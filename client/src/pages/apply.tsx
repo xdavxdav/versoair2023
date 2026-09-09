@@ -51,6 +51,7 @@ import SuccessCelebration from "@/components/SuccessCelebration";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -525,7 +526,7 @@ export default function ApplyPage() {
         <div className="container mx-auto px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => window.history.back()}
+            onClick={() => navigateBackSafely(setLocation, "/")}
             className="text-white/70 hover:text-white mb-8"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -937,7 +938,7 @@ export default function ApplyPage() {
         <div className="container mx-auto px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => window.history.back()}
+            onClick={() => navigateBackSafely(setLocation, "/")}
             className="text-white/70 hover:text-white mb-8"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />

@@ -121,6 +121,31 @@ export function ContractorApplicationsSection() {
       setFeedback({ type: "error", message: "Failed to reject application" }),
   });
 
+  const lifecycleMutation = useMutation({
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: number;
+      status: "pending" | "archived";
+    }) => {
+      const res = await authenticatedFetch(
+        `/api/contractor-pipeline/applications/${id}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to update application");
+      return res.json();
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["contractor-applications"] }),
+    onError: () =>
+      setFeedback({ type: "error", message: "Failed to update application" }),
+  });
+
   const handleAction = () => {
     if (!actionTarget) return;
     if (actionTarget.action === "approve") {
@@ -410,6 +435,34 @@ export function ContractorApplicationsSection() {
                           Reject
                         </button>
                       </div>
+                    )}
+                    {app.status === "rejected" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          lifecycleMutation.mutate({
+                            id: app.id,
+                            status: "pending",
+                          });
+                        }}
+                        className="mr-2 rounded-lg border border-indigo-200 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50"
+                      >
+                        Reopen
+                      </button>
+                    )}
+                    {app.status !== "approved" && app.status !== "archived" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          lifecycleMutation.mutate({
+                            id: app.id,
+                            status: "archived",
+                          });
+                        }}
+                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                      >
+                        Archive
+                      </button>
                     )}
                   </div>
                 )}

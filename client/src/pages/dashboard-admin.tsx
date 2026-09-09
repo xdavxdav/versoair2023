@@ -11,6 +11,7 @@ import {
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
+import { CMSSection } from "@/components/sections/CMSSection";
 
 import {
   Store,
@@ -7280,25 +7281,7 @@ export default function AdminDashboard() {
             {activeSection === "users" && <UsersSection />}
             {activeSection === "roles" && <RoleManagementSection />}
             {activeSection === "analytics" && <AnalyticsSection />}
-            {activeSection === "cms" && (
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Content Management
-                  </CardTitle>
-                  <CardDescription>
-                    Manage website pages and content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <p>Content management features coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {activeSection === "cms" && <CMSSection />}
             {activeSection === "security" && <SecuritySection />}
             {activeSection === "smtp" && <SmtpSection />}
             {activeSection === "tsr-whitelist" && <TSRWhitelistSection />}

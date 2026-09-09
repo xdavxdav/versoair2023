@@ -64,3 +64,4 @@ client/pages/
 tailwind.config.cjs
 postcss.config.cjs
 uploads/
+node_modules

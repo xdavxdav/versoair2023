@@ -832,12 +832,10 @@ router.get("/database/export", async (req, res) => {
   try {
     // 🔒 Superuser only
     if (req.user?.role !== "superuser") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: "Superuser access required for data export",
-        });
+      return res.status(403).json({
+        success: false,
+        error: "Superuser access required for data export",
+      });
     }
     const { table, format } = req.query;
 

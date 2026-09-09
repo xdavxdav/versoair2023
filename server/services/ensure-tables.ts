@@ -65,6 +65,115 @@ export async function ensureAllTables(): Promise<void> {
       }
     }
 
+    const systemRoles = [
+      {
+        name: "superuser",
+        description: "Full system access with all permissions",
+        permissions: [
+          "businesses.read",
+          "businesses.write",
+          "businesses.delete",
+          "categories.read",
+          "categories.write",
+          "categories.delete",
+          "jobs.read",
+          "jobs.write",
+          "jobs.delete",
+          "users.read",
+          "users.write",
+          "users.delete",
+          "analytics.read",
+          "reports.read",
+          "reports.export",
+          "advertising.read",
+          "advertising.write",
+          "system.admin",
+          "system.backup",
+          "system.security",
+        ],
+        color: "bg-red-100 text-red-800",
+      },
+      {
+        name: "admin",
+        description:
+          "Administrative access to manage businesses, users, and settings",
+        permissions: [
+          "businesses.read",
+          "businesses.write",
+          "businesses.delete",
+          "categories.read",
+          "categories.write",
+          "categories.delete",
+          "jobs.read",
+          "jobs.write",
+          "jobs.delete",
+          "users.read",
+          "users.write",
+          "analytics.read",
+          "reports.read",
+          "reports.export",
+          "advertising.read",
+          "advertising.write",
+        ],
+        color: "bg-orange-100 text-orange-800",
+      },
+      {
+        name: "moderator",
+        description: "Can review and moderate content, businesses, and users",
+        permissions: [
+          "businesses.read",
+          "businesses.write",
+          "categories.read",
+          "jobs.read",
+          "jobs.write",
+          "users.read",
+          "analytics.read",
+          "reports.read",
+        ],
+        color: "bg-blue-100 text-blue-800",
+      },
+      {
+        name: "business_owner",
+        description: "Manage own business listings and job postings",
+        permissions: [
+          "businesses.read",
+          "businesses.write",
+          "jobs.read",
+          "jobs.write",
+          "analytics.read",
+        ],
+        color: "bg-purple-100 text-purple-800",
+      },
+      {
+        name: "user",
+        description:
+          "Basic user access — browse and interact with the platform",
+        permissions: ["businesses.read", "jobs.read"],
+        color: "bg-gray-100 text-gray-800",
+      },
+    ];
+    for (const role of systemRoles) {
+      try {
+        await client.query(
+          `INSERT INTO admin_roles (name, description, permissions, color, is_system)
+           VALUES ($1, $2, $3::jsonb, $4, TRUE)
+           ON CONFLICT (name) DO NOTHING`,
+          [
+            role.name,
+            role.description,
+            JSON.stringify(role.permissions),
+            role.color,
+          ],
+        );
+      } catch (err: any) {
+        failed++;
+        console.error(
+          `  ❌ Failed to seed system role ${role.name}:`,
+          err.message,
+        );
+      }
+    }
+
     // ── Column drift fix: ensure users table has all schema columns ──
     // Tables created before schema updates may be missing newer columns.
     const USERS_COLUMN_ADDITIONS = [
@@ -81,6 +190,53 @@ export async function ensureAllTables(): Promise<void> {
         await client.query(alt);
       } catch (_) {
         // Column may already exist — that's fine
+      }
+    }
+
+    const BUSINESS_COLUMN_ADDITIONS = [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id)`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES business_categories(id)`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS city_id INTEGER REFERENCES cities(id)`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS reviews_count INTEGER DEFAULT 0`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS popularity_score INTEGER DEFAULT 0`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_advertiser BOOLEAN DEFAULT false`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ad_balance DECIMAL DEFAULT 0`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ad_status VARCHAR`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS contact_info JSONB`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS social_links JSONB`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS opening_hours JSONB`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS attributes JSONB DEFAULT '{}'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS keywords JSONB`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS amenities JSONB DEFAULT '[]'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS reviews INTEGER DEFAULT 0`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS business_type VARCHAR`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS migrated_from_table VARCHAR`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS search_vector TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS approval_status VARCHAR DEFAULT 'approved'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS submitted_by INTEGER REFERENCES users(id)`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS approved_by INTEGER REFERENCES users(id)`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS approval_notes TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS pdf_path TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tier VARCHAR DEFAULT 'free'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tier_expires_at TIMESTAMP`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_url TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS verification_status VARCHAR DEFAULT 'unverified'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS verification_documents JSONB DEFAULT '[]'`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS avg_response_time_hours DECIMAL`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`,
+    ];
+    for (const alt of BUSINESS_COLUMN_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (err: any) {
+        console.error("  ❌ Failed to ensure businesses column:", err.message);
       }
     }
 
@@ -759,6 +915,45 @@ const TABLE_STATEMENTS: TableDef[] = [
       ip_address VARCHAR,
       user_agent TEXT,
       created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+
+  {
+    table: "admin_roles",
+    sql: `CREATE TABLE IF NOT EXISTS admin_roles (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL UNIQUE,
+      description TEXT NOT NULL,
+      permissions JSONB NOT NULL DEFAULT '[]'::jsonb,
+      color VARCHAR(120) NOT NULL,
+      is_system BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+
+  {
+    table: "system_settings",
+    sql: `CREATE TABLE IF NOT EXISTS system_settings (
+      id SERIAL PRIMARY KEY,
+      key VARCHAR(100) NOT NULL UNIQUE,
+      value JSONB,
+      encrypted_at TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT NOW(),
+      updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  },
+
+  {
+    table: "content_pages",
+    sql: `CREATE TABLE IF NOT EXISTS content_pages (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      slug VARCHAR(255) NOT NULL UNIQUE,
+      content TEXT NOT NULL DEFAULT '',
+      is_published BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     )`,
   },
 

@@ -191,14 +191,24 @@ router.post(
     // Parse tags: accept comma-separated string or array
     const parsedTags = tags
       ? typeof tags === "string"
-        ? JSON.stringify(
-            tags
-              .split(",")
-              .map((t: string) => t.trim())
-              .filter(Boolean),
-          )
-        : JSON.stringify(tags)
+        ? tags
+            .split(",")
+            .map((t: string) => t.trim())
+            .filter(Boolean)
+        : tags
       : null;
+    let parsedOpeningHours: unknown = null;
+    if (openingHours) {
+      if (typeof openingHours === "string") {
+        try {
+          parsedOpeningHours = JSON.parse(openingHours);
+        } catch {
+          parsedOpeningHours = openingHours;
+        }
+      } else {
+        parsedOpeningHours = openingHours;
+      }
+    }
 
     const [business] = await db
       .insert(businesses)
@@ -218,11 +228,7 @@ router.post(
         website: website || null,
         tags: parsedTags,
         businessType: businessType || null,
-        openingHours: openingHours
-          ? typeof openingHours === "string"
-            ? openingHours
-            : JSON.stringify(openingHours)
-          : null,
+        openingHours: parsedOpeningHours,
         attributes: businessType ? { type: businessType } : null,
       })
       .returning({

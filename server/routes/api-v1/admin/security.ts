@@ -11,6 +11,7 @@ import { db } from "../../../db";
 import * as schema from "../../../../shared/schema";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
+import { encryptSetting } from "../../../utils/encrypted-settings";
 
 const router = Router();
 
@@ -189,15 +190,25 @@ router.delete(
 router.get(
   "/smtp",
   asyncHandler(async (_req: Request, res: Response) => {
+    const [stored] = await db
+      .select({ value: schema.systemSettings.value })
+      .from(schema.systemSettings)
+      .where(eq(schema.systemSettings.key, "smtp_config"))
+      .limit(1);
+    const saved = stored?.value as Record<string, unknown> | undefined;
+    const hasStoredPassword =
+      typeof saved?.pass === "string" && Boolean(saved.pass);
     res.json({
       success: true,
       data: {
-        host: process.env.SMTP_HOST || "",
-        port: process.env.SMTP_PORT || "587",
-        user: process.env.SMTP_USER || "",
-        pass: process.env.SMTP_PASS ? "••••••••" : "",
-        from: process.env.SMTP_FROM || "",
-        configured: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+        host: saved?.host || process.env.SMTP_HOST || "",
+        port: saved?.port || process.env.SMTP_PORT || "587",
+        user: saved?.user || process.env.SMTP_USER || "",
+        pass: hasStoredPassword || process.env.SMTP_PASS ? "••••••••" : "",
+        from: saved?.from || process.env.SMTP_FROM || "",
+        configured:
+          hasStoredPassword ||
+          !!(process.env.SMTP_USER && process.env.SMTP_PASS),
       },
     });
   }),
@@ -261,8 +272,7 @@ router.post(
 
 /**
  * POST /api/v1/admin/security/smtp/save
- * Persist SMTP settings to process.env at runtime.
- * NOTE: For permanent persistence, write to .env file or your secret manager.
+ * Persist SMTP settings in the database and apply them to the running process.
  */
 router.post(
   "/smtp/save",
@@ -276,6 +286,42 @@ router.post(
       });
       return;
     }
+
+    const existing = await db
+      .select({ value: schema.systemSettings.value })
+      .from(schema.systemSettings)
+      .where(eq(schema.systemSettings.key, "smtp_config"))
+      .limit(1);
+    const previous = (existing[0]?.value || {}) as Record<string, unknown>;
+    const password =
+      pass === "••••••••" ? previous.pass : encryptSetting(String(pass));
+    const value = {
+      host,
+      port: String(port || 587),
+      user,
+      pass: password,
+      from: from || user,
+    };
+    const actorId =
+      Number((req.user as any)?.userId || (req.user as any)?.id) || null;
+    await db
+      .insert(schema.systemSettings)
+      .values({
+        key: "smtp_config",
+        value,
+        encryptedAt: new Date(),
+        updatedBy: actorId,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: schema.systemSettings.key,
+        set: {
+          value,
+          encryptedAt: new Date(),
+          updatedBy: actorId,
+          updatedAt: new Date(),
+        },
+      });
 
     // Apply to running process immediately
     process.env.SMTP_HOST = host;
@@ -291,8 +337,7 @@ router.post(
 
     res.json({
       success: true,
-      message:
-        "SMTP settings applied. Add them to your .env for persistence across restarts.",
+      message: "SMTP settings saved securely and applied.",
     });
   }),
 );

@@ -58,6 +58,18 @@ export function MarketplaceModeration() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [previewListing, setPreviewListing] = useState<Listing | null>(null);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    contact_email: "",
+    contact_phone: "",
+    address: "",
+    city: "",
+    website_url: "",
+  });
   const [actionDialog, setActionDialog] = useState<{
     listing: Listing;
     action: "approve" | "reject";
@@ -101,6 +113,72 @@ export function MarketplaceModeration() {
       setActionDialog(null);
     },
   });
+
+  const resetForm = () =>
+    setForm({
+      title: "",
+      description: "",
+      category: "",
+      contact_email: "",
+      contact_phone: "",
+      address: "",
+      city: "",
+      website_url: "",
+    });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const isEditing = Boolean(editingListing);
+      const res = await authenticatedFetch(
+        isEditing
+          ? `/api/marketing/journal/listings/${editingListing!.id}`
+          : "/api/marketing/journal/listings",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to save listing");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
+      setEditingListing(null);
+      setShowCreate(false);
+      resetForm();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await authenticatedFetch(
+        `/api/marketing/journal/listings/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (!res.ok) throw new Error("Failed to delete listing");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
+    },
+  });
+
+  const openEdit = (listing: Listing) => {
+    setEditingListing(listing);
+    setForm({
+      title: listing.title || "",
+      description: listing.description || "",
+      category: listing.category || "",
+      contact_email: listing.owner_email || "",
+      contact_phone: "",
+      address: "",
+      city: "",
+      website_url: "",
+    });
+  };
 
   const listings: Listing[] = data?.data || [];
   const pendingCount = listings.length;
@@ -152,17 +230,29 @@ export function MarketplaceModeration() {
                 auto-approve after 24 hours.
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  resetForm();
+                  setShowCreate(true);
+                }}
+              >
+                <ShoppingBag className="h-4 w-4 mr-2" />
+                New listing
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -331,6 +421,26 @@ export function MarketplaceModeration() {
                           </Button>
                         </>
                       )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEdit(listing)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => {
+                          if (window.confirm("Delete this listing?")) {
+                            deleteMutation.mutate(listing.id);
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -339,6 +449,90 @@ export function MarketplaceModeration() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={showCreate || Boolean(editingListing)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowCreate(false);
+            setEditingListing(null);
+            resetForm();
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingListing ? "Edit listing" : "Create listing"}
+            </DialogTitle>
+            <DialogDescription>
+              Manage marketplace listing details before publishing or review.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(
+              [
+                "title",
+                "category",
+                "contact_email",
+                "contact_phone",
+                "city",
+                "website_url",
+              ] as const
+            ).map((field) => (
+              <div key={field} className="space-y-1">
+                <label className="text-sm font-medium capitalize">
+                  {field.replace("_", " ")}
+                </label>
+                <input
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  value={form[field]}
+                  onChange={(event) =>
+                    setForm({ ...form, [field]: event.target.value })
+                  }
+                />
+              </div>
+            ))}
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                className="min-h-24 w-full rounded-md border px-3 py-2 text-sm"
+                value={form.description}
+                onChange={(event) =>
+                  setForm({ ...form, description: event.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-sm font-medium">Address</label>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={form.address}
+                onChange={(event) =>
+                  setForm({ ...form, address: event.target.value })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreate(false);
+                setEditingListing(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={!form.title.trim() || saveMutation.isPending}
+            >
+              {saveMutation.isPending ? "Saving..." : "Save listing"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Preview Dialog */}
       <Dialog

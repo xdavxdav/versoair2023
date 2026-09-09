@@ -46,6 +46,17 @@ export function ArtisanProfilesSection() {
   const [status, setStatus] = useState("PENDING");
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [message, setMessage] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ArtisanProfile | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    displayName: "",
+    category: "",
+    description: "",
+    bio: "",
+    email: "",
+    phone: "",
+    website: "",
+  });
 
   const profilesQuery = useQuery({
     queryKey: ["admin-artisan-profiles", status],
@@ -95,6 +106,30 @@ export function ArtisanProfilesSection() {
   });
 
   const profiles = profilesQuery.data || [];
+
+  const saveProfile = async () => {
+    if (!editing) return;
+    try {
+      const response = await authenticatedFetch(
+        `/api/admin/profiles/${editing.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editForm),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to update profile");
+      setEditing(null);
+      setMessage("Profile updated.");
+      void profilesQuery.refetch();
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Failed to update profile",
+      );
+    }
+  };
 
   return (
     <Card className="border-slate-200 shadow-lg">
@@ -177,6 +212,25 @@ export function ArtisanProfilesSection() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditing(profile);
+                        setEditForm({
+                          name: profile.name || "",
+                          displayName: profile.displayName || "",
+                          category: profile.category || "",
+                          description: "",
+                          bio: "",
+                          email: profile.ownerEmail || "",
+                          phone: "",
+                          website: "",
+                        });
+                      }}
+                    >
+                      Edit
+                    </Button>
                     {(profile.status === "PENDING" ||
                       profile.status === "SUSPENDED") && (
                       <Button
@@ -253,6 +307,59 @@ export function ArtisanProfilesSection() {
                 />
               </div>
             ))}
+          </div>
+        )}
+        {editing && (
+          <div className="mt-5 grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:grid-cols-2">
+            {(
+              [
+                "name",
+                "displayName",
+                "category",
+                "email",
+                "phone",
+                "website",
+              ] as const
+            ).map((field) => (
+              <label key={field} className="text-sm text-slate-700">
+                {field}
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+                  value={editForm[field]}
+                  onChange={(event) =>
+                    setEditForm({ ...editForm, [field]: event.target.value })
+                  }
+                />
+              </label>
+            ))}
+            <label className="text-sm text-slate-700 sm:col-span-2">
+              description
+              <textarea
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+                rows={2}
+                value={editForm.description}
+                onChange={(event) =>
+                  setEditForm({ ...editForm, description: event.target.value })
+                }
+              />
+            </label>
+            <label className="text-sm text-slate-700 sm:col-span-2">
+              bio
+              <textarea
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+                rows={2}
+                value={editForm.bio}
+                onChange={(event) =>
+                  setEditForm({ ...editForm, bio: event.target.value })
+                }
+              />
+            </label>
+            <div className="flex gap-2 sm:col-span-2">
+              <Button onClick={() => void saveProfile()}>Save</Button>
+              <Button variant="outline" onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

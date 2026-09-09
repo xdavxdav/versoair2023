@@ -24,6 +24,7 @@ import { Link, useLocation } from "wouter";
 import PortalSelector from "@/components/PortalSelector";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCapabilities } from "@/hooks/useCapabilities";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"overview" | "portals">(
@@ -99,11 +100,7 @@ export default function ProfilePage() {
   }, [user?.id]);
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate("/");
-    }
+    navigateBackSafely(navigate, "/stream");
   };
 
   const handleSaveDisplayName = async () => {

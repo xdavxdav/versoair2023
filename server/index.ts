@@ -104,10 +104,12 @@ const app = express();
 
 process.on("unhandledRejection", (reason) => {
   serverLog.error("Unhandled promise rejection:", reason);
+  process.exit(1);
 });
 
 process.on("uncaughtException", (error) => {
   serverLog.error("Uncaught exception:", error);
+  process.exit(1);
 });
 
 // ─── Security headers (helmet) ────────────────────────────────────────────────

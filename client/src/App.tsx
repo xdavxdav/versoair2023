@@ -784,7 +784,17 @@ function AppContent() {
   const [isAuthed, setIsAuthed] = useState<boolean>(() => {
     if (typeof window === "undefined") return Boolean(user);
     return (
-      Boolean(user) || localStorage.getItem("blog_community_auth") === "true"
+      Boolean(user) ||
+      Boolean(
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("artist_token") ||
+        localStorage.getItem("geoadmin_session") ||
+        localStorage.getItem("adminAccessTime"),
+      ) ||
+      (isContentNavPath(window.location.pathname) &&
+        localStorage.getItem("blog_community_auth") === "true")
     );
   });
 
@@ -792,26 +802,37 @@ function AppContent() {
     const syncAuthState = () => {
       if (typeof window === "undefined") return;
       setIsAuthed(
-        Boolean(user) || localStorage.getItem("blog_community_auth") === "true",
+        Boolean(user) ||
+          Boolean(
+            localStorage.getItem("auth_token") ||
+            localStorage.getItem("authToken") ||
+            localStorage.getItem("token") ||
+            localStorage.getItem("artist_token") ||
+            localStorage.getItem("geoadmin_session") ||
+            localStorage.getItem("adminAccessTime"),
+          ) ||
+          (isContentNavPage &&
+            localStorage.getItem("blog_community_auth") === "true"),
       );
     };
 
     syncAuthState();
     window.addEventListener("storage", syncAuthState);
     return () => window.removeEventListener("storage", syncAuthState);
-  }, [user]);
+  }, [user, isContentNavPage]);
 
   // BlogNavbar owns the stable navigation for blog/marketplace pages.
   // Keep ContentNav for the other content routes so the two nav systems never stack.
   const isBlogOrMarketplace =
     currentPath === "/blog" || currentPath === "/marketplace";
   const isAuthPage = currentPath.startsWith("/auth");
+  const isGeoAdminPage = currentPath.startsWith("/geo-admin");
   const showAccountBlogNavbar =
     isAuthed &&
     !isAuthPage &&
     !isMusicPage &&
     !currentPath.startsWith("/admin") &&
-    !currentPath.startsWith("/geo-admin");
+    !isGeoAdminPage;
   const showContentNav =
     isContentNavPage &&
     isAuthed &&
@@ -1105,7 +1126,8 @@ function AppContent() {
       {!isImmersivePage &&
         !isMusicPage &&
         !isBlogOrMarketplace &&
-        !showAccountBlogNavbar && (
+        !showAccountBlogNavbar &&
+        !isGeoAdminPage && (
           <Suspense fallback={null}>
             <MobileMenuBubble />
           </Suspense>

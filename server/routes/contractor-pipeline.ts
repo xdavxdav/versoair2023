@@ -310,6 +310,42 @@ router.post(
   }),
 );
 
+router.patch(
+  "/applications/:id/status",
+  requireAuth(["admin", "superuser"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const appId = Number(req.params.id);
+    const status = String(req.body?.status || "").toLowerCase();
+    const reviewNotes = String(req.body?.reviewNotes || "").trim() || null;
+    if (
+      !Number.isInteger(appId) ||
+      !["pending", "rejected", "archived"].includes(status)
+    ) {
+      res
+        .status(400)
+        .json({ success: false, message: "Invalid application status" });
+      return;
+    }
+    const [updated] = await db
+      .update(schema.contractorApplications)
+      .set({
+        status,
+        reviewNotes,
+        reviewedBy: Number((req as any).user.userId),
+        reviewedAt: new Date(),
+      })
+      .where(eq(schema.contractorApplications.id, appId))
+      .returning();
+    if (!updated) {
+      res
+        .status(404)
+        .json({ success: false, message: "Application not found" });
+      return;
+    }
+    res.json({ success: true, application: updated });
+  }),
+);
+
 /**
  * GET /api/contractor-pipeline/contractors
  * Admin: list approved contractors (for assignment dropdown)
@@ -431,6 +467,91 @@ router.post(
       message: `Contract "${title}" offered to contractor`,
       contract,
     });
+  }),
+);
+
+router.put(
+  "/contracts/:id",
+  requireAuth(["admin", "superuser", "moderator"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const contractId = Number(req.params.id);
+    const { title, description, terms, deadline, paymentAmount } =
+      req.body || {};
+    if (!Number.isInteger(contractId) || !title?.trim()) {
+      res.status(400).json({
+        success: false,
+        message: "Valid contract id and title are required",
+      });
+      return;
+    }
+    const [updated] = await db
+      .update(schema.assignedContracts)
+      .set({
+        title: title.trim(),
+        description: description || null,
+        terms: terms || null,
+        deadline: deadline ? new Date(deadline) : null,
+        paymentAmount: paymentAmount || null,
+      })
+      .where(eq(schema.assignedContracts.id, contractId))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ success: false, message: "Contract not found" });
+      return;
+    }
+    res.json({ success: true, contract: updated });
+  }),
+);
+
+router.patch(
+  "/contracts/:id/status",
+  requireAuth(["admin", "superuser", "moderator"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const contractId = Number(req.params.id);
+    const status = String(req.body?.status || "").toLowerCase();
+    if (
+      !Number.isInteger(contractId) ||
+      !["offered", "in_progress", "cancelled", "completed"].includes(status)
+    ) {
+      res
+        .status(400)
+        .json({ success: false, message: "Invalid contract status" });
+      return;
+    }
+    const [updated] = await db
+      .update(schema.assignedContracts)
+      .set({
+        status,
+        completedAt: status === "completed" ? new Date() : undefined,
+      })
+      .where(eq(schema.assignedContracts.id, contractId))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ success: false, message: "Contract not found" });
+      return;
+    }
+    res.json({ success: true, contract: updated });
+  }),
+);
+
+router.delete(
+  "/contracts/:id",
+  requireAuth(["admin", "superuser"]),
+  asyncHandler(async (req: Request, res: Response) => {
+    const contractId = Number(req.params.id);
+    if (!Number.isInteger(contractId)) {
+      res.status(400).json({ success: false, message: "Invalid contract id" });
+      return;
+    }
+    const [deleted] = await db
+      .delete(schema.assignedContracts)
+      .where(eq(schema.assignedContracts.id, contractId))
+      .returning({ id: schema.assignedContracts.id });
+    if (!deleted) {
+      res.status(404).json({ success: false, message: "Contract not found" });
+      return;
+    }
+    res.json({ success: true, id: deleted.id });
   }),
 );
 

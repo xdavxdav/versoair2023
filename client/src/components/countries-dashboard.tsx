@@ -2620,8 +2620,8 @@ export default function DatabaseExpert({
                 </div>
                 {!canManage && (
                   <p className="mt-2 text-xs text-slate-400">
-                    Subscriber view is read-only. Business creation and
-                    changes are available only to Joel's superadmin account.
+                    Subscriber view is read-only. Business creation and changes
+                    are available only to Joel's superadmin account.
                   </p>
                 )}
               </CardHeader>

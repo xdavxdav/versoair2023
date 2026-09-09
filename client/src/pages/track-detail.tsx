@@ -271,7 +271,8 @@ export default function TrackDetailPage() {
                 {formatStreams(track.streams || 0)} streams
               </span>
               <span className="flex items-center gap-1">
-                <Heart className="w-3.5 h-3.5" /> {track.like_count ?? track.likes ?? 0} likes
+                <Heart className="w-3.5 h-3.5" />{" "}
+                {track.like_count ?? track.likes ?? 0} likes
               </span>
               {track.genre && (
                 <span className="px-2 py-0.5 bg-gray-800 rounded-full text-xs">

@@ -54,6 +54,7 @@ import { useAudio } from "@/lib/audio-context";
 import { usePaymentCountry } from "@/hooks/usePaymentCountry";
 import { PaymentTopBanner } from "@/components/PaymentTopBanner";
 import { PAYMENT_METHODS, type PaymentMethodId } from "@/lib/payment-methods";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import { PaymentLogo } from "@/components/PaymentLogos";
 
 // ── Reaction emoji mapping ──
@@ -916,7 +917,7 @@ export default function StreamerPortal() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           {/* Back button */}
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigateBackSafely(navigate, "/stream")}
             className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200 text-white mb-4"
             title="Go back"
           >

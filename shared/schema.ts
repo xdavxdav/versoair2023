@@ -552,6 +552,17 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const adminRoles = pgTable("admin_roles", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: text("description").notNull(),
+  permissions: jsonb("permissions").$type<string[]>().notNull().default([]),
+  color: varchar("color", { length: 120 }).notNull(),
+  isSystem: boolean("is_system").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // --- 6B. ADVERTISING ---
 export const adCampaigns = pgTable("ad_campaigns", {
   id: uuid("id").primaryKey().defaultRandom(),

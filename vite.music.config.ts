@@ -20,7 +20,7 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist-music/public"),
     emptyOutDir: true,
     rollupOptions: {
-        input: path.resolve(__dirname, "client/music.html"),
+      input: path.resolve(__dirname, "client/music.html"),
       output: {
         manualChunks: {
           "vendor-tiptap": [

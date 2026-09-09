@@ -308,4 +308,54 @@ router.post("/:id/status", requireAuth(reviewRoles), async (req, res) => {
   }
 });
 
+router.put("/:id", requireAuth(manageRoles), async (req, res) => {
+  const parsed = eventPayload(req.body || {});
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  try {
+    const value = parsed.value!;
+    const result = await pool.query(
+      `UPDATE events SET title = $1, description = $2, event_type = $3,
+              starts_at = $4, ends_at = $5, venue = $6, city = $7,
+              updated_at = NOW()
+       WHERE id = $8 RETURNING *`,
+      [
+        value.title,
+        value.description,
+        value.eventType,
+        value.startsAt,
+        value.endsAt,
+        value.venue,
+        value.city,
+        Number(req.params.id),
+      ],
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Event not found" });
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by)
+       VALUES ($1, 'updated', $2)`,
+      [Number(req.params.id), Number(req.user?.userId)],
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:update]", error);
+    res.status(500).json({ error: "Failed to update event" });
+  }
+});
+
+router.delete("/:id", requireAuth(["admin", "superuser"]), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `DELETE FROM events WHERE id = $1 RETURNING id`,
+      [Number(req.params.id)],
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Event not found" });
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (error) {
+    console.error("[events:delete]", error);
+    res.status(500).json({ error: "Failed to delete event" });
+  }
+});
+
 export default router;

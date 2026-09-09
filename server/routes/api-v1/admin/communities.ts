@@ -73,6 +73,27 @@ router.get("/join-requests", requireAuth(reviewRoles), async (_req, res) => {
   }
 });
 
+router.get("/posts", requireAuth(reviewRoles), async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT cp.id, cp.content, cp.is_hidden, cp.created_at,
+              COALESCE(u.display_name, u.username, u.email) AS author_name,
+              ac.name AS community_name
+       FROM community_posts cp
+       LEFT JOIN users u ON u.id = cp.user_id
+       LEFT JOIN artisan_communities ac ON ac.id = cp.community_id
+       ORDER BY cp.created_at DESC
+       LIMIT 100`,
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[admin:communities:posts]", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to load community posts" });
+  }
+});
+
 router.patch("/:id/status", requireAuth(manageRoles), async (req, res) => {
   const id = Number(req.params.id);
   const status = String(req.body?.status || "").toUpperCase();

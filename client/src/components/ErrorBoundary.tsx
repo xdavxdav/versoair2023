@@ -74,7 +74,9 @@ export default class ErrorBoundary extends Component<Props, State> {
 
             <div>
               <h2 className="text-white text-xl font-bold mb-2">
-                {isChunkError ? "A new version is available" : "Something went wrong"}
+                {isChunkError
+                  ? "A new version is available"
+                  : "Something went wrong"}
               </h2>
               <p className="text-white/50 text-sm">
                 {isChunkError

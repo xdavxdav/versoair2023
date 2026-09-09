@@ -1,6 +1,5 @@
 import {
   activeSessions,
-  adCampaigns,
   artistProfiles,
   artists,
   assignedContracts,
@@ -28,8 +27,10 @@ import {
   musicAnalytics,
   musicArtists,
   musicTracks,
+  notifications,
   paymentCardTypes,
   pool,
+  profileApprovalActions,
   properties,
   regions,
   schema_exports,
@@ -48,12 +49,14 @@ import {
   sendPasswordResetEmail,
   sendReservationUpdateEmail,
   sendVerificationEmail,
+  systemSettings,
   tsrWhitelist,
+  unifiedProfiles,
   userBrowsingHistory,
   userSettings,
   users,
   verificationTokens
-} from "./chunk-X7LCIHAQ.js";
+} from "./chunk-ROMXVLW6.js";
 import {
   CATEGORY_SEED_DATA
 } from "./chunk-72G26RMG.js";
@@ -65,11 +68,11 @@ import {
 } from "./chunk-KFQGP6VL.js";
 
 // server/services/notification-service.ts
-import { eq as eq9, and as and6, sql as sql3 } from "drizzle-orm";
+import { eq as eq8, and as and5, sql as sql3 } from "drizzle-orm";
 import { EventEmitter } from "events";
 async function notifyConnectionRequest(fromUserId, toUserId) {
   try {
-    const [requester] = await db.select({ username: users.username }).from(users).where(eq9(users.id, fromUserId));
+    const [requester] = await db.select({ username: users.username }).from(users).where(eq8(users.id, fromUserId));
     if (!requester) {
       throw new Error("Requester not found");
     }
@@ -91,7 +94,7 @@ async function notifyConnectionRequest(fromUserId, toUserId) {
     });
     (async () => {
       try {
-        const [recipient] = await db.select({ email: users.email, username: users.username }).from(users).where(eq9(users.id, toUserId));
+        const [recipient] = await db.select({ email: users.email, username: users.username }).from(users).where(eq8(users.id, toUserId));
         if (recipient?.email) {
           await sendConnectionRequestEmail(
             recipient.email,
@@ -130,14 +133,14 @@ async function notifyConnectionRequest(fromUserId, toUserId) {
 async function acceptConnectionRequest(connectionId, userId) {
   try {
     const result = await db.transaction(async (tx) => {
-      const [connection] = await tx.select().from(connections).where(eq9(connections.id, connectionId));
+      const [connection] = await tx.select().from(connections).where(eq8(connections.id, connectionId));
       if (!connection) {
         throw new Error("Connection request not found");
       }
       if (connection.receiverId !== userId) {
         throw new Error("Not authorized to accept this connection");
       }
-      await tx.update(connections).set({ status: "accepted", acceptedAt: /* @__PURE__ */ new Date() }).where(eq9(connections.id, connectionId));
+      await tx.update(connections).set({ status: "accepted", acceptedAt: /* @__PURE__ */ new Date() }).where(eq8(connections.id, connectionId));
       await tx.insert(auditLogs).values({
         userId,
         action: "ACCEPT_CONNECTION_REQUEST",
@@ -146,7 +149,7 @@ async function acceptConnectionRequest(connectionId, userId) {
         changes: { status: "pending" },
         ipAddress: "system"
       });
-      const [requester] = await tx.select({ username: users.username }).from(users).where(eq9(users.id, connection.requesterId));
+      const [requester] = await tx.select({ username: users.username }).from(users).where(eq8(users.id, connection.requesterId));
       return {
         connection,
         requester
@@ -162,7 +165,7 @@ async function acceptConnectionRequest(connectionId, userId) {
     });
     (async () => {
       try {
-        const [requesterData] = await db.select({ email: users.email, username: users.username }).from(users).where(eq9(users.id, result.connection.requesterId));
+        const [requesterData] = await db.select({ email: users.email, username: users.username }).from(users).where(eq8(users.id, result.connection.requesterId));
         if (requesterData?.email) {
           await sendConnectionAcceptedEmail(
             requesterData.email,
@@ -204,11 +207,11 @@ async function acceptConnectionRequest(connectionId, userId) {
 async function declineConnectionRequest(connectionId, userId) {
   try {
     const result = await db.transaction(async (tx) => {
-      const [connection] = await tx.select().from(connections).where(eq9(connections.id, connectionId));
+      const [connection] = await tx.select().from(connections).where(eq8(connections.id, connectionId));
       if (!connection || connection.receiverId !== userId) {
         throw new Error("Not authorized");
       }
-      await tx.delete(connections).where(eq9(connections.id, connectionId));
+      await tx.delete(connections).where(eq8(connections.id, connectionId));
       await tx.insert(auditLogs).values({
         userId,
         action: "DECLINE_CONNECTION_REQUEST",
@@ -231,10 +234,10 @@ async function getPendingConnections(userId) {
     requesterUsername: users.username,
     status: connections.status,
     createdAt: connections.createdAt
-  }).from(connections).innerJoin(users, eq9(connections.requesterId, users.id)).where(
-    and6(
-      eq9(connections.receiverId, userId),
-      eq9(connections.status, "pending")
+  }).from(connections).innerJoin(users, eq8(connections.requesterId, users.id)).where(
+    and5(
+      eq8(connections.receiverId, userId),
+      eq8(connections.status, "pending")
     )
   );
 }
@@ -254,7 +257,7 @@ async function getUserConnections(userId) {
         OR
         (${connections.receiverId} = ${userId} AND ${users.id} = ${connections.requesterId})
       )`
-  ).where(eq9(connections.status, "accepted"));
+  ).where(eq8(connections.status, "accepted"));
 }
 function buildUnsubscribeUrl(unsubscribeToken) {
   const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "http://localhost:5003";
@@ -268,10 +271,10 @@ async function notifyNewJobPosted(job) {
       subscription: emailSubscriptions,
       email: users.email,
       username: users.username
-    }).from(emailSubscriptions).innerJoin(users, eq9(emailSubscriptions.userId, users.id)).where(
-      and6(
-        eq9(emailSubscriptions.type, "job_alerts"),
-        eq9(emailSubscriptions.isActive, true)
+    }).from(emailSubscriptions).innerJoin(users, eq8(emailSubscriptions.userId, users.id)).where(
+      and5(
+        eq8(emailSubscriptions.type, "job_alerts"),
+        eq8(emailSubscriptions.isActive, true)
       )
     );
     const postedAt = (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", {
@@ -314,7 +317,7 @@ async function notifyNewJobPosted(job) {
           buildUnsubscribeUrl(sub.subscription.unsubscribeToken)
         );
         if (sent) instant++;
-        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq9(emailSubscriptions.id, sub.subscription.id));
+        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq8(emailSubscriptions.id, sub.subscription.id));
       } else {
         await db.insert(emailQueue).values({
           subscriptionId: sub.subscription.id,
@@ -351,11 +354,11 @@ async function notifyReservationUpdate(reservation) {
       subscription: emailSubscriptions,
       email: users.email,
       username: users.username
-    }).from(emailSubscriptions).innerJoin(users, eq9(emailSubscriptions.userId, users.id)).where(
-      and6(
-        eq9(emailSubscriptions.userId, reservation.userId),
-        eq9(emailSubscriptions.type, "reservation_tracking"),
-        eq9(emailSubscriptions.isActive, true)
+    }).from(emailSubscriptions).innerJoin(users, eq8(emailSubscriptions.userId, users.id)).where(
+      and5(
+        eq8(emailSubscriptions.userId, reservation.userId),
+        eq8(emailSubscriptions.type, "reservation_tracking"),
+        eq8(emailSubscriptions.isActive, true)
       )
     );
     if (!sub) {
@@ -380,7 +383,7 @@ async function notifyReservationUpdate(reservation) {
       buildUnsubscribeUrl(sub.subscription.unsubscribeToken)
     );
     if (sent) {
-      await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq9(emailSubscriptions.id, sub.subscription.id));
+      await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq8(emailSubscriptions.id, sub.subscription.id));
     }
     notificationEmitter.emit("reservation_update", {
       userId: reservation.userId,
@@ -398,6 +401,93 @@ async function notifyReservationUpdate(reservation) {
     console.error("[NOTIFICATION] Error notifying reservation update:", error);
     return false;
   }
+}
+async function createGenericNotification(params) {
+  const { userId, type, actorName, message, entityUrl } = params;
+  try {
+    await db.insert(notifications).values({
+      userId,
+      type,
+      title: actorName,
+      message,
+      actionUrl: entityUrl || null,
+      isRead: false
+    });
+    notificationEmitter.emit("notification", {
+      userId,
+      type,
+      actorName,
+      message,
+      entityUrl,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    return true;
+  } catch (error) {
+    console.error(
+      "[NOTIFICATION] Failed to create generic notification:",
+      error
+    );
+    return false;
+  }
+}
+async function notifyFollow(params) {
+  return createGenericNotification({
+    userId: params.followingId,
+    type: "follow",
+    actorId: params.followerId,
+    actorName: params.followerName,
+    message: "started following you",
+    entityUrl: `/user/${params.followerId}`
+  });
+}
+async function notifyLike(params) {
+  return createGenericNotification({
+    userId: params.postAuthorId,
+    type: "like",
+    actorId: params.likerId,
+    actorName: params.likerName,
+    message: "liked your post",
+    entityUrl: `/post/${params.postId}`
+  });
+}
+async function notifyComment(params) {
+  return createGenericNotification({
+    userId: params.postAuthorId,
+    type: "comment",
+    actorId: params.commenterId,
+    actorName: params.commenterName,
+    message: `commented: "${params.commentPreview.slice(0, 50)}${params.commentPreview.length > 50 ? "..." : ""}"`,
+    entityUrl: `/post/${params.postId}`
+  });
+}
+async function notifyMessage(params) {
+  return createGenericNotification({
+    userId: params.recipientId,
+    type: "message",
+    actorId: params.senderId,
+    actorName: params.senderName,
+    message: `sent you a message: "${params.messagePreview.slice(0, 40)}${params.messagePreview.length > 40 ? "..." : ""}"`,
+    entityUrl: params.conversationId ? `/inbox?conversation=${params.conversationId}` : "/inbox"
+  });
+}
+async function notifyTrackPublished(params) {
+  return createGenericNotification({
+    userId: params.artistId,
+    type: "publish",
+    actorName: "Verso Air",
+    message: `Your track "${params.trackTitle}" has been published!`,
+    entityUrl: `/streaming/${params.trackId}`
+  });
+}
+async function notifyTrackDownload(params) {
+  return createGenericNotification({
+    userId: params.artistId,
+    type: "download",
+    actorId: params.downloaderId,
+    actorName: params.downloaderName,
+    message: `downloaded your track "${params.trackTitle}"`,
+    entityUrl: `/streaming/${params.trackId}`
+  });
 }
 var notificationEmitter;
 var init_notification_service = __esm({
@@ -419,23 +509,60 @@ __export(socket_config_exports, {
   isUserConnected: () => isUserConnected
 });
 import { Server as SocketIOServer } from "socket.io";
+import jwt3 from "jsonwebtoken";
+function socketAllowedOrigins() {
+  return process.env.NODE_ENV === "production" ? (process.env.CORS_ORIGIN || "").split(",").map((o) => o.trim()).filter(Boolean) : [
+    "http://localhost:5003",
+    "http://localhost:5004",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "http://localhost:5173"
+  ];
+}
+function cookieFromHeader(header, name) {
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() === name) {
+      return decodeURIComponent(part.slice(idx + 1).trim());
+    }
+  }
+  return null;
+}
+function authenticateHandshake(socket) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
+  const handshakeToken = socket.handshake.auth?.token;
+  const token = typeof handshakeToken === "string" && handshakeToken || cookieFromHeader(socket.handshake.headers.cookie, "auth_token");
+  if (!token) return null;
+  try {
+    const decoded = jwt3.verify(token, secret);
+    const userId = Number(decoded?.userId);
+    return Number.isFinite(userId) ? userId : null;
+  } catch {
+    return null;
+  }
+}
 function initializeSocket(server) {
   io = new SocketIOServer(server, {
     cors: {
-      origin: [
-        "http://localhost:5003",
-        // Single port for frontend + backend
-        "http://localhost:3000",
-        process.env.PRODUCTION_URL || "http://localhost:5003"
-      ],
+      origin: socketAllowedOrigins(),
       credentials: true,
       methods: ["GET", "POST"]
     },
     transports: ["websocket", "polling"]
   });
+  io.use((socket, next) => {
+    socket.data.userId = authenticateHandshake(socket);
+    next();
+  });
   io.on("connection", (socket) => {
-    console.log(`[SOCKET] User connected: ${socket.id}`);
-    socket.on("user_auth", (userId) => {
+    const userId = socket.data.userId ?? null;
+    console.log(
+      `[SOCKET] Connected: ${socket.id} (user: ${userId ?? "anonymous"})`
+    );
+    if (userId !== null) {
       const roomName = `user_${userId}`;
       socket.join(roomName);
       const connections2 = userConnections.get(userId) || [];
@@ -444,9 +571,27 @@ function initializeSocket(server) {
       console.log(
         `[SOCKET] User ${userId} joined room ${roomName} (socket ${socket.id})`
       );
+      socket.emit("authenticated", { userId, roomName });
       socket.emit("auth_confirmed", { userId, roomName });
+    } else {
+      socket.emit("unauthenticated", {
+        message: "No valid session \u2014 only public broadcasts will be received."
+      });
+    }
+    socket.on("authenticate", () => {
+      if (socket.data.userId !== null && socket.data.userId !== void 0) {
+        socket.emit("authenticated", { userId: socket.data.userId });
+      }
+    });
+    socket.on("user_auth", () => {
+      if (socket.data.userId !== null && socket.data.userId !== void 0) {
+        socket.emit("auth_confirmed", { userId: socket.data.userId });
+      }
     });
     socket.on("join_game_room", (data) => {
+      if (socket.data.userId === null || socket.data.userId === void 0) {
+        return;
+      }
       if (data?.room && data.room.startsWith("game_")) {
         socket.join(data.room);
         console.log(`[SOCKET] ${socket.id} joined game room ${data.room}`);
@@ -457,14 +602,35 @@ function initializeSocket(server) {
         socket.leave(data.room);
       }
     });
+    socket.on(
+      "inbox_typing",
+      (data) => {
+        if (socket.data.userId === null || socket.data.userId === void 0) {
+          return;
+        }
+        if (!data?.toUserId || !data?.conversationId) return;
+        io?.to(`user_${data.toUserId}`).emit("inbox_typing", {
+          conversationId: data.conversationId,
+          fromUserId: socket.data.userId,
+          isTyping: Boolean(data.isTyping)
+        });
+      }
+    );
+    socket.on("presence_check", (data) => {
+      if (!data?.userId) return;
+      socket.emit("presence_status", {
+        userId: data.userId,
+        online: isUserConnected(data.userId)
+      });
+    });
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
-      for (const [userId, socketIds] of userConnections.entries()) {
+      for (const [userId2, socketIds] of userConnections.entries()) {
         const filtered = socketIds.filter((id) => id !== socket.id);
         if (filtered.length === 0) {
-          userConnections.delete(userId);
+          userConnections.delete(userId2);
         } else {
-          userConnections.set(userId, filtered);
+          userConnections.set(userId2, filtered);
         }
       }
     });
@@ -577,6 +743,22 @@ function initializeSocket(server) {
       read: false
     });
   });
+  notificationEmitter.on("inbox_message", (data) => {
+    if (!io) return;
+    const roomName = `user_${data.toUserId}`;
+    io.to(roomName).emit("inbox_message", {
+      conversationId: data.conversationId,
+      message: data.message
+    });
+    io.to(roomName).emit("notification", {
+      id: `inbox-${data.message?.id ?? Date.now()}`,
+      type: "message",
+      title: `New message from ${data.message?.senderName || "someone"}`,
+      message: data.message?.content?.slice(0, 100) || "",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      read: false
+    });
+  });
   return io;
 }
 function getIO() {
@@ -608,7 +790,7 @@ import cookieParser from "cookie-parser";
 
 // server/routes.ts
 init_db();
-import { sql as sql28 } from "drizzle-orm";
+import { sql as sql29 } from "drizzle-orm";
 
 // server/routes/database-management.ts
 init_db();
@@ -630,8 +812,18 @@ function getJwtSecret() {
 }
 function extractToken(req) {
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
-  if (req.cookies?.auth_token) return req.cookies.auth_token;
+  if (typeof authHeader === "string") {
+    const cleaned = authHeader.trim();
+    if (/^Bearer\s+/i.test(cleaned)) {
+      const token = cleaned.replace(/^Bearer\s+/i, "").trim();
+      return token.length > 0 ? token : null;
+    }
+  }
+  const cookieToken = req.cookies?.auth_token;
+  if (typeof cookieToken === "string") {
+    const token = cookieToken.trim();
+    return token.length > 0 ? token : null;
+  }
   return null;
 }
 async function isSessionRevoked(token) {
@@ -646,6 +838,7 @@ async function isSessionRevoked(token) {
 }
 var PUBLIC_PATHS = [
   // Auth endpoints (must be accessible to log in)
+  "/auth/signin",
   "/auth/login",
   "/auth/register",
   "/auth/logout",
@@ -658,7 +851,9 @@ var PUBLIC_PATHS = [
   "/auth/refresh-token",
   "/auth/admin-gate",
   "/auth/geo-admin",
-  "/auth/register-geoadmin",
+  // "/auth/register-geoadmin" intentionally NOT public — creating .test admin
+  // accounts requires an existing authenticated Admin/Superadmin session
+  // (enforced by requireAuth + role check in the route handler).
   // Artist portal auth
   "/auth/artist/login",
   "/auth/artist/register",
@@ -692,17 +887,30 @@ var PUBLIC_PATHS = [
   "/api/request/business",
   "/api/request/artist",
   "/api/request/job",
+  // Public beta contact & newsletter endpoints
+  "/api/contact",
+  "/api/marketing/newsletters/subscribe",
+  "/api/marketing/newsletters/unsubscribe",
+  "/api/marketing/newsletters/archive",
   // VersoAI chat — public so the assistant works before login
   // NOTE: /api/ai/support/stream is intentionally EXCLUDED — it requires auth (JWT cookie)
+  "/api/search/intent",
   "/api/ai/status",
   "/api/ai/chat",
   "/api/ai/ask",
   "/api/ai/smart-chat",
-  "/api/ai/connectors"
+  "/api/ai/connectors",
+  // FAQ read endpoints — public so anyone can browse (writes require auth)
+  "/api/faq/categories",
+  "/api/communities"
 ];
 var PUBLIC_PATH_PREFIXES = [
   "/api/home/",
   // Home page stats
+  "/api/profiles/",
+  // Public artisan and unified profile directory
+  "/api/faq",
+  // FAQ browsing — GET only (list/search/detail)
   "/api/artists/",
   // Artist directory (search, genres, countries)
   "/api/music/",
@@ -733,28 +941,34 @@ var PUBLIC_PATH_PREFIXES = [
   // Streaming browse — album details
   "/api/streaming/search",
   // Streaming search
-  "/api/streaming/subscription/plans"
+  "/api/streaming/subscription/plans",
   // Subscription plan listing (public)
+  "/api/communities/",
+  // Public artisan community discovery
+  "/api/events",
+  // Public published event discovery
+  "/api/astrology"
+  // Read-only astrology data used by the public VersoAI page
 ];
-function isPublicPath(path8, method) {
-  if (PUBLIC_PATHS.includes(path8)) return true;
-  if (path8.startsWith("/auth/oauth/")) return true;
-  if (path8.startsWith("/auth/google/") || path8.startsWith("/auth/facebook/"))
+function isPublicPath(path9, method) {
+  if (PUBLIC_PATHS.includes(path9)) return true;
+  if (path9.startsWith("/auth/oauth/")) return true;
+  if (path9.startsWith("/auth/google/") || path9.startsWith("/auth/facebook/"))
     return true;
   if (method === "GET") {
     for (const prefix of PUBLIC_PATH_PREFIXES) {
-      if (path8.startsWith(prefix)) return true;
+      if (path9.startsWith(prefix)) return true;
     }
   }
   return false;
 }
 async function globalAuthGate(req, res, next) {
-  const path8 = req.path;
-  if (isPublicPath(path8, req.method.toUpperCase())) return next();
-  if (!path8.startsWith("/api/") && !path8.startsWith("/auth/")) return next();
+  const path9 = req.path;
+  if (isPublicPath(path9, req.method.toUpperCase())) return next();
+  if (!path9.startsWith("/api/") && !path9.startsWith("/auth/")) return next();
   try {
     const token = extractToken(req);
-    if (!token) {
+    if (!token || token.trim().length < 10) {
       return res.status(401).json({
         success: false,
         status: 401,
@@ -765,6 +979,17 @@ async function globalAuthGate(req, res, next) {
       });
     }
     const decoded = jwt.verify(token, getJwtSecret());
+    const userId = decoded.userId ?? decoded.id;
+    if (!userId || !decoded.email || !decoded.role) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Invalid or expired token. Please log in again."
+        }
+      });
+    }
     const revoked = await isSessionRevoked(token);
     if (revoked) {
       res.clearCookie("auth_token", { path: "/" });
@@ -778,7 +1003,8 @@ async function globalAuthGate(req, res, next) {
       });
     }
     req.user = {
-      userId: decoded.userId,
+      userId: String(userId),
+      id: String(userId),
       email: decoded.email,
       role: decoded.role
     };
@@ -798,7 +1024,7 @@ function requireAuth(allowedRoles) {
   return async (req, res, next) => {
     try {
       const token = extractToken(req);
-      if (!token) {
+      if (!token || token.trim().length < 10) {
         return res.status(401).json({
           success: false,
           status: 401,
@@ -809,8 +1035,17 @@ function requireAuth(allowedRoles) {
         });
       }
       const decoded = jwt.verify(token, getJwtSecret());
+      const userId = decoded.userId ?? decoded.id;
+      if (!userId || !decoded.email || !decoded.role) {
+        return res.status(401).json({
+          success: false,
+          status: 401,
+          error: { code: "INVALID_TOKEN", message: "Invalid or expired token" }
+        });
+      }
       const user = {
-        userId: decoded.userId,
+        userId: String(userId),
+        id: String(userId),
         email: decoded.email,
         role: decoded.role
       };
@@ -835,12 +1070,54 @@ function requireAuth(allowedRoles) {
     }
   };
 }
+function requireJoelSuperadminForMutations(req, res, next) {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method.toUpperCase())) {
+    return next();
+  }
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(401).json({
+      success: false,
+      error: { code: "UNAUTHORIZED", message: "Authentication required" }
+    });
+  }
+  void db.select({
+    username: users.username,
+    gateUsername: users.gateUsername,
+    role: users.role
+  }).from(users).where(eq(users.id, userId)).limit(1).then(([user]) => {
+    const username = String(user?.username || "").toLowerCase();
+    const gateUsername = String(user?.gateUsername || "").toLowerCase();
+    const role = String(user?.role || "").toLowerCase();
+    const isJoel = ["superuser", "superadmin"].includes(role) && (username === "joel_007" || gateUsername === "joel_007");
+    if (!isJoel) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: "JOEL_SUPERADMIN_ONLY",
+          message: "Database mutations are restricted to Joel's superadmin account."
+        }
+      });
+      return;
+    }
+    next();
+  }).catch((error) => {
+    console.error("[AUTH] Failed to verify mutation owner:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: "AUTHORIZATION_CHECK_FAILED",
+        message: "Could not verify mutation access"
+      }
+    });
+  });
+}
 function optionalAuth(req, res, next) {
   try {
     const token = extractToken(req);
     if (token) {
       const decoded = jwt.verify(token, getJwtSecret());
-      req.user = decoded;
+      req.user = { ...decoded, id: decoded.userId };
     }
     next();
   } catch {
@@ -853,6 +1130,7 @@ import { z } from "zod";
 var ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var router = Router();
 router.use(requireAuth(["admin", "superuser"]));
+router.use(requireJoelSuperadminForMutations);
 async function auditLog(req, action, entityType, entityId, changes) {
   try {
     await db.insert(auditLogs).values({
@@ -1569,7 +1847,7 @@ async function validateBusinessCategory(businessData) {
   return result;
 }
 function checkDescriptionCategoryMatch(description, categoryName) {
-  const desc20 = description.toLowerCase();
+  const desc21 = description.toLowerCase();
   const cat = categoryName.toLowerCase();
   const categoryKeywords = {
     plumb: ["plumb", "water", "pipe", "drain", "faucet", "sewer"],
@@ -1595,7 +1873,7 @@ function checkDescriptionCategoryMatch(description, categoryName) {
   if (matchedKeywords.length === 0) {
     return { isSuspicious: false, expectedKeywords: [] };
   }
-  const hasMatch = matchedKeywords.some((kw) => desc20.includes(kw));
+  const hasMatch = matchedKeywords.some((kw) => desc21.includes(kw));
   return {
     isSuspicious: !hasMatch,
     expectedKeywords: matchedKeywords
@@ -1731,6 +2009,23 @@ async function bizHasColumn(col) {
     _bizColCache[col] = false;
   }
   return _bizColCache[col];
+}
+async function ensureBusinessDetailTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_services (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      price DECIMAL(10,2),
+      category VARCHAR(50),
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    ALTER TABLE business_reviews
+    ADD COLUMN IF NOT EXISTS title TEXT
+  `);
 }
 router2.get("/api/countries", async (_req, res) => {
   try {
@@ -2050,31 +2345,10 @@ router2.get("/api/businesses/:id", async (req, res) => {
     const { id } = req.params;
     const result = await pool.query(
       `
-      SELECT 
-        b.*,
-        bc.name as category_name,
-        json_agg(
-          json_build_object(
-            'id', bs.id,
-            'name', bs.name,
-            'price', bs.price,
-            'category', bs.category
-          )
-        ) FILTER (WHERE bs.id IS NOT NULL) as services,
-        json_agg(
-          json_build_object(
-            'id', br.id,
-            'rating', br.rating,
-            'title', br.title,
-            'content', br.content
-          )
-        ) FILTER (WHERE br.id IS NOT NULL) as reviews
+      SELECT b.*, bc.name as category_name
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
-      LEFT JOIN business_services bs ON b.id = bs.business_id
-      LEFT JOIN business_reviews br ON b.id = br.business_id
       WHERE b.id = $1
-      GROUP BY b.id, bc.name
     `,
       [id]
     );
@@ -2084,9 +2358,79 @@ router2.get("/api/businesses/:id", async (req, res) => {
         error: "Business not found"
       });
     }
+    const PUBLIC_BUSINESS_DETAIL_FIELDS = [
+      "id",
+      "name",
+      "category_id",
+      "category_name",
+      "description",
+      "location",
+      "address",
+      "city_name",
+      "country_code",
+      "region_id",
+      "region_name",
+      "phone",
+      "email",
+      "website",
+      "latitude",
+      "longitude",
+      "rating",
+      "reviews",
+      "tags",
+      "featured",
+      "is_active",
+      "is_verified",
+      "verification_status",
+      "created_at",
+      "updated_at",
+      "is_advertiser",
+      "logo_url",
+      "business_type",
+      "pdf_path",
+      "approval_status"
+    ];
+    const publicBusiness = Object.fromEntries(
+      PUBLIC_BUSINESS_DETAIL_FIELDS.flatMap((field) => {
+        const value = result.rows[0][field];
+        return value !== void 0 && value !== null ? [[field, value]] : [];
+      })
+    );
+    await ensureBusinessDetailTables();
+    const business = { ...publicBusiness, services: [], reviews: [] };
+    try {
+      const services = await pool.query(
+        `SELECT id, name, price, category
+         FROM business_services
+         WHERE business_id = $1
+         ORDER BY id ASC`,
+        [id]
+      );
+      business.services = services.rows;
+    } catch (error) {
+      console.warn(
+        "Optional business_services table unavailable:",
+        error.message
+      );
+    }
+    try {
+      const reviews = await pool.query(
+        `SELECT id, rating, title, content
+         FROM business_reviews
+         WHERE business_id = $1
+         ORDER BY id DESC`,
+        [id]
+      );
+      business.reviews = reviews.rows;
+    } catch (error) {
+      console.warn(
+        "Optional business_reviews table unavailable:",
+        error.message
+      );
+    }
     res.json({
       success: true,
-      data: result.rows[0]
+      data: business
     });
   } catch (error) {
     console.error("Error fetching business:", error);
@@ -2744,8 +3088,8 @@ router2.get("/api/businesses/:id/pdf", async (req, res) => {
       });
     }
     const { pdf_path, name } = result.rows[0];
-    const fs8 = await import("fs");
-    if (!fs8.existsSync(pdf_path)) {
+    const fs10 = await import("fs");
+    if (!fs10.existsSync(pdf_path)) {
       return res.status(404).json({
         success: false,
         error: "PDF file not found on server"
@@ -3232,11 +3576,11 @@ router3.post(
 var properties_default = router3;
 
 // server/routes/api-v1/index.ts
-import { Router as Router21, raw } from "express";
+import { Router as Router22, raw } from "express";
 
 // server/routes/api-v1/admin/index.ts
 init_db();
-import { Router as Router14 } from "express";
+import { Router as Router15 } from "express";
 
 // server/middleware/asyncHandler.ts
 function asyncHandler(fn) {
@@ -3247,7 +3591,7 @@ function asyncHandler(fn) {
 
 // server/routes/api-v1/admin/index.ts
 init_schema();
-import { count as count9, eq as eq14 } from "drizzle-orm";
+import { count as count8, eq as eq13 } from "drizzle-orm";
 
 // server/routes/api-v1/admin/businesses.ts
 init_db();
@@ -4258,93 +4602,87 @@ var artists_default = router6;
 // server/routes/api-v1/admin/campaigns.ts
 init_db();
 import { Router as Router7 } from "express";
-
-// server/middleware/tierGate.ts
-init_db();
-var TIER_ORDER = {
-  free: 0,
-  essential: 1,
-  verified: 2,
-  max: 3,
-  enterprise: 4
-};
-async function getEffectiveTier(userId) {
-  const result = await pool.query(
-    `SELECT subscription_tier, trial_tier, trial_expires_at FROM users WHERE id = $1`,
-    [userId]
-  );
-  if (result.rows.length === 0) return "free";
-  const user = result.rows[0];
-  if (user.trial_tier && user.trial_expires_at && new Date(user.trial_expires_at) > /* @__PURE__ */ new Date()) {
-    return user.trial_tier;
-  }
-  return user.subscription_tier || "free";
-}
-function requireTier(minimumTier) {
-  return async (req, res, next) => {
-    try {
-      const userId = req.user?.userId || req.query.userId;
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Authentication required"
-        });
-      }
-      const effectiveTier = await getEffectiveTier(Number(userId));
-      const userTierLevel = TIER_ORDER[effectiveTier] ?? 0;
-      const requiredTierLevel = TIER_ORDER[minimumTier] ?? 0;
-      if (userTierLevel < requiredTierLevel) {
-        return res.status(403).json({
-          success: false,
-          error: `This feature requires the ${minimumTier} tier or above. You are on ${effectiveTier}.`,
-          currentTier: effectiveTier,
-          requiredTier: minimumTier,
-          upgradeUrl: "/pricing"
-        });
-      }
-      req.userTier = effectiveTier;
-      next();
-    } catch (error) {
-      console.error("\u274C Tier gate error:", error);
-      res.status(500).json({ success: false, error: "Internal server error" });
-    }
+init_schema();
+var router7 = Router7();
+var campaignSelect = `
+  SELECT id, business_id, name, objective, daily_budget, status,
+         start_date, end_date, impressions, clicks, conversions,
+         created_at, created_at AS updated_at
+  FROM ad_campaigns`;
+function toCampaign(row) {
+  return {
+    id: String(row.id),
+    businessId: row.business_id,
+    name: row.name,
+    description: row.objective || null,
+    objective: row.objective || null,
+    budget: String(row.daily_budget ?? "0"),
+    dailyBudget: String(row.daily_budget ?? "0"),
+    status: row.status || "active",
+    startDate: row.start_date,
+    endDate: row.end_date,
+    impressions: row.impressions || 0,
+    clicks: row.clicks || 0,
+    conversions: row.conversions || 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at || row.created_at
   };
 }
-
-// server/routes/api-v1/admin/campaigns.ts
-init_schema();
-import { eq as eq8, ilike as ilike4, and as and5, count as count5, desc as desc6 } from "drizzle-orm";
-var router7 = Router7();
+function parseCampaignId(value) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+function parseBusinessId(value) {
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+async function writeAudit(action, campaignId, changes) {
+  try {
+    await db.insert(auditLogs).values({
+      action,
+      entityType: "campaign",
+      entityId: campaignId,
+      changes
+    });
+  } catch (error) {
+    console.warn("Campaign audit log unavailable:", error.message);
+  }
+}
 router7.get(
   "/",
   requireAuth(["admin", "moderator", "business_owner"]),
-  requireTier("verified"),
   asyncHandler(async (req, res) => {
     try {
       const { page = "1", limit = "20", search } = req.query;
       const pageNum = Math.max(1, parseInt(page, 10) || 1);
-      const limitNum = Math.min(100, parseInt(limit, 10) || 20);
+      const limitNum = Math.min(
+        100,
+        Math.max(1, parseInt(limit, 10) || 20)
+      );
       const offset = (pageNum - 1) * limitNum;
-      const conditions = [];
-      if (search) {
-        conditions.push(ilike4(adCampaigns.name, `${search}%`));
-      }
-      const where = conditions.length > 0 ? and5(...conditions) : void 0;
-      const [totalResult, data] = await Promise.all([
-        db.select({ total: count5() }).from(adCampaigns).where(where),
-        db.select().from(adCampaigns).where(where).orderBy(desc6(adCampaigns.createdAt)).limit(limitNum).offset(offset)
-      ]);
-      const total = totalResult[0]?.total || 0;
+      const searchValue = typeof search === "string" ? search.trim() : "";
+      const filter = searchValue ? " WHERE name ILIKE $1" : "";
+      const filterParams = searchValue ? [`${searchValue}%`] : [];
+      const totalResult = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM ad_campaigns${filter}`,
+        filterParams
+      );
+      const dataResult = await pool.query(
+        `${campaignSelect}${filter} ORDER BY created_at DESC NULLS LAST LIMIT $${filterParams.length + 1} OFFSET $${filterParams.length + 2}`,
+        [...filterParams, limitNum, offset]
+      );
+      const total = totalResult.rows[0]?.total || 0;
+      const totalPages = Math.ceil(total / limitNum);
       res.status(200).json({
         success: true,
         status: 200,
-        data: data || [],
+        data: dataResult.rows.map(toCampaign),
         pagination: {
           page: pageNum,
           limit: limitNum,
           total,
-          totalPages: Math.ceil(total / limitNum),
-          hasNext: pageNum < Math.ceil(total / limitNum),
+          totalPages,
+          hasNext: pageNum < totalPages,
           hasPrev: pageNum > 1
         },
         metadata: {
@@ -4374,6 +4712,7 @@ router7.post(
         businessId,
         objective,
         budget,
+        dailyBudget,
         startDate,
         endDate,
         status
@@ -4388,33 +4727,51 @@ router7.post(
           }
         });
       }
-      console.log("\u{1F4DD} Creating campaign with data:", req.body);
-      const [campaign] = await db.insert(adCampaigns).values({
-        name,
-        businessId: parseInt(businessId),
-        budget: budget ? String(parseFloat(budget).toFixed(2)) : "0.00",
-        ...startDate && { startDate: new Date(startDate) },
-        ...endDate && { endDate: new Date(endDate) },
-        status: status || "active"
-      }).returning();
+      const parsedBusinessId = parseBusinessId(businessId);
+      if (!parsedBusinessId) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "businessId must be a positive integer"
+          }
+        });
+      }
+      const budgetValue = Number.parseFloat(
+        String(budget ?? dailyBudget ?? "0")
+      );
+      const result = await pool.query(
+        `INSERT INTO ad_campaigns
+           (business_id, name, objective, daily_budget, status, start_date, end_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id, business_id, name, objective, daily_budget, status,
+                   start_date, end_date, impressions, clicks, conversions,
+                   created_at, created_at AS updated_at`,
+        [
+          parsedBusinessId,
+          name.trim(),
+          objective || null,
+          Number.isFinite(budgetValue) && budgetValue >= 0 ? budgetValue : 0,
+          status || "active",
+          startDate || (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+          endDate || null
+        ]
+      );
+      const campaign = result.rows[0];
       if (!campaign) {
         throw new Error("Insert returned no data - check database connection");
       }
       console.log("\u2705 Campaign created successfully:", campaign.id);
-      await db.insert(auditLogs).values({
-        action: "CREATE",
-        entityType: "campaign",
-        entityId: String(campaign.id),
-        changes: {
-          name: campaign.name,
-          businessId: campaign.businessId,
-          budget: campaign.budget
-        }
+      await writeAudit("CREATE", String(campaign.id), {
+        name: campaign.name,
+        businessId: campaign.business_id,
+        budget: campaign.daily_budget
       });
       res.status(201).json({
         success: true,
         status: 201,
-        data: campaign,
+        data: toCampaign(campaign),
         metadata: { timestamp: (/* @__PURE__ */ new Date()).toISOString() }
       });
     } catch (error) {
@@ -4435,8 +4792,18 @@ router7.get(
   "/:id",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const [campaign] = await db.select().from(adCampaigns).where(eq8(adCampaigns.id, String(id))).limit(1);
+    const campaignId = parseCampaignId(req.params.id);
+    if (!campaignId) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: { code: "INVALID_ID", message: "Invalid campaign ID" }
+      });
+    }
+    const result = await pool.query(`${campaignSelect} WHERE id = $1 LIMIT 1`, [
+      campaignId
+    ]);
+    const campaign = result.rows[0];
     if (!campaign) {
       return res.status(404).json({
         success: false,
@@ -4450,7 +4817,7 @@ router7.get(
     res.json({
       success: true,
       status: 200,
-      data: campaign,
+      data: toCampaign(campaign),
       metadata: { timestamp: (/* @__PURE__ */ new Date()).toISOString() }
     });
   })
@@ -4466,11 +4833,12 @@ router7.put(
         businessId,
         objective,
         budget,
+        dailyBudget,
         startDate,
         endDate,
         status
       } = req.body;
-      const campaignId = String(id);
+      const campaignId = parseCampaignId(id);
       if (!name || !businessId) {
         return res.status(400).json({
           success: false,
@@ -4481,7 +4849,22 @@ router7.put(
           }
         });
       }
-      const [existing] = await db.select().from(adCampaigns).where(eq8(adCampaigns.id, campaignId)).limit(1);
+      const parsedBusinessId = parseBusinessId(businessId);
+      if (!campaignId || !parsedBusinessId) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid campaign or business ID"
+          }
+        });
+      }
+      const existingResult = await pool.query(
+        `${campaignSelect} WHERE id = $1 LIMIT 1`,
+        [campaignId]
+      );
+      const existing = existingResult.rows[0];
       if (!existing) {
         return res.status(404).json({
           success: false,
@@ -4493,39 +4876,41 @@ router7.put(
         });
       }
       console.log("\u{1F4DD} Updating campaign ID:", campaignId);
-      const [updatedCampaign] = await db.update(adCampaigns).set({
-        name,
-        businessId: parseInt(businessId),
-        budget: budget ? String(parseFloat(budget).toFixed(2)) : "0.00",
-        ...startDate && { startDate: new Date(startDate) },
-        ...endDate && { endDate: new Date(endDate) },
-        status: status || "active"
-      }).where(eq8(adCampaigns.id, campaignId)).returning();
+      const budgetValue = Number.parseFloat(
+        String(budget ?? dailyBudget ?? "0")
+      );
+      const updatedResult = await pool.query(
+        `UPDATE ad_campaigns
+         SET business_id = $1, name = $2, objective = $3, daily_budget = $4,
+             status = $5, start_date = $6, end_date = $7
+         WHERE id = $8
+         RETURNING id, business_id, name, objective, daily_budget, status,
+                   start_date, end_date, impressions, clicks, conversions,
+                   created_at, created_at AS updated_at`,
+        [
+          parsedBusinessId,
+          name.trim(),
+          objective || null,
+          Number.isFinite(budgetValue) && budgetValue >= 0 ? budgetValue : 0,
+          status || "active",
+          startDate || existing.start_date,
+          endDate || null,
+          campaignId
+        ]
+      );
+      const updatedCampaign = updatedResult.rows[0];
       if (!updatedCampaign) {
         throw new Error("Update returned no data");
       }
       console.log("\u2705 Campaign updated successfully:", campaignId);
-      await db.insert(auditLogs).values({
-        action: "UPDATE",
-        entityType: "campaign",
-        entityId: campaignId,
-        changes: {
-          before: {
-            name: existing.name,
-            budget: existing.budget,
-            status: existing.status
-          },
-          after: {
-            name: updatedCampaign.name,
-            budget: updatedCampaign.budget,
-            status: updatedCampaign.status
-          }
-        }
+      await writeAudit("UPDATE", String(campaignId), {
+        before: toCampaign(existing),
+        after: toCampaign(updatedCampaign)
       });
       res.json({
         success: true,
         status: 200,
-        data: updatedCampaign,
+        data: toCampaign(updatedCampaign),
         metadata: { timestamp: (/* @__PURE__ */ new Date()).toISOString() }
       });
     } catch (error) {
@@ -4547,9 +4932,19 @@ router7.delete(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     try {
-      const { id } = req.params;
-      const campaignId = String(id);
-      const [campaign] = await db.select().from(adCampaigns).where(eq8(adCampaigns.id, campaignId)).limit(1);
+      const campaignId = parseCampaignId(req.params.id);
+      if (!campaignId) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          error: { code: "INVALID_ID", message: "Invalid campaign ID" }
+        });
+      }
+      const existingResult = await pool.query(
+        `${campaignSelect} WHERE id = $1 LIMIT 1`,
+        [campaignId]
+      );
+      const campaign = existingResult.rows[0];
       if (!campaign) {
         return res.status(404).json({
           success: false,
@@ -4561,28 +4956,22 @@ router7.delete(
         });
       }
       console.log("\u{1F5D1}\uFE0F Deleting campaign ID:", campaignId);
-      const [deletedCampaign] = await db.delete(adCampaigns).where(eq8(adCampaigns.id, campaignId)).returning();
+      const deletedResult = await pool.query(
+        "DELETE FROM ad_campaigns WHERE id = $1 RETURNING id",
+        [campaignId]
+      );
+      const deletedCampaign = deletedResult.rows[0];
       if (!deletedCampaign) {
         throw new Error("Delete returned no data");
       }
       console.log("\u2705 Campaign deleted successfully:", campaignId);
-      await db.insert(auditLogs).values({
-        action: "DELETE",
-        entityType: "campaign",
-        entityId: campaignId,
-        changes: {
-          deleted: {
-            id: campaign.id,
-            name: campaign.name,
-            budget: campaign.budget,
-            businessId: campaign.businessId
-          }
-        }
+      await writeAudit("DELETE", String(campaignId), {
+        deleted: toCampaign(campaign)
       });
       res.json({
         success: true,
         status: 200,
-        data: deletedCampaign,
+        data: { id: String(deletedCampaign.id) },
         metadata: { timestamp: (/* @__PURE__ */ new Date()).toISOString() }
       });
     } catch (error) {
@@ -4607,7 +4996,7 @@ import { Router as Router8 } from "express";
 init_schema();
 init_notification_service();
 init_email_service();
-import { eq as eq10, ilike as ilike5, and as and7, count as count6, desc as desc7 } from "drizzle-orm";
+import { eq as eq9, ilike as ilike4, and as and6, count as count5, desc as desc6 } from "drizzle-orm";
 import { randomUUID } from "crypto";
 var ADMIN_NOTIFICATION_EMAIL4 = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var router8 = Router8();
@@ -4622,14 +5011,14 @@ router8.get(
       const offset = (pageNum - 1) * limitNum;
       const whereConditions = [];
       if (search) {
-        whereConditions.push(ilike5(jobs.title, `${search}%`));
+        whereConditions.push(ilike4(jobs.title, `${search}%`));
       }
       if (countryCode && typeof countryCode === "string" && countryCode.length === 2) {
-        whereConditions.push(eq10(jobs.countryCode, countryCode.toUpperCase()));
+        whereConditions.push(eq9(jobs.countryCode, countryCode.toUpperCase()));
       }
-      const where = whereConditions.length > 0 ? and7(...whereConditions) : void 0;
-      const [{ value: total }] = await db.select({ value: count6() }).from(jobs).where(where);
-      const result = await db.select().from(jobs).where(where).orderBy(desc7(jobs.createdAt)).limit(limitNum).offset(offset);
+      const where = whereConditions.length > 0 ? and6(...whereConditions) : void 0;
+      const [{ value: total }] = await db.select({ value: count5() }).from(jobs).where(where);
+      const result = await db.select().from(jobs).where(where).orderBy(desc6(jobs.createdAt)).limit(limitNum).offset(offset);
       console.log("\u2705 Jobs fetched successfully - count:", result.length);
       res.status(200).json({
         success: true,
@@ -4778,7 +5167,7 @@ router8.get(
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const [job] = await db.select().from(jobs).where(eq10(jobs.id, id)).limit(1);
+    const [job] = await db.select().from(jobs).where(eq9(jobs.id, id)).limit(1);
     if (!job) {
       return res.status(404).json({
         success: false,
@@ -4835,7 +5224,7 @@ router8.put(
           }
         });
       }
-      const [existing] = await db.select().from(jobs).where(eq10(jobs.id, id)).limit(1);
+      const [existing] = await db.select().from(jobs).where(eq9(jobs.id, id)).limit(1);
       if (!existing) {
         return res.status(404).json({
           success: false,
@@ -4874,7 +5263,7 @@ router8.put(
         isFeatured: isFeatured !== void 0 ? isFeatured === true || isFeatured === "true" : existing.isFeatured,
         status: isActive === false ? "inactive" : "active",
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq10(jobs.id, id)).returning();
+      }).where(eq9(jobs.id, id)).returning();
       if (!updatedJob) {
         throw new Error("Update returned no data");
       }
@@ -4922,7 +5311,7 @@ router8.delete(
   asyncHandler(async (req, res) => {
     try {
       const { id } = req.params;
-      const [job] = await db.select().from(jobs).where(eq10(jobs.id, id)).limit(1);
+      const [job] = await db.select().from(jobs).where(eq9(jobs.id, id)).limit(1);
       if (!job) {
         return res.status(404).json({
           success: false,
@@ -4934,7 +5323,7 @@ router8.delete(
         });
       }
       console.log("\u{1F5D1}\uFE0F Deleting job ID:", id);
-      const [deletedJob] = await db.delete(jobs).where(eq10(jobs.id, id)).returning();
+      const [deletedJob] = await db.delete(jobs).where(eq9(jobs.id, id)).returning();
       if (!deletedJob) {
         throw new Error("Delete returned no data");
       }
@@ -5060,7 +5449,7 @@ function getEventStats(hoursBack = 24) {
     ([_, duration]) => duration === 0
   ).length;
   const bounceRate = sessionMap.size > 0 ? Math.round(bouncedSessions / sessionMap.size * 100) : 0;
-  const topEvents = Object.entries(eventsByType).sort(([, a], [, b]) => b - a).slice(0, 5).map(([name, count11]) => ({ name, count: count11 }));
+  const topEvents = Object.entries(eventsByType).sort(([, a], [, b]) => b - a).slice(0, 5).map(([name, count10]) => ({ name, count: count10 }));
   return {
     totalEvents: recentEvents.length,
     eventsByType,
@@ -5096,9 +5485,9 @@ function getEventTimeline(hoursBack = 24) {
     const key = hour.toISOString();
     timeline[key] = (timeline[key] || 0) + 1;
   });
-  return Object.entries(timeline).sort(([a], [b]) => a.localeCompare(b)).map(([hour, count11]) => ({
+  return Object.entries(timeline).sort(([a], [b]) => a.localeCompare(b)).map(([hour, count10]) => ({
     hour,
-    count: count11
+    count: count10
   }));
 }
 setInterval(
@@ -5488,7 +5877,7 @@ init_db();
 init_schema();
 import { Router as Router11 } from "express";
 import nodemailer from "nodemailer";
-import { eq as eq11, desc as desc8, isNotNull as isNotNull2, gt } from "drizzle-orm";
+import { eq as eq10, desc as desc7, isNotNull as isNotNull2, gt } from "drizzle-orm";
 var router11 = Router11();
 router11.use(requireAuth(["admin", "superuser"]));
 router11.get(
@@ -5506,7 +5895,7 @@ router11.get(
       passwordResetExpires: users.passwordResetExpires,
       password: users.password,
       createdAt: users.createdAt
-    }).from(users).orderBy(desc8(users.createdAt));
+    }).from(users).orderBy(desc7(users.createdAt));
     const now = /* @__PURE__ */ new Date();
     const enriched = allUsers.map(({ password, ...u }) => ({
       ...u,
@@ -5525,7 +5914,7 @@ router11.post(
       res.status(400).json({ success: false, message: "Invalid user ID" });
       return;
     }
-    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq11(users.id, userId));
+    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq10(users.id, userId));
     res.json({ success: true, message: "Account unlocked successfully" });
   })
 );
@@ -5543,7 +5932,7 @@ router11.post(
       lockedUntil: null,
       passwordResetToken: null,
       passwordResetExpires: null
-    }).where(eq11(users.id, userId));
+    }).where(eq10(users.id, userId));
     res.json({
       success: true,
       message: "User must reset their password on next login"
@@ -5577,7 +5966,7 @@ router11.post(
       });
       return;
     }
-    await db.update(users).set({ role }).where(eq11(users.id, userId));
+    await db.update(users).set({ role }).where(eq10(users.id, userId));
     res.json({ success: true, message: `Role updated to ${role}` });
   })
 );
@@ -5593,7 +5982,7 @@ router11.delete(
       });
       return;
     }
-    await db.delete(users).where(eq11(users.id, userId));
+    await db.delete(users).where(eq10(users.id, userId));
     res.json({ success: true, message: "User deleted" });
   })
 );
@@ -5675,7 +6064,7 @@ router11.post(
     process.env.SMTP_USER = user;
     if (pass !== "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022") process.env.SMTP_PASS = pass;
     if (from) process.env.SMTP_FROM = from;
-    const { initializeEmailTransporter: initializeEmailTransporter2 } = await import("./email-service-X4PAGBYB.js");
+    const { initializeEmailTransporter: initializeEmailTransporter2 } = await import("./email-service-7RSVS4AA.js");
     initializeEmailTransporter2();
     res.json({
       success: true,
@@ -5708,7 +6097,7 @@ var security_default = router11;
 init_db();
 import { Router as Router12 } from "express";
 init_schema();
-import { eq as eq12, ilike as ilike6, and as and8, count as count7, desc as desc9, or as or4 } from "drizzle-orm";
+import { eq as eq11, ilike as ilike5, and as and7, count as count6, desc as desc8, or as or4 } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 // server/utils/artist-code.ts
@@ -5988,17 +6377,17 @@ router12.get(
     if (search) {
       conditions.push(
         or4(
-          ilike6(users.username, `${search}%`),
-          ilike6(users.email, `${search}%`)
+          ilike5(users.username, `${search}%`),
+          ilike5(users.email, `${search}%`)
         )
       );
     }
     if (role && typeof role === "string") {
-      conditions.push(eq12(users.role, role));
+      conditions.push(eq11(users.role, role));
     }
-    const where = conditions.length > 0 ? and8(...conditions) : void 0;
+    const where = conditions.length > 0 ? and7(...conditions) : void 0;
     const [totalResult, data] = await Promise.all([
-      db.select({ total: count7() }).from(users).where(where),
+      db.select({ total: count6() }).from(users).where(where),
       db.select({
         id: users.id,
         username: users.username,
@@ -6013,7 +6402,7 @@ router12.get(
         lockedUntil: users.lockedUntil,
         portalAccess: users.portalAccess,
         createdAt: users.createdAt
-      }).from(users).where(where).orderBy(desc9(users.id)).limit(limitNum).offset(offset)
+      }).from(users).where(where).orderBy(desc8(users.id)).limit(limitNum).offset(offset)
     ]);
     const total = totalResult[0]?.total || 0;
     const enriched = data.map(deriveUserStatus);
@@ -6096,7 +6485,7 @@ router12.post(
         }
       });
     }
-    const existing = await db.select().from(users).where(or4(eq12(users.username, username), eq12(users.email, email))).limit(1);
+    const existing = await db.select().from(users).where(or4(eq11(users.username, username), eq11(users.email, email))).limit(1);
     if (existing.length > 0) {
       return res.status(409).json({
         success: false,
@@ -6227,7 +6616,7 @@ router12.get(
       lockedUntil: users.lockedUntil,
       portalAccess: users.portalAccess,
       createdAt: users.createdAt
-    }).from(users).where(eq12(users.id, userId)).limit(1);
+    }).from(users).where(eq11(users.id, userId)).limit(1);
     if (!user.length) {
       return res.status(404).json({
         success: false,
@@ -6264,7 +6653,7 @@ router12.put(
       portalAccess
     } = req.body;
     const userId = parseInt(id, 10);
-    const existing = await db.select().from(users).where(eq12(users.id, userId)).limit(1);
+    const existing = await db.select().from(users).where(eq11(users.id, userId)).limit(1);
     if (!existing.length) {
       return res.status(404).json({
         success: false,
@@ -6304,7 +6693,7 @@ router12.put(
         }
       });
     }
-    const [updated] = await db.update(users).set(updates).where(eq12(users.id, userId)).returning({
+    const [updated] = await db.update(users).set(updates).where(eq11(users.id, userId)).returning({
       id: users.id,
       username: users.username,
       email: users.email,
@@ -6340,7 +6729,7 @@ router12.delete(
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const userId = parseInt(id, 10);
-    const user = await db.select().from(users).where(eq12(users.id, userId)).limit(1);
+    const user = await db.select().from(users).where(eq11(users.id, userId)).limit(1);
     if (!user.length) {
       return res.status(404).json({
         success: false,
@@ -6361,7 +6750,17 @@ router12.delete(
         }
       });
     }
-    await db.delete(users).where(eq12(users.id, userId));
+    if (user[0].username === "joel_007" || user[0].gateUsername === "joel_007") {
+      return res.status(403).json({
+        success: false,
+        status: 403,
+        error: {
+          code: "FORBIDDEN",
+          message: "The joel_007 account cannot be deleted"
+        }
+      });
+    }
+    await db.delete(users).where(eq11(users.id, userId));
     await db.insert(auditLogs).values({
       userId: void 0,
       action: "DELETE",
@@ -6385,7 +6784,7 @@ var users_default = router12;
 init_db();
 import { Router as Router13 } from "express";
 init_schema();
-import { eq as eq13, count as count8 } from "drizzle-orm";
+import { eq as eq12, count as count7 } from "drizzle-orm";
 var router13 = Router13();
 var AVAILABLE_PERMISSIONS = [
   "businesses.read",
@@ -6475,7 +6874,7 @@ router13.get(
     try {
       const roleCounts = await db.select({
         role: users.role,
-        userCount: count8()
+        userCount: count7()
       }).from(users).groupBy(users.role);
       const roleCountMap = /* @__PURE__ */ new Map();
       for (const rc of roleCounts) {
@@ -6529,7 +6928,7 @@ router13.get(
       });
     }
     const [name, def] = roleEntries[roleId - 1];
-    const [result] = await db.select({ userCount: count8() }).from(users).where(eq13(users.role, name));
+    const [result] = await db.select({ userCount: count7() }).from(users).where(eq12(users.role, name));
     res.json({
       success: true,
       status: 200,
@@ -6650,7 +7049,7 @@ router13.put(
     } catch (e) {
       console.warn("Audit log insert failed:", e);
     }
-    const [result] = await db.select({ userCount: count8() }).from(users).where(eq13(users.role, roleName));
+    const [result] = await db.select({ userCount: count7() }).from(users).where(eq12(users.role, roleName));
     res.json({
       success: true,
       status: 200,
@@ -6691,7 +7090,7 @@ router13.delete(
         }
       });
     }
-    const reassigned = await db.update(users).set({ role: "user" }).where(eq13(users.role, roleName)).returning({ id: users.id });
+    const reassigned = await db.update(users).set({ role: "user" }).where(eq12(users.role, roleName)).returning({ id: users.id });
     delete ROLE_DEFINITIONS[roleName];
     try {
       await db.insert(auditLogs).values({
@@ -6742,7 +7141,7 @@ router13.post(
       });
     }
     const [roleName] = roleEntries[roleId - 1];
-    const [updated] = await db.update(users).set({ role: roleName }).where(eq13(users.id, parseInt(userId, 10))).returning({
+    const [updated] = await db.update(users).set({ role: roleName }).where(eq12(users.id, parseInt(userId, 10))).returning({
       id: users.id,
       username: users.username,
       email: users.email,
@@ -6775,28 +7174,313 @@ router13.post(
 );
 var roles_default = router13;
 
-// server/routes/api-v1/admin/index.ts
+// server/routes/api-v1/admin/communities.ts
+init_db();
+import { Router as Router14 } from "express";
 var router14 = Router14();
-router14.use("/businesses", businesses_default2);
-router14.use("/categories", categories_default);
-router14.use("/artists", artists_default);
-router14.use("/campaigns", campaigns_default);
-router14.use("/jobs", jobs_default);
-router14.use("/gtm-events", gtm_events_default);
-router14.use("/verification", verification_default);
-router14.use("/security", security_default);
-router14.use("/users", users_default);
-router14.use("/roles", roles_default);
-router14.get(
+var reviewRoles = ["admin", "moderator", "superuser"];
+var manageRoles = ["admin", "superuser"];
+async function recordAudit(entityType, entityId, action, performedBy, reason) {
+  await pool.query(
+    `INSERT INTO community_operation_audit
+       (entity_type, entity_id, action, performed_by, reason)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [entityType, entityId, action, performedBy, reason || null]
+  );
+}
+router14.get("/", requireAuth(reviewRoles), async (req, res) => {
+  try {
+    const status = String(req.query.status || "").trim();
+    const values = [];
+    const where = status ? `WHERE ac.status = $${values.push(status)}` : "";
+    const result = await pool.query(
+      `SELECT ac.id, ac.name, ac.slug, ac.region, ac.category, ac.focus,
+              ac.description, ac.activities, ac.image_url, ac.status,
+              ac.member_count, ac.created_at, ac.updated_at,
+              COALESCE(u.display_name, u.username, u.email) AS owner_name,
+              COUNT(jr.id) FILTER (WHERE jr.status = 'PENDING')::int AS pending_requests
+       FROM artisan_communities ac
+       LEFT JOIN users u ON u.id = ac.owner_id
+       LEFT JOIN artisan_community_join_requests jr ON jr.community_id = ac.id
+       ${where}
+       GROUP BY ac.id, u.display_name, u.username, u.email
+       ORDER BY ac.updated_at DESC NULLS LAST, ac.created_at DESC`,
+      values
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[admin:communities:list]", error);
+    res.status(500).json({ success: false, error: "Failed to load communities" });
+  }
+});
+router14.get("/join-requests", requireAuth(reviewRoles), async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT jr.id, jr.community_id, jr.user_id, jr.message, jr.status,
+              jr.created_at, jr.updated_at, ac.name AS community_name,
+              COALESCE(u.display_name, u.username, u.email) AS applicant_name,
+              u.email AS applicant_email
+       FROM artisan_community_join_requests jr
+       JOIN artisan_communities ac ON ac.id = jr.community_id
+       JOIN users u ON u.id = jr.user_id
+       WHERE jr.status = 'PENDING'
+       ORDER BY jr.created_at ASC`
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[admin:communities:requests]", error);
+    res.status(500).json({ success: false, error: "Failed to load join requests" });
+  }
+});
+router14.patch("/:id/status", requireAuth(manageRoles), async (req, res) => {
+  const id = Number(req.params.id);
+  const status = String(req.body?.status || "").toUpperCase();
+  const reason = String(req.body?.reason || "").trim().slice(0, 1e3);
+  const allowed = /* @__PURE__ */ new Set([
+    "DRAFT",
+    "PENDING",
+    "PUBLISHED",
+    "SUSPENDED",
+    "ARCHIVED"
+  ]);
+  if (!Number.isInteger(id) || !allowed.has(status)) {
+    return res.status(400).json({ success: false, error: "Invalid community status" });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE artisan_communities
+       SET status = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, name, status, updated_at`,
+      [status, id]
+    );
+    if (!result.rowCount) {
+      return res.status(404).json({ success: false, error: "Community not found" });
+    }
+    await recordAudit(
+      "community",
+      id,
+      `status_${status.toLowerCase()}`,
+      Number(req.user?.userId),
+      reason
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[admin:communities:status]", error);
+    res.status(500).json({ success: false, error: "Failed to update community" });
+  }
+});
+router14.patch(
+  "/join-requests/:id/status",
+  requireAuth(reviewRoles),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    const status = String(req.body?.status || "").toUpperCase();
+    const reason = String(req.body?.reason || "").trim().slice(0, 1e3);
+    if (!Number.isInteger(id) || !["APPROVED", "REJECTED", "CANCELLED"].includes(status)) {
+      return res.status(400).json({ success: false, error: "Invalid request status" });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `UPDATE artisan_community_join_requests
+       SET status = $1, updated_at = NOW()
+       WHERE id = $2 AND status = 'PENDING'
+       RETURNING id, community_id, user_id, status`,
+        [status, id]
+      );
+      if (!result.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ success: false, error: "Pending request not found" });
+      }
+      if (status === "APPROVED") {
+        await client.query(
+          `INSERT INTO artisan_community_memberships (community_id, user_id, status, joined_at, updated_at)
+         VALUES ($1, $2, 'ACTIVE', NOW(), NOW())
+         ON CONFLICT (community_id, user_id)
+         DO UPDATE SET status = 'ACTIVE', removed_at = NULL, updated_at = NOW()`,
+          [result.rows[0].community_id, result.rows[0].user_id]
+        );
+      }
+      await client.query(
+        `INSERT INTO community_operation_audit
+         (entity_type, entity_id, action, performed_by, reason)
+       VALUES ('join_request', $1, $2, $3, $4)`,
+        [
+          id,
+          `join_${status.toLowerCase()}`,
+          Number(req.user?.userId),
+          reason || null
+        ]
+      );
+      await client.query(
+        `UPDATE artisan_communities ac
+       SET member_count = (
+         SELECT COUNT(*)::int
+         FROM artisan_community_memberships m
+         WHERE m.community_id = ac.id AND m.status = 'ACTIVE'
+       ), updated_at = NOW()
+       WHERE ac.id = $1`,
+        [result.rows[0].community_id]
+      );
+      await client.query("COMMIT");
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => void 0);
+      console.error("[admin:communities:request-status]", error);
+      res.status(500).json({ success: false, error: "Failed to update join request" });
+    } finally {
+      client.release();
+    }
+  }
+);
+router14.patch(
+  "/posts/:id/moderation",
+  requireAuth(reviewRoles),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    const action = String(req.body?.action || "").toLowerCase();
+    const reason = String(req.body?.reason || "").trim().slice(0, 1e3);
+    if (!Number.isInteger(id) || !["hide", "unhide", "remove"].includes(action)) {
+      return res.status(400).json({ success: false, error: "Invalid moderation action" });
+    }
+    if (!reason) {
+      return res.status(400).json({ success: false, error: "A moderation reason is required" });
+    }
+    try {
+      const result = action === "remove" ? await pool.query(
+        "DELETE FROM community_posts WHERE id = $1 RETURNING id",
+        [id]
+      ) : await pool.query(
+        "UPDATE community_posts SET is_hidden = $1 WHERE id = $2 RETURNING id, is_hidden",
+        [action === "hide", id]
+      );
+      if (!result.rowCount) {
+        return res.status(404).json({ success: false, error: "Post not found" });
+      }
+      await recordAudit(
+        "post",
+        id,
+        `moderation_${action}`,
+        Number(req.user?.userId),
+        reason
+      );
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("[admin:communities:moderation]", error);
+      res.status(500).json({ success: false, error: "Failed to moderate post" });
+    }
+  }
+);
+var communities_default = router14;
+
+// server/routes/api-v1/admin/index.ts
+var router15 = Router15();
+router15.use(requireJoelSuperadminForMutations);
+var ADMIN_ANALYTICS_PERIODS = {
+  day: 1,
+  week: 7,
+  month: 30,
+  year: 365
+};
+router15.get(
+  "/control-center/summary",
+  requireAuth(["admin", "moderator", "superuser"]),
+  async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM unified_profiles
+           WHERE account_type = 'artisan' AND status = 'PENDING') AS "pendingArtisanProfiles",
+          (SELECT COUNT(*)::int FROM artisan_community_join_requests
+           WHERE status = 'PENDING') AS "pendingJoinRequests",
+          (SELECT COUNT(*)::int FROM artisan_communities
+           WHERE status <> 'PUBLISHED') AS "unpublishedCommunities",
+          (SELECT COUNT(*)::int FROM community_posts
+           WHERE is_hidden = TRUE) AS "moderationItems"
+      `);
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("Failed to fetch GeoAdmin control-center summary:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch control-center summary"
+      });
+    }
+  }
+);
+router15.get("/analytics", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
+    const result = await pool.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM businesses) AS "totalBusinesses",
+         (SELECT COUNT(*)::int FROM content_pages) AS "totalPages",
+         (SELECT COUNT(*)::int FROM users) AS "totalUsers",
+         (SELECT COUNT(*)::int FROM users WHERE role IN ('admin', 'superuser')) AS "activeAdmins",
+         (SELECT COUNT(*)::int FROM businesses WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS "newBusinesses",
+         (SELECT COUNT(*)::int FROM users WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS "newUsers"`,
+      [days]
+    );
+    const metrics = result.rows[0];
+    res.json({
+      success: true,
+      data: {
+        totalBusinesses: Number(metrics.totalBusinesses || 0),
+        totalPages: Number(metrics.totalPages || 0),
+        totalUsers: Number(metrics.totalUsers || 0),
+        activeAdmins: Number(metrics.activeAdmins || 0),
+        businessesTrend: Number(metrics.newBusinesses || 0),
+        usersTrend: Number(metrics.newUsers || 0)
+      }
+    });
+  } catch (error) {
+    console.error("Failed to fetch admin analytics:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch analytics" });
+  }
+});
+router15.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
+    const result = await pool.query(
+      `SELECT al.id, al.action, al.entity_type AS entity,
+              al.created_at AS timestamp,
+              COALESCE(u.display_name, u.username, 'System') AS "user"
+       FROM audit_logs al
+       LEFT JOIN users u ON u.id = al.user_id
+       WHERE al.created_at >= NOW() - ($1::int * INTERVAL '1 day')
+       ORDER BY al.created_at DESC
+       LIMIT 100`,
+      [days]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("Failed to fetch admin activity log:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch activity log" });
+  }
+});
+router15.use("/businesses", businesses_default2);
+router15.use("/categories", categories_default);
+router15.use("/artists", artists_default);
+router15.use("/campaigns", campaigns_default);
+router15.use("/jobs", jobs_default);
+router15.use("/gtm-events", gtm_events_default);
+router15.use("/verification", verification_default);
+router15.use("/security", security_default);
+router15.use("/users", users_default);
+router15.use("/roles", roles_default);
+router15.use("/communities", communities_default);
+router15.get(
   "/stats",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
     try {
       const [businessCount, categoryCount, artistCount, activeBusinessCount] = await Promise.all([
-        db.select({ total: count9() }).from(businesses),
-        db.select({ total: count9() }).from(businessCategories),
-        db.select({ total: count9() }).from(artists),
-        db.select({ total: count9() }).from(businesses).where(eq14(businesses.isActive, true))
+        db.select({ total: count8() }).from(businesses),
+        db.select({ total: count8() }).from(businessCategories),
+        db.select({ total: count8() }).from(artists),
+        db.select({ total: count8() }).from(businesses).where(eq13(businesses.isActive, true))
       ]);
       res.json({
         success: true,
@@ -6824,17 +7508,17 @@ router14.get(
     }
   })
 );
-var admin_default = router14;
+var admin_default = router15;
 
 // server/routes/api-v1/connections.ts
 init_db();
 init_schema();
 init_notification_service();
-import { Router as Router15 } from "express";
-import { eq as eq15, and as and9 } from "drizzle-orm";
+import { Router as Router16 } from "express";
+import { eq as eq14, and as and8 } from "drizzle-orm";
 
 // server/middleware/rate-limiter.ts
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 var connectionRequestLimiter = rateLimit({
   windowMs: 60 * 60 * 1e3,
   // 1 hour
@@ -6913,6 +7597,34 @@ var registerLimiter = rateLimit({
     });
   }
 });
+var contactFormLimiter = rateLimit({
+  windowMs: 15 * 60 * 1e3,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    console.warn(`[RATE_LIMIT] Contact form limit exceeded for: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      message: "Too many contact requests. Please try again in 15 minutes."
+    });
+  }
+});
+var newsletterLimiter = rateLimit({
+  windowMs: 15 * 60 * 1e3,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    console.warn(
+      `[RATE_LIMIT] Newsletter request limit exceeded for: ${req.ip}`
+    );
+    res.status(429).json({
+      success: false,
+      message: "Too many newsletter requests. Please try again in 15 minutes."
+    });
+  }
+});
 var forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1e3,
   // 1 hour
@@ -6943,14 +7655,75 @@ var apiLimiter = rateLimit({
     });
   }
 });
+var aiLimiter = rateLimit({
+  windowMs: 5 * 60 * 1e3,
+  // 5 minutes
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+  handler: (req, res) => {
+    console.warn(`[RATE_LIMIT] AI rate limit exceeded for: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      error: "Too many AI requests. Please wait a moment and try again.",
+      retryAfter: "5 minutes"
+    });
+  }
+});
+var marketplaceMessageLimiter = rateLimit({
+  windowMs: 60 * 60 * 1e3,
+  // 1 hour
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const userId = req.user?.userId;
+    return userId ? `mp-user-${userId}` : ipKeyGenerator(req.ip ?? "unknown");
+  },
+  handler: (req, res) => {
+    console.warn(
+      `[RATE_LIMIT] Marketplace message limit exceeded for: ${req.user?.userId || req.ip}`
+    );
+    res.status(429).json({
+      success: false,
+      error: "You're sending messages too fast. Please slow down and try again shortly."
+    });
+  }
+});
+var fanChatSlowMode = rateLimit({
+  windowMs: 60 * 1e3,
+  // 1 minute
+  max: 2,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const userId = req.user?.userId || req.user?.id;
+    return userId ? `fan-user-${userId}` : ipKeyGenerator(req.ip ?? "unknown");
+  },
+  skip: (req) => {
+    const user = req.user;
+    if (!user) return false;
+    if (user.role === "superuser") return true;
+    const tier = user.subscriptionTier;
+    return tier === "essential" || tier === "verified" || tier === "max" || tier === "enterprise";
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: "Slow mode: please wait ~30 seconds between messages. Subscribers post without cooldown.",
+      slowMode: true,
+      upgradeAvailable: true
+    });
+  }
+});
 console.log("[RATE_LIMIT] Rate limiters initialized (memory store)");
 console.log(
   "[RATE_LIMIT] For production serverless: Configure Upstash Redis in .env"
 );
 
 // server/routes/api-v1/connections.ts
-var router15 = Router15();
-router15.post(
+var router16 = Router16();
+router16.post(
   "/request",
   connectionRequestLimiter,
   async (req, res) => {
@@ -6969,9 +7742,9 @@ router15.post(
         });
       }
       const existingConnection = await db.select().from(connections).where(
-        and9(
-          eq15(connections.requesterId, fromUserId),
-          eq15(connections.receiverId, toUserId)
+        and8(
+          eq14(connections.requesterId, fromUserId),
+          eq14(connections.receiverId, toUserId)
         )
       ).limit(1);
       if (existingConnection.length > 0) {
@@ -7001,14 +7774,14 @@ router15.post(
     }
   }
 );
-router15.post("/:id/accept", async (req, res) => {
+router16.post("/:id/accept", async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.body.userId || req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        error: "userId is required"
+        error: "Authentication required"
       });
     }
     const result = await acceptConnectionRequest(
@@ -7034,14 +7807,14 @@ router15.post("/:id/accept", async (req, res) => {
     });
   }
 });
-router15.post("/:id/decline", async (req, res) => {
+router16.post("/:id/decline", async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.body.userId || req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        error: "userId is required"
+        error: "Authentication required"
       });
     }
     const success = await declineConnectionRequest(
@@ -7066,7 +7839,7 @@ router15.post("/:id/decline", async (req, res) => {
     });
   }
 });
-router15.get("/pending/:userId", async (req, res) => {
+router16.get("/pending/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const pending = await getPendingConnections(parseInt(userId));
@@ -7083,7 +7856,7 @@ router15.get("/pending/:userId", async (req, res) => {
     });
   }
 });
-router15.get("/network/:userId", async (req, res) => {
+router16.get("/network/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const connections2 = await getUserConnections(parseInt(userId));
@@ -7100,12 +7873,12 @@ router15.get("/network/:userId", async (req, res) => {
     });
   }
 });
-var connections_default = router15;
+var connections_default = router16;
 
 // server/routes/api-v1/subscription.ts
 init_db();
-import { Router as Router16 } from "express";
-var router16 = Router16();
+import { Router as Router17 } from "express";
+var router17 = Router17();
 var VALID_TIERS = [
   "free",
   "essential",
@@ -7113,7 +7886,7 @@ var VALID_TIERS = [
   "max",
   "enterprise"
 ];
-var TIER_ORDER2 = {
+var TIER_ORDER = {
   free: 0,
   essential: 1,
   verified: 2,
@@ -7256,15 +8029,15 @@ var TIER_FEATURES = {
 function isValidTier(tier) {
   return VALID_TIERS.includes(tier);
 }
-function getEffectiveTier2(user) {
+function getEffectiveTier(user) {
   if (user.trial_tier && user.trial_expires_at && new Date(user.trial_expires_at) > /* @__PURE__ */ new Date()) {
     return user.trial_tier;
   }
   return user.subscription_tier || "free";
 }
-router16.get("/status", async (req, res) => {
+router17.get("/status", async (req, res) => {
   try {
-    const userId = req.user?.userId || req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
@@ -7278,7 +8051,7 @@ router16.get("/status", async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const user = result.rows[0];
-    const effectiveTier = getEffectiveTier2(user);
+    const effectiveTier = getEffectiveTier(user);
     const features = TIER_FEATURES[effectiveTier];
     const isTrialing = user.trial_tier && user.trial_expires_at && new Date(user.trial_expires_at) > /* @__PURE__ */ new Date();
     res.json({
@@ -7301,7 +8074,7 @@ router16.get("/status", async (req, res) => {
           )
         } : null,
         features,
-        tierOrder: TIER_ORDER2[effectiveTier]
+        tierOrder: TIER_ORDER[effectiveTier]
       }
     });
   } catch (error) {
@@ -7309,7 +8082,7 @@ router16.get("/status", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.post("/upgrade", async (req, res) => {
+router17.post("/upgrade", async (req, res) => {
   try {
     const { userId, targetTier, startTrial = false } = req.body;
     if (!userId || !targetTier) {
@@ -7329,8 +8102,8 @@ router16.post("/upgrade", async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const user = userResult.rows[0];
-    const currentTierOrder = TIER_ORDER2[user.subscription_tier || "free"];
-    const targetTierOrder = TIER_ORDER2[targetTier];
+    const currentTierOrder = TIER_ORDER[user.subscription_tier || "free"];
+    const targetTierOrder = TIER_ORDER[targetTier];
     if (targetTierOrder <= currentTierOrder && !startTrial) {
       return res.status(400).json({
         success: false,
@@ -7386,7 +8159,7 @@ router16.post("/upgrade", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.post("/downgrade", async (req, res) => {
+router17.post("/downgrade", async (req, res) => {
   try {
     const { userId, targetTier } = req.body;
     if (!userId || !targetTier) {
@@ -7403,7 +8176,7 @@ router16.post("/downgrade", async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const currentTier = userResult.rows[0].subscription_tier || "free";
-    if (TIER_ORDER2[targetTier] >= TIER_ORDER2[currentTier]) {
+    if (TIER_ORDER[targetTier] >= TIER_ORDER[currentTier]) {
       return res.status(400).json({
         success: false,
         error: "Target tier must be lower than current tier for a downgrade"
@@ -7429,7 +8202,7 @@ router16.post("/downgrade", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.get("/feature-check", async (req, res) => {
+router17.get("/feature-check", async (req, res) => {
   try {
     const { userId, feature } = req.query;
     if (!userId || !feature) {
@@ -7443,7 +8216,7 @@ router16.get("/feature-check", async (req, res) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     const user = result.rows[0];
-    const effectiveTier = getEffectiveTier2(user);
+    const effectiveTier = getEffectiveTier(user);
     const features = TIER_FEATURES[effectiveTier];
     const featureValue = features[feature];
     const hasAccess = featureValue === true || featureValue === -1 || typeof featureValue === "number" && featureValue > 0 || typeof featureValue === "string" && featureValue !== "none" && featureValue !== "basic";
@@ -7470,10 +8243,10 @@ router16.get("/feature-check", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.get("/tiers", async (_req, res) => {
+router17.get("/tiers", async (_req, res) => {
   const tiers = VALID_TIERS.map((tier) => ({
     key: tier,
-    order: TIER_ORDER2[tier],
+    order: TIER_ORDER[tier],
     features: TIER_FEATURES[tier],
     pricing: {
       free: { monthly: 0, annual: 0 },
@@ -7485,7 +8258,7 @@ router16.get("/tiers", async (_req, res) => {
   }));
   res.json({ success: true, data: tiers });
 });
-router16.post("/cancel-trial", async (req, res) => {
+router17.post("/cancel-trial", async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) {
@@ -7521,15 +8294,15 @@ router16.post("/cancel-trial", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var subscription_default = router16;
+var subscription_default = router17;
 
 // server/routes/api-v1/email-subscriptions.ts
 init_db();
 init_schema();
-import { Router as Router17 } from "express";
-import { eq as eq16, and as and10 } from "drizzle-orm";
+import { Router as Router18 } from "express";
+import { eq as eq15, and as and9 } from "drizzle-orm";
 import crypto2 from "crypto";
-var router17 = Router17();
+var router18 = Router18();
 var VALID_TYPES = [
   "job_alerts",
   "contract_alerts",
@@ -7590,7 +8363,7 @@ async function getUserTier(userId) {
   }
   return user.subscription_tier || "free";
 }
-router17.post("/subscribe", async (req, res) => {
+router18.post("/subscribe", async (req, res) => {
   try {
     const { userId, type, frequency = "daily_digest", filters = {} } = req.body;
     if (!userId) {
@@ -7626,9 +8399,9 @@ router17.post("/subscribe", async (req, res) => {
       });
     }
     const existing = await db.select().from(emailSubscriptions).where(
-      and10(
-        eq16(emailSubscriptions.userId, userId),
-        eq16(emailSubscriptions.type, type)
+      and9(
+        eq15(emailSubscriptions.userId, userId),
+        eq15(emailSubscriptions.type, type)
       )
     );
     if (existing.length > 0) {
@@ -7637,7 +8410,7 @@ router17.post("/subscribe", async (req, res) => {
         frequency,
         filters,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq16(emailSubscriptions.id, existing[0].id)).returning();
+      }).where(eq15(emailSubscriptions.id, existing[0].id)).returning();
       return res.json({
         success: true,
         message: `${type} subscription reactivated`,
@@ -7663,13 +8436,13 @@ router17.post("/subscribe", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.get("/my", async (req, res) => {
+router18.get("/my", async (req, res) => {
   try {
-    const userId = req.user?.userId || req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
-    const subscriptions = await db.select().from(emailSubscriptions).where(eq16(emailSubscriptions.userId, Number(userId)));
+    const subscriptions = await db.select().from(emailSubscriptions).where(eq15(emailSubscriptions.userId, Number(userId)));
     const tier = await getUserTier(Number(userId));
     const allowedTypes = TIER_ACCESS[tier] || TIER_ACCESS.free;
     const allowedFrequencies = TIER_FREQUENCIES[tier] || TIER_FREQUENCIES.free;
@@ -7691,24 +8464,25 @@ router17.get("/my", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.put("/:id", async (req, res) => {
+router18.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, frequency, filters, isActive } = req.body;
+    const userId = req.user?.userId;
+    const { frequency, filters, isActive } = req.body;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
     const [existing] = await db.select().from(emailSubscriptions).where(
-      and10(
-        eq16(emailSubscriptions.id, id),
-        eq16(emailSubscriptions.userId, userId)
+      and9(
+        eq15(emailSubscriptions.id, id),
+        eq15(emailSubscriptions.userId, Number(userId))
       )
     );
     if (!existing) {
       return res.status(404).json({ success: false, error: "Subscription not found" });
     }
     if (frequency) {
-      const tier = await getUserTier(userId);
+      const tier = await getUserTier(Number(userId));
       const allowedFrequencies = TIER_FREQUENCIES[tier] || TIER_FREQUENCIES.free;
       if (!allowedFrequencies.includes(frequency)) {
         return res.status(403).json({
@@ -7722,7 +8496,7 @@ router17.put("/:id", async (req, res) => {
     if (frequency !== void 0) updateData.frequency = frequency;
     if (filters !== void 0) updateData.filters = filters;
     if (isActive !== void 0) updateData.isActive = isActive;
-    const [updated] = await db.update(emailSubscriptions).set(updateData).where(eq16(emailSubscriptions.id, id)).returning();
+    const [updated] = await db.update(emailSubscriptions).set(updateData).where(eq15(emailSubscriptions.id, id)).returning();
     res.json({
       success: true,
       message: "Subscription updated",
@@ -7733,23 +8507,23 @@ router17.put("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.delete("/:id", async (req, res) => {
+router18.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.userId || req.body.userId || req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
     const [existing] = await db.select().from(emailSubscriptions).where(
-      and10(
-        eq16(emailSubscriptions.id, id),
-        eq16(emailSubscriptions.userId, Number(userId))
+      and9(
+        eq15(emailSubscriptions.id, id),
+        eq15(emailSubscriptions.userId, Number(userId))
       )
     );
     if (!existing) {
       return res.status(404).json({ success: false, error: "Subscription not found" });
     }
-    await db.delete(emailSubscriptions).where(eq16(emailSubscriptions.id, id));
+    await db.delete(emailSubscriptions).where(eq15(emailSubscriptions.id, id));
     res.json({
       success: true,
       message: `Unsubscribed from ${existing.type}`
@@ -7759,17 +8533,17 @@ router17.delete("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.get("/unsubscribe/:token", async (req, res) => {
+router18.get("/unsubscribe/:token", async (req, res) => {
   try {
     const { token } = req.params;
-    const [subscription] = await db.select().from(emailSubscriptions).where(eq16(emailSubscriptions.unsubscribeToken, token));
+    const [subscription] = await db.select().from(emailSubscriptions).where(eq15(emailSubscriptions.unsubscribeToken, token));
     if (!subscription) {
       return res.status(404).json({
         success: false,
         error: "Invalid unsubscribe link. It may have already been used."
       });
     }
-    await db.update(emailSubscriptions).set({ isActive: false, updatedAt: /* @__PURE__ */ new Date() }).where(eq16(emailSubscriptions.id, subscription.id));
+    await db.update(emailSubscriptions).set({ isActive: false, updatedAt: /* @__PURE__ */ new Date() }).where(eq15(emailSubscriptions.id, subscription.id));
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -7800,7 +8574,7 @@ router17.get("/unsubscribe/:token", async (req, res) => {
     res.status(500).json({ success: false, error: "Something went wrong" });
   }
 });
-router17.get("/available", async (_req, res) => {
+router18.get("/available", async (_req, res) => {
   const channels = [
     {
       type: "job_alerts",
@@ -7845,7 +8619,7 @@ router17.get("/available", async (_req, res) => {
   ];
   res.json({ success: true, data: channels });
 });
-router17.get("/stats", async (req, res) => {
+router18.get("/stats", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -7877,13 +8651,13 @@ router17.get("/stats", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var email_subscriptions_default = router17;
+var email_subscriptions_default = router18;
 
 // server/routes/api-v1/payments.ts
 init_db();
-import { Router as Router18 } from "express";
+import { Router as Router19 } from "express";
 import Stripe from "stripe";
-var router18 = Router18();
+var router19 = Router19();
 var STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 var STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 var stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-02-24.acacia" }) : null;
@@ -7904,13 +8678,18 @@ function requireStripe(res) {
   }
   return true;
 }
-router18.post("/create-checkout", async (req, res) => {
+router19.post("/create-checkout", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
-    const { userId, targetTier, billingCycle = "monthly" } = req.body;
-    if (!userId || !targetTier) {
-      return res.status(400).json({ success: false, error: "userId and targetTier are required" });
+    const authenticatedUserId = req.user?.userId;
+    const { targetTier, billingCycle = "monthly" } = req.body;
+    if (!authenticatedUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    if (!targetTier) {
+      return res.status(400).json({ success: false, error: "targetTier is required" });
+    }
+    const userId = authenticatedUserId;
     const pricing = TIER_PRICING[targetTier];
     if (!pricing) {
       return res.status(400).json({
@@ -7928,7 +8707,7 @@ router18.post("/create-checkout", async (req, res) => {
     const user = userResult.rows[0];
     const amount = billingCycle === "annual" ? pricing.annual : pricing.monthly;
     const customerId = await getOrCreateStripeCustomer(
-      userId,
+      Number(userId),
       user.email,
       user.username
     );
@@ -7973,7 +8752,7 @@ router18.post("/create-checkout", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/webhook", async (req, res) => {
+router19.post("/webhook", async (req, res) => {
   if (!stripe) {
     return res.status(503).json({ error: "Stripe not configured" });
   }
@@ -8161,15 +8940,23 @@ router18.post("/webhook", async (req, res) => {
   }
   res.json({ received: true });
 });
-router18.get("/billing-history", async (req, res) => {
+router19.get("/billing-history", async (req, res) => {
   try {
-    const userId = req.user?.userId || req.query.userId;
+    const authenticatedUserId = req.user?.userId;
+    const requestedUserId = req.query.userId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
-    if (!userId) {
+    if (!authenticatedUserId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    if (requestedUserId !== void 0 && Number(requestedUserId) !== Number(authenticatedUserId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: cannot access another user's billing history"
+      });
+    }
+    const userId = Number(authenticatedUserId);
     const tableCheck = await pool.query(
       `SELECT to_regclass('public.transactions') AS tbl`
     );
@@ -8210,13 +8997,21 @@ router18.get("/billing-history", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/create-portal", async (req, res) => {
+router19.post("/create-portal", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ success: false, error: "userId is required" });
+    const authenticatedUserId = req.user?.userId;
+    const requestedUserId = req.body?.userId;
+    if (!authenticatedUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    if (requestedUserId !== void 0 && Number(requestedUserId) !== Number(authenticatedUserId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: cannot create portal for another user"
+      });
+    }
+    const userId = Number(authenticatedUserId);
     const userResult = await pool.query(
       `SELECT email FROM users WHERE id = $1`,
       [userId]
@@ -8358,7 +9153,7 @@ async function autoSavePaymentMethod(pmId, userId, customerId, opts = {}) {
     console.error(`\u274C Auto-save PM error for ${pmId}:`, error.message);
   }
 }
-router18.post("/add-card-session", async (req, res) => {
+router19.post("/add-card-session", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const userId = req.user?.userId;
@@ -8399,7 +9194,7 @@ router18.post("/add-card-session", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/setup-intent", async (req, res) => {
+router19.post("/setup-intent", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const { userId } = req.body;
@@ -8440,7 +9235,7 @@ router18.post("/setup-intent", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/save-card", async (req, res) => {
+router19.post("/save-card", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const {
@@ -8538,7 +9333,7 @@ router18.post("/save-card", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/my-cards", async (req, res) => {
+router19.get("/my-cards", async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -8563,7 +9358,7 @@ router18.get("/my-cards", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.put("/cards/:cardId/default", async (req, res) => {
+router19.put("/cards/:cardId/default", async (req, res) => {
   try {
     const userId = req.user?.userId;
     const { cardId } = req.params;
@@ -8591,9 +9386,21 @@ router18.put("/cards/:cardId/default", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/cards/:userId", async (req, res) => {
+router19.get("/cards/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
+    const authenticatedUserId = req.user?.userId;
+    const authenticatedRole = req.user?.role;
+    if (!authenticatedUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    const isAdmin2 = authenticatedRole === "admin" || authenticatedRole === "superuser";
+    if (!isAdmin2 && String(userId) !== String(authenticatedUserId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: cannot access another user's payment methods"
+      });
+    }
     const result = await pool.query(
       `SELECT spm.*, u.username, u.email
        FROM saved_payment_methods spm
@@ -8612,7 +9419,7 @@ router18.get("/cards/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.delete("/cards/:cardId", async (req, res) => {
+router19.delete("/cards/:cardId", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const { cardId } = req.params;
@@ -8642,7 +9449,7 @@ router18.delete("/cards/:cardId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/charge", async (req, res) => {
+router19.post("/charge", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const {
@@ -8774,7 +9581,7 @@ router18.post("/charge", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/refund", async (req, res) => {
+router19.post("/refund", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const { chargeId, reason = "requested_by_customer" } = req.body;
@@ -8828,7 +9635,7 @@ router18.post("/refund", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/customers", async (req, res) => {
+router19.get("/customers", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const search = req.query.search;
     const page = parseInt(req.query.page) || 1;
@@ -8899,7 +9706,7 @@ router18.get("/customers", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/ngo-charges", async (req, res) => {
+router19.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const status = req.query.status;
     const category = req.query.category;
@@ -8951,7 +9758,7 @@ router18.get("/ngo-charges", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/pos-stats", async (req, res) => {
+router19.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -8977,15 +9784,15 @@ router18.get("/pos-stats", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var payments_default = router18;
+var payments_default = router19;
 
 // server/routes/api-v1/referral.ts
 init_db();
 init_schema();
-import { Router as Router19 } from "express";
-import { eq as eq17, sql as sql5 } from "drizzle-orm";
+import { Router as Router20 } from "express";
+import { eq as eq16, sql as sql5 } from "drizzle-orm";
 import jwt2 from "jsonwebtoken";
-var router19 = Router19();
+var router20 = Router20();
 function generateReferralCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -9007,12 +9814,12 @@ function getUserId(req) {
     return null;
   }
 }
-router19.get("/code", async (req, res) => {
+router20.get("/code", async (req, res) => {
   const userId = getUserId(req);
   if (!userId)
     return res.status(401).json({ success: false, error: "Not authenticated" });
   try {
-    const [user] = await db.select({ referralCode: users.referralCode }).from(users).where(eq17(users.id, userId)).limit(1);
+    const [user] = await db.select({ referralCode: users.referralCode }).from(users).where(eq16(users.id, userId)).limit(1);
     if (!user)
       return res.status(404).json({ success: false, error: "User not found" });
     let code = user.referralCode;
@@ -9020,7 +9827,7 @@ router19.get("/code", async (req, res) => {
       code = generateReferralCode();
       for (let attempt = 0; attempt < 5; attempt++) {
         try {
-          await db.update(users).set({ referralCode: code }).where(eq17(users.id, userId));
+          await db.update(users).set({ referralCode: code }).where(eq16(users.id, userId));
           break;
         } catch (err) {
           if (err.code === "23505") {
@@ -9031,7 +9838,7 @@ router19.get("/code", async (req, res) => {
         }
       }
     }
-    const [referralStats] = await db.select({ count: sql5`count(*)` }).from(users).where(eq17(users.referredBy, userId));
+    const [referralStats] = await db.select({ count: sql5`count(*)` }).from(users).where(eq16(users.referredBy, userId));
     res.json({
       success: true,
       referralCode: code,
@@ -9043,16 +9850,16 @@ router19.get("/code", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to get referral code" });
   }
 });
-router19.get("/stats", async (req, res) => {
+router20.get("/stats", async (req, res) => {
   const userId = getUserId(req);
   if (!userId)
     return res.status(401).json({ success: false, error: "Not authenticated" });
   try {
-    const [total] = await db.select({ count: sql5`count(*)` }).from(users).where(eq17(users.referredBy, userId));
+    const [total] = await db.select({ count: sql5`count(*)` }).from(users).where(eq16(users.referredBy, userId));
     const tierBreakdown = await db.select({
       tier: users.subscriptionTier,
       count: sql5`count(*)`
-    }).from(users).where(eq17(users.referredBy, userId)).groupBy(users.subscriptionTier);
+    }).from(users).where(eq16(users.referredBy, userId)).groupBy(users.subscriptionTier);
     const paidReferrals = tierBreakdown.filter((t) => t.tier && t.tier !== "free").reduce((sum, t) => sum + (t.count || 0), 0);
     res.json({
       success: true,
@@ -9067,7 +9874,7 @@ router19.get("/stats", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to get referral stats" });
   }
 });
-router19.post("/apply", async (req, res) => {
+router20.post("/apply", async (req, res) => {
   const userId = getUserId(req);
   if (!userId)
     return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -9076,31 +9883,31 @@ router19.post("/apply", async (req, res) => {
     return res.status(400).json({ success: false, error: "Referral code is required" });
   }
   try {
-    const [currentUser] = await db.select({ referredBy: users.referredBy }).from(users).where(eq17(users.id, userId)).limit(1);
+    const [currentUser] = await db.select({ referredBy: users.referredBy }).from(users).where(eq16(users.id, userId)).limit(1);
     if (currentUser?.referredBy) {
       return res.status(400).json({ success: false, error: "You already have a referrer" });
     }
-    const [referrer] = await db.select({ id: users.id }).from(users).where(eq17(users.referralCode, code.toUpperCase().trim())).limit(1);
+    const [referrer] = await db.select({ id: users.id }).from(users).where(eq16(users.referralCode, code.toUpperCase().trim())).limit(1);
     if (!referrer) {
       return res.status(404).json({ success: false, error: "Invalid referral code" });
     }
     if (referrer.id === userId) {
       return res.status(400).json({ success: false, error: "You cannot refer yourself" });
     }
-    await db.update(users).set({ referredBy: referrer.id }).where(eq17(users.id, userId));
+    await db.update(users).set({ referredBy: referrer.id }).where(eq16(users.id, userId));
     res.json({ success: true, message: "Referral code applied successfully" });
   } catch (error) {
     console.error("\u274C Apply referral error:", error);
     res.status(500).json({ success: false, error: "Failed to apply referral code" });
   }
 });
-var referral_default = router19;
+var referral_default = router20;
 
 // server/routes/api-v1/cards.ts
 init_db();
-import { Router as Router20 } from "express";
+import { Router as Router21 } from "express";
 import Stripe2 from "stripe";
-var router20 = Router20();
+var router21 = Router21();
 var stripe2 = null;
 function initStripe() {
   if (!stripe2 && process.env.STRIPE_SECRET_KEY) {
@@ -9143,7 +9950,7 @@ var TIER_SPENDING_LIMITS = {
   max: { amount: 15e3, interval: "monthly" },
   enterprise: { amount: 5e4, interval: "monthly" }
 };
-router20.post("/cardholder", async (req, res) => {
+router21.post("/cardholder", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { userId } = req.body;
@@ -9193,7 +10000,7 @@ router20.post("/cardholder", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/issue", async (req, res) => {
+router21.post("/issue", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { userId, cardholderId, label } = req.body;
@@ -9298,11 +10105,11 @@ router20.post("/issue", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/my-cards", async (req, res) => {
+router21.get("/my-cards", async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
-      return res.status(400).json({ success: false, error: "userId query param required" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
     const result = await pool.query(
       `SELECT ic.*,
@@ -9323,11 +10130,14 @@ router20.get("/my-cards", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/:cardId/details", async (req, res) => {
+router21.get("/:cardId/details", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { cardId } = req.params;
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
     const cardResult = await pool.query(
       `SELECT * FROM issued_cards WHERE id = $1 AND user_id = $2`,
       [cardId, userId]
@@ -9367,11 +10177,15 @@ router20.get("/:cardId/details", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/:cardId/freeze", async (req, res) => {
+router21.post("/:cardId/freeze", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { cardId } = req.params;
-    const { userId, freeze } = req.body;
+    const userId = req.user?.userId;
+    const { freeze } = req.body;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
     const cardResult = await pool.query(
       `SELECT * FROM issued_cards WHERE id = $1 AND user_id = $2`,
       [cardId, userId]
@@ -9397,11 +10211,14 @@ router20.post("/:cardId/freeze", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/:cardId/cancel", async (req, res) => {
+router21.post("/:cardId/cancel", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { cardId } = req.params;
-    const { userId } = req.body;
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
     const cardResult = await pool.query(
       `SELECT * FROM issued_cards WHERE id = $1 AND user_id = $2`,
       [cardId, userId]
@@ -9426,11 +10243,11 @@ router20.post("/:cardId/cancel", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/points/balance", async (req, res) => {
+router21.get("/points/balance", async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
     if (!userId) {
-      return res.status(400).json({ success: false, error: "userId required" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
     const userResult = await pool.query(
       `SELECT subscription_tier FROM users WHERE id = $1`,
@@ -9498,15 +10315,15 @@ function getNextTierMultiplier(currentTier) {
   const nextTier = order[idx + 1];
   return { tier: nextTier, multiplier: TIER_MULTIPLIERS[nextTier] };
 }
-router20.get("/points/history", async (req, res) => {
+router21.get("/points/history", async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user?.userId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const type = req.query.type;
     const offset = (page - 1) * limit;
     if (!userId) {
-      return res.status(400).json({ success: false, error: "userId required" });
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
     let whereClause = "WHERE pl.user_id = $1";
     const params = [userId];
@@ -9539,7 +10356,7 @@ router20.get("/points/history", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/points/rewards", async (req, res) => {
+router21.get("/points/rewards", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM points_redemptions WHERE is_active = true ORDER BY points_cost ASC`
@@ -9553,7 +10370,7 @@ router20.get("/points/rewards", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/points/redeem", async (req, res) => {
+router21.post("/points/redeem", async (req, res) => {
   try {
     const { userId, rewardId } = req.body;
     if (!userId || !rewardId) {
@@ -9601,7 +10418,7 @@ router20.post("/points/redeem", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/webhook/issuing", async (req, res) => {
+router21.post("/webhook/issuing", async (req, res) => {
   try {
     const event = req.body;
     switch (event.type) {
@@ -9679,7 +10496,7 @@ router20.post("/webhook/issuing", async (req, res) => {
     res.status(500).json({ received: false, error: error.message });
   }
 });
-router20.get("/config", async (_req, res) => {
+router21.get("/config", async (_req, res) => {
   res.json({
     success: true,
     data: {
@@ -9704,39 +10521,72 @@ router20.get("/config", async (_req, res) => {
     }
   });
 });
-var cards_default = router20;
+var cards_default = router21;
 
 // server/routes/api-v1/index.ts
-var router21 = Router21();
-router21.use("/admin", admin_default);
-router21.use("/connections", connections_default);
-router21.use("/subscription", subscription_default);
-router21.use("/email-subscriptions", email_subscriptions_default);
-router21.use("/payments/webhook", raw({ type: "application/json" }));
-router21.use("/payments", payments_default);
-router21.use("/referral", referral_default);
-router21.use("/cards/webhook/issuing", raw({ type: "application/json" }));
-router21.use("/cards", cards_default);
-var api_v1_default = router21;
+var router22 = Router22();
+router22.use("/admin", admin_default);
+router22.use("/connections", connections_default);
+router22.use("/subscription", subscription_default);
+router22.use("/email-subscriptions", email_subscriptions_default);
+router22.use("/payments/webhook", raw({ type: "application/json" }));
+router22.use("/payments", payments_default);
+router22.use("/referral", referral_default);
+router22.use("/cards/webhook/issuing", raw({ type: "application/json" }));
+router22.use("/cards", cards_default);
+var api_v1_default = router22;
 
 // server/routes/auth.ts
 init_db();
 init_schema();
-import { Router as Router23 } from "express";
-import jwt3 from "jsonwebtoken";
+import { Router as Router24 } from "express";
+import jwt4 from "jsonwebtoken";
 import bcrypt2 from "bcryptjs";
 import crypto3 from "crypto";
 import { z as z3 } from "zod";
-import { eq as eq19, and as and11, sql as sql7 } from "drizzle-orm";
+import { eq as eq18, and as and10, sql as sql7 } from "drizzle-orm";
 init_email_service();
 
 // server/routes/capabilities.ts
 init_db();
 init_schema();
-import { Router as Router22 } from "express";
+import { Router as Router23 } from "express";
 import { z as z2 } from "zod";
-import { eq as eq18, sql as sql6 } from "drizzle-orm";
-var router22 = Router22();
+import { eq as eq17, sql as sql6 } from "drizzle-orm";
+var router23 = Router23();
+function normalizeAccountRoleFromEmail(email, fallbackRole) {
+  const normalizedEmail = (email || "").toLowerCase();
+  const normalizedRole = (fallbackRole || "").toLowerCase();
+  if (normalizedEmail.includes("@versoair-gu") || normalizedEmail.includes("@versoair.gu") || normalizedEmail.includes("@versoair-general") || normalizedEmail.includes("@versoair-generaluser")) {
+    return "user";
+  }
+  if (normalizedEmail.includes("@versoair-geoa") || normalizedEmail.includes("@versoair.geoa") || normalizedEmail.includes("@versoair-geo-admin") || normalizedEmail.includes("@versoair-geo")) {
+    return "geo-admin";
+  }
+  if (normalizedEmail.includes("@versoair-supa") || normalizedEmail.includes("@versoair.supa") || normalizedEmail.includes("@versoair-superadmin") || normalizedEmail.includes("@versoair-admin")) {
+    return "superuser";
+  }
+  if (normalizedEmail.includes("@versoair-art") || normalizedEmail.includes("@versoair.art") || normalizedEmail.includes("@versoair-artist")) {
+    return "artist";
+  }
+  if (normalizedEmail.includes("@versoair-cr") || normalizedEmail.includes("@versoair.cr") || normalizedEmail.includes("@versoair-creator") || normalizedEmail.includes("@versoair-creator-user")) {
+    return "creator";
+  }
+  if ([
+    "admin",
+    "moderator",
+    "superuser",
+    "tsr",
+    "artist",
+    "creator",
+    "geo-admin",
+    "contractor",
+    "user"
+  ].includes(normalizedRole)) {
+    return normalizedRole;
+  }
+  return normalizedRole || "user";
+}
 async function computeUserCapabilities(userId) {
   const userResult = await db.execute(
     sql6`SELECT id, username, email, role, subscription_tier, subscription_status,
@@ -9746,6 +10596,10 @@ async function computeUserCapabilities(userId) {
   );
   const user = userResult.rows?.[0];
   if (!user) return null;
+  const effectiveRole = normalizeAccountRoleFromEmail(
+    user.email,
+    user.role || "user"
+  );
   const artistResult = await db.execute(
     sql6`SELECT id, stage_name FROM artist_profiles WHERE user_id = ${userId} LIMIT 1`
   );
@@ -9762,8 +10616,11 @@ async function computeUserCapabilities(userId) {
     isTrialing = true;
   }
   const portals = /* @__PURE__ */ new Set(["general", "streamer"]);
-  if (hasArtistProfile || user.role === "artist") portals.add("artist");
+  if (hasArtistProfile || effectiveRole === "artist") portals.add("artist");
   if (isContractor) portals.add("contractor");
+  if (effectiveRole === "creator" || effectiveRole === "geo-admin" || effectiveRole === "superuser" || effectiveRole === "admin") {
+    portals.add("streamer");
+  }
   if (effectiveTier !== "free" && ["active", "trialing"].includes(user.subscription_status || "active")) {
     portals.add("geo-admin");
   }
@@ -9771,10 +10628,13 @@ async function computeUserCapabilities(userId) {
   if (existingPortalAccess.includes("community") || user.username?.startsWith("community_")) {
     portals.add("community");
   }
-  if (user.role === "tsr") {
+  if (existingPortalAccess.includes("artisan")) {
+    portals.add("artisan");
+  }
+  if (user.role === "tsr" || effectiveRole === "geo-admin") {
     portals.add("geo-admin");
   }
-  if (["admin", "moderator", "superuser"].includes(user.role)) {
+  if (["admin", "moderator", "superuser"].includes(effectiveRole)) {
     portals.add("artist");
     portals.add("geo-admin");
     portals.add("contractor");
@@ -9792,14 +10652,14 @@ async function computeUserCapabilities(userId) {
     isContractor,
     hasOAuthAccount: !!user.oauth_provider,
     oauthProvider: user.oauth_provider || null,
-    canAccessBlog: portals.has("community") || portals.has("geo-admin") || ["admin", "moderator", "superuser"].includes(user.role),
-    role: user.role || "user"
+    canAccessBlog: portals.has("community") || portals.has("geo-admin") || ["admin", "moderator", "superuser"].includes(effectiveRole),
+    role: effectiveRole
   };
 }
 async function syncPortalAccess(userId, portals) {
-  await db.update(users).set({ portalAccess: portals }).where(eq18(users.id, userId));
+  await db.update(users).set({ portalAccess: portals }).where(eq17(users.id, userId));
 }
-router22.get(
+router23.get(
   "/capabilities",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -9821,12 +10681,12 @@ var becomeArtistSchema = z2.object({
   spotifyUrl: z2.string().url().optional().or(z2.literal("")),
   instagramHandle: z2.string().max(100).optional()
 });
-router22.post(
+router23.post(
   "/become-artist",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
-    const existing = await db.select({ id: artistProfiles.id }).from(artistProfiles).where(eq18(artistProfiles.userId, userId)).limit(1);
+    const existing = await db.select({ id: artistProfiles.id }).from(artistProfiles).where(eq17(artistProfiles.userId, userId)).limit(1);
     if (existing.length > 0) {
       return res.status(409).json({
         success: false,
@@ -9915,10 +10775,10 @@ router22.post(
       } catch {
       }
     }
-    const [userRow] = await db.select({ email: users.email, role: users.role }).from(users).where(eq18(users.id, userId)).limit(1);
+    const [userRow] = await db.select({ email: users.email, role: users.role }).from(users).where(eq17(users.id, userId)).limit(1);
     const staffRoles = ["superuser", "admin", "moderator"];
     const isStaff = staffRoles.includes((userRow?.role || "").toLowerCase());
-    const gateUser = isStaff ? await db.select({ gateUsername: users.gateUsername }).from(users).where(eq18(users.id, userId)).limit(1).then((r) => r[0]?.gateUsername || void 0) : void 0;
+    const gateUser = isStaff ? await db.select({ gateUsername: users.gateUsername }).from(users).where(eq17(users.id, userId)).limit(1).then((r) => r[0]?.gateUsername || void 0) : void 0;
     const artistCode = generateArtistCode(
       stageName,
       "discovery",
@@ -9951,7 +10811,7 @@ router22.post(
       previousRole: userRow?.role || "user",
       role: "artist",
       portalAccess: newPortals.sort()
-    }).where(eq18(users.id, userId));
+    }).where(eq17(users.id, userId));
     console.log(
       `[CAPABILITIES] User ${userId} became an artist (${stageName})`
     );
@@ -9962,7 +10822,7 @@ router22.post(
     });
   })
 );
-router22.post(
+router23.post(
   "/restore-staff-role",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -9970,7 +10830,7 @@ router22.post(
     const [userRow] = await db.select({
       role: users.role,
       previousRole: users.previousRole
-    }).from(users).where(eq18(users.id, userId)).limit(1);
+    }).from(users).where(eq17(users.id, userId)).limit(1);
     if (!userRow) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
@@ -9993,7 +10853,7 @@ router22.post(
       role: userRow.previousRole,
       previousRole: null,
       portalAccess: portals.sort()
-    }).where(eq18(users.id, userId));
+    }).where(eq17(users.id, userId));
     console.log(
       `[CAPABILITIES] User ${userId} restored staff role: ${userRow.previousRole}`
     );
@@ -10011,7 +10871,7 @@ var becomeContractorSchema = z2.object({
   phone: z2.string().max(30).optional(),
   hourlyRate: z2.string().optional()
 });
-router22.post(
+router23.post(
   "/become-contractor",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -10030,7 +10890,7 @@ router22.post(
       return res.status(400).json({ success: false, message: parsed.error.errors[0].message });
     }
     const { name, specialization, phone, hourlyRate } = parsed.data;
-    const [userRow] = await db.select({ email: users.email }).from(users).where(eq18(users.id, userId)).limit(1);
+    const [userRow] = await db.select({ email: users.email }).from(users).where(eq17(users.id, userId)).limit(1);
     await db.insert(contractors).values({
       userId,
       name,
@@ -10041,7 +10901,7 @@ router22.post(
     });
     const capabilities = await computeUserCapabilities(userId);
     const newPortals = capabilities ? [.../* @__PURE__ */ new Set([...capabilities.portals, "contractor"])] : ["general", "contractor"];
-    await db.update(users).set({ portalAccess: newPortals.sort() }).where(eq18(users.id, userId));
+    await db.update(users).set({ portalAccess: newPortals.sort() }).where(eq17(users.id, userId));
     console.log(`[CAPABILITIES] User ${userId} became a contractor (${name})`);
     res.json({
       success: true,
@@ -10054,7 +10914,7 @@ var upgradeSchema = z2.object({
   tier: z2.enum(["essential", "verified", "max", "enterprise"]),
   billingCycle: z2.enum(["monthly", "annual"]).default("monthly")
 });
-router22.post(
+router23.post(
   "/upgrade-subscription",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -10070,7 +10930,7 @@ router22.post(
     const [user] = await db.select({
       subscriptionTier: users.subscriptionTier,
       stripeCustomerId: users.stripeCustomerId
-    }).from(users).where(eq18(users.id, userId)).limit(1);
+    }).from(users).where(eq17(users.id, userId)).limit(1);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
@@ -10085,11 +10945,11 @@ router22.post(
     });
   })
 );
-var capabilities_default = router22;
+var capabilities_default = router23;
 
 // server/routes/auth.ts
 var JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
-var router23 = Router23();
+var router24 = Router24();
 async function isTsrWhitelisted(email) {
   try {
     const result = await db.execute(
@@ -10110,6 +10970,39 @@ function getTokenFromRequest(req) {
   if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
   if (req.cookies?.auth_token) return req.cookies.auth_token;
   return null;
+}
+function normalizeAccountRoleFromEmail2(email, fallbackRole) {
+  const normalizedEmail = (email || "").toLowerCase();
+  const normalizedRole = (fallbackRole || "").toLowerCase();
+  if (normalizedEmail.includes("@versoair-gu") || normalizedEmail.includes("@versoair.gu") || normalizedEmail.includes("@versoair-general") || normalizedEmail.includes("@versoair-generaluser")) {
+    return "user";
+  }
+  if (normalizedEmail.includes("@versoair-geoa") || normalizedEmail.includes("@versoair.geoa") || normalizedEmail.includes("@versoair-geo-admin") || normalizedEmail.includes("@versoair-geo")) {
+    return "geo-admin";
+  }
+  if (normalizedEmail.includes("@versoair-supa") || normalizedEmail.includes("@versoair.supa") || normalizedEmail.includes("@versoair-superadmin") || normalizedEmail.includes("@versoair-admin")) {
+    return "superuser";
+  }
+  if (normalizedEmail.includes("@versoair-art") || normalizedEmail.includes("@versoair.art") || normalizedEmail.includes("@versoair-artist")) {
+    return "artist";
+  }
+  if (normalizedEmail.includes("@versoair-cr") || normalizedEmail.includes("@versoair.cr") || normalizedEmail.includes("@versoair-creator") || normalizedEmail.includes("@versoair-creator-user")) {
+    return "creator";
+  }
+  if ([
+    "admin",
+    "moderator",
+    "superuser",
+    "tsr",
+    "artist",
+    "creator",
+    "geo-admin",
+    "contractor",
+    "user"
+  ].includes(normalizedRole)) {
+    return normalizedRole;
+  }
+  return normalizedRole || "user";
 }
 function setAuthCookie(res, token) {
   res.cookie("auth_token", token, {
@@ -10142,7 +11035,7 @@ async function createSession(userId, token, req, opts = {}) {
     if (isNaN(numericUserId) || numericUserId === 0) return;
     const device = parseDevice(req.headers["user-agent"]);
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || null;
-    const decoded = jwt3.decode(token);
+    const decoded = jwt4.decode(token);
     const expiresAt = decoded?.exp ? new Date(decoded.exp * 1e3) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1e3);
     if (opts.revokeOthers) {
       await db.update(activeSessions).set({
@@ -10150,9 +11043,9 @@ async function createSession(userId, token, req, opts = {}) {
         revokedAt: /* @__PURE__ */ new Date(),
         revokedReason: "new_login"
       }).where(
-        and11(
-          eq19(activeSessions.userId, numericUserId),
-          eq19(activeSessions.isRevoked, false)
+        and10(
+          eq18(activeSessions.userId, numericUserId),
+          eq18(activeSessions.isRevoked, false)
         )
       );
     }
@@ -10176,7 +11069,7 @@ async function revokeSessionByHash(tokenHash, reason) {
     isRevoked: true,
     revokedAt: /* @__PURE__ */ new Date(),
     revokedReason: reason
-  }).where(eq19(activeSessions.tokenHash, tokenHash));
+  }).where(eq18(activeSessions.tokenHash, tokenHash));
 }
 var loginSchema = z3.object({
   email: z3.string().email("Invalid email address").max(254),
@@ -10208,7 +11101,53 @@ function isSuperadmin(email) {
   if (!SUPERADMIN_EMAIL) return false;
   return email.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase();
 }
-router23.post(
+var OTP_REQUIRED_ROLES = ["admin", "moderator"];
+var OTP_EXPIRY_MS = 10 * 60 * 1e3;
+function generateOtpCode() {
+  return String(crypto3.randomInt(1e5, 1e6));
+}
+async function finishLogin(user, effectiveLoginRole, req, res) {
+  const token = jwt4.sign(
+    {
+      userId: String(user.id),
+      email: user.email,
+      role: effectiveLoginRole,
+      subscriptionTier: user.subscription_tier || "free"
+    },
+    getJwtSecret2(),
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+  setAuthCookie(res, token);
+  await createSession(user.id, token, req, { revokeOthers: true });
+  let capabilities = null;
+  try {
+    capabilities = await computeUserCapabilities(user.id);
+  } catch (e) {
+    console.warn("[AUTH] Could not compute capabilities on login:", e);
+  }
+  const displayName = user.display_name || null;
+  res.json({
+    success: true,
+    token,
+    needsDisplayName: !displayName,
+    needsPasswordChange: !!user.must_change_password,
+    user: {
+      id: String(user.id),
+      email: user.email,
+      name: displayName || user.username || null,
+      username: user.username || null,
+      role: effectiveLoginRole,
+      subscriptionTier: user.subscription_tier || "free",
+      subscriptionStatus: user.subscription_status || "active",
+      trialTier: user.trial_tier || null,
+      trialExpiresAt: user.trial_expires_at || null,
+      portals: capabilities?.portals || ["general"],
+      hasArtistProfile: capabilities?.hasArtistProfile || false,
+      isContractor: capabilities?.isContractor || false
+    }
+  });
+}
+router24.post(
   "/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -10227,7 +11166,7 @@ router23.post(
       businessType,
       phone
     } = parsed.data;
-    const existing = await db.select({ id: users.id }).from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const existing = await db.select({ id: users.id }).from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (existing.length > 0) {
       res.status(409).json({
         success: false,
@@ -10277,7 +11216,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -10289,11 +11228,31 @@ router23.post(
     const { email, password } = parsed.data;
     const result = await db.execute(
       sql7`SELECT id, username, email, password, role, is_verified, display_name,
-                 failed_login_attempts, locked_until,
-                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
-          FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`
+                 failed_login_attempts, locked_until, must_change_password,
+                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at,
+                 oauth_provider
+          FROM users WHERE LOWER(email) = LOWER(${email}) ORDER BY id`
     );
-    const user = result.rows?.[0];
+    const rows = result.rows || [];
+    const requestedAccountId = req.body?.accountId ? Number(req.body.accountId) : null;
+    const selectedUser = requestedAccountId ? rows.find((row) => Number(row.id) === Number(requestedAccountId)) || null : rows[0] || null;
+    if (rows.length > 1 && !requestedAccountId) {
+      const accounts = rows.map((row) => ({
+        id: Number(row.id),
+        email: row.email,
+        username: row.username,
+        role: row.role || "user",
+        name: row.display_name || row.username || null
+      }));
+      res.json({
+        success: true,
+        requiresAccountSelection: true,
+        accounts,
+        message: "Multiple accounts were found for this email. Please choose one."
+      });
+      return;
+    }
+    const user = selectedUser;
     if (user?.lockedUntil && new Date(user.lockedUntil) > /* @__PURE__ */ new Date()) {
       const unlockMins = Math.ceil(
         (new Date(user.lockedUntil).getTime() - Date.now()) / 6e4
@@ -10308,11 +11267,8 @@ router23.post(
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
     }
-    const oauthCheck = await db.execute(
-      sql7`SELECT oauth_provider FROM users WHERE id = ${user.id} AND oauth_provider IS NOT NULL LIMIT 1`
-    );
-    if ((oauthCheck.rows?.length ?? 0) > 0) {
-      const provider = oauthCheck.rows[0].oauth_provider;
+    if (user?.oauth_provider) {
+      const provider = user.oauth_provider;
       res.status(400).json({
         success: false,
         message: `This account uses ${provider} sign-in. Please sign in with ${provider} instead.`,
@@ -10327,7 +11283,7 @@ router23.post(
       await db.update(users).set({
         failedLoginAttempts: failedAttempts,
         lockedUntil: shouldLock ? new Date(Date.now() + LOCK_DURATION_MS) : null
-      }).where(eq19(users.id, user.id));
+      }).where(eq18(users.id, user.id));
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
     }
@@ -10340,57 +11296,107 @@ router23.post(
       });
       return;
     }
-    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq19(users.id, user.id));
+    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq18(users.id, user.id));
     let effectiveLoginRole = user.role || "user";
     const userTier = (user.subscription_tier || "free").toLowerCase();
     if (effectiveLoginRole === "user" && ["max", "enterprise"].includes(userTier) && await isTsrWhitelisted(user.email)) {
       effectiveLoginRole = "tsr";
       if (user.role !== "tsr") {
-        await db.update(users).set({ role: "tsr" }).where(eq19(users.id, user.id));
+        await db.update(users).set({ role: "tsr" }).where(eq18(users.id, user.id));
       }
     }
-    const token = jwt3.sign(
-      {
-        userId: String(user.id),
-        email: user.email,
-        role: effectiveLoginRole,
-        subscriptionTier: user.subscription_tier || "free"
-      },
-      getJwtSecret2(),
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-    setAuthCookie(res, token);
-    await createSession(user.id, token, req, { revokeOthers: true });
-    let capabilities = null;
-    try {
-      capabilities = await computeUserCapabilities(user.id);
-    } catch (e) {
-      console.warn("[AUTH] Could not compute capabilities on login:", e);
+    if (OTP_REQUIRED_ROLES.includes(effectiveLoginRole)) {
+      const code = generateOtpCode();
+      const codeHash = await bcrypt2.hash(code, 10);
+      await db.execute(
+        sql7`DELETE FROM verification_tokens WHERE user_id = ${user.id} AND type = 'login_otp'`
+      );
+      await db.insert(verificationTokens).values({
+        userId: user.id,
+        token: codeHash,
+        type: "login_otp",
+        expiresAt: new Date(Date.now() + OTP_EXPIRY_MS)
+      });
+      sendEmail(
+        user.email,
+        "Your Verso Air sign-in code",
+        `<p>Your verification code is:</p><h2 style="letter-spacing:4px">${code}</h2><p>This code expires in 10 minutes. If you didn't try to sign in, ignore this email.</p>`
+      ).catch((e) => console.warn("[AUTH] Failed to send OTP email:", e));
+      const otpToken = jwt4.sign(
+        { userId: String(user.id), purpose: "login_otp" },
+        getJwtSecret2(),
+        { expiresIn: "10m" }
+      );
+      res.json({
+        success: true,
+        requiresOtp: true,
+        otpToken,
+        email: user.email
+      });
+      return;
     }
-    const displayName = user.display_name || null;
-    res.json({
-      success: true,
-      token,
-      needsDisplayName: !displayName,
-      // true when the user hasn't set their name yet
-      user: {
-        id: String(user.id),
-        email: user.email,
-        name: displayName || user.username || null,
-        username: user.username || null,
-        role: effectiveLoginRole,
-        subscriptionTier: user.subscription_tier || "free",
-        subscriptionStatus: user.subscription_status || "active",
-        trialTier: user.trial_tier || null,
-        trialExpiresAt: user.trial_expires_at || null,
-        portals: capabilities?.portals || ["general"],
-        hasArtistProfile: capabilities?.hasArtistProfile || false,
-        isContractor: capabilities?.isContractor || false
-      }
-    });
+    await finishLogin(user, effectiveLoginRole, req, res);
   })
 );
-router23.post(
+router24.post(
+  "/verify-login-otp",
+  loginLimiter,
+  asyncHandler(async (req, res) => {
+    const { otpToken, code } = req.body || {};
+    if (!otpToken || !code) {
+      res.status(400).json({ success: false, message: "Missing code or token" });
+      return;
+    }
+    let payload;
+    try {
+      payload = jwt4.verify(otpToken, getJwtSecret2());
+    } catch {
+      res.status(401).json({
+        success: false,
+        message: "Verification session expired. Please sign in again."
+      });
+      return;
+    }
+    if (payload.purpose !== "login_otp" || !payload.userId) {
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
+    }
+    const userId = parseInt(payload.userId, 10);
+    const tokenRows = await db.execute(
+      sql7`SELECT id, token, expires_at FROM verification_tokens
+          WHERE user_id = ${userId} AND type = 'login_otp'
+          ORDER BY id DESC LIMIT 1`
+    );
+    const tokenRecord = tokenRows.rows?.[0];
+    if (!tokenRecord || new Date(tokenRecord.expires_at) < /* @__PURE__ */ new Date()) {
+      res.status(401).json({
+        success: false,
+        message: "Code expired. Please sign in again to get a new one."
+      });
+      return;
+    }
+    const codeValid = await bcrypt2.compare(String(code), tokenRecord.token);
+    if (!codeValid) {
+      res.status(401).json({ success: false, message: "Incorrect code" });
+      return;
+    }
+    await db.execute(
+      sql7`DELETE FROM verification_tokens WHERE id = ${tokenRecord.id}`
+    );
+    const result = await db.execute(
+      sql7`SELECT id, username, email, role, is_verified, display_name, must_change_password,
+                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
+          FROM users WHERE id = ${userId} LIMIT 1`
+    );
+    const user = result.rows?.[0];
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    await finishLogin(user, user.role || "user", req, res);
+  })
+);
+router24.post(
   "/logout",
   asyncHandler(async (req, res) => {
     const token = getTokenFromRequest(req);
@@ -10405,7 +11411,7 @@ router23.post(
     res.json({ success: true });
   })
 );
-router23.get(
+router24.get(
   "/verify-email",
   asyncHandler(async (req, res) => {
     const { token } = req.query;
@@ -10443,7 +11449,7 @@ router23.get(
       res.redirect(`${appUrl2}/signin?verification=expired`);
       return;
     }
-    await db.update(users).set({ isVerified: true, verifiedAt: /* @__PURE__ */ new Date() }).where(eq19(users.id, tokenRecord.user_id));
+    await db.update(users).set({ isVerified: true, verifiedAt: /* @__PURE__ */ new Date() }).where(eq18(users.id, tokenRecord.user_id));
     await db.execute(
       sql7`DELETE FROM verification_tokens WHERE user_id = ${tokenRecord.user_id} AND type = 'email_verification'`
     );
@@ -10454,7 +11460,7 @@ router23.get(
     const verifiedUser = verifiedUserResult.rows?.[0];
     const appUrl = (process.env.APP_PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || process.env.VERSOAIR_URL || "").replace(/\/$/, "");
     if (verifiedUser) {
-      const verifyToken = jwt3.sign(
+      const verifyToken = jwt4.sign(
         {
           userId: String(verifiedUser.id),
           email: verifiedUser.email,
@@ -10481,7 +11487,7 @@ router23.get(
     }
   })
 );
-router23.post(
+router24.post(
   "/resend-verification",
   asyncHandler(async (req, res) => {
     const { email } = req.body;
@@ -10532,7 +11538,7 @@ router23.post(
     });
   })
 );
-router23.get(
+router24.get(
   "/verify",
   asyncHandler(async (req, res) => {
     const token = getTokenFromRequest(req);
@@ -10541,23 +11547,24 @@ router23.get(
       return;
     }
     try {
-      const decoded = jwt3.verify(token, getJwtSecret2());
+      const decoded = jwt4.verify(token, getJwtSecret2());
       res.json({ success: true, user: decoded });
     } catch {
       res.status(401).json({ success: false, message: "Invalid or expired token" });
     }
   })
 );
-router23.get(
+router24.get(
   "/session",
   asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "private, max-age=30");
     const token = getTokenFromRequest(req);
     if (!token) {
       res.status(401).json({ success: false, message: "No token provided" });
       return;
     }
     try {
-      const decoded = jwt3.verify(token, getJwtSecret2());
+      const decoded = jwt4.verify(token, getJwtSecret2());
       const userId = decoded.userId || decoded.sub;
       const dbResult = await db.execute(
         sql7`SELECT id, username, email, role, subscription_tier, subscription_status,
@@ -10566,7 +11573,7 @@ router23.get(
             FROM users WHERE id = ${Number(userId)} LIMIT 1`
       );
       const dbUser = dbResult.rows?.[0];
-      const isAdmin = (dbUser?.role || decoded.role) === "admin" || (dbUser?.role || decoded.role) === "superuser" || (dbUser?.role || decoded.role) === "moderator";
+      const isAdmin2 = (dbUser?.role || decoded.role) === "admin" || (dbUser?.role || decoded.role) === "superuser" || (dbUser?.role || decoded.role) === "moderator";
       let capabilities = null;
       try {
         capabilities = await computeUserCapabilities(Number(userId));
@@ -10576,6 +11583,10 @@ router23.get(
       const createdAt = dbUser?.created_at ? new Date(dbUser.created_at) : null;
       const isNewAccount = createdAt ? Date.now() - createdAt.getTime() < 5 * 60 * 1e3 : false;
       const userDisplayName = dbUser?.display_name || null;
+      const effectiveRole = normalizeAccountRoleFromEmail2(
+        dbUser?.email || decoded.email,
+        dbUser?.role || decoded.role || "user"
+      );
       res.json({
         success: true,
         user: {
@@ -10584,8 +11595,8 @@ router23.get(
           username: dbUser?.username || null,
           displayName: userDisplayName,
           name: userDisplayName || dbUser?.username || decoded.name || decoded.email?.split("@")[0] || "User",
-          isAdmin,
-          role: dbUser?.role || decoded.role || "user",
+          isAdmin: isAdmin2,
+          role: effectiveRole,
           isFirstLogin: isNewAccount && !userDisplayName,
           needsDisplayName: !userDisplayName,
           subscriptionTier: dbUser?.subscription_tier || "free",
@@ -10606,7 +11617,7 @@ router23.get(
     }
   })
 );
-router23.post(
+router24.post(
   "/forgot-password",
   forgotPasswordLimiter,
   asyncHandler(async (req, res) => {
@@ -10619,12 +11630,12 @@ router23.post(
       success: true,
       message: "If that email is registered, a reset link has been sent."
     };
-    const [user] = await db.select({ id: users.id, email: users.email }).from(users).where(eq19(users.email, parsed.data.email.toLowerCase())).limit(1);
+    const [user] = await db.select({ id: users.id, email: users.email }).from(users).where(eq18(users.email, parsed.data.email.toLowerCase())).limit(1);
     if (!user) {
       res.json(GENERIC_OK);
       return;
     }
-    const resetToken = jwt3.sign(
+    const resetToken = jwt4.sign(
       { userId: String(user.id), purpose: "password_reset" },
       getJwtSecret2(),
       { expiresIn: "1h" }
@@ -10633,7 +11644,7 @@ router23.post(
     await db.update(users).set({
       passwordResetToken: hashedResetToken,
       passwordResetExpires: new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
-    }).where(eq19(users.id, user.id));
+    }).where(eq18(users.id, user.id));
     const sent = await sendPasswordResetEmail(user.email, resetToken);
     if (!sent) {
       console.warn(
@@ -10643,7 +11654,7 @@ router23.post(
     res.json(GENERIC_OK);
   })
 );
-router23.post(
+router24.post(
   "/admin-gate",
   asyncHandler(async (req, res) => {
     const { username, password } = req.body;
@@ -10665,7 +11676,7 @@ router23.post(
       password: users.password,
       role: users.role,
       subscriptionTier: users.subscriptionTier
-    }).from(users).where(eq19(users.gateUsername, username.toLowerCase())).limit(1);
+    }).from(users).where(eq18(users.gateUsername, username.toLowerCase())).limit(1);
     if (!user) {
       return res.status(403).json({
         success: false,
@@ -10679,12 +11690,6 @@ router23.post(
         message: "Invalid credentials."
       });
     }
-    if (user.email && !user.email.endsWith(".test")) {
-      return res.status(403).json({
-        success: false,
-        message: "GeoAdmin access requires a .test email domain. Please register a .test account."
-      });
-    }
     const allowedRoles = ["admin", "superuser", "moderator"];
     if (!user.role || !allowedRoles.includes(user.role)) {
       return res.status(403).json({
@@ -10692,7 +11697,7 @@ router23.post(
         message: "Access denied. Admin, CEO, or Moderator clearance required."
       });
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         userId: String(user.id),
         email: user.email,
@@ -10723,7 +11728,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/geo-admin",
   asyncHandler(async (req, res) => {
     res.status(403).json({
@@ -10742,10 +11747,17 @@ var registerGeoAdminSchema = z3.object({
     "Username must be lowercase alphanumeric with underscores only"
   )
 });
-router23.post(
+router24.post(
   "/register-geoadmin",
   registerLimiter,
   asyncHandler(async (req, res) => {
+    const requesterRole = req.user?.role;
+    if (requesterRole !== "admin" && requesterRole !== "superuser") {
+      return res.status(403).json({
+        success: false,
+        message: "Only Admin or Superadmin accounts can create .test accounts."
+      });
+    }
     const parsed = registerGeoAdminSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ success: false, message: parsed.error.errors[0].message });
@@ -10757,14 +11769,14 @@ router23.post(
         message: "Only .test email domains are allowed for GeoAdmin registration."
       });
     }
-    const existingEmail = await db.select({ id: users.id }).from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const existingEmail = await db.select({ id: users.id }).from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (existingEmail.length > 0) {
       return res.status(409).json({
         success: false,
         message: "An account with this email already exists."
       });
     }
-    const existingGate = await db.select({ id: users.id }).from(users).where(eq19(users.gateUsername, gateUsername.toLowerCase())).limit(1);
+    const existingGate = await db.select({ id: users.id }).from(users).where(eq18(users.gateUsername, gateUsername.toLowerCase())).limit(1);
     if (existingGate.length > 0) {
       return res.status(409).json({
         success: false,
@@ -10787,7 +11799,7 @@ router23.post(
       email: users.email,
       role: users.role
     });
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         userId: String(newUser.id),
         email: newUser.email,
@@ -10797,7 +11809,6 @@ router23.post(
       getJwtSecret2(),
       { expiresIn: JWT_EXPIRES_IN }
     );
-    setAuthCookie(res, token);
     await createSession(newUser.id, token, req);
     res.status(201).json({
       success: true,
@@ -10811,7 +11822,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/reset-password",
   asyncHandler(async (req, res) => {
     const parsed = resetPasswordSchema.safeParse(req.body);
@@ -10822,7 +11833,7 @@ router23.post(
     const { token, password } = parsed.data;
     let decoded;
     try {
-      decoded = jwt3.verify(token, getJwtSecret2());
+      decoded = jwt4.verify(token, getJwtSecret2());
     } catch {
       res.status(400).json({
         success: false,
@@ -10834,7 +11845,7 @@ router23.post(
       res.status(400).json({ success: false, message: "Invalid reset token." });
       return;
     }
-    const [user] = await db.select().from(users).where(eq19(users.id, Number(decoded.userId))).limit(1);
+    const [user] = await db.select().from(users).where(eq18(users.id, Number(decoded.userId))).limit(1);
     if (!user || !user.passwordResetToken || !user.passwordResetExpires) {
       res.status(400).json({
         success: false,
@@ -10864,7 +11875,7 @@ router23.post(
       passwordResetExpires: null,
       failedLoginAttempts: 0,
       lockedUntil: null
-    }).where(eq19(users.id, user.id));
+    }).where(eq18(users.id, user.id));
     res.clearCookie("auth_token", { path: "/" });
     res.json({
       success: true,
@@ -10875,7 +11886,7 @@ router23.post(
 var startTrialSchema = z3.object({
   tier: z3.enum(["essential", "verified", "max", "enterprise"])
 });
-router23.post(
+router24.post(
   "/start-trial",
   asyncHandler(async (req, res) => {
     const token = getTokenFromRequest(req);
@@ -10885,7 +11896,7 @@ router23.post(
     }
     let decoded;
     try {
-      decoded = jwt3.verify(token, getJwtSecret2());
+      decoded = jwt4.verify(token, getJwtSecret2());
     } catch {
       res.status(401).json({ success: false, message: "Invalid or expired token" });
       return;
@@ -10924,7 +11935,7 @@ router23.post(
       trialTier: parsed.data.tier,
       trialStartedAt: now,
       trialExpiresAt: expiresAt
-    }).where(eq19(users.id, userId));
+    }).where(eq18(users.id, userId));
     console.log(
       `[AUTH] Trial started: user ${userId} \u2192 tier ${parsed.data.tier} until ${expiresAt.toISOString()}`
     );
@@ -10938,7 +11949,7 @@ router23.post(
     });
   })
 );
-router23.get(
+router24.get(
   "/account/profile",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -10956,7 +11967,7 @@ router23.get(
       subscriptionStatus: users.subscriptionStatus,
       oauthProvider: users.oauthProvider,
       createdAt: users.createdAt
-    }).from(users).where(eq19(users.id, userId)).limit(1);
+    }).from(users).where(eq18(users.id, userId)).limit(1);
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
       return;
@@ -10964,7 +11975,7 @@ router23.get(
     res.json({ success: true, profile: user });
   })
 );
-router23.put(
+router24.put(
   "/account/profile",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -10981,17 +11992,17 @@ router23.put(
       return;
     }
     const existing = await db.select({ id: users.id }).from(users).where(
-      and11(eq19(users.username, username.trim()), sql7`id != ${userId}`)
+      and10(eq18(users.username, username.trim()), sql7`id != ${userId}`)
     ).limit(1);
     if (existing.length > 0) {
       res.status(409).json({ success: false, message: "Username already taken" });
       return;
     }
-    await db.update(users).set({ username: username.trim() }).where(eq19(users.id, userId));
+    await db.update(users).set({ username: username.trim() }).where(eq18(users.id, userId));
     res.json({ success: true, message: "Profile updated" });
   })
 );
-router23.post(
+router24.post(
   "/account/set-display-name",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11017,7 +12028,7 @@ router23.post(
     const [user] = await db.select({
       displayName: users.displayName,
       password: users.password
-    }).from(users).where(eq19(users.id, userId)).limit(1);
+    }).from(users).where(eq18(users.id, userId)).limit(1);
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
       return;
@@ -11043,7 +12054,7 @@ router23.post(
         return;
       }
     }
-    await db.update(users).set({ displayName: displayName.trim() }).where(eq19(users.id, userId));
+    await db.update(users).set({ displayName: displayName.trim() }).where(eq18(users.id, userId));
     res.json({
       success: true,
       message: user.displayName ? "Display name updated" : "Welcome aboard! Your name is set.",
@@ -11051,7 +12062,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/account/change-password",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11077,7 +12088,7 @@ router23.post(
     const [user] = await db.select({
       password: users.password,
       oauthProvider: users.oauthProvider
-    }).from(users).where(eq19(users.id, userId)).limit(1);
+    }).from(users).where(eq18(users.id, userId)).limit(1);
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
       return;
@@ -11095,16 +12106,16 @@ router23.post(
       return;
     }
     const hashed = await bcrypt2.hash(newPassword, SALT_ROUNDS);
-    await db.update(users).set({ password: hashed }).where(eq19(users.id, userId));
+    await db.update(users).set({ password: hashed, mustChangePassword: false }).where(eq18(users.id, userId));
     try {
       await db.update(activeSessions).set({
         isRevoked: true,
         revokedAt: /* @__PURE__ */ new Date(),
         revokedReason: "password_change"
       }).where(
-        and11(
-          eq19(activeSessions.userId, userId),
-          eq19(activeSessions.isRevoked, false)
+        and10(
+          eq18(activeSessions.userId, userId),
+          eq18(activeSessions.isRevoked, false)
         )
       );
     } catch (e) {
@@ -11116,7 +12127,7 @@ router23.post(
     res.json({ success: true, message: "Password changed successfully" });
   })
 );
-router23.get(
+router24.get(
   "/sessions",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11138,7 +12149,7 @@ router23.get(
       lastActive: activeSessions.lastActive,
       expiresAt: activeSessions.expiresAt,
       createdAt: activeSessions.createdAt
-    }).from(activeSessions).where(eq19(activeSessions.userId, numericId)).orderBy(sql7`created_at DESC`).limit(20);
+    }).from(activeSessions).where(eq18(activeSessions.userId, numericId)).orderBy(sql7`created_at DESC`).limit(20);
     const currentToken = getTokenFromRequest(req);
     const currentHash = currentToken ? hashToken(currentToken) : null;
     const enriched = await Promise.all(
@@ -11146,9 +12157,9 @@ router23.get(
         let isCurrent = false;
         if (currentHash) {
           const [match] = await db.select({ tokenHash: activeSessions.tokenHash }).from(activeSessions).where(
-            and11(
-              eq19(activeSessions.id, s.id),
-              eq19(activeSessions.tokenHash, currentHash)
+            and10(
+              eq18(activeSessions.id, s.id),
+              eq18(activeSessions.tokenHash, currentHash)
             )
           ).limit(1);
           isCurrent = !!match;
@@ -11159,7 +12170,7 @@ router23.get(
     res.json({ success: true, sessions: enriched });
   })
 );
-router23.post(
+router24.post(
   "/logout-all",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11173,9 +12184,9 @@ router23.post(
         revokedAt: /* @__PURE__ */ new Date(),
         revokedReason: "logout_all"
       }).where(
-        and11(
-          eq19(activeSessions.userId, numericId),
-          eq19(activeSessions.isRevoked, false)
+        and10(
+          eq18(activeSessions.userId, numericId),
+          eq18(activeSessions.isRevoked, false)
         )
       );
       try {
@@ -11194,7 +12205,7 @@ router23.post(
     res.json({ success: true, message: "All sessions revoked" });
   })
 );
-router23.post(
+router24.post(
   "/logout/:sessionId",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11207,15 +12218,15 @@ router23.post(
       return res.status(400).json({ success: false, message: "Invalid session ID" });
     }
     const userRole = req.user?.role;
-    const whereConditions = [eq19(activeSessions.id, sessionId)];
+    const whereConditions = [eq18(activeSessions.id, sessionId)];
     if (userRole !== "superuser" && userRole !== "admin") {
-      whereConditions.push(eq19(activeSessions.userId, numericId));
+      whereConditions.push(eq18(activeSessions.userId, numericId));
     }
     const result = await db.update(activeSessions).set({
       isRevoked: true,
       revokedAt: /* @__PURE__ */ new Date(),
       revokedReason: "manual_revoke"
-    }).where(and11(...whereConditions)).returning({
+    }).where(and10(...whereConditions)).returning({
       id: activeSessions.id,
       userId: activeSessions.userId
     });
@@ -11237,7 +12248,7 @@ router23.post(
     res.json({ success: true, message: "Session revoked" });
   })
 );
-router23.get(
+router24.get(
   "/admin/sessions",
   asyncHandler(async (req, res) => {
     const userRole = req.user?.role;
@@ -11258,7 +12269,7 @@ router23.get(
     res.json({ success: true, sessions: sessions.rows || [] });
   })
 );
-router23.get(
+router24.get(
   "/account/preferences",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11267,9 +12278,9 @@ router23.get(
       return;
     }
     const settings = await db.select().from(userSettings).where(
-      and11(
-        eq19(userSettings.userId, userId),
-        eq19(userSettings.sector, "account")
+      and10(
+        eq18(userSettings.userId, userId),
+        eq18(userSettings.sector, "account")
       )
     );
     const prefs = {};
@@ -11283,7 +12294,7 @@ router23.get(
     res.json({ success: true, preferences: prefs });
   })
 );
-router23.put(
+router24.put(
   "/account/preferences",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11317,7 +12328,7 @@ router23.put(
     res.json({ success: true, message: "Preferences saved" });
   })
 );
-router23.delete(
+router24.delete(
   "/account",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -11331,7 +12342,7 @@ router23.delete(
       username: scramble,
       role: "deleted",
       isVerified: false
-    }).where(eq19(users.id, userId));
+    }).where(eq18(users.id, userId));
     res.json({ success: true, message: "Account deleted" });
   })
 );
@@ -11342,7 +12353,7 @@ function requireSuperuser(req, res, next) {
     return;
   }
   try {
-    const decoded = jwt3.verify(token, getJwtSecret2());
+    const decoded = jwt4.verify(token, getJwtSecret2());
     if (decoded.role !== "superuser") {
       res.status(403).json({ success: false, message: "Superuser role required" });
       return;
@@ -11353,7 +12364,7 @@ function requireSuperuser(req, res, next) {
     res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
 }
-router23.get(
+router24.get(
   "/admin/users",
   requireSuperuser,
   asyncHandler(async (_req, res) => {
@@ -11380,7 +12391,7 @@ router23.get(
     });
   })
 );
-router23.post(
+router24.post(
   "/admin/unlock-user",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -11389,14 +12400,14 @@ router23.post(
       res.status(400).json({ success: false, message: "userId is required" });
       return;
     }
-    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq19(users.id, Number(userId)));
+    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq18(users.id, Number(userId)));
     console.log(
       `[ADMIN] User ${userId} unlocked by superuser ${req.superuserId}`
     );
     res.json({ success: true, message: "Account unlocked" });
   })
 );
-router23.post(
+router24.post(
   "/admin/change-password",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -11416,14 +12427,14 @@ router23.post(
       return;
     }
     const hashed = await bcrypt2.hash(newPassword, SALT_ROUNDS);
-    await db.update(users).set({ password: hashed, failedLoginAttempts: 0, lockedUntil: null }).where(eq19(users.id, Number(userId)));
+    await db.update(users).set({ password: hashed, failedLoginAttempts: 0, lockedUntil: null }).where(eq18(users.id, Number(userId)));
     console.log(
       `[ADMIN] Password changed for user ${userId} by superuser ${req.superuserId}`
     );
     res.json({ success: true, message: "Password changed successfully" });
   })
 );
-router23.post(
+router24.post(
   "/admin/change-role",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -11442,14 +12453,14 @@ router23.post(
       });
       return;
     }
-    await db.update(users).set({ role: newRole }).where(eq19(users.id, Number(userId)));
+    await db.update(users).set({ role: newRole }).where(eq18(users.id, Number(userId)));
     console.log(
       `[ADMIN] Role changed for user ${userId} to ${newRole} by superuser ${req.superuserId}`
     );
     res.json({ success: true, message: `Role changed to ${newRole}` });
   })
 );
-router23.post(
+router24.post(
   "/admin/verify-user",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -11458,7 +12469,7 @@ router23.post(
       res.status(400).json({ success: false, message: "userId is required" });
       return;
     }
-    await db.update(users).set({ isVerified: true }).where(eq19(users.id, Number(userId)));
+    await db.update(users).set({ isVerified: true }).where(eq18(users.id, Number(userId)));
     console.log(
       `[ADMIN] User ${userId} verified by superuser ${req.superuserId}`
     );
@@ -11487,7 +12498,7 @@ var artistLoginSchema = z3.union([
   })
 ]);
 var SUPERUSER_ARTIST_CODE = "VA-jdcz-SYS_MASTER";
-router23.post(
+router24.post(
   "/artist/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -11508,7 +12519,7 @@ router23.post(
       instagramHandle,
       artistRole
     } = parsed.data;
-    const existing = await db.select({ id: users.id }).from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const existing = await db.select({ id: users.id }).from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (existing.length > 0) {
       res.status(409).json({
         success: false,
@@ -11684,7 +12695,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/artist/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -11697,7 +12708,7 @@ router23.post(
     let user = null;
     let skipPasswordCheck = false;
     if ("artistCode" in data && data.artistCode === SUPERUSER_ARTIST_CODE) {
-      const [superuser] = await db.select().from(users).where(eq19(users.role, "superuser")).limit(1);
+      const [superuser] = await db.select().from(users).where(eq18(users.role, "superuser")).limit(1);
       if (!superuser) {
         res.status(401).json({ success: false, message: "Invalid artist code" });
         return;
@@ -11707,9 +12718,9 @@ router23.post(
     } else if ("artistCode" in data) {
       const code = data.artistCode.trim();
       try {
-        const profiles = await db.select().from(artistProfiles).where(eq19(artistProfiles.artistCode, code)).limit(1);
+        const profiles = await db.select().from(artistProfiles).where(eq18(artistProfiles.artistCode, code)).limit(1);
         if (profiles.length > 0) {
-          const [foundUser] = await db.select().from(users).where(eq19(users.id, profiles[0].userId)).limit(1);
+          const [foundUser] = await db.select().from(users).where(eq18(users.id, profiles[0].userId)).limit(1);
           if (foundUser) {
             user = foundUser;
             skipPasswordCheck = true;
@@ -11718,7 +12729,7 @@ router23.post(
       } catch (e) {
       }
       if (!user) {
-        const [byGate] = await db.select().from(users).where(eq19(users.gateUsername, code)).limit(1);
+        const [byGate] = await db.select().from(users).where(eq18(users.gateUsername, code)).limit(1);
         if (byGate) {
           user = byGate;
           skipPasswordCheck = true;
@@ -11733,7 +12744,7 @@ router23.post(
       }
     } else if ("email" in data && "password" in data) {
       const { email, password } = data;
-      const [foundUser] = await db.select().from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+      const [foundUser] = await db.select().from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
       if (!foundUser) {
         res.status(401).json({ success: false, message: "Invalid email or password" });
         return;
@@ -11765,23 +12776,26 @@ router23.post(
         if (attempts >= MAX_FAILED_ATTEMPTS) {
           updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
         }
-        await db.update(users).set(updates).where(eq19(users.id, user.id));
+        await db.update(users).set(updates).where(eq18(users.id, user.id));
         res.status(401).json({ success: false, message: "Invalid email or password" });
         return;
       }
-      await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq19(users.id, user.id));
+      await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq18(users.id, user.id));
     } else {
       res.status(400).json({ success: false, message: "Email or artist code required" });
       return;
     }
-    const effectiveRole = user.role === "artist" ? "artist" : user.role || "user";
+    const effectiveRole = normalizeAccountRoleFromEmail2(
+      user.email,
+      user.role === "artist" ? "artist" : user.role || "user"
+    );
     let artistProfile = null;
     try {
-      const profiles = await db.select().from(artistProfiles).where(eq19(artistProfiles.userId, user.id)).limit(1);
+      const profiles = await db.select().from(artistProfiles).where(eq18(artistProfiles.userId, user.id)).limit(1);
       if (profiles.length > 0) artistProfile = profiles[0];
     } catch (e) {
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       { userId: user.id, email: user.email, role: effectiveRole },
       getJwtSecret2(),
       { expiresIn: JWT_EXPIRES_IN }
@@ -11829,7 +12843,7 @@ var subscriberLoginSchema = z3.object({
   email: z3.string().email("Invalid email format"),
   password: z3.string().min(1, "Password is required")
 });
-router23.post(
+router24.post(
   "/subscriber/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -11839,7 +12853,7 @@ router23.post(
       return;
     }
     const { email, password, displayName, tier, interests } = parsed.data;
-    const existing = await db.select({ id: users.id }).from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const existing = await db.select({ id: users.id }).from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (existing.length > 0) {
       res.status(409).json({
         success: false,
@@ -11865,7 +12879,7 @@ router23.post(
       subscriptionTier: users.subscriptionTier
     });
     try {
-      const verificationToken = jwt3.sign(
+      const verificationToken = jwt4.sign(
         { userId: newUser.id, purpose: "email_verification" },
         getJwtSecret2(),
         { expiresIn: "24h" }
@@ -11888,7 +12902,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/subscriber/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -11898,7 +12912,7 @@ router23.post(
       return;
     }
     const { email, password } = parsed.data;
-    const [user] = await db.select().from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const [user] = await db.select().from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (!user) {
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
@@ -11920,7 +12934,7 @@ router23.post(
       if (attempts >= MAX_FAILED_ATTEMPTS) {
         updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
       }
-      await db.update(users).set(updates).where(eq19(users.id, user.id));
+      await db.update(users).set(updates).where(eq18(users.id, user.id));
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
     }
@@ -11933,17 +12947,17 @@ router23.post(
       });
       return;
     }
-    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq19(users.id, user.id));
+    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq18(users.id, user.id));
     let effectiveSubRole = user.role || "user";
     if (effectiveSubRole === "user" && ["max", "enterprise"].includes(user.subscriptionTier || "")) {
       const tsrOk = await isTsrWhitelisted(user.email);
       if (tsrOk) {
         effectiveSubRole = "tsr";
-        await db.update(users).set({ role: "tsr" }).where(eq19(users.id, user.id));
+        await db.update(users).set({ role: "tsr" }).where(eq18(users.id, user.id));
         console.log(`[AUTH] TSR role granted to subscriber ${user.email}`);
       }
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         userId: user.id,
         email: user.email,
@@ -11987,13 +13001,14 @@ var communityRegisterSchema = z3.object({
   email: z3.string().email("Invalid email format"),
   password: z3.string().min(8, "Password must be at least 8 characters").max(128).regex(/[A-Z]/, "Password must contain at least one uppercase letter").regex(/[0-9]/, "Password must contain at least one number"),
   displayName: z3.string().min(2, "Display name must be at least 2 characters"),
-  interests: z3.array(z3.string()).optional()
+  interests: z3.array(z3.string()).optional(),
+  accountType: z3.enum(["community", "artisan"]).optional()
 });
 var communityLoginSchema = z3.object({
   email: z3.string().email("Invalid email format"),
   password: z3.string().min(1, "Password is required")
 });
-router23.post(
+router24.post(
   "/community/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -12002,8 +13017,14 @@ router23.post(
       res.status(400).json({ success: false, message: parsed.error.errors[0].message });
       return;
     }
-    const { email, password, displayName, interests } = parsed.data;
-    const existing = await db.select({ id: users.id }).from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const {
+      email,
+      password,
+      displayName,
+      interests,
+      accountType = "community"
+    } = parsed.data;
+    const existing = await db.select({ id: users.id }).from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (existing.length > 0) {
       res.status(409).json({
         success: false,
@@ -12020,7 +13041,7 @@ router23.post(
       role: "user",
       subscriptionTier: "free",
       // community members start free
-      portalAccess: ["general", "community"],
+      portalAccess: accountType === "artisan" ? ["general", "community", "artisan"] : ["general", "community"],
       isVerified: false
     }).returning({
       id: users.id,
@@ -12053,7 +13074,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/community/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -12063,7 +13084,7 @@ router23.post(
       return;
     }
     const { email, password } = parsed.data;
-    const [user] = await db.select().from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
+    const [user] = await db.select().from(users).where(eq18(users.email, email.toLowerCase())).limit(1);
     if (!user) {
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
@@ -12094,12 +13115,12 @@ router23.post(
       if (attempts >= MAX_FAILED_ATTEMPTS) {
         updates.lockedUntil = new Date(Date.now() + LOCK_DURATION_MS);
       }
-      await db.update(users).set(updates).where(eq19(users.id, user.id));
+      await db.update(users).set(updates).where(eq18(users.id, user.id));
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
     }
-    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq19(users.id, user.id));
-    const token = jwt3.sign(
+    await db.update(users).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq18(users.id, user.id));
+    const token = jwt4.sign(
       { userId: user.id, email: user.email, role: user.role || "user" },
       getJwtSecret2(),
       { expiresIn: JWT_EXPIRES_IN }
@@ -12131,7 +13152,7 @@ router23.post(
     });
   })
 );
-router23.get(
+router24.get(
   "/tsr/whitelist",
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
@@ -12145,7 +13166,7 @@ router23.get(
     res.json({ success: true, entries: entries.rows });
   })
 );
-router23.post(
+router24.post(
   "/tsr/whitelist",
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
@@ -12182,7 +13203,7 @@ router23.post(
     res.json({ success: true, message: "Email added to TSR whitelist" });
   })
 );
-router23.delete(
+router24.delete(
   "/tsr/whitelist/:email",
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
@@ -12195,15 +13216,15 @@ router23.delete(
     );
     const targetUser = userResult.rows?.[0];
     if (targetUser) {
-      await db.update(users).set({ role: "user" }).where(eq19(users.id, targetUser.id));
+      await db.update(users).set({ role: "user" }).where(eq18(users.id, targetUser.id));
       await db.update(activeSessions).set({
         isRevoked: true,
         revokedAt: /* @__PURE__ */ new Date(),
         revokedReason: "tsr_revoked"
       }).where(
-        and11(
-          eq19(activeSessions.userId, targetUser.id),
-          eq19(activeSessions.isRevoked, false)
+        and10(
+          eq18(activeSessions.userId, targetUser.id),
+          eq18(activeSessions.isRevoked, false)
         )
       );
       console.log(
@@ -12218,7 +13239,7 @@ router23.delete(
   })
 );
 var stepUpCodes = /* @__PURE__ */ new Map();
-router23.post(
+router24.post(
   "/step-up/request",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -12239,7 +13260,7 @@ router23.post(
       purpose: purpose || "verification"
     });
     try {
-      const { sendEmail: sendEmail2 } = await import("./email-service-X4PAGBYB.js");
+      const { sendEmail: sendEmail2 } = await import("./email-service-7RSVS4AA.js");
       await sendEmail2(
         user.email,
         "Verso Air \u2014 Verification Code",
@@ -12268,7 +13289,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/step-up/verify",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -12296,17 +13317,17 @@ router23.post(
     });
   })
 );
-var auth_default = router23;
+var auth_default = router24;
 
 // server/routes/oauth.ts
 init_db();
 init_db();
 init_schema();
-import { Router as Router24 } from "express";
-import jwt4 from "jsonwebtoken";
+import { Router as Router25 } from "express";
+import jwt5 from "jsonwebtoken";
 import crypto4 from "crypto";
-import { eq as eq20, sql as sql8 } from "drizzle-orm";
-var router24 = Router24();
+import { eq as eq19, sql as sql8 } from "drizzle-orm";
+var router25 = Router25();
 (async () => {
   try {
     await pool.query(`
@@ -12424,7 +13445,7 @@ setInterval(
   },
   10 * 60 * 1e3
 );
-router24.get(
+router25.get(
   "/oauth/:provider",
   asyncHandler(async (req, res) => {
     const { provider } = req.params;
@@ -12582,7 +13603,7 @@ async function handleOAuthCallback(req, res) {
         isVerified: true,
         oauthProvider: provider,
         oauthProviderId: providerUserId
-      }).where(eq20(users.id, userId));
+      }).where(eq19(users.id, userId));
       console.log(
         `[OAuth] Existing user ${userId} linked to ${provider}, role: ${userRole}`
       );
@@ -12618,7 +13639,7 @@ async function handleOAuthCallback(req, res) {
       subscriptionTier,
       oauthProvider: provider
     };
-    const token = jwt4.sign(jwtPayload, getJwtSecret3(), {
+    const token = jwt5.sign(jwtPayload, getJwtSecret3(), {
       expiresIn: JWT_EXPIRES_IN2
     });
     setAuthCookie2(res, token);
@@ -12631,19 +13652,19 @@ async function handleOAuthCallback(req, res) {
     res.redirect(`${appUrl}/auth/signin?mode=login&error=oauth_server_error`);
   }
 }
-router24.get(
+router25.get(
   "/oauth/:provider/callback",
   asyncHandler(async (req, res) => {
     await handleOAuthCallback(req, res);
   })
 );
-router24.post(
+router25.post(
   "/oauth/:provider/callback",
   asyncHandler(async (req, res) => {
     await handleOAuthCallback(req, res);
   })
 );
-router24.get(
+router25.get(
   "/oauth/status",
   asyncHandler(async (req, res) => {
     const authHeader = req.headers.authorization;
@@ -12657,7 +13678,7 @@ router24.get(
       return;
     }
     try {
-      const decoded = jwt4.verify(token, getJwtSecret3());
+      const decoded = jwt5.verify(token, getJwtSecret3());
       const result = await db.execute(
         sql8`SELECT id, username, email, role, is_verified, subscription_tier, subscription_status,
                    trial_tier, trial_expires_at, oauth_provider, created_at
@@ -12775,12 +13796,12 @@ function getRolePermissions(role) {
       };
   }
 }
-var oauth_default = router24;
+var oauth_default = router25;
 
 // server/routes/social-api.ts
 init_db();
-import { Router as Router25 } from "express";
-import { desc as desc10, eq as eq21, isNull, and as and12, inArray } from "drizzle-orm";
+import { Router as Router26 } from "express";
+import { desc as desc9, eq as eq20, isNull, and as and11, inArray, sql as sql9 } from "drizzle-orm";
 
 // shared/social-schema.ts
 import {
@@ -12856,6 +13877,7 @@ var socialPosts = pgTable(
     videoUrl: text("video_url"),
     mediaType: text("media_type"),
     // text, image, video, link
+    allowMediaDownload: boolean("allow_media_download").default(false),
     postType: text("post_type").default("discussion"),
     // discussion, job, trend, announcement, faq
     faqCategory: text("faq_category"),
@@ -12885,6 +13907,8 @@ var socialPosts = pgTable(
     // Array of {editedAt, content}
     metadata: jsonb("metadata"),
     // Additional data, analytics, A/B test flags
+    // Attached music track — makes any post an instantly-playable music share
+    trackId: integer("track_id"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     deletedAt: timestamp("deleted_at")
@@ -12899,7 +13923,8 @@ var socialPosts = pgTable(
     isTrendingIdx: index("social_posts_is_trending_idx").on(t.isTrending),
     tagsIdx: index("social_posts_tags_idx").on(t.tags),
     postTypeIdx: index("social_posts_post_type_idx").on(t.postType),
-    faqCategoryIdx: index("social_posts_faq_category_idx").on(t.faqCategory)
+    faqCategoryIdx: index("social_posts_faq_category_idx").on(t.faqCategory),
+    trackIdIdx: index("social_posts_track_id_idx").on(t.trackId)
   })
 );
 var faqCategories = pgTable("faq_categories", {
@@ -13227,15 +14252,86 @@ var insertSavedPostSchema = createInsertSchema(savedPosts);
 var insertFaqCategorySchema = createInsertSchema(faqCategories);
 
 // server/routes/social-api.ts
-var router25 = Router25();
-router25.get("/posts", async (req, res) => {
+init_schema();
+init_notification_service();
+var router26 = Router26();
+async function recordSocialAudit(event) {
+  await pool.query(
+    `INSERT INTO social_audit_events
+      (actor_user_id, post_id, event_type, outcome, metadata)
+     VALUES ($1, $2, $3, $4, $5::jsonb)`,
+    [
+      event.actorUserId || null,
+      event.postId || null,
+      event.eventType,
+      event.outcome,
+      JSON.stringify(event.metadata || {})
+    ]
+  );
+}
+var ALLOWED_POST_TYPES = [
+  "discussion",
+  "job",
+  "trend",
+  "announcement",
+  "faq",
+  "marketplace",
+  "musical_universe",
+  "music_post",
+  // a social post with a playable track attached
+  "contractor",
+  "job_seeker",
+  "dm_share"
+  // a DM the sender chose to publish/promote to the public feed
+];
+async function getSocialProfileId(appUserId) {
+  const [existingProfile] = await db.select({ id: socialUsers.id }).from(socialUsers).where(eq20(socialUsers.userId, appUserId)).limit(1);
+  if (existingProfile) return existingProfile.id;
+  const [profile] = await db.insert(socialUsers).values({
+    userId: appUserId,
+    username: `member_${appUserId}`,
+    displayName: `Verso member ${appUserId}`
+  }).returning({ id: socialUsers.id });
+  return profile.id;
+}
+async function getTrackInfo(trackId) {
+  const result = await pool.query(
+    `SELECT id, title, artist_id, genre, duration, cover_art, pochette, has_audio_data, status
+     FROM music_tracks WHERE id = $1 AND status = 'published'`,
+    [trackId]
+  );
+  return result.rows[0] || null;
+}
+async function enrichPostsWithTracks(posts) {
+  const trackIds = [...new Set(posts.map((p) => p.trackId).filter(Boolean))];
+  if (trackIds.length === 0) return posts;
+  const tracks = await pool.query(
+    `SELECT id, title, artist_id, genre, duration, cover_art, pochette, has_audio_data, status
+     FROM music_tracks WHERE id = ANY($1::int[]) AND status = 'published'`,
+    [trackIds]
+  );
+  const trackMap = Object.fromEntries(tracks.rows.map((t) => [t.id, t]));
+  return posts.map((post) => ({
+    ...post,
+    track: post.trackId ? trackMap[post.trackId] || null : null
+  }));
+}
+async function syncFollowerCount(socialUserId) {
+  const followers = await db.select({ id: socialFollowers.id }).from(socialFollowers).where(eq20(socialFollowers.followingId, socialUserId));
+  await db.update(socialUsers).set({ followerCount: followers.length }).where(eq20(socialUsers.id, socialUserId));
+}
+router26.get("/posts", async (req, res) => {
   try {
-    const { page = 1, limit = 10, sort = "recent" } = req.query;
+    const { page = 1, limit = 10, sort = "recent", postType } = req.query;
     const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
     const offset = (pageNum - 1) * limitNum;
-    let query = db.select().from(socialPosts).where(isNull(socialPosts.deletedAt)).orderBy(
-      sort === "trending" ? desc10(socialPosts.engagementScore) : desc10(socialPosts.createdAt)
+    const conditions = [isNull(socialPosts.deletedAt)];
+    if (postType && typeof postType === "string") {
+      conditions.push(eq20(socialPosts.postType, postType));
+    }
+    let query = db.select().from(socialPosts).where(and11(...conditions)).orderBy(
+      sort === "trending" ? desc9(socialPosts.engagementScore) : desc9(socialPosts.createdAt)
     ).limit(limitNum).offset(offset);
     const posts = await query;
     const authorIds = [
@@ -13252,9 +14348,10 @@ router25.get("/posts", async (req, res) => {
       ...post,
       author: authorMap[post.authorId] || null
     }));
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
     res.json({
       success: true,
-      data: enrichedPosts,
+      data: withTracks,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -13266,29 +14363,149 @@ router25.get("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch posts" });
   }
 });
-router25.post("/posts", async (req, res) => {
+router26.get("/posts/following", async (req, res) => {
   try {
-    const {
-      authorId,
-      content,
-      imageUrls,
-      tags,
-      postType = "discussion"
-    } = req.body;
-    if (!authorId || !content) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required fields: authorId, content"
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0 }
       });
     }
-    const newPost = await db.insert(socialPosts).values({
-      authorId,
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
+    const offset = (pageNum - 1) * limitNum;
+    const following = await db.select({ followingId: socialFollowers.followingId }).from(socialFollowers).where(eq20(socialFollowers.followerId, followerId));
+    if (following.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { page: pageNum, limit: limitNum, total: 0 }
+      });
+    }
+    const followingIds = following.map((f) => f.followingId);
+    const posts = await db.select().from(socialPosts).where(
+      and11(
+        isNull(socialPosts.deletedAt),
+        inArray(socialPosts.authorId, followingIds)
+      )
+    ).orderBy(desc9(socialPosts.createdAt)).limit(limitNum).offset(offset);
+    const authorIds = [...new Set(posts.map((p) => p.authorId))];
+    let authorMap = {};
+    if (authorIds.length > 0) {
+      const authors = await db.select().from(socialUsers).where(inArray(socialUsers.id, authorIds));
+      for (const author of authors) authorMap[author.id] = author;
+    }
+    const enrichedPosts = posts.map((post) => ({
+      ...post,
+      author: authorMap[post.authorId] || null
+    }));
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+    res.json({
+      success: true,
+      data: withTracks,
+      pagination: { page: pageNum, limit: limitNum, total: posts.length }
+    });
+  } catch (error) {
+    console.error("Error fetching following feed:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch feed" });
+  }
+});
+router26.get("/posts/music", async (req, res) => {
+  try {
+    const { page = 1, limit = 10, sort = "recent" } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limitNum = Math.min(parseInt(limit) || 10, 50);
+    const offset = (pageNum - 1) * limitNum;
+    const posts = await db.select().from(socialPosts).where(
+      and11(
+        isNull(socialPosts.deletedAt),
+        eq20(socialPosts.postType, "music_post")
+      )
+    ).orderBy(
+      sort === "trending" ? desc9(socialPosts.engagementScore) : desc9(socialPosts.createdAt)
+    ).limit(limitNum).offset(offset);
+    const authorIds = [...new Set(posts.map((p) => p.authorId))];
+    let authorMap = {};
+    if (authorIds.length > 0) {
+      const authors = await db.select().from(socialUsers).where(inArray(socialUsers.id, authorIds));
+      for (const author of authors) authorMap[author.id] = author;
+    }
+    const enrichedPosts = posts.map((post) => ({
+      ...post,
+      author: authorMap[post.authorId] || null
+    }));
+    const withTracks = await enrichPostsWithTracks(enrichedPosts);
+    res.json({
+      success: true,
+      data: withTracks,
+      pagination: { page: pageNum, limit: limitNum, total: posts.length }
+    });
+  } catch (error) {
+    console.error("Error fetching music feed:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch music feed" });
+  }
+});
+router26.post("/posts", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const {
       content,
       imageUrls,
+      videoUrl,
+      allowMediaDownload = false,
+      tags,
+      postType = "discussion",
+      trackId
+    } = req.body;
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required to post"
+      });
+    }
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: content"
+      });
+    }
+    if (!ALLOWED_POST_TYPES.includes(postType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid postType. Must be one of: ${ALLOWED_POST_TYPES.join(", ")}`
+      });
+    }
+    if (trackId) {
+      const track = await getTrackInfo(Number(trackId));
+      if (!track) {
+        return res.status(400).json({
+          success: false,
+          error: "Track not found or not published"
+        });
+      }
+    }
+    const authorId = await getSocialProfileId(Number(appUserId));
+    const newPost = await db.insert(socialPosts).values({
+      authorId: Number(authorId),
+      content,
+      imageUrls,
+      videoUrl: videoUrl || null,
+      allowMediaDownload: Boolean(allowMediaDownload),
       tags,
       postType,
-      mediaType: imageUrls ? "image" : "text"
+      trackId: trackId ? Number(trackId) : null,
+      mediaType: trackId ? "audio" : videoUrl ? "video" : imageUrls ? "image" : "text"
     }).returning();
+    await recordSocialAudit({
+      actorUserId: appUserId,
+      postId: newPost[0]?.id,
+      eventType: "media_download_permission",
+      outcome: allowMediaDownload ? "enabled" : "disabled"
+    });
     res.status(201).json({
       success: true,
       data: newPost[0],
@@ -13299,14 +14516,119 @@ router25.post("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create post" });
   }
 });
-router25.get("/posts/:postId", async (req, res) => {
+router26.post("/audit/screenshot", async (req, res) => {
+  try {
+    await recordSocialAudit({
+      actorUserId: req.user?.userId,
+      eventType: "screenshot_capture",
+      outcome: "captured",
+      metadata: {
+        path: typeof req.body?.path === "string" ? req.body.path : "unknown",
+        viewport: typeof req.body?.viewport === "string" ? req.body.viewport : "unknown",
+        theme: typeof req.body?.theme === "string" ? req.body.theme : "unknown"
+      }
+    });
+    return res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("Error recording screenshot audit:", error);
+    return res.status(500).json({ success: false, error: "Failed to record screenshot audit" });
+  }
+});
+router26.get(
+  "/posts/:postId/media-download",
+  async (req, res) => {
+    try {
+      const postId = Number(req.params.postId);
+      const [post] = await db.select({
+        imageUrls: socialPosts.imageUrls,
+        videoUrl: socialPosts.videoUrl,
+        allowMediaDownload: socialPosts.allowMediaDownload
+      }).from(socialPosts).where(and11(eq20(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+      if (!post || !post.allowMediaDownload) {
+        return res.status(403).json({
+          success: false,
+          error: "The author has disabled media downloads"
+        });
+      }
+      const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+      if (!mediaUrl)
+        return res.status(404).json({ success: false, error: "No downloadable media found" });
+      return res.redirect(mediaUrl);
+    } catch (error) {
+      console.error("Error authorizing media download:", error);
+      return res.status(500).json({ success: false, error: "Failed to authorize media download" });
+    }
+  }
+);
+router26.get(
+  "/posts/:postId/media-download",
+  async (req, res) => {
+    try {
+      const postId = Number(req.params.postId);
+      const [post] = await db.select({
+        imageUrls: socialPosts.imageUrls,
+        videoUrl: socialPosts.videoUrl,
+        allowMediaDownload: socialPosts.allowMediaDownload
+      }).from(socialPosts).where(and11(eq20(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+      if (!post || !post.allowMediaDownload) {
+        await recordSocialAudit({
+          actorUserId: req.user?.userId,
+          postId,
+          eventType: "media_download",
+          outcome: "denied"
+        });
+        return res.status(403).json({
+          success: false,
+          error: "The author has disabled media downloads"
+        });
+      }
+      const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+      if (!mediaUrl)
+        return res.status(404).json({ success: false, error: "No downloadable media found" });
+      await recordSocialAudit({
+        actorUserId: req.user?.userId,
+        postId,
+        eventType: "media_download",
+        outcome: "allowed"
+      });
+      return res.redirect(mediaUrl);
+    } catch (error) {
+      console.error("Error authorizing media download:", error);
+      return res.status(500).json({ success: false, error: "Failed to authorize media download" });
+    }
+  }
+);
+router26.post("/posts/:postId/share", async (req, res) => {
+  try {
+    const postId = Number(req.params.postId);
+    const [updatedPost] = await db.update(socialPosts).set({ shareCount: sql9`COALESCE(${socialPosts.shareCount}, 0) + 1` }).where(and11(eq20(socialPosts.id, postId), isNull(socialPosts.deletedAt))).returning({ shareCount: socialPosts.shareCount });
+    if (!updatedPost)
+      return res.status(404).json({ success: false, error: "Post not found" });
+    await recordSocialAudit({
+      actorUserId: req.user?.userId,
+      postId,
+      eventType: "post_share",
+      outcome: "success"
+    });
+    return res.json({ success: true, shareCount: updatedPost.shareCount });
+  } catch (error) {
+    console.error("Error recording share:", error);
+    return res.status(500).json({ success: false, error: "Failed to record share" });
+  }
+});
+router26.get("/posts/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
-    const post = await db.select().from(socialPosts).where(eq21(socialPosts.id, parseInt(postId))).limit(1);
+    const post = await db.select().from(socialPosts).where(eq20(socialPosts.id, parseInt(postId))).limit(1);
     if (!post.length) {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
-    const comments = await db.select().from(socialComments).where(eq21(socialComments.postId, parseInt(postId))).orderBy(desc10(socialComments.createdAt));
+    const comments = await db.select().from(socialComments).where(
+      and11(
+        eq20(socialComments.postId, parseInt(postId)),
+        isNull(socialComments.deletedAt)
+      )
+    ).orderBy(desc9(socialComments.createdAt));
     res.json({
       success: true,
       data: {
@@ -13319,17 +14641,18 @@ router25.get("/posts/:postId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch post" });
   }
 });
-router25.post("/posts/:postId/like", async (req, res) => {
+router26.post("/posts/:postId/like", async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ success: false, error: "Missing userId" });
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    const userId = await getSocialProfileId(Number(appUserId));
     const existingLike = await db.select().from(socialLikes).where(
-      and12(
-        eq21(socialLikes.userId, userId),
-        eq21(socialLikes.postId, parseInt(postId))
+      and11(
+        eq20(socialLikes.userId, userId),
+        eq20(socialLikes.postId, parseInt(postId))
       )
     ).limit(1);
     if (existingLike.length) {
@@ -13340,11 +14663,29 @@ router25.post("/posts/:postId/like", async (req, res) => {
       postId: parseInt(postId),
       likeType: "post"
     });
-    const post = await db.select().from(socialPosts).where(eq21(socialPosts.id, parseInt(postId))).limit(1);
+    const post = await db.select().from(socialPosts).where(eq20(socialPosts.id, parseInt(postId))).limit(1);
     const updatedPost = await db.update(socialPosts).set({
       likeCount: (post[0].likeCount || 0) + 1,
       engagementScore: (((typeof post[0].engagementScore === "string" ? parseFloat(post[0].engagementScore) : post[0].engagementScore) || 0) + 1).toFixed(2)
-    }).where(eq21(socialPosts.id, parseInt(postId))).returning();
+    }).where(eq20(socialPosts.id, parseInt(postId))).returning();
+    if (post[0] && post[0].authorId !== userId) {
+      try {
+        const [postAuthor] = await db.select({ userId: socialUsers.userId }).from(socialUsers).where(eq20(socialUsers.id, post[0].authorId)).limit(1);
+        const [likerInfo] = await db.select({
+          name: users.displayName
+        }).from(users).where(eq20(users.id, Number(appUserId))).limit(1);
+        if (postAuthor && likerInfo) {
+          await notifyLike({
+            likerId: Number(appUserId),
+            postAuthorId: postAuthor.userId,
+            likerName: likerInfo.name || "Someone",
+            postId: parseInt(postId)
+          });
+        }
+      } catch (notifError) {
+        console.error("[LIKE] Failed to create notification:", notifError);
+      }
+    }
     res.json({
       success: true,
       data: updatedPost[0],
@@ -13355,27 +14696,28 @@ router25.post("/posts/:postId/like", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to like post" });
   }
 });
-router25.delete("/posts/:postId/like", async (req, res) => {
+router26.delete("/posts/:postId/like", async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ success: false, error: "Missing userId" });
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
+    const userId = await getSocialProfileId(Number(appUserId));
     await db.delete(socialLikes).where(
-      and12(
-        eq21(socialLikes.userId, userId),
-        eq21(socialLikes.postId, parseInt(postId))
+      and11(
+        eq20(socialLikes.userId, userId),
+        eq20(socialLikes.postId, parseInt(postId))
       )
     );
-    const post = await db.select().from(socialPosts).where(eq21(socialPosts.id, parseInt(postId))).limit(1);
+    const post = await db.select().from(socialPosts).where(eq20(socialPosts.id, parseInt(postId))).limit(1);
     const updatedPost = await db.update(socialPosts).set({
       likeCount: Math.max(0, (post[0].likeCount || 1) - 1),
       engagementScore: Math.max(
         0,
         (parseFloat(post[0].engagementScore) || 1) - 1
       ).toFixed(2)
-    }).where(eq21(socialPosts.id, parseInt(postId))).returning();
+    }).where(eq20(socialPosts.id, parseInt(postId))).returning();
     res.json({
       success: true,
       data: updatedPost[0],
@@ -13386,28 +14728,53 @@ router25.delete("/posts/:postId/like", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to unlike post" });
   }
 });
-router25.post("/posts/:postId/comments", async (req, res) => {
+router26.post("/posts/:postId/comments", async (req, res) => {
   try {
     const { postId } = req.params;
-    const { authorId, content, parentCommentId } = req.body;
-    if (!authorId || !content) {
+    const appUserId = req.user?.userId;
+    const { content, parentCommentId } = req.body;
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    if (!content || !String(content).trim()) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: authorId, content"
+        error: "Missing required field: content"
       });
     }
+    const trimmedContent = String(content).trim();
+    const authorId = await getSocialProfileId(Number(appUserId));
     const newComment = await db.insert(socialComments).values({
       postId: parseInt(postId),
       authorId,
-      content,
+      content: trimmedContent,
       parentCommentId
     }).returning();
-    const post = await db.select().from(socialPosts).where(eq21(socialPosts.id, parseInt(postId))).limit(1);
+    const post = await db.select().from(socialPosts).where(eq20(socialPosts.id, parseInt(postId))).limit(1);
     await db.update(socialPosts).set({
       commentCount: (post[0].commentCount || 0) + 1,
       engagementScore: ((parseFloat(post[0].engagementScore) || 0) + 3).toFixed(2)
       // Comment worth 3 points
-    }).where(eq21(socialPosts.id, parseInt(postId)));
+    }).where(eq20(socialPosts.id, parseInt(postId)));
+    if (post[0] && post[0].authorId !== authorId) {
+      try {
+        const [postAuthor] = await db.select({ userId: socialUsers.userId }).from(socialUsers).where(eq20(socialUsers.id, post[0].authorId)).limit(1);
+        const [commenterInfo] = await db.select({
+          name: users.displayName
+        }).from(users).where(eq20(users.id, Number(appUserId))).limit(1);
+        if (postAuthor && commenterInfo) {
+          await notifyComment({
+            commenterId: Number(appUserId),
+            postAuthorId: postAuthor.userId,
+            commenterName: commenterInfo.name || "Someone",
+            postId: parseInt(postId),
+            commentPreview: content
+          });
+        }
+      } catch (notifError) {
+        console.error("[COMMENT] Failed to create notification:", notifError);
+      }
+    }
     res.status(201).json({
       success: true,
       data: Array.isArray(newComment) ? newComment[0] : newComment,
@@ -13418,14 +14785,19 @@ router25.post("/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to add comment" });
   }
 });
-router25.get("/posts/:postId/comments", async (req, res) => {
+router26.get("/posts/:postId/comments", async (req, res) => {
   try {
     const { postId } = req.params;
     const { page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     const offset = (pageNum - 1) * limitNum;
-    const comments = await db.select().from(socialComments).where(eq21(socialComments.postId, parseInt(postId))).orderBy(desc10(socialComments.createdAt)).limit(limitNum).offset(offset);
+    const comments = await db.select().from(socialComments).where(
+      and11(
+        eq20(socialComments.postId, parseInt(postId)),
+        isNull(socialComments.deletedAt)
+      )
+    ).orderBy(desc9(socialComments.createdAt)).limit(limitNum).offset(offset);
     res.json({
       success: true,
       data: comments,
@@ -13439,13 +14811,114 @@ router25.get("/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch comments" });
   }
 });
-router25.post("/follow/:userId", async (req, res) => {
+router26.patch("/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const commentId = Number(req.params.commentId);
+    const { content } = req.body;
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
+    if (!trimmedContent) {
+      return res.status(400).json({ success: false, error: "Comment content is required" });
+    }
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const [existingComment] = await db.select().from(socialComments).where(
+      and11(
+        eq20(socialComments.id, commentId),
+        eq20(socialComments.postId, postId),
+        eq20(socialComments.authorId, authorProfileId),
+        isNull(socialComments.deletedAt)
+      )
+    ).limit(1);
+    if (!existingComment) {
+      return res.status(404).json({ success: false, error: "Comment not found" });
+    }
+    const [updatedComment] = await db.update(socialComments).set({
+      content: trimmedContent,
+      isEdited: true,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq20(socialComments.id, commentId)).returning();
+    res.json({
+      success: true,
+      data: updatedComment,
+      message: "Comment updated"
+    });
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    res.status(500).json({ success: false, error: "Failed to update comment" });
+  }
+});
+router26.delete("/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const commentId = Number(req.params.commentId);
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const [existingComment] = await db.select().from(socialComments).where(
+      and11(
+        eq20(socialComments.id, commentId),
+        eq20(socialComments.postId, postId),
+        eq20(socialComments.authorId, authorProfileId),
+        isNull(socialComments.deletedAt)
+      )
+    ).limit(1);
+    if (!existingComment) {
+      return res.status(404).json({ success: false, error: "Comment not found" });
+    }
+    const [deletedComment] = await db.update(socialComments).set({
+      deletedAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq20(socialComments.id, commentId)).returning();
+    const [postRow] = await db.select({ commentCount: socialPosts.commentCount }).from(socialPosts).where(and11(eq20(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+    if (postRow) {
+      await db.update(socialPosts).set({
+        commentCount: Math.max(0, (postRow.commentCount || 0) - 1)
+      }).where(eq20(socialPosts.id, postId));
+    }
+    res.json({
+      success: true,
+      data: deletedComment,
+      message: "Comment deleted"
+    });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ success: false, error: "Failed to delete comment" });
+  }
+});
+router26.get("/follow/following", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.json({ success: true, data: [] });
+    }
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const rows = await db.select({ appUserId: socialUsers.userId }).from(socialFollowers).innerJoin(socialUsers, eq20(socialUsers.id, socialFollowers.followingId)).where(eq20(socialFollowers.followerId, followerId));
+    res.json({
+      success: true,
+      data: rows.map((row) => row.appUserId).filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Error fetching following list:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch following list" });
+  }
+});
+router26.post("/follow/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { followerId } = req.body;
-    if (!followerId) {
-      return res.status(400).json({ success: false, error: "Missing followerId" });
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Sign in to follow other members"
+      });
     }
+    const followerId = await getSocialProfileId(Number(appUserId));
     try {
       const targetUser = await pool.query(
         "SELECT role FROM users WHERE id = $1",
@@ -13458,11 +14931,11 @@ router25.post("/follow/:userId", async (req, res) => {
       if (targetUser.rows[0]?.role === "artist" || targetHasArtist.rows.length > 0) {
         const followerUser = await pool.query(
           "SELECT role FROM users WHERE id = $1",
-          [followerId]
+          [appUserId]
         );
         const followerHasArtist = await pool.query(
           "SELECT id FROM artist_profiles WHERE user_id = $1 LIMIT 1",
-          [followerId]
+          [appUserId]
         );
         const followerIsArtist = followerUser.rows[0]?.role === "artist" || followerHasArtist.rows.length > 0;
         if (!followerIsArtist) {
@@ -13475,24 +14948,39 @@ router25.post("/follow/:userId", async (req, res) => {
       }
     } catch (_artistCheckErr) {
     }
+    const followingId = await getSocialProfileId(parseInt(userId));
+    if (followingId === followerId) {
+      return res.status(400).json({ success: false, error: "You cannot follow yourself" });
+    }
     const existingFollow = await db.select().from(socialFollowers).where(
-      and12(
-        eq21(socialFollowers.followerId, followerId),
-        eq21(socialFollowers.followingId, parseInt(userId))
+      and11(
+        eq20(socialFollowers.followerId, followerId),
+        eq20(socialFollowers.followingId, followingId)
       )
     ).limit(1);
-    if (existingFollow.length) {
-      return res.status(400).json({ success: false, error: "Already following this user" });
+    if (!existingFollow.length) {
+      await db.insert(socialFollowers).values({ followerId, followingId });
+      try {
+        const [followerInfo] = await db.select({
+          name: users.displayName
+        }).from(users).where(eq20(users.id, Number(appUserId))).limit(1);
+        if (followerInfo) {
+          await notifyFollow({
+            followerId: Number(appUserId),
+            followingId: parseInt(userId),
+            followerName: followerInfo.name || "Someone"
+          });
+        }
+      } catch (notifError) {
+        console.error("[FOLLOW] Failed to create notification:", notifError);
+      }
     }
-    await db.insert(socialFollowers).values({
-      followerId,
-      followingId: parseInt(userId)
-    });
-    await db.update(socialUsers).set({
-      followerCount: (await db.select().from(socialFollowers).where(eq21(socialFollowers.followingId, parseInt(userId)))).length + 1
-    }).where(eq21(socialUsers.id, parseInt(userId)));
+    await syncFollowerCount(followingId);
+    const [{ count: count10 }] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq20(socialFollowers.followingId, followingId));
     res.json({
       success: true,
+      following: true,
+      followerCount: Number(count10) || 0,
       message: "User followed successfully"
     });
   } catch (error) {
@@ -13500,21 +14988,30 @@ router25.post("/follow/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to follow user" });
   }
 });
-router25.delete("/follow/:userId", async (req, res) => {
+router26.delete("/follow/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { followerId } = req.body;
-    if (!followerId) {
-      return res.status(400).json({ success: false, error: "Missing followerId" });
+    const appUserId = req.user?.userId;
+    if (!appUserId) {
+      return res.status(401).json({
+        success: false,
+        error: "Sign in to manage the members you follow"
+      });
     }
+    const followerId = await getSocialProfileId(Number(appUserId));
+    const followingId = await getSocialProfileId(parseInt(userId));
     await db.delete(socialFollowers).where(
-      and12(
-        eq21(socialFollowers.followerId, followerId),
-        eq21(socialFollowers.followingId, parseInt(userId))
+      and11(
+        eq20(socialFollowers.followerId, followerId),
+        eq20(socialFollowers.followingId, followingId)
       )
     );
+    await syncFollowerCount(followingId);
+    const [{ count: count10 }] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq20(socialFollowers.followingId, followingId));
     res.json({
       success: true,
+      following: false,
+      followerCount: Number(count10) || 0,
       message: "User unfollowed successfully"
     });
   } catch (error) {
@@ -13522,19 +15019,98 @@ router25.delete("/follow/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to unfollow user" });
   }
 });
-router25.get("/users/:userId", async (req, res) => {
+router26.get("/users/:userId", async (req, res) => {
   try {
-    const { userId } = req.params;
-    const user = await db.select().from(socialUsers).where(eq21(socialUsers.id, parseInt(userId))).limit(1);
-    if (!user.length) {
+    const targetAppUserId = parseInt(req.params.userId, 10);
+    if (!targetAppUserId || Number.isNaN(targetAppUserId)) {
+      return res.status(400).json({ success: false, error: "Invalid user id" });
+    }
+    const [account] = await db.select({
+      id: users.id,
+      username: users.username,
+      displayName: users.displayName,
+      role: users.role,
+      subscriptionTier: users.subscriptionTier,
+      createdAt: users.createdAt
+    }).from(users).where(eq20(users.id, targetAppUserId)).limit(1);
+    if (!account) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
-    const posts = await db.select().from(socialPosts).where(eq21(socialPosts.authorId, parseInt(userId)));
+    const currentAppUserId = req.user?.userId ? Number(req.user.userId) : null;
+    const targetSocialId = await getSocialProfileId(targetAppUserId);
+    const [socialProfile] = await db.select().from(socialUsers).where(eq20(socialUsers.id, targetSocialId)).limit(1);
+    if (!socialProfile) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    let viewerSocialId = null;
+    if (currentAppUserId) {
+      viewerSocialId = await getSocialProfileId(currentAppUserId);
+    }
+    const [followerRow] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq20(socialFollowers.followingId, targetSocialId));
+    const [followingRow] = await db.select({ count: sql9`count(*)` }).from(socialFollowers).where(eq20(socialFollowers.followerId, targetSocialId));
+    const [postStats] = await db.select({
+      postCount: sql9`count(*)`,
+      likeCount: sql9`coalesce(sum(${socialPosts.likeCount}), 0)`
+    }).from(socialPosts).where(
+      and11(
+        eq20(socialPosts.authorId, targetSocialId),
+        isNull(socialPosts.deletedAt)
+      )
+    );
+    const [trackStats] = await db.select({
+      trackCount: sql9`count(*)`,
+      streamCount: sql9`coalesce(sum(${musicTracks.playCount}), 0)`
+    }).from(musicTracks).where(eq20(musicTracks.artistId, targetAppUserId));
+    const artistCheck = await pool.query(
+      "SELECT 1 FROM artist_profiles WHERE user_id = $1 LIMIT 1",
+      [targetAppUserId]
+    );
+    let isFollowing = false;
+    if (viewerSocialId && viewerSocialId !== targetSocialId) {
+      const [followState] = await db.select({ id: socialFollowers.id }).from(socialFollowers).where(
+        and11(
+          eq20(socialFollowers.followerId, viewerSocialId),
+          eq20(socialFollowers.followingId, targetSocialId)
+        )
+      ).limit(1);
+      isFollowing = Boolean(followState);
+    }
     res.json({
       success: true,
       data: {
-        ...user[0],
-        postCount: posts.length
+        id: account.id,
+        userId: account.id,
+        socialUserId: socialProfile.id,
+        username: account.username,
+        displayName: account.displayName || socialProfile.displayName || account.username,
+        name: account.displayName || socialProfile.displayName || account.username,
+        avatarUrl: socialProfile.avatarUrl ?? null,
+        avatar: socialProfile.avatarUrl ?? null,
+        bio: socialProfile.bio ?? null,
+        location: socialProfile.location ?? null,
+        website: socialProfile.website ?? null,
+        profession: socialProfile.profession ?? null,
+        role: account.role || "user",
+        tier: account.subscriptionTier || "free",
+        joinedAt: account.createdAt ?? null,
+        isArtist: artistCheck.rows.length > 0,
+        isFollowing,
+        followerCount: Number(followerRow?.count) || 0,
+        followingCount: Number(followingRow?.count) || 0,
+        postCount: Number(postStats?.postCount) || 0,
+        trackCount: Number(trackStats?.trackCount) || 0,
+        streamCount: Number(trackStats?.streamCount) || 0,
+        likeCount: Number(postStats?.likeCount) || 0,
+        engagementScore: Number(socialProfile.engagementScore || 0),
+        satisfactionRating: Number(socialProfile.satisfactionRating || 0),
+        stats: {
+          followerCount: Number(followerRow?.count) || 0,
+          followingCount: Number(followingRow?.count) || 0,
+          postCount: Number(postStats?.postCount) || 0,
+          trackCount: Number(trackStats?.trackCount) || 0,
+          streamCount: Number(trackStats?.streamCount) || 0,
+          likeCount: Number(postStats?.likeCount) || 0
+        }
       }
     });
   } catch (error) {
@@ -13542,14 +15118,69 @@ router25.get("/users/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch user" });
   }
 });
-var social_api_default = router25;
+router26.get("/users/:userId/tracks", async (req, res) => {
+  try {
+    const targetUserId = parseInt(req.params.userId, 10);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const offset = parseInt(req.query.offset) || 0;
+    const tracks = await db.select({
+      id: musicTracks.id,
+      title: musicTracks.title,
+      duration: musicTracks.duration,
+      coverArt: musicTracks.coverArt,
+      audioUrl: musicTracks.audioUrl,
+      genre: musicTracks.genre,
+      playCount: musicTracks.playCount,
+      createdAt: musicTracks.createdAt
+    }).from(musicTracks).where(eq20(musicTracks.artistId, targetUserId)).orderBy(desc9(musicTracks.createdAt)).limit(limit).offset(offset);
+    const [totalResult] = await db.select({ count: sql9`count(*)` }).from(musicTracks).where(eq20(musicTracks.artistId, targetUserId));
+    res.json({
+      success: true,
+      data: tracks,
+      meta: { total: totalResult?.count || 0, limit, offset }
+    });
+  } catch (error) {
+    console.error("Error fetching user tracks:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch tracks" });
+  }
+});
+router26.get("/users/:userId/posts", async (req, res) => {
+  try {
+    const targetUserId = parseInt(req.params.userId, 10);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const offset = parseInt(req.query.offset) || 0;
+    const targetSocialId = await getSocialProfileId(targetUserId);
+    const posts = await db.select().from(socialPosts).where(
+      and11(
+        eq20(socialPosts.authorId, targetSocialId),
+        isNull(socialPosts.deletedAt)
+      )
+    ).orderBy(desc9(socialPosts.createdAt)).limit(limit).offset(offset);
+    const [totalResult] = await db.select({ count: sql9`count(*)` }).from(socialPosts).where(
+      and11(
+        eq20(socialPosts.authorId, targetSocialId),
+        isNull(socialPosts.deletedAt)
+      )
+    );
+    const enriched = await enrichPostsWithTracks(posts);
+    res.json({
+      success: true,
+      data: enriched,
+      meta: { total: totalResult?.count || 0, limit, offset }
+    });
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch posts" });
+  }
+});
+var social_api_default = router26;
 
 // server/routes/faq-api.ts
 init_db();
-import { Router as Router26 } from "express";
-import { desc as desc11, eq as eq22, and as and13, ilike as ilike7, isNull as isNull2, sql as sql9 } from "drizzle-orm";
-var router26 = Router26();
-router26.get("/categories", async (_req, res) => {
+import { Router as Router27 } from "express";
+import { desc as desc10, eq as eq21, and as and12, ilike as ilike6, isNull as isNull2, sql as sql10 } from "drizzle-orm";
+var router27 = Router27();
+router27.get("/categories", async (_req, res) => {
   try {
     const categories = await db.select().from(faqCategories).orderBy(faqCategories.sortOrder);
     if (!categories.length) {
@@ -13611,7 +15242,7 @@ router26.get("/categories", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch categories" });
   }
 });
-router26.get("/", async (req, res) => {
+router27.get("/", async (req, res) => {
   try {
     const {
       page = 1,
@@ -13625,27 +15256,27 @@ router26.get("/", async (req, res) => {
     const limitNum = parseInt(limit) || 15;
     const offset = (pageNum - 1) * limitNum;
     const conditions = [
-      eq22(socialPosts.postType, "faq"),
+      eq21(socialPosts.postType, "faq"),
       isNull2(socialPosts.deletedAt)
     ];
     if (search) {
       conditions.push(
-        sql9`(${ilike7(socialPosts.title, `${search}%`)} OR ${ilike7(socialPosts.content, `${search}%`)})`
+        sql10`(${ilike6(socialPosts.title, `${search}%`)} OR ${ilike6(socialPosts.content, `${search}%`)})`
       );
     }
     if (category && category !== "all") {
-      conditions.push(eq22(socialPosts.faqCategory, category));
+      conditions.push(eq21(socialPosts.faqCategory, category));
     }
     if (resolved === "true") {
-      conditions.push(eq22(socialPosts.isResolved, true));
+      conditions.push(eq21(socialPosts.isResolved, true));
     } else if (resolved === "false") {
-      conditions.push(eq22(socialPosts.isResolved, false));
+      conditions.push(eq21(socialPosts.isResolved, false));
     }
-    const orderBy = sort === "popular" ? desc11(socialPosts.viewCount) : sort === "most-replies" ? desc11(socialPosts.commentCount) : desc11(socialPosts.createdAt);
-    const posts = await db.select().from(socialPosts).where(and13(...conditions)).orderBy(orderBy).limit(limitNum).offset(offset);
+    const orderBy = sort === "popular" ? desc10(socialPosts.viewCount) : sort === "most-replies" ? desc10(socialPosts.commentCount) : desc10(socialPosts.createdAt);
+    const posts = await db.select().from(socialPosts).where(and12(...conditions)).orderBy(orderBy).limit(limitNum).offset(offset);
     const enrichedPosts = await Promise.all(
       posts.map(async (post) => {
-        const author = await db.select().from(socialUsers).where(eq22(socialUsers.id, post.authorId)).limit(1);
+        const author = await db.select().from(socialUsers).where(eq21(socialUsers.id, post.authorId)).limit(1);
         return {
           ...post,
           author: author[0] || {
@@ -13655,7 +15286,7 @@ router26.get("/", async (req, res) => {
         };
       })
     );
-    const totalResult = await db.select({ count: sql9`count(*)` }).from(socialPosts).where(and13(...conditions));
+    const totalResult = await db.select({ count: sql10`count(*)` }).from(socialPosts).where(and12(...conditions));
     const total = Number(totalResult[0]?.count || 0);
     res.json({
       success: true,
@@ -13672,7 +15303,7 @@ router26.get("/", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch FAQ topics" });
   }
 });
-router26.get("/search", async (req, res) => {
+router27.get("/search", async (req, res) => {
   try {
     const { q, limit = 5 } = req.query;
     if (!q) {
@@ -13687,42 +15318,42 @@ router26.get("/search", async (req, res) => {
       isResolved: socialPosts.isResolved,
       createdAt: socialPosts.createdAt
     }).from(socialPosts).where(
-      and13(
-        eq22(socialPosts.postType, "faq"),
+      and12(
+        eq21(socialPosts.postType, "faq"),
         isNull2(socialPosts.deletedAt),
-        sql9`(${ilike7(socialPosts.title, `${q}%`)} OR ${ilike7(socialPosts.content, `${q}%`)})`
+        sql10`(${ilike6(socialPosts.title, `${q}%`)} OR ${ilike6(socialPosts.content, `${q}%`)})`
       )
-    ).orderBy(desc11(socialPosts.viewCount)).limit(limitNum);
+    ).orderBy(desc10(socialPosts.viewCount)).limit(limitNum);
     res.json({ success: true, data: results });
   } catch (error) {
     console.error("Error searching FAQ:", error);
     res.status(500).json({ success: false, error: "Failed to search FAQ" });
   }
 });
-router26.get("/:id", async (req, res) => {
+router27.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
     const post = await db.select().from(socialPosts).where(
-      and13(
-        eq22(socialPosts.id, postId),
-        eq22(socialPosts.postType, "faq"),
+      and12(
+        eq21(socialPosts.id, postId),
+        eq21(socialPosts.postType, "faq"),
         isNull2(socialPosts.deletedAt)
       )
     ).limit(1);
     if (!post.length) {
       return res.status(404).json({ success: false, error: "FAQ topic not found" });
     }
-    const author = await db.select().from(socialUsers).where(eq22(socialUsers.id, post[0].authorId)).limit(1);
+    const author = await db.select().from(socialUsers).where(eq21(socialUsers.id, post[0].authorId)).limit(1);
     const comments = await db.select().from(socialComments).where(
-      and13(
-        eq22(socialComments.postId, postId),
+      and12(
+        eq21(socialComments.postId, postId),
         isNull2(socialComments.deletedAt)
       )
-    ).orderBy(desc11(socialComments.likeCount), socialComments.createdAt);
+    ).orderBy(desc10(socialComments.likeCount), socialComments.createdAt);
     const enrichedComments = await Promise.all(
       comments.map(async (comment) => {
-        const commentAuthor = await db.select().from(socialUsers).where(eq22(socialUsers.id, comment.authorId)).limit(1);
+        const commentAuthor = await db.select().from(socialUsers).where(eq21(socialUsers.id, comment.authorId)).limit(1);
         return {
           ...comment,
           author: commentAuthor[0] || {
@@ -13738,7 +15369,7 @@ router26.get("/:id", async (req, res) => {
       ...reply,
       replies: nested.filter((n) => n.parentCommentId === reply.id)
     }));
-    await db.update(socialPosts).set({ viewCount: sql9`${socialPosts.viewCount} + 1` }).where(eq22(socialPosts.id, postId));
+    await db.update(socialPosts).set({ viewCount: sql10`${socialPosts.viewCount} + 1` }).where(eq21(socialPosts.id, postId));
     res.json({
       success: true,
       data: {
@@ -13753,23 +15384,24 @@ router26.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch FAQ topic" });
   }
 });
-router26.post("/", async (req, res) => {
+router27.post("/", async (req, res) => {
   try {
-    const {
-      authorId,
-      title,
-      content,
-      faqCategory = "general",
-      tags
-    } = req.body;
-    if (!authorId || !title || !content) {
+    const authorId = req.user?.userId;
+    const { title, content, faqCategory = "general", tags } = req.body;
+    if (!authorId) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required to post a FAQ topic"
+      });
+    }
+    if (!title || !content) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: authorId, title, content"
+        error: "Missing required fields: title, content"
       });
     }
     const newPost = await db.insert(socialPosts).values({
-      authorId,
+      authorId: Number(authorId),
       title,
       content,
       postType: "faq",
@@ -13787,30 +15419,37 @@ router26.post("/", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create FAQ topic" });
   }
 });
-router26.post("/:id/reply", async (req, res) => {
+router27.post("/:id/reply", async (req, res) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
-    const { authorId, content, parentCommentId } = req.body;
-    if (!authorId || !content) {
-      return res.status(400).json({
+    const authorId = req.user?.userId;
+    const { content, parentCommentId } = req.body;
+    if (!authorId) {
+      return res.status(401).json({
         success: false,
-        error: "Missing required fields: authorId, content"
+        error: "Authentication required to reply"
       });
     }
-    const post = await db.select().from(socialPosts).where(and13(eq22(socialPosts.id, postId), eq22(socialPosts.postType, "faq"))).limit(1);
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: content"
+      });
+    }
+    const post = await db.select().from(socialPosts).where(and12(eq21(socialPosts.id, postId), eq21(socialPosts.postType, "faq"))).limit(1);
     if (!post.length) {
       return res.status(404).json({ success: false, error: "FAQ topic not found" });
     }
     const newComment = await db.insert(socialComments).values({
       postId,
-      authorId,
+      authorId: Number(authorId),
       content,
       parentCommentId: parentCommentId || null
     }).returning();
-    await db.update(socialPosts).set({ commentCount: sql9`${socialPosts.commentCount} + 1` }).where(eq22(socialPosts.id, postId));
+    await db.update(socialPosts).set({ commentCount: sql10`${socialPosts.commentCount} + 1` }).where(eq21(socialPosts.id, postId));
     if (parentCommentId) {
-      await db.update(socialComments).set({ replyCount: sql9`${socialComments.replyCount} + 1` }).where(eq22(socialComments.id, parentCommentId));
+      await db.update(socialComments).set({ replyCount: sql10`${socialComments.replyCount} + 1` }).where(eq21(socialComments.id, parentCommentId));
     }
     res.status(201).json({
       success: true,
@@ -13822,11 +15461,11 @@ router26.post("/:id/reply", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to post reply" });
   }
 });
-router26.post("/:id/resolve", async (req, res) => {
+router27.post("/:id/resolve", async (req, res) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
-    const updated = await db.update(socialPosts).set({ isResolved: true, updatedAt: /* @__PURE__ */ new Date() }).where(and13(eq22(socialPosts.id, postId), eq22(socialPosts.postType, "faq"))).returning();
+    const updated = await db.update(socialPosts).set({ isResolved: true, updatedAt: /* @__PURE__ */ new Date() }).where(and12(eq21(socialPosts.id, postId), eq21(socialPosts.postType, "faq"))).returning();
     if (!updated.length) {
       return res.status(404).json({ success: false, error: "FAQ topic not found" });
     }
@@ -13840,17 +15479,17 @@ router26.post("/:id/resolve", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to resolve FAQ topic" });
   }
 });
-var faq_api_default = router26;
+var faq_api_default = router27;
 
 // server/routes/tickets.ts
 init_db();
-import { Router as Router27 } from "express";
-import { sql as sql10 } from "drizzle-orm";
-var router27 = Router27();
+import { Router as Router28 } from "express";
+import { sql as sql11 } from "drizzle-orm";
+var router28 = Router28();
 var inMemoryTickets = [];
 async function ensureTicketsTable() {
   try {
-    await db.execute(sql10`SELECT 1 FROM tickets LIMIT 1`);
+    await db.execute(sql11`SELECT 1 FROM tickets LIMIT 1`);
     return true;
   } catch {
     return false;
@@ -13865,12 +15504,12 @@ function calculateSLATargetHours(priority2) {
   };
   return slaMap[priority2.toLowerCase()] || 24;
 }
-router27.get("/", async (req, res) => {
+router28.get("/", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
       const rows = await db.execute(
-        sql10`SELECT * FROM tickets ORDER BY created_at DESC`
+        sql11`SELECT * FROM tickets ORDER BY created_at DESC`
       );
       return res.json(rows.rows || []);
     }
@@ -13880,7 +15519,7 @@ router27.get("/", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/", async (req, res) => {
+router28.post("/", async (req, res) => {
   try {
     const payload = req.body || {};
     const priority2 = payload.priority || "medium";
@@ -13907,7 +15546,7 @@ router27.post("/", async (req, res) => {
     if (exists) {
       try {
         const inserted = await db.execute(
-          sql10`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
+          sql11`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
               VALUES (${payload.title || "Untitled"}, ${payload.description || ""}, ${payload.status || "open"}, ${priority2}, ${payload.category || "general"}, ${payload.reporter || null}, ${payload.requesterEmail || null}, ${payload.assigneeId || null}, ${payload.team || null}, ${payload.source || "portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
               RETURNING *`
         );
@@ -13923,7 +15562,7 @@ router27.post("/", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.put("/:id", async (req, res) => {
+router28.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const payload = req.body || {};
@@ -13931,7 +15570,7 @@ router27.put("/:id", async (req, res) => {
     if (exists) {
       try {
         const updated = await db.execute(
-          sql10`UPDATE tickets 
+          sql11`UPDATE tickets 
               SET title=${payload.title || ""}, 
                   description=${payload.description || ""}, 
                   status=${payload.status || "open"},
@@ -13962,13 +15601,13 @@ router27.put("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.delete("/:id", async (req, res) => {
+router28.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
-        await db.execute(sql10`DELETE FROM tickets WHERE id = ${parseInt(id)}`);
+        await db.execute(sql11`DELETE FROM tickets WHERE id = ${parseInt(id)}`);
         return res.json({ success: true });
       } catch (dbError) {
         console.error("\u274C Database delete error:", dbError);
@@ -13981,7 +15620,7 @@ router27.delete("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.put("/:id/assign", async (req, res) => {
+router28.put("/:id/assign", async (req, res) => {
   try {
     const { id } = req.params;
     const { assigneeId, team } = req.body;
@@ -13989,7 +15628,7 @@ router27.put("/:id/assign", async (req, res) => {
     if (exists) {
       try {
         const updated = await db.execute(
-          sql10`UPDATE tickets SET assignee_id=${assigneeId}, team=${team || null}, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
+          sql11`UPDATE tickets SET assignee_id=${assigneeId}, team=${team || null}, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
         );
         return res.json(updated.rows[0]);
       } catch (dbError) {
@@ -14009,14 +15648,14 @@ router27.put("/:id/assign", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/:id/escalate", async (req, res) => {
+router28.post("/:id/escalate", async (req, res) => {
   try {
     const { id } = req.params;
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
         const updated = await db.execute(
-          sql10`UPDATE tickets SET priority='critical', sla_target_hours=2, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
+          sql11`UPDATE tickets SET priority='critical', sla_target_hours=2, updated_at=NOW() WHERE id=${parseInt(id)} RETURNING *`
         );
         return res.json(updated.rows[0]);
       } catch (dbError) {
@@ -14036,13 +15675,62 @@ router27.post("/:id/escalate", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/stats/summary", async (req, res) => {
+router28.get("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const exists = await ensureTicketsTable();
+    if (exists) {
+      try {
+        const rows = await db.execute(
+          sql11`SELECT * FROM ticket_comments WHERE ticket_id=${parseInt(id)} ORDER BY created_at ASC`
+        );
+        return res.json(rows.rows || []);
+      } catch (dbError) {
+        console.error("\u274C Fetch ticket comments error:", dbError);
+      }
+    }
+    res.json([]);
+  } catch (error) {
+    console.error("\u274C Get ticket comments failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router28.post("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { body, authorName } = req.body || {};
+    if (!body || !String(body).trim()) {
+      return res.status(400).json({ error: "Comment body is required" });
+    }
+    const authorId = req.user?.id || null;
+    const resolvedAuthorName = authorName || req.user?.username || "Anonymous";
+    const exists = await ensureTicketsTable();
+    if (exists) {
+      try {
+        const inserted = await db.execute(
+          sql11`INSERT INTO ticket_comments (ticket_id, author_id, author_name, body)
+              VALUES (${parseInt(id)}, ${authorId}, ${resolvedAuthorName}, ${body})
+              RETURNING *`
+        );
+        return res.json(inserted.rows[0]);
+      } catch (dbError) {
+        console.error("\u274C Create ticket comment error:", dbError);
+        return res.status(500).json({ success: false, error: dbError.message });
+      }
+    }
+    res.status(503).json({ success: false, error: "Tickets table unavailable" });
+  } catch (error) {
+    console.error("\u274C Create ticket comment failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router28.get("/stats/summary", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
         const statsRows = await db.execute(
-          sql10`SELECT 
+          sql11`SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status='open' THEN 1 ELSE 0 END) as open,
                 SUM(CASE WHEN status='in-progress' THEN 1 ELSE 0 END) as in_progress,
@@ -14086,13 +15774,13 @@ router27.get("/stats/summary", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/sla/breaches", async (req, res) => {
+router28.get("/sla/breaches", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
         const breaches = await db.execute(
-          sql10`SELECT * FROM tickets WHERE sla_breached=true ORDER BY created_at DESC`
+          sql11`SELECT * FROM tickets WHERE sla_breached=true ORDER BY created_at DESC`
         );
         return res.json(breaches.rows || []);
       } catch (dbError) {
@@ -14104,13 +15792,13 @@ router27.get("/sla/breaches", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/status/:status", async (req, res) => {
+router28.get("/status/:status", async (req, res) => {
   try {
     const { status } = req.params;
     const exists = await ensureTicketsTable();
     if (exists) {
       const rows = await db.execute(
-        sql10`SELECT * FROM tickets WHERE status = ${status} ORDER BY created_at DESC`
+        sql11`SELECT * FROM tickets WHERE status = ${status} ORDER BY created_at DESC`
       );
       return res.json(rows.rows || []);
     }
@@ -14119,12 +15807,12 @@ router27.get("/status/:status", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/priority/critical", async (req, res) => {
+router28.get("/priority/critical", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
       const rows = await db.execute(
-        sql10`SELECT * FROM tickets WHERE priority IN ('critical', 'high') ORDER BY created_at DESC`
+        sql11`SELECT * FROM tickets WHERE priority IN ('critical', 'high') ORDER BY created_at DESC`
       );
       return res.json(rows.rows || []);
     }
@@ -14133,7 +15821,7 @@ router27.get("/priority/critical", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/batch/update", async (req, res) => {
+router28.post("/batch/update", async (req, res) => {
   try {
     const { ids, updates } = req.body;
     if (!ids || !Array.isArray(ids)) {
@@ -14143,7 +15831,7 @@ router27.post("/batch/update", async (req, res) => {
     if (exists) {
       for (const id of ids) {
         await db.execute(
-          sql10`UPDATE tickets SET status = ${updates?.status || "open"}, updated_at = NOW() WHERE id = ${parseInt(id)}`
+          sql11`UPDATE tickets SET status = ${updates?.status || "open"}, updated_at = NOW() WHERE id = ${parseInt(id)}`
         );
       }
     }
@@ -14152,18 +15840,18 @@ router27.post("/batch/update", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var tickets_default = router27;
+var tickets_default = router28;
 
 // server/routes/jobs.ts
 init_db();
 init_schema();
 init_email_service();
-import { Router as Router28 } from "express";
-import { sql as sql11, eq as eq23, and as and14, or as or5, ilike as ilike8, desc as desc12, count as count10 } from "drizzle-orm";
-import jwt5 from "jsonwebtoken";
+import { Router as Router29 } from "express";
+import { sql as sql12, eq as eq22, and as and13, or as or5, ilike as ilike7, desc as desc11, count as count9 } from "drizzle-orm";
+import jwt6 from "jsonwebtoken";
 var ADMIN_NOTIFICATION_EMAIL5 = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
-var router28 = Router28();
-router28.get("/", async (req, res) => {
+var router29 = Router29();
+router29.get("/", async (req, res) => {
   try {
     const {
       type,
@@ -14178,12 +15866,12 @@ router28.get("/", async (req, res) => {
     );
     const conditions = [];
     if (type && typeof type === "string") {
-      conditions.push(eq23(jobs.type, type));
+      conditions.push(eq22(jobs.type, type));
     }
     if (countryCode && typeof countryCode === "string" && countryCode !== "all") {
-      conditions.push(eq23(jobs.countryCode, countryCode.toUpperCase()));
+      conditions.push(eq22(jobs.countryCode, countryCode.toUpperCase()));
     }
-    const jobResults = await db.select().from(jobs).where(conditions.length > 0 ? and14(...conditions) : void 0).orderBy(jobs.createdAt);
+    const jobResults = await db.select().from(jobs).where(conditions.length > 0 ? and13(...conditions) : void 0).orderBy(jobs.createdAt);
     console.log(`\u2705 [JOBS] Found ${jobResults.length} jobs from database`);
     const formatDate = (dateValue, defaultValue = null) => {
       if (!dateValue) return defaultValue;
@@ -14215,7 +15903,7 @@ router28.get("/", async (req, res) => {
     });
   }
 });
-router28.get("/search", async (req, res) => {
+router29.get("/search", async (req, res) => {
   try {
     const {
       search,
@@ -14238,42 +15926,42 @@ router28.get("/search", async (req, res) => {
     const offset = (pageNum - 1) * limitNum;
     const conditions = [];
     if (jobStatus && typeof jobStatus === "string") {
-      conditions.push(eq23(jobs.status, jobStatus));
+      conditions.push(eq22(jobs.status, jobStatus));
     } else {
-      conditions.push(eq23(jobs.status, "active"));
+      conditions.push(eq22(jobs.status, "active"));
     }
     if (searchTerm.trim()) {
       const searchCond = or5(
-        ilike8(jobs.title, `${searchTerm}%`),
-        ilike8(jobs.company, `${searchTerm}%`),
-        ilike8(jobs.description, `${searchTerm}%`)
+        ilike7(jobs.title, `${searchTerm}%`),
+        ilike7(jobs.company, `${searchTerm}%`),
+        ilike7(jobs.description, `${searchTerm}%`)
       );
       if (searchCond) conditions.push(searchCond);
     }
     if (type && typeof type === "string") {
-      conditions.push(eq23(jobs.type, type));
+      conditions.push(eq22(jobs.type, type));
     }
     if (sector && typeof sector === "string" && sector !== "all") {
-      conditions.push(eq23(jobs.sector, sector));
+      conditions.push(eq22(jobs.sector, sector));
     }
     if (department && typeof department === "string") {
-      conditions.push(ilike8(jobs.department, `${department}%`));
+      conditions.push(ilike7(jobs.department, `${department}%`));
     }
     if (experience_level && typeof experience_level === "string") {
-      conditions.push(eq23(jobs.experienceLevel, experience_level));
+      conditions.push(eq22(jobs.experienceLevel, experience_level));
     }
     if (is_remote === "true" || remote === "true") {
-      conditions.push(eq23(jobs.isRemote, true));
+      conditions.push(eq22(jobs.isRemote, true));
     }
     if (featured === "true") {
-      conditions.push(eq23(jobs.isFeatured, true));
+      conditions.push(eq22(jobs.isFeatured, true));
     }
     if (countryCode && typeof countryCode === "string" && countryCode !== "all") {
-      conditions.push(eq23(jobs.countryCode, countryCode.toUpperCase()));
+      conditions.push(eq22(jobs.countryCode, countryCode.toUpperCase()));
     }
-    const where = conditions.length > 0 ? and14(...conditions) : void 0;
-    const [{ value: total }] = await db.select({ value: count10() }).from(jobs).where(where);
-    const rows = await db.select().from(jobs).where(where).orderBy(desc12(jobs.createdAt)).limit(limitNum).offset(offset);
+    const where = conditions.length > 0 ? and13(...conditions) : void 0;
+    const [{ value: total }] = await db.select({ value: count9() }).from(jobs).where(where);
+    const rows = await db.select().from(jobs).where(where).orderBy(desc11(jobs.createdAt)).limit(limitNum).offset(offset);
     const parseField = (val) => {
       if (!val) return [];
       if (Array.isArray(val)) return val;
@@ -14322,7 +16010,7 @@ router28.get("/search", async (req, res) => {
     if (businessIds.length > 0) {
       try {
         const reviewData = await db.execute(
-          sql11`SELECT business_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+          sql12`SELECT business_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
            FROM business_reviews
            WHERE business_id = ANY(${businessIds})
            GROUP BY business_id`
@@ -14363,7 +16051,7 @@ router28.get("/search", async (req, res) => {
     });
   }
 });
-router28.post("/:id/apply", async (req, res) => {
+router29.post("/:id/apply", async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -14383,7 +16071,7 @@ router28.post("/:id/apply", async (req, res) => {
         const token = authHeader.substring(7);
         const secret = process.env.JWT_SECRET;
         if (!secret) throw new Error("JWT_SECRET not set");
-        const decoded = jwt5.verify(token, secret);
+        const decoded = jwt6.verify(token, secret);
         applicantId = decoded.userId || decoded.email || "authenticated-user";
       } catch {
       }
@@ -14429,21 +16117,21 @@ router28.post("/:id/apply", async (req, res) => {
     });
   }
 });
-router28.post("/:id/save", (req, res) => {
+router29.post("/:id/save", (req, res) => {
   res.json({
     success: true,
     message: "Job saved successfully",
     jobId: req.params.id
   });
 });
-router28.post("/:id/unsave", (req, res) => {
+router29.post("/:id/unsave", (req, res) => {
   res.json({
     success: true,
     message: "Job removed from saved list",
     jobId: req.params.id
   });
 });
-router28.post("/", async (req, res) => {
+router29.post("/", async (req, res) => {
   try {
     const {
       title,
@@ -14502,38 +16190,27 @@ router28.post("/", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var jobs_default2 = router28;
+var jobs_default2 = router29;
 
 // server/routes/music.ts
 init_db();
 init_schema();
-import { Router as Router29 } from "express";
-import { eq as eq24 } from "drizzle-orm";
+import { Router as Router30 } from "express";
+import { eq as eq23 } from "drizzle-orm";
 import multer from "multer";
-import path2 from "path";
 import fs2 from "fs";
-var router29 = Router29();
-var TRACKS_DIR = process.env.NODE_ENV === "production" ? path2.join("/tmp", "uploads", "tracks") : path2.resolve("uploads", "tracks");
-try {
-  if (!fs2.existsSync(TRACKS_DIR)) {
-    fs2.mkdirSync(TRACKS_DIR, { recursive: true });
-  }
-} catch (err) {
-  console.warn(`\u26A0\uFE0F  Could not create tracks dir (${TRACKS_DIR}):`, err.message);
-}
-var storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, TRACKS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path2.extname(file.originalname);
-    cb(null, `track-${uniqueSuffix}${ext}`);
-  }
-});
+init_notification_service();
+var router30 = Router30();
+var storage = multer.memoryStorage();
 var upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024 },
   // 100 MB
   fileFilter: (_req, file, cb) => {
+    if (file.fieldname === "pochette" || file.fieldname === "cover") {
+      const okImg = /^image\/(jpeg|jpg|png|webp|avif|gif)$/i.test(file.mimetype) || /\.(jpe?g|png|webp|avif|gif)$/i.test(file.originalname);
+      return okImg ? cb(null, true) : cb(new Error(`Unsupported cover image: ${file.mimetype}`));
+    }
     const allowed = [
       "audio/mpeg",
       "audio/mp3",
@@ -14630,7 +16307,7 @@ async function artistsHaveCountryCode() {
   }
   return hasCountryCodeCol;
 }
-router29.get("/artists", async (req, res) => {
+router30.get("/artists", async (req, res) => {
   try {
     const { countryCode } = req.query;
     console.log(
@@ -14656,7 +16333,7 @@ router29.get("/artists", async (req, res) => {
     });
   }
 });
-router29.get("/tracks", async (_req, res) => {
+router30.get("/tracks", async (_req, res) => {
   try {
     await ensureTrackColumns();
     const result = await pool.query(
@@ -14694,7 +16371,7 @@ router29.get("/tracks", async (_req, res) => {
     });
   }
 });
-router29.get("/analytics", async (_req, res) => {
+router30.get("/analytics", async (_req, res) => {
   try {
     const analytics = await db.select().from(musicAnalytics).orderBy(musicAnalytics.recordedAt).limit(1);
     const analyticsData = analytics[0] || {
@@ -14714,14 +16391,14 @@ router29.get("/analytics", async (_req, res) => {
     });
   }
 });
-router29.get("/artists/:id", async (req, res) => {
+router30.get("/artists/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const artist = await db.select().from(musicArtists).where(eq24(musicArtists.id, parseInt(id))).limit(1);
+    const artist = await db.select().from(musicArtists).where(eq23(musicArtists.id, parseInt(id))).limit(1);
     if (!artist.length) {
       return res.status(404).json({ success: false, error: "Artist not found" });
     }
-    const tracks = await db.select().from(musicTracks).where(eq24(musicTracks.artistId, parseInt(id))).orderBy(musicTracks.id);
+    const tracks = await db.select().from(musicTracks).where(eq23(musicTracks.artistId, parseInt(id))).orderBy(musicTracks.id);
     res.json({ success: true, data: { ...artist[0], tracks } });
   } catch (error) {
     console.error("\u274C Get artist error:", error);
@@ -14732,7 +16409,7 @@ router29.get("/artists/:id", async (req, res) => {
     });
   }
 });
-router29.get("/my-artist", requireAuth(), async (req, res) => {
+router30.get("/my-artist", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const result = await pool.query(
@@ -14748,14 +16425,31 @@ router29.get("/my-artist", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch artist profile" });
   }
 });
-router29.post(
+router30.post(
   "/tracks/upload",
   requireAuth(),
-  upload.single("audio"),
+  (req, res, next) => {
+    const handler = upload.fields([
+      { name: "audio", maxCount: 1 },
+      { name: "pochette", maxCount: 1 },
+      { name: "cover", maxCount: 1 }
+    ]);
+    handler(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+      }
+      if (err) {
+        return res.status(400).json({ success: false, error: err.message || "Upload rejected" });
+      }
+      next();
+    });
+  },
   async (req, res) => {
     try {
       await ensureTrackColumns();
-      const file = req.file;
+      const files = req.files;
+      const file = files?.audio?.[0];
+      const coverImgFile = files?.pochette?.[0] || files?.cover?.[0];
       if (!file) {
         return res.status(400).json({ success: false, error: "No audio file provided" });
       }
@@ -14779,14 +16473,19 @@ router29.post(
         if (artistRow.rows.length) {
           artistId = artistRow.rows[0].id;
         } else {
-          return res.status(403).json({
-            success: false,
-            error: "You must register as an artist before uploading tracks"
-          });
+          const fallbackName = req.user.email?.split("@")[0] || `Artist${req.user.userId}`;
+          const created = await pool.query(
+            `INSERT INTO artists (user_id, stage_name, label_status)
+             VALUES ($1, $2, 'unsigned') RETURNING id`,
+            [parseInt(req.user.userId), fallbackName]
+          );
+          artistId = created.rows[0].id;
+          console.log(
+            `\u{1F3A4} [MUSIC] Auto-created artist profile "${fallbackName}" (id ${artistId}) for user ${req.user.userId}`
+          );
         }
       }
       if (!title) {
-        fs2.unlinkSync(file.path);
         return res.status(400).json({ success: false, error: "Track title is required" });
       }
       const insertParams = [
@@ -14795,7 +16494,8 @@ router29.post(
         genre || null,
         description || null,
         price,
-        file.path,
+        null,
+        // file_path — audio lives in Neon (audio_data), not on disk
         file.originalname,
         file.size,
         file.mimetype,
@@ -14834,19 +16534,36 @@ router29.post(
           throw insertErr;
         }
       }
+      if (coverImgFile) {
+        try {
+          const dataUri = `data:${coverImgFile.mimetype};base64,${coverImgFile.buffer.toString("base64")}`;
+          await pool.query(
+            "UPDATE music_tracks SET pochette = $1, cover_art = COALESCE(cover_art, $1) WHERE id = $2",
+            [dataUri, result.rows[0].id]
+          );
+        } catch (e) {
+          console.warn(`\u26A0\uFE0F [MUSIC] Cover persist failed: ${e.message}`);
+        }
+      }
       try {
-        const audioBuffer = fs2.readFileSync(file.path);
         await pool.query(
           "UPDATE music_tracks SET audio_data = $1 WHERE id = $2",
-          [audioBuffer, result.rows[0].id]
+          [file.buffer, result.rows[0].id]
         );
         console.log(
-          `\u{1F3B5} [MUSIC] Track uploaded + persisted to DB: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`
+          `\u{1F3B5} [MUSIC] Track persisted to Neon: "${title}" (${(file.size / 1024 / 1024).toFixed(1)} MB)`
         );
       } catch (persistErr) {
-        console.warn(
-          `\u26A0\uFE0F [MUSIC] Track uploaded to disk but DB persist failed: ${persistErr.message}`
+        console.error(
+          `\u274C [MUSIC] Audio persist to Neon failed: ${persistErr.message}`
         );
+        await pool.query("DELETE FROM music_tracks WHERE id = $1", [result.rows[0].id]).catch(() => {
+        });
+        return res.status(500).json({
+          success: false,
+          error: "Could not save audio to the database. Please try again.",
+          details: persistErr.message
+        });
       }
       res.json({ success: true, data: result.rows[0] });
     } catch (error) {
@@ -14859,7 +16576,7 @@ router29.post(
     }
   }
 );
-router29.get("/tracks/:id/download", async (req, res) => {
+router30.get("/tracks/:id/download", async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -14904,32 +16621,86 @@ router29.get("/tracks/:id/download", async (req, res) => {
       }
     }
     if (!isArtistOwner) {
-      try {
-        const purchaseCheck = await pool.query(
-          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
-          [userId, parseInt(id)]
-        );
-        if (!purchaseCheck.rows.length) {
-          const trackPrice = parseFloat(track.price || "0.99");
-          return res.status(402).json({
-            success: false,
-            error: "Achat requis pour t\xE9l\xE9charger",
-            requiresPayment: true,
-            price: trackPrice,
-            trackId: parseInt(id),
-            trackTitle: track.title
-          });
+      const role = String(
+        req.user?.role || req.user?.userRole || ""
+      ).toLowerCase();
+      const staffBypass = ["superuser", "admin", "moderator"].includes(role);
+      if (!staffBypass) {
+        let hasPurchase = false;
+        try {
+          const purchaseCheck = await pool.query(
+            "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+            [userId, parseInt(id)]
+          );
+          hasPurchase = purchaseCheck.rows.length > 0;
+        } catch (_) {
+          hasPurchase = false;
         }
-      } catch (_) {
-        const trackPrice = parseFloat(track.price || "0.99");
-        return res.status(402).json({
-          success: false,
-          error: "Achat requis pour t\xE9l\xE9charger",
-          requiresPayment: true,
-          price: trackPrice,
-          trackId: parseInt(id),
-          trackTitle: track.title
-        });
+        if (!hasPurchase) {
+          let planName = "Gratuit";
+          let quota = 0;
+          try {
+            const subResult = await pool.query(
+              `SELECT sp.name, sp.downloads_per_month
+                 FROM listener_subscriptions ls
+                 JOIN streaming_plans sp ON sp.id = ls.plan_id
+                 WHERE ls.user_id = $1 AND ls.status = 'active'
+                 ORDER BY ls.created_at DESC
+                 LIMIT 1`,
+              [userId]
+            );
+            if (subResult.rows.length) {
+              planName = subResult.rows[0].name;
+              quota = Number(subResult.rows[0].downloads_per_month) || 0;
+            }
+          } catch (_) {
+          }
+          if (quota === 0) {
+            const trackPrice = parseFloat(track.price || "0.99");
+            return res.status(402).json({
+              success: false,
+              error: planName === "Gratuit" ? "Downloading requires a Supporter subscription or a one-time purchase." : "Your current plan does not include downloads.",
+              requiresPayment: true,
+              requiresUpgrade: true,
+              plan: planName,
+              quota: 0,
+              price: trackPrice,
+              trackId: parseInt(id),
+              trackTitle: track.title
+            });
+          }
+          if (quota !== -1) {
+            let usedThisMonth = 0;
+            try {
+              const usedResult = await pool.query(
+                `SELECT COUNT(*)::int AS n FROM track_downloads
+                   WHERE user_id = $1
+                     AND downloaded_at >= date_trunc('month', NOW())`,
+                [userId]
+              );
+              usedThisMonth = Number(usedResult.rows[0]?.n) || 0;
+            } catch (_) {
+            }
+            if (usedThisMonth >= quota) {
+              return res.status(429).json({
+                success: false,
+                error: `Monthly download quota reached (${usedThisMonth}/${quota}) on ${planName}. Upgrade for more.`,
+                requiresUpgrade: true,
+                plan: planName,
+                quota,
+                used: usedThisMonth
+              });
+            }
+          }
+          try {
+            await pool.query(
+              `INSERT INTO track_downloads (user_id, track_id, plan_tier)
+                 VALUES ($1, $2, $3)`,
+              [userId, parseInt(id), planName]
+            );
+          } catch (_) {
+          }
+        }
       }
     }
     if (!isArtistOwner) {
@@ -14937,6 +16708,25 @@ router29.get("/tracks/:id/download", async (req, res) => {
         "UPDATE music_tracks SET downloads = COALESCE(downloads, 0) + 1 WHERE id = $1",
         [parseInt(id)]
       );
+      if (track.artist_id) {
+        try {
+          const [downloaderInfo] = await db.select({
+            name: users.displayName
+          }).from(users).where(eq23(users.id, userId)).limit(1);
+          await notifyTrackDownload({
+            artistId: track.artist_id,
+            downloaderId: userId,
+            downloaderName: downloaderInfo?.name || "Someone",
+            trackTitle: track.title || "Your track",
+            trackId: parseInt(id)
+          });
+        } catch (notifError) {
+          console.error(
+            "[DOWNLOAD] Failed to create notification:",
+            notifError
+          );
+        }
+      }
     }
     const fileName = track.file_name || `track-${id}.mp3`;
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
@@ -14965,151 +16755,169 @@ router29.get("/tracks/:id/download", async (req, res) => {
 });
 var playCountDebounce = /* @__PURE__ */ new Map();
 var PLAY_DEBOUNCE_MS = 3e4;
-router29.post("/tracks/:id/purchase", requireAuth, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const trackId = parseInt(req.params.id);
-    if (!userId) return res.status(401).json({ error: "Not authenticated" });
-    const trackResult = await pool.query(
-      "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
-      [trackId]
-    );
-    if (!trackResult.rows.length) {
-      return res.status(404).json({ error: "Track not found" });
-    }
-    const track = trackResult.rows[0];
-    const price = parseFloat(track.price || "1.29");
+router30.post(
+  "/tracks/:id/purchase",
+  requireAuth,
+  async (req, res) => {
     try {
-      const existing = await pool.query(
-        "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
-        [userId, trackId]
+      const userId = req.user?.id;
+      const trackId = parseInt(req.params.id);
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+      const trackResult = await pool.query(
+        "SELECT id, title, price, artist_id FROM music_tracks WHERE id = $1",
+        [trackId]
       );
-      if (existing.rows.length > 0) {
-        return res.json({
-          success: true,
-          alreadyOwned: true,
-          message: "Track already purchased"
-        });
+      if (!trackResult.rows.length) {
+        return res.status(404).json({ error: "Track not found" });
       }
-    } catch {
-    }
-    let buyerWallet = await pool.query(
-      "SELECT * FROM platform_wallets WHERE user_id = $1",
-      [userId]
-    );
-    if (buyerWallet.rows.length === 0) {
-      buyerWallet = await pool.query(
-        "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+      const track = trackResult.rows[0];
+      const price = parseFloat(track.price || "1.29");
+      try {
+        const existing = await pool.query(
+          "SELECT id FROM track_purchases WHERE user_id = $1 AND track_id = $2 AND status = 'completed'",
+          [userId, trackId]
+        );
+        if (existing.rows.length > 0) {
+          return res.json({
+            success: true,
+            alreadyOwned: true,
+            message: "Track already purchased"
+          });
+        }
+      } catch {
+      }
+      let buyerWallet = await pool.query(
+        "SELECT * FROM platform_wallets WHERE user_id = $1",
         [userId]
       );
-    }
-    const bw = buyerWallet.rows[0];
-    const buyerBalance = parseFloat(bw.balance || "0");
-    if (buyerBalance < price) {
-      return res.status(402).json({
-        error: "Insufficient credits",
-        required: price,
-        current: buyerBalance,
-        requiresDeposit: true
-      });
-    }
-    const artistShare = price * 0.7;
-    const platformShare = price * 0.3;
-    await pool.query("BEGIN");
-    const buyerAfter = buyerBalance - price;
-    await pool.query(
-      "UPDATE platform_wallets SET balance = $1, total_spent = CAST(total_spent AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-      [buyerAfter.toFixed(2), price.toFixed(2), userId]
-    );
-    if (track.artist_id) {
-      let artistWallet = await pool.query(
-        "SELECT * FROM platform_wallets WHERE user_id = $1",
-        [track.artist_id]
-      );
-      if (artistWallet.rows.length === 0) {
-        artistWallet = await pool.query(
+      if (buyerWallet.rows.length === 0) {
+        buyerWallet = await pool.query(
           "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
-          [track.artist_id]
+          [userId]
         );
       }
-      const aw = artistWallet.rows[0];
-      const artistBalance = parseFloat(aw.balance || "0");
+      const bw = buyerWallet.rows[0];
+      const buyerBalance = parseFloat(bw.balance || "0");
+      if (buyerBalance < price) {
+        return res.status(402).json({
+          error: "Insufficient credits",
+          required: price,
+          current: buyerBalance,
+          requiresDeposit: true
+        });
+      }
+      const artistShare = price * 0.7;
+      const platformShare = price * 0.3;
+      await pool.query("BEGIN");
+      const buyerAfter = buyerBalance - price;
       await pool.query(
-        "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-        [
-          (artistBalance + artistShare).toFixed(2),
-          artistShare.toFixed(2),
-          track.artist_id
-        ]
+        "UPDATE platform_wallets SET balance = $1, total_spent = CAST(total_spent AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
+        [buyerAfter.toFixed(2), price.toFixed(2), userId]
       );
+      if (track.artist_id) {
+        let artistWallet = await pool.query(
+          "SELECT * FROM platform_wallets WHERE user_id = $1",
+          [track.artist_id]
+        );
+        if (artistWallet.rows.length === 0) {
+          artistWallet = await pool.query(
+            "INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked) VALUES ($1, '0.00', 'USD', true) RETURNING *",
+            [track.artist_id]
+          );
+        }
+        const aw = artistWallet.rows[0];
+        const artistBalance = parseFloat(aw.balance || "0");
+        await pool.query(
+          "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
+          [
+            (artistBalance + artistShare).toFixed(2),
+            artistShare.toFixed(2),
+            track.artist_id
+          ]
+        );
+        await pool.query(
+          `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
+         VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
+          [
+            track.artist_id,
+            aw.id,
+            artistShare.toFixed(2),
+            artistBalance.toFixed(2),
+            (artistBalance + artistShare).toFixed(2),
+            `Track sale: ${track.title}`,
+            String(trackId)
+          ]
+        );
+      }
       await pool.query(
         `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-         VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
+       VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
         [
-          track.artist_id,
-          aw.id,
-          artistShare.toFixed(2),
-          artistBalance.toFixed(2),
-          (artistBalance + artistShare).toFixed(2),
-          `Track sale: ${track.title}`,
+          userId,
+          bw.id,
+          (-price).toFixed(2),
+          buyerBalance.toFixed(2),
+          buyerAfter.toFixed(2),
+          `Track purchase: ${track.title}`,
           String(trackId)
         ]
       );
-    }
-    await pool.query(
-      `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-       VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
-      [
-        userId,
-        bw.id,
-        (-price).toFixed(2),
-        buyerBalance.toFixed(2),
-        buyerAfter.toFixed(2),
-        `Track purchase: ${track.title}`,
-        String(trackId)
-      ]
-    );
-    try {
-      await pool.query(
-        `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
+      try {
+        await pool.query(
+          `INSERT INTO track_purchases (user_id, track_id, price, artist_share, platform_share, status, purchased_at)
          VALUES ($1, $2, $3, $4, $5, 'completed', NOW())`,
-        [
-          userId,
-          trackId,
-          price.toFixed(2),
-          artistShare.toFixed(2),
-          platformShare.toFixed(2)
-        ]
+          [
+            userId,
+            trackId,
+            price.toFixed(2),
+            artistShare.toFixed(2),
+            platformShare.toFixed(2)
+          ]
+        );
+      } catch {
+        console.warn("[MUSIC] track_purchases insert failed, continuing");
+      }
+      await pool.query(
+        "UPDATE music_tracks SET revenue = COALESCE(CAST(revenue AS NUMERIC), 0) + $1 WHERE id = $2",
+        [price, trackId]
       );
-    } catch {
-      console.warn("[MUSIC] track_purchases insert failed, continuing");
+      await pool.query("COMMIT");
+      res.json({
+        success: true,
+        message: "Track purchased successfully",
+        price,
+        artistShare,
+        platformShare,
+        newBalance: buyerAfter
+      });
+    } catch (err) {
+      await pool.query("ROLLBACK").catch(() => {
+      });
+      console.error("\u274C Track purchase error:", err);
+      res.status(500).json({ error: "Purchase failed" });
     }
-    await pool.query(
-      "UPDATE music_tracks SET revenue = COALESCE(CAST(revenue AS NUMERIC), 0) + $1 WHERE id = $2",
-      [price, trackId]
-    );
-    await pool.query("COMMIT");
-    res.json({
-      success: true,
-      message: "Track purchased successfully",
-      price,
-      artistShare,
-      platformShare,
-      newBalance: buyerAfter
-    });
-  } catch (err) {
-    await pool.query("ROLLBACK").catch(() => {
-    });
-    console.error("\u274C Track purchase error:", err);
-    res.status(500).json({ error: "Purchase failed" });
   }
-});
-router29.get("/tracks/:id/stream", async (req, res) => {
+);
+router30.get("/tracks/:id/stream", async (req, res) => {
   try {
+    const origin = req.headers.origin;
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    if (origin) res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Timing-Allow-Origin", origin || "*");
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "Content-Range, Accept-Ranges, Content-Length"
+    );
     await ensureTrackColumns();
     const { id } = req.params;
     const result = await pool.query(
-      "SELECT * FROM music_tracks WHERE id = $1",
+      // NEVER "SELECT *" here — audio_data is a multi-MB BYTEA and pulling it
+      // just to read metadata made every request transfer the whole file twice
+      // (8s for a 101-byte range request). Fetch only what this handler needs.
+      `SELECT id, artist_id, file_path, mime_type,
+              octet_length(audio_data) AS audio_size
+         FROM music_tracks WHERE id = $1`,
       [parseInt(id)]
     );
     if (!result.rows.length) {
@@ -15122,8 +16930,8 @@ router29.get("/tracks/:id/stream", async (req, res) => {
       const authHeader = req.headers.authorization;
       const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : req.cookies?.auth_token || null;
       if (token && track.artist_id) {
-        const jwt8 = __require("jsonwebtoken");
-        const decoded = jwt8.verify(token, process.env.JWT_SECRET);
+        const jwt9 = __require("jsonwebtoken");
+        const decoded = jwt9.verify(token, process.env.JWT_SECRET);
         const userId = decoded?.userId || decoded?.id;
         if (userId) {
           if (String(userId) === String(track.artist_id)) {
@@ -15173,37 +16981,41 @@ router29.get("/tracks/:id/stream", async (req, res) => {
         fs2.createReadStream(track.file_path).pipe(res);
       }
     } else {
-      const audioResult = await pool.query(
-        "SELECT audio_data, mime_type FROM music_tracks WHERE id = $1 AND audio_data IS NOT NULL",
-        [parseInt(id)]
-      );
-      if (!audioResult.rows.length || !audioResult.rows[0].audio_data) {
+      const totalSize = Number(track.audio_size || 0);
+      if (!totalSize) {
         return res.status(404).json({ success: false, error: "Audio file not found" });
       }
-      const buffer = audioResult.rows[0].audio_data;
-      const mimeType = audioResult.rows[0].mime_type || "audio/mpeg";
+      const mimeType = track.mime_type || "audio/mpeg";
       const range = req.headers.range;
-      try {
-        if (track.file_path) {
-          const dir = path2.dirname(track.file_path);
-          if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
-          fs2.writeFileSync(track.file_path, buffer);
-        }
-      } catch {
-      }
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+        const start = parseInt(parts[0], 10) || 0;
+        const end = parts[1] ? Math.min(parseInt(parts[1], 10), totalSize - 1) : totalSize - 1;
+        if (start >= totalSize || start > end) {
+          res.setHeader("Content-Range", `bytes */${totalSize}`);
+          return res.status(416).end();
+        }
         const chunkSize = end - start + 1;
+        const chunkResult = await pool.query(
+          "SELECT substring(audio_data from $2 for $3) AS chunk FROM music_tracks WHERE id = $1",
+          [parseInt(id), start + 1, chunkSize]
+        );
         res.writeHead(206, {
-          "Content-Range": `bytes ${start}-${end}/${buffer.length}`,
+          "Content-Range": `bytes ${start}-${end}/${totalSize}`,
           "Accept-Ranges": "bytes",
           "Content-Length": chunkSize,
           "Content-Type": mimeType
         });
-        res.end(buffer.slice(start, end + 1));
+        res.end(chunkResult.rows[0]?.chunk ?? Buffer.alloc(0));
       } else {
+        const fullResult = await pool.query(
+          "SELECT audio_data FROM music_tracks WHERE id = $1",
+          [parseInt(id)]
+        );
+        const buffer = fullResult.rows[0]?.audio_data;
+        if (!buffer) {
+          return res.status(404).json({ success: false, error: "Audio file not found" });
+        }
         res.writeHead(200, {
           "Content-Length": buffer.length,
           "Content-Type": mimeType,
@@ -15221,7 +17033,7 @@ router29.get("/tracks/:id/stream", async (req, res) => {
     });
   }
 });
-router29.get("/tracks/:id/monetization", async (req, res) => {
+router30.get("/tracks/:id/monetization", async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -15237,7 +17049,7 @@ router29.get("/tracks/:id/monetization", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch monetization data" });
   }
 });
-router29.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
+router30.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -15278,7 +17090,7 @@ router29.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to update monetization" });
   }
 });
-router29.get("/earnings", async (_req, res) => {
+router30.get("/earnings", async (_req, res) => {
   try {
     await ensureTrackColumns();
     const result = await pool.query(`
@@ -15313,7 +17125,7 @@ router29.get("/earnings", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch earnings" });
   }
 });
-router29.put(
+router30.put(
   "/tracks/:id/reupload",
   requireAuth(),
   upload.single("audio"),
@@ -15330,17 +17142,14 @@ router29.put(
         [parseInt(id)]
       );
       if (!existing.rows.length) {
-        fs2.unlinkSync(file.path);
         return res.status(404).json({ success: false, error: "Track not found" });
       }
-      const audioBuffer = fs2.readFileSync(file.path);
       await pool.query(
         `UPDATE music_tracks
-         SET audio_data = $1, file_path = $2, file_name = $3, file_size = $4, mime_type = $5
-         WHERE id = $6`,
+         SET audio_data = $1, file_path = NULL, file_name = $2, file_size = $3, mime_type = $4
+         WHERE id = $5`,
         [
-          audioBuffer,
-          file.path,
+          file.buffer,
           file.originalname,
           file.size,
           file.mimetype,
@@ -15357,7 +17166,7 @@ router29.put(
     }
   }
 );
-router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
+router30.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -15415,8 +17224,8 @@ router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
       return res.status(400).json({ success: false, error: "No fields to update" });
     }
     values.push(trackId);
-    const sql30 = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
-    const result = await pool.query(sql30, values);
+    const sql31 = `UPDATE music_tracks SET ${setClauses.join(", ")} WHERE id = $${paramIdx} RETURNING *`;
+    const result = await pool.query(sql31, values);
     console.log(
       "[MUSIC] Track #" + id + " edited (" + setClauses.length + " fields)"
     );
@@ -15426,7 +17235,46 @@ router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to edit track" });
   }
 });
-router29.delete("/tracks/:id", requireAuth(), async (req, res) => {
+router30.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
+  try {
+    const trackId = parseInt(req.params.id);
+    const { status } = req.body;
+    const allowed = ["published", "draft", "scheduled", "archived"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `status must be one of: ${allowed.join(", ")}`
+      });
+    }
+    const result = await pool.query(
+      `UPDATE music_tracks SET status = $1 WHERE id = $2 RETURNING id, title, artist_id, status`,
+      [status, trackId]
+    );
+    if (!result.rows.length)
+      return res.status(404).json({ success: false, error: "Track not found" });
+    const track = result.rows[0];
+    console.log(`[MUSIC] Track #${trackId} status \u2192 ${status}`);
+    if (status === "published" && track.artist_id) {
+      try {
+        await notifyTrackPublished({
+          artistId: track.artist_id,
+          trackTitle: track.title || "Your track",
+          trackId
+        });
+      } catch (notifError) {
+        console.error(
+          "[MUSIC] Failed to create publication notification:",
+          notifError
+        );
+      }
+    }
+    res.json({ success: true, track });
+  } catch (err) {
+    console.error("Track status error:", err);
+    res.status(500).json({ success: false, error: "Failed to update status" });
+  }
+});
+router30.delete("/tracks/:id", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -15465,7 +17313,7 @@ async function ensureAlbumsTable() {
     )
   `);
 }
-router29.get("/albums", async (req, res) => {
+router30.get("/albums", async (req, res) => {
   try {
     await ensureAlbumsTable();
     const { artist_id } = req.query;
@@ -15485,7 +17333,7 @@ router29.get("/albums", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.post("/albums", requireAuth(), async (req, res) => {
+router30.post("/albums", requireAuth(), async (req, res) => {
   try {
     await ensureAlbumsTable();
     const { title, genre, description, albumType, trackIds } = req.body;
@@ -15528,7 +17376,7 @@ router29.post("/albums", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.delete("/albums/:id", requireAuth(), async (req, res) => {
+router30.delete("/albums/:id", requireAuth(), async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query(
@@ -15557,7 +17405,7 @@ async function ensureCollabTable() {
     )
   `);
 }
-router29.get("/collaborations", requireAuth(), async (req, res) => {
+router30.get("/collaborations", requireAuth(), async (req, res) => {
   try {
     await ensureCollabTable();
     const userId = req.user?.id;
@@ -15586,7 +17434,7 @@ router29.get("/collaborations", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.post("/collaborations", requireAuth(), async (req, res) => {
+router30.post("/collaborations", requireAuth(), async (req, res) => {
   try {
     await ensureCollabTable();
     const userId = req.user?.id;
@@ -15630,7 +17478,7 @@ router29.post("/collaborations", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
+router30.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
   try {
     await ensureCollabTable();
     const { id } = req.params;
@@ -15649,7 +17497,7 @@ router29.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.get("/artists/search", async (req, res) => {
+router30.get("/artists/search", async (req, res) => {
   try {
     const { q, genre } = req.query;
     let query = `SELECT id, stage_name as name, genre, country_code as country 
@@ -15673,7 +17521,7 @@ router29.get("/artists/search", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.post("/purchase", requireAuth, async (req, res) => {
+router30.post("/purchase", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const { trackId } = req.body;
@@ -15768,7 +17616,7 @@ router29.post("/purchase", requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router29.get("/my-purchases", requireAuth, async (req, res) => {
+router30.get("/my-purchases", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -15786,11 +17634,11 @@ router29.get("/my-purchases", requireAuth, async (req, res) => {
     res.json({ success: true, purchases: [] });
   }
 });
-var music_default = router29;
+var music_default = router30;
 
 // server/routes/streamroyale.ts
 init_db();
-import { Router as Router30 } from "express";
+import { Router as Router31 } from "express";
 init_socket_config();
 
 // server/services/royalty-engine.ts
@@ -15968,17 +17816,23 @@ async function distributeWeeklyPool(weekNumber, yearNumber) {
         });
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, action_url)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO notifications (user_id, type, title, message, data)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
             [
               artist.user_id,
               "royalty_payout",
               `\u{1F4B0} Weekly Earnings: $${totalEarnings.toFixed(2)}`,
               `Week ${weekNumber}: Guaranteed $${guaranteedAmount.toFixed(2)} + Performance $${performanceAmount.toFixed(2)}${badgeBonus > 0 ? ` + Badge Bonus $${badgeBonus.toFixed(2)}` : ""}. Rank #${globalRank}.`,
-              "/artist-portal/dashboard?tab=royalties"
+              JSON.stringify({
+                actionUrl: "/artist-portal/dashboard?tab=royalties"
+              })
             ]
           );
         } catch (e) {
+          console.error(
+            "[royalty-engine] failed to persist payout notification:",
+            e
+          );
         }
       }
     }
@@ -16114,7 +17968,7 @@ function setupRoyaltyEngine() {
 }
 
 // server/routes/streamroyale.ts
-var router30 = Router30();
+var router31 = Router31();
 function getWeekNumber2(d = /* @__PURE__ */ new Date()) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -16325,7 +18179,7 @@ async function ensureStreamRoyaleTables() {
     tablesEnsured = true;
   }
 }
-router30.post(
+router31.post(
   "/stream/heartbeat",
   optionalAuth,
   async (req, res) => {
@@ -16362,7 +18216,7 @@ router30.post(
     res.json({ success: true, sessionId, elapsed });
   }
 );
-router30.post(
+router31.post(
   "/stream/complete",
   optionalAuth,
   async (req, res) => {
@@ -16543,17 +18397,23 @@ async function checkBadgeMilestone(artistProfileId) {
         });
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, action_url)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO notifications (user_id, type, title, message, data)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
             [
               user_id,
               "badge_unlocked",
               `\u{1F3C6} Badge Unlocked: ${badge.name}!`,
               `You've reached ${streams.toLocaleString()} lifetime streams!`,
-              "/artist-portal/dashboard?tab=royalties"
+              JSON.stringify({
+                actionUrl: "/artist-portal/dashboard?tab=royalties"
+              })
             ]
           );
         } catch (e) {
+          console.error(
+            "[streamroyale] failed to persist badge notification:",
+            e
+          );
         }
       }
       console.log(
@@ -16564,7 +18424,7 @@ async function checkBadgeMilestone(artistProfileId) {
     console.error("[STREAMROYALE] Badge check error:", err);
   }
 }
-router30.get("/pool/current", async (req, res) => {
+router31.get("/pool/current", async (req, res) => {
   await ensureStreamRoyaleTables();
   const { week, year } = getWeekNumber2();
   try {
@@ -16615,7 +18475,7 @@ router30.get("/pool/current", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch pool data" });
   }
 });
-router30.get("/leaderboard", async (req, res) => {
+router31.get("/leaderboard", async (req, res) => {
   await ensureStreamRoyaleTables();
   const {
     scope = "global",
@@ -16715,7 +18575,7 @@ router30.get("/leaderboard", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch leaderboard" });
   }
 });
-router30.get("/artist/me", optionalAuth, async (req, res) => {
+router31.get("/artist/me", optionalAuth, async (req, res) => {
   await ensureStreamRoyaleTables();
   const userId = req.user ? parseInt(req.user.userId) : null;
   if (!userId) {
@@ -16838,7 +18698,7 @@ router30.get("/artist/me", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch artist stats" });
   }
 });
-router30.post("/boost", optionalAuth, async (req, res) => {
+router31.post("/boost", optionalAuth, async (req, res) => {
   await ensureStreamRoyaleTables();
   const userId = req.user ? parseInt(req.user.userId) : null;
   if (!userId)
@@ -16880,7 +18740,7 @@ router30.post("/boost", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to apply boost" });
   }
 });
-router30.post("/tip", optionalAuth, async (req, res) => {
+router31.post("/tip", optionalAuth, async (req, res) => {
   await ensureStreamRoyaleTables();
   const userId = req.user ? parseInt(req.user.userId) : null;
   if (!userId)
@@ -16944,7 +18804,7 @@ router30.post("/tip", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to process tip" });
   }
 });
-router30.post(
+router31.post(
   "/payout/request",
   optionalAuth,
   async (req, res) => {
@@ -16999,7 +18859,7 @@ router30.post(
     }
   }
 );
-router30.get(
+router31.get(
   "/payout/history",
   optionalAuth,
   async (req, res) => {
@@ -17037,7 +18897,7 @@ router30.get(
     }
   }
 );
-router30.get("/plans", async (req, res) => {
+router31.get("/plans", async (req, res) => {
   await ensureStreamRoyaleTables();
   try {
     const plans = await pool.query(
@@ -17060,7 +18920,7 @@ router30.get("/plans", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch plans" });
   }
 });
-router30.get(
+router31.get(
   "/listener/status",
   optionalAuth,
   async (req, res) => {
@@ -17113,7 +18973,7 @@ router30.get(
     }
   }
 );
-router30.get(
+router31.get(
   "/admin/overview",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -17208,7 +19068,7 @@ router30.get(
     }
   }
 );
-router30.post(
+router31.post(
   "/admin/distribute",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -17225,7 +19085,7 @@ router30.post(
     }
   }
 );
-router30.put(
+router31.put(
   "/admin/payout/:id",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -17265,7 +19125,7 @@ router30.put(
     }
   }
 );
-router30.get(
+router31.get(
   "/admin/payouts",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -17322,7 +19182,7 @@ router30.get(
     }
   }
 );
-router30.post(
+router31.post(
   "/admin/add-to-pool",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -17351,12 +19211,12 @@ router30.post(
     }
   }
 );
-var streamroyale_default = router30;
+var streamroyale_default = router31;
 
 // server/routes/streaming.ts
 init_db();
-import { Router as Router31 } from "express";
-var router31 = Router31();
+import { Router as Router32 } from "express";
+var router32 = Router32();
 var MT_COLS = `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
   mt.duration, mt.streams, mt.play_count, mt.likes, mt.release_date, mt.genre,
   mt.file_path, mt.file_name, mt.file_size, mt.mime_type, mt.audio_url,
@@ -17365,7 +19225,7 @@ var MT_COLS = `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
   mt.is_explicit, mt.created_at,
   (mt.pochette IS NOT NULL) AS has_pochette,
   (mt.audio_data IS NOT NULL) AS has_audio_data`;
-router31.get("/tracks", async (req, res) => {
+router32.get("/tracks", async (req, res) => {
   try {
     const {
       genre,
@@ -17413,7 +19273,10 @@ router31.get("/tracks", async (req, res) => {
         a.title as album_title, a.cover_art as album_cover,
         COALESCE(
           (SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0
-        ) as like_count
+        ) as like_count,
+        COALESCE(
+          (SELECT COUNT(*) FROM track_comments tc WHERE tc.track_id = mt.id), 0
+        ) as comment_count
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
@@ -17453,7 +19316,7 @@ router31.get("/tracks", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch tracks" });
   }
 });
-router31.get("/tracks/featured", async (_req, res) => {
+router32.get("/tracks/featured", async (_req, res) => {
   try {
     const featured = await pool.query(`
       SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
@@ -17495,7 +19358,7 @@ router31.get("/tracks/featured", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch featured tracks" });
   }
 });
-router31.get("/tracks/:id/preview", async (req, res) => {
+router32.get("/tracks/:id/preview", async (req, res) => {
   console.log("[PREVIEW] HIT - trackId:", req.params.id);
   try {
     const trackId = parseInt(req.params.id);
@@ -17547,7 +19410,7 @@ router31.get("/tracks/:id/preview", async (req, res) => {
     res.status(500).json({ error: "Failed to load preview" });
   }
 });
-router31.get("/tracks/:id", async (req, res) => {
+router32.get("/tracks/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const track = await pool.query(
@@ -17617,7 +19480,7 @@ router31.get("/tracks/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch track" });
   }
 });
-router31.get("/tracks/:id/pochette", async (req, res) => {
+router32.get("/tracks/:id/pochette", async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -17783,7 +19646,7 @@ async function getStreamBudget(userId) {
     upgradeHint
   };
 }
-router31.post("/record-play", async (req, res) => {
+router32.post("/record-play", async (req, res) => {
   try {
     const { trackId, duration, sessionId } = req.body;
     if (!trackId || !duration) {
@@ -17903,7 +19766,7 @@ router31.post("/record-play", async (req, res) => {
     res.status(500).json({ error: "Failed to record play" });
   }
 });
-router31.get("/budget", async (req, res) => {
+router32.get("/budget", async (req, res) => {
   try {
     const userId = req.user?.id || null;
     const budget = await getStreamBudget(userId);
@@ -17927,7 +19790,7 @@ router31.get("/budget", async (req, res) => {
     res.status(500).json({ error: "Failed to get budget" });
   }
 });
-router31.get("/paylist", async (req, res) => {
+router32.get("/paylist", async (req, res) => {
   try {
     const userId = req.user?.id || null;
     const budget = await getStreamBudget(userId);
@@ -17997,7 +19860,7 @@ router31.get("/paylist", async (req, res) => {
     });
   }
 });
-router31.post("/paylist/:trackId/access", async (req, res) => {
+router32.post("/paylist/:trackId/access", async (req, res) => {
   try {
     const trackId = parseInt(req.params.trackId);
     if (!trackId || isNaN(trackId)) {
@@ -18070,7 +19933,7 @@ router31.post("/paylist/:trackId/access", async (req, res) => {
     res.status(500).json({ error: "Failed to access track" });
   }
 });
-router31.get("/artists", async (req, res) => {
+router32.get("/artists", async (req, res) => {
   try {
     const {
       search,
@@ -18142,7 +20005,7 @@ router31.get("/artists", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artists" });
   }
 });
-router31.get("/artists/:id", async (req, res) => {
+router32.get("/artists/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const artist = await pool.query(
@@ -18159,6 +20022,7 @@ router31.get("/artists/:id", async (req, res) => {
         ap.lifetime_streams as total_streams,
         ap.instagram_handle,
         ap.spotify_url,
+        ap.user_id as user_id,
         (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
@@ -18237,7 +20101,7 @@ router31.get("/artists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artist" });
   }
 });
-router31.get("/albums/:id", async (req, res) => {
+router32.get("/albums/:id", async (req, res) => {
   try {
     const album = await pool.query(
       `
@@ -18266,7 +20130,7 @@ router31.get("/albums/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch album" });
   }
 });
-router31.get("/playlists", async (req, res) => {
+router32.get("/playlists", async (req, res) => {
   try {
     const userId = req.user?.id;
     let query = `
@@ -18296,7 +20160,7 @@ router31.get("/playlists", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch playlists" });
   }
 });
-router31.post("/playlists", async (req, res) => {
+router32.post("/playlists", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId)
@@ -18316,7 +20180,7 @@ router31.post("/playlists", async (req, res) => {
     res.status(500).json({ error: "Failed to create playlist" });
   }
 });
-router31.put("/playlists/:id", async (req, res) => {
+router32.put("/playlists/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
     const { name, description, isPublic } = req.body;
@@ -18339,7 +20203,7 @@ router31.put("/playlists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update playlist" });
   }
 });
-router31.delete("/playlists/:id", async (req, res) => {
+router32.delete("/playlists/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
     await pool.query(`DELETE FROM playlists WHERE id = $1 AND user_id = $2`, [
@@ -18351,7 +20215,7 @@ router31.delete("/playlists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete playlist" });
   }
 });
-router31.post("/playlists/:id/tracks", async (req, res) => {
+router32.post("/playlists/:id/tracks", async (req, res) => {
   try {
     const { trackId } = req.body;
     if (!trackId) return res.status(400).json({ error: "trackId required" });
@@ -18384,7 +20248,7 @@ router31.post("/playlists/:id/tracks", async (req, res) => {
     res.status(500).json({ error: "Failed to add track" });
   }
 });
-router31.delete(
+router32.delete(
   "/playlists/:playlistId/tracks/:trackId",
   async (req, res) => {
     try {
@@ -18410,7 +20274,7 @@ router31.delete(
     }
   }
 );
-router31.put("/playlists/:id/reorder", async (req, res) => {
+router32.put("/playlists/:id/reorder", async (req, res) => {
   try {
     const { trackIds } = req.body;
     if (!Array.isArray(trackIds))
@@ -18429,7 +20293,7 @@ router31.put("/playlists/:id/reorder", async (req, res) => {
     res.status(500).json({ error: "Failed to reorder" });
   }
 });
-router31.get("/playlists/:id", async (req, res) => {
+router32.get("/playlists/:id", async (req, res) => {
   try {
     const playlist = await pool.query(
       `
@@ -18458,7 +20322,7 @@ router31.get("/playlists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch playlist" });
   }
 });
-router31.post("/like", async (req, res) => {
+router32.post("/like", async (req, res) => {
   try {
     const userId = req.user?.id;
     const { trackId } = req.body;
@@ -18497,7 +20361,7 @@ router31.post("/like", async (req, res) => {
     res.status(500).json({ error: "Failed to toggle like" });
   }
 });
-router31.get("/liked", async (req, res) => {
+router32.get("/liked", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ tracks: [] });
@@ -18520,37 +20384,41 @@ router31.get("/liked", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch liked tracks" });
   }
 });
-router31.post("/comment", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId)
-      return res.status(401).json({ error: "Authentication required" });
-    const { trackId, content, parentId } = req.body;
-    if (!trackId || !content)
-      return res.status(400).json({ error: "trackId and content required" });
-    const result = await pool.query(
-      `
+router32.post(
+  "/comment",
+  fanChatSlowMode,
+  async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId)
+        return res.status(401).json({ error: "Authentication required" });
+      const { trackId, content, parentId } = req.body;
+      if (!trackId || !content)
+        return res.status(400).json({ error: "trackId and content required" });
+      const result = await pool.query(
+        `
       INSERT INTO track_comments (track_id, user_id, content, parent_id)
       VALUES ($1, $2, $3, $4)
       RETURNING *
     `,
-      [trackId, userId, content, parentId || null]
-    );
-    const comment = await pool.query(
-      `
+        [trackId, userId, content, parentId || null]
+      );
+      const comment = await pool.query(
+        `
       SELECT tc.*, u.username, u.display_name
       FROM track_comments tc
       JOIN users u ON tc.user_id = u.id
       WHERE tc.id = $1
     `,
-      [result.rows[0].id]
-    );
-    res.json({ comment: comment.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add comment" });
+        [result.rows[0].id]
+      );
+      res.json({ comment: comment.rows[0] });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to add comment" });
+    }
   }
-});
-router31.delete("/comment/:id", async (req, res) => {
+);
+router32.delete("/comment/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
     await pool.query(
@@ -18562,7 +20430,7 @@ router31.delete("/comment/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete comment" });
   }
 });
-router31.post("/follow", async (req, res) => {
+router32.post("/follow", async (req, res) => {
   try {
     const userId = req.user?.id;
     const { artistId } = req.body;
@@ -18612,7 +20480,7 @@ router31.post("/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to toggle follow" });
   }
 });
-router31.get("/user/following", async (req, res) => {
+router32.get("/user/following", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ following: [] });
@@ -18627,7 +20495,7 @@ router31.get("/user/following", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch following" });
   }
 });
-router31.get("/user/liked-tracks", async (req, res) => {
+router32.get("/user/liked-tracks", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ likedTrackIds: [] });
@@ -18643,7 +20511,7 @@ router31.get("/user/liked-tracks", async (req, res) => {
   }
 });
 var VALID_REACTIONS = ["fire", "heart", "clap", "mindblown", "party", "sad"];
-router31.post("/track/:id/react", async (req, res) => {
+router32.post("/track/:id/react", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId)
@@ -18677,7 +20545,7 @@ router31.post("/track/:id/react", async (req, res) => {
     res.status(500).json({ error: "Failed to toggle reaction" });
   }
 });
-router31.get("/track/:id/reactions", async (req, res) => {
+router32.get("/track/:id/reactions", async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const userId = req.user?.id;
@@ -18711,7 +20579,7 @@ router31.get("/track/:id/reactions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reactions" });
   }
 });
-router31.get("/user/reactions", async (req, res) => {
+router32.get("/user/reactions", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ reactions: [] });
@@ -18729,7 +20597,7 @@ router31.get("/user/reactions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user reactions" });
   }
 });
-router31.get("/track/:id/thread", async (req, res) => {
+router32.get("/track/:id/thread", async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const { page = "1", limit = "50" } = req.query;
@@ -18760,20 +20628,36 @@ router31.get("/track/:id/thread", async (req, res) => {
        LIMIT $2 OFFSET $3`,
       [trackId, limit, offset]
     );
-    const commentsWithReplies = await Promise.all(
-      comments.rows.map(async (comment) => {
-        const replies = await pool.query(
-          `SELECT tc.*, u.username, u.display_name, u.avatar_url
+    const parentIds = comments.rows.map((c) => c.id);
+    const repliesByParent = /* @__PURE__ */ new Map();
+    if (parentIds.length > 0) {
+      const replies = await pool.query(
+        `SELECT * FROM (
+           SELECT tc.*, u.username, u.display_name, u.avatar_url,
+             ROW_NUMBER() OVER (
+               PARTITION BY tc.parent_id ORDER BY tc.created_at ASC
+             ) AS rn
            FROM track_comments tc
            JOIN users u ON tc.user_id = u.id
-           WHERE tc.parent_id = $1
-           ORDER BY tc.created_at ASC
-           LIMIT 3`,
-          [comment.id]
-        );
-        return { ...comment, replies: replies.rows };
-      })
-    );
+           WHERE tc.parent_id = ANY($1::int[])
+         ) ranked
+         WHERE ranked.rn <= 3
+         ORDER BY ranked.parent_id, ranked.created_at ASC`,
+        [parentIds]
+      );
+      for (const reply of replies.rows) {
+        const bucket = repliesByParent.get(reply.parent_id);
+        if (bucket) {
+          bucket.push(reply);
+        } else {
+          repliesByParent.set(reply.parent_id, [reply]);
+        }
+      }
+    }
+    const commentsWithReplies = comments.rows.map((comment) => ({
+      ...comment,
+      replies: repliesByParent.get(comment.id) ?? []
+    }));
     const countResult = await pool.query(
       `SELECT COUNT(*) as total FROM track_comments WHERE track_id = $1`,
       [trackId]
@@ -18801,7 +20685,7 @@ router31.get("/track/:id/thread", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch thread" });
   }
 });
-router31.get("/comment/:id/replies", async (req, res) => {
+router32.get("/comment/:id/replies", async (req, res) => {
   try {
     const commentId = parseInt(req.params.id);
     const replies = await pool.query(
@@ -18817,7 +20701,7 @@ router31.get("/comment/:id/replies", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch replies" });
   }
 });
-router31.get("/artist/:id/dashboard", async (req, res) => {
+router32.get("/artist/:id/dashboard", async (req, res) => {
   try {
     const artistId = parseInt(req.params.id);
     const userId = req.user?.id;
@@ -18894,7 +20778,7 @@ router31.get("/artist/:id/dashboard", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artist dashboard" });
   }
 });
-router31.get("/user/followed-artists", async (req, res) => {
+router32.get("/user/followed-artists", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ artists: [] });
@@ -18915,7 +20799,7 @@ router31.get("/user/followed-artists", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch followed artists" });
   }
 });
-router31.get("/history", async (req, res) => {
+router32.get("/history", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ history: [] });
@@ -18938,7 +20822,7 @@ router31.get("/history", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch history" });
   }
 });
-router31.get("/analytics/overview", async (_req, res) => {
+router32.get("/analytics/overview", async (_req, res) => {
   try {
     const stats = await pool.query(`
       SELECT 
@@ -19007,7 +20891,7 @@ router31.get("/analytics/overview", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch analytics" });
   }
 });
-router31.get("/analytics/artist/:id", async (req, res) => {
+router32.get("/analytics/artist/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const artist = await pool.query(
@@ -19095,7 +20979,7 @@ router31.get("/analytics/artist/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artist analytics" });
   }
 });
-router31.get("/subscription/plans", async (_req, res) => {
+router32.get("/subscription/plans", async (_req, res) => {
   res.json({
     plans: [
       {
@@ -19119,6 +21003,8 @@ router31.get("/subscription/plans", async (_req, res) => {
           "No downloads"
         ],
         downloadsPerMonth: 0,
+        contestVoteWeight: 0.1,
+        contestVoteLabel: "10% of 1 vote point",
         audioQuality: "256kbps",
         ads: true,
         offline: false,
@@ -19151,6 +21037,8 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Supporter badge"
         ],
         downloadsPerMonth: 5,
+        contestVoteWeight: 0.35,
+        contestVoteLabel: "35% of 1 vote point",
         audioQuality: "320kbps",
         ads: false,
         offline: true,
@@ -19174,7 +21062,7 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Acc\xE8s Arcade",
           "Sorties en avant-premi\xE8re",
           "Badge Champion",
-          "Vote Arena \xD72"
+          "Vote Arena: 70% of 1 vote point"
         ],
         featuresEn: [
           "1,500 streams per week",
@@ -19184,9 +21072,11 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Arcade access",
           "Early access releases",
           "Champion badge",
-          "Arena vote \xD72"
+          "Arena vote: 70% of 1 vote point"
         ],
         downloadsPerMonth: 20,
+        contestVoteWeight: 0.7,
+        contestVoteLabel: "70% of 1 vote point",
         audioQuality: "FLAC",
         ads: false,
         offline: true,
@@ -19209,7 +21099,7 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Acc\xE8s Arcade",
           "Exclusivit\xE9s Patron",
           "Badge Patron dor\xE9",
-          "Vote Arena \xD73",
+          "Vote Arena: 100% of 1 vote point",
           "Support prioritaire",
           "Rencontre artistes VIP"
         ],
@@ -19221,11 +21111,13 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Arcade access",
           "Patron exclusives",
           "Gold Patron badge",
-          "Arena vote \xD73",
+          "Arena vote: 100% of 1 vote point",
           "Priority support",
           "VIP artist meetups"
         ],
         downloadsPerMonth: -1,
+        contestVoteWeight: 1,
+        contestVoteLabel: "100% of 1 vote point",
         audioQuality: "FLAC",
         ads: false,
         offline: true,
@@ -19306,7 +21198,7 @@ router31.get("/subscription/plans", async (_req, res) => {
     }
   });
 });
-router31.get("/subscription/status", async (req, res) => {
+router32.get("/subscription/status", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ tier: "free", authenticated: false });
@@ -19324,7 +21216,7 @@ router31.get("/subscription/status", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch subscription" });
   }
 });
-router31.get("/search", async (req, res) => {
+router32.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
     if (!q)
@@ -19387,7 +21279,7 @@ router31.get("/search", async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
-router31.post("/play", async (req, res) => {
+router32.post("/play", async (req, res) => {
   try {
     const { trackId, duration, sessionId } = req.body;
     if (!trackId || !duration) {
@@ -19432,7 +21324,7 @@ router31.post("/play", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router31.get("/stats/:artistId", async (req, res) => {
+router32.get("/stats/:artistId", async (req, res) => {
   try {
     const { artistId } = req.params;
     const artist = await pool.query(
@@ -19460,7 +21352,7 @@ router31.get("/stats/:artistId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router31.get("/top", async (_req, res) => {
+router32.get("/top", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT mt.id, mt.title, mt.streams, mt.cover_art, mt.duration, mt.genre,
@@ -19476,13 +21368,13 @@ router31.get("/top", async (_req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-var streaming_default = router31;
+var streaming_default = router32;
 
 // server/routes/artist-contracts.ts
 init_db();
 init_email_service();
-import { Router as Router32 } from "express";
-var router32 = Router32();
+import { Router as Router33 } from "express";
+var router33 = Router33();
 var GRADE_TIERS = {
   S: {
     label: "Elite / Exclusive",
@@ -19620,7 +21512,7 @@ async function ensureTable() {
     console.error("artist_contracts table setup error:", err);
   }
 }
-router32.get("/grades", async (_req, res) => {
+router33.get("/grades", async (_req, res) => {
   res.json({
     grades: Object.entries(GRADE_TIERS).map(([key, tier]) => ({
       grade: key,
@@ -19629,7 +21521,7 @@ router32.get("/grades", async (_req, res) => {
     }))
   });
 });
-router32.post("/apply", async (req, res) => {
+router33.post("/apply", async (req, res) => {
   await ensureTable();
   try {
     const {
@@ -19748,7 +21640,7 @@ router32.post("/apply", async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la soumission" });
   }
 });
-router32.get("/status/:email", async (req, res) => {
+router33.get("/status/:email", async (req, res) => {
   await ensureTable();
   try {
     const result = await pool.query(
@@ -19765,7 +21657,7 @@ router32.get("/status/:email", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/my-contract", async (req, res) => {
+router33.get("/my-contract", async (req, res) => {
   await ensureTable();
   try {
     const userId = req.user?.id;
@@ -19794,7 +21686,7 @@ router32.get("/my-contract", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/check-artist/:artistId", async (req, res) => {
+router33.get("/check-artist/:artistId", async (req, res) => {
   await ensureTable();
   try {
     const artistId = parseInt(req.params.artistId);
@@ -19828,7 +21720,7 @@ router32.get("/check-artist/:artistId", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/admin/applications", async (req, res) => {
+router33.get("/admin/applications", async (req, res) => {
   await ensureTable();
   try {
     const status = req.query.status || "";
@@ -19900,7 +21792,7 @@ router32.get("/admin/applications", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/admin/applications/:id", async (req, res) => {
+router33.get("/admin/applications/:id", async (req, res) => {
   await ensureTable();
   try {
     const id = parseInt(req.params.id);
@@ -19919,7 +21811,7 @@ router32.get("/admin/applications/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.put("/admin/review/:id", async (req, res) => {
+router33.put("/admin/review/:id", async (req, res) => {
   await ensureTable();
   try {
     const id = parseInt(req.params.id);
@@ -20117,7 +22009,7 @@ router32.put("/admin/review/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur lors de l'examen" });
   }
 });
-router32.put("/admin/upgrade/:id", async (req, res) => {
+router33.put("/admin/upgrade/:id", async (req, res) => {
   await ensureTable();
   try {
     const id = parseInt(req.params.id);
@@ -20164,7 +22056,7 @@ router32.put("/admin/upgrade/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/admin/stats", async (_req, res) => {
+router33.get("/admin/stats", async (_req, res) => {
   await ensureTable();
   try {
     const result = await pool.query(`
@@ -20187,12 +22079,12 @@ router32.get("/admin/stats", async (_req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-var artist_contracts_default = router32;
+var artist_contracts_default = router33;
 
 // server/routes/artists.ts
 init_db();
-import { Router as Router33 } from "express";
-var router33 = Router33();
+import { Router as Router34 } from "express";
+var router34 = Router34();
 var hasCountryCodeColumn = null;
 async function checkCountryCodeColumn() {
   if (hasCountryCodeColumn !== null) return hasCountryCodeColumn;
@@ -20210,7 +22102,7 @@ async function checkCountryCodeColumn() {
   );
   return hasCountryCodeColumn;
 }
-router33.get("/search", async (req, res) => {
+router34.get("/search", async (req, res) => {
   try {
     const {
       query = "",
@@ -20286,7 +22178,7 @@ router33.get("/search", async (req, res) => {
     });
   }
 });
-router33.get("/genres", async (_req, res) => {
+router34.get("/genres", async (_req, res) => {
   try {
     const result = await pool.query(
       "SELECT DISTINCT genre FROM artists WHERE genre IS NOT NULL AND genre != '' ORDER BY genre ASC"
@@ -20297,7 +22189,7 @@ router33.get("/genres", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch genres" });
   }
 });
-router33.get("/countries", async (_req, res) => {
+router34.get("/countries", async (_req, res) => {
   try {
     const hasCC = await checkCountryCodeColumn();
     if (!hasCC) {
@@ -20315,7 +22207,7 @@ router33.get("/countries", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch artist countries" });
   }
 });
-router33.get("/:id/details", async (req, res) => {
+router34.get("/:id/details", async (req, res) => {
   try {
     const { id } = req.params;
     const artistResult = await pool.query(
@@ -20336,15 +22228,15 @@ router33.get("/:id/details", async (req, res) => {
     });
   }
 });
-var artists_default2 = router33;
+var artists_default2 = router34;
 
 // server/routes/data-dispatch.ts
 init_db();
 init_schema();
-import { Router as Router34 } from "express";
-import { eq as eq25, sql as sql12 } from "drizzle-orm";
-var router34 = Router34();
-router34.post("/categories", async (req, res) => {
+import { Router as Router35 } from "express";
+import { eq as eq24, sql as sql13 } from "drizzle-orm";
+var router35 = Router35();
+router35.post("/categories", async (req, res) => {
   try {
     console.log("Dispatching business categories...");
     const categories = [
@@ -20461,22 +22353,22 @@ router34.post("/categories", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to dispatch categories" });
   }
 });
-router34.get("/status", async (_req, res) => {
+router35.get("/status", async (_req, res) => {
   try {
-    const categoryCount = await db.select({ count: sql12`count(*)` }).from(businessCategories).execute();
-    const businessCount = await db.select({ count: sql12`count(*)` }).from(businesses).execute();
+    const categoryCount = await db.select({ count: sql13`count(*)` }).from(businessCategories).execute();
+    const businessCount = await db.select({ count: sql13`count(*)` }).from(businesses).execute();
     const categoryStats = await db.select({
       categoryName: businessCategories.name,
       categorySlug: businessCategories.slug,
-      businessCount: sql12`count(${businesses.id})`
+      businessCount: sql13`count(${businesses.id})`
     }).from(businessCategories).leftJoin(
       businesses,
-      eq25(businessCategories.id, businesses.categoryId)
+      eq24(businessCategories.id, businesses.categoryId)
     ).groupBy(
       businessCategories.id,
       businessCategories.name,
       businessCategories.slug
-    ).orderBy(sql12`count(${businesses.id}) DESC`).execute();
+    ).orderBy(sql13`count(${businesses.id}) DESC`).execute();
     res.json({
       success: true,
       statistics: {
@@ -20490,11 +22382,11 @@ router34.get("/status", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to get dispatch status" });
   }
 });
-router34.post("/all", async (req, res) => {
+router35.post("/all", async (req, res) => {
   try {
     console.log("Starting full data dispatch...");
-    const cats = await db.select({ count: sql12`count(*)` }).from(businessCategories).execute();
-    const biz = await db.select({ count: sql12`count(*)` }).from(businesses).execute();
+    const cats = await db.select({ count: sql13`count(*)` }).from(businessCategories).execute();
+    const biz = await db.select({ count: sql13`count(*)` }).from(businesses).execute();
     res.json({
       success: true,
       message: "Full data dispatch completed",
@@ -20505,16 +22397,16 @@ router34.post("/all", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to complete full dispatch" });
   }
 });
-var data_dispatch_default = router34;
+var data_dispatch_default = router35;
 
 // server/routes/settings.ts
 init_db();
 init_schema();
-import { Router as Router35 } from "express";
-import { eq as eq26, and as and15 } from "drizzle-orm";
-import jwt6 from "jsonwebtoken";
-var router35 = Router35();
-router35.get("/", async (req, res) => {
+import { Router as Router36 } from "express";
+import { eq as eq25, and as and14 } from "drizzle-orm";
+import jwt7 from "jsonwebtoken";
+var router36 = Router36();
+router36.get("/", async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -20523,7 +22415,7 @@ router35.get("/", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId = null;
     try {
-      const decoded = jwt6.verify(
+      const decoded = jwt7.verify(
         token,
         process.env.JWT_SECRET || "your-secret-key"
       );
@@ -20534,7 +22426,7 @@ router35.get("/", async (req, res) => {
     if (!userId) {
       return res.status(401).json({ success: false, message: "User not found in token" });
     }
-    const settings = await db.select().from(userSettings).where(eq26(userSettings.userId, userId)).execute();
+    const settings = await db.select().from(userSettings).where(eq25(userSettings.userId, userId)).execute();
     const settingsBySector = {};
     settings.forEach((setting) => {
       if (!settingsBySector[setting.sector]) {
@@ -20558,7 +22450,7 @@ router35.get("/", async (req, res) => {
     });
   }
 });
-router35.get("/:sector", async (req, res) => {
+router36.get("/:sector", async (req, res) => {
   try {
     const { sector } = req.params;
     const authHeader = req.headers.authorization;
@@ -20568,7 +22460,7 @@ router35.get("/:sector", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId = null;
     try {
-      const decoded = jwt6.verify(
+      const decoded = jwt7.verify(
         token,
         process.env.JWT_SECRET || process.env.SESSION_SECRET
       );
@@ -20580,9 +22472,9 @@ router35.get("/:sector", async (req, res) => {
       return res.status(401).json({ success: false, message: "User not found in token" });
     }
     const settings = await db.select().from(userSettings).where(
-      and15(
-        eq26(userSettings.userId, userId),
-        eq26(userSettings.sector, sector)
+      and14(
+        eq25(userSettings.userId, userId),
+        eq25(userSettings.sector, sector)
       )
     ).execute();
     const settingsObj = {};
@@ -20605,7 +22497,7 @@ router35.get("/:sector", async (req, res) => {
     });
   }
 });
-router35.post("/:sector", async (req, res) => {
+router36.post("/:sector", async (req, res) => {
   try {
     const { sector } = req.params;
     const { settings } = req.body;
@@ -20616,7 +22508,7 @@ router35.post("/:sector", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId = null;
     try {
-      const decoded = jwt6.verify(
+      const decoded = jwt7.verify(
         token,
         process.env.JWT_SECRET || process.env.SESSION_SECRET
       );
@@ -20665,52 +22557,70 @@ router35.post("/:sector", async (req, res) => {
     });
   }
 });
-var settings_default = router35;
+var settings_default = router36;
 
 // server/routes/home-stats.ts
 init_db();
-import { Router as Router36 } from "express";
-var router36 = Router36();
-router36.get("/stats", async (req, res) => {
+import { Router as Router37 } from "express";
+var router37 = Router37();
+router37.get("/stats", async (req, res) => {
   try {
     const { countryCode = "" } = req.query;
     const cc = countryCode.trim().toUpperCase();
-    const countryFilter = cc ? `WHERE country_code = $1` : "";
-    const countParams = cc ? [cc] : [];
-    const [bizRes, artistRes, catRes] = await Promise.all([
+    const bizCountParams = cc ? [cc] : [];
+    const bizCountFilter = cc ? `WHERE country_code = $1` : "";
+    const [bizRes, artisanRes, catRes] = await Promise.all([
       pool.query(
-        `SELECT COUNT(*)::int AS count FROM businesses ${countryFilter}`,
-        countParams
+        `SELECT COUNT(*)::int AS count FROM businesses ${bizCountFilter}`,
+        bizCountParams
       ),
-      pool.query(
-        `SELECT COUNT(*)::int AS count FROM artists ${countryFilter}`,
-        countParams
+      // Artisan count from the unified index (published craft artisans)
+      cc ? pool.query(
+        `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1`,
+        [cc]
+      ) : pool.query(
+        `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED'`
       ),
-      // Distinct categories used by businesses in that country
       pool.query(
         cc ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND category_id IS NOT NULL` : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE category_id IS NOT NULL`,
-        countParams
+        bizCountParams
       )
     ]);
     const businessCount = bizRes.rows[0]?.count ?? 0;
-    const artisanCount = artistRes.rows[0]?.count ?? 0;
+    const artisanCount = artisanRes.rows[0]?.count ?? 0;
     const categoryCount = catRes.rows[0]?.count ?? 0;
-    const featuredQuery = cc ? `SELECT id, stage_name AS name, genre, label_status, spotify_url
-         FROM artists
-         WHERE country_code = $1
-         ORDER BY RANDOM()
-         LIMIT 3` : `SELECT id, stage_name AS name, genre, label_status, spotify_url
-         FROM artists
-         ORDER BY RANDOM()
-         LIMIT 3`;
-    const featuredRes = await pool.query(featuredQuery, countParams);
+    let featuredArtisans = [];
+    try {
+      const unified = cc ? await pool.query(
+        `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
+             WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1
+             ORDER BY RANDOM() LIMIT 3`,
+        [cc]
+      ) : await pool.query(
+        `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
+             WHERE account_type = 'artisan' AND status = 'PUBLISHED'
+             ORDER BY RANDOM() LIMIT 3`
+      );
+      if (unified.rows.length > 0) {
+        featuredArtisans = unified.rows;
+      } else {
+        const fallback = cc ? await pool.query(
+          `SELECT id, stage_name AS name, genre FROM artists WHERE country_code = $1 ORDER BY RANDOM() LIMIT 3`,
+          [cc]
+        ) : await pool.query(
+          `SELECT id, stage_name AS name, genre FROM artists ORDER BY RANDOM() LIMIT 3`
+        );
+        featuredArtisans = fallback.rows;
+      }
+    } catch (_) {
+    }
     res.json({
       success: true,
       countryCode: cc || "ALL",
       businessCount,
       artisanCount,
       categoryCount,
-      featuredArtisans: featuredRes.rows
+      featuredArtisans
     });
   } catch (error) {
     console.error("Home stats error:", error);
@@ -20720,10 +22630,10 @@ router36.get("/stats", async (req, res) => {
     });
   }
 });
-var home_stats_default = router36;
+var home_stats_default = router37;
 
 // server/routes/ai-chat.ts
-import { Router as Router37 } from "express";
+import { Router as Router38 } from "express";
 import { z as z4 } from "zod";
 
 // server/services/ai-context.ts
@@ -20765,8 +22675,15 @@ var SECTOR_ALIASES = {
   clinic: "sante",
   doctor: "sante"
 };
+function normalizeForSearch(input) {
+  return input.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+function extractMeaningfulKeywords(normalizedMessage, stopWords) {
+  const rawWords = normalizedMessage.match(/\p{L}{3,}/gu) ?? [];
+  return rawWords.filter((word) => !stopWords.has(word) && word.length > 2);
+}
 async function buildAIContext(userMessage, userRole) {
-  const msg = userMessage.toLowerCase();
+  const msg = normalizeForSearch(userMessage);
   const allowedSectors = getAllowedSectors(userRole);
   const [statsRes, categoriesRes, countriesRes] = await Promise.all([
     pool.query(`
@@ -20820,14 +22737,14 @@ async function buildAIContext(userMessage, userRole) {
       whereClause += ` AND bc.slug = ANY($${params.length})`;
     }
     const mentionedCountry = context.countries.find(
-      (c) => msg.includes(c.name.toLowerCase()) || msg.includes(c.code.toLowerCase())
+      (c) => msg.includes(normalizeForSearch(c.name)) || msg.includes(normalizeForSearch(c.code))
     );
     if (mentionedCountry) {
       params.push(mentionedCountry.code);
       whereClause += ` AND c.code = $${params.length}`;
     }
     const mentionedCategory = context.categories.find(
-      (cat) => msg.includes(cat.name.toLowerCase())
+      (cat) => msg.includes(normalizeForSearch(cat.name))
     );
     let targetSlug = mentionedCategory?.slug ?? Object.entries(SECTOR_ALIASES).find(
       ([alias]) => msg.includes(alias)
@@ -20836,7 +22753,7 @@ async function buildAIContext(userMessage, userRole) {
       params.push(targetSlug);
       whereClause += ` AND bc.slug = $${params.length}`;
     }
-    const keywords = msg.match(/\b[a-z]{4,}\b/g) ?? [];
+    const keywords = msg.match(/\p{L}{3,}/gu) ?? [];
     const stopWords = /* @__PURE__ */ new Set([
       "find",
       "show",
@@ -20864,10 +22781,27 @@ async function buildAIContext(userMessage, userRole) {
       "avec",
       "les",
       "des",
-      "une"
+      "une",
+      "como",
+      "donde",
+      "cual",
+      "quien",
+      "para",
+      "con",
+      "los",
+      "las",
+      "und",
+      "die",
+      "das",
+      "mit",
+      "bei",
+      "che",
+      "dove",
+      "con"
     ]);
+    const normalizedCountryName = mentionedCountry ? normalizeForSearch(mentionedCountry.name) : "";
     const meaningfulKeywords = keywords.filter(
-      (k) => !stopWords.has(k) && k.length > 3 && !mentionedCountry?.name.toLowerCase().includes(k) && !Object.keys(SECTOR_ALIASES).includes(k)
+      (k) => !stopWords.has(k) && k.length > 2 && !normalizedCountryName.includes(k) && !Object.keys(SECTOR_ALIASES).includes(k)
     );
     if (meaningfulKeywords.length > 0 && !targetSlug && !mentionedCountry) {
       const tsQuery = meaningfulKeywords.join(" | ");
@@ -20959,9 +22893,8 @@ async function buildAIContext(userMessage, userRole) {
   return context;
 }
 async function groundedSearch(question, userRole) {
-  const msg = question.toLowerCase();
+  const msg = normalizeForSearch(question);
   const allowedSectors = getAllowedSectors(userRole);
-  const keywords = msg.match(/\b[a-z]{4,}\b/g) ?? [];
   const stopWords = /* @__PURE__ */ new Set([
     "what",
     "which",
@@ -21000,11 +22933,24 @@ async function groundedSearch(question, userRole) {
     "avec",
     "les",
     "des",
-    "une"
+    "une",
+    "como",
+    "donde",
+    "cual",
+    "quien",
+    "para",
+    "con",
+    "los",
+    "las",
+    "und",
+    "die",
+    "das",
+    "mit",
+    "bei",
+    "che",
+    "dove"
   ]);
-  const meaningfulKeywords = keywords.filter(
-    (k) => !stopWords.has(k) && k.length > 3
-  );
+  const meaningfulKeywords = extractMeaningfulKeywords(msg, stopWords);
   const params = [];
   let whereClause = "WHERE b.is_active = true";
   let selectExtra = "";
@@ -21639,6 +23585,12 @@ var SECTOR_PATTERNS = [
     patterns: /\b(flood|plumb|roof|leak|pipe|burst|construct|build|contractor|electrician|electric|wir(ing|e)|hvac|heat|cool|renovate|renovation|repair|fix|handyman|carpenter|mason|concrete|demolition|foundation|insulation|plombier|toiture|fuite|tuyau|maçon|charpentier|rénovation)\b/i,
     urgencyBoost: 3
   },
+  // Metalworking / metallurgy
+  {
+    slug: "metallurgie",
+    label: "M\xE9tallurgie / Travail des m\xE9taux",
+    patterns: /\b(metal(?:lurgy|working)?|metallurgy|steel|foundry|forge|forging|welding|welder|fabrication|machining|metalwork|métallurgie|métallurgique|acier|fonderie|forge|soudure|soudeur|usinage|métal)\b/i
+  },
   // Hospitality / Hotels
   {
     slug: "hotellerie",
@@ -21816,6 +23768,14 @@ var MAJOR_CITIES = {
   doha: "QA",
   riyadh: "SA"
 };
+function normalizeSelectedLanguage(language) {
+  const normalized = (language ?? "").trim().toLowerCase();
+  if (!normalized) return "other";
+  if (normalized.startsWith("fr")) return "fr";
+  if (normalized.startsWith("en")) return "en";
+  if (normalized.startsWith("es")) return "es";
+  return "other";
+}
 function detectLanguage(text2) {
   const fr = /\b(je|mon|ma|mes|nous|vous|dans|pour|avec|est|sont|les|des|une|cherche|trouver|besoin|près|chez|où)\b/i;
   const es = /\b(yo|mi|mis|nosotros|busco|necesito|cerca|donde|para|con|estoy|están|los|las|una)\b/i;
@@ -21898,9 +23858,9 @@ async function aiParse(query) {
   }
   return null;
 }
-function ruleParse(query) {
+function ruleParse(query, selectedLanguage) {
   const lower = query.toLowerCase().trim();
-  const language = detectLanguage(lower);
+  const language = selectedLanguage ? normalizeSelectedLanguage(selectedLanguage) : detectLanguage(lower);
   let sector = null;
   let sectorLabel = null;
   let urgency = 3;
@@ -21958,6 +23918,15 @@ function ruleParse(query) {
     "best",
     "good",
     "top",
+    "someone",
+    "somebody",
+    "who",
+    "what",
+    "services",
+    "servicing",
+    "serve",
+    "serves",
+    "exactly",
     "je",
     "mon",
     "ma",
@@ -21997,7 +23966,7 @@ function ruleParse(query) {
     rawQuery: query
   };
 }
-async function parseUserIntent(query) {
+async function parseUserIntent(query, selectedLanguage) {
   if (!query || query.trim().length < 2) {
     return {
       sector: null,
@@ -22007,12 +23976,12 @@ async function parseUserIntent(query) {
       countryCode: null,
       action: "info",
       keywords: [],
-      language: "en",
+      language: normalizeSelectedLanguage(selectedLanguage),
       confidence: 0,
       rawQuery: query
     };
   }
-  const ruleResult = ruleParse(query);
+  const ruleResult = ruleParse(query, selectedLanguage);
   if (query.trim().split(/\s+/).length <= 4 && ruleResult.confidence >= 0.7) {
     return ruleResult;
   }
@@ -22043,6 +24012,17 @@ async function parseUserIntent(query) {
 // server/services/knowledge-injector.ts
 init_db();
 var SECTOR_TO_CATEGORIES = {
+  metallurgie: [
+    "Metal",
+    "Metallurgy",
+    "Metalworking",
+    "Steel",
+    "Foundry",
+    "Forge",
+    "Welding",
+    "Fabrication",
+    "Machining"
+  ],
   batiment: [
     "Construction",
     "Building",
@@ -22145,7 +24125,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
   if (intent.location) {
     params.push(`%${intent.location}%`);
     whereClauses.push(
-      `(b.location ILIKE $${params.length} OR b.city ILIKE $${params.length} OR c.name ILIKE $${params.length})`
+      `(b.location ILIKE $${params.length} OR b.city_name ILIKE $${params.length} OR c.name ILIKE $${params.length})`
     );
     searchMethod += "+location";
   }
@@ -22177,7 +24157,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
   } else if (intent.urgency <= 3) {
     orderClause = `
       b.rating DESC NULLS LAST,
-      COALESCE(b.review_count, 0) DESC,
+      COALESCE(b.reviews_count, 0) DESC,
       CASE WHEN b.is_verified = true THEN 0 ELSE 1 END ASC
     `;
   } else {
@@ -22187,7 +24167,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
            WHEN COALESCE(b.tier, 'free') = 'premium' THEN 1
            ELSE 2 END ASC,
       b.rating DESC NULLS LAST,
-      COALESCE(b.review_count, 0) DESC
+      COALESCE(b.reviews_count, 0) DESC
     `;
   }
   const whereSQL = whereClauses.join(" AND ");
@@ -22212,7 +24192,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
         COALESCE(b.country_code, c.code, '') AS country_code,
         COALESCE(LEFT(b.description, 200), '') AS description,
         b.rating,
-        COALESCE(b.review_count, 0) AS review_count,
+        COALESCE(b.reviews_count, 0) AS review_count,
         b.phone,
         b.website,
         COALESCE(b.is_verified, false) AS is_verified,
@@ -22271,7 +24251,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
                 COALESCE(c.name, '') AS country,
                 COALESCE(b.country_code, c.code, '') AS country_code,
                 COALESCE(LEFT(b.description, 200), '') AS description,
-                b.rating, COALESCE(b.review_count, 0) AS review_count,
+                b.rating, COALESCE(b.reviews_count, 0) AS review_count,
                 b.phone, b.website,
                 COALESCE(b.is_verified, false) AS is_verified,
                 COALESCE(b.tier, 'free') AS tier,
@@ -22327,7 +24307,7 @@ async function searchRelevantBusinesses(intent, limit = 5) {
 // server/routes/ai-chat.ts
 init_db();
 init_schema();
-import { eq as eq27, desc as desc13 } from "drizzle-orm";
+import { eq as eq26, desc as desc12 } from "drizzle-orm";
 
 // server/services/redis-client.ts
 import Redis from "ioredis";
@@ -22468,8 +24448,9 @@ async function getCachedAIReply(key) {
 }
 
 // server/routes/ai-chat.ts
-var router37 = Router37();
-router37.use(optionalAuth);
+var router38 = Router38();
+router38.use(optionalAuth);
+router38.use(aiLimiter);
 var chatSchema = z4.object({
   messages: z4.array(
     z4.object({
@@ -22481,7 +24462,7 @@ var chatSchema = z4.object({
 var askSchema = z4.object({
   question: z4.string().min(1).max(2e3)
 });
-router37.post("/chat", async (req, res) => {
+router38.post("/chat", async (req, res) => {
   try {
     const parsed = chatSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -22508,7 +24489,7 @@ router37.post("/chat", async (req, res) => {
     });
   }
 });
-router37.post("/ask", async (req, res) => {
+router38.post("/ask", async (req, res) => {
   try {
     const parsed = askSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -22535,7 +24516,7 @@ router37.post("/ask", async (req, res) => {
     });
   }
 });
-router37.post("/smart-chat", async (req, res) => {
+router38.post("/smart-chat", async (req, res) => {
   try {
     const parsed = chatSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -22607,7 +24588,7 @@ Detected sector: ${intent.sectorLabel || "general"} | Urgency: ${intent.urgency}
     });
   }
 });
-router37.get("/status", async (_req, res) => {
+router38.get("/status", async (_req, res) => {
   let ollamaOnline = false;
   try {
     const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
@@ -22635,13 +24616,13 @@ router37.get("/status", async (_req, res) => {
     }
   });
 });
-router37.get("/connectors", async (_req, res) => {
+router38.get("/connectors", async (_req, res) => {
   return res.json({
     success: true,
     connectors: getConnectorStatuses()
   });
 });
-router37.post("/connectors/run", async (req, res) => {
+router38.post("/connectors/run", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
@@ -22724,7 +24705,7 @@ function matchFAQ(question) {
   }
   return best ? best.answer : null;
 }
-router37.get("/support/stream", async (req, res) => {
+router38.get("/support/stream", async (req, res) => {
   const user = req.user;
   if (!user) {
     res.status(401).end();
@@ -22787,7 +24768,7 @@ data: ${JSON.stringify({ error: msg })}
       const history = await db.select({
         content: inboxMessages.content,
         senderId: inboxMessages.senderId
-      }).from(inboxMessages).where(eq27(inboxMessages.conversationId, convId)).orderBy(desc13(inboxMessages.createdAt)).limit(10);
+      }).from(inboxMessages).where(eq26(inboxMessages.conversationId, convId)).orderBy(desc12(inboxMessages.createdAt)).limit(10);
       historyMessages = history.reverse().map((m) => ({
         role: m.senderId === "support" ? "assistant" : "user",
         content: m.content
@@ -22996,13 +24977,13 @@ data: ${JSON.stringify({ error: msg })}
   }
   sendDone("fallback");
 });
-var ai_chat_default = router37;
+var ai_chat_default = router38;
 
 // server/routes/submission-requests.ts
 init_email_service();
 init_db();
-import { Router as Router38 } from "express";
-var router38 = Router38();
+import { Router as Router39 } from "express";
+var router39 = Router39();
 var ADMIN_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var APP_URL = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "http://localhost:5003";
 var recentSubmissions = /* @__PURE__ */ new Map();
@@ -23014,7 +24995,7 @@ function isDuplicate(type, name) {
   recentSubmissions.set(key, Date.now());
   return false;
 }
-router38.post("/business", async (req, res) => {
+router39.post("/business", async (req, res) => {
   try {
     const {
       name,
@@ -23132,7 +25113,7 @@ router38.post("/business", async (req, res) => {
     });
   }
 });
-router38.post("/artist", async (req, res) => {
+router39.post("/artist", async (req, res) => {
   try {
     const { stageName, genre, labelStatus, spotifyUrl, countryCode, username } = req.body;
     if (!stageName?.trim()) {
@@ -23246,7 +25227,7 @@ Spotify: ${spotifyUrl || "N/A"}`,
     });
   }
 });
-router38.post("/job", async (req, res) => {
+router39.post("/job", async (req, res) => {
   try {
     const {
       title,
@@ -23382,14 +25363,14 @@ Remote: ${isRemote ? "Yes" : "No"}`,
     });
   }
 });
-var submission_requests_default = router38;
+var submission_requests_default = router39;
 
 // server/routes/evaluations.ts
 init_db();
 init_schema();
-import { Router as Router39 } from "express";
+import { Router as Router40 } from "express";
 import { z as z5 } from "zod";
-import { eq as eq28, sql as sql14, desc as desc14 } from "drizzle-orm";
+import { eq as eq27, sql as sql15, desc as desc13 } from "drizzle-orm";
 
 // server/utils/artist-code-generator.ts
 function nameToCode(stageName) {
@@ -23548,7 +25529,7 @@ function isoToPhoneCode(isoCode) {
 }
 
 // server/routes/evaluations.ts
-var router39 = Router39();
+var router40 = Router40();
 var submitDemoSchema = z5.object({
   projectTitle: z5.string().min(1, "Project title is required").max(200),
   projectNotes: z5.string().max(2e3).optional(),
@@ -23561,7 +25542,7 @@ var submitDemoSchema = z5.object({
   ).min(3, "Minimum 3 tracks required for evaluation").max(12, "Maximum 12 tracks per submission"),
   coverArtUrl: z5.string().url().optional()
 });
-router39.post(
+router40.post(
   "/artist/submit-demo",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -23570,7 +25551,7 @@ router39.post(
       id: artistProfiles.id,
       evaluationStatus: artistProfiles.evaluationStatus,
       stageName: artistProfiles.stageName
-    }).from(artistProfiles).where(eq28(artistProfiles.userId, userId)).limit(1);
+    }).from(artistProfiles).where(eq27(artistProfiles.userId, userId)).limit(1);
     if (!artist) {
       return res.status(404).json({
         success: false,
@@ -23583,10 +25564,10 @@ router39.post(
         message: "You are already approved. No need to resubmit."
       });
     }
-    const existingSubmission = await db.select({ id: evaluationSubmissions.id }).from(evaluationSubmissions).where(eq28(evaluationSubmissions.artistId, artist.id)).limit(1);
+    const existingSubmission = await db.select({ id: evaluationSubmissions.id }).from(evaluationSubmissions).where(eq27(evaluationSubmissions.artistId, artist.id)).limit(1);
     const submissionCount = existingSubmission.length;
     if (artist.evaluationStatus === "resubmit") {
-      const lastRejection = await db.select({ resubmitAfter: evaluationSubmissions.resubmitAfter }).from(evaluationSubmissions).where(eq28(evaluationSubmissions.artistId, artist.id)).orderBy(desc14(evaluationSubmissions.createdAt)).limit(1);
+      const lastRejection = await db.select({ resubmitAfter: evaluationSubmissions.resubmitAfter }).from(evaluationSubmissions).where(eq27(evaluationSubmissions.artistId, artist.id)).orderBy(desc13(evaluationSubmissions.createdAt)).limit(1);
       if (lastRejection.length > 0 && lastRejection[0].resubmitAfter && /* @__PURE__ */ new Date() < new Date(lastRejection[0].resubmitAfter)) {
         return res.status(400).json({
           success: false,
@@ -23610,7 +25591,7 @@ router39.post(
       aiScore: aiScore.toFixed(1),
       submissionNumber: submissionCount + 1
     });
-    await db.update(artistProfiles).set({ evaluationStatus: "pending" }).where(eq28(artistProfiles.id, artist.id));
+    await db.update(artistProfiles).set({ evaluationStatus: "pending" }).where(eq27(artistProfiles.id, artist.id));
     console.log(
       `[A&R] Demo submitted by ${artist.stageName} (artistId=${artist.id}), AI pre-score: ${aiScore.toFixed(1)}`
     );
@@ -23622,7 +25603,7 @@ router39.post(
     });
   })
 );
-router39.get(
+router40.get(
   "/admin/evaluations",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -23637,7 +25618,7 @@ router39.get(
       Math.max(1, parseInt(req.query.limit) || 20)
     );
     const offset = (page - 1) * limit;
-    const submissions = await db.execute(sql14`
+    const submissions = await db.execute(sql15`
       SELECT
         es.id, es.project_title, es.status, es.tracks, es.cover_art_url,
         es.ai_score, es.final_score, es.reviewer_notes, es.submission_number,
@@ -23650,7 +25631,7 @@ router39.get(
       ORDER BY es.created_at ASC
       LIMIT ${limit} OFFSET ${offset}
     `);
-    const countResult = await db.execute(sql14`
+    const countResult = await db.execute(sql15`
       SELECT COUNT(*) as total FROM evaluation_submissions WHERE status = ${status}
     `);
     res.json({
@@ -23662,7 +25643,7 @@ router39.get(
     });
   })
 );
-router39.get(
+router40.get(
   "/admin/evaluations/:id",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -23671,7 +25652,7 @@ router39.get(
       return res.status(403).json({ success: false, message: "Staff only" });
     }
     const id = parseInt(req.params.id);
-    const result = await db.execute(sql14`
+    const result = await db.execute(sql15`
       SELECT
         es.*,
         ap.stage_name, ap.genre, ap.country, ap.country_code,
@@ -23699,7 +25680,7 @@ var scoreSchema = z5.object({
   decision: z5.enum(["approved", "rejected", "resubmit"]),
   reviewerNotes: z5.string().max(2e3).optional()
 });
-router39.put(
+router40.put(
   "/admin/evaluations/:id/score",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -23714,7 +25695,7 @@ router39.put(
     }
     const { scores, decision, reviewerNotes } = parsed.data;
     const finalScore = (scores.production + scores.originality + scores.craft + scores.marketReadiness) / 4;
-    const [submission] = await db.select({ artistId: evaluationSubmissions.artistId }).from(evaluationSubmissions).where(eq28(evaluationSubmissions.id, submissionId)).limit(1);
+    const [submission] = await db.select({ artistId: evaluationSubmissions.artistId }).from(evaluationSubmissions).where(eq27(evaluationSubmissions.id, submissionId)).limit(1);
     if (!submission) {
       return res.status(404).json({ success: false, message: "Submission not found" });
     }
@@ -23728,7 +25709,7 @@ router39.put(
       reviewedAt: /* @__PURE__ */ new Date(),
       // If rejected, set 30-day resubmit cooldown
       resubmitAfter: decision === "rejected" || decision === "resubmit" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1e3) : null
-    }).where(eq28(evaluationSubmissions.id, submissionId));
+    }).where(eq27(evaluationSubmissions.id, submissionId));
     const artistUpdates = {
       evaluationStatus: decision,
       evaluationScore: finalScore.toFixed(1)
@@ -23746,7 +25727,7 @@ router39.put(
           lifetimeStreams: artistProfiles.lifetimeStreams,
           division: artistProfiles.division,
           artistCode: artistProfiles.artistCode
-        }).from(artistProfiles).where(eq28(artistProfiles.id, submission.artistId)).limit(1);
+        }).from(artistProfiles).where(eq27(artistProfiles.id, submission.artistId)).limit(1);
         if (profile && !profile.artistCode) {
           const codeInput = {
             stageName: profile.stageName || "XX",
@@ -23773,7 +25754,7 @@ router39.put(
         console.error("[A&R] Failed to generate artist code:", codeErr);
       }
     }
-    await db.update(artistProfiles).set(artistUpdates).where(eq28(artistProfiles.id, submission.artistId));
+    await db.update(artistProfiles).set(artistUpdates).where(eq27(artistProfiles.id, submission.artistId));
     console.log(
       `[A&R] Evaluation ${submissionId} scored: ${finalScore.toFixed(1)}/10 \u2192 ${decision} (by reviewer ${reviewerId})`
     );
@@ -23785,12 +25766,12 @@ router39.put(
     });
   })
 );
-router39.get(
+router40.get(
   "/artist/my-evaluation",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
-    const result = await db.execute(sql14`
+    const result = await db.execute(sql15`
       SELECT
         es.id, es.project_title, es.status, es.ai_score, es.final_score,
         es.scores, es.reviewer_notes, es.submission_number,
@@ -23815,12 +25796,12 @@ router39.get(
     });
   })
 );
-router39.get(
+router40.get(
   "/artist/division-status",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
-    const profileResult = await db.execute(sql14`
+    const profileResult = await db.execute(sql15`
       SELECT
         ap.id, ap.stage_name, ap.artist_code, ap.division, ap.evaluation_status,
         ap.evaluation_score, ap.contract_access, ap.promotion_eligible_at,
@@ -23879,7 +25860,7 @@ router39.get(
     let thresholds = null;
     let progress = 100;
     if (nextDiv) {
-      const threshResult = await db.execute(sql14`
+      const threshResult = await db.execute(sql15`
         SELECT min_streams, min_releases, min_active_days, min_engagement_rate
         FROM promotion_thresholds
         WHERE from_division = ${division}
@@ -23910,7 +25891,7 @@ router39.get(
         };
       }
     }
-    const evalResult = await db.execute(sql14`
+    const evalResult = await db.execute(sql15`
       SELECT status, final_score, reviewed_at, resubmit_after
       FROM evaluation_submissions
       WHERE artist_id = ${profile.id}
@@ -23974,13 +25955,111 @@ function computeAIPreScore(tracks) {
   if (uniqueTitles.size === tracks.length) score += 0.5;
   return Math.min(10, Math.max(1, score));
 }
-var evaluations_default = router39;
+var evaluations_default = router40;
+
+// server/routes/notifications.ts
+init_db();
+import { Router as Router41 } from "express";
+var router41 = Router41();
+async function ensureNotifTable() {
+  await pool.query(
+    `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL,
+      type VARCHAR(30) NOT NULL DEFAULT 'activity',
+      title TEXT NOT NULL DEFAULT '',
+      message TEXT,
+      actor_name TEXT,
+      actor_avatar TEXT,
+      entity_url TEXT,
+      read BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `
+  ).catch(() => {
+  });
+  const cols = ["actor_name TEXT", "actor_avatar TEXT", "entity_url TEXT"];
+  for (const col of cols) {
+    const [name] = col.split(" ");
+    await pool.query(
+      `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS ${name} ${col.split(" ").slice(1).join(" ")}`
+    ).catch(() => {
+    });
+  }
+}
+function mapType(raw2) {
+  const map = {
+    connection_request: "follow",
+    connection_accepted: "follow",
+    track_review: "like",
+    message: "message",
+    activity: "publish",
+    job_posted: "mention",
+    contract_posted: "mention",
+    reservation_update: "comment"
+  };
+  return map[raw2] || raw2;
+}
+router41.get("/", requireAuth(), async (req, res) => {
+  try {
+    await ensureNotifTable();
+    const userId = parseInt(req.user.userId);
+    const result = await pool.query(
+      `SELECT id::text, type, title, message,
+              actor_name AS "actorName", actor_avatar AS "actorAvatar",
+              entity_url AS "entityUrl", read, created_at AS "createdAt"
+       FROM notifications
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [userId]
+    );
+    const rows = result.rows.map((r) => ({
+      id: r.id,
+      type: mapType(r.type),
+      actorName: r.actorName || "Someone",
+      actorAvatar: r.actorAvatar || null,
+      text: r.message || r.title || "",
+      entityUrl: r.entityUrl || null,
+      read: r.read,
+      createdAt: r.createdAt
+    }));
+    res.json({ success: true, notifications: rows });
+  } catch (err) {
+    console.error("[NOTIFICATIONS] GET error:", err.message);
+    res.json({ success: true, notifications: [] });
+  }
+});
+router41.post("/read-all", requireAuth(), async (req, res) => {
+  try {
+    const userId = parseInt(req.user.userId);
+    await pool.query(
+      `UPDATE notifications SET read = true WHERE user_id = $1`,
+      [userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+router41.post("/:id/read", requireAuth(), async (req, res) => {
+  try {
+    await pool.query(`UPDATE notifications SET read = true WHERE id = $1`, [
+      req.params.id
+    ]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+var notifications_default = router41;
 
 // server/routes/marketing.ts
 init_db();
-import { Router as Router40 } from "express";
+import { Router as Router42 } from "express";
 import multer2 from "multer";
-import path4 from "path";
+import path3 from "path";
 import fs4 from "fs";
 import Stripe3 from "stripe";
 
@@ -23988,8 +26067,8 @@ import Stripe3 from "stripe";
 init_db();
 import PDFDocument2 from "pdfkit";
 import fs3 from "fs";
-import path3 from "path";
-var JOURNAL_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "journal-editions") : path3.resolve("uploads", "journal-editions");
+import path2 from "path";
+var JOURNAL_DIR = process.env.NODE_ENV === "production" ? path2.join("/tmp", "uploads", "journal-editions") : path2.resolve("uploads", "journal-editions");
 try {
   if (!fs3.existsSync(JOURNAL_DIR)) {
     fs3.mkdirSync(JOURNAL_DIR, { recursive: true });
@@ -24008,7 +26087,7 @@ async function generateJournalPDF(type = "on_demand") {
   );
   const listings = listingsResult.rows;
   const fileName = `journal-${type}-${Date.now()}.pdf`;
-  const filePath = path3.join(JOURNAL_DIR, fileName);
+  const filePath = path2.join(JOURNAL_DIR, fileName);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument2({ size: "A4", margin: 50, bufferPages: true });
     const stream = fs3.createWriteStream(filePath);
@@ -24280,10 +26359,10 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
   }
   if (mimetype === "application/pdf") {
     try {
-      const fs8 = await import("fs");
+      const fs10 = await import("fs");
       const pdfParseModule = await import("pdf-parse");
       const pdfParse = pdfParseModule.default || pdfParseModule;
-      const buffer = fs8.readFileSync(filePath);
+      const buffer = fs10.readFileSync(filePath);
       const pdfData = await pdfParse(buffer);
       checks.push({
         name: "PDF pages",
@@ -24319,9 +26398,9 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
 }
 
 // server/routes/marketing.ts
-var router40 = Router40();
+var router42 = Router42();
 var stripe3 = process.env.STRIPE_SECRET_KEY ? new Stripe3(process.env.STRIPE_SECRET_KEY) : null;
-var PRINT_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path4.join("/tmp", "uploads", "print") : path4.resolve("uploads", "print");
+var PRINT_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "print") : path3.resolve("uploads", "print");
 try {
   if (!fs4.existsSync(PRINT_UPLOADS_DIR)) {
     fs4.mkdirSync(PRINT_UPLOADS_DIR, { recursive: true });
@@ -24329,11 +26408,46 @@ try {
 } catch (err) {
   console.warn(`\u26A0\uFE0F  Could not create print uploads dir: ${err.message}`);
 }
+var allowedPrintTypes = /* @__PURE__ */ new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/svg+xml",
+  "application/postscript"
+]);
+var allowedPrintExtensions = /* @__PURE__ */ new Set([
+  ".pdf",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".tif",
+  ".tiff",
+  ".svg",
+  ".eps",
+  ".ai"
+]);
+function sanitizeStoredName(originalName) {
+  const safe = (originalName || "print-file").replace(/[\\/]+/g, "/").split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").trim();
+  if (!safe || safe === "." || safe === "..") return "print-file.bin";
+  return safe.length > 150 ? safe.slice(0, 150) : safe;
+}
+function validatePrintFile(file) {
+  const extension = path3.extname(file.originalname || "").toLowerCase();
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (!allowedPrintTypes.has(file.mimetype) || !allowedPrintExtensions.has(extension)) {
+    throw new Error(`Unsupported print file format: ${file.mimetype}`);
+  }
+  return sanitizeStoredName(file.originalname);
+}
 var printStorage = multer2.diskStorage({
   destination: (_req, _file, cb) => cb(null, PRINT_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path4.extname(file.originalname);
+    const safeName = validatePrintFile(file);
+    const ext = path3.extname(safeName).toLowerCase();
     cb(null, `print-${uniqueSuffix}${ext}`);
   }
 });
@@ -24342,23 +26456,15 @@ var printUpload = multer2({
   limits: { fileSize: 200 * 1024 * 1024 },
   // 200 MB for print files
   fileFilter: (_req, file, cb) => {
-    const allowed = [
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-      "image/tiff",
-      "image/svg+xml",
-      "application/postscript"
-      // .ai / .eps
-    ];
-    if (allowed.includes(file.mimetype)) {
+    try {
+      validatePrintFile(file);
       cb(null, true);
-    } else {
-      cb(new Error(`Unsupported print file format: ${file.mimetype}`));
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
-var LISTING_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path4.join("/tmp", "uploads", "listings") : path4.resolve("uploads", "listings");
+var LISTING_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "listings") : path3.resolve("uploads", "listings");
 try {
   if (!fs4.existsSync(LISTING_UPLOADS_DIR)) {
     fs4.mkdirSync(LISTING_UPLOADS_DIR, { recursive: true });
@@ -24366,14 +26472,6 @@ try {
 } catch (err) {
   console.warn(`\u26A0\uFE0F  Could not create listing uploads dir: ${err.message}`);
 }
-var listingStorage = multer2.diskStorage({
-  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path4.extname(file.originalname);
-    cb(null, `listing-${uniqueSuffix}${ext}`);
-  }
-});
 var ALLOWED_LISTING_IMAGES = /* @__PURE__ */ new Set([
   "image/jpeg",
   "image/png",
@@ -24387,22 +26485,62 @@ var ALLOWED_LISTING_VIDEOS = /* @__PURE__ */ new Set([
   "video/quicktime",
   "video/x-msvideo"
 ]);
+var ALLOWED_LISTING_IMAGE_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif",
+  ".gif"
+]);
+var ALLOWED_LISTING_VIDEO_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".avi"
+]);
+function validateListingMedia(file) {
+  const extension = path3.extname(file.originalname || "").toLowerCase();
+  const isImage = ALLOWED_LISTING_IMAGES.has(file.mimetype);
+  const isVideo = ALLOWED_LISTING_VIDEOS.has(file.mimetype);
+  const isImageExtAllowed = ALLOWED_LISTING_IMAGE_EXTENSIONS.has(extension);
+  const isVideoExtAllowed = ALLOWED_LISTING_VIDEO_EXTENSIONS.has(extension);
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (!isImage && !isVideo || isImage && !isImageExtAllowed || isVideo && !isVideoExtAllowed) {
+    throw new Error(
+      `Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`
+    );
+  }
+  return sanitizeStoredName(file.originalname);
+}
+var listingStorage = multer2.diskStorage({
+  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const safeName = validateListingMedia(file);
+    const ext = path3.extname(safeName).toLowerCase();
+    cb(null, `listing-${uniqueSuffix}${ext}`);
+  }
+});
 var listingUpload = multer2({
   storage: listingStorage,
   limits: { fileSize: 100 * 1024 * 1024 },
   // 100 MB max per file
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_LISTING_IMAGES.has(file.mimetype) || ALLOWED_LISTING_VIDEOS.has(file.mimetype)) {
+    try {
+      validateListingMedia(file);
       cb(null, true);
-    } else {
-      cb(new Error(`Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`));
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 }).fields([
   { name: "images", maxCount: 10 },
   { name: "videos", maxCount: 3 }
 ]);
-router40.get("/journal/listings", async (req, res) => {
+router42.get("/journal/listings", async (req, res) => {
   try {
     const { category, status, page = "1", limit = "20" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -24447,7 +26585,7 @@ router40.get("/journal/listings", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router42.post(
   "/journal/listings",
   requireAuth(),
   (req, res, next) => {
@@ -24482,10 +26620,10 @@ router40.post(
       }
       const files = req.files;
       const imagePaths = (files?.images || []).map(
-        (f) => `/uploads/listings/${path4.basename(f.path)}`
+        (f) => `/uploads/listings/${path3.basename(f.path)}`
       );
       const videoPaths = (files?.videos || []).map(
-        (f) => `/uploads/listings/${path4.basename(f.path)}`
+        (f) => `/uploads/listings/${path3.basename(f.path)}`
       );
       const result = await pool.query(
         `INSERT INTO ad_journal_listings
@@ -24505,7 +26643,9 @@ router40.post(
           JSON.stringify(videoPaths)
         ]
       );
-      console.log(`\u{1F4E6} [LISTING] New listing "${title}" by user ${userId} \u2014 ${imagePaths.length} images, ${videoPaths.length} videos`);
+      console.log(
+        `\u{1F4E6} [LISTING] New listing "${title}" by user ${userId} \u2014 ${imagePaths.length} images, ${videoPaths.length} videos`
+      );
       res.status(201).json({
         success: true,
         data: result.rows[0],
@@ -24517,7 +26657,7 @@ router40.post(
     }
   }
 );
-router40.get(
+router42.get(
   "/journal/my-listings",
   requireAuth(),
   async (req, res) => {
@@ -24533,7 +26673,7 @@ router40.get(
     }
   }
 );
-router40.put(
+router42.put(
   "/journal/listings/:id",
   requireAuth(),
   async (req, res) => {
@@ -24599,7 +26739,7 @@ router40.put(
     }
   }
 );
-router40.delete(
+router42.delete(
   "/journal/listings/:id",
   requireAuth(),
   async (req, res) => {
@@ -24625,7 +26765,7 @@ router40.delete(
     }
   }
 );
-router40.get("/journal/pdf/:type", async (req, res) => {
+router42.get("/journal/pdf/:type", async (req, res) => {
   try {
     const type = req.params.type;
     if (type !== "weekly" && type !== "monthly") {
@@ -24658,7 +26798,7 @@ router40.get("/journal/pdf/:type", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router42.post(
   "/journal/generate",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -24675,7 +26815,7 @@ router40.post(
     }
   }
 );
-router40.get("/journal/editions", async (_req, res) => {
+router42.get("/journal/editions", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, type, listing_count, generated_at, pdf_url FROM journal_editions ORDER BY generated_at DESC LIMIT 20`
@@ -24685,7 +26825,7 @@ router40.get("/journal/editions", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.patch(
+router42.patch(
   "/journal/listings/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -24707,7 +26847,7 @@ router40.patch(
     }
   }
 );
-router40.get("/packs", async (_req, res) => {
+router42.get("/packs", async (_req, res) => {
   try {
     const packs = await pool.query(
       `SELECT mp.*, 
@@ -24725,7 +26865,7 @@ router40.get("/packs", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get("/packs/:id", async (req, res) => {
+router42.get("/packs/:id", async (req, res) => {
   try {
     const pack = await pool.query(
       `SELECT mp.*,
@@ -24746,7 +26886,7 @@ router40.get("/packs/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get("/print/products", async (_req, res) => {
+router42.get("/print/products", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM print_products WHERE is_active = true ORDER BY price_cents ASC`
@@ -24756,7 +26896,7 @@ router40.get("/print/products", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router42.post(
   "/print/upload",
   requireAuth(),
   printUpload.single("file"),
@@ -24812,12 +26952,12 @@ router40.post(
     }
   }
 );
-router40.get(
+router42.get(
   "/print/jobs",
   requireAuth(),
   async (req, res) => {
     try {
-      const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
+      const isAdmin2 = req.user.role === "admin" || req.user.role === "superuser";
       const { status, page = "1", limit = "20" } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
       let query = `SELECT pj.*, pp.name as product_name, u.name as user_name
@@ -24827,7 +26967,7 @@ router40.get(
                  WHERE 1=1`;
       const params = [];
       let idx = 1;
-      if (!isAdmin) {
+      if (!isAdmin2) {
         query += ` AND pj.user_id = $${idx++}`;
         params.push(req.user.userId);
       }
@@ -24844,7 +26984,7 @@ router40.get(
     }
   }
 );
-router40.patch(
+router42.patch(
   "/print/jobs/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -24888,7 +27028,7 @@ router40.patch(
     }
   }
 );
-router40.get("/cart", requireAuth(), async (req, res) => {
+router42.get("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const result = await pool.query(
@@ -24919,7 +27059,7 @@ router40.get("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post("/cart", requireAuth(), async (req, res) => {
+router42.post("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const { item_type, item_id, quantity = 1, metadata } = req.body;
@@ -24979,7 +27119,7 @@ router40.post("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.put("/cart/:id", requireAuth(), async (req, res) => {
+router42.put("/cart/:id", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const { quantity } = req.body;
@@ -24999,7 +27139,7 @@ router40.put("/cart/:id", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.delete(
+router42.delete(
   "/cart/:id",
   requireAuth(),
   async (req, res) => {
@@ -25018,7 +27158,7 @@ router40.delete(
     }
   }
 );
-router40.delete("/cart", requireAuth(), async (req, res) => {
+router42.delete("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     await pool.query(`DELETE FROM cart_items WHERE user_id = $1`, [userId]);
@@ -25027,7 +27167,7 @@ router40.delete("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.post(
+router42.post(
   "/cart/merge",
   requireAuth(),
   async (req, res) => {
@@ -25114,7 +27254,7 @@ router40.post(
     }
   }
 );
-router40.post(
+router42.post(
   "/cart/checkout",
   requireAuth(),
   async (req, res) => {
@@ -25200,9 +27340,9 @@ router40.post(
     }
   }
 );
-router40.get("/orders", requireAuth(), async (req, res) => {
+router42.get("/orders", requireAuth(), async (req, res) => {
   try {
-    const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
+    const isAdmin2 = req.user.role === "admin" || req.user.role === "superuser";
     const { status, page = "1", limit = "20" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     let query = `SELECT o.*, u.name as user_name, u.email as user_email,
@@ -25216,7 +27356,7 @@ router40.get("/orders", requireAuth(), async (req, res) => {
                  WHERE 1=1`;
     const params = [];
     let idx = 1;
-    if (!isAdmin) {
+    if (!isAdmin2) {
       query += ` AND o.user_id = $${idx++}`;
       params.push(req.user.userId);
     }
@@ -25232,13 +27372,13 @@ router40.get("/orders", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get(
+router42.get(
   "/orders/:id",
   requireAuth(),
   async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
+      const isAdmin2 = req.user.role === "admin" || req.user.role === "superuser";
       let query = `SELECT o.*,
                         json_agg(json_build_object(
                           'id', oi.id, 'item_type', oi.item_type, 'item_id', oi.item_id,
@@ -25248,7 +27388,7 @@ router40.get(
                  LEFT JOIN order_items oi ON oi.order_id = o.id
                  WHERE o.id = $1`;
       const params = [orderId];
-      if (!isAdmin) {
+      if (!isAdmin2) {
         query += ` AND o.user_id = $2`;
         params.push(req.user.userId);
       }
@@ -25263,7 +27403,7 @@ router40.get(
     }
   }
 );
-router40.patch(
+router42.patch(
   "/orders/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -25297,42 +27437,50 @@ router40.patch(
     }
   }
 );
-router40.post("/newsletters/subscribe", async (req, res) => {
-  try {
-    const { email, name } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, error: "Email is required" });
-    }
-    const crypto6 = await import("crypto");
-    const unsubscribeToken = crypto6.randomUUID();
-    const result = await pool.query(
-      `INSERT INTO newsletter_subscribers (email, name, is_active, unsubscribe_token)
+router42.post(
+  "/newsletters/subscribe",
+  newsletterLimiter,
+  async (req, res) => {
+    try {
+      const { email, name } = req.body;
+      if (!email) {
+        return res.status(400).json({ success: false, error: "Email is required" });
+      }
+      const crypto6 = await import("crypto");
+      const unsubscribeToken = crypto6.randomUUID();
+      const result = await pool.query(
+        `INSERT INTO newsletter_subscribers (email, name, is_active, unsubscribe_token)
        VALUES ($1, $2, true, $3)
        ON CONFLICT (email) DO UPDATE SET is_active = true, name = COALESCE($2, newsletter_subscribers.name)
        RETURNING *`,
-      [email, name || null, unsubscribeToken]
-    );
-    res.status(201).json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-router40.post("/newsletters/unsubscribe", async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, error: "Email is required" });
+        [email, name || null, unsubscribeToken]
+      );
+      res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
     }
-    await pool.query(
-      `UPDATE newsletter_subscribers SET is_active = false WHERE email = $1`,
-      [email]
-    );
-    res.json({ success: true, message: "Successfully unsubscribed" });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
   }
-});
-router40.get("/newsletters/archive", async (req, res) => {
+);
+router42.post(
+  "/newsletters/unsubscribe",
+  newsletterLimiter,
+  async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ success: false, error: "Email is required" });
+      }
+      await pool.query(
+        `UPDATE newsletter_subscribers SET is_active = false WHERE email = $1`,
+        [email]
+      );
+      res.json({ success: true, message: "Successfully unsubscribed" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+router42.get("/newsletters/archive", async (req, res) => {
   try {
     const { page = "1", limit = "10" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -25349,7 +27497,7 @@ router40.get("/newsletters/archive", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router40.get(
+router42.get(
   "/newsletters/subscribers",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -25363,7 +27511,7 @@ router40.get(
     }
   }
 );
-router40.get(
+router42.get(
   "/newsletters/campaigns",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -25377,7 +27525,7 @@ router40.get(
     }
   }
 );
-router40.post(
+router42.post(
   "/newsletters/campaigns",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -25410,7 +27558,7 @@ router40.post(
     }
   }
 );
-router40.put(
+router42.put(
   "/newsletters/campaigns/:id",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -25445,7 +27593,7 @@ router40.put(
     }
   }
 );
-router40.post(
+router42.post(
   "/newsletters/campaigns/:id/send",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -25491,7 +27639,7 @@ router40.post(
     }
   }
 );
-router40.get(
+router42.get(
   "/analytics",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -25546,7 +27694,7 @@ router40.get(
     }
   }
 );
-router40.get(
+router42.get(
   "/printshop/queue",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -25586,7 +27734,7 @@ router40.get(
     }
   }
 );
-router40.delete(
+router42.delete(
   "/cart/purge-expired",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -25604,26 +27752,26 @@ router40.delete(
     }
   }
 );
-var marketing_default = router40;
+var marketing_default = router42;
 
 // server/routes/user-history.ts
 init_db();
 init_schema();
-import { Router as Router41 } from "express";
-import { eq as eq29, desc as desc15, and as and17 } from "drizzle-orm";
-var router41 = Router41();
-router41.get(
+import { Router as Router43 } from "express";
+import { eq as eq28, desc as desc14, and as and16 } from "drizzle-orm";
+var router43 = Router43();
+router43.get(
   "/",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = parseInt(req.user.userId ?? req.user.id, 10);
     if (isNaN(userId))
       return res.status(400).json({ success: false, message: "Invalid user" });
-    const rows = await db.select().from(userBrowsingHistory).where(eq29(userBrowsingHistory.userId, userId)).orderBy(desc15(userBrowsingHistory.visitedAt)).limit(100);
+    const rows = await db.select().from(userBrowsingHistory).where(eq28(userBrowsingHistory.userId, userId)).orderBy(desc14(userBrowsingHistory.visitedAt)).limit(100);
     res.json({ success: true, history: rows });
   })
 );
-router41.post(
+router43.post(
   "/",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -25637,16 +27785,16 @@ router41.post(
     if (businessId) {
       const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1e3);
       const [existing] = await db.select().from(userBrowsingHistory).where(
-        and17(
-          eq29(userBrowsingHistory.userId, userId),
-          eq29(userBrowsingHistory.businessId, businessId)
+        and16(
+          eq28(userBrowsingHistory.userId, userId),
+          eq28(userBrowsingHistory.businessId, businessId)
         )
       ).limit(1);
       if (existing && existing.visitedAt >= thirtyMinAgo) {
         await db.update(userBrowsingHistory).set({
           visitedAt: /* @__PURE__ */ new Date(),
           metadata: metadata ?? existing.metadata
-        }).where(eq29(userBrowsingHistory.id, existing.id));
+        }).where(eq28(userBrowsingHistory.id, existing.id));
         return res.json({ success: true, action: "updated", id: existing.id });
       }
     }
@@ -25662,7 +27810,7 @@ router41.post(
     res.status(201).json({ success: true, action: "created", id: inserted.id });
   })
 );
-router41.delete(
+router43.delete(
   "/:id",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -25670,16 +27818,16 @@ router41.delete(
     if (isNaN(userId))
       return res.status(400).json({ success: false, message: "Invalid user" });
     if (req.params.id === "all") {
-      await db.delete(userBrowsingHistory).where(eq29(userBrowsingHistory.userId, userId));
+      await db.delete(userBrowsingHistory).where(eq28(userBrowsingHistory.userId, userId));
       return res.json({ success: true, action: "cleared" });
     }
     const entryId = parseInt(req.params.id, 10);
     if (isNaN(entryId))
       return res.status(400).json({ success: false, message: "Invalid id" });
     const [deleted] = await db.delete(userBrowsingHistory).where(
-      and17(
-        eq29(userBrowsingHistory.id, entryId),
-        eq29(userBrowsingHistory.userId, userId)
+      and16(
+        eq28(userBrowsingHistory.id, entryId),
+        eq28(userBrowsingHistory.userId, userId)
       )
     ).returning({ id: userBrowsingHistory.id });
     if (!deleted)
@@ -25687,25 +27835,37 @@ router41.delete(
     res.json({ success: true, action: "deleted", id: deleted.id });
   })
 );
-var user_history_default = router41;
+var user_history_default = router43;
 
 // server/routes/track-upload.ts
 init_db();
-import { Router as Router42 } from "express";
+import { Router as Router44 } from "express";
 import multer3 from "multer";
-import path5 from "path";
+import path4 from "path";
 import fs5 from "fs";
 import crypto5 from "crypto";
-var router42 = Router42();
-var UPLOAD_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "tracks") : path5.resolve("uploads", "tracks");
-var COVER_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "covers") : path5.resolve("uploads", "covers");
-try {
-  [UPLOAD_DIR, COVER_DIR].forEach((dir) => {
-    if (!fs5.existsSync(dir)) fs5.mkdirSync(dir, { recursive: true });
-  });
-} catch (err) {
-  console.warn(`\u26A0\uFE0F  Could not create upload dirs: ${err.message}`);
+var router44 = Router44();
+function resolveWritableDir(preferred, fallback) {
+  for (const dir of [preferred, fallback]) {
+    try {
+      fs5.mkdirSync(dir, { recursive: true });
+      fs5.accessSync(dir, fs5.constants.W_OK);
+      return dir;
+    } catch {
+    }
+  }
+  return fallback;
 }
+var isDev = process.env.NODE_ENV === "development";
+var UPLOAD_DIR = resolveWritableDir(
+  isDev ? path4.resolve("uploads", "tracks") : path4.join("/tmp", "uploads", "tracks"),
+  path4.join("/tmp", "uploads", "tracks")
+);
+var COVER_DIR = resolveWritableDir(
+  isDev ? path4.resolve("uploads", "covers") : path4.join("/tmp", "uploads", "covers"),
+  path4.join("/tmp", "uploads", "covers")
+);
+console.log(`\u{1F3B5} [UPLOAD] audio=${UPLOAD_DIR} cover=${COVER_DIR}`);
 var ALLOWED_AUDIO = /* @__PURE__ */ new Set([
   "audio/mpeg",
   "audio/mp3",
@@ -25724,13 +27884,56 @@ var ALLOWED_IMAGE = /* @__PURE__ */ new Set([
   "image/webp",
   "image/avif"
 ]);
+var ALLOWED_AUDIO_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".mp3",
+  ".wav",
+  ".flac",
+  ".aac",
+  ".ogg",
+  ".mp4",
+  ".m4a",
+  ".webm"
+]);
+var ALLOWED_IMAGE_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif"
+]);
 var MAX_AUDIO_SIZE = 100 * 1024 * 1024;
 var MAX_COVER_SIZE = 10 * 1024 * 1024;
+function sanitizeStoredName2(originalName) {
+  const safeBase = (originalName || "upload").replace(/[\\/]+/g, "/").split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").trim();
+  if (!safeBase || safeBase === "." || safeBase === "..") {
+    return "upload.bin";
+  }
+  return safeBase.length > 150 ? safeBase.slice(0, 150) : safeBase;
+}
+function validateUploadFile(file, allowedMimeTypes, allowedExtensions) {
+  const extension = path4.extname(file.originalname || "").toLowerCase();
+  const isMimeAllowed = allowedMimeTypes.has(file.mimetype);
+  const isExtAllowed = allowedExtensions.has(extension);
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid upload filename.");
+  }
+  if (!isMimeAllowed || !isExtAllowed) {
+    throw new Error(
+      `Invalid file format: ${file.mimetype || "unknown"}. Allowed types: ${[...allowedExtensions].join(", ")}`
+    );
+  }
+  return sanitizeStoredName2(file.originalname);
+}
 var audioStorage = multer3.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
     const unique = crypto5.randomBytes(8).toString("hex");
-    const ext = path5.extname(file.originalname) || ".mp3";
+    const safeName = validateUploadFile(
+      file,
+      ALLOWED_AUDIO,
+      ALLOWED_AUDIO_EXTENSIONS
+    );
+    const ext = path4.extname(safeName).toLowerCase() || ".mp3";
     cb(null, `${Date.now()}_${unique}${ext}`);
   }
 });
@@ -25738,14 +27941,11 @@ var uploadAudio = multer3({
   storage: audioStorage,
   limits: { fileSize: MAX_AUDIO_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_AUDIO.has(file.mimetype)) {
+    try {
+      validateUploadFile(file, ALLOWED_AUDIO, ALLOWED_AUDIO_EXTENSIONS);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Invalid audio format: ${file.mimetype}. Accepted: MP3, WAV, FLAC, AAC, OGG`
-        )
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
@@ -25753,7 +27953,12 @@ var coverStorage = multer3.diskStorage({
   destination: (_req, _file, cb) => cb(null, COVER_DIR),
   filename: (_req, file, cb) => {
     const unique = crypto5.randomBytes(8).toString("hex");
-    const ext = path5.extname(file.originalname) || ".jpg";
+    const safeName = validateUploadFile(
+      file,
+      ALLOWED_IMAGE,
+      ALLOWED_IMAGE_EXTENSIONS
+    );
+    const ext = path4.extname(safeName).toLowerCase() || ".jpg";
     cb(null, `cover_${Date.now()}_${unique}${ext}`);
   }
 });
@@ -25761,14 +27966,11 @@ var uploadCover = multer3({
   storage: coverStorage,
   limits: { fileSize: MAX_COVER_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_IMAGE.has(file.mimetype)) {
+    try {
+      validateUploadFile(file, ALLOWED_IMAGE, ALLOWED_IMAGE_EXTENSIONS);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Invalid image format: ${file.mimetype}. Accepted: JPEG, PNG, WebP`
-        )
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
@@ -25781,9 +27983,10 @@ var uploadFields = multer3({
     },
     filename: (_req, file, cb) => {
       const unique = crypto5.randomBytes(8).toString("hex");
-      const ext = path5.extname(file.originalname) || "";
+      const safeName = ALLOWED_IMAGE.has(file.mimetype) ? validateUploadFile(file, ALLOWED_IMAGE, ALLOWED_IMAGE_EXTENSIONS) : validateUploadFile(file, ALLOWED_AUDIO, ALLOWED_AUDIO_EXTENSIONS);
+      const ext = path4.extname(safeName).toLowerCase();
       const prefix = ALLOWED_IMAGE.has(file.mimetype) ? "cover" : "track";
-      cb(null, `${prefix}_${Date.now()}_${unique}${ext}`);
+      cb(null, `${prefix}_${Date.now()}_${unique}${ext || ".mp3"}`);
     }
   }),
   limits: { fileSize: MAX_AUDIO_SIZE }
@@ -25820,7 +28023,7 @@ async function getArtistSubscriptionTier(userId) {
   }
   return { tier: "spark", uploadsUsed: 0, maxUploads: 3 };
 }
-router42.post(
+router44.post(
   "/track",
   requireAuth(),
   (req, res, next) => {
@@ -25885,8 +28088,8 @@ router42.post(
         }
       } catch (e) {
       }
-      const audioUrl = `/uploads/tracks/${path5.basename(audioFile.path)}`;
-      const coverArt = coverFile ? `/uploads/covers/${path5.basename(coverFile.path)}` : null;
+      const audioUrl = `/uploads/tracks/${path4.basename(audioFile.path)}`;
+      const coverArt = coverFile ? `/uploads/covers/${path4.basename(coverFile.path)}` : null;
       const result = await pool.query(
         `INSERT INTO music_tracks (
            title, artist_id, album_id, genre, mood, bpm, musical_key,
@@ -25949,7 +28152,7 @@ router42.post(
     }
   }
 );
-router42.get("/my-tracks", requireAuth(), async (req, res) => {
+router44.get("/my-tracks", requireAuth(), async (req, res) => {
   try {
     const userId = req.user ? parseInt(req.user.userId) : null;
     if (!userId)
@@ -25965,7 +28168,9 @@ router42.get("/my-tracks", requireAuth(), async (req, res) => {
     const tracks = await pool.query(
       `SELECT id, title, genre, mood, bpm, musical_key, streams, play_count, likes,
               downloads, revenue, status, audio_url, cover_art, duration,
-              file_name, file_size, is_explicit, created_at
+              file_name, file_size, is_explicit, created_at, file_path,
+              (audio_data IS NOT NULL) AS has_audio_data,
+              (pochette IS NOT NULL) AS has_pochette
        FROM music_tracks
        WHERE artist_id = $1
        ORDER BY created_at DESC`,
@@ -25987,7 +28192,7 @@ router42.get("/my-tracks", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch tracks" });
   }
 });
-router42.delete(
+router44.delete(
   "/track/:id",
   requireAuth(),
   async (req, res) => {
@@ -26014,7 +28219,7 @@ router42.delete(
         fs5.unlinkSync(row.file_path);
       }
       if (row.cover_art) {
-        const coverPath = path5.resolve(
+        const coverPath = path4.resolve(
           process.cwd(),
           row.cover_art.replace(/^\//, "")
         );
@@ -26036,12 +28241,12 @@ router42.delete(
     }
   }
 );
-var track_upload_default = router42;
+var track_upload_default = router44;
 
 // server/routes/artist-subscriptions.ts
 init_db();
-import { Router as Router43 } from "express";
-var router43 = Router43();
+import { Router as Router45 } from "express";
+var router45 = Router45();
 var ARTIST_TIERS = {
   spark: {
     name: "Spark",
@@ -26128,7 +28333,7 @@ var ARTIST_TIERS = {
     icon: "\u{1F451}"
   }
 };
-router43.get("/tiers", async (_req, res) => {
+router45.get("/tiers", async (_req, res) => {
   const tiers = Object.entries(ARTIST_TIERS).map(([key, tier]) => ({
     id: key,
     ...tier,
@@ -26136,7 +28341,7 @@ router43.get("/tiers", async (_req, res) => {
   }));
   res.json({ success: true, tiers });
 });
-router43.get(
+router45.get(
   "/my-subscription",
   optionalAuth,
   async (req, res) => {
@@ -26180,7 +28385,7 @@ router43.get(
     }
   }
 );
-router43.post(
+router45.post(
   "/subscribe",
   requireAuth(),
   async (req, res) => {
@@ -26308,7 +28513,7 @@ router43.post(
     }
   }
 );
-router43.post("/cancel", requireAuth(), async (req, res) => {
+router45.post("/cancel", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const result = await pool.query(
@@ -26331,7 +28536,7 @@ router43.post("/cancel", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to cancel" });
   }
 });
-router43.get(
+router45.get(
   "/subscription",
   optionalAuth,
   async (req, res) => {
@@ -26373,12 +28578,12 @@ router43.get(
     }
   }
 );
-var artist_subscriptions_default = router43;
+var artist_subscriptions_default = router45;
 
 // server/routes/payments.ts
 init_db();
-import { Router as Router44 } from "express";
-var router44 = Router44();
+import { Router as Router46 } from "express";
+var router46 = Router46();
 var PAYMENT_METHODS = [
   {
     id: "wallet",
@@ -26458,7 +28663,7 @@ var PAYMENT_METHODS = [
     requiresMinActivity: 500
   }
 ];
-router44.get("/methods", async (_req, res) => {
+router46.get("/methods", async (_req, res) => {
   let interacEnabled = false;
   let cryptoEnabled = false;
   let mobileMoneyEnabled = false;
@@ -26509,7 +28714,7 @@ router44.get("/methods", async (_req, res) => {
   }
   res.json({ success: true, methods });
 });
-router44.get("/wallet", requireAuth(), async (req, res) => {
+router46.get("/wallet", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const wallet = await pool.query(
@@ -26537,7 +28742,7 @@ router44.get("/wallet", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch wallet" });
   }
 });
-router44.post(
+router46.post(
   "/wallet/create",
   requireAuth(),
   async (req, res) => {
@@ -26572,7 +28777,7 @@ router44.post(
     }
   }
 );
-router44.post(
+router46.post(
   "/wallet/deposit",
   requireAuth(),
   async (req, res) => {
@@ -26649,7 +28854,7 @@ router44.post(
     }
   }
 );
-router44.post(
+router46.post(
   "/wallet/withdraw",
   requireAuth(),
   async (req, res) => {
@@ -26761,7 +28966,7 @@ router44.post(
     }
   }
 );
-router44.post(
+router46.post(
   "/wallet/transfer",
   requireAuth(),
   async (req, res) => {
@@ -26852,7 +29057,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router46.get(
   "/transactions",
   requireAuth(),
   async (req, res) => {
@@ -26872,7 +29077,7 @@ router44.get(
         where += ` AND wt.type = $2`;
         params.push(type);
       }
-      const count11 = await pool.query(
+      const count10 = await pool.query(
         `SELECT COUNT(*) FROM wallet_transactions wt ${where}`,
         params
       );
@@ -26886,9 +29091,9 @@ router44.get(
       res.json({
         success: true,
         transactions: result.rows,
-        total: parseInt(count11.rows[0].count),
+        total: parseInt(count10.rows[0].count),
         page: pageNum,
-        totalPages: Math.ceil(parseInt(count11.rows[0].count) / limitNum)
+        totalPages: Math.ceil(parseInt(count10.rows[0].count) / limitNum)
       });
     } catch (err) {
       console.error("[PAYMENTS] Transactions error:", err);
@@ -26896,7 +29101,7 @@ router44.get(
     }
   }
 );
-router44.post(
+router46.post(
   "/method/add",
   requireAuth(),
   async (req, res) => {
@@ -26981,7 +29186,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router46.get(
   "/method/list",
   requireAuth(),
   async (req, res) => {
@@ -27000,7 +29205,7 @@ router44.get(
     }
   }
 );
-router44.delete(
+router46.delete(
   "/method/:id",
   requireAuth(),
   async (req, res) => {
@@ -27021,7 +29226,7 @@ router44.delete(
     }
   }
 );
-router44.post(
+router46.post(
   "/bank-transfer",
   requireAuth(),
   async (req, res) => {
@@ -27073,7 +29278,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router46.get(
   "/bank-transfers",
   requireAuth(),
   async (req, res) => {
@@ -27089,7 +29294,7 @@ router44.get(
     }
   }
 );
-router44.put(
+router46.put(
   "/bank-transfer/:id/review",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -27176,7 +29381,7 @@ router44.put(
     }
   }
 );
-router44.post(
+router46.post(
   "/interac/request",
   requireAuth(),
   async (req, res) => {
@@ -27248,7 +29453,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router46.get(
   "/crypto/addresses",
   requireAuth(),
   async (_req, res) => {
@@ -27279,7 +29484,7 @@ router44.get(
     }
   }
 );
-router44.post(
+router46.post(
   "/crypto/deposit",
   requireAuth(),
   async (req, res) => {
@@ -27323,7 +29528,7 @@ router44.post(
     }
   }
 );
-router44.get("/mobile-money/providers", async (_req, res) => {
+router46.get("/mobile-money/providers", async (_req, res) => {
   try {
     const enabled = await pool.query(
       `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`
@@ -27374,7 +29579,7 @@ router44.get("/mobile-money/providers", async (_req, res) => {
     });
   }
 });
-router44.post(
+router46.post(
   "/mobile-money/request",
   requireAuth(),
   async (req, res) => {
@@ -27440,7 +29645,7 @@ router44.post(
     }
   }
 );
-router44.get(
+router46.get(
   "/admin/settings",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -27458,7 +29663,7 @@ router44.get(
     }
   }
 );
-router44.put(
+router46.put(
   "/admin/settings/:key",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -27491,7 +29696,7 @@ var TIER_PRICES = {
   // $99.99/month
 };
 var TIER_DURATION_DAYS = 30;
-router44.get("/tier/prices", (_req, res) => {
+router46.get("/tier/prices", (_req, res) => {
   res.json({
     success: true,
     tiers: [
@@ -27538,7 +29743,7 @@ router44.get("/tier/prices", (_req, res) => {
     ]
   });
 });
-router44.post(
+router46.post(
   "/tier/upgrade",
   requireAuth(),
   async (req, res) => {
@@ -27618,12 +29823,12 @@ router44.post(
     }
   }
 );
-var payments_default2 = router44;
+var payments_default2 = router46;
 
 // server/routes/arena.ts
 init_db();
-import { Router as Router45 } from "express";
-var router45 = Router45();
+import { Router as Router47 } from "express";
+var router47 = Router47();
 var ROUND_NAMES = [
   "Round of 16",
   "Quarter-Finals",
@@ -27633,6 +29838,21 @@ var ROUND_NAMES = [
 var MAX_VOTES_PER_LISTENER = 100;
 var SOFT_VOTE_WINDOW_HOURS = 6;
 var LOCK_STREAM_THRESHOLD = 3;
+var CONTEST_VOTE_WEIGHTS = {
+  free: 0.1,
+  guest: 0.1,
+  supporter: 0.35,
+  champion: 0.7,
+  patron: 1
+};
+async function getContestVoteWeight(userId) {
+  const result = await pool.query(
+    `SELECT tier FROM streaming_subscriptions WHERE user_id = $1 LIMIT 1`,
+    [userId]
+  );
+  const tier = String(result.rows[0]?.tier || "free").toLowerCase();
+  return CONTEST_VOTE_WEIGHTS[tier] ?? CONTEST_VOTE_WEIGHTS.free;
+}
 var BADGE_HIERARCHY = [
   "initiate",
   "bronze",
@@ -27668,7 +29888,7 @@ function getWeekNumber3(date) {
   );
   return { week: weekNo, year: d.getUTCFullYear() };
 }
-router45.get("/active", async (_req, res) => {
+router47.get("/active", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT ac.*,
@@ -27684,7 +29904,7 @@ router45.get("/active", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch arenas" });
   }
 });
-router45.get("/:id", async (req, res) => {
+router47.get("/:id", async (req, res) => {
   try {
     const contestId = parseInt(req.params.id);
     const contest = await pool.query(
@@ -27720,7 +29940,7 @@ router45.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch contest" });
   }
 });
-router45.get("/:id/bracket", async (req, res) => {
+router47.get("/:id/bracket", async (req, res) => {
   try {
     const contestId = parseInt(req.params.id);
     const contest = await pool.query(
@@ -27750,7 +29970,7 @@ router45.get("/:id/bracket", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch bracket" });
   }
 });
-router45.post(
+router47.post(
   "/create",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -27803,7 +30023,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router47.post(
   "/:id/enter",
   requireAuth(),
   async (req, res) => {
@@ -27902,11 +30122,12 @@ router45.post(
     }
   }
 );
-router45.post("/:id/vote", requireAuth(), async (req, res) => {
+router47.post("/:id/vote", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const contestId = parseInt(req.params.id);
     const { artistProfileId } = req.body;
+    const voteWeight = await getContestVoteWeight(userId);
     if (!artistProfileId) {
       return res.status(400).json({ success: false, error: "artistProfileId required" });
     }
@@ -27986,21 +30207,28 @@ router45.post("/:id/vote", requireAuth(), async (req, res) => {
       );
     }
     await pool.query(
-      `INSERT INTO arena_votes (contest_id, user_id, artist_profile_id, stream_count, locked)
-       VALUES ($1, $2, $3, 1, $4)
+      `INSERT INTO arena_votes (contest_id, user_id, artist_profile_id, stream_count, locked, vote_weight)
+       VALUES ($1, $2, $3, 1, $4, $5)
        ON CONFLICT ON CONSTRAINT arena_votes_unique DO UPDATE
        SET stream_count = arena_votes.stream_count + 1,
+           vote_weight = EXCLUDED.vote_weight,
            locked = EXCLUDED.locked OR arena_votes.locked`,
-      [contestId, userId, artistProfileId, voteStatus === "locked"]
+      [contestId, userId, artistProfileId, voteStatus === "locked", voteWeight]
     );
     await pool.query(
-      `UPDATE arena_brackets SET vote_count = vote_count + 1, streams = streams + 1
+      `UPDATE arena_brackets
+       SET vote_count = vote_count + 1,
+           weighted_vote_count = COALESCE(weighted_vote_count, 0) + $4,
+           streams = streams + 1
        WHERE contest_id = $1 AND round = $2 AND artist_profile_id = $3`,
-      [contestId, currentRound, artistProfileId]
+      [contestId, currentRound, artistProfileId, voteWeight]
     );
     await pool.query(
-      `UPDATE arena_contests SET total_votes = COALESCE(total_votes, 0) + 1 WHERE id = $1`,
-      [contestId]
+      `UPDATE arena_contests
+         SET total_votes = COALESCE(total_votes, 0) + 1,
+           weighted_total_votes = COALESCE(weighted_total_votes, 0) + $2
+         WHERE id = $1`,
+      [contestId, voteWeight]
     );
     if (existingVote.rows.length === 0) {
       await pool.query(
@@ -28030,6 +30258,8 @@ router45.post("/:id/vote", requireAuth(), async (req, res) => {
       message: isNewlyLocked ? `\u{1F512} Vote locked for this artist after ${streamCount} streams!` : `Stream-vote recorded (${voteStatus})`,
       voteStatus,
       streamCount,
+      voteWeight,
+      voteWeightLabel: `${Math.round(voteWeight * 100)}% of 1 vote point`,
       isNewlyLocked,
       votesRemaining: MAX_VOTES_PER_LISTENER - totalUsed - 1,
       xpAwarded: existingVote.rows.length === 0 ? XP_REWARDS.VOTE : 0,
@@ -28044,7 +30274,7 @@ router45.post("/:id/vote", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to record vote" });
   }
 });
-router45.get(
+router47.get(
   "/:id/my-votes",
   requireAuth(),
   async (req, res) => {
@@ -28090,7 +30320,7 @@ router45.get(
     }
   }
 );
-router45.post(
+router47.post(
   "/:id/admin-unlock",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -28133,7 +30363,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router47.post(
   "/:id/advance-round",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -28242,7 +30472,7 @@ router45.post(
     }
   }
 );
-router45.get("/history", async (req, res) => {
+router47.get("/history", async (req, res) => {
   try {
     const { page = "1", limit = "10" } = req.query;
     const pageNum = Math.max(1, parseInt(page));
@@ -28257,21 +30487,21 @@ router45.get("/history", async (req, res) => {
        LIMIT $1 OFFSET $2`,
       [limitNum, offset]
     );
-    const count11 = await pool.query(
+    const count10 = await pool.query(
       `SELECT COUNT(*) FROM arena_contests WHERE status = 'completed'`
     );
     res.json({
       success: true,
       contests: result.rows,
-      total: parseInt(count11.rows[0].count),
+      total: parseInt(count10.rows[0].count),
       page: pageNum,
-      totalPages: Math.ceil(parseInt(count11.rows[0].count) / limitNum)
+      totalPages: Math.ceil(parseInt(count10.rows[0].count) / limitNum)
     });
   } catch (err) {
     res.status(500).json({ success: false, error: "Failed to fetch arena history" });
   }
 });
-router45.get("/eligible-artists", async (_req, res) => {
+router47.get("/eligible-artists", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
@@ -28320,7 +30550,7 @@ router45.get("/eligible-artists", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch eligible artists" });
   }
 });
-router45.post(
+router47.post(
   "/:id/award-predictions",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -28350,13 +30580,16 @@ router45.post(
         [contestId, winnerId]
       );
       let awardedCount = 0;
+      const alreadyAwarded = await pool.query(
+        `SELECT user_id FROM listener_contest_rewards
+         WHERE contest_id = $1 AND reward_type = 'prediction_correct'`,
+        [contestId]
+      );
+      const awardedUserIds = new Set(
+        alreadyAwarded.rows.map((r) => r.user_id)
+      );
       for (const voter of votersResult.rows) {
-        const existing = await pool.query(
-          `SELECT id FROM listener_contest_rewards 
-           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'prediction_correct'`,
-          [voter.user_id, contestId]
-        );
-        if (existing.rows.length === 0) {
+        if (!awardedUserIds.has(voter.user_id)) {
           await pool.query(
             `INSERT INTO listener_stats (user_id, total_points)
              VALUES ($1, $2)
@@ -28397,13 +30630,17 @@ router45.post(
         [contestId]
       );
       let underdogCount = 0;
+      const alreadyUnderdog = await pool.query(
+        `SELECT user_id FROM listener_contest_rewards
+         WHERE contest_id = $1 AND reward_type = 'underdog'`,
+        [contestId]
+      );
+      const underdogUserIds = new Set(
+        alreadyUnderdog.rows.map((r) => r.user_id)
+      );
       for (const underdog of underdogResult.rows) {
-        const existing = await pool.query(
-          `SELECT id FROM listener_contest_rewards 
-           WHERE user_id = $1 AND contest_id = $2 AND reward_type = 'underdog'`,
-          [underdog.user_id, contestId]
-        );
-        if (existing.rows.length === 0) {
+        if (!underdogUserIds.has(underdog.user_id)) {
+          underdogUserIds.add(underdog.user_id);
           await pool.query(
             `INSERT INTO listener_stats (user_id, total_points)
              VALUES ($1, $2)
@@ -28451,7 +30688,7 @@ router45.post(
     }
   }
 );
-router45.get("/participation-stats", async (_req, res) => {
+router47.get("/participation-stats", async (_req, res) => {
   try {
     const stats = await pool.query(`
       SELECT 
@@ -28488,12 +30725,12 @@ router45.get("/participation-stats", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-var arena_default = router45;
+var arena_default = router47;
 
 // server/routes/vault.ts
 init_db();
-import { Router as Router46 } from "express";
-var router46 = Router46();
+import { Router as Router48 } from "express";
+var router48 = Router48();
 var VALID_RULE_TYPES = [
   "time_gate",
   "stream_gate",
@@ -28502,7 +30739,7 @@ var VALID_RULE_TYPES = [
   "badge_gate"
 ];
 var TIER_HIERARCHY = ["free", "supporter", "champion", "patron"];
-router46.post("/rules", requireAuth(), async (req, res) => {
+router48.post("/rules", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const { trackId, rules } = req.body;
@@ -28604,7 +30841,7 @@ router46.post("/rules", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to set vault rules" });
   }
 });
-router46.get(
+router48.get(
   "/track/:trackId",
   optionalAuth,
   async (req, res) => {
@@ -28644,7 +30881,7 @@ router46.get(
     }
   }
 );
-router46.post(
+router48.post(
   "/check-unlock",
   requireAuth(),
   async (req, res) => {
@@ -28779,7 +31016,7 @@ router46.post(
     }
   }
 );
-router46.delete(
+router48.delete(
   "/rules/:ruleId",
   requireAuth(),
   async (req, res) => {
@@ -28818,7 +31055,7 @@ router46.delete(
     }
   }
 );
-router46.get(
+router48.get(
   "/my-vaulted",
   requireAuth(),
   async (req, res) => {
@@ -28842,15 +31079,15 @@ router46.get(
     }
   }
 );
-var vault_default = router46;
+var vault_default = router48;
 
 // server/routes/collab-chains.ts
 init_db();
-import { Router as Router47 } from "express";
-var router47 = Router47();
+import { Router as Router49 } from "express";
+var router49 = Router49();
 var COLLAB_TYPES = ["open_verse", "remix", "feature"];
 var MAX_SPLIT_TOTAL = 100;
-router47.post("/request", requireAuth(), async (req, res) => {
+router49.post("/request", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const {
@@ -28925,7 +31162,7 @@ router47.post("/request", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create collab request" });
   }
 });
-router47.get("/open", optionalAuth, async (req, res) => {
+router49.get("/open", optionalAuth, async (req, res) => {
   try {
     const {
       genre,
@@ -28959,7 +31196,7 @@ router47.get("/open", optionalAuth, async (req, res) => {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    const count11 = await pool.query(
+    const count10 = await pool.query(
       `SELECT COUNT(*) FROM collab_requests cr ${where}`,
       params.slice(0, params.length - 2)
       // remove limit/offset
@@ -28967,16 +31204,16 @@ router47.get("/open", optionalAuth, async (req, res) => {
     res.json({
       success: true,
       requests: result.rows,
-      total: parseInt(count11.rows[0].count),
+      total: parseInt(count10.rows[0].count),
       page: pageNum,
-      totalPages: Math.ceil(parseInt(count11.rows[0].count) / limitNum)
+      totalPages: Math.ceil(parseInt(count10.rows[0].count) / limitNum)
     });
   } catch (err) {
     console.error("[COLLAB] Open browse error:", err);
     res.status(500).json({ success: false, error: "Failed to fetch open requests" });
   }
 });
-router47.get(
+router49.get(
   "/my-requests",
   requireAuth(),
   async (req, res) => {
@@ -29020,7 +31257,7 @@ router47.get(
     }
   }
 );
-router47.put(
+router49.put(
   "/:id/respond",
   requireAuth(),
   async (req, res) => {
@@ -29101,7 +31338,7 @@ router47.put(
     }
   }
 );
-router47.post(
+router49.post(
   "/:id/submit",
   requireAuth(),
   async (req, res) => {
@@ -29138,7 +31375,7 @@ router47.post(
     }
   }
 );
-router47.post(
+router49.post(
   "/:id/finalize",
   requireAuth(),
   async (req, res) => {
@@ -29207,7 +31444,7 @@ router47.post(
     }
   }
 );
-router47.get("/track/:trackId", async (req, res) => {
+router49.get("/track/:trackId", async (req, res) => {
   try {
     const trackId = parseInt(req.params.trackId);
     const chain = await pool.query(
@@ -29234,12 +31471,12 @@ router47.get("/track/:trackId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch collab chain" });
   }
 });
-var collab_chains_default = router47;
+var collab_chains_default = router49;
 
 // server/routes/revenue-pulse.ts
 init_db();
-import { Router as Router48 } from "express";
-var router48 = Router48();
+import { Router as Router50 } from "express";
+var router50 = Router50();
 var BADGE_THRESHOLDS = [
   { badge: "initiate", streams: 0, bonusPct: 0, icon: "\u{1F331}", color: "#6b7280" },
   {
@@ -29309,7 +31546,7 @@ var LISTENER_TIERS = [
     label: "Patron (Unlimited)"
   }
 ];
-router48.get("/", optionalAuth, async (req, res) => {
+router50.get("/", optionalAuth, async (req, res) => {
   try {
     const userId = req.user ? parseInt(req.user.userId) : null;
     const currentPool = await pool.query(
@@ -29396,7 +31633,7 @@ router48.get("/", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to load revenue pulse" });
   }
 });
-router48.get("/pool", async (_req, res) => {
+router50.get("/pool", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT wp.*,
@@ -29422,7 +31659,7 @@ router48.get("/pool", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch pool" });
   }
 });
-router48.get("/my-impact", requireAuth(), async (req, res) => {
+router50.get("/my-impact", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const lifetime = await pool.query(
@@ -29481,7 +31718,7 @@ router48.get("/my-impact", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch impact" });
   }
 });
-router48.get("/leaderboard", async (req, res) => {
+router50.get("/leaderboard", async (req, res) => {
   try {
     const { limit = "25" } = req.query;
     const limitNum = Math.min(100, parseInt(limit) || 25);
@@ -29517,7 +31754,7 @@ router48.get("/leaderboard", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch leaderboard" });
   }
 });
-router48.get("/badges", async (_req, res) => {
+router50.get("/badges", async (_req, res) => {
   res.json({
     success: true,
     badges: BADGE_THRESHOLDS,
@@ -29529,13 +31766,13 @@ router48.get("/badges", async (_req, res) => {
     }
   });
 });
-var revenue_pulse_default = router48;
+var revenue_pulse_default = router50;
 
 // server/routes/wallet.ts
 init_db();
-import { Router as Router49 } from "express";
-var router49 = Router49();
-router49.get("/balance", requireAuth, async (req, res) => {
+import { Router as Router51 } from "express";
+var router51 = Router51();
+router51.get("/balance", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -29569,7 +31806,7 @@ router49.get("/balance", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to get wallet balance" });
   }
 });
-router49.get(
+router51.get(
   "/transactions",
   requireAuth,
   async (req, res) => {
@@ -29592,7 +31829,7 @@ router49.get(
     }
   }
 );
-router49.post("/deposit", requireAuth, async (req, res) => {
+router51.post("/deposit", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -29623,7 +31860,7 @@ router49.post("/deposit", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to process deposit" });
   }
 });
-router49.post(
+router51.post(
   "/game-reward",
   requireAuth,
   async (req, res) => {
@@ -29693,7 +31930,7 @@ router49.post(
     }
   }
 );
-router49.post("/ad-reward", async (req, res) => {
+router51.post("/ad-reward", async (req, res) => {
   try {
     const { userId, amount, transactionId, secret } = req.body;
     if (!secret || secret !== process.env.AD_REWARD_SECRET) {
@@ -29753,13 +31990,13 @@ router49.post("/ad-reward", async (req, res) => {
     res.status(500).json({ error: "Failed to credit ad reward" });
   }
 });
-var wallet_default = router49;
+var wallet_default = router51;
 
 // server/routes/games.ts
 init_db();
-import { Router as Router50 } from "express";
+import { Router as Router52 } from "express";
 init_socket_config();
-var router50 = Router50();
+var router52 = Router52();
 var TRIVIA_QUESTIONS = [
   {
     q: "Quel artiste a popularis\xE9 l'Afrobeats \xE0 l'international en 2020 ?",
@@ -29837,9 +32074,9 @@ var TRIVIA_QUESTIONS = [
     answer: 1
   }
 ];
-function pickRandomQuestions(count11) {
+function pickRandomQuestions(count10) {
   const shuffled = [...TRIVIA_QUESTIONS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count11, shuffled.length));
+  return shuffled.slice(0, Math.min(count10, shuffled.length));
 }
 async function getOrCreateWallet(userId) {
   let w = await pool.query(
@@ -29927,7 +32164,7 @@ async function settleMatch(matchId, winnerId, loserId, wagerAmount) {
   await pool.query("COMMIT");
   return { winnerPrize, platformCut };
 }
-router50.post("/challenge", requireAuth, async (req, res) => {
+router52.post("/challenge", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -30046,7 +32283,7 @@ router50.post("/challenge", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to create game" });
   }
 });
-router50.post("/:id/join", requireAuth, async (req, res) => {
+router52.post("/:id/join", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matchId = parseInt(req.params.id);
@@ -30124,7 +32361,7 @@ router50.post("/:id/join", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to join game" });
   }
 });
-router50.post("/:id/answer", requireAuth, async (req, res) => {
+router52.post("/:id/answer", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matchId = parseInt(req.params.id);
@@ -30265,7 +32502,7 @@ router50.post("/:id/answer", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to submit answer" });
   }
 });
-router50.get("/open", async (_req, res) => {
+router52.get("/open", async (_req, res) => {
   try {
     const matches = await pool.query(
       `SELECT gm.id, gm.game_type, gm.wager_amount, gm.round_count, gm.created_at,
@@ -30283,7 +32520,7 @@ router50.get("/open", async (_req, res) => {
     res.status(500).json({ error: "Failed to list matches" });
   }
 });
-router50.get("/my", requireAuth, async (req, res) => {
+router52.get("/my", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matches = await pool.query(
@@ -30312,7 +32549,7 @@ router50.get("/my", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to list matches" });
   }
 });
-router50.post("/verify-age", requireAuth, async (req, res) => {
+router52.post("/verify-age", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const { dateOfBirth } = req.body;
@@ -30342,7 +32579,7 @@ router50.post("/verify-age", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to verify age" });
   }
 });
-router50.get("/leaderboard", async (_req, res) => {
+router52.get("/leaderboard", async (_req, res) => {
   try {
     const leaders = await pool.query(
       `SELECT u.username,
@@ -30361,12 +32598,12 @@ router50.get("/leaderboard", async (_req, res) => {
     res.status(500).json({ error: "Failed to load leaderboard" });
   }
 });
-var games_default = router50;
+var games_default = router52;
 
 // server/routes/paypal.ts
 init_db();
-import { Router as Router51 } from "express";
-var router51 = Router51();
+import { Router as Router53 } from "express";
+var router53 = Router53();
 var PAYPAL_BASE = (process.env.PAYPAL_MODE || "sandbox") === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
 var PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
 var PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
@@ -30419,7 +32656,7 @@ async function getOrCreateWallet2(userId) {
   }
   return w.rows[0];
 }
-router51.get("/config", (_req, res) => {
+router53.get("/config", (_req, res) => {
   if (!PAYPAL_CLIENT_ID) {
     return res.status(503).json({
       error: "PayPal not configured",
@@ -30438,7 +32675,7 @@ router51.get("/config", (_req, res) => {
     }))
   });
 });
-router51.post(
+router53.post(
   "/create-order",
   requireAuth,
   async (req, res) => {
@@ -30529,7 +32766,7 @@ router51.post(
     }
   }
 );
-router51.post(
+router53.post(
   "/capture-order",
   requireAuth,
   async (req, res) => {
@@ -30634,7 +32871,7 @@ router51.post(
     }
   }
 );
-router51.get("/success", requireAuth, async (req, res) => {
+router53.get("/success", requireAuth, async (req, res) => {
   try {
     const orderId = req.query.token;
     const userId = req.user?.id;
@@ -30716,15 +32953,15 @@ router51.get("/success", requireAuth, async (req, res) => {
     res.redirect("/account/paypal?paypal=error");
   }
 });
-router51.get("/cancel", (_req, res) => {
+router53.get("/cancel", (_req, res) => {
   res.redirect("/account/paypal?paypal=cancelled");
 });
-var paypal_default = router51;
+var paypal_default = router53;
 
 // server/routes/listener.ts
 init_db();
-import { Router as Router52 } from "express";
-var router52 = Router52();
+import { Router as Router54 } from "express";
+var router54 = Router54();
 var LEVEL_THRESHOLDS = [
   0,
   100,
@@ -30750,7 +32987,7 @@ function calculateLevel(points) {
   }
   return level;
 }
-router52.get("/stats", requireAuth(), async (req, res) => {
+router54.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -30908,7 +33145,7 @@ router52.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router52.post(
+router54.post(
   "/bonuses/:id/claim",
   requireAuth(),
   async (req, res) => {
@@ -30954,7 +33191,7 @@ router52.post(
     }
   }
 );
-router52.post(
+router54.post(
   "/activity/listen",
   requireAuth(),
   async (req, res) => {
@@ -31029,20 +33266,20 @@ router52.post(
     }
   }
 );
-var listener_default = router52;
+var listener_default = router54;
 
 // server/routes/beatmaker.ts
 init_db();
-import { Router as Router53 } from "express";
-import { sql as sql15 } from "drizzle-orm";
-var router53 = Router53();
-router53.get("/requests", requireAuth(), async (req, res) => {
+import { Router as Router55 } from "express";
+import { sql as sql16 } from "drizzle-orm";
+var router55 = Router55();
+router55.get("/requests", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const tableCheck = await db.execute(sql15`
+    const tableCheck = await db.execute(sql16`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -31052,7 +33289,7 @@ router53.get("/requests", requireAuth(), async (req, res) => {
     if (!tableCheck.rows[0]?.exists) {
       return res.json({ requests: [], message: "Table not yet created" });
     }
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       SELECT 
         br.*,
         u.display_name as producer_name
@@ -31068,7 +33305,7 @@ router53.get("/requests", requireAuth(), async (req, res) => {
     res.json({ requests: [] });
   }
 });
-router53.post("/requests", requireAuth(), async (req, res) => {
+router55.post("/requests", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -31091,7 +33328,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
     if (!genre || !mood) {
       return res.status(400).json({ error: "Genre and mood are required" });
     }
-    const tableCheck = await db.execute(sql15`
+    const tableCheck = await db.execute(sql16`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -31099,7 +33336,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
       ) as exists
     `);
     if (!tableCheck.rows[0]?.exists) {
-      await db.execute(sql15`
+      await db.execute(sql16`
         CREATE TABLE IF NOT EXISTS beatmaker_requests (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id),
@@ -31125,7 +33362,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
         )
       `);
     }
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       INSERT INTO beatmaker_requests (
         user_id, genre, mood, bpm, key, reference_urls, intent_style,
         intended_use, delivery_type, deadline, budget_tier, message,
@@ -31154,7 +33391,7 @@ router53.post("/requests", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create request" });
   }
 });
-router53.patch(
+router55.patch(
   "/requests/:id",
   requireAuth(),
   async (req, res) => {
@@ -31165,7 +33402,7 @@ router53.patch(
       }
       const requestId = parseInt(req.params.id);
       const { status, message } = req.body;
-      const check = await db.execute(sql15`
+      const check = await db.execute(sql16`
       SELECT id FROM beatmaker_requests WHERE id = ${requestId} AND user_id = ${userId}
     `);
       if (check.rows.length === 0) {
@@ -31175,7 +33412,7 @@ router53.patch(
       if (status && !allowedStatuses.includes(status)) {
         return res.status(403).json({ error: "Cannot update to this status" });
       }
-      const result = await db.execute(sql15`
+      const result = await db.execute(sql16`
       UPDATE beatmaker_requests
       SET 
         status = COALESCE(${status}, status),
@@ -31191,13 +33428,13 @@ router53.patch(
     }
   }
 );
-router53.get("/briefs", requireAuth(), async (req, res) => {
+router55.get("/briefs", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const tableCheck = await db.execute(sql15`
+    const tableCheck = await db.execute(sql16`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -31207,7 +33444,7 @@ router53.get("/briefs", requireAuth(), async (req, res) => {
     if (!tableCheck.rows[0]?.exists) {
       return res.json({ briefs: [] });
     }
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       SELECT * FROM beatmaker_briefs
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
@@ -31219,7 +33456,7 @@ router53.get("/briefs", requireAuth(), async (req, res) => {
     res.json({ briefs: [] });
   }
 });
-router53.post("/briefs", requireAuth(), async (req, res) => {
+router55.post("/briefs", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -31240,7 +33477,7 @@ router53.post("/briefs", requireAuth(), async (req, res) => {
       darkness,
       bounce
     } = req.body;
-    await db.execute(sql15`
+    await db.execute(sql16`
       CREATE TABLE IF NOT EXISTS beatmaker_briefs (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(id),
@@ -31260,7 +33497,7 @@ router53.post("/briefs", requireAuth(), async (req, res) => {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       INSERT INTO beatmaker_briefs (
         user_id, name, genre, mood, bpm, key, reference_urls, intent_style,
         intended_use, delivery_type, message, energy, darkness, bounce
@@ -31288,7 +33525,7 @@ router53.post("/briefs", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save brief" });
   }
 });
-router53.delete(
+router55.delete(
   "/briefs/:id",
   requireAuth(),
   async (req, res) => {
@@ -31298,7 +33535,7 @@ router53.delete(
         return res.status(401).json({ error: "Not authenticated" });
       }
       const briefId = parseInt(req.params.id);
-      await db.execute(sql15`
+      await db.execute(sql16`
       DELETE FROM beatmaker_briefs
       WHERE id = ${briefId} AND user_id = ${userId}
     `);
@@ -31309,9 +33546,9 @@ router53.delete(
     }
   }
 );
-router53.get("/producers", requireAuth(), async (req, res) => {
+router55.get("/producers", requireAuth(), async (req, res) => {
   try {
-    const result = await db.execute(sql15`
+    const result = await db.execute(sql16`
       SELECT 
         u.id,
         u.display_name,
@@ -31334,16 +33571,16 @@ router53.get("/producers", requireAuth(), async (req, res) => {
     res.json({ producers: [] });
   }
 });
-var beatmaker_default = router53;
+var beatmaker_default = router55;
 
 // server/routes/versavids.ts
 init_db();
-import { Router as Router54 } from "express";
-import { sql as sql16 } from "drizzle-orm";
-var router54 = Router54();
+import { Router as Router56 } from "express";
+import { sql as sql17 } from "drizzle-orm";
+var router56 = Router56();
 async function ensureVersaVidsTables() {
   try {
-    await db.execute(sql16`
+    await db.execute(sql17`
       CREATE TABLE IF NOT EXISTS video_projects (
         id SERIAL PRIMARY KEY,
         client_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -31447,13 +33684,13 @@ async function ensureVersaVidsTables() {
   }
 }
 ensureVersaVidsTables();
-router54.get("/projects", requireAuth(), async (req, res) => {
+router56.get("/projects", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     const role = req.query.role || "client";
     let result;
     if (role === "videaste") {
-      result = await db.execute(sql16`
+      result = await db.execute(sql17`
         SELECT vp.*, u.display_name as client_name, u.email as client_email
         FROM video_projects vp
         LEFT JOIN users u ON vp.client_id = u.id
@@ -31464,7 +33701,7 @@ router54.get("/projects", requireAuth(), async (req, res) => {
         LIMIT 50
       `);
     } else {
-      result = await db.execute(sql16`
+      result = await db.execute(sql17`
         SELECT vp.*, u.display_name as videaste_name
         FROM video_projects vp
         LEFT JOIN users u ON vp.claimed_by = u.id
@@ -31479,9 +33716,9 @@ router54.get("/projects", requireAuth(), async (req, res) => {
     res.json({ success: true, projects: [] });
   }
 });
-router54.get("/projects/open", async (_req, res) => {
+router56.get("/projects/open", async (_req, res) => {
   try {
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       SELECT vp.*, u.display_name as client_name
       FROM video_projects vp
       LEFT JOIN users u ON vp.client_id = u.id
@@ -31497,7 +33734,7 @@ router54.get("/projects/open", async (_req, res) => {
     res.json({ success: true, projects: [] });
   }
 });
-router54.post("/projects", requireAuth(), async (req, res) => {
+router56.post("/projects", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     const {
@@ -31517,7 +33754,7 @@ router54.post("/projects", requireAuth(), async (req, res) => {
     if (!title) {
       return res.status(400).json({ error: "Title is required" });
     }
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       INSERT INTO video_projects (client_id, title, description, project_type, genre, budget, currency, deadline, priority, tags, reference_urls, mood, target_audience)
       VALUES (${userId}, ${title}, ${description || null}, ${project_type || "music_video"}, ${genre || null}, ${budget || null}, ${currency || "USD"}, ${deadline ? new Date(deadline) : null}, ${priority2 || "normal"}, ${JSON.stringify(tags || [])}, ${JSON.stringify(reference_urls || [])}, ${mood || null}, ${target_audience || null})
       RETURNING *
@@ -31528,7 +33765,7 @@ router54.post("/projects", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create project" });
   }
 });
-router54.patch(
+router56.patch(
   "/projects/:id",
   requireAuth(),
   async (req, res) => {
@@ -31536,14 +33773,14 @@ router54.patch(
       const userId = req.user?.userId;
       const projectId = parseInt(req.params.id);
       const { status, claimed_by } = req.body;
-      const [project] = (await db.execute(sql16`
+      const [project] = (await db.execute(sql17`
       SELECT client_id, status, claimed_by FROM video_projects WHERE id = ${projectId}
     `)).rows;
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
       if (claimed_by !== void 0 && project.status === "open") {
-        await db.execute(sql16`
+        await db.execute(sql17`
         UPDATE video_projects SET claimed_by = ${userId}, claimed_at = NOW(), status = 'claimed', updated_at = NOW()
         WHERE id = ${projectId}
       `);
@@ -31553,11 +33790,11 @@ router54.patch(
         const updates = { status };
         if (status === "completed") {
           await db.execute(
-            sql16`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${projectId}`
+            sql17`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${projectId}`
           );
         } else {
           await db.execute(
-            sql16`UPDATE video_projects SET status = ${status}, updated_at = NOW() WHERE id = ${projectId}`
+            sql17`UPDATE video_projects SET status = ${status}, updated_at = NOW() WHERE id = ${projectId}`
           );
         }
         return res.json({
@@ -31572,10 +33809,10 @@ router54.patch(
     }
   }
 );
-router54.get("/projects/:id", async (req, res) => {
+router56.get("/projects/:id", async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
-    const [project] = (await db.execute(sql16`
+    const [project] = (await db.execute(sql17`
       SELECT vp.*, u.display_name as client_name, u.email as client_email,
              v.display_name as videaste_name
       FROM video_projects vp
@@ -31586,17 +33823,17 @@ router54.get("/projects/:id", async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: "Project not found" });
     }
-    const briefResult = await db.execute(sql16`
+    const briefResult = await db.execute(sql17`
       SELECT * FROM video_briefs WHERE project_id = ${projectId} LIMIT 1
     `);
-    const deliverableResult = await db.execute(sql16`
+    const deliverableResult = await db.execute(sql17`
       SELECT vd.*, u.display_name as videaste_name
       FROM video_deliverables vd
       LEFT JOIN users u ON vd.videaste_id = u.id
       WHERE vd.project_id = ${projectId}
       ORDER BY vd.version DESC
     `);
-    const licenseResult = await db.execute(sql16`
+    const licenseResult = await db.execute(sql17`
       SELECT * FROM video_licenses WHERE project_id = ${projectId} LIMIT 1
     `);
     res.json({
@@ -31611,7 +33848,7 @@ router54.get("/projects/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch project" });
   }
 });
-router54.post("/briefs", requireAuth(), async (req, res) => {
+router56.post("/briefs", requireAuth(), async (req, res) => {
   try {
     const {
       project_id,
@@ -31638,10 +33875,10 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
       return res.status(400).json({ error: "project_id is required" });
     }
     const existing = await db.execute(
-      sql16`SELECT id FROM video_briefs WHERE project_id = ${project_id} LIMIT 1`
+      sql17`SELECT id FROM video_briefs WHERE project_id = ${project_id} LIMIT 1`
     );
     if (existing.rows.length > 0) {
-      await db.execute(sql16`
+      await db.execute(sql17`
         UPDATE video_briefs SET
           visual_style = ${visual_style || null}, color_palette = ${color_palette || null},
           editing_pace = ${editing_pace || null}, duration = ${duration || null},
@@ -31658,7 +33895,7 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
       `);
       return res.json({ success: true, message: "Brief updated" });
     }
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       INSERT INTO video_briefs (project_id, visual_style, color_palette, editing_pace, duration, aspect_ratio, resolution, has_music_track, music_track_url, needs_sound_design, needs_voiceover, deliverable_formats, includes_raw_footage, includes_project_files, reference_links, moodboard_url, storyboard_url, script_text, additional_notes)
       VALUES (${project_id}, ${visual_style || null}, ${color_palette || null}, ${editing_pace || null}, ${duration || null}, ${aspect_ratio || "16:9"}, ${resolution || "4K"}, ${has_music_track || false}, ${music_track_url || null}, ${needs_sound_design || false}, ${needs_voiceover || false}, ${JSON.stringify(deliverable_formats || ["mp4"])}, ${includes_raw_footage || false}, ${includes_project_files || false}, ${JSON.stringify(reference_links || [])}, ${moodboard_url || null}, ${storyboard_url || null}, ${script_text || null}, ${additional_notes || null})
       RETURNING *
@@ -31669,7 +33906,7 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save brief" });
   }
 });
-router54.post(
+router56.post(
   "/deliverables",
   requireAuth(),
   async (req, res) => {
@@ -31690,13 +33927,13 @@ router54.post(
       if (!project_id || !title || !file_url) {
         return res.status(400).json({ error: "project_id, title, and file_url are required" });
       }
-      const result = await db.execute(sql16`
+      const result = await db.execute(sql17`
       INSERT INTO video_deliverables (project_id, videaste_id, title, description, file_url, thumbnail_url, file_size, duration, format, resolution, version)
       VALUES (${project_id}, ${videasteId}, ${title}, ${description || null}, ${file_url}, ${thumbnail_url || null}, ${file_size || null}, ${duration || null}, ${format || "mp4"}, ${resolution || null}, ${version || 1})
       RETURNING *
     `);
       await db.execute(
-        sql16`UPDATE video_projects SET status = 'review', updated_at = NOW() WHERE id = ${project_id}`
+        sql17`UPDATE video_projects SET status = 'review', updated_at = NOW() WHERE id = ${project_id}`
       );
       res.status(201).json({ success: true, deliverable: result.rows[0] });
     } catch (error) {
@@ -31705,7 +33942,7 @@ router54.post(
     }
   }
 );
-router54.patch(
+router56.patch(
   "/deliverables/:id",
   requireAuth(),
   async (req, res) => {
@@ -31713,34 +33950,34 @@ router54.patch(
       const { status, client_feedback } = req.body;
       const deliverableId = parseInt(req.params.id);
       if (status === "approved") {
-        await db.execute(sql16`
+        await db.execute(sql17`
         UPDATE video_deliverables SET status = 'approved', client_feedback = ${client_feedback || null}, approved_at = NOW()
         WHERE id = ${deliverableId}
       `);
         const [deliv] = (await db.execute(
-          sql16`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
+          sql17`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
         )).rows;
         if (deliv) {
           await db.execute(
-            sql16`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${deliv.project_id}`
+            sql17`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${deliv.project_id}`
           );
         }
       } else if (status === "revision_requested") {
-        await db.execute(sql16`
+        await db.execute(sql17`
         UPDATE video_deliverables SET status = 'revision_requested', client_feedback = ${client_feedback || null}
         WHERE id = ${deliverableId}
       `);
         const userId = req.user?.userId;
-        await db.execute(sql16`
+        await db.execute(sql17`
         INSERT INTO video_revisions (deliverable_id, requested_by, revision_notes)
         VALUES (${deliverableId}, ${userId}, ${client_feedback || "Revision requested"})
       `);
         const [deliv] = (await db.execute(
-          sql16`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
+          sql17`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`
         )).rows;
         if (deliv) {
           await db.execute(
-            sql16`UPDATE video_projects SET status = 'revision', updated_at = NOW() WHERE id = ${deliv.project_id}`
+            sql17`UPDATE video_projects SET status = 'revision', updated_at = NOW() WHERE id = ${deliv.project_id}`
           );
         }
       }
@@ -31751,9 +33988,9 @@ router54.patch(
     }
   }
 );
-router54.get("/stats", async (_req, res) => {
+router56.get("/stats", async (_req, res) => {
   try {
-    const result = await db.execute(sql16`
+    const result = await db.execute(sql17`
       SELECT
         (SELECT COUNT(*) FROM video_projects) as total_projects,
         (SELECT COUNT(*) FROM video_projects WHERE status = 'open') as open_projects,
@@ -31775,16 +34012,17 @@ router54.get("/stats", async (_req, res) => {
     });
   }
 });
-var versavids_default = router54;
+var versavids_default = router56;
 
 // server/routes/intent-search.ts
-import { Router as Router55 } from "express";
+import { Router as Router57 } from "express";
 import { z as z6 } from "zod";
 init_db();
-var router55 = Router55();
+var router57 = Router57();
 var intentSearchSchema = z6.object({
   query: z6.string().min(2).max(500),
-  limit: z6.number().min(1).max(20).optional().default(5)
+  limit: z6.number().min(1).max(20).optional().default(5),
+  language: z6.string().optional()
 });
 var emergencyAlertSchema = z6.object({
   businessIds: z6.array(z6.number()).min(1).max(5),
@@ -31793,7 +34031,7 @@ var emergencyAlertSchema = z6.object({
   contactEmail: z6.string().email().optional(),
   location: z6.string().optional()
 });
-router55.post("/intent", optionalAuth, async (req, res) => {
+router57.post("/intent", optionalAuth, async (req, res) => {
   try {
     const parsed = intentSearchSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -31802,11 +34040,13 @@ router55.post("/intent", optionalAuth, async (req, res) => {
         error: "Invalid request: " + parsed.error.issues[0]?.message
       });
     }
-    const { query, limit } = parsed.data;
+    const { query, limit, language } = parsed.data;
     const startTime = Date.now();
-    const intent = await parseUserIntent(query);
+    const intent = await parseUserIntent(query, language);
     const results = await searchRelevantBusinesses(intent, limit);
     const elapsed = Date.now() - startTime;
+    const needsClarification = !intent.sector && !intent.location;
+    const clarification = needsClarification ? intent.language === "fr" ? "Que recherchez-vous exactement : une entreprise, un service, un lieu ou un professionnel ?" : "What are you looking for exactly: a business, a service, a place, or a professional?" : null;
     return res.json({
       success: true,
       intent: {
@@ -31824,6 +34064,10 @@ router55.post("/intent", optionalAuth, async (req, res) => {
         businesses: results.businesses,
         totalMatches: results.totalMatches,
         searchMethod: results.searchMethod
+      },
+      discovery: {
+        needsClarification,
+        clarification
       },
       emergency: results.isEmergency ? {
         isEmergency: true,
@@ -31843,7 +34087,7 @@ router55.post("/intent", optionalAuth, async (req, res) => {
     });
   }
 });
-router55.post(
+router57.post(
   "/emergency-alert",
   optionalAuth,
   async (req, res) => {
@@ -31864,27 +34108,40 @@ router55.post(
         [businessIds]
       );
       const notified = [];
-      for (const biz of businessResult.rows) {
+      const notificationRows = businessResult.rows.filter((biz) => biz.owner_id != null).map((biz) => ({
+        userId: biz.owner_id,
+        title: `\u{1F6A8} Emergency Request \u2014 ${biz.name}`,
+        data: JSON.stringify({
+          businessId: biz.id,
+          contactPhone,
+          contactEmail,
+          location,
+          urgency: "emergency",
+          sentAt: (/* @__PURE__ */ new Date()).toISOString()
+        })
+      }));
+      if (notificationRows.length > 0) {
         try {
           await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, metadata, created_at)
-             VALUES ($1, 'emergency_alert', $2, $3, $4, NOW())`,
+            `INSERT INTO notifications (user_id, type, title, message, data, created_at)
+             SELECT u.user_id, 'emergency_alert', u.title, u.message, u.data, NOW()
+             FROM UNNEST($1::int[], $2::text[], $3::text[], $4::jsonb[])
+               AS u(user_id, title, message, data)`,
             [
-              biz.owner_id ?? null,
-              `\u{1F6A8} Emergency Request \u2014 ${biz.name}`,
-              message,
-              JSON.stringify({
-                businessId: biz.id,
-                contactPhone,
-                contactEmail,
-                location,
-                urgency: "emergency",
-                sentAt: (/* @__PURE__ */ new Date()).toISOString()
-              })
+              notificationRows.map((r) => r.userId),
+              notificationRows.map((r) => r.title),
+              notificationRows.map(() => message),
+              notificationRows.map((r) => r.data)
             ]
           );
-        } catch {
+        } catch (err) {
+          console.error(
+            "[intent-search] failed to persist emergency notifications:",
+            err
+          );
         }
+      }
+      for (const biz of businessResult.rows) {
         notified.push({
           businessId: biz.id,
           businessName: biz.name,
@@ -31905,7 +34162,7 @@ router55.post(
     }
   }
 );
-router55.get("/status", async (_req, res) => {
+router57.get("/status", async (_req, res) => {
   let groqAvailable = false;
   let ollamaAvailable = false;
   if (process.env.GROQ_API_KEY) {
@@ -31935,10 +34192,10 @@ router55.get("/status", async (_req, res) => {
     }
   });
 });
-var intent_search_default = router55;
+var intent_search_default = router57;
 
 // server/routes/migrate.ts
-import { Router as Router56 } from "express";
+import { Router as Router58 } from "express";
 import { z as z7 } from "zod";
 init_db();
 
@@ -32070,12 +34327,12 @@ async function scrapeDirectoryUrl(url) {
 }
 
 // server/routes/migrate.ts
-var router56 = Router56();
-router56.use(requireAuth);
+var router58 = Router58();
+router58.use(requireAuth);
 var scrapeSchema = z7.object({
   url: z7.string().url().max(500)
 });
-router56.post("/scrape", async (req, res) => {
+router58.post("/scrape", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -32119,7 +34376,7 @@ var importSchema = z7.object({
   countryCode: z7.string().length(2).optional(),
   categoryId: z7.number().optional()
 });
-router56.post("/import", async (req, res) => {
+router58.post("/import", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -32172,7 +34429,7 @@ router56.post("/import", async (req, res) => {
     errors
   });
 });
-router56.get("/history", async (req, res) => {
+router58.get("/history", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -32196,14 +34453,14 @@ router56.get("/history", async (req, res) => {
     });
   }
 });
-var migrate_default = router56;
+var migrate_default = router58;
 
 // server/routes/escrow.ts
-import { Router as Router57 } from "express";
+import { Router as Router59 } from "express";
 import { z as z8 } from "zod";
 init_db();
-var router57 = Router57();
-router57.use(requireAuth);
+var router59 = Router59();
+router59.use(requireAuth);
 async function ensureEscrowTable() {
   try {
     await pool.query(`
@@ -32241,7 +34498,7 @@ var createEscrowSchema = z8.object({
   description: z8.string().max(1e3).optional(),
   serviceDate: z8.string().optional()
 });
-router57.post("/create", async (req, res) => {
+router59.post("/create", async (req, res) => {
   const parsed = createEscrowSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -32287,7 +34544,7 @@ router57.post("/create", async (req, res) => {
     });
   }
 });
-router57.post("/:id/fund", async (req, res) => {
+router59.post("/:id/fund", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -32321,7 +34578,7 @@ router57.post("/:id/fund", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router57.post("/:id/release", async (req, res) => {
+router59.post("/:id/release", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -32359,7 +34616,7 @@ router57.post("/:id/release", async (req, res) => {
 var disputeSchema = z8.object({
   reason: z8.string().min(10).max(1e3)
 });
-router57.post("/:id/dispute", async (req, res) => {
+router59.post("/:id/dispute", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   const parsed = disputeSchema.safeParse(req.body);
@@ -32389,7 +34646,7 @@ router57.post("/:id/dispute", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router57.get("/my", async (req, res) => {
+router59.get("/my", async (req, res) => {
   const userId = parseInt(req.user.userId);
   try {
     const result = await pool.query(
@@ -32409,7 +34666,7 @@ router57.get("/my", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router57.get("/:id", async (req, res) => {
+router59.get("/:id", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -32431,11 +34688,11 @@ router57.get("/:id", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-var escrow_default = router57;
+var escrow_default = router59;
 
 // server/routes/geo-seo.ts
 init_db();
-import { Router as Router58 } from "express";
+import { Router as Router60 } from "express";
 
 // server/services/json-ld-generator.ts
 function generateBusinessJsonLd(biz) {
@@ -32543,8 +34800,8 @@ function generateWebsiteJsonLd() {
 }
 
 // server/routes/geo-seo.ts
-var router58 = Router58();
-router58.get("/json-ld/business/:id", async (req, res) => {
+var router60 = Router60();
+router60.get("/json-ld/business/:id", async (req, res) => {
   const businessId = parseInt(req.params.id);
   if (isNaN(businessId)) {
     return res.status(400).json({ error: "Invalid business ID" });
@@ -32587,15 +34844,15 @@ router58.get("/json-ld/business/:id", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router58.get("/json-ld/organization", (_req, res) => {
+router60.get("/json-ld/organization", (_req, res) => {
   res.setHeader("Content-Type", "application/ld+json");
   return res.json(generateOrganizationJsonLd());
 });
-router58.get("/json-ld/website", (_req, res) => {
+router60.get("/json-ld/website", (_req, res) => {
   res.setHeader("Content-Type", "application/ld+json");
   return res.json(generateWebsiteJsonLd());
 });
-router58.get("/json-ld/search", async (req, res) => {
+router60.get("/json-ld/search", async (req, res) => {
   const query = req.query.q || "";
   const limit = Math.min(parseInt(req.query.limit) || 10, 50);
   try {
@@ -32644,7 +34901,7 @@ router58.get("/json-ld/search", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router58.get("/sitemap.xml", async (_req, res) => {
+router60.get("/sitemap.xml", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, name, updated_at FROM businesses WHERE is_active = true ORDER BY updated_at DESC LIMIT 50000`
@@ -32712,38 +34969,24 @@ router58.get("/sitemap.xml", async (_req, res) => {
     );
   }
 });
-router58.get("/robots.txt", (_req, res) => {
-  const robots = `User-agent: *
-Allow: /
-Allow: /businesses-directory
-Allow: /commerce
-Allow: /hotellerie
-Allow: /batiment
-Allow: /automobile
-Allow: /finances
-Allow: /divertissement
-Disallow: /api/
-Disallow: /auth/
-Disallow: /admin/
-
-Sitemap: https://verso-air.com/api/seo/sitemap.xml
-
-# Verso Air \u2014 Multi-sector business intelligence platform
-# Contact: info@verso-air.com
-`;
+function robotsTxtHandler(req, res) {
+  const configuredUrl = (process.env.RENDER_EXTERNAL_URL || process.env.PRODUCTION_URL || process.env.APP_PUBLIC_URL || process.env.VERSOAIR_URL)?.trim();
+  const origin = (configuredUrl || req.protocol + "://" + req.get("host")).replace(/\/+$/, "");
+  const robots = "User-agent: *\nAllow: /\nAllow: /businesses-directory\nAllow: /commerce\nAllow: /hotellerie\nAllow: /batiment\nAllow: /automobile\nAllow: /finances\nAllow: /divertissement\nDisallow: /api/\nAllow: /api/seo/sitemap.xml\nDisallow: /auth/\nDisallow: /admin/\nDisallow: /dashboard\nDisallow: /profile\nDisallow: /geo-admin\nDisallow: /account/\nDisallow: /payments/\nDisallow: /contracts\n\nSitemap: " + origin + "/api/seo/sitemap.xml\n";
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);
-});
-var geo_seo_default = router58;
+}
+router60.get("/robots.txt", robotsTxtHandler);
+var geo_seo_default = router60;
 
 // server/routes/business-logo.ts
 init_db();
-import { Router as Router59 } from "express";
+import { Router as Router61 } from "express";
 import multer4 from "multer";
-import path6 from "path";
+import path5 from "path";
 import fs6 from "fs";
-var router59 = Router59();
-var LOGO_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path6.join("/tmp", "uploads", "logos") : path6.resolve("uploads", "logos");
+var router61 = Router61();
+var LOGO_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "logos") : path5.resolve("uploads", "logos");
 try {
   if (!fs6.existsSync(LOGO_UPLOADS_DIR)) {
     fs6.mkdirSync(LOGO_UPLOADS_DIR, { recursive: true });
@@ -32751,11 +34994,44 @@ try {
 } catch (err) {
   console.warn(`\u26A0\uFE0F  Could not create logo uploads dir: ${err.message}`);
 }
+var allowedLogoTypes = /* @__PURE__ */ new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+  "image/gif"
+]);
+var allowedLogoExtensions = /* @__PURE__ */ new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".svg",
+  ".gif"
+]);
+function sanitizeStoredName3(originalName) {
+  const safe = (originalName || "logo").replace(/[\\/]+/g, "/").split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").trim();
+  if (!safe || safe === "." || safe === "..") return "logo.bin";
+  return safe.length > 150 ? safe.slice(0, 150) : safe;
+}
+function validateLogoFile(file) {
+  const extension = path5.extname(file.originalname || "").toLowerCase();
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (!allowedLogoTypes.has(file.mimetype) || !allowedLogoExtensions.has(extension)) {
+    throw new Error(
+      `Invalid file type: ${file.mimetype}. Accepted: JPEG, PNG, WebP, SVG, GIF`
+    );
+  }
+  return sanitizeStoredName3(file.originalname);
+}
 var logoStorage = multer4.diskStorage({
   destination: (_req, _file, cb) => cb(null, LOGO_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path6.extname(file.originalname).toLowerCase();
+    const safeName = validateLogoFile(file);
+    const ext = path5.extname(safeName).toLowerCase() || ".png";
     cb(null, `logo-${uniqueSuffix}${ext}`);
   }
 });
@@ -32764,27 +35040,16 @@ var logoUpload = multer4({
   limits: { fileSize: 5 * 1024 * 1024 },
   // 5 MB max for logos
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/svg+xml",
-      "image/gif"
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
+    try {
+      validateLogoFile(file);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Invalid file type. Accepted: JPEG, PNG, WebP, SVG, GIF"
-        ),
-        false
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
 var PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
-router59.post(
+router61.post(
   "/upload",
   requireAuth(),
   (req, res, next) => {
@@ -32851,12 +35116,12 @@ router59.post(
       );
       const oldLogoUrl = oldLogoResult.rows[0]?.logo_url;
       if (oldLogoUrl) {
-        const oldFilename = path6.basename(oldLogoUrl);
-        const oldPath = path6.join(LOGO_UPLOADS_DIR, oldFilename);
+        const oldFilename = path5.basename(oldLogoUrl);
+        const oldPath = path5.join(LOGO_UPLOADS_DIR, oldFilename);
         fs6.unlink(oldPath, () => {
         });
       }
-      const logoUrl = `/api/business-logo/file/${path6.basename(req.file.path)}`;
+      const logoUrl = `/api/business-logo/file/${path5.basename(req.file.path)}`;
       await pool.query(`UPDATE businesses SET logo_url = $1 WHERE id = $2`, [
         logoUrl,
         businessId
@@ -32875,7 +35140,7 @@ router59.post(
     }
   }
 );
-router59.delete(
+router61.delete(
   "/:businessId",
   requireAuth(),
   async (req, res) => {
@@ -32897,8 +35162,8 @@ router59.delete(
       }
       const logoUrl = ownerCheck.rows[0].logo_url;
       if (logoUrl) {
-        const filename = path6.basename(logoUrl);
-        const filePath = path6.join(LOGO_UPLOADS_DIR, filename);
+        const filename = path5.basename(logoUrl);
+        const filePath = path5.join(LOGO_UPLOADS_DIR, filename);
         fs6.unlink(filePath, () => {
         });
       }
@@ -32915,26 +35180,26 @@ router59.delete(
     }
   }
 );
-router59.get("/file/:filename", (req, res) => {
+router61.get("/file/:filename", (req, res) => {
   const { filename } = req.params;
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
     return res.status(400).json({ success: false, message: "Invalid filename" });
   }
-  const filePath = path6.join(LOGO_UPLOADS_DIR, filename);
+  const filePath = path5.join(LOGO_UPLOADS_DIR, filename);
   if (!fs6.existsSync(filePath)) {
     return res.status(404).json({ success: false, message: "Logo not found" });
   }
   res.set("Cache-Control", "public, max-age=86400");
   res.sendFile(filePath);
 });
-var business_logo_default = router59;
+var business_logo_default = router61;
 
 // server/routes/inventory.ts
 init_db();
 init_schema();
-import { Router as Router60 } from "express";
-var router60 = Router60();
-router60.get("/products", requireAuth(), async (req, res) => {
+import { Router as Router62 } from "express";
+var router62 = Router62();
+router62.get("/products", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -33022,7 +35287,7 @@ router60.get("/products", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
-router60.get(
+router62.get(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -33047,7 +35312,7 @@ router60.get(
     }
   }
 );
-router60.post("/products", requireAuth(), async (req, res) => {
+router62.post("/products", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -33102,7 +35367,7 @@ router60.post("/products", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create product" });
   }
 });
-router60.put(
+router62.put(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -33162,7 +35427,7 @@ router60.put(
     }
   }
 );
-router60.delete(
+router62.delete(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -33184,7 +35449,7 @@ router60.delete(
     }
   }
 );
-router60.get("/alerts", requireAuth(), async (req, res) => {
+router62.get("/alerts", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -33214,7 +35479,7 @@ router60.get("/alerts", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alerts" });
   }
 });
-router60.get(
+router62.get(
   "/predictions",
   requireAuth(),
   async (req, res) => {
@@ -33248,7 +35513,7 @@ router60.get(
     }
   }
 );
-router60.get("/stats", requireAuth(), async (req, res) => {
+router62.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -33293,7 +35558,7 @@ router60.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
-router60.get("/settings", requireAuth(), async (req, res) => {
+router62.get("/settings", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -33316,7 +35581,7 @@ router60.get("/settings", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
-router60.post("/settings", requireAuth(), async (req, res) => {
+router62.post("/settings", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const { settings } = req.body;
@@ -33340,14 +35605,45 @@ router60.post("/settings", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save settings" });
   }
 });
-var inventory_default = router60;
+var inventory_default = router62;
 
 // server/routes/inbox.ts
 init_db();
 init_schema();
-import { Router as Router61 } from "express";
-import { eq as eq30, and as and18, desc as desc16, sql as sql17 } from "drizzle-orm";
-var router61 = Router61();
+import { Router as Router63 } from "express";
+import { eq as eq29, and as and17, desc as desc15, sql as sql18 } from "drizzle-orm";
+import multer5 from "multer";
+import path6 from "path";
+import fs7 from "fs";
+init_notification_service();
+var router63 = Router63();
+var INBOX_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path6.join("/tmp", "uploads", "inbox") : path6.resolve("uploads", "inbox");
+try {
+  if (!fs7.existsSync(INBOX_UPLOADS_DIR)) {
+    fs7.mkdirSync(INBOX_UPLOADS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`\u26A0\uFE0F  Could not create inbox uploads dir: ${err.message}`);
+}
+var inboxUpload = multer5({
+  storage: multer5.diskStorage({
+    destination: (_req, _file, cb) => cb(null, INBOX_UPLOADS_DIR),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(
+        null,
+        `chat-${uniqueSuffix}${path6.extname(file.originalname).toLowerCase()}`
+      );
+    }
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  // 8 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Only image attachments are allowed"), false);
+  }
+});
 var TIER_NETWORKING_LIMIT = {
   free: 0,
   essential: 1,
@@ -33372,7 +35668,35 @@ function priority(tier) {
   if (tier === "verified") return "high";
   return "normal";
 }
-router61.get("/conversations", async (req, res) => {
+async function getOrCreateMirrorConversation(recipientUserId, senderUserId, senderName, senderAvatar, type, businessId) {
+  const [existing] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
+    and17(
+      eq29(inboxConversations.userId, recipientUserId),
+      eq29(inboxConversations.participantId, String(senderUserId)),
+      eq29(inboxConversations.type, type)
+    )
+  ).limit(1);
+  if (existing) return existing.id;
+  const [conv] = await db.insert(inboxConversations).values({
+    userId: recipientUserId,
+    type,
+    participantId: String(senderUserId),
+    participantName: senderName,
+    participantAvatar: senderAvatar || null,
+    businessId: businessId ? Number(businessId) : null,
+    unreadCount: 0
+  }).returning({ id: inboxConversations.id });
+  return conv?.id ?? null;
+}
+async function resolveUserDisplay(userId) {
+  const [u] = await db.select({
+    displayName: users.displayName,
+    username: users.username
+  }).from(users).where(eq29(users.id, userId)).limit(1);
+  if (!u) return null;
+  return { name: u.displayName || u.username, avatar: null };
+}
+router63.get("/conversations", async (req, res) => {
   const userId = req.user.userId;
   try {
     const queued = await drainInboxQueue(userId);
@@ -33391,14 +35715,18 @@ router61.get("/conversations", async (req, res) => {
         }
       }
     }
-    const rows = await db.select().from(inboxConversations).where(eq30(inboxConversations.userId, Number(userId))).orderBy(desc16(inboxConversations.updatedAt));
-    return res.json({ success: true, conversations: rows });
+    const rows = await db.select().from(inboxConversations).where(eq29(inboxConversations.userId, Number(userId))).orderBy(desc15(inboxConversations.updatedAt));
+    const conversations = rows.map((conversation) => ({
+      ...conversation,
+      portal: conversation.type === "music_artist" ? "music" : "community"
+    }));
+    return res.json({ success: true, conversations });
   } catch (err) {
     console.error("[Inbox] GET /conversations error:", err?.message);
     return res.status(500).json({ success: false, error: "Failed to load conversations" });
   }
 });
-router61.get("/suggested-contacts", async (req, res) => {
+router63.get("/suggested-contacts", async (req, res) => {
   const tier = getTierFromUser(req.user);
   if (tier === "free") {
     return res.json({
@@ -33412,7 +35740,7 @@ router61.get("/suggested-contacts", async (req, res) => {
     const search = req.query.q ?? "";
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const rows = await db.execute(
-      sql17`
+      sql18`
         SELECT
           b.id,
           b.name,
@@ -33430,7 +35758,7 @@ router61.get("/suggested-contacts", async (req, res) => {
             WHERE user_id = ${req.user.userId}
             LIMIT 1
           )
-          ${search ? sql17`AND b.name ILIKE ${"%" + search + "%"}` : sql17``}
+          ${search ? sql18`AND b.name ILIKE ${"%" + search + "%"}` : sql18``}
         ORDER BY b.rating DESC NULLS LAST
         LIMIT ${limit}
       `
@@ -33441,7 +35769,7 @@ router61.get("/suggested-contacts", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to load contacts" });
   }
 });
-router61.get(
+router63.get(
   "/conversations/:id/messages",
   async (req, res) => {
     const userId = req.user.userId;
@@ -33453,22 +35781,22 @@ router61.get(
     }
     try {
       const [conv] = await db.select().from(inboxConversations).where(
-        and18(
-          eq30(inboxConversations.id, convId),
-          eq30(inboxConversations.userId, Number(userId))
+        and17(
+          eq29(inboxConversations.id, convId),
+          eq29(inboxConversations.userId, Number(userId))
         )
       ).limit(1);
       if (!conv) {
         return res.status(404).json({ success: false, error: "Conversation not found" });
       }
-      const messages = await db.select().from(inboxMessages).where(eq30(inboxMessages.conversationId, convId)).orderBy(desc16(inboxMessages.createdAt)).limit(limit).offset(offset);
+      const messages = await db.select().from(inboxMessages).where(eq29(inboxMessages.conversationId, convId)).orderBy(desc15(inboxMessages.createdAt)).limit(limit).offset(offset);
       db.update(inboxMessages).set({ isRead: true }).where(
-        and18(
-          eq30(inboxMessages.conversationId, convId),
-          eq30(inboxMessages.isRead, false)
+        and17(
+          eq29(inboxMessages.conversationId, convId),
+          eq29(inboxMessages.isRead, false)
         )
       ).then(
-        () => db.update(inboxConversations).set({ unreadCount: 0 }).where(eq30(inboxConversations.id, convId))
+        () => db.update(inboxConversations).set({ unreadCount: 0 }).where(eq29(inboxConversations.id, convId))
       ).catch(() => {
       });
       return res.json({
@@ -33486,82 +35814,128 @@ router61.get(
     }
   }
 );
-router61.post("/conversations", async (req, res) => {
-  const userId = req.user.userId;
-  const tier = getTierFromUser(req.user);
-  const {
-    participantId,
-    participantName,
-    participantAvatar,
-    type = "business_network",
-    businessId
-  } = req.body;
-  if (!participantId || !participantName) {
-    return res.status(400).json({
-      success: false,
-      error: "participantId and participantName are required"
-    });
-  }
-  if (type === "business_network") {
-    const limit = TIER_NETWORKING_LIMIT[tier];
-    if (limit === 0) {
-      return res.status(403).json({
+router63.post(
+  "/conversations",
+  marketplaceMessageLimiter,
+  async (req, res) => {
+    const userId = req.user.userId;
+    const tier = getTierFromUser(req.user);
+    const {
+      participantId,
+      participantName,
+      participantAvatar,
+      type = "business_network",
+      businessId
+    } = req.body;
+    if (!participantId || !participantName) {
+      return res.status(400).json({
         success: false,
-        error: "Business Networking requires Essential plan or above.",
-        upgradeRequired: true
+        error: "participantId and participantName are required"
       });
     }
-    if (limit < 999) {
-      const [{ count: activeCount }] = await db.select({ count: sql17`count(*)` }).from(inboxConversations).where(
-        and18(
-          eq30(inboxConversations.userId, Number(userId)),
-          eq30(inboxConversations.type, "business_network")
-        )
-      );
-      if (Number(activeCount) >= limit) {
+    if (type === "business_network") {
+      const limit = TIER_NETWORKING_LIMIT[tier];
+      if (limit === 0) {
         return res.status(403).json({
           success: false,
-          error: `Your ${tier} plan allows up to ${limit} active Business Network thread(s). Upgrade to add more.`,
+          error: "Business Networking requires Essential plan or above.",
           upgradeRequired: true
         });
       }
+      if (limit < 999) {
+        const [{ count: activeCount }] = await db.select({ count: sql18`count(*)` }).from(inboxConversations).where(
+          and17(
+            eq29(inboxConversations.userId, Number(userId)),
+            eq29(inboxConversations.type, "business_network")
+          )
+        );
+        if (Number(activeCount) >= limit) {
+          return res.status(403).json({
+            success: false,
+            error: `Your ${tier} plan allows up to ${limit} active Business Network thread(s). Upgrade to add more.`,
+            upgradeRequired: true
+          });
+        }
+      }
+    }
+    const [existing] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
+      and17(
+        eq29(inboxConversations.userId, Number(userId)),
+        eq29(inboxConversations.participantId, String(participantId)),
+        eq29(inboxConversations.type, type)
+      )
+    ).limit(1);
+    if (existing) {
+      return res.json({
+        success: true,
+        conversation: existing,
+        existing: true
+      });
+    }
+    try {
+      const [conv] = await db.insert(inboxConversations).values({
+        userId: Number(userId),
+        type,
+        participantId: String(participantId),
+        participantName: String(participantName),
+        participantAvatar: participantAvatar || null,
+        businessId: businessId ? Number(businessId) : null,
+        priority: priority(tier),
+        unreadCount: 0
+      }).returning();
+      const recipientUserId = Number(participantId);
+      if (Number.isFinite(recipientUserId) && recipientUserId !== Number(userId)) {
+        const sender = await resolveUserDisplay(Number(userId));
+        if (sender) {
+          await getOrCreateMirrorConversation(
+            recipientUserId,
+            Number(userId),
+            sender.name,
+            sender.avatar,
+            type,
+            businessId
+          );
+        }
+      }
+      return res.json({ success: true, conversation: conv });
+    } catch (err) {
+      console.error("[Inbox] POST /conversations error:", err?.message);
+      return res.status(500).json({ success: false, error: "Failed to create conversation" });
     }
   }
-  const [existing] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
-    and18(
-      eq30(inboxConversations.userId, Number(userId)),
-      eq30(inboxConversations.participantId, String(participantId)),
-      eq30(inboxConversations.type, type)
-    )
-  ).limit(1);
-  if (existing) {
-    return res.json({ success: true, conversation: existing, existing: true });
+);
+router63.post(
+  "/attachments",
+  inboxUpload.single("file"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No file uploaded" });
+    }
+    const url = `/api/inbox/attachments/file/${req.file.filename}`;
+    res.json({ success: true, url });
   }
-  try {
-    const [conv] = await db.insert(inboxConversations).values({
-      userId: Number(userId),
-      type,
-      participantId: String(participantId),
-      participantName: String(participantName),
-      participantAvatar: participantAvatar || null,
-      businessId: businessId ? Number(businessId) : null,
-      priority: priority(tier),
-      unreadCount: 0
-    }).returning();
-    return res.json({ success: true, conversation: conv });
-  } catch (err) {
-    console.error("[Inbox] POST /conversations error:", err?.message);
-    return res.status(500).json({ success: false, error: "Failed to create conversation" });
+);
+router63.get("/attachments/file/:filename", (req, res) => {
+  const { filename } = req.params;
+  if (/[^a-zA-Z0-9._-]/.test(filename)) {
+    return res.status(400).json({ success: false, error: "Invalid filename" });
   }
+  const filePath = path6.join(INBOX_UPLOADS_DIR, filename);
+  if (!fs7.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: "File not found" });
+  }
+  res.set("Cache-Control", "public, max-age=86400");
+  res.sendFile(filePath);
 });
-router61.post(
+router63.post(
   "/conversations/:id/messages",
+  marketplaceMessageLimiter,
   async (req, res) => {
     const userId = req.user.userId;
     const tier = getTierFromUser(req.user);
     const convId = Number(req.params.id);
-    const { content, senderId, senderName, senderAvatar } = req.body;
-    if (!content?.trim()) {
+    const { content, senderId, senderName, senderAvatar, attachmentUrl } = req.body;
+    if (!content?.trim() && !attachmentUrl) {
       return res.status(400).json({ success: false, error: "Message content is required" });
     }
     if (isNaN(convId)) {
@@ -33569,9 +35943,9 @@ router61.post(
     }
     try {
       const [conv] = await db.select().from(inboxConversations).where(
-        and18(
-          eq30(inboxConversations.id, convId),
-          eq30(inboxConversations.userId, Number(userId))
+        and17(
+          eq29(inboxConversations.id, convId),
+          eq29(inboxConversations.userId, Number(userId))
         )
       ).limit(1);
       if (!conv) {
@@ -33580,11 +35954,11 @@ router61.post(
       if (conv.type === "business_network") {
         const dailyLimit = TIER_DAILY_MSG_LIMIT[tier];
         if (dailyLimit < 999) {
-          const [{ count: todayCount }] = await db.select({ count: sql17`count(*)` }).from(inboxMessages).where(
-            and18(
-              eq30(inboxMessages.conversationId, convId),
-              eq30(inboxMessages.senderId, String(userId)),
-              sql17`created_at > NOW() - INTERVAL '24 hours'`
+          const [{ count: todayCount }] = await db.select({ count: sql18`count(*)` }).from(inboxMessages).where(
+            and17(
+              eq29(inboxMessages.conversationId, convId),
+              eq29(inboxMessages.senderId, String(userId)),
+              sql18`created_at > NOW() - INTERVAL '24 hours'`
             )
           );
           if (Number(todayCount) >= dailyLimit) {
@@ -33601,16 +35975,63 @@ router61.post(
         senderId: String(senderId ?? userId),
         senderName: String(senderName ?? "You"),
         senderAvatar: senderAvatar || null,
-        content: content.trim(),
+        content: content?.trim() || "",
+        attachmentUrl: attachmentUrl || null,
         isRead: true,
         isAi: false
       }).returning();
       db.update(inboxConversations).set({
-        lastMessage: content.trim().substring(0, 120),
+        lastMessage: content?.trim() ? content.trim().substring(0, 120) : "\u{1F4F7} Photo",
         lastMessageAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq30(inboxConversations.id, convId)).catch(() => {
+      }).where(eq29(inboxConversations.id, convId)).catch(() => {
       });
+      const recipientUserId = Number(conv.participantId);
+      if (Number.isFinite(recipientUserId) && recipientUserId !== Number(userId)) {
+        (async () => {
+          try {
+            const sender = await resolveUserDisplay(Number(userId));
+            const mirrorConvId = await getOrCreateMirrorConversation(
+              recipientUserId,
+              Number(userId),
+              sender?.name || String(senderName ?? "Member"),
+              null,
+              conv.type,
+              conv.businessId
+            );
+            if (!mirrorConvId) return;
+            const [mirrorMessage] = await db.insert(inboxMessages).values({
+              conversationId: mirrorConvId,
+              senderId: String(userId),
+              senderName: sender?.name || String(senderName ?? "Member"),
+              senderAvatar: senderAvatar || null,
+              content: content.trim(),
+              isRead: false,
+              isAi: false
+            }).returning();
+            await db.update(inboxConversations).set({
+              lastMessage: content.trim().substring(0, 120),
+              lastMessageAt: /* @__PURE__ */ new Date(),
+              updatedAt: /* @__PURE__ */ new Date(),
+              unreadCount: sql18`${inboxConversations.unreadCount} + 1`
+            }).where(eq29(inboxConversations.id, mirrorConvId));
+            await notifyMessage({
+              senderId: Number(userId),
+              recipientId: recipientUserId,
+              senderName: sender?.name || String(senderName ?? "Member"),
+              messagePreview: content.trim(),
+              conversationId: mirrorConvId
+            });
+            notificationEmitter.emit("inbox_message", {
+              toUserId: recipientUserId,
+              conversationId: mirrorConvId,
+              message: mirrorMessage
+            });
+          } catch (mirrorErr) {
+            console.error("[Inbox] Mirror message error:", mirrorErr?.message);
+          }
+        })();
+      }
       return res.json({ success: true, message });
     } catch (err) {
       console.error(
@@ -33641,7 +36062,55 @@ router61.post(
     }
   }
 );
-router61.patch("/conversations/:id/read", async (req, res) => {
+router63.post("/messages/:id/publish", async (req, res) => {
+  const userId = req.user.userId;
+  const messageId = Number(req.params.id);
+  if (isNaN(messageId)) {
+    return res.status(400).json({ success: false, error: "Invalid message ID" });
+  }
+  try {
+    const [message] = await db.select().from(inboxMessages).where(eq29(inboxMessages.id, messageId)).limit(1);
+    if (!message) {
+      return res.status(404).json({ success: false, error: "Message not found" });
+    }
+    if (message.senderId !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: "You can only publish your own messages"
+      });
+    }
+    if (message.isPublished) {
+      return res.status(400).json({
+        success: false,
+        error: "This message has already been published"
+      });
+    }
+    const [conv] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
+      and17(
+        eq29(inboxConversations.id, message.conversationId),
+        eq29(inboxConversations.userId, Number(userId))
+      )
+    ).limit(1);
+    if (!conv) {
+      return res.status(403).json({
+        success: false,
+        error: "You do not have access to this conversation"
+      });
+    }
+    const [post] = await db.insert(socialPosts).values({
+      authorId: Number(userId),
+      content: message.content,
+      postType: "dm_share",
+      mediaType: "text"
+    }).returning({ id: socialPosts.id });
+    await db.update(inboxMessages).set({ isPublished: true, publishedPostId: post.id }).where(eq29(inboxMessages.id, messageId));
+    return res.json({ success: true, postId: post.id });
+  } catch (err) {
+    console.error("[Inbox] POST /messages/:id/publish error:", err?.message);
+    return res.status(500).json({ success: false, error: "Failed to publish message" });
+  }
+});
+router63.patch("/conversations/:id/read", async (req, res) => {
   const userId = req.user.userId;
   const convId = Number(req.params.id);
   if (isNaN(convId)) {
@@ -33649,35 +36118,35 @@ router61.patch("/conversations/:id/read", async (req, res) => {
   }
   try {
     const [conv] = await db.select({ id: inboxConversations.id }).from(inboxConversations).where(
-      and18(
-        eq30(inboxConversations.id, convId),
-        eq30(inboxConversations.userId, Number(userId))
+      and17(
+        eq29(inboxConversations.id, convId),
+        eq29(inboxConversations.userId, Number(userId))
       )
     ).limit(1);
     if (!conv) {
       return res.status(404).json({ success: false, error: "Conversation not found" });
     }
     await db.update(inboxMessages).set({ isRead: true }).where(
-      and18(
-        eq30(inboxMessages.conversationId, convId),
-        eq30(inboxMessages.isRead, false)
+      and17(
+        eq29(inboxMessages.conversationId, convId),
+        eq29(inboxMessages.isRead, false)
       )
     );
-    await db.update(inboxConversations).set({ unreadCount: 0 }).where(eq30(inboxConversations.id, convId));
+    await db.update(inboxConversations).set({ unreadCount: 0 }).where(eq29(inboxConversations.id, convId));
     return res.json({ success: true });
   } catch (err) {
     console.error("[Inbox] PATCH /read error:", err?.message);
     return res.status(500).json({ success: false, error: "Failed to mark as read" });
   }
 });
-router61.get("/ensure-support-thread", async (req, res) => {
+router63.get("/ensure-support-thread", async (req, res) => {
   const userId = req.user.userId;
   const tier = getTierFromUser(req.user);
   try {
     const [existing] = await db.select().from(inboxConversations).where(
-      and18(
-        eq30(inboxConversations.userId, Number(userId)),
-        eq30(inboxConversations.type, "support")
+      and17(
+        eq29(inboxConversations.userId, Number(userId)),
+        eq29(inboxConversations.type, "support")
       )
     ).limit(1);
     if (existing) {
@@ -33712,17 +36181,219 @@ router61.get("/ensure-support-thread", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to ensure support thread" });
   }
 });
-var inbox_default = router61;
+var inbox_default = router63;
+
+// server/routes/community.ts
+init_db();
+import { Router as Router64 } from "express";
+var router64 = Router64();
+router64.get("/posts", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "50"), 100);
+    const before = req.query.before ? parseInt(req.query.before) : null;
+    const params = [];
+    let where = "cp.is_hidden = FALSE AND cp.parent_id IS NULL";
+    if (before) {
+      params.push(before);
+      where += ` AND cp.id < $${params.length}`;
+    }
+    params.push(limit);
+    const result = await pool.query(
+      `
+      SELECT cp.id, cp.content, cp.author_name, cp.author_avatar, cp.created_at, cp.user_id,
+             u.username, u.display_name, u.avatar_url
+      FROM community_posts cp
+      LEFT JOIN users u ON u.id = cp.user_id
+      WHERE ${where}
+      ORDER BY cp.created_at DESC
+      LIMIT $${params.length}
+      `,
+      params
+    );
+    res.json({ success: true, posts: result.rows });
+  } catch (err) {
+    console.error("[COMMUNITY] GET /posts error:", err?.message);
+    res.status(500).json({ success: false, error: "Failed to load posts" });
+  }
+});
+router64.post(
+  "/posts",
+  requireAuth(),
+  fanChatSlowMode,
+  async (req, res) => {
+    try {
+      const user = req.user;
+      const userId = user?.userId || user?.id;
+      const content = String(req.body?.content || "").trim();
+      if (!content) {
+        return res.status(400).json({ success: false, error: "Message content is required" });
+      }
+      if (content.length > 2e3) {
+        return res.status(400).json({ success: false, error: "Message too long (2000 chars max)" });
+      }
+      const result = await pool.query(
+        `INSERT INTO community_posts (user_id, author_name, author_avatar, content)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, content, author_name, author_avatar, user_id, created_at`,
+        [
+          userId,
+          user?.displayName || user?.username || user?.email || "Anonymous",
+          user?.avatarUrl || null,
+          content
+        ]
+      );
+      res.json({ success: true, post: result.rows[0] });
+    } catch (err) {
+      console.error("[COMMUNITY] POST /posts error:", err?.message);
+      res.status(500).json({ success: false, error: "Failed to publish message" });
+    }
+  }
+);
+router64.delete(
+  "/posts/:id",
+  requireAuth(),
+  async (req, res) => {
+    try {
+      const user = req.user;
+      const userId = user?.userId || user?.id;
+      const isSuper = user?.role === "superuser";
+      const postId = parseInt(req.params.id);
+      if (isNaN(postId)) {
+        return res.status(400).json({ success: false, error: "Invalid post id" });
+      }
+      const cond = isSuper ? "id = $1" : "id = $1 AND user_id = $2";
+      const params = isSuper ? [postId] : [postId, userId];
+      const result = await pool.query(
+        `DELETE FROM community_posts WHERE ${cond} RETURNING id`,
+        params
+      );
+      if (!result.rowCount) {
+        return res.status(404).json({ success: false, error: "Post not found or not yours" });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      console.error("[COMMUNITY] DELETE /posts error:", err?.message);
+      res.status(500).json({ success: false, error: "Failed to delete" });
+    }
+  }
+);
+var community_default = router64;
 
 // server/routes/geo-actions.ts
 init_db();
 init_schema();
-import { Router as Router62 } from "express";
-import { eq as eq31, sql as sql18 } from "drizzle-orm";
-var router62 = Router62();
+import { Router as Router65 } from "express";
+import { eq as eq30, and as and18, sql as sql19 } from "drizzle-orm";
+var router65 = Router65();
+router65.use(requireJoelSuperadminForMutations);
+var BUSINESS_CHANGE_FIELDS = [
+  "name",
+  "categoryId",
+  "email",
+  "phone",
+  "description",
+  "address",
+  "countryCode",
+  "cityName",
+  "regionId",
+  "latitude",
+  "longitude",
+  "website",
+  "businessType",
+  "tags",
+  "isActive"
+];
+async function executeGeoAction(tx, action) {
+  if (action.entityType !== "business") {
+    throw new Error(`Unsupported geo action entity: ${action.entityType}`);
+  }
+  const entityId = action.entityId ? Number(action.entityId) : null;
+  const change = action.requestedChange || {};
+  if (action.actionType === "create") {
+    if (!change.name || !change.categoryId) {
+      throw new Error("Business creation requires name and categoryId");
+    }
+    const category = await tx.select({ id: businessCategories.id }).from(businessCategories).where(eq30(businessCategories.id, Number(change.categoryId))).limit(1);
+    if (!category.length) throw new Error("Business category does not exist");
+    const countryCode = change.countryCode ? String(change.countryCode).toUpperCase() : null;
+    const cityName = change.cityName || null;
+    const [created] = await tx.insert(businesses).values({
+      name: String(change.name),
+      categoryId: Number(change.categoryId),
+      email: change.email || null,
+      phone: change.phone || null,
+      description: change.description || null,
+      address: change.address || null,
+      countryCode,
+      cityName,
+      regionId: change.regionId ? Number(change.regionId) : null,
+      latitude: change.latitude == null ? null : String(change.latitude),
+      longitude: change.longitude == null ? null : String(change.longitude),
+      website: change.website || null,
+      businessType: change.businessType || null,
+      location: [cityName, countryCode].filter(Boolean).join(", ") || null,
+      tags: change.tags ? typeof change.tags === "string" ? JSON.stringify(
+        change.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+      ) : change.tags : null
+    }).returning({ id: businesses.id });
+    return created;
+  }
+  if (!entityId) throw new Error("Business action requires entityId");
+  if (action.actionType === "delete") {
+    const deleted = await tx.delete(businesses).where(eq30(businesses.id, entityId)).returning({ id: businesses.id });
+    if (!deleted.length) throw new Error("Business not found");
+    return deleted[0];
+  }
+  if (action.actionType !== "edit") {
+    throw new Error(`Unsupported business action: ${action.actionType}`);
+  }
+  const updateFields = {};
+  for (const field of BUSINESS_CHANGE_FIELDS) {
+    if (change[field] !== void 0) updateFields[field] = change[field];
+  }
+  if (updateFields.categoryId !== void 0) {
+    updateFields.categoryId = Number(updateFields.categoryId);
+  }
+  if (updateFields.regionId !== void 0 && updateFields.regionId !== null) {
+    updateFields.regionId = Number(updateFields.regionId);
+  }
+  if (updateFields.countryCode !== void 0) {
+    updateFields.countryCode = updateFields.countryCode ? String(updateFields.countryCode).toUpperCase() : null;
+  }
+  if (updateFields.latitude !== void 0 && updateFields.latitude !== null) {
+    updateFields.latitude = String(updateFields.latitude);
+  }
+  if (updateFields.longitude !== void 0 && updateFields.longitude !== null) {
+    updateFields.longitude = String(updateFields.longitude);
+  }
+  if (updateFields.businessType !== void 0) {
+    updateFields.attributes = updateFields.businessType ? { type: updateFields.businessType } : null;
+    delete updateFields.businessType;
+  }
+  if (updateFields.cityName !== void 0 || updateFields.countryCode !== void 0) {
+    const current = await tx.select({
+      cityName: businesses.cityName,
+      countryCode: businesses.countryCode
+    }).from(businesses).where(eq30(businesses.id, entityId)).limit(1);
+    if (!current.length) throw new Error("Business not found");
+    const city = updateFields.cityName ?? current[0].cityName;
+    const country = updateFields.countryCode ?? current[0].countryCode;
+    updateFields.location = [city, country].filter(Boolean).join(", ") || null;
+  }
+  if (updateFields.tags !== void 0 && typeof updateFields.tags === "string") {
+    updateFields.tags = JSON.stringify(
+      updateFields.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+    );
+  }
+  if (!Object.keys(updateFields).length)
+    throw new Error("No business changes supplied");
+  const [updated] = await tx.update(businesses).set(updateFields).where(eq30(businesses.id, entityId)).returning({ id: businesses.id });
+  if (!updated) throw new Error("Business not found");
+  return updated;
+}
 async function getGeoAccessLevel(userId) {
   const result = await db.execute(
-    sql18`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`
+    sql19`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`
   );
   const user = result.rows?.[0];
   if (!user) {
@@ -33779,7 +36450,7 @@ async function getGeoAccessLevel(userId) {
     deleteDelayHours: 72
   };
 }
-router62.get(
+router65.get(
   "/access-level",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -33788,7 +36459,7 @@ router62.get(
     res.json({ success: true, access });
   })
 );
-router62.post(
+router65.post(
   "/request",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -33802,10 +36473,10 @@ router62.post(
       return;
     }
     const { actionType, entityType, entityId, requestedChange } = req.body;
-    if (!actionType || !entityType || !entityId) {
+    if (!actionType || !entityType || actionType !== "create" && !entityId) {
       res.status(400).json({
         success: false,
-        message: "actionType, entityType, and entityId are required"
+        message: "actionType and entityType are required; entityId is required for edit and delete"
       });
       return;
     }
@@ -33818,23 +36489,27 @@ router62.post(
       return;
     }
     if (!access.requiresQueue) {
-      const [inserted2] = await db.insert(geoActionRequests).values({
-        requestedBy: userId,
-        actionType,
-        entityType,
-        entityId: String(entityId),
-        requestedChange: requestedChange || null,
-        delayHours: 0,
-        status: "approved",
-        reviewedBy: userId,
-        reviewedAt: /* @__PURE__ */ new Date(),
-        reviewNotes: "Auto-approved (staff)",
-        expiresAt: null
-      }).returning();
+      const result = await db.transaction(async (tx) => {
+        const [inserted2] = await tx.insert(geoActionRequests).values({
+          requestedBy: userId,
+          actionType,
+          entityType,
+          entityId: entityId == null ? null : String(entityId),
+          requestedChange: requestedChange || null,
+          delayHours: 0,
+          status: "approved",
+          reviewedBy: userId,
+          reviewedAt: /* @__PURE__ */ new Date(),
+          reviewNotes: "Auto-approved (staff)",
+          expiresAt: null
+        }).returning();
+        const result2 = await executeGeoAction(tx, inserted2);
+        return { inserted: inserted2, result: result2 };
+      });
       res.json({
         success: true,
         message: "Action approved immediately (staff access)",
-        request: inserted2,
+        request: result.inserted,
         autoApproved: true
       });
       return;
@@ -33861,7 +36536,7 @@ router62.post(
     });
   })
 );
-router62.get(
+router65.get(
   "/my-requests",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -33870,7 +36545,7 @@ router62.get(
     const limit = Math.min(50, parseInt(req.query.limit) || 20);
     const offset = (page - 1) * limit;
     const requests = await db.execute(
-      sql18`SELECT gar.*, u.username AS reviewer_name
+      sql19`SELECT gar.*, u.username AS reviewer_name
           FROM geo_action_requests gar
           LEFT JOIN users u ON u.id = gar.reviewed_by
           WHERE gar.requested_by = ${userId}
@@ -33878,7 +36553,7 @@ router62.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql18`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE requested_by = ${userId}`
+      sql19`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE requested_by = ${userId}`
     );
     res.json({
       success: true,
@@ -33889,7 +36564,7 @@ router62.get(
     });
   })
 );
-router62.get(
+router65.get(
   "/pending",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -33898,7 +36573,7 @@ router62.get(
     const offset = (page - 1) * limit;
     const status = req.query.status || "pending";
     const requests = await db.execute(
-      sql18`SELECT gar.*, u.username AS requester_name, u.email AS requester_email,
+      sql19`SELECT gar.*, u.username AS requester_name, u.email AS requester_email,
                  u.subscription_tier AS requester_tier
           FROM geo_action_requests gar
           JOIN users u ON u.id = gar.requested_by
@@ -33907,7 +36582,7 @@ router62.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql18`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE status = ${status}`
+      sql19`SELECT COUNT(*)::int AS total FROM geo_action_requests WHERE status = ${status}`
     );
     res.json({
       success: true,
@@ -33918,14 +36593,14 @@ router62.get(
     });
   })
 );
-router62.post(
+router65.post(
   "/:id/approve",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
     const requestId = parseInt(req.params.id);
     const reviewerId = req.user.userId;
     const { reviewNotes } = req.body;
-    const [existing] = await db.select().from(geoActionRequests).where(eq31(geoActionRequests.id, requestId)).limit(1);
+    const [existing] = await db.select().from(geoActionRequests).where(eq30(geoActionRequests.id, requestId)).limit(1);
     if (!existing) {
       res.status(404).json({ success: false, message: "Request not found" });
       return;
@@ -33937,30 +36612,40 @@ router62.post(
       });
       return;
     }
-    await db.update(geoActionRequests).set({
-      status: "approved",
-      reviewedBy: reviewerId,
-      reviewedAt: /* @__PURE__ */ new Date(),
-      reviewNotes: reviewNotes || "Approved"
-    }).where(eq31(geoActionRequests.id, requestId));
+    const result = await db.transaction(async (tx) => {
+      const [claimed] = await tx.update(geoActionRequests).set({
+        status: "approved",
+        reviewedBy: reviewerId,
+        reviewedAt: /* @__PURE__ */ new Date(),
+        reviewNotes: reviewNotes || "Approved"
+      }).where(
+        and18(
+          eq30(geoActionRequests.id, requestId),
+          eq30(geoActionRequests.status, "pending")
+        )
+      ).returning();
+      if (!claimed) throw new Error("Request is no longer pending");
+      return executeGeoAction(tx, claimed);
+    });
     console.log(
       `[GEO-ACTION] Request #${requestId} approved by user ${reviewerId}`
     );
     res.json({
       success: true,
-      message: "Request approved",
-      requestId
+      message: "Request approved and applied",
+      requestId,
+      result
     });
   })
 );
-router62.post(
+router65.post(
   "/:id/reject",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
     const requestId = parseInt(req.params.id);
     const reviewerId = req.user.userId;
     const { reviewNotes } = req.body;
-    const [existing] = await db.select().from(geoActionRequests).where(eq31(geoActionRequests.id, requestId)).limit(1);
+    const [existing] = await db.select().from(geoActionRequests).where(eq30(geoActionRequests.id, requestId)).limit(1);
     if (!existing) {
       res.status(404).json({ success: false, message: "Request not found" });
       return;
@@ -33977,7 +36662,7 @@ router62.post(
       reviewedBy: reviewerId,
       reviewedAt: /* @__PURE__ */ new Date(),
       reviewNotes: reviewNotes || "Rejected"
-    }).where(eq31(geoActionRequests.id, requestId));
+    }).where(eq30(geoActionRequests.id, requestId));
     console.log(
       `[GEO-ACTION] Request #${requestId} rejected by user ${reviewerId}`
     );
@@ -33988,15 +36673,15 @@ router62.post(
     });
   })
 );
-var geo_actions_default = router62;
+var geo_actions_default = router65;
 
 // server/routes/contractor-pipeline.ts
 init_db();
 init_schema();
-import { Router as Router63 } from "express";
-import { eq as eq32, sql as sql19 } from "drizzle-orm";
+import { Router as Router66 } from "express";
+import { eq as eq31, sql as sql20 } from "drizzle-orm";
 import { z as z9 } from "zod";
-var router63 = Router63();
+var router66 = Router66();
 var applySchema = z9.object({
   name: z9.string().min(1, "Name is required").max(200),
   phone: z9.string().max(30).optional(),
@@ -34005,14 +36690,14 @@ var applySchema = z9.object({
   portfolioUrl: z9.string().url().max(500).optional().or(z9.literal("")),
   coverLetter: z9.string().max(2e3).optional()
 });
-router63.post(
+router66.post(
   "/apply",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
     const email = req.user.email;
     const existing = await db.execute(
-      sql19`SELECT id, status FROM contractor_applications
+      sql20`SELECT id, status FROM contractor_applications
           WHERE user_id = ${userId} AND status = 'pending'
           LIMIT 1`
     );
@@ -34024,7 +36709,7 @@ router63.post(
       return;
     }
     const alreadyContractor = await db.execute(
-      sql19`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
+      sql20`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
     );
     if (alreadyContractor.rows?.length) {
       res.status(409).json({
@@ -34070,13 +36755,13 @@ router63.post(
     });
   })
 );
-router63.get(
+router66.get(
   "/my-application",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
     const result = await db.execute(
-      sql19`SELECT ca.*, u.username AS reviewer_name
+      sql20`SELECT ca.*, u.username AS reviewer_name
           FROM contractor_applications ca
           LEFT JOIN users u ON u.id = ca.reviewed_by
           WHERE ca.user_id = ${userId}
@@ -34090,7 +36775,7 @@ router63.get(
     res.json({ success: true, application: result.rows[0] });
   })
 );
-router63.get(
+router66.get(
   "/applications",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -34099,7 +36784,7 @@ router63.get(
     const offset = (page - 1) * limit;
     const status = req.query.status || "pending";
     const applications = await db.execute(
-      sql19`SELECT ca.*, u.username, u.email AS user_email,
+      sql20`SELECT ca.*, u.username, u.email AS user_email,
                  u.subscription_tier, r.username AS reviewer_name
           FROM contractor_applications ca
           JOIN users u ON u.id = ca.user_id
@@ -34109,7 +36794,7 @@ router63.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql19`SELECT COUNT(*)::int AS total FROM contractor_applications WHERE status = ${status}`
+      sql20`SELECT COUNT(*)::int AS total FROM contractor_applications WHERE status = ${status}`
     );
     res.json({
       success: true,
@@ -34120,14 +36805,14 @@ router63.get(
     });
   })
 );
-router63.post(
+router66.post(
   "/applications/:id/approve",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
     const appId = parseInt(req.params.id);
     const reviewerId = Number(req.user.userId);
     const { reviewNotes } = req.body;
-    const [application] = await db.select().from(contractorApplications).where(eq32(contractorApplications.id, appId)).limit(1);
+    const [application] = await db.select().from(contractorApplications).where(eq31(contractorApplications.id, appId)).limit(1);
     if (!application) {
       res.status(404).json({ success: false, message: "Application not found" });
       return;
@@ -34144,7 +36829,7 @@ router63.post(
       reviewedBy: reviewerId,
       reviewedAt: /* @__PURE__ */ new Date(),
       reviewNotes: reviewNotes || "Approved"
-    }).where(eq32(contractorApplications.id, appId));
+    }).where(eq31(contractorApplications.id, appId));
     await db.insert(contractors).values({
       userId: application.userId,
       name: application.name,
@@ -34154,7 +36839,7 @@ router63.post(
       hourlyRate: application.hourlyRate
     });
     await db.execute(
-      sql19`UPDATE users
+      sql20`UPDATE users
           SET portal_access = COALESCE(portal_access, '[]'::jsonb) || '["contractor"]'::jsonb
           WHERE id = ${application.userId}`
     );
@@ -34167,14 +36852,14 @@ router63.post(
     });
   })
 );
-router63.post(
+router66.post(
   "/applications/:id/reject",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
     const appId = parseInt(req.params.id);
     const reviewerId = Number(req.user.userId);
     const { reviewNotes } = req.body;
-    const [application] = await db.select().from(contractorApplications).where(eq32(contractorApplications.id, appId)).limit(1);
+    const [application] = await db.select().from(contractorApplications).where(eq31(contractorApplications.id, appId)).limit(1);
     if (!application) {
       res.status(404).json({ success: false, message: "Application not found" });
       return;
@@ -34191,7 +36876,7 @@ router63.post(
       reviewedBy: reviewerId,
       reviewedAt: /* @__PURE__ */ new Date(),
       reviewNotes: reviewNotes || "Rejected"
-    }).where(eq32(contractorApplications.id, appId));
+    }).where(eq31(contractorApplications.id, appId));
     console.log(
       `[CONTRACTOR] Application #${appId} rejected by admin ${reviewerId}`
     );
@@ -34201,14 +36886,14 @@ router63.post(
     });
   })
 );
-router63.get(
+router66.get(
   "/contractors",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
     const search = req.query.search || "";
-    const searchClause = search ? sql19` AND (c.name ILIKE ${"%" + search + "%"} OR c.email ILIKE ${"%" + search + "%"} OR c.specialization ILIKE ${"%" + search + "%"})` : sql19``;
+    const searchClause = search ? sql20` AND (c.name ILIKE ${"%" + search + "%"} OR c.email ILIKE ${"%" + search + "%"} OR c.specialization ILIKE ${"%" + search + "%"})` : sql20``;
     const contractors2 = await db.execute(
-      sql19`SELECT c.id, c.user_id, c.name, c.email, c.phone, c.specialization,
+      sql20`SELECT c.id, c.user_id, c.name, c.email, c.phone, c.specialization,
                  c.hourly_rate, c.created_at, u.username, u.subscription_tier
           FROM contractors c
           JOIN users u ON u.id = c.user_id
@@ -34218,7 +36903,7 @@ router63.get(
     res.json({ success: true, contractors: contractors2.rows });
   })
 );
-router63.get(
+router66.get(
   "/assignments",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -34226,9 +36911,9 @@ router63.get(
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(50, parseInt(req.query.limit) || 20);
     const offset = (page - 1) * limit;
-    const statusClause = status ? sql19` AND ac.status = ${status}` : sql19``;
+    const statusClause = status ? sql20` AND ac.status = ${status}` : sql20``;
     const assignments = await db.execute(
-      sql19`SELECT ac.*, c.name AS contractor_name, c.email AS contractor_email,
+      sql20`SELECT ac.*, c.name AS contractor_name, c.email AS contractor_email,
                  c.specialization, u.username AS assigned_by_name
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
@@ -34238,7 +36923,7 @@ router63.get(
           LIMIT ${limit} OFFSET ${offset}`
     );
     const countResult = await db.execute(
-      sql19`SELECT COUNT(*)::int AS total FROM assigned_contracts ac WHERE 1=1 ${statusClause}`
+      sql20`SELECT COUNT(*)::int AS total FROM assigned_contracts ac WHERE 1=1 ${statusClause}`
     );
     res.json({
       success: true,
@@ -34249,7 +36934,7 @@ router63.get(
     });
   })
 );
-router63.post(
+router66.post(
   "/assign",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -34262,7 +36947,7 @@ router63.post(
       });
       return;
     }
-    const [contractor] = await db.select().from(contractors).where(eq32(contractors.id, Number(contractorId))).limit(1);
+    const [contractor] = await db.select().from(contractors).where(eq31(contractors.id, Number(contractorId))).limit(1);
     if (!contractor) {
       res.status(404).json({ success: false, message: "Contractor not found" });
       return;
@@ -34287,13 +36972,13 @@ router63.post(
     });
   })
 );
-router63.get(
+router66.get(
   "/my-contracts",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const userId = Number(req.user.userId);
     const contractorResult = await db.execute(
-      sql19`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
+      sql20`SELECT id FROM contractors WHERE user_id = ${userId} LIMIT 1`
     );
     const contractor = contractorResult.rows?.[0];
     if (!contractor) {
@@ -34301,7 +36986,7 @@ router63.get(
       return;
     }
     const contracts = await db.execute(
-      sql19`SELECT ac.*, u.username AS assigned_by_name
+      sql20`SELECT ac.*, u.username AS assigned_by_name
           FROM assigned_contracts ac
           LEFT JOIN users u ON u.id = ac.assigned_by
           WHERE ac.contractor_id = ${contractor.id}
@@ -34310,14 +36995,14 @@ router63.get(
     res.json({ success: true, contracts: contracts.rows });
   })
 );
-router63.post(
+router66.post(
   "/contracts/:id/accept",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const contractId = parseInt(req.params.id);
     const userId = Number(req.user.userId);
     const contract = await db.execute(
-      sql19`SELECT ac.id, ac.status, ac.contractor_id, c.user_id
+      sql20`SELECT ac.id, ac.status, ac.contractor_id, c.user_id
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
           WHERE ac.id = ${contractId} AND c.user_id = ${userId}
@@ -34335,18 +37020,18 @@ router63.post(
       });
       return;
     }
-    await db.update(assignedContracts).set({ status: "accepted", acceptedAt: /* @__PURE__ */ new Date() }).where(eq32(assignedContracts.id, contractId));
+    await db.update(assignedContracts).set({ status: "accepted", acceptedAt: /* @__PURE__ */ new Date() }).where(eq31(assignedContracts.id, contractId));
     res.json({ success: true, message: "Contract accepted" });
   })
 );
-router63.post(
+router66.post(
   "/contracts/:id/decline",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const contractId = parseInt(req.params.id);
     const userId = Number(req.user.userId);
     const contract = await db.execute(
-      sql19`SELECT ac.id, ac.status, c.user_id
+      sql20`SELECT ac.id, ac.status, c.user_id
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
           WHERE ac.id = ${contractId} AND c.user_id = ${userId}
@@ -34364,18 +37049,18 @@ router63.post(
       });
       return;
     }
-    await db.update(assignedContracts).set({ status: "declined" }).where(eq32(assignedContracts.id, contractId));
+    await db.update(assignedContracts).set({ status: "declined" }).where(eq31(assignedContracts.id, contractId));
     res.json({ success: true, message: "Contract declined" });
   })
 );
-router63.post(
+router66.post(
   "/contracts/:id/complete",
   requireAuth(),
   asyncHandler(async (req, res) => {
     const contractId = parseInt(req.params.id);
     const userId = Number(req.user.userId);
     const contract = await db.execute(
-      sql19`SELECT ac.id, ac.status, c.user_id
+      sql20`SELECT ac.id, ac.status, c.user_id
           FROM assigned_contracts ac
           JOIN contractors c ON c.id = ac.contractor_id
           WHERE ac.id = ${contractId} AND c.user_id = ${userId}
@@ -34393,17 +37078,17 @@ router63.post(
       });
       return;
     }
-    await db.update(assignedContracts).set({ status: "completed", completedAt: /* @__PURE__ */ new Date() }).where(eq32(assignedContracts.id, contractId));
+    await db.update(assignedContracts).set({ status: "completed", completedAt: /* @__PURE__ */ new Date() }).where(eq31(assignedContracts.id, contractId));
     res.json({ success: true, message: "Contract marked as completed" });
   })
 );
-var contractor_pipeline_default = router63;
+var contractor_pipeline_default = router66;
 
 // server/routes/purgatoire.ts
 init_db();
-import { Router as Router64 } from "express";
+import { Router as Router67 } from "express";
 init_notification_service();
-var router64 = Router64();
+var router67 = Router67();
 var APPROVE_ROLES = ["superuser", "admin"];
 var FLAG_ROLES = ["superuser", "admin", "moderator"];
 async function getUserRole(userId) {
@@ -34412,7 +37097,7 @@ async function getUserRole(userId) {
   ]);
   return result.rows[0]?.role || null;
 }
-router64.get("/queue", requireAuth(), async (req, res) => {
+router67.get("/queue", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -34467,7 +37152,7 @@ router64.get("/queue", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch queue" });
   }
 });
-router64.get("/stats", requireAuth(), async (req, res) => {
+router67.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -34491,7 +37176,7 @@ router64.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router64.post(
+router67.post(
   "/:trackId/approve",
   requireAuth(),
   async (req, res) => {
@@ -34571,7 +37256,7 @@ router64.post(
     }
   }
 );
-router64.post(
+router67.post(
   "/:trackId/reject",
   requireAuth(),
   async (req, res) => {
@@ -34657,7 +37342,7 @@ router64.post(
     }
   }
 );
-router64.post(
+router67.post(
   "/:trackId/flag",
   requireAuth(),
   async (req, res) => {
@@ -34701,27 +37386,27 @@ router64.post(
     }
   }
 );
-var purgatoire_default = router64;
+var purgatoire_default = router67;
 
 // server/routes/ad-campaigns.ts
 init_db();
-import { Router as Router65 } from "express";
-import { sql as sql20 } from "drizzle-orm";
-var router65 = Router65();
-router65.get(
+import { Router as Router68 } from "express";
+import { sql as sql21 } from "drizzle-orm";
+var router68 = Router68();
+router68.get(
   "/",
   asyncHandler(async (req, res) => {
     const { countryCode, limit = "50" } = req.query;
     const limitNum = Math.min(100, parseInt(String(limit), 10) || 50);
     const result = countryCode && String(countryCode) !== "all" ? await db.execute(
-      sql20`SELECT ac.*, b.name AS business_name, b.country_code
+      sql21`SELECT ac.*, b.name AS business_name, b.country_code
                 FROM ad_campaigns ac
                 INNER JOIN businesses b ON b.id = ac.business_id
                   AND UPPER(b.country_code) = UPPER(${String(countryCode)})
                 ORDER BY ac.created_at DESC NULLS LAST
                 LIMIT ${limitNum}`
     ) : await db.execute(
-      sql20`SELECT ac.*, b.name AS business_name, b.country_code
+      sql21`SELECT ac.*, b.name AS business_name, b.country_code
                 FROM ad_campaigns ac
                 LEFT JOIN businesses b ON b.id = ac.business_id
                 ORDER BY ac.created_at DESC NULLS LAST
@@ -34746,13 +37431,13 @@ router65.get(
     res.json({ success: true, data: campaigns });
   })
 );
-var ad_campaigns_default = router65;
+var ad_campaigns_default = router68;
 
 // server/routes/admin.ts
 init_db();
 init_schema();
-import { Router as Router66 } from "express";
-import { sql as sql21, eq as eq33, ilike as ilike9 } from "drizzle-orm";
+import { Router as Router69 } from "express";
+import { sql as sql22, eq as eq32, ilike as ilike8 } from "drizzle-orm";
 import * as os from "os";
 import { execSync } from "child_process";
 init_notification_service();
@@ -34793,175 +37478,161 @@ var TABLE_NAME_MAP = {
   contractors: "contractors",
   payment_card_types: "paymentCardTypes"
 };
-var router66 = Router66();
-router66.get(
-  "/database-stats",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const tables = [
-        "users",
-        "businesses",
-        "business_categories",
-        "business_hours",
-        "business_services",
-        "business_reviews",
-        "analytics",
-        "reservations",
-        "ad_campaigns",
-        "ad_audiences",
-        "ad_creatives",
-        "ad_performance",
-        "billing_history",
-        "music_artists",
-        "music_tracks",
-        "music_analytics",
-        "countries",
-        "regions",
-        "cities",
-        "target_regions",
-        "jobs",
-        "job_applications",
-        "saved_jobs",
-        "commerce_categories",
-        "payment_methods",
-        "transactions",
-        "content_categories",
-        "content_pages",
-        "page_categories",
-        "notifications",
-        "user_favorites"
-      ];
-      let totalRecords = 0;
-      const tableCounts = {};
-      for (const tableName of tables) {
-        try {
-          const countResult = await db.execute(
-            sql21.raw(`SELECT COUNT(*) as count FROM ${tableName}`)
-          );
-          const count11 = parseInt(
-            String(countResult.rows[0]?.count) || "0"
-          );
-          tableCounts[tableName] = count11;
-          totalRecords += count11;
-        } catch (error) {
-          console.error(`Failed to count ${tableName}:`, error);
-          tableCounts[tableName] = 0;
-        }
+var router69 = Router69();
+router69.use(requireJoelSuperadminForMutations);
+router69.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const tables = [
+      "users",
+      "businesses",
+      "business_categories",
+      "business_hours",
+      "business_services",
+      "business_reviews",
+      "analytics",
+      "reservations",
+      "ad_campaigns",
+      "ad_audiences",
+      "ad_creatives",
+      "ad_performance",
+      "billing_history",
+      "music_artists",
+      "music_tracks",
+      "music_analytics",
+      "countries",
+      "regions",
+      "cities",
+      "target_regions",
+      "jobs",
+      "job_applications",
+      "saved_jobs",
+      "commerce_categories",
+      "payment_methods",
+      "transactions",
+      "content_categories",
+      "content_pages",
+      "page_categories",
+      "notifications",
+      "user_favorites"
+    ];
+    let totalRecords = 0;
+    const tableCounts = {};
+    for (const tableName of tables) {
+      try {
+        const countResult = await db.execute(
+          sql22.raw(`SELECT COUNT(*) as count FROM ${tableName}`)
+        );
+        const count10 = parseInt(
+          String(countResult.rows[0]?.count) || "0"
+        );
+        tableCounts[tableName] = count10;
+        totalRecords += count10;
+      } catch (error) {
+        console.error(`Failed to count ${tableName}:`, error);
+        tableCounts[tableName] = 0;
       }
-      res.json({
-        success: true,
-        totalRecords,
-        activeTables: tables.length,
-        tableCounts,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    } catch (error) {
-      console.error("\u274C Failed to get database stats:", error);
-      res.status(500).json({
+    }
+    res.json({
+      success: true,
+      totalRecords,
+      activeTables: tables.length,
+      tableCounts,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+  } catch (error) {
+    console.error("\u274C Failed to get database stats:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+router69.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { tableName } = req.params;
+    const { search } = req.query;
+    const validTables = Object.keys(TABLE_NAME_MAP);
+    if (!validTables.includes(tableName)) {
+      return res.status(400).json({
         success: false,
-        error: error.message
+        error: "Invalid table name"
       });
     }
-  }
-);
-router66.get(
-  "/table/:tableName",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const { tableName } = req.params;
-      const { search } = req.query;
-      const validTables = Object.keys(TABLE_NAME_MAP);
-      if (!validTables.includes(tableName)) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid table name"
-        });
-      }
-      const schemaName = TABLE_NAME_MAP[tableName];
-      console.log(`\u{1F50D} Looking up table: ${tableName} -> ${schemaName}`);
-      console.log(`\u{1F4E6} Schema has key "${schemaName}":`, schemaName in schema_exports);
-      const table = schemaName ? schema_exports[schemaName] : null;
-      console.log(`\u2705 Found table:`, !!table);
-      if (!table) {
-        return res.status(400).json({
-          success: false,
-          error: "Table not found in schema"
-        });
-      }
-      const page = parseInt(String(req.query.page || "1"), 10);
-      const limit = Math.min(
-        200,
-        parseInt(String(req.query.limit || "100"), 10)
-      );
-      const offset = (page - 1) * limit;
-      let query = db.select().from(table);
-      if (search && typeof search === "string") {
-        const nameField = table.name;
-        if (nameField) {
-          query = query.where(ilike9(nameField, `${search}%`));
-        }
-      }
-      const countResult = await db.select({ count: sql21`count(*)` }).from(table);
-      const total = countResult[0]?.count || 0;
-      const data = await query.limit(limit).offset(offset);
-      res.json({
-        success: true,
-        data,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(Number(total) / limit)
-        }
-      });
-    } catch (error) {
-      console.error(`\u274C Failed to fetch ${req.params.tableName}:`, error);
-      res.status(500).json({
+    const schemaName = TABLE_NAME_MAP[tableName];
+    console.log(`\u{1F50D} Looking up table: ${tableName} -> ${schemaName}`);
+    console.log(`\u{1F4E6} Schema has key "${schemaName}":`, schemaName in schema_exports);
+    const table = schemaName ? schema_exports[schemaName] : null;
+    console.log(`\u2705 Found table:`, !!table);
+    if (!table) {
+      return res.status(400).json({
         success: false,
-        error: error.message
+        error: "Table not found in schema"
       });
     }
+    const page = parseInt(String(req.query.page || "1"), 10);
+    const limit = Math.min(200, parseInt(String(req.query.limit || "100"), 10));
+    const offset = (page - 1) * limit;
+    let query = db.select().from(table);
+    if (search && typeof search === "string") {
+      const nameField = table.name;
+      if (nameField) {
+        query = query.where(ilike8(nameField, `${search}%`));
+      }
+    }
+    const countResult = await db.select({ count: sql22`count(*)` }).from(table);
+    const total = countResult[0]?.count || 0;
+    const data = await query.limit(limit).offset(offset);
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(Number(total) / limit)
+      }
+    });
+  } catch (error) {
+    console.error(`\u274C Failed to fetch ${req.params.tableName}:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
-);
-router66.post(
-  "/table/:tableName",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const { tableName } = req.params;
-      const data = req.body;
-      const validTables = Object.keys(TABLE_NAME_MAP);
-      if (!validTables.includes(tableName)) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid table name"
-        });
-      }
-      const schemaName = TABLE_NAME_MAP[tableName];
-      const table = schemaName ? schema_exports[schemaName] : null;
-      if (!table) {
-        return res.status(400).json({
-          success: false,
-          error: "Table not found in schema"
-        });
-      }
-      const result = await db.insert(table).values(data).returning();
-      res.json({
-        success: true,
-        data: result[0]
-      });
-    } catch (error) {
-      console.error(`\u274C Failed to create in ${req.params.tableName}:`, error);
-      res.status(500).json({
+});
+router69.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { tableName } = req.params;
+    const data = req.body;
+    const validTables = Object.keys(TABLE_NAME_MAP);
+    if (!validTables.includes(tableName)) {
+      return res.status(400).json({
         success: false,
-        error: error.message
+        error: "Invalid table name"
       });
     }
+    const schemaName = TABLE_NAME_MAP[tableName];
+    const table = schemaName ? schema_exports[schemaName] : null;
+    if (!table) {
+      return res.status(400).json({
+        success: false,
+        error: "Table not found in schema"
+      });
+    }
+    const result = await db.insert(table).values(data).returning();
+    res.json({
+      success: true,
+      data: result[0]
+    });
+  } catch (error) {
+    console.error(`\u274C Failed to create in ${req.params.tableName}:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
-);
-router66.put(
+});
+router69.put(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -34985,7 +37656,7 @@ router66.put(
       }
       const { id: _, ...updateData } = data;
       const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
-      const result = await db.update(table).set(updateData).where(eq33(table.id, idValue)).returning();
+      const result = await db.update(table).set(updateData).where(eq32(table.id, idValue)).returning();
       if (result.length === 0) {
         return res.status(404).json({
           success: false,
@@ -35043,7 +37714,7 @@ router66.put(
     }
   }
 );
-router66.delete(
+router69.delete(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -35065,7 +37736,17 @@ router66.delete(
         });
       }
       const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
-      const result = await db.delete(table).where(eq33(table.id, idValue)).returning();
+      if (tableName === "users") {
+        const rows = await db.select().from(table).where(eq32(table.id, idValue));
+        const target = rows[0];
+        if (target && (target.username === "joel_007" || target.gateUsername === "joel_007")) {
+          return res.status(403).json({
+            success: false,
+            error: "The joel_007 account cannot be deleted"
+          });
+        }
+      }
+      const result = await db.delete(table).where(eq32(table.id, idValue)).returning();
       if (result.length === 0) {
         return res.status(404).json({
           success: false,
@@ -35077,10 +37758,7 @@ router66.delete(
         message: "Record deleted successfully"
       });
     } catch (error) {
-      console.error(
-        `\u274C Failed to delete from ${req.params.tableName}:`,
-        error
-      );
+      console.error(`\u274C Failed to delete from ${req.params.tableName}:`, error);
       res.status(500).json({
         success: false,
         error: error.message
@@ -35088,67 +37766,63 @@ router66.delete(
     }
   }
 );
-router66.post(
-  "/execute-query",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const { query: sqlQuery } = req.body;
-      if (!sqlQuery || typeof sqlQuery !== "string") {
-        return res.status(400).json({
-          success: false,
-          error: "Query is required"
-        });
-      }
-      const normalized = sqlQuery.trim().toUpperCase();
-      const destructivePatterns = [
-        /^\s*DROP\s/i,
-        /^\s*TRUNCATE\s/i,
-        /^\s*ALTER\s/i,
-        /GRANT\s/i,
-        /REVOKE\s/i
-      ];
-      if (destructivePatterns.some((pattern) => pattern.test(sqlQuery))) {
-        console.warn(
-          `\u{1F6AB} BLOCKED destructive query from ${req.user?.email}: ${sqlQuery.substring(0, 100)}`
-        );
-        return res.status(403).json({
-          success: false,
-          error: "Destructive DDL statements (DROP, TRUNCATE, ALTER, GRANT, REVOKE) are not allowed. Use Drizzle migrations instead."
-        });
-      }
-      console.log(
-        `\u{1F50D} [${req.user?.email}] Executing query:`,
-        sqlQuery.substring(0, 100) + "..."
-      );
-      const startTime = Date.now();
-      const result = await db.execute(sql21.raw(sqlQuery));
-      const duration = Date.now() - startTime;
-      const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
-      res.json({
-        success: true,
-        data: result.rows,
-        columns,
-        rowCount: result.rows.length,
-        duration
-      });
-    } catch (error) {
-      console.error("\u274C Query execution failed:", error);
-      res.status(500).json({
+router69.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { query: sqlQuery } = req.body;
+    if (!sqlQuery || typeof sqlQuery !== "string") {
+      return res.status(400).json({
         success: false,
-        error: error.message || "Query execution failed",
-        data: [],
-        columns: [],
-        rowCount: 0,
-        duration: 0
+        error: "Query is required"
       });
     }
+    const normalized = sqlQuery.trim().toUpperCase();
+    const destructivePatterns = [
+      /^\s*DROP\s/i,
+      /^\s*TRUNCATE\s/i,
+      /^\s*ALTER\s/i,
+      /GRANT\s/i,
+      /REVOKE\s/i
+    ];
+    if (destructivePatterns.some((pattern) => pattern.test(sqlQuery))) {
+      console.warn(
+        `\u{1F6AB} BLOCKED destructive query from ${req.user?.email}: ${sqlQuery.substring(0, 100)}`
+      );
+      return res.status(403).json({
+        success: false,
+        error: "Destructive DDL statements (DROP, TRUNCATE, ALTER, GRANT, REVOKE) are not allowed. Use Drizzle migrations instead."
+      });
+    }
+    console.log(
+      `\u{1F50D} [${req.user?.email}] Executing query:`,
+      sqlQuery.substring(0, 100) + "..."
+    );
+    const startTime = Date.now();
+    const result = await db.execute(sql22.raw(sqlQuery));
+    const duration = Date.now() - startTime;
+    const columns = result.rows[0] ? Object.keys(result.rows[0]) : [];
+    res.json({
+      success: true,
+      data: result.rows,
+      columns,
+      rowCount: result.rows.length,
+      duration
+    });
+  } catch (error) {
+    console.error("\u274C Query execution failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Query execution failed",
+      data: [],
+      columns: [],
+      rowCount: 0,
+      duration: 0
+    });
   }
-);
-router66.get("/health", requireAuth(["admin"]), async (req, res) => {
+});
+router69.get("/health", requireAuth(["admin"]), async (req, res) => {
   try {
     const connResult = await db.execute(
-      sql21.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
+      sql22.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
     );
     const connectionsCount = parseInt(
       String(connResult.rows[0]?.connections || 0),
@@ -35159,10 +37833,7 @@ router66.get("/health", requireAuth(["admin"]), async (req, res) => {
     const memPercent = Math.round((totalMem - freeMem) / totalMem * 100);
     const loadAvg1m = os.loadavg()[0];
     const cpuCount = os.cpus().length;
-    const cpuPercent = Math.min(
-      100,
-      Math.round(loadAvg1m / cpuCount * 100)
-    );
+    const cpuPercent = Math.min(100, Math.round(loadAvg1m / cpuCount * 100));
     let diskPercent = 0;
     try {
       const dfOut = execSync("df -k /").toString();
@@ -35203,7 +37874,7 @@ router66.get("/health", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.post("/backup", requireAuth(["admin"]), async (req, res) => {
+router69.post("/backup", requireAuth(["admin"]), async (req, res) => {
   try {
     const { type = "full" } = req.body;
     if (!["full", "partial"].includes(type)) {
@@ -35218,11 +37889,11 @@ router66.post("/backup", requireAuth(["admin"]), async (req, res) => {
     let tableCount = 0;
     try {
       const sizeResult = await db.execute(
-        sql21`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
+        sql22`SELECT pg_size_pretty(pg_database_size(current_database())) AS size`
       );
       dbSize = sizeResult.rows[0]?.size || "unknown";
       const tableResult = await db.execute(
-        sql21`SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = 'public'`
+        sql22`SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = 'public'`
       );
       tableCount = parseInt(
         String(tableResult.rows[0]?.cnt || "0"),
@@ -35249,34 +37920,30 @@ router66.post("/backup", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router66.get(
-  "/category-stats",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const result = await db.execute(
-        sql21.raw(`
+router69.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const result = await db.execute(
+      sql22.raw(`
       SELECT c.id, c.name, c.slug, c.parent_id, c.main_category, COUNT(b.id) AS businesses_count
       FROM business_categories c
       LEFT JOIN businesses b ON b.category_id = c.id
       GROUP BY c.id, c.name, c.slug, c.parent_id, c.main_category
       ORDER BY businesses_count DESC, c.name
     `)
-      );
-      res.json({ success: true, data: result.rows });
-    } catch (error) {
-      console.error("\u274C Failed to fetch category stats:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("\u274C Failed to fetch category stats:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
-);
-router66.post(
+});
+router69.post(
   "/preview-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
     try {
       const result = await db.execute(
-        sql21.raw(`
+        sql22.raw(`
       SELECT b.id AS business_id, b.name AS business_name, b.business_type,
              c.id AS category_id, c.name AS category_name
       FROM businesses b
@@ -35297,14 +37964,14 @@ router66.post(
     }
   }
 );
-router66.post(
+router69.post(
   "/apply-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
     try {
-      await db.execute(sql21.raw(`BEGIN`));
+      await db.execute(sql22.raw(`BEGIN`));
       const result = await db.execute(
-        sql21.raw(`
+        sql22.raw(`
       UPDATE businesses b
       SET category_id = c.id
       FROM business_categories c
@@ -35314,13 +37981,13 @@ router66.post(
       RETURNING b.id
     `)
       );
-      await db.execute(sql21.raw(`COMMIT`));
+      await db.execute(sql22.raw(`COMMIT`));
       const affected = Array.isArray(result.rows) ? result.rows.length : 0;
       res.json({ success: true, affected, sample: result.rows.slice(0, 50) });
     } catch (error) {
       console.error("\u274C Apply mapping failed, rolling back:", error);
       try {
-        await db.execute(sql21.raw(`ROLLBACK`));
+        await db.execute(sql22.raw(`ROLLBACK`));
       } catch (rbErr) {
         console.error("\u274C Rollback failed:", rbErr);
       }
@@ -35328,11 +37995,11 @@ router66.post(
     }
   }
 );
-router66.get("/categories", requireAuth(["admin"]), async (req, res) => {
+router69.get("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     console.log("\u{1F50D} Fetching admin categories (no slug)");
     const result = await db.execute(
-      sql21.raw(`
+      sql22.raw(`
         SELECT id, name, slug, description, parent_id, main_category
         FROM business_categories
         ORDER BY main_category DESC, name
@@ -35344,85 +38011,1166 @@ router66.get("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router66.post(
-  "/categories",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const { name, description, parent_id, slug } = req.body;
-      if (!name)
-        return res.status(400).json({ success: false, error: "name is required" });
-      const autoSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const insert = await db.execute(
-        sql21`INSERT INTO business_categories (name, slug, description, parent_id)
+router69.post("/categories", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { name, description, parent_id, slug } = req.body;
+    if (!name)
+      return res.status(400).json({ success: false, error: "name is required" });
+    const autoSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const insert = await db.execute(
+      sql22`INSERT INTO business_categories (name, slug, description, parent_id)
         VALUES (${name}, ${autoSlug}, ${description ?? null}, ${parent_id ?? null}) RETURNING *`
-      );
-      res.json({ success: true, category: insert.rows[0] });
-    } catch (error) {
-      console.error("\u274C Create category failed:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
+    );
+    res.json({ success: true, category: insert.rows[0] });
+  } catch (error) {
+    console.error("\u274C Create category failed:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
-);
-router66.put(
-  "/categories/:id",
-  requireAuth(["admin"]),
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { name, description, parent_id, slug } = req.body;
-      const update = await db.execute(
-        sql21`UPDATE business_categories
+});
+router69.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, parent_id, slug } = req.body;
+    const update = await db.execute(
+      sql22`UPDATE business_categories
         SET name = ${name}, description = ${description ?? null}, parent_id = ${parent_id ?? null}, slug = COALESCE(${slug ?? null}, slug)
         WHERE id = ${id}
         RETURNING *`
+    );
+    res.json({ success: true, category: update.rows[0] });
+  } catch (error) {
+    console.error("\u274C Update category failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router69.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+  try {
+    const { id: idStr } = req.params;
+    const { force } = req.query;
+    const id = parseInt(idStr, 10);
+    const countResult = await db.execute(
+      sql22`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`
+    );
+    const cnt = parseInt(String(countResult.rows[0]?.cnt ?? "0"), 10);
+    if (cnt > 0 && String(force) !== "true") {
+      return res.status(400).json({
+        success: false,
+        error: "Category in use; pass ?force=true to unset references and delete."
+      });
+    }
+    if (cnt > 0 && String(force) === "true") {
+      await db.execute(
+        sql22`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`
       );
-      res.json({ success: true, category: update.rows[0] });
+    }
+    await db.execute(sql22`DELETE FROM business_categories WHERE id = ${id}`);
+    res.json({ success: true, deleted: true, unmapped: cnt });
+  } catch (error) {
+    console.error("\u274C Delete category failed:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router69.get(
+  "/settings/smtp",
+  requireAuth(["superuser", "admin"]),
+  asyncHandler(async (req, res) => {
+    const setting = await db.select().from(systemSettings).where(eq32(systemSettings.key, "smtp_config")).limit(1);
+    const smtpConfig = setting[0]?.value || {
+      host: "",
+      port: 587,
+      user: "",
+      pass: "",
+      from: "",
+      secure: false
+    };
+    res.json({
+      success: true,
+      config: smtpConfig,
+      hasConfig: !!setting[0]
+    });
+  })
+);
+router69.post(
+  "/settings/smtp",
+  requireAuth(["superuser", "admin"]),
+  asyncHandler(async (req, res) => {
+    const { host, port, user, pass, from, secure } = req.body;
+    if (!host || !user || !pass || !from) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required SMTP fields: host, user, pass, from are required"
+      });
+    }
+    const existing = await db.select().from(systemSettings).where(eq32(systemSettings.key, "smtp_config")).limit(1);
+    const configData = {
+      host,
+      port: parseInt(String(port)) || 587,
+      user,
+      pass,
+      from,
+      secure: Boolean(secure)
+    };
+    if (existing[0]) {
+      await db.update(systemSettings).set({
+        value: configData,
+        updatedAt: /* @__PURE__ */ new Date(),
+        updatedBy: req.user?.id
+      }).where(eq32(systemSettings.key, "smtp_config"));
+    } else {
+      await db.insert(systemSettings).values({
+        key: "smtp_config",
+        value: configData,
+        updatedBy: req.user?.id
+      });
+    }
+    res.json({
+      success: true,
+      message: "SMTP configuration updated",
+      config: configData
+    });
+  })
+);
+router69.post(
+  "/settings/smtp/test",
+  requireAuth(["superuser", "admin"]),
+  asyncHandler(async (req, res) => {
+    const { host, port, user, pass, from } = req.body;
+    if (!host || !user || !pass || !from) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required SMTP fields: host, user, pass, from are required"
+      });
+    }
+    try {
+      const nodemailer2 = __require("nodemailer");
+      const transporter = nodemailer2.createTransport({
+        host,
+        port: parseInt(String(port)) || 587,
+        secure: Boolean(req.body.secure),
+        auth: {
+          user,
+          pass
+        }
+      });
+      await transporter.verify();
+      await transporter.sendMail({
+        from,
+        to: req.user?.email || from,
+        subject: "SMTP Configuration Test - Verso Air",
+        html: `
+          <h2>SMTP Configuration Successful</h2>
+          <p>Your SMTP settings are working correctly.</p>
+          <p style="color: #666; font-size: 12px;">
+            Timestamp: ${(/* @__PURE__ */ new Date()).toISOString()}
+          </p>
+        `
+      });
+      res.json({
+        success: true,
+        message: "SMTP test successful! Configuration is working correctly."
+      });
     } catch (error) {
-      console.error("\u274C Update category failed:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(400).json({
+        success: false,
+        error: `SMTP test failed: ${error.message}`
+      });
+    }
+  })
+);
+var admin_default2 = router69;
+
+// server/routes/profiles.ts
+init_db();
+init_schema();
+import { Router as Router70 } from "express";
+import { and as and22, eq as eq35 } from "drizzle-orm";
+
+// server/services/profile-queries.ts
+init_db();
+init_schema();
+import { eq as eq33, and as and21, or as or7, ilike as ilike9, desc as desc19 } from "drizzle-orm";
+async function getPublicProfiles(filters = {}) {
+  const {
+    category,
+    query,
+    accountType,
+    countryCode,
+    limit = 20,
+    offset = 0
+  } = filters;
+  const conditions = [eq33(unifiedProfiles.status, "PUBLISHED")];
+  if (accountType)
+    conditions.push(eq33(unifiedProfiles.accountType, accountType));
+  if (category) conditions.push(eq33(unifiedProfiles.category, category));
+  if (countryCode)
+    conditions.push(eq33(unifiedProfiles.countryCode, countryCode));
+  let results = db.select().from(unifiedProfiles).where(and21(...conditions)).orderBy(desc19(unifiedProfiles.createdAt)).limit(limit).offset(offset);
+  if (query) {
+    const like3 = `%${query}%`;
+    return db.select().from(unifiedProfiles).where(
+      and21(
+        eq33(unifiedProfiles.status, "PUBLISHED"),
+        ...accountType ? [eq33(unifiedProfiles.accountType, accountType)] : [],
+        ...category ? [eq33(unifiedProfiles.category, category)] : [],
+        ...countryCode ? [eq33(unifiedProfiles.countryCode, countryCode)] : [],
+        or7(
+          ilike9(unifiedProfiles.name, like3),
+          ilike9(unifiedProfiles.description, like3),
+          ilike9(unifiedProfiles.category, like3),
+          ilike9(unifiedProfiles.cityName, like3)
+        )
+      )
+    ).orderBy(desc19(unifiedProfiles.createdAt)).limit(limit).offset(offset);
+  }
+  return results;
+}
+async function getPartnerProfiles(ownerId2) {
+  return db.select().from(unifiedProfiles).where(eq33(unifiedProfiles.ownerId, ownerId2)).orderBy(desc19(unifiedProfiles.createdAt));
+}
+async function getAdminProfiles(filters = {}) {
+  const conditions = [];
+  if (filters.status)
+    conditions.push(eq33(unifiedProfiles.status, filters.status));
+  if (filters.verificationStatus)
+    conditions.push(
+      eq33(unifiedProfiles.verificationStatus, filters.verificationStatus)
+    );
+  if (filters.accountType)
+    conditions.push(eq33(unifiedProfiles.accountType, filters.accountType));
+  if (conditions.length === 0) {
+    return db.select().from(unifiedProfiles).orderBy(desc19(unifiedProfiles.createdAt));
+  }
+  return db.select().from(unifiedProfiles).where(and21(...conditions)).orderBy(desc19(unifiedProfiles.createdAt));
+}
+async function getPublicProfileBySlug(slug) {
+  const [profile] = await db.select().from(unifiedProfiles).where(
+    and21(
+      eq33(unifiedProfiles.slug, slug),
+      eq33(unifiedProfiles.status, "PUBLISHED")
+    )
+  ).limit(1);
+  return profile ?? null;
+}
+
+// server/services/profile-migration.ts
+init_db();
+init_schema();
+import { eq as eq34 } from "drizzle-orm";
+function slugify(str) {
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+async function generateUniqueSlug(rawName, accountType) {
+  const base = slugify(rawName);
+  const typeSuffix = `-${accountType}`;
+  const candidates = [base, `${base}${typeSuffix}`];
+  for (let i = 2; i <= 99; i++) {
+    candidates.push(`${base}${typeSuffix}-${i}`);
+  }
+  for (const candidate of candidates) {
+    const [existing] = await db.select({ id: unifiedProfiles.id }).from(unifiedProfiles).where(eq34(unifiedProfiles.slug, candidate)).limit(1);
+    if (!existing) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+function deriveStatus(approvalStatus, verificationStatus, isActive) {
+  if (!isActive) return "SUSPENDED";
+  if (approvalStatus === "approved") return "PUBLISHED";
+  if (approvalStatus === "pending" || verificationStatus === "pending")
+    return "PENDING";
+  return "DRAFT";
+}
+async function syncBusinesses() {
+  let synced = 0;
+  let skipped = 0;
+  const errors = [];
+  const allBusinesses = await db.select().from(businesses);
+  for (const biz of allBusinesses) {
+    try {
+      const [existing] = await db.select({ id: unifiedProfiles.id }).from(unifiedProfiles).where(eq34(unifiedProfiles.legacyBusinessId, biz.id)).limit(1);
+      if (existing) {
+        skipped++;
+        continue;
+      }
+      const slug = await generateUniqueSlug(biz.name, "business");
+      const status = deriveStatus(
+        biz.approvalStatus,
+        biz.verificationStatus,
+        biz.isActive
+      );
+      await db.insert(unifiedProfiles).values({
+        accountType: "business",
+        ownerId: biz.ownerId ?? void 0,
+        name: biz.name,
+        slug,
+        category: void 0,
+        // resolved via join — stored in metadata for now
+        description: biz.description ?? void 0,
+        email: biz.email ?? void 0,
+        phone: biz.phone ?? void 0,
+        website: biz.website ?? void 0,
+        socialLinks: biz.socialLinks ?? {},
+        latitude: biz.latitude ?? void 0,
+        longitude: biz.longitude ?? void 0,
+        address: biz.address ?? void 0,
+        cityId: biz.cityId ?? void 0,
+        regionId: biz.regionId ?? void 0,
+        countryId: biz.countryId ?? void 0,
+        countryCode: biz.countryCode ?? void 0,
+        cityName: biz.cityName ?? void 0,
+        isVerified: biz.isVerified ?? false,
+        verificationStatus: biz.verificationStatus ?? "pending",
+        verifiedAt: biz.verifiedAt ?? void 0,
+        status,
+        logoUrl: biz.logoUrl ?? void 0,
+        rating: biz.rating ?? void 0,
+        reviewCount: biz.reviewsCount ?? 0,
+        metadata: {
+          businessType: biz.businessType,
+          tier: biz.tier,
+          tags: biz.tags,
+          attributes: biz.attributes,
+          approvalNotes: biz.approvalNotes
+        },
+        legacyBusinessId: biz.id,
+        createdAt: biz.createdAt ?? /* @__PURE__ */ new Date()
+      });
+      synced++;
+    } catch (err) {
+      errors.push(`Business #${biz.id} (${biz.name}): ${String(err)}`);
+    }
+  }
+  return { synced, skipped, errors };
+}
+async function syncArtists() {
+  let synced = 0;
+  let skipped = 0;
+  const errors = [];
+  try {
+    const { rows } = await pool.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'artist_profiles' LIMIT 1`
+    );
+    if (rows.length === 0) return { synced: 0, skipped: 0, errors: [] };
+    const { rows: artists2 } = await pool.query(`SELECT * FROM artist_profiles`);
+    for (const artist of artists2) {
+      try {
+        const [existing] = await db.select({ id: unifiedProfiles.id }).from(unifiedProfiles).where(eq34(unifiedProfiles.legacyArtistProfileId, artist.id)).limit(1);
+        if (existing) {
+          skipped++;
+          continue;
+        }
+        const name = artist.display_name || artist.stage_name || artist.name || `Artist #${artist.id}`;
+        const slug = await generateUniqueSlug(name, "artisan");
+        await db.insert(unifiedProfiles).values({
+          accountType: "artisan",
+          ownerId: artist.user_id ?? void 0,
+          name,
+          slug,
+          description: artist.bio ?? void 0,
+          email: artist.email ?? void 0,
+          website: artist.website_url ?? void 0,
+          countryCode: artist.country_code ?? void 0,
+          isVerified: artist.is_verified ?? false,
+          verificationStatus: artist.is_verified ? "approved" : "pending",
+          status: artist.is_verified ? "PUBLISHED" : "DRAFT",
+          logoUrl: artist.avatar_url ?? void 0,
+          profileImageUrl: artist.avatar_url ?? void 0,
+          coverImageUrl: artist.cover_image_url ?? void 0,
+          metadata: {
+            genre: artist.genre,
+            stageName: artist.stage_name,
+            accountType: artist.account_type
+          },
+          legacyArtistProfileId: artist.id
+        });
+        synced++;
+      } catch (err) {
+        errors.push(`Artist #${artist.id}: ${String(err)}`);
+      }
+    }
+  } catch (err) {
+    errors.push(`Artist sync failed: ${String(err)}`);
+  }
+  return { synced, skipped, errors };
+}
+async function syncLegacyProfiles() {
+  const [bizResult, artistResult] = await Promise.all([
+    syncBusinesses(),
+    syncArtists()
+  ]);
+  return {
+    businessesSynced: bizResult.synced,
+    artistsSynced: artistResult.synced,
+    skipped: bizResult.skipped + artistResult.skipped,
+    errors: [...bizResult.errors, ...artistResult.errors]
+  };
+}
+
+// server/routes/profiles.ts
+var router70 = Router70();
+var VALID_ACTIONS = ["approve", "reject", "suspend", "restore"];
+var TRANSITIONS = {
+  DRAFT: {
+    approve: "DRAFT",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "DRAFT"
+  },
+  PENDING: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PENDING"
+  },
+  PUBLISHED: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PUBLISHED"
+  },
+  SUSPENDED: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PUBLISHED"
+  }
+};
+var EDITABLE_PROFILE_FIELDS = [
+  "name",
+  "displayName",
+  "category",
+  "description",
+  "bio",
+  "email",
+  "phone",
+  "website",
+  "address",
+  "cityName",
+  "countryCode",
+  "profileImageUrl",
+  "coverImageUrl",
+  "socialLinks",
+  "metadata"
+];
+function ownerId(req) {
+  return Number(req.user?.userId);
+}
+function pickEditableFields(body) {
+  return Object.fromEntries(
+    EDITABLE_PROFILE_FIELDS.filter((field) => body[field] !== void 0).map(
+      (field) => [field, body[field]]
+    )
+  );
+}
+function profilePayload(body) {
+  const fields = pickEditableFields(body);
+  if (fields.metadata !== void 0 && typeof fields.metadata !== "object") {
+    delete fields.metadata;
+  }
+  return fields;
+}
+function requireAdmin(req, res) {
+  const user = req.user;
+  if (!user || !["admin", "superadmin", "superuser"].includes(user.role)) {
+    res.status(403).json({ error: "Admin access required" });
+    return false;
+  }
+  return true;
+}
+router70.get("/api/my/profiles", requireAuth(), async (req, res) => {
+  try {
+    const profiles = await getPartnerProfiles(ownerId(req));
+    res.json({ success: true, data: profiles });
+  } catch (err) {
+    console.error("[my/profiles]", err);
+    res.status(500).json({ error: "Failed to fetch your profiles" });
+  }
+});
+router70.post("/api/my/profiles", requireAuth(), async (req, res) => {
+  const payload = profilePayload(req.body);
+  const name = String(payload.name || payload.displayName || "").trim();
+  if (!name) {
+    return res.status(400).json({ error: "Profile name is required" });
+  }
+  try {
+    const profile = await db.insert(unifiedProfiles).values({
+      ...payload,
+      name,
+      ownerId: ownerId(req),
+      accountType: "artisan",
+      slug: await generateUniqueSlug(name, "artisan"),
+      status: "DRAFT",
+      verificationStatus: "pending",
+      isVerified: false,
+      metadata: payload.metadata || {}
+    }).returning();
+    res.status(201).json({ success: true, data: profile[0] });
+  } catch (err) {
+    console.error("[my/profiles:create]", err);
+    res.status(500).json({ error: "Failed to create artisan profile" });
+  }
+});
+router70.put("/api/my/profiles/:id", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  if (!Number.isInteger(profileId)) {
+    return res.status(400).json({ error: "Invalid profile id" });
+  }
+  const payload = profilePayload(req.body);
+  if (payload.name !== void 0 && !String(payload.name).trim()) {
+    return res.status(400).json({ error: "Profile name cannot be empty" });
+  }
+  try {
+    const [profile] = await db.update(unifiedProfiles).set({ ...payload, updatedAt: /* @__PURE__ */ new Date() }).where(
+      and22(
+        eq35(unifiedProfiles.id, profileId),
+        eq35(unifiedProfiles.ownerId, ownerId(req)),
+        eq35(unifiedProfiles.accountType, "artisan")
+      )
+    ).returning();
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[my/profiles:update]", err);
+    res.status(500).json({ error: "Failed to update artisan profile" });
+  }
+});
+router70.post("/api/my/profiles/:id/submit", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  try {
+    const [profile] = await db.update(unifiedProfiles).set({
+      status: "PENDING",
+      verificationStatus: "pending",
+      isVerified: false,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(
+      and22(
+        eq35(unifiedProfiles.id, profileId),
+        eq35(unifiedProfiles.ownerId, ownerId(req)),
+        eq35(unifiedProfiles.accountType, "artisan"),
+        eq35(unifiedProfiles.status, "DRAFT")
+      )
+    ).returning();
+    if (!profile) {
+      return res.status(409).json({
+        error: "Only a draft artisan profile can be submitted"
+      });
+    }
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[my/profiles:submit]", err);
+    res.status(500).json({ error: "Failed to submit artisan profile" });
+  }
+});
+router70.delete("/api/my/profiles/:id", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  try {
+    const [profile] = await db.update(unifiedProfiles).set({ status: "DRAFT", updatedAt: /* @__PURE__ */ new Date() }).where(
+      and22(
+        eq35(unifiedProfiles.id, profileId),
+        eq35(unifiedProfiles.ownerId, ownerId(req)),
+        eq35(unifiedProfiles.accountType, "artisan"),
+        eq35(unifiedProfiles.status, "DRAFT")
+      )
+    ).returning({ id: unifiedProfiles.id });
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, id: profile.id });
+  } catch (err) {
+    console.error("[my/profiles:archive]", err);
+    res.status(500).json({ error: "Failed to archive artisan profile" });
+  }
+});
+router70.get("/api/profiles/search", async (req, res) => {
+  try {
+    const {
+      q,
+      category,
+      accountType,
+      countryCode,
+      limit = "20",
+      offset = "0"
+    } = req.query;
+    const profiles = await getPublicProfiles({
+      query: q,
+      category,
+      accountType,
+      countryCode,
+      limit: Math.min(Number(limit) || 20, 100),
+      offset: Number(offset) || 0
+    });
+    res.json({ success: true, data: profiles, count: profiles.length });
+  } catch (err) {
+    console.error("[profiles/search]", err);
+    res.status(500).json({ error: "Search failed" });
+  }
+});
+router70.get("/api/profiles/:slug", async (req, res) => {
+  try {
+    const profile = await getPublicProfileBySlug(req.params.slug);
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    db.update(unifiedProfiles).set({ viewCount: (profile.viewCount ?? 0) + 1 }).where(eq35(unifiedProfiles.id, profile.id)).catch(() => {
+    });
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[profiles/:slug]", err);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+router70.get("/api/admin/profiles", async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const { status, verificationStatus, accountType } = req.query;
+    const profiles = await getAdminProfiles({
+      status,
+      verificationStatus,
+      accountType
+    });
+    res.json({ success: true, data: profiles, count: profiles.length });
+  } catch (err) {
+    console.error("[admin/profiles]", err);
+    res.status(500).json({ error: "Failed to fetch profiles" });
+  }
+});
+router70.get(
+  "/api/admin/profiles/pending",
+  async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      const profiles = await getAdminProfiles({ status: "PENDING" });
+      res.json({ success: true, data: profiles, count: profiles.length });
+    } catch (err) {
+      console.error("[admin/profiles/pending]", err);
+      res.status(500).json({ error: "Failed to fetch pending profiles" });
     }
   }
 );
-router66.delete(
-  "/categories/:id",
-  requireAuth(["admin"]),
+router70.post(
+  "/api/admin/profiles/:id/action",
   async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const profileId = Number(req.params.id);
+    const { action, notes } = req.body;
+    const adminUser = req.user;
+    if (adminUser.role === "moderator" && action === "suspend") {
+      return res.status(403).json({
+        error: "Moderators may recommend suspension, but only Admin or Superuser can execute it"
+      });
+    }
+    if (!VALID_ACTIONS.includes(action)) {
+      return res.status(400).json({
+        error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}`
+      });
+    }
     try {
-      const { id: idStr } = req.params;
-      const { force } = req.query;
-      const id = parseInt(idStr, 10);
-      const countResult = await db.execute(
-        sql21`SELECT COUNT(*) AS cnt FROM businesses WHERE category_id = ${id}`
-      );
-      const cnt = parseInt(
-        String(countResult.rows[0]?.cnt ?? "0"),
-        10
-      );
-      if (cnt > 0 && String(force) !== "true") {
+      const [profile] = await db.select().from(unifiedProfiles).where(eq35(unifiedProfiles.id, profileId)).limit(1);
+      if (!profile) return res.status(404).json({ error: "Profile not found" });
+      const currentStatus = profile.status ?? "DRAFT";
+      const nextStatus = TRANSITIONS[currentStatus]?.[action];
+      if (!nextStatus) {
         return res.status(400).json({
-          success: false,
-          error: "Category in use; pass ?force=true to unset references and delete."
+          error: `Transition '${action}' is not valid from status '${currentStatus}'`
         });
       }
-      if (cnt > 0 && String(force) === "true") {
-        await db.execute(
-          sql21`UPDATE businesses SET category_id = NULL WHERE category_id = ${id}`
-        );
-      }
-      await db.execute(sql21`DELETE FROM business_categories WHERE id = ${id}`);
-      res.json({ success: true, deleted: true, unmapped: cnt });
-    } catch (error) {
-      console.error("\u274C Delete category failed:", error);
-      res.status(500).json({ success: false, error: error.message });
+      const isVerified = nextStatus === "PUBLISHED";
+      const verificationStatus = action === "approve" ? "approved" : action === "reject" ? "rejected" : profile.verificationStatus;
+      await db.update(unifiedProfiles).set({
+        status: nextStatus,
+        isVerified,
+        verificationStatus,
+        approvedBy: action === "approve" ? adminUser.id : profile.approvedBy,
+        approvalNotes: notes ?? profile.approvalNotes,
+        verifiedAt: action === "approve" ? /* @__PURE__ */ new Date() : profile.verifiedAt,
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq35(unifiedProfiles.id, profileId));
+      await db.insert(profileApprovalActions).values({
+        profileId,
+        action,
+        performedBy: adminUser.id,
+        notes: notes ?? null
+      });
+      res.json({
+        success: true,
+        profileId,
+        previousStatus: currentStatus,
+        newStatus: nextStatus,
+        action
+      });
+    } catch (err) {
+      console.error("[admin/profiles/:id/action]", err);
+      res.status(500).json({ error: "Action failed" });
     }
   }
 );
-var admin_default2 = router66;
+router70.get(
+  "/api/admin/profiles/:id/history",
+  async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const profileId = Number(req.params.id);
+    if (!Number.isInteger(profileId)) {
+      return res.status(400).json({ error: "Invalid profile id" });
+    }
+    try {
+      const history = await db.select().from(profileApprovalActions).where(eq35(profileApprovalActions.profileId, profileId));
+      res.json({ success: true, data: history });
+    } catch (err) {
+      console.error("[admin/profiles/:id/history]", err);
+      res.status(500).json({ error: "Failed to fetch profile history" });
+    }
+  }
+);
+router70.post("/api/admin/profiles/sync", async (req, res) => {
+  const user = req.user;
+  if (!user || !["superadmin", "superuser"].includes(user.role)) {
+    return res.status(403).json({ error: "Superadmin access required" });
+  }
+  try {
+    const result = await syncLegacyProfiles();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error("[admin/profiles/sync]", err);
+    res.status(500).json({ error: "Sync failed" });
+  }
+});
+var profiles_default = router70;
+
+// server/routes/artisan-communities.ts
+init_db();
+import { Router as Router71 } from "express";
+var router71 = Router71();
+function isAdmin(req) {
+  return ["admin", "superuser", "moderator"].includes(req.user?.role || "");
+}
+router71.get("/", async (req, res) => {
+  try {
+    const search = String(req.query.q || "").trim();
+    const category = String(req.query.category || "").trim();
+    const values = [];
+    const filters = ["status = 'PUBLISHED'"];
+    if (search) {
+      values.push(`%${search}%`);
+      filters.push(
+        `(name ILIKE $${values.length} OR region ILIKE $${values.length} OR focus ILIKE $${values.length})`
+      );
+    }
+    if (category && category !== "all") {
+      values.push(category);
+      filters.push(`category = $${values.length}`);
+    }
+    const result = await pool.query(
+      `SELECT id, name, slug, region, category, focus, description, activities,
+              image_url, member_count, created_at
+       FROM artisan_communities
+       WHERE ${filters.join(" AND ")}
+       ORDER BY created_at DESC`,
+      values
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[artisan-communities:list]", error);
+    res.status(500).json({ error: "Failed to load communities" });
+  }
+});
+router71.get("/me", requireAuth(), async (req, res) => {
+  const userId = Number(req.user?.userId);
+  try {
+    const [memberships, requests] = await Promise.all([
+      pool.query(
+        `SELECT m.id, m.community_id, m.status, m.joined_at,
+                ac.name, ac.slug, ac.region, ac.category, ac.focus,
+                ac.description, ac.activities, ac.image_url, ac.member_count
+         FROM artisan_community_memberships m
+         JOIN artisan_communities ac ON ac.id = m.community_id
+         WHERE m.user_id = $1 AND m.status = 'ACTIVE'
+         ORDER BY m.joined_at DESC NULLS LAST, ac.name ASC`,
+        [userId]
+      ),
+      pool.query(
+        `SELECT jr.id, jr.community_id, jr.status, jr.message, jr.created_at,
+                ac.name, ac.slug, ac.region, ac.category, ac.focus
+         FROM artisan_community_join_requests jr
+         JOIN artisan_communities ac ON ac.id = jr.community_id
+         WHERE jr.user_id = $1 AND jr.status = 'PENDING'
+         ORDER BY jr.created_at DESC`,
+        [userId]
+      )
+    ]);
+    res.json({
+      success: true,
+      data: {
+        memberships: memberships.rows,
+        pendingRequests: requests.rows,
+        counts: {
+          joined: memberships.rowCount || 0,
+          pending: requests.rowCount || 0,
+          activities: memberships.rows.reduce(
+            (total, community) => total + (Array.isArray(community.activities) ? community.activities.length : 0),
+            0
+          )
+        }
+      }
+    });
+  } catch (error) {
+    console.error("[artisan-communities:me]", error);
+    res.status(500).json({ error: "Failed to load your community activity" });
+  }
+});
+router71.post("/:id/join", requireAuth(), async (req, res) => {
+  const communityId = Number(req.params.id);
+  const message = String(req.body?.message || "").trim().slice(0, 1e3);
+  if (!Number.isInteger(communityId)) {
+    return res.status(400).json({ error: "Invalid community id" });
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO artisan_community_join_requests (community_id, user_id, message)
+       SELECT $1, $2, $3
+       WHERE EXISTS (
+         SELECT 1 FROM artisan_communities
+         WHERE id = $1 AND status = 'PUBLISHED'
+       )
+       ON CONFLICT (community_id, user_id)
+       DO UPDATE SET message = EXCLUDED.message, status = 'PENDING', updated_at = NOW()
+       RETURNING id, community_id, status, created_at`,
+      [communityId, Number(req.user?.userId), message || null]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Community not found" });
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[artisan-communities:join]", error);
+    res.status(500).json({ error: "Failed to request membership" });
+  }
+});
+router71.post("/", requireAuth(), async (req, res) => {
+  if (!isAdmin(req))
+    return res.status(403).json({ error: "Admin access required" });
+  const {
+    name,
+    region,
+    category,
+    focus,
+    description,
+    activities = [],
+    imageUrl
+  } = req.body || {};
+  if (!name || !region || !category || !focus || !description) {
+    return res.status(400).json({
+      error: "Name, region, category, focus, and description are required"
+    });
+  }
+  try {
+    const slug = await generateUniqueSlug(String(name), "community");
+    const result = await pool.query(
+      `INSERT INTO artisan_communities
+         (owner_id, name, slug, region, category, focus, description, activities, image_url, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, 'DRAFT')
+       RETURNING *`,
+      [
+        Number(req.user?.userId),
+        String(name).trim(),
+        slug,
+        String(region).trim(),
+        String(category).trim(),
+        String(focus).trim(),
+        String(description).trim(),
+        JSON.stringify(Array.isArray(activities) ? activities : []),
+        imageUrl || null
+      ]
+    );
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[artisan-communities:create]", error);
+    res.status(500).json({ error: "Failed to create community" });
+  }
+});
+var artisan_communities_default = router71;
+
+// server/routes/events.ts
+init_db();
+import { Router as Router72 } from "express";
+var router72 = Router72();
+var reviewRoles2 = ["admin", "moderator", "superuser"];
+var organizerRoles = [
+  "admin",
+  "moderator",
+  "superuser",
+  "artist",
+  "user",
+  "listener"
+];
+function eventPayload(body) {
+  const title = String(body.title || "").trim();
+  const description = String(body.description || "").trim();
+  const startsAt = String(body.startsAt || "").trim();
+  const endsAt = body.endsAt ? String(body.endsAt).trim() : null;
+  const eventType = String(body.eventType || "COMMUNITY").trim().toUpperCase();
+  const venue = body.venue ? String(body.venue).trim() : null;
+  const city = body.city ? String(body.city).trim() : null;
+  const communityId = body.communityId ? Number(body.communityId) : null;
+  if (!title || !description || !startsAt || !Number.isFinite(Date.parse(startsAt))) {
+    return { error: "Title, description, and a valid start date are required" };
+  }
+  if (endsAt && !Number.isFinite(Date.parse(endsAt))) {
+    return { error: "End date must be valid" };
+  }
+  if (endsAt && Date.parse(endsAt) < Date.parse(startsAt)) {
+    return { error: "End date cannot be before start date" };
+  }
+  return {
+    value: {
+      title,
+      description,
+      startsAt: new Date(startsAt),
+      endsAt: endsAt ? new Date(endsAt) : null,
+      eventType,
+      venue,
+      city,
+      communityId: Number.isInteger(communityId) ? communityId : null
+    }
+  };
+}
+router72.get("/", async (req, res) => {
+  try {
+    const type = String(req.query.type || "").trim().toUpperCase();
+    const values = [];
+    const filters = ["e.status = 'PUBLISHED'", "e.starts_at >= NOW()"];
+    if (type) {
+      values.push(type);
+      filters.push(`e.event_type = $${values.length}`);
+    }
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.slug, e.description, e.event_type,
+              e.starts_at, e.ends_at, e.venue, e.city, e.image_url,
+              e.community_id, ac.name AS community_name,
+              (SELECT COUNT(*)::int FROM event_attendees ea
+               WHERE ea.event_id = e.id AND ea.status = 'GOING') AS attendee_count
+       FROM events e
+       LEFT JOIN artisan_communities ac ON ac.id = e.community_id
+       WHERE ${filters.join(" AND ")}
+       ORDER BY e.starts_at ASC
+       LIMIT 100`,
+      values
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[events:list]", error);
+    res.status(500).json({ error: "Failed to load events" });
+  }
+});
+router72.get("/me", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, slug, description, event_type, starts_at, ends_at,
+              venue, city, image_url, community_id, status, created_at, updated_at
+       FROM events WHERE organizer_id = $1 ORDER BY created_at DESC`,
+      [Number(req.user?.userId)]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[events:mine]", error);
+    res.status(500).json({ error: "Failed to load your events" });
+  }
+});
+router72.get("/admin", requireAuth(reviewRoles2), async (req, res) => {
+  try {
+    const status = String(req.query.status || "PENDING").trim().toUpperCase();
+    const allowedStatuses = [
+      "DRAFT",
+      "PENDING",
+      "PUBLISHED",
+      "REJECTED",
+      "SUSPENDED",
+      "ARCHIVED"
+    ];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid event status" });
+    }
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.slug, e.description, e.event_type,
+              e.starts_at, e.ends_at, e.venue, e.city, e.status,
+              e.created_at, e.updated_at,
+              COALESCE(u.display_name, u.username, u.email) AS organizer_name,
+              u.email AS organizer_email
+       FROM events e
+       LEFT JOIN users u ON u.id = e.organizer_id
+       WHERE e.status = $1
+       ORDER BY e.updated_at DESC NULLS LAST, e.created_at DESC`,
+      [status]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[events:admin]", error);
+    res.status(500).json({ error: "Failed to load event review queue" });
+  }
+});
+router72.get("/:slug", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.slug, e.description, e.event_type,
+              e.starts_at, e.ends_at, e.venue, e.city, e.image_url,
+              e.community_id, ac.name AS community_name,
+              (SELECT COUNT(*)::int FROM event_attendees ea
+               WHERE ea.event_id = e.id AND ea.status = 'GOING') AS attendee_count
+       FROM events e
+       LEFT JOIN artisan_communities ac ON ac.id = e.community_id
+       WHERE e.slug = $1 AND e.status = 'PUBLISHED'`,
+      [req.params.slug]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Event not found" });
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:detail]", error);
+    res.status(500).json({ error: "Failed to load event" });
+  }
+});
+router72.post("/", requireAuth(organizerRoles), async (req, res) => {
+  const parsed = eventPayload(req.body || {});
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  try {
+    const value = parsed.value;
+    const slug = await generateUniqueSlug(value.title, "event");
+    const result = await pool.query(
+      `INSERT INTO events
+         (organizer_id, community_id, title, slug, description, event_type,
+          starts_at, ends_at, venue, city, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'DRAFT')
+       RETURNING *`,
+      [
+        Number(req.user?.userId),
+        value.communityId,
+        value.title,
+        slug,
+        value.description,
+        value.eventType,
+        value.startsAt,
+        value.endsAt,
+        value.venue,
+        value.city
+      ]
+    );
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by)
+       VALUES ($1, 'created', $2)`,
+      [result.rows[0].id, Number(req.user?.userId)]
+    );
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:create]", error);
+    res.status(500).json({ error: "Failed to create event" });
+  }
+});
+router72.post("/:id/submit", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE events SET status = 'PENDING', updated_at = NOW()
+       WHERE id = $1 AND organizer_id = $2 AND status = 'DRAFT'
+       RETURNING id, status`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Draft event not found" });
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by)
+       VALUES ($1, 'submitted', $2)`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:submit]", error);
+    res.status(500).json({ error: "Failed to submit event" });
+  }
+});
+router72.get("/:id/rsvp/status", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT EXISTS(
+         SELECT 1 FROM event_attendees
+         WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'
+       ) AS attending,
+       (SELECT COUNT(*)::int FROM event_attendees
+        WHERE event_id = $1 AND status = 'GOING') AS attendee_count`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:rsvp-status]", error);
+    res.status(500).json({ error: "Failed to load RSVP status" });
+  }
+});
+router72.post("/:id/rsvp", requireAuth(), async (req, res) => {
+  const eventId = Number(req.params.id);
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ error: "Invalid event id" });
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO event_attendees (event_id, user_id, status, updated_at)
+       SELECT id, $2, 'GOING', NOW() FROM events
+       WHERE id = $1 AND status = 'PUBLISHED'
+       ON CONFLICT (event_id, user_id)
+       DO UPDATE SET status = 'GOING', updated_at = NOW()
+       RETURNING event_id, status`,
+      [eventId, userId]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Published event not found" });
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:rsvp]", error);
+    res.status(500).json({ error: "Failed to RSVP to event" });
+  }
+});
+router72.delete("/:id/rsvp", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE event_attendees SET status = 'CANCELLED', updated_at = NOW()
+       WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'
+       RETURNING event_id`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "RSVP not found" });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[events:rsvp-cancel]", error);
+    res.status(500).json({ error: "Failed to cancel RSVP" });
+  }
+});
+router72.post("/:id/status", requireAuth(reviewRoles2), async (req, res) => {
+  const status = String(req.body?.status || "").toUpperCase();
+  if (!["PUBLISHED", "REJECTED", "SUSPENDED", "ARCHIVED"].includes(status)) {
+    return res.status(400).json({ error: "Invalid event status" });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE events SET status = $1, published_at = CASE WHEN $1 = 'PUBLISHED' THEN NOW() ELSE published_at END, updated_at = NOW()
+       WHERE id = $2 RETURNING id, status`,
+      [status, Number(req.params.id)]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Event not found" });
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by, reason)
+       VALUES ($1, $2, $3, $4)`,
+      [
+        Number(req.params.id),
+        `status_${status.toLowerCase()}`,
+        Number(req.user?.userId),
+        req.body?.reason || null
+      ]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:status]", error);
+    res.status(500).json({ error: "Failed to update event" });
+  }
+});
+var events_default = router72;
 
 // server/routes/astrology.ts
-import { Router as Router67 } from "express";
-var router67 = Router67();
+import { Router as Router73 } from "express";
+var router73 = Router73();
 var astroCache = /* @__PURE__ */ new Map();
 var ASTRO_TTL = 10 * 60 * 1e3;
 var ASTRO_FETCH_TIMEOUT = 5e3;
@@ -35470,7 +39218,7 @@ async function fetchAstroWithRetries(sign) {
   }
   throw lastErr || new Error("Unknown upstream error");
 }
-router67.post(
+router73.get(
   "/astrology",
   asyncHandler(async (req, res) => {
     const sign = (req.query.sign || req.body.sign || "").toString().trim().toLowerCase();
@@ -35537,35 +39285,35 @@ router67.post(
     }
   })
 );
-var astrology_default = router67;
+var astrology_default = router73;
 
 // server/routes/business-search.ts
 init_schema();
 init_db();
-import { Router as Router68 } from "express";
-import { and as and22, eq as eq34, ilike as ilike10, or as or7, sql as sql22 } from "drizzle-orm";
-var router68 = Router68();
-router68.get(
+import { Router as Router74 } from "express";
+import { and as and23, eq as eq36, ilike as ilike10, or as or8, sql as sql23 } from "drizzle-orm";
+var router74 = Router74();
+router74.get(
   "/business/search",
   asyncHandler(async (req, res) => {
     const { query, category, location, page = "1", limit = "10" } = req.query;
     console.log("\u{1F50D} [BUSINESS] Search:", { query, category, location });
     const conditions = [];
     if (query && typeof query === "string") {
-      const searchCondition = or7(
+      const searchCondition = or8(
         ilike10(businesses.name, `${query}%`),
         ilike10(businesses.description, `${query}%`)
       );
       if (searchCondition) conditions.push(searchCondition);
     }
     if (category && typeof category === "string") {
-      const categoryRecord = await db.select().from(businessCategories).where(eq34(businessCategories.slug, category)).limit(1);
+      const categoryRecord = await db.select().from(businessCategories).where(eq36(businessCategories.slug, category)).limit(1);
       if (categoryRecord.length > 0) {
-        conditions.push(eq34(businesses.categoryId, categoryRecord[0].id));
+        conditions.push(eq36(businesses.categoryId, categoryRecord[0].id));
       }
     }
-    const whereCondition = conditions.length > 0 ? and22(...conditions) : void 0;
-    const countResult = await db.select({ count: sql22`count(*)` }).from(businesses).where(whereCondition);
+    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
+    const countResult = await db.select({ count: sql23`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -35584,7 +39332,7 @@ router68.get(
       website: businesses.website
     }).from(businesses).leftJoin(
       businessCategories,
-      eq34(businesses.categoryId, businessCategories.id)
+      eq36(businesses.categoryId, businessCategories.id)
     ).where(whereCondition).orderBy(businesses.name).limit(limitNum).offset(offset);
     const formattedResults = businessResults.map((business) => ({
       id: business.id.toString(),
@@ -35618,7 +39366,7 @@ router68.get(
     });
   })
 );
-router68.get(
+router74.get(
   "/category/:slug/search",
   asyncHandler(async (req, res) => {
     const { slug } = req.params;
@@ -35702,7 +39450,7 @@ router68.get(
     });
   })
 );
-router68.get(
+router74.get(
   "/business/categories",
   asyncHandler(async (_req, res) => {
     try {
@@ -35727,7 +39475,7 @@ router68.get(
     }
   })
 );
-router68.get(
+router74.get(
   "/businesses/pool/:categoryName",
   asyncHandler(async (req, res) => {
     const { categoryName } = req.params;
@@ -35794,20 +39542,20 @@ router68.get(
       });
     }
     const result = await db.execute(
-      sql22`
+      sql23`
         SELECT
           id,
           business_name,
           created_at,
           is_active
-        FROM ${sql22.identifier(selectedPool.tableName)}
+        FROM ${sql23.identifier(selectedPool.tableName)}
         WHERE is_active = true
         ORDER BY created_at DESC
         LIMIT ${limitNum} OFFSET ${offset}
       `
     );
     const countResult = await db.execute(
-      sql22`SELECT COUNT(*) as count FROM ${sql22.identifier(selectedPool.tableName)} WHERE is_active = true`
+      sql23`SELECT COUNT(*) as count FROM ${sql23.identifier(selectedPool.tableName)} WHERE is_active = true`
     );
     const businesses2 = result.rows.map((row) => ({
       id: row.id,
@@ -35827,19 +39575,19 @@ router68.get(
     });
   })
 );
-router68.get(
+router74.get(
   "/business/locations",
   asyncHandler(async (_req, res) => {
     try {
       const locResult = await db.execute(
-        sql22`SELECT DISTINCT location FROM businesses
+        sql23`SELECT DISTINCT location FROM businesses
             WHERE location IS NOT NULL AND TRIM(location) != ''
             ORDER BY location LIMIT 100`
       );
       let locations = locResult.rows.map((r) => r.location).filter(Boolean);
       if (locations.length === 0) {
         const cityResult = await db.execute(
-          sql22`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`
+          sql23`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`
         );
         locations = cityResult.rows.map((r) => r.name).filter(Boolean);
       }
@@ -35857,11 +39605,11 @@ router68.get(
     }
   })
 );
-router68.get(
+router74.get(
   "/business/test-connection",
   asyncHandler(async (_req, res) => {
     try {
-      const testResult = await db.execute(sql22`
+      const testResult = await db.execute(sql23`
         SELECT
           NOW() as time,
           current_database() as database,
@@ -35901,20 +39649,20 @@ router68.get(
     }
   })
 );
-var business_search_default = router68;
+var business_search_default = router74;
 
 // server/routes/categories.ts
 init_schema();
 init_db();
-import { Router as Router69 } from "express";
-import { sql as sql23 } from "drizzle-orm";
-var router69 = Router69();
-router69.get(
+import { Router as Router75 } from "express";
+import { sql as sql24 } from "drizzle-orm";
+var router75 = Router75();
+router75.get(
   "/business-categories",
   asyncHandler(async (req, res) => {
     const { countryCode } = req.query;
     const result = countryCode && String(countryCode) !== "all" ? await db.execute(
-      sql23`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+      sql24`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
                 COUNT(b.id)::int AS business_count
               FROM business_categories bc
               LEFT JOIN businesses b ON b.category_id = bc.id
@@ -35922,7 +39670,7 @@ router69.get(
               GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
               ORDER BY bc.name`
     ) : await db.execute(
-      sql23`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
+      sql24`SELECT bc.id, bc.name, bc.slug, bc.description, bc.parent_id,
                 COUNT(b.id)::int AS business_count
               FROM business_categories bc
               LEFT JOIN businesses b ON b.category_id = bc.id
@@ -35932,7 +39680,7 @@ router69.get(
     res.json(result.rows);
   })
 );
-router69.get(
+router75.get(
   "/categories",
   asyncHandler(async (_req, res) => {
     const result = await db.select({
@@ -35946,15 +39694,15 @@ router69.get(
     res.json(result);
   })
 );
-var categories_default2 = router69;
+var categories_default2 = router75;
 
 // server/routes/commerce-ads.ts
 init_schema();
 init_db();
-import { Router as Router70 } from "express";
-import { and as and23, eq as eq35, ilike as ilike11, or as or8, sql as sql24 } from "drizzle-orm";
-var router70 = Router70();
-router70.get(
+import { Router as Router76 } from "express";
+import { and as and24, asc as asc3, desc as desc20, eq as eq37, ilike as ilike11, or as or9, sql as sql25 } from "drizzle-orm";
+var router76 = Router76();
+router76.get(
   "/ads/search",
   asyncHandler(async (req, res) => {
     const {
@@ -35971,21 +39719,21 @@ router70.get(
       limit,
       sort_by
     });
-    const conditions = [];
+    const conditions = [eq37(businesses.isActive, true)];
     if (query && typeof query === "string") {
-      const searchCondition = or8(
+      const searchCondition = or9(
         ilike11(businesses.name, `${query}%`),
         ilike11(businesses.description, `${query}%`)
       );
       if (searchCondition) conditions.push(searchCondition);
     }
     if (category && typeof category === "string") {
-      const categoryRecord = await db.select().from(businessCategories).where(eq35(businessCategories.slug, category)).limit(1);
+      const categoryRecord = await db.select().from(businessCategories).where(eq37(businessCategories.slug, category)).limit(1);
       if (categoryRecord.length > 0) {
-        conditions.push(eq35(businesses.categoryId, categoryRecord[0].id));
+        conditions.push(eq37(businesses.categoryId, categoryRecord[0].id));
       }
     }
-    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
+    const whereCondition = conditions.length > 0 ? and24(...conditions) : void 0;
     let baseQuery = db.select({
       id: businesses.id,
       name: businesses.name,
@@ -36004,21 +39752,23 @@ router70.get(
       website: businesses.website
     }).from(businesses).leftJoin(
       businessCategories,
-      eq35(businesses.categoryId, businessCategories.id)
+      eq37(businesses.categoryId, businessCategories.id)
     ).where(whereCondition);
-    const countResult = await db.select({ count: sql24`count(*)` }).from(businesses).where(whereCondition);
+    const countResult = await db.select({ count: sql25`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
     const sortMap = {
-      rating_desc: businesses.createdAt,
-      newest: businesses.createdAt,
-      oldest: businesses.createdAt,
-      name_asc: businesses.name,
-      name_desc: businesses.name
+      rating_desc: desc20(businesses.rating),
+      newest: desc20(businesses.createdAt),
+      oldest: asc3(businesses.createdAt),
+      name_asc: asc3(businesses.name),
+      name_desc: desc20(businesses.name)
     };
-    const orderBy = sortMap[sort_by] || businesses.createdAt;
+    const orderBy = sortMap[sort_by] || desc20(businesses.createdAt);
     baseQuery = baseQuery.orderBy(orderBy);
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
+    const parsedPage = Number.parseInt(page, 10);
+    const parsedLimit = Number.parseInt(limit, 10);
+    const pageNum = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const limitNum = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 50) : 9;
     const offset = (pageNum - 1) * limitNum;
     baseQuery = baseQuery.limit(limitNum).offset(offset);
     const businessResults = await baseQuery;
@@ -36111,11 +39861,11 @@ router70.get(
     });
   })
 );
-router70.get(
+router76.get(
   "/analytics",
   asyncHandler(async (_req, res) => {
     console.log("\u{1F4CA} [COMMERCE] Fetching analytics from database...");
-    const totalAdsResult = await db.select({ count: sql24`count(*)` }).from(businesses);
+    const totalAdsResult = await db.select({ count: sql25`count(*)` }).from(businesses);
     const totalAds = totalAdsResult[0]?.count || 1250;
     const businesses2 = await db.select({
       id: businesses.id,
@@ -36129,7 +39879,7 @@ router70.get(
     let ratingCount = 0;
     try {
       const campaignStats = await db.execute(
-        sql24`SELECT COALESCE(SUM(CAST(budget AS numeric)), 0) AS total_budget,
+        sql25`SELECT COALESCE(SUM(CAST(budget AS numeric)), 0) AS total_budget,
                    COALESCE(SUM(impressions), 0) AS total_impressions,
                    COALESCE(SUM(clicks), 0) AS total_clicks,
                    COALESCE(SUM(conversions), 0) AS total_conversions
@@ -36143,7 +39893,7 @@ router70.get(
     }
     try {
       const ratingResult = await db.execute(
-        sql24`SELECT AVG(CAST(rating AS numeric)) AS avg_rating,
+        sql25`SELECT AVG(CAST(rating AS numeric)) AS avg_rating,
                    COUNT(*) FILTER (WHERE CAST(rating AS numeric) > 0) AS rated_count
             FROM businesses WHERE is_active = true`
       );
@@ -36164,11 +39914,11 @@ router70.get(
     const categoryResult = await db.select({
       name: businessCategories.name,
       slug: businessCategories.slug,
-      count: sql24`count(*)`
+      count: sql25`count(*)`
     }).from(businesses).leftJoin(
       businessCategories,
-      eq35(businesses.categoryId, businessCategories.id)
-    ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql24`count(*) DESC`).limit(10);
+      eq37(businesses.categoryId, businessCategories.id)
+    ).groupBy(businessCategories.name, businessCategories.slug).orderBy(sql25`count(*) DESC`).limit(10);
     const totalCatCount = categoryResult.reduce(
       (sum, cat) => sum + (cat.count || 0),
       0
@@ -36187,11 +39937,31 @@ router70.get(
       revenue: Math.floor(totalRevenue / 6 * growthFactors[index2])
     }));
     const platformStats = [
-      { platform: "Facebook", ads_count: Math.floor(totalAds * 0.35), avg_ctr: 5.4 },
-      { platform: "Instagram", ads_count: Math.floor(totalAds * 0.28), avg_ctr: 7.1 },
-      { platform: "Google", ads_count: Math.floor(totalAds * 0.22), avg_ctr: 4.5 },
-      { platform: "LinkedIn", ads_count: Math.floor(totalAds * 0.1), avg_ctr: 3.9 },
-      { platform: "TikTok", ads_count: Math.floor(totalAds * 0.05), avg_ctr: 7.5 }
+      {
+        platform: "Facebook",
+        ads_count: Math.floor(totalAds * 0.35),
+        avg_ctr: 5.4
+      },
+      {
+        platform: "Instagram",
+        ads_count: Math.floor(totalAds * 0.28),
+        avg_ctr: 7.1
+      },
+      {
+        platform: "Google",
+        ads_count: Math.floor(totalAds * 0.22),
+        avg_ctr: 4.5
+      },
+      {
+        platform: "LinkedIn",
+        ads_count: Math.floor(totalAds * 0.1),
+        avg_ctr: 3.9
+      },
+      {
+        platform: "TikTok",
+        ads_count: Math.floor(totalAds * 0.05),
+        avg_ctr: 7.5
+      }
     ];
     res.json({
       success: true,
@@ -36215,15 +39985,16 @@ router70.get(
     });
   })
 );
-var commerce_ads_default = router70;
+var commerce_ads_default = router76;
 
 // server/routes/contact.ts
 init_schema();
 init_db();
-import { Router as Router71 } from "express";
-var router71 = Router71();
-router71.post(
+import { Router as Router77 } from "express";
+var router77 = Router77();
+router77.post(
   "/",
+  contactFormLimiter,
   asyncHandler(async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
     if (!name || !email || !subject || !message) {
@@ -36279,39 +40050,39 @@ router71.post(
     });
   })
 );
-var contact_default = router71;
+var contact_default = router77;
 
 // server/routes/geo.ts
 init_schema();
 init_db();
-import { Router as Router72 } from "express";
-import { sql as sql25 } from "drizzle-orm";
-var router72 = Router72();
-router72.get(
+import { Router as Router78 } from "express";
+import { sql as sql26 } from "drizzle-orm";
+var router78 = Router78();
+router78.get(
   "/regions",
   asyncHandler(async (req, res) => {
     const { countryId } = req.query;
     if (countryId) {
       const cid = parseInt(countryId, 10);
       const result2 = await db.execute(
-        sql25`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`
+        sql26`SELECT id, name, country_id AS "countryId" FROM regions WHERE country_id = ${cid} ORDER BY name`
       );
       return res.json(result2.rows);
     }
     const result = await db.execute(
-      sql25`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`
+      sql26`SELECT id, name, country_id AS "countryId" FROM regions ORDER BY name`
     );
     res.json(result.rows);
   })
 );
-router72.get(
+router78.get(
   "/cities",
   asyncHandler(async (req, res) => {
     const { countryId, regionId } = req.query;
     if (regionId) {
       const rid = parseInt(regionId, 10);
       const result2 = await db.execute(
-        sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+        sql26`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
             FROM cities c
             JOIN regions r ON c.region_id = r.id
             WHERE c.region_id = ${rid}
@@ -36322,7 +40093,7 @@ router72.get(
     if (countryId) {
       const cid = parseInt(countryId, 10);
       const result2 = await db.execute(
-        sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+        sql26`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
             FROM cities c
             JOIN regions r ON c.region_id = r.id
             WHERE r.country_id = ${cid}
@@ -36331,7 +40102,7 @@ router72.get(
       return res.json(result2.rows);
     }
     const result = await db.execute(
-      sql25`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
+      sql26`SELECT c.id, c.name, c.region_id AS "regionId", r.name AS "regionName", r.country_id AS "countryId"
           FROM cities c
           LEFT JOIN regions r ON c.region_id = r.id
           ORDER BY c.name LIMIT 500`
@@ -36339,7 +40110,7 @@ router72.get(
     res.json(result.rows);
   })
 );
-router72.get(
+router78.get(
   "/countries",
   asyncHandler(async (_req, res) => {
     try {
@@ -36382,27 +40153,27 @@ router72.get(
     }
   })
 );
-var geo_default = router72;
+var geo_default = router78;
 
 // server/routes/public-stats.ts
 init_db();
-import { Router as Router73 } from "express";
-import { sql as sql26 } from "drizzle-orm";
-var router73 = Router73();
-router73.get(
+import { Router as Router79 } from "express";
+import { sql as sql27 } from "drizzle-orm";
+var router79 = Router79();
+router79.get(
   "/dashboard-stats",
   asyncHandler(async (req, res) => {
     const { category, businessId } = req.query;
     if (businessId) {
       const businessData = await db.execute(
-        sql26`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`
+        sql27`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`
       );
       const business = businessData.rows[0];
       if (!business) {
         return res.status(404).json({ success: false, error: "Business not found" });
       }
       const categoryData = await db.execute(
-        sql26`SELECT name FROM business_categories WHERE id = ${business.category_id}`
+        sql27`SELECT name FROM business_categories WHERE id = ${business.category_id}`
       );
       const categoryName = categoryData.rows[0]?.name || "General";
       return res.json({
@@ -36422,12 +40193,12 @@ router73.get(
     }
     if (category) {
       const categoryData = await db.execute(
-        sql26`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`
+        sql27`SELECT id FROM business_categories WHERE name ILIKE ${`${category}%`}`
       );
       const categoryIds = categoryData.rows.map((row) => row.id);
       if (categoryIds.length > 0) {
         const businessCount2 = await db.execute(
-          sql26`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`
+          sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`
         );
         const totalBusinesses2 = parseInt(
           String(businessCount2.rows[0]?.count || 0),
@@ -36444,22 +40215,22 @@ router73.get(
       }
     }
     const [businessCount, categoryCount, jobCount, countryData, countryMapData, topCategories, recentListings] = await Promise.all([
-      db.execute(sql26`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
-      db.execute(sql26`SELECT COUNT(*) as count FROM business_categories`),
-      db.execute(sql26`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories`),
+      db.execute(sql27`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
       db.execute(
-        sql26`SELECT COUNT(DISTINCT c.id) as count
+        sql27`SELECT COUNT(DISTINCT c.id) as count
               FROM countries c
               INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true`
       ),
       db.execute(
-        sql26`SELECT c.name, COUNT(b.id)::int as count
+        sql27`SELECT c.name, COUNT(b.id)::int as count
               FROM countries c
               INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true
               GROUP BY c.id, c.name
               ORDER BY count DESC`
       ),
-      db.execute(sql26`
+      db.execute(sql27`
           SELECT bc.name, COUNT(b.id) as count
           FROM business_categories bc
           LEFT JOIN businesses b ON b.category_id = bc.id AND b.is_active = true
@@ -36468,7 +40239,7 @@ router73.get(
           ORDER BY count DESC
           LIMIT 10
         `),
-      db.execute(sql26`
+      db.execute(sql27`
           SELECT id, name, location, created_at
           FROM businesses
           WHERE is_active = true
@@ -36892,15 +40663,15 @@ function generateBusinessStats(category, rating, reviewCount) {
     growthRate: (Math.random() * 15 + 5).toFixed(1)
   };
 }
-var public_stats_default = router73;
+var public_stats_default = router79;
 
 // server/routes/seed.ts
 init_schema();
 init_db();
-import { Router as Router74 } from "express";
-import { eq as eq36 } from "drizzle-orm";
-var router74 = Router74();
-router74.post(
+import { Router as Router80 } from "express";
+import { eq as eq38 } from "drizzle-orm";
+var router80 = Router80();
+router80.post(
   "/seed-categories",
   asyncHandler(async (_req, res) => {
     if (process.env.NODE_ENV !== "development") {
@@ -36928,7 +40699,7 @@ router74.post(
           createdCategories.push(result[0]);
         }
       } catch {
-        const existing = await db.select({ id: businessCategories.id }).from(businessCategories).where(eq36(businessCategories.slug, catData.slug)).limit(1);
+        const existing = await db.select({ id: businessCategories.id }).from(businessCategories).where(eq38(businessCategories.slug, catData.slug)).limit(1);
         if (existing.length > 0) {
           categorySlugMap.set(catData.slug, existing[0].id);
         }
@@ -36939,7 +40710,7 @@ router74.post(
         const catId = categorySlugMap.get(catData.slug);
         const parentId = categorySlugMap.get(catData.parentSlug);
         if (catId && parentId) {
-          await db.update(businessCategories).set({ parentId }).where(eq36(businessCategories.id, catId));
+          await db.update(businessCategories).set({ parentId }).where(eq38(businessCategories.id, catId));
         }
       }
     }
@@ -36951,55 +40722,54 @@ router74.post(
     });
   })
 );
-var seed_default = router74;
+var seed_default = router80;
 
 // server/routes/system.ts
 init_db();
-import { Router as Router75 } from "express";
-import { sql as sql27 } from "drizzle-orm";
-var router75 = Router75();
-router75.get(
+import { Router as Router81 } from "express";
+import { sql as sql28 } from "drizzle-orm";
+import fs8 from "node:fs";
+import path7 from "node:path";
+var router81 = Router81();
+function getAppVersion() {
+  if (process.env.APP_VERSION) return process.env.APP_VERSION;
+  try {
+    const packageJson = JSON.parse(
+      fs8.readFileSync(path7.join(process.cwd(), "package.json"), "utf8")
+    );
+    return packageJson.version || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+router81.get(
   "/status",
   asyncHandler(async (_req, res) => {
-    try {
-      const dbTest = await db.execute(sql27`SELECT NOW() as time`);
-      return res.json({
-        status: "ok",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: true,
-          time: dbTest.rows[0]?.time
-        }
-      });
-    } catch (error) {
-      return res.json({
-        status: "warning",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running but database connection failed",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: false,
-          error: error.message
-        }
-      });
-    }
+    return res.json({
+      status: "ok",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      message: "API is running",
+      environment: process.env.NODE_ENV || "development",
+      api: { connected: true }
+    });
   })
 );
-router75.get(
+router81.get(
   "/health",
   asyncHandler(async (_req, res) => {
     try {
-      const dbTest = await db.execute(sql27`SELECT NOW() as time`);
+      const dbTest = await db.execute(sql28`SELECT NOW() as time`);
       return res.json({
         success: true,
         status: "ok",
         timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running",
+        message: "API and database are operational",
         environment: process.env.NODE_ENV || "development",
+        version: getAppVersion(),
+        frontend: { status: "served-by-api" },
+        api: { status: "ok" },
         database: {
-          connected: true,
+          status: "connected",
           time: dbTest.rows[0]?.time
         }
       });
@@ -37008,17 +40778,20 @@ router75.get(
         success: false,
         status: "error",
         timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running but database connection failed",
+        message: "API is running but the database is unavailable",
         environment: process.env.NODE_ENV || "development",
+        version: getAppVersion(),
+        frontend: { status: "served-by-api" },
+        api: { status: "ok" },
         database: {
-          connected: false,
-          error: error.message
+          status: "unavailable",
+          error: error?.code || "connection_failed"
         }
       });
     }
   })
 );
-router75.get(
+router81.get(
   "/verify-db-counts",
   asyncHandler(async (_req, res) => {
     const [
@@ -37034,33 +40807,47 @@ router75.get(
       allReviews,
       allReservations
     ] = await Promise.all([
-      db.execute(sql27`SELECT COUNT(*) as count FROM businesses`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM jobs`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM businesses`),
       db.execute(
-        sql27`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
+        sql28`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`
       ),
-      db.execute(sql27`SELECT COUNT(*) as count FROM users`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM business_reviews`),
-      db.execute(sql27`SELECT COUNT(*) as count FROM reservations`)
+      db.execute(sql28`SELECT COUNT(*) as count FROM business_categories`),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`
+      ),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`
+      ),
+      db.execute(sql28`SELECT COUNT(*) as count FROM jobs`),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`
+      ),
+      db.execute(
+        sql28`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
+      ),
+      db.execute(sql28`SELECT COUNT(*) as count FROM users`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM business_reviews`),
+      db.execute(sql28`SELECT COUNT(*) as count FROM reservations`)
     ]);
     res.json({
       success: true,
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
       counts: {
         businesses: {
-          total: parseInt(String(allBusinesses.rows[0]?.count || 0), 10),
+          total: parseInt(
+            String(allBusinesses.rows[0]?.count || 0),
+            10
+          ),
           active: parseInt(
             String(activeBusinesses.rows[0]?.count || 0),
             10
           )
         },
         categories: {
-          total: parseInt(String(allCategories.rows[0]?.count || 0), 10),
+          total: parseInt(
+            String(allCategories.rows[0]?.count || 0),
+            10
+          ),
           mainCategories: parseInt(
             String(mainCategories.rows[0]?.count || 0),
             10
@@ -37094,7 +40881,7 @@ router75.get(
     });
   })
 );
-router75.get("/simple-test", (_req, res) => {
+router81.get("/simple-test", (_req, res) => {
   res.json({
     message: "Server is working!",
     success: true,
@@ -37114,12 +40901,12 @@ router75.get("/simple-test", (_req, res) => {
     ]
   });
 });
-var system_default = router75;
+var system_default = router81;
 
 // server/routes/users.ts
-import { Router as Router76 } from "express";
-import jwt7 from "jsonwebtoken";
-var router76 = Router76();
+import { Router as Router82 } from "express";
+import jwt8 from "jsonwebtoken";
+var router82 = Router82();
 var activeUsers = /* @__PURE__ */ new Map();
 var INACTIVE_THRESHOLD = 5 * 60 * 1e3;
 setInterval(() => {
@@ -37132,7 +40919,7 @@ setInterval(() => {
   });
   entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
 }, 6e4);
-router76.post("/users/heartbeat", (req, res) => {
+router82.post("/users/heartbeat", (req, res) => {
   const sessionId = req.body.sessionId || req.ip;
   activeUsers.set(sessionId, Date.now());
   res.json({
@@ -37141,7 +40928,7 @@ router76.post("/users/heartbeat", (req, res) => {
     sessionId
   });
 });
-router76.get("/users/active-count", (_req, res) => {
+router82.get("/users/active-count", (_req, res) => {
   const now = Date.now();
   const entriesToDelete = [];
   activeUsers.forEach((lastSeen, sessionId) => {
@@ -37156,7 +40943,7 @@ router76.get("/users/active-count", (_req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   });
 });
-router76.get("/user", (req, res) => {
+router82.get("/user", (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
@@ -37170,15 +40957,15 @@ router76.get("/user", (req, res) => {
     try {
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) throw new Error("JWT_SECRET not set");
-      const decoded = jwt7.verify(token, jwtSecret);
-      const isAdmin = decoded.role === "admin" || decoded.role === "superuser";
+      const decoded = jwt8.verify(token, jwtSecret);
+      const isAdmin2 = decoded.role === "admin" || decoded.role === "superuser";
       return res.json({
         success: true,
         user: {
           id: decoded.userId || "user",
           email: decoded.email || "",
           name: decoded.name || decoded.email?.split("@")[0] || "User",
-          isAdmin,
+          isAdmin: isAdmin2,
           role: decoded.role || "user"
         }
       });
@@ -37197,12 +40984,13 @@ router76.get("/user", (req, res) => {
     });
   }
 });
-var users_default2 = router76;
+var users_default2 = router82;
 
 // server/routes.ts
 async function registerRoutes(app2) {
   app2.use("/auth", auth_default);
   app2.use("/auth", oauth_default);
+  app2.use("/", profiles_default);
   app2.get("/api/vault/authorize", requireAuth(), async (req, res) => {
     const VAULT_MASTER_EMAIL = "superadmin@versoair.test";
     const user = req.user;
@@ -37236,6 +41024,7 @@ async function registerRoutes(app2) {
   app2.use("/api/tickets", tickets_default);
   app2.use("/api/jobs", jobs_default2);
   app2.use("/api/music", music_default);
+  app2.use("/api/notifications", notifications_default);
   app2.use("/api/streamroyale", streamroyale_default);
   app2.get("/api/streaming/tracks/:id/preview", async (req, res) => {
     try {
@@ -37303,8 +41092,12 @@ async function registerRoutes(app2) {
   app2.use("/api/migrate", migrate_default);
   app2.use("/api/escrow", escrow_default);
   app2.use("/api/seo", geo_seo_default);
+  app2.get("/robots.txt", robotsTxtHandler);
   app2.use("/api/inventory", inventory_default);
   app2.use("/api/inbox", inbox_default);
+  app2.use("/api/community", community_default);
+  app2.use("/api/communities", artisan_communities_default);
+  app2.use("/api/events", events_default);
   app2.use("/api/geo-actions", geo_actions_default);
   app2.use("/api/contractor-pipeline", contractor_pipeline_default);
   app2.get("/api/csrf-token", (req, res) => {
@@ -37800,7 +41593,7 @@ async function registerRoutes(app2) {
   app2.use("/api", astrology_default);
   app2.get("/api/business/test-connection", async (req, res) => {
     try {
-      const testResult = await db.execute(sql28`
+      const testResult = await db.execute(sql29`
         SELECT 
           NOW() as time,
           current_database() as database,
@@ -37903,8 +41696,8 @@ async function registerRoutes(app2) {
 
 // server/prod-static.ts
 import express from "express";
-import fs7 from "fs";
-import path7 from "path";
+import fs9 from "fs";
+import path8 from "path";
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -37915,23 +41708,23 @@ function log(message, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 function serveStatic(app2) {
-  const distPath = path7.join(process.cwd(), "dist", "public");
+  const distPath = path8.join(process.cwd(), "dist", "public");
   console.log(`[STATIC] Serving static files from: ${distPath}`);
-  console.log(`[STATIC] Directory exists: ${fs7.existsSync(distPath)}`);
-  if (fs7.existsSync(distPath)) {
+  console.log(`[STATIC] Directory exists: ${fs9.existsSync(distPath)}`);
+  if (fs9.existsSync(distPath)) {
     try {
-      const assets = fs7.readdirSync(distPath);
+      const assets = fs9.readdirSync(distPath);
       console.log(`[STATIC] Contents: ${assets.join(", ")}`);
     } catch (err) {
       console.warn("[STATIC] Could not list dist contents:", err);
     }
   }
-  if (!fs7.existsSync(distPath)) {
+  if (!fs9.existsSync(distPath)) {
     console.error(
       `[STATIC] dist/public not found. Contents of cwd (${process.cwd()}):`
     );
     try {
-      console.error(fs7.readdirSync(process.cwd()).join(", "));
+      console.error(fs9.readdirSync(process.cwd()).join(", "));
     } catch (e) {
       console.error("Could not read cwd");
     }
@@ -37943,15 +41736,33 @@ function serveStatic(app2) {
     express.static(distPath, {
       maxAge: "1y",
       immutable: true,
-      index: false
+      index: false,
       // Don't auto-serve index.html for directory requests
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html") || filePath.endsWith("/sw.js") || filePath.endsWith("/service-worker.js")) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        }
+      }
     })
   );
   app2.use("*", (req, res, next) => {
-    if (req.originalUrl.includes(".")) {
+    const acceptsHtml = req.accepts("html") === "html";
+    const isNavigation = req.method === "GET" || req.method === "HEAD";
+    if (!isNavigation || req.path.startsWith("/api/") || !acceptsHtml) {
       return next();
     }
-    res.sendFile(path7.join(distPath, "index.html"));
+    fs9.readFile(path8.join(distPath, "index.html"), "utf-8", (err, html) => {
+      if (err) {
+        console.error("[STATIC] Failed to read index.html:", err);
+        return res.sendFile(path8.join(distPath, "index.html"));
+      }
+      const siblingUrl = process.env.SIBLING_URL;
+      const runtimeScript = siblingUrl ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>
+  ` : "";
+      const injected = html.replace("</head>", `${runtimeScript}</head>`);
+      res.set("Content-Type", "text/html");
+      res.send(injected);
+    });
   });
 }
 
@@ -38155,7 +41966,22 @@ init_email_service();
 // server/services/ensure-tables.ts
 init_db();
 async function ensureAllTables() {
-  const client = await pool.connect();
+  if (process.env.DISABLE_DB_CHECK === "true") {
+    console.warn(
+      "\u26A0\uFE0F [MIGRATE] DISABLE_DB_CHECK=true \u2014 skipping schema boot check."
+    );
+    return;
+  }
+  let client;
+  try {
+    client = await pool.connect();
+  } catch (err) {
+    console.warn(
+      "\u26A0\uFE0F [MIGRATE] Database unavailable during boot check; skipping schema migration.",
+      err?.message || err
+    );
+    return;
+  }
   const startTime = Date.now();
   let created = 0;
   let existed = 0;
@@ -38199,11 +42025,93 @@ async function ensureAllTables() {
       } catch (_) {
       }
     }
+    const BUSINESSES_COLUMN_ADDITIONS = [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_url TEXT`
+    ];
+    for (const alt of BUSINESSES_COLUMN_ADDITIONS) {
+      await client.query(alt);
+    }
+    const STREAMING_PLANS_ADDITIONS = [
+      `ALTER TABLE streaming_plans ADD COLUMN IF NOT EXISTS downloads_per_month INTEGER DEFAULT 0`
+    ];
+    for (const alt of STREAMING_PLANS_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+      }
+    }
+    const ARENA_WEIGHT_ADDITIONS = [
+      `ALTER TABLE arena_votes ADD COLUMN IF NOT EXISTS vote_weight NUMERIC(6,4) DEFAULT 0.1`,
+      `ALTER TABLE arena_brackets ADD COLUMN IF NOT EXISTS weighted_vote_count NUMERIC(12,4) DEFAULT 0`,
+      `ALTER TABLE arena_contests ADD COLUMN IF NOT EXISTS weighted_total_votes NUMERIC(12,4) DEFAULT 0`
+    ];
+    for (const alt of ARENA_WEIGHT_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+      }
+    }
+    const PLAN_QUOTA_UPDATES = [
+      ["Gratuit", 0],
+      ["Supporter", 5],
+      ["Champion", 20],
+      ["Patron", -1]
+      // -1 = unlimited
+    ];
+    for (const [name, quota] of PLAN_QUOTA_UPDATES) {
+      try {
+        await client.query(
+          `UPDATE streaming_plans SET downloads_per_month = $1
+             WHERE name = $2 AND (downloads_per_month IS NULL OR downloads_per_month = 0)`,
+          [quota, name]
+        );
+      } catch (_) {
+      }
+    }
+    const INBOX_MESSAGES_ADDITIONS = [
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
+      `ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS allow_media_download BOOLEAN DEFAULT FALSE`
+    ];
+    for (const alt of INBOX_MESSAGES_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+      }
+    }
     for (const idx of INDEX_STATEMENTS) {
       try {
         await client.query(idx);
       } catch (_) {
       }
+    }
+    try {
+      await client.query(`
+        CREATE OR REPLACE FUNCTION protect_joel_007()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          IF OLD.username = 'joel_007' OR OLD.gate_username = 'joel_007' THEN
+            RAISE EXCEPTION 'The joel_007 account cannot be deleted';
+          END IF;
+          RETURN OLD;
+        END;
+        $$ LANGUAGE plpgsql;
+      `);
+      await client.query(`
+        DROP TRIGGER IF EXISTS trg_protect_joel_007 ON users;
+      `);
+      await client.query(`
+        CREATE TRIGGER trg_protect_joel_007
+        BEFORE DELETE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION protect_joel_007();
+      `);
+      console.log("\u{1F512} [MIGRATE] joel_007 deletion protection trigger active");
+    } catch (err) {
+      console.error(
+        "  \u274C Failed to install joel_007 protection trigger:",
+        err.message
+      );
     }
     const duration = Date.now() - startTime;
     console.log(
@@ -38350,8 +42258,44 @@ var TABLE_STATEMENTS = [
       approved_by INTEGER REFERENCES users(id),
       approval_notes TEXT,
       pdf_path TEXT,
+      tier VARCHAR DEFAULT 'free',
+      tier_expires_at TIMESTAMP,
+      logo_url TEXT,
+      verification_status VARCHAR DEFAULT 'unverified',
+      verification_documents JSONB DEFAULT '[]',
+      avg_response_time_hours DECIMAL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "business_services",
+    sql: `CREATE TABLE IF NOT EXISTS business_services (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      price DECIMAL(10,2),
+      category VARCHAR(50),
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "geo_action_requests",
+    sql: `CREATE TABLE IF NOT EXISTS geo_action_requests (
+      id SERIAL PRIMARY KEY,
+      requested_by INTEGER NOT NULL REFERENCES users(id),
+      action_type VARCHAR(50) NOT NULL,
+      entity_type VARCHAR(50),
+      entity_id TEXT,
+      requested_change JSONB,
+      delay_hours INTEGER NOT NULL DEFAULT 24,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      reviewed_by INTEGER REFERENCES users(id),
+      reviewed_at TIMESTAMP,
+      review_notes TEXT,
+      expires_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW()
     )`
   },
   // ═══════════════════════════════════════════════
@@ -38453,6 +42397,139 @@ var TABLE_STATEMENTS = [
   // ═══════════════════════════════════════════════
   // 5. MUSIC TRACKS
   // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════
+  // 5b. SOCIAL PLATFORM (posts, comments, likes, follows, notifications)
+  // ═══════════════════════════════════════════════
+  {
+    table: "social_users",
+    sql: `CREATE TABLE IF NOT EXISTS social_users (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      username TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      bio TEXT,
+      avatar_url TEXT,
+      cover_image_url TEXT,
+      location TEXT,
+      website TEXT,
+      profession TEXT,
+      company TEXT,
+      follower_count INTEGER DEFAULT 0,
+      following_count INTEGER DEFAULT 0,
+      post_count INTEGER DEFAULT 0,
+      engagement_score DECIMAL(10,2) DEFAULT 0,
+      satisfaction_rating DECIMAL(3,2) DEFAULT 0,
+      verified_badge BOOLEAN DEFAULT false,
+      premium_member BOOLEAN DEFAULT false,
+      dark_mode_enabled BOOLEAN DEFAULT true,
+      notifications_enabled BOOLEAN DEFAULT true,
+      privacy_level TEXT DEFAULT 'public',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      last_active_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_posts",
+    sql: `CREATE TABLE IF NOT EXISTS social_posts (
+      id SERIAL PRIMARY KEY,
+      author_id INTEGER NOT NULL REFERENCES social_users(id),
+      title TEXT,
+      content TEXT NOT NULL,
+      image_urls TEXT[],
+      video_url TEXT,
+      media_type TEXT,
+      allow_media_download BOOLEAN DEFAULT false,
+      post_type TEXT DEFAULT 'discussion',
+      faq_category TEXT,
+      is_resolved BOOLEAN DEFAULT false,
+      tags TEXT[],
+      mentioned_users INTEGER[],
+      like_count INTEGER DEFAULT 0,
+      comment_count INTEGER DEFAULT 0,
+      share_count INTEGER DEFAULT 0,
+      view_count INTEGER DEFAULT 0,
+      engagement_score DECIMAL(10,2) DEFAULT 0,
+      engagement_rate DECIMAL(5,2) DEFAULT 0,
+      is_trending BOOLEAN DEFAULT false,
+      is_pinned BOOLEAN DEFAULT false,
+      is_edited BOOLEAN DEFAULT false,
+      edit_history JSONB,
+      metadata JSONB,
+      track_id INTEGER,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      deleted_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_comments",
+    sql: `CREATE TABLE IF NOT EXISTS social_comments (
+      id SERIAL PRIMARY KEY,
+      post_id INTEGER NOT NULL REFERENCES social_posts(id),
+      author_id INTEGER NOT NULL REFERENCES social_users(id),
+      parent_comment_id INTEGER REFERENCES social_comments(id),
+      content TEXT NOT NULL,
+      like_count INTEGER DEFAULT 0,
+      reply_count INTEGER DEFAULT 0,
+      is_edited BOOLEAN DEFAULT false,
+      edit_history JSONB,
+      mentioned_users INTEGER[],
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      deleted_at TIMESTAMP
+    )`
+  },
+  {
+    table: "social_audit_events",
+    sql: `CREATE TABLE IF NOT EXISTS social_audit_events (
+      id SERIAL PRIMARY KEY,
+      actor_user_id INTEGER,
+      post_id INTEGER,
+      event_type TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      metadata JSONB,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "social_likes",
+    sql: `CREATE TABLE IF NOT EXISTS social_likes (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES social_users(id),
+      post_id INTEGER REFERENCES social_posts(id),
+      comment_id INTEGER REFERENCES social_comments(id),
+      like_type TEXT DEFAULT 'post',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "social_followers",
+    sql: `CREATE TABLE IF NOT EXISTS social_followers (
+      id SERIAL PRIMARY KEY,
+      follower_id INTEGER NOT NULL REFERENCES social_users(id),
+      following_id INTEGER NOT NULL REFERENCES social_users(id),
+      is_close BOOLEAN DEFAULT false,
+      is_muted BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "social_notifications",
+    sql: `CREATE TABLE IF NOT EXISTS social_notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES social_users(id),
+      from_user_id INTEGER REFERENCES social_users(id),
+      post_id INTEGER REFERENCES social_posts(id),
+      comment_id INTEGER REFERENCES social_comments(id),
+      notification_type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      data JSONB,
+      is_read BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      read_at TIMESTAMP
+    )`
+  },
   {
     table: "music_tracks",
     sql: `CREATE TABLE IF NOT EXISTS music_tracks (
@@ -38563,6 +42640,7 @@ var TABLE_STATEMENTS = [
       business_id INTEGER NOT NULL REFERENCES businesses(id),
       user_id INTEGER REFERENCES users(id),
       rating INTEGER NOT NULL,
+      title TEXT,
       content TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     )`
@@ -38828,6 +42906,146 @@ var TABLE_STATEMENTS = [
       notes TEXT
     )`
   },
+  {
+    table: "ticket_comments",
+    sql: `CREATE TABLE IF NOT EXISTS ticket_comments (
+      id SERIAL PRIMARY KEY,
+      ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+      author_id INTEGER REFERENCES users(id),
+      author_name VARCHAR,
+      body TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "community_posts",
+    sql: `CREATE TABLE IF NOT EXISTS community_posts (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      author_name VARCHAR,
+      author_avatar TEXT,
+      content TEXT NOT NULL,
+      parent_id INTEGER REFERENCES community_posts(id) ON DELETE CASCADE,
+      is_hidden BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "artisan_communities",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_communities (
+      id SERIAL PRIMARY KEY,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      name VARCHAR(180) NOT NULL,
+      slug VARCHAR(220) UNIQUE NOT NULL,
+      region VARCHAR(120) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      focus TEXT NOT NULL,
+      description TEXT NOT NULL,
+      activities JSONB DEFAULT '[]',
+      image_url TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+      member_count INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "artisan_community_join_requests",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_community_join_requests (
+      id SERIAL PRIMARY KEY,
+      community_id INTEGER NOT NULL REFERENCES artisan_communities(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      message TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (community_id, user_id)
+    )`
+  },
+  {
+    table: "artisan_community_memberships",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_community_memberships (
+      id SERIAL PRIMARY KEY,
+      community_id INTEGER NOT NULL REFERENCES artisan_communities(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+      joined_at TIMESTAMP DEFAULT NOW(),
+      removed_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (community_id, user_id)
+    )`
+  },
+  {
+    table: "community_operation_audit",
+    sql: `CREATE TABLE IF NOT EXISTS community_operation_audit (
+      id SERIAL PRIMARY KEY,
+      entity_type VARCHAR(40) NOT NULL,
+      entity_id INTEGER NOT NULL,
+      action VARCHAR(40) NOT NULL,
+      performed_by INTEGER REFERENCES users(id),
+      reason TEXT,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "events",
+    sql: `CREATE TABLE IF NOT EXISTS events (
+      id SERIAL PRIMARY KEY,
+      organizer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      community_id INTEGER REFERENCES artisan_communities(id) ON DELETE SET NULL,
+      title VARCHAR(220) NOT NULL,
+      slug VARCHAR(260) UNIQUE NOT NULL,
+      description TEXT NOT NULL,
+      event_type VARCHAR(40) NOT NULL DEFAULT 'COMMUNITY',
+      starts_at TIMESTAMP NOT NULL,
+      ends_at TIMESTAMP,
+      venue VARCHAR(220),
+      city VARCHAR(120),
+      image_url TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      published_at TIMESTAMP
+    )`
+  },
+  {
+    table: "event_audit",
+    sql: `CREATE TABLE IF NOT EXISTS event_audit (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      action VARCHAR(40) NOT NULL,
+      performed_by INTEGER REFERENCES users(id),
+      reason TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "event_attendees",
+    sql: `CREATE TABLE IF NOT EXISTS event_attendees (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(20) NOT NULL DEFAULT 'GOING',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (event_id, user_id)
+    )`
+  },
+  {
+    table: "artisan_communities_seed",
+    sql: `INSERT INTO artisan_communities
+      (name, slug, region, category, focus, description, activities, status, member_count)
+      VALUES
+      ('Abidjan Textile Collective', 'abidjan-textile-collective-community', 'Abidjan', 'Textiles', 'Traditional weaving and fabric arts', 'A vibrant collective of weavers preserving traditional techniques while innovating with contemporary designs.', '["Weekly workshops","Market sales","Cultural exhibitions","Skill training"]', 'PUBLISHED', 245),
+      ('Yamoussoukro Ceramics Guild', 'yamoussoukro-ceramics-guild-community', 'Yamoussoukro', 'Ceramics', 'Pottery and clay crafts', 'Master potters teaching the next generation while creating stunning handcrafted pieces.', '["Pottery classes","Exhibitions","International orders","Apprenticeships"]', 'PUBLISHED', 156),
+      ('Korhogo Carvers Association', 'korhogo-carvers-association-community', 'Korhogo', 'Wood Carving', 'Traditional wood sculpture', 'Ancient wood carving traditions passed down through families, creating iconic African art.', '["Carving demonstrations","Art shows","Museum partnerships","Youth programs"]', 'PUBLISHED', 189),
+      ('Bouake Metalwork Artisans', 'bouake-metalwork-artisans-community', 'Bouake', 'Metalwork', 'Metal arts and sculpture', 'Skilled metalworkers creating decorative and functional pieces using traditional techniques.', '["Forging workshops","Large commissions","Art festivals","Technical training"]', 'PUBLISHED', 127),
+      ('San Pedro Leather Craftspeople', 'san-pedro-leather-craftspeople-community', 'San Pedro', 'Leather Work', 'Leather goods and accessories', 'Dedicated artisans crafting high-quality leather products with traditional methods.', '["Leather classes","Market participation","Custom orders","Sustainable practices"]', 'PUBLISHED', 98),
+      ('Daloa Jewelry Makers', 'daloa-jewelry-makers-community', 'Daloa', 'Jewelry', 'Traditional and contemporary jewelry', 'Gold, silver, and beaded jewelry artisans creating stunning wearable art.', '["Design workshops","Jewelry shows","International sales","Apprenticeships"]', 'PUBLISHED', 112)
+      ON CONFLICT (slug) DO NOTHING`
+  },
   // ═══════════════════════════════════════════════
   // 18. USER SETTINGS
   // ═══════════════════════════════════════════════
@@ -39018,10 +43236,22 @@ var TABLE_STATEMENTS = [
       stream_limit INTEGER,
       pool_contribution_percent INTEGER NOT NULL,
       boost_credits INTEGER DEFAULT 0,
+      downloads_per_month INTEGER DEFAULT 0,
       stripe_price_id VARCHAR(255),
       stripe_product_id VARCHAR(255),
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    // Per-user download event log — used to enforce monthly quota per plan tier
+    table: "track_downloads",
+    sql: `CREATE TABLE IF NOT EXISTS track_downloads (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      track_id INTEGER NOT NULL REFERENCES music_tracks(id) ON DELETE CASCADE,
+      plan_tier VARCHAR(50),
+      downloaded_at TIMESTAMP DEFAULT NOW()
     )`
   },
   {
@@ -39307,6 +43537,8 @@ var INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS music_tracks_artist_idx ON music_tracks (artist_id)`,
   `CREATE INDEX IF NOT EXISTS music_tracks_album_idx ON music_tracks (album_id)`,
   `CREATE INDEX IF NOT EXISTS music_tracks_genre_idx ON music_tracks (genre)`,
+  // Browse/streaming queries filter on status ('published') and sort by newest.
+  `CREATE INDEX IF NOT EXISTS music_tracks_status_created_idx ON music_tracks (status, created_at DESC)`,
   // connections
   `CREATE INDEX IF NOT EXISTS connections_status_idx ON connections (status)`,
   `CREATE INDEX IF NOT EXISTS connections_requester_idx ON connections (requester_id)`,
@@ -39332,6 +43564,15 @@ var INDEX_STATEMENTS = [
   // ticket_assignments
   `CREATE INDEX IF NOT EXISTS ticket_assignments_ticket_idx ON ticket_assignments (ticket_id)`,
   `CREATE INDEX IF NOT EXISTS ticket_assignments_assigned_to_idx ON ticket_assignments (assigned_to)`,
+  // ticket_comments
+  `CREATE INDEX IF NOT EXISTS ticket_comments_ticket_idx ON ticket_comments (ticket_id)`,
+  // community_posts
+  `CREATE INDEX IF NOT EXISTS community_posts_created_idx ON community_posts (created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS community_posts_user_idx ON community_posts (user_id)`,
+  `CREATE INDEX IF NOT EXISTS community_posts_parent_idx ON community_posts (parent_id)`,
+  // track_downloads
+  `CREATE INDEX IF NOT EXISTS track_downloads_user_time_idx ON track_downloads (user_id, downloaded_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS track_downloads_track_idx ON track_downloads (track_id)`,
   // user_settings
   `CREATE INDEX IF NOT EXISTS user_settings_user_sector_idx ON user_settings (user_id, sector)`,
   `CREATE INDEX IF NOT EXISTS user_settings_sector_idx ON user_settings (sector)`,
@@ -39409,14 +43650,73 @@ var INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS artist_contracts_email_idx ON artist_contracts (email)`,
   `CREATE INDEX IF NOT EXISTS artist_contracts_status_idx ON artist_contracts (status)`,
   `CREATE INDEX IF NOT EXISTS artist_contracts_grade_idx ON artist_contracts (grade)`,
-  `CREATE INDEX IF NOT EXISTS artist_contracts_artist_idx ON artist_contracts (artist_id)`
+  `CREATE INDEX IF NOT EXISTS artist_contracts_artist_idx ON artist_contracts (artist_id)`,
+  // ── unified_profiles ──────────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS unified_profiles (
+    id SERIAL PRIMARY KEY,
+    owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    account_type VARCHAR(30) NOT NULL,
+    name TEXT NOT NULL,
+    display_name TEXT,
+    slug VARCHAR(255) UNIQUE,
+    category VARCHAR(120),
+    description TEXT,
+    bio TEXT,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    website TEXT,
+    social_links JSONB DEFAULT '{}',
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    address TEXT,
+    city_id INTEGER REFERENCES cities(id),
+    region_id INTEGER REFERENCES regions(id),
+    country_id INTEGER REFERENCES countries(id),
+    country_code VARCHAR(2),
+    city_name VARCHAR(120),
+    is_verified BOOLEAN DEFAULT false,
+    verification_status VARCHAR(30) DEFAULT 'pending',
+    verified_at TIMESTAMP,
+    verified_by INTEGER REFERENCES users(id),
+    status VARCHAR(30) DEFAULT 'DRAFT',
+    approved_by INTEGER REFERENCES users(id),
+    approval_notes TEXT,
+    logo_url TEXT,
+    cover_image_url TEXT,
+    profile_image_url TEXT,
+    rating DECIMAL(3,1),
+    review_count INTEGER DEFAULT 0,
+    view_count INTEGER DEFAULT 0,
+    metadata JSONB DEFAULT '{}',
+    legacy_business_id INTEGER,
+    legacy_artist_profile_id INTEGER,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS up_owner_idx ON unified_profiles (owner_id)`,
+  `CREATE INDEX IF NOT EXISTS up_status_idx ON unified_profiles (status)`,
+  `CREATE INDEX IF NOT EXISTS up_verification_idx ON unified_profiles (verification_status)`,
+  `CREATE INDEX IF NOT EXISTS up_account_type_idx ON unified_profiles (account_type)`,
+  `CREATE INDEX IF NOT EXISTS up_published_idx ON unified_profiles (status, is_verified)`,
+  `CREATE INDEX IF NOT EXISTS up_geo_idx ON unified_profiles (latitude, longitude)`,
+  // ── profile_approval_actions (flat audit log) ─────────────────────────────
+  `CREATE TABLE IF NOT EXISTS profile_approval_actions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id INTEGER NOT NULL REFERENCES unified_profiles(id) ON DELETE CASCADE,
+    action VARCHAR(20) NOT NULL,
+    performed_by INTEGER NOT NULL REFERENCES users(id),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS paa_profile_idx ON profile_approval_actions (profile_id)`,
+  `CREATE INDEX IF NOT EXISTS paa_admin_idx ON profile_approval_actions (performed_by)`
 ];
 
 // server/services/digest-worker.ts
 init_db();
 init_schema();
 init_email_service();
-import { eq as eq38, and as and24, sql as sql29, inArray as inArray2 } from "drizzle-orm";
+import { eq as eq40, and as and25, sql as sql30, inArray as inArray2 } from "drizzle-orm";
 var DIGEST_CHECK_INTERVAL_MS = 60 * 60 * 1e3;
 var MAX_RETRIES = 3;
 var BATCH_SIZE = 50;
@@ -39465,12 +43765,12 @@ async function processDailyDigests() {
       recipientName: users.username
     }).from(emailQueue).innerJoin(
       emailSubscriptions,
-      eq38(emailQueue.subscriptionId, emailSubscriptions.id)
-    ).innerJoin(users, eq38(emailQueue.recipientUserId, users.id)).where(
-      and24(
-        eq38(emailQueue.status, "pending"),
-        eq38(emailSubscriptions.frequency, "daily_digest"),
-        eq38(emailSubscriptions.isActive, true)
+      eq40(emailQueue.subscriptionId, emailSubscriptions.id)
+    ).innerJoin(users, eq40(emailQueue.recipientUserId, users.id)).where(
+      and25(
+        eq40(emailQueue.status, "pending"),
+        eq40(emailSubscriptions.frequency, "daily_digest"),
+        eq40(emailSubscriptions.isActive, true)
       )
     ).limit(BATCH_SIZE);
     if (pendingItems.length === 0) {
@@ -39514,12 +43814,12 @@ async function processWeeklyDigests() {
       recipientName: users.username
     }).from(emailQueue).innerJoin(
       emailSubscriptions,
-      eq38(emailQueue.subscriptionId, emailSubscriptions.id)
-    ).innerJoin(users, eq38(emailQueue.recipientUserId, users.id)).where(
-      and24(
-        eq38(emailQueue.status, "pending"),
-        eq38(emailSubscriptions.frequency, "weekly_digest"),
-        eq38(emailSubscriptions.isActive, true)
+      eq40(emailQueue.subscriptionId, emailSubscriptions.id)
+    ).innerJoin(users, eq40(emailQueue.recipientUserId, users.id)).where(
+      and25(
+        eq40(emailQueue.status, "pending"),
+        eq40(emailSubscriptions.frequency, "weekly_digest"),
+        eq40(emailSubscriptions.isActive, true)
       )
     ).limit(BATCH_SIZE * 2);
     if (pendingItems.length === 0) {
@@ -39561,10 +43861,10 @@ async function processGeoAdminReports() {
       subscription: emailSubscriptions,
       email: users.email,
       username: users.username
-    }).from(emailSubscriptions).innerJoin(users, eq38(emailSubscriptions.userId, users.id)).where(
-      and24(
-        eq38(emailSubscriptions.type, "geoadmin_reports"),
-        eq38(emailSubscriptions.isActive, true)
+    }).from(emailSubscriptions).innerJoin(users, eq40(emailSubscriptions.userId, users.id)).where(
+      and25(
+        eq40(emailSubscriptions.type, "geoadmin_reports"),
+        eq40(emailSubscriptions.isActive, true)
       )
     );
     if (subscribers.length === 0) {
@@ -39594,7 +43894,7 @@ async function processGeoAdminReports() {
       );
       if (success) {
         sent++;
-        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq38(emailSubscriptions.id, sub.subscription.id));
+        await db.update(emailSubscriptions).set({ lastSentAt: /* @__PURE__ */ new Date() }).where(eq40(emailSubscriptions.id, sub.subscription.id));
       }
     }
     console.log(
@@ -39665,9 +43965,9 @@ async function sendDigestEmail(recipientEmail, items, digestType) {
 async function retryFailedItems() {
   try {
     const failedItems = await db.select().from(emailQueue).where(
-      and24(
-        eq38(emailQueue.status, "failed"),
-        sql29`${emailQueue.retryCount} < ${MAX_RETRIES}`
+      and25(
+        eq40(emailQueue.status, "failed"),
+        sql30`${emailQueue.retryCount} < ${MAX_RETRIES}`
       )
     ).limit(20);
     if (failedItems.length === 0) return;
@@ -39684,12 +43984,12 @@ async function retryFailedItems() {
           sentAt: sent ? /* @__PURE__ */ new Date() : void 0,
           retryCount: (item.retryCount || 0) + 1,
           error: sent ? void 0 : `Retry ${(item.retryCount || 0) + 1} failed`
-        }).where(eq38(emailQueue.id, item.id));
+        }).where(eq40(emailQueue.id, item.id));
       } catch (err) {
         await db.update(emailQueue).set({
           retryCount: (item.retryCount || 0) + 1,
           error: `Retry error: ${err instanceof Error ? err.message : String(err)}`
-        }).where(eq38(emailQueue.id, item.id));
+        }).where(eq40(emailQueue.id, item.id));
       }
     }
   } catch (error) {
@@ -40168,10 +44468,10 @@ async function autoApproveStalePendingListings() {
   }
 }
 function setupMarketplaceAutoApprove() {
-  autoApproveStalePendingListings().then((count11) => {
-    if (count11 > 0) {
+  autoApproveStalePendingListings().then((count10) => {
+    if (count10 > 0) {
       console.log(
-        `[MARKETPLACE-CRON] Startup: Auto-approved ${count11} stale listings`
+        `[MARKETPLACE-CRON] Startup: Auto-approved ${count10} stale listings`
       );
     }
   });
@@ -40199,8 +44499,8 @@ var CSRF_EXEMPT_PATHS = [
   // geo-admin login — must be exempt so it can bootstrap the token
   "/auth/admin-gate",
   // admin gate login — must be exempt so it can bootstrap the token
-  "/auth/register-geoadmin",
-  // .test account creation — must be exempt to bootstrap auth
+  // "/auth/register-geoadmin" requires an authenticated Admin/Superadmin session,
+  // so it goes through normal CSRF validation like any other protected write.
   "/api/users/heartbeat",
   // public presence-tracking ping — no CSRF needed
   "/api/v1/admin/gtm-events",
@@ -40211,8 +44511,12 @@ var CSRF_EXEMPT_PATHS = [
   // resend verification email — must be exempt for unverified users
   "/api/ai/chat",
   // VersoAI chat — same-origin, uses credentials:include
+  "/api/ai/ask",
+  // VersoAI grounded ask — same-origin, uses credentials:include
   "/api/ai/status",
   // VersoAI status check
+  "/api/search/intent",
+  // Read-only natural-language search
   // GeoAdmin submission requests — email-only, no DB writes
   "/api/request/business",
   "/api/request/artist",
@@ -40308,7 +44612,7 @@ function csrfProtect(req, res, next) {
 
 // server/index-music.ts
 dotenv.config();
-if (!process.env.SIBLING_URL) {
+if (!process.env.SIBLING_URL && process.env.NODE_ENV !== "production") {
   process.env.SIBLING_URL = process.env.MAIN_APP_URL || "http://localhost:5003";
 }
 if (!process.env.JWT_SECRET) {
@@ -40330,8 +44634,8 @@ if (!process.env.SESSION_SECRET) {
   process.exit(1);
 }
 var app = express2();
-var isDev = process.env.NODE_ENV !== "production";
-if (!isDev) {
+var isDev2 = process.env.NODE_ENV !== "production";
+if (!isDev2) {
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -40398,14 +44702,14 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(express2.json({ limit: "2mb" }));
-app.use(express2.urlencoded({ extended: false }));
+app.use(express2.json({ limit: "10mb" }));
+app.use(express2.urlencoded({ extended: false, limit: "10mb" }));
 app.use(csrfSetCookie);
 app.use(csrfProtect);
 app.use(globalAuthGate);
 app.use((req, res, next) => {
   const start = Date.now();
-  const path8 = req.path;
+  const path9 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -40414,8 +44718,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path8.startsWith("/api")) {
-      let line = `${req.method} ${path8} ${res.statusCode} in ${duration}ms`;
+    if (path9.startsWith("/api")) {
+      let line = `${req.method} ${path9} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         line += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -40466,7 +44770,10 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-  const port = parseInt(process.env.MUSIC_PORT || process.env.PORT || "5004", 10);
+  const port = parseInt(
+    process.env.MUSIC_PORT || process.env.PORT || "5004",
+    10
+  );
   server.listen(
     {
       port,

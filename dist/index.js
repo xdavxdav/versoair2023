@@ -36,6 +36,9 @@ __export(schema_exports, {
   arenaBrackets: () => arenaBrackets,
   arenaContests: () => arenaContests,
   arenaVotes: () => arenaVotes,
+  artisanCommunities: () => artisanCommunities,
+  artisanCommunityJoinRequests: () => artisanCommunityJoinRequests,
+  artisanCommunityMemberships: () => artisanCommunityMemberships,
   artistBadges: () => artistBadges,
   artistCollaborations: () => artistCollaborations,
   artistContracts: () => artistContracts,
@@ -55,6 +58,7 @@ __export(schema_exports, {
   cartItems: () => cartItems,
   cities: () => cities,
   collabRequests: () => collabRequests,
+  communityOperationAudit: () => communityOperationAudit,
   connections: () => connections,
   connectionsRelations: () => connectionsRelations,
   contestParticipationRequirements: () => contestParticipationRequirements,
@@ -65,6 +69,9 @@ __export(schema_exports, {
   emailQueue: () => emailQueue,
   emailSubscriptions: () => emailSubscriptions,
   evaluationSubmissions: () => evaluationSubmissions,
+  eventAttendees: () => eventAttendees,
+  eventAudit: () => eventAudit,
+  events: () => events,
   gameMatches: () => gameMatches,
   gameMoves: () => gameMoves,
   geoActionRequests: () => geoActionRequests,
@@ -236,7 +243,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-var countries, regions, cities, users, verificationTokens, businessCategories, businesses, artists, contractors, tsrWhitelist, contractorApplications, geoActionRequests, assignedContracts, paymentCardTypes, savedPaymentMethods, ngoCharges, musicTracks, jobs, connections, transactions, businessReviews, auditLogs, adCampaigns, properties, reservations, analytics, musicAnalytics, trackPurchases, musicArtists, businessMessages, notifications, userRelations, businessRelations, connectionsRelations, insertUserSchema, insertBusinessSchema, insertConnectionSchema, verifications, tickets, ticketAssignments, unifiedProfiles, profileApprovalActions, insertUnifiedProfileSchema, ticketComments, userSettings, settingsTemplates, emailSubscriptions, insertEmailSubscriptionSchema, emailQueue, insertEmailQueueSchema, issuedCards, pointsLedger, pointsRedemptions, insertIssuedCardSchema, insertPointsLedgerSchema, insertPointsRedemptionSchema, artistProfiles, evaluationSubmissions, promotionThresholds, regionalLeagues, streamingPlans, listenerSubscriptions, streamEvents, weeklyPools, artistRoyalties, artistBadges, payoutRequests, insertArtistProfileSchema, insertStreamEventSchema, insertWeeklyPoolSchema, insertArtistRoyaltySchema, insertArtistBadgeSchema, insertPayoutRequestSchema, albums, playlists, playlistTracks, streamPlays, trackLikes, trackComments, trackReactions, insertTrackReactionSchema, artistFollows, streamingSubscriptions, listeningHistory, insertAlbumSchema, insertPlaylistSchema, insertPlaylistTrackSchema, insertStreamPlaySchema, insertTrackLikeSchema, insertTrackCommentSchema, insertArtistFollowSchema, insertStreamingSubscriptionSchema, insertListeningHistorySchema, artistContracts, insertArtistContractSchema, adJournalListings, journalEditions, marketingPacks, packItems, printProducts, printJobs, cartItems, orders, orderItems, newsletterCampaigns, newsletterSubscribers, marketingPackRelations, packItemRelations, orderRelations, orderItemRelations, insertAdJournalListingSchema, insertJournalEditionSchema, insertMarketingPackSchema, insertPackItemSchema, insertPrintProductSchema, insertPrintJobSchema, insertCartItemSchema, insertOrderSchema, insertOrderItemSchema, insertNewsletterCampaignSchema, insertNewsletterSubscriberSchema, userBrowsingHistory, userBrowsingHistoryRelations, insertUserBrowsingHistorySchema, artistCollaborations, contestVotes, artistSubscriptions, arenaContests, arenaBrackets, arenaVotes, contestParticipationRequirements, listenerContestRewards, vaultRules, collabRequests, platformWallets, walletTransactions, userPaymentMethods, bankTransferRequests, gameMatches, gameMoves, insertGameMatchSchema, insertGameMoveSchema, listenerStats, listenerActivity, listenerBonuses, listenerBadges, insertListenerStatsSchema, insertListenerActivitySchema, insertListenerBonusesSchema, insertListenerBadgesSchema, insertContestParticipationRequirementsSchema, insertListenerContestRewardsSchema, insertContestVoteSchema, insertArtistSubscriptionSchema, insertArenaContestSchema, insertArenaBracketSchema, insertArenaVoteSchema, insertVaultRuleSchema, insertCollabRequestSchema, insertPlatformWalletSchema, insertWalletTransactionSchema, insertUserPaymentMethodSchema, insertBankTransferRequestSchema, paylistItems, paylistAccessLog, insertPaylistItemSchema, insertPaylistAccessLogSchema, activeSessions, insertActiveSessionSchema, platformSettings, insertPlatformSettingSchema, inventoryProducts, insertInventoryProductSchema, inboxConversations, insertInboxConversationSchema, inboxMessages, insertInboxMessageSchema, videoProjects, insertVideoProjectSchema, videoBriefs, insertVideoBriefSchema, videoDeliverables, insertVideoDeliverableSchema, videoRevisions, insertVideoRevisionSchema, videoLicenses, insertVideoLicenseSchema, systemSettings, insertSystemSettingsSchema;
+var countries, regions, cities, users, verificationTokens, businessCategories, businesses, artists, contractors, tsrWhitelist, contractorApplications, geoActionRequests, assignedContracts, paymentCardTypes, savedPaymentMethods, ngoCharges, musicTracks, jobs, connections, transactions, businessReviews, auditLogs, adCampaigns, properties, reservations, analytics, musicAnalytics, trackPurchases, musicArtists, businessMessages, notifications, userRelations, businessRelations, connectionsRelations, insertUserSchema, insertBusinessSchema, insertConnectionSchema, verifications, tickets, ticketAssignments, unifiedProfiles, profileApprovalActions, artisanCommunities, artisanCommunityJoinRequests, artisanCommunityMemberships, communityOperationAudit, events, eventAudit, eventAttendees, insertUnifiedProfileSchema, ticketComments, userSettings, settingsTemplates, emailSubscriptions, insertEmailSubscriptionSchema, emailQueue, insertEmailQueueSchema, issuedCards, pointsLedger, pointsRedemptions, insertIssuedCardSchema, insertPointsLedgerSchema, insertPointsRedemptionSchema, artistProfiles, evaluationSubmissions, promotionThresholds, regionalLeagues, streamingPlans, listenerSubscriptions, streamEvents, weeklyPools, artistRoyalties, artistBadges, payoutRequests, insertArtistProfileSchema, insertStreamEventSchema, insertWeeklyPoolSchema, insertArtistRoyaltySchema, insertArtistBadgeSchema, insertPayoutRequestSchema, albums, playlists, playlistTracks, streamPlays, trackLikes, trackComments, trackReactions, insertTrackReactionSchema, artistFollows, streamingSubscriptions, listeningHistory, insertAlbumSchema, insertPlaylistSchema, insertPlaylistTrackSchema, insertStreamPlaySchema, insertTrackLikeSchema, insertTrackCommentSchema, insertArtistFollowSchema, insertStreamingSubscriptionSchema, insertListeningHistorySchema, artistContracts, insertArtistContractSchema, adJournalListings, journalEditions, marketingPacks, packItems, printProducts, printJobs, cartItems, orders, orderItems, newsletterCampaigns, newsletterSubscribers, marketingPackRelations, packItemRelations, orderRelations, orderItemRelations, insertAdJournalListingSchema, insertJournalEditionSchema, insertMarketingPackSchema, insertPackItemSchema, insertPrintProductSchema, insertPrintJobSchema, insertCartItemSchema, insertOrderSchema, insertOrderItemSchema, insertNewsletterCampaignSchema, insertNewsletterSubscriberSchema, userBrowsingHistory, userBrowsingHistoryRelations, insertUserBrowsingHistorySchema, artistCollaborations, contestVotes, artistSubscriptions, arenaContests, arenaBrackets, arenaVotes, contestParticipationRequirements, listenerContestRewards, vaultRules, collabRequests, platformWallets, walletTransactions, userPaymentMethods, bankTransferRequests, gameMatches, gameMoves, insertGameMatchSchema, insertGameMoveSchema, listenerStats, listenerActivity, listenerBonuses, listenerBadges, insertListenerStatsSchema, insertListenerActivitySchema, insertListenerBonusesSchema, insertListenerBadgesSchema, insertContestParticipationRequirementsSchema, insertListenerContestRewardsSchema, insertContestVoteSchema, insertArtistSubscriptionSchema, insertArenaContestSchema, insertArenaBracketSchema, insertArenaVoteSchema, insertVaultRuleSchema, insertCollabRequestSchema, insertPlatformWalletSchema, insertWalletTransactionSchema, insertUserPaymentMethodSchema, insertBankTransferRequestSchema, paylistItems, paylistAccessLog, insertPaylistItemSchema, insertPaylistAccessLogSchema, activeSessions, insertActiveSessionSchema, platformSettings, insertPlatformSettingSchema, inventoryProducts, insertInventoryProductSchema, inboxConversations, insertInboxConversationSchema, inboxMessages, insertInboxMessageSchema, videoProjects, insertVideoProjectSchema, videoBriefs, insertVideoBriefSchema, videoDeliverables, insertVideoDeliverableSchema, videoRevisions, insertVideoRevisionSchema, videoLicenses, insertVideoLicenseSchema, systemSettings, insertSystemSettingsSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -1148,6 +1155,152 @@ var init_schema = __esm({
       (t) => ({
         profileIdx: index("paa_profile_idx").on(t.profileId),
         adminIdx: index("paa_admin_idx").on(t.performedBy)
+      })
+    );
+    artisanCommunities = pgTable(
+      "artisan_communities",
+      {
+        id: serial("id").primaryKey(),
+        ownerId: integer("owner_id").references(() => users.id, {
+          onDelete: "set null"
+        }),
+        name: varchar("name", { length: 180 }).notNull(),
+        slug: varchar("slug", { length: 220 }).unique().notNull(),
+        region: varchar("region", { length: 120 }).notNull(),
+        category: varchar("category", { length: 120 }).notNull(),
+        focus: text("focus").notNull(),
+        description: text("description").notNull(),
+        activities: jsonb("activities").$type().default([]),
+        imageUrl: text("image_url"),
+        status: varchar("status", { length: 30 }).default("DRAFT").notNull(),
+        memberCount: integer("member_count").default(0).notNull(),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow()
+      },
+      (t) => ({
+        statusIdx: index("artisan_communities_status_idx").on(t.status),
+        regionIdx: index("artisan_communities_region_idx").on(t.region)
+      })
+    );
+    artisanCommunityJoinRequests = pgTable(
+      "artisan_community_join_requests",
+      {
+        id: serial("id").primaryKey(),
+        communityId: integer("community_id").references(() => artisanCommunities.id, { onDelete: "cascade" }).notNull(),
+        userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+        message: text("message"),
+        status: varchar("status", { length: 30 }).default("PENDING").notNull(),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow()
+      },
+      (t) => ({
+        communityIdx: index("artisan_join_requests_community_idx").on(
+          t.communityId
+        ),
+        userIdx: index("artisan_join_requests_user_idx").on(t.userId)
+      })
+    );
+    artisanCommunityMemberships = pgTable(
+      "artisan_community_memberships",
+      {
+        id: serial("id").primaryKey(),
+        communityId: integer("community_id").references(() => artisanCommunities.id, { onDelete: "cascade" }).notNull(),
+        userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+        status: varchar("status", { length: 30 }).default("ACTIVE").notNull(),
+        joinedAt: timestamp("joined_at").defaultNow(),
+        removedAt: timestamp("removed_at"),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow()
+      },
+      (t) => ({
+        communityIdx: index("artisan_memberships_community_idx").on(t.communityId),
+        userIdx: index("artisan_memberships_user_idx").on(t.userId),
+        uniqueMember: unique("artisan_memberships_unique_member").on(
+          t.communityId,
+          t.userId
+        )
+      })
+    );
+    communityOperationAudit = pgTable(
+      "community_operation_audit",
+      {
+        id: serial("id").primaryKey(),
+        entityType: varchar("entity_type", { length: 40 }).notNull(),
+        entityId: integer("entity_id").notNull(),
+        action: varchar("action", { length: 40 }).notNull(),
+        performedBy: integer("performed_by").references(() => users.id),
+        reason: text("reason"),
+        metadata: jsonb("metadata").$type().default({}),
+        createdAt: timestamp("created_at").defaultNow()
+      },
+      (t) => ({
+        entityIdx: index("community_audit_entity_idx").on(t.entityType, t.entityId),
+        actorIdx: index("community_audit_actor_idx").on(t.performedBy),
+        createdIdx: index("community_audit_created_idx").on(t.createdAt)
+      })
+    );
+    events = pgTable(
+      "events",
+      {
+        id: serial("id").primaryKey(),
+        organizerId: integer("organizer_id").references(() => users.id, {
+          onDelete: "set null"
+        }),
+        communityId: integer("community_id").references(
+          () => artisanCommunities.id,
+          {
+            onDelete: "set null"
+          }
+        ),
+        title: varchar("title", { length: 220 }).notNull(),
+        slug: varchar("slug", { length: 260 }).unique().notNull(),
+        description: text("description").notNull(),
+        eventType: varchar("event_type", { length: 40 }).default("COMMUNITY").notNull(),
+        startsAt: timestamp("starts_at").notNull(),
+        endsAt: timestamp("ends_at"),
+        venue: varchar("venue", { length: 220 }),
+        city: varchar("city", { length: 120 }),
+        imageUrl: text("image_url"),
+        status: varchar("status", { length: 30 }).default("DRAFT").notNull(),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow(),
+        publishedAt: timestamp("published_at")
+      },
+      (t) => ({
+        statusIdx: index("events_status_idx").on(t.status),
+        startsAtIdx: index("events_starts_at_idx").on(t.startsAt),
+        organizerIdx: index("events_organizer_idx").on(t.organizerId)
+      })
+    );
+    eventAudit = pgTable(
+      "event_audit",
+      {
+        id: serial("id").primaryKey(),
+        eventId: integer("event_id").references(() => events.id, { onDelete: "cascade" }).notNull(),
+        action: varchar("action", { length: 40 }).notNull(),
+        performedBy: integer("performed_by").references(() => users.id),
+        reason: text("reason"),
+        createdAt: timestamp("created_at").defaultNow()
+      },
+      (t) => ({
+        eventIdx: index("event_audit_event_idx").on(t.eventId),
+        actorIdx: index("event_audit_actor_idx").on(t.performedBy)
+      })
+    );
+    eventAttendees = pgTable(
+      "event_attendees",
+      {
+        id: serial("id").primaryKey(),
+        eventId: integer("event_id").references(() => events.id, { onDelete: "cascade" }).notNull(),
+        userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+        status: varchar("status", { length: 20 }).default("GOING").notNull(),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow()
+      },
+      (t) => ({
+        eventIdx: index("event_attendees_event_idx").on(t.eventId),
+        userIdx: index("event_attendees_user_idx").on(t.userId),
+        uniqueAttendance: unique("event_attendees_unique").on(t.eventId, t.userId)
       })
     );
     insertUnifiedProfileSchema = createInsertSchema(unifiedProfiles);
@@ -6237,8 +6390,18 @@ function getJwtSecret() {
 }
 function extractToken(req) {
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
-  if (req.cookies?.auth_token) return req.cookies.auth_token;
+  if (typeof authHeader === "string") {
+    const cleaned = authHeader.trim();
+    if (/^Bearer\s+/i.test(cleaned)) {
+      const token = cleaned.replace(/^Bearer\s+/i, "").trim();
+      return token.length > 0 ? token : null;
+    }
+  }
+  const cookieToken = req.cookies?.auth_token;
+  if (typeof cookieToken === "string") {
+    const token = cookieToken.trim();
+    return token.length > 0 ? token : null;
+  }
   return null;
 }
 async function isSessionRevoked(token) {
@@ -6316,11 +6479,14 @@ var PUBLIC_PATHS = [
   "/api/ai/smart-chat",
   "/api/ai/connectors",
   // FAQ read endpoints — public so anyone can browse (writes require auth)
-  "/api/faq/categories"
+  "/api/faq/categories",
+  "/api/communities"
 ];
 var PUBLIC_PATH_PREFIXES = [
   "/api/home/",
   // Home page stats
+  "/api/profiles/",
+  // Public artisan and unified profile directory
   "/api/faq",
   // FAQ browsing — GET only (list/search/detail)
   "/api/artists/",
@@ -6353,28 +6519,34 @@ var PUBLIC_PATH_PREFIXES = [
   // Streaming browse — album details
   "/api/streaming/search",
   // Streaming search
-  "/api/streaming/subscription/plans"
+  "/api/streaming/subscription/plans",
   // Subscription plan listing (public)
+  "/api/communities/",
+  // Public artisan community discovery
+  "/api/events",
+  // Public published event discovery
+  "/api/astrology"
+  // Read-only astrology data used by the public VersoAI page
 ];
-function isPublicPath(path8, method) {
-  if (PUBLIC_PATHS.includes(path8)) return true;
-  if (path8.startsWith("/auth/oauth/")) return true;
-  if (path8.startsWith("/auth/google/") || path8.startsWith("/auth/facebook/"))
+function isPublicPath(path9, method) {
+  if (PUBLIC_PATHS.includes(path9)) return true;
+  if (path9.startsWith("/auth/oauth/")) return true;
+  if (path9.startsWith("/auth/google/") || path9.startsWith("/auth/facebook/"))
     return true;
   if (method === "GET") {
     for (const prefix of PUBLIC_PATH_PREFIXES) {
-      if (path8.startsWith(prefix)) return true;
+      if (path9.startsWith(prefix)) return true;
     }
   }
   return false;
 }
 async function globalAuthGate(req, res, next) {
-  const path8 = req.path;
-  if (isPublicPath(path8, req.method.toUpperCase())) return next();
-  if (!path8.startsWith("/api/") && !path8.startsWith("/auth/")) return next();
+  const path9 = req.path;
+  if (isPublicPath(path9, req.method.toUpperCase())) return next();
+  if (!path9.startsWith("/api/") && !path9.startsWith("/auth/")) return next();
   try {
     const token = extractToken(req);
-    if (!token) {
+    if (!token || token.trim().length < 10) {
       return res.status(401).json({
         success: false,
         status: 401,
@@ -6385,6 +6557,17 @@ async function globalAuthGate(req, res, next) {
       });
     }
     const decoded = jwt.verify(token, getJwtSecret());
+    const userId = decoded.userId ?? decoded.id;
+    if (!userId || !decoded.email || !decoded.role) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Invalid or expired token. Please log in again."
+        }
+      });
+    }
     const revoked = await isSessionRevoked(token);
     if (revoked) {
       res.clearCookie("auth_token", { path: "/" });
@@ -6398,8 +6581,8 @@ async function globalAuthGate(req, res, next) {
       });
     }
     req.user = {
-      userId: decoded.userId,
-      id: decoded.userId,
+      userId: String(userId),
+      id: String(userId),
       email: decoded.email,
       role: decoded.role
     };
@@ -6419,7 +6602,7 @@ function requireAuth(allowedRoles) {
   return async (req, res, next) => {
     try {
       const token = extractToken(req);
-      if (!token) {
+      if (!token || token.trim().length < 10) {
         return res.status(401).json({
           success: false,
           status: 401,
@@ -6430,9 +6613,17 @@ function requireAuth(allowedRoles) {
         });
       }
       const decoded = jwt.verify(token, getJwtSecret());
+      const userId = decoded.userId ?? decoded.id;
+      if (!userId || !decoded.email || !decoded.role) {
+        return res.status(401).json({
+          success: false,
+          status: 401,
+          error: { code: "INVALID_TOKEN", message: "Invalid or expired token" }
+        });
+      }
       const user = {
-        userId: decoded.userId,
-        id: decoded.userId,
+        userId: String(userId),
+        id: String(userId),
         email: decoded.email,
         role: decoded.role
       };
@@ -6457,6 +6648,48 @@ function requireAuth(allowedRoles) {
     }
   };
 }
+function requireJoelSuperadminForMutations(req, res, next) {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method.toUpperCase())) {
+    return next();
+  }
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(401).json({
+      success: false,
+      error: { code: "UNAUTHORIZED", message: "Authentication required" }
+    });
+  }
+  void db.select({
+    username: users.username,
+    gateUsername: users.gateUsername,
+    role: users.role
+  }).from(users).where(eq2(users.id, userId)).limit(1).then(([user]) => {
+    const username = String(user?.username || "").toLowerCase();
+    const gateUsername = String(user?.gateUsername || "").toLowerCase();
+    const role = String(user?.role || "").toLowerCase();
+    const isJoel = ["superuser", "superadmin"].includes(role) && (username === "joel_007" || gateUsername === "joel_007");
+    if (!isJoel) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: "JOEL_SUPERADMIN_ONLY",
+          message: "Database mutations are restricted to Joel's superadmin account."
+        }
+      });
+      return;
+    }
+    next();
+  }).catch((error) => {
+    console.error("[AUTH] Failed to verify mutation owner:", error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: "AUTHORIZATION_CHECK_FAILED",
+        message: "Could not verify mutation access"
+      }
+    });
+  });
+}
 function optionalAuth(req, res, next) {
   try {
     const token = extractToken(req);
@@ -6475,6 +6708,7 @@ import { z } from "zod";
 var ADMIN_NOTIFICATION_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var router = Router();
 router.use(requireAuth(["admin", "superuser"]));
+router.use(requireJoelSuperadminForMutations);
 async function auditLog(req, action, entityType, entityId, changes) {
   try {
     await db.insert(auditLogs).values({
@@ -8432,8 +8666,8 @@ router2.get("/api/businesses/:id/pdf", async (req, res) => {
       });
     }
     const { pdf_path, name } = result.rows[0];
-    const fs9 = await import("fs");
-    if (!fs9.existsSync(pdf_path)) {
+    const fs10 = await import("fs");
+    if (!fs10.existsSync(pdf_path)) {
       return res.status(404).json({
         success: false,
         error: "PDF file not found on server"
@@ -8920,11 +9154,11 @@ router3.post(
 var properties_default = router3;
 
 // server/routes/api-v1/index.ts
-import { Router as Router21, raw } from "express";
+import { Router as Router22, raw } from "express";
 
 // server/routes/api-v1/admin/index.ts
 init_db();
-import { Router as Router14 } from "express";
+import { Router as Router15 } from "express";
 
 // server/middleware/asyncHandler.ts
 function asyncHandler(fn) {
@@ -10732,20 +10966,20 @@ function logEvent(event) {
   return gtmEvent;
 }
 function getEvents(options) {
-  let events = Array.from(eventStore.values());
+  let events2 = Array.from(eventStore.values());
   if (options?.hoursBack) {
     const cutoffTime = new Date(
       Date.now() - options.hoursBack * 60 * 60 * 1e3
     );
-    events = events.filter((e) => e.timestamp > cutoffTime);
+    events2 = events2.filter((e) => e.timestamp > cutoffTime);
   }
   if (options?.category) {
-    events = events.filter((e) => e.eventCategory === options.category);
+    events2 = events2.filter((e) => e.eventCategory === options.category);
   }
-  events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  events2.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   const start = options?.offset || 0;
   const end = start + (options?.limit || 100);
-  return events.slice(start, end);
+  return events2.slice(start, end);
 }
 function getEventStats(hoursBack = 24) {
   const cutoffTime = new Date(Date.now() - hoursBack * 60 * 60 * 1e3);
@@ -10934,7 +11168,7 @@ router9.get(
     const hoursBack = parseInt(req.query.hoursBack) || 24;
     const category = req.query.category;
     try {
-      const events = getEvents({
+      const events2 = getEvents({
         limit,
         offset,
         hoursBack,
@@ -10942,11 +11176,11 @@ router9.get(
       });
       res.json({
         success: true,
-        data: events,
+        data: events2,
         pagination: {
           limit,
           offset,
-          count: events.length
+          count: events2.length
         }
       });
     } catch (error) {
@@ -12519,15 +12753,243 @@ router13.post(
 );
 var roles_default = router13;
 
-// server/routes/api-v1/admin/index.ts
+// server/routes/api-v1/admin/communities.ts
+init_db();
+import { Router as Router14 } from "express";
 var router14 = Router14();
+var reviewRoles = ["admin", "moderator", "superuser"];
+var manageRoles = ["admin", "superuser"];
+async function recordAudit(entityType, entityId, action, performedBy, reason) {
+  await pool.query(
+    `INSERT INTO community_operation_audit
+       (entity_type, entity_id, action, performed_by, reason)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [entityType, entityId, action, performedBy, reason || null]
+  );
+}
+router14.get("/", requireAuth(reviewRoles), async (req, res) => {
+  try {
+    const status = String(req.query.status || "").trim();
+    const values = [];
+    const where = status ? `WHERE ac.status = $${values.push(status)}` : "";
+    const result = await pool.query(
+      `SELECT ac.id, ac.name, ac.slug, ac.region, ac.category, ac.focus,
+              ac.description, ac.activities, ac.image_url, ac.status,
+              ac.member_count, ac.created_at, ac.updated_at,
+              COALESCE(u.display_name, u.username, u.email) AS owner_name,
+              COUNT(jr.id) FILTER (WHERE jr.status = 'PENDING')::int AS pending_requests
+       FROM artisan_communities ac
+       LEFT JOIN users u ON u.id = ac.owner_id
+       LEFT JOIN artisan_community_join_requests jr ON jr.community_id = ac.id
+       ${where}
+       GROUP BY ac.id, u.display_name, u.username, u.email
+       ORDER BY ac.updated_at DESC NULLS LAST, ac.created_at DESC`,
+      values
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[admin:communities:list]", error);
+    res.status(500).json({ success: false, error: "Failed to load communities" });
+  }
+});
+router14.get("/join-requests", requireAuth(reviewRoles), async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT jr.id, jr.community_id, jr.user_id, jr.message, jr.status,
+              jr.created_at, jr.updated_at, ac.name AS community_name,
+              COALESCE(u.display_name, u.username, u.email) AS applicant_name,
+              u.email AS applicant_email
+       FROM artisan_community_join_requests jr
+       JOIN artisan_communities ac ON ac.id = jr.community_id
+       JOIN users u ON u.id = jr.user_id
+       WHERE jr.status = 'PENDING'
+       ORDER BY jr.created_at ASC`
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[admin:communities:requests]", error);
+    res.status(500).json({ success: false, error: "Failed to load join requests" });
+  }
+});
+router14.patch("/:id/status", requireAuth(manageRoles), async (req, res) => {
+  const id = Number(req.params.id);
+  const status = String(req.body?.status || "").toUpperCase();
+  const reason = String(req.body?.reason || "").trim().slice(0, 1e3);
+  const allowed = /* @__PURE__ */ new Set([
+    "DRAFT",
+    "PENDING",
+    "PUBLISHED",
+    "SUSPENDED",
+    "ARCHIVED"
+  ]);
+  if (!Number.isInteger(id) || !allowed.has(status)) {
+    return res.status(400).json({ success: false, error: "Invalid community status" });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE artisan_communities
+       SET status = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, name, status, updated_at`,
+      [status, id]
+    );
+    if (!result.rowCount) {
+      return res.status(404).json({ success: false, error: "Community not found" });
+    }
+    await recordAudit(
+      "community",
+      id,
+      `status_${status.toLowerCase()}`,
+      Number(req.user?.userId),
+      reason
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[admin:communities:status]", error);
+    res.status(500).json({ success: false, error: "Failed to update community" });
+  }
+});
+router14.patch(
+  "/join-requests/:id/status",
+  requireAuth(reviewRoles),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    const status = String(req.body?.status || "").toUpperCase();
+    const reason = String(req.body?.reason || "").trim().slice(0, 1e3);
+    if (!Number.isInteger(id) || !["APPROVED", "REJECTED", "CANCELLED"].includes(status)) {
+      return res.status(400).json({ success: false, error: "Invalid request status" });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `UPDATE artisan_community_join_requests
+       SET status = $1, updated_at = NOW()
+       WHERE id = $2 AND status = 'PENDING'
+       RETURNING id, community_id, user_id, status`,
+        [status, id]
+      );
+      if (!result.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ success: false, error: "Pending request not found" });
+      }
+      if (status === "APPROVED") {
+        await client.query(
+          `INSERT INTO artisan_community_memberships (community_id, user_id, status, joined_at, updated_at)
+         VALUES ($1, $2, 'ACTIVE', NOW(), NOW())
+         ON CONFLICT (community_id, user_id)
+         DO UPDATE SET status = 'ACTIVE', removed_at = NULL, updated_at = NOW()`,
+          [result.rows[0].community_id, result.rows[0].user_id]
+        );
+      }
+      await client.query(
+        `INSERT INTO community_operation_audit
+         (entity_type, entity_id, action, performed_by, reason)
+       VALUES ('join_request', $1, $2, $3, $4)`,
+        [
+          id,
+          `join_${status.toLowerCase()}`,
+          Number(req.user?.userId),
+          reason || null
+        ]
+      );
+      await client.query(
+        `UPDATE artisan_communities ac
+       SET member_count = (
+         SELECT COUNT(*)::int
+         FROM artisan_community_memberships m
+         WHERE m.community_id = ac.id AND m.status = 'ACTIVE'
+       ), updated_at = NOW()
+       WHERE ac.id = $1`,
+        [result.rows[0].community_id]
+      );
+      await client.query("COMMIT");
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => void 0);
+      console.error("[admin:communities:request-status]", error);
+      res.status(500).json({ success: false, error: "Failed to update join request" });
+    } finally {
+      client.release();
+    }
+  }
+);
+router14.patch(
+  "/posts/:id/moderation",
+  requireAuth(reviewRoles),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    const action = String(req.body?.action || "").toLowerCase();
+    const reason = String(req.body?.reason || "").trim().slice(0, 1e3);
+    if (!Number.isInteger(id) || !["hide", "unhide", "remove"].includes(action)) {
+      return res.status(400).json({ success: false, error: "Invalid moderation action" });
+    }
+    if (!reason) {
+      return res.status(400).json({ success: false, error: "A moderation reason is required" });
+    }
+    try {
+      const result = action === "remove" ? await pool.query(
+        "DELETE FROM community_posts WHERE id = $1 RETURNING id",
+        [id]
+      ) : await pool.query(
+        "UPDATE community_posts SET is_hidden = $1 WHERE id = $2 RETURNING id, is_hidden",
+        [action === "hide", id]
+      );
+      if (!result.rowCount) {
+        return res.status(404).json({ success: false, error: "Post not found" });
+      }
+      await recordAudit(
+        "post",
+        id,
+        `moderation_${action}`,
+        Number(req.user?.userId),
+        reason
+      );
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("[admin:communities:moderation]", error);
+      res.status(500).json({ success: false, error: "Failed to moderate post" });
+    }
+  }
+);
+var communities_default = router14;
+
+// server/routes/api-v1/admin/index.ts
+var router15 = Router15();
+router15.use(requireJoelSuperadminForMutations);
 var ADMIN_ANALYTICS_PERIODS = {
   day: 1,
   week: 7,
   month: 30,
   year: 365
 };
-router14.get("/analytics", requireAuth(["admin"]), async (req, res) => {
+router15.get(
+  "/control-center/summary",
+  requireAuth(["admin", "moderator", "superuser"]),
+  async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM unified_profiles
+           WHERE account_type = 'artisan' AND status = 'PENDING') AS "pendingArtisanProfiles",
+          (SELECT COUNT(*)::int FROM artisan_community_join_requests
+           WHERE status = 'PENDING') AS "pendingJoinRequests",
+          (SELECT COUNT(*)::int FROM artisan_communities
+           WHERE status <> 'PUBLISHED') AS "unpublishedCommunities",
+          (SELECT COUNT(*)::int FROM community_posts
+           WHERE is_hidden = TRUE) AS "moderationItems"
+      `);
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      console.error("Failed to fetch GeoAdmin control-center summary:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch control-center summary"
+      });
+    }
+  }
+);
+router15.get("/analytics", requireAuth(["admin"]), async (req, res) => {
   try {
     const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
     const result = await pool.query(
@@ -12540,16 +13002,16 @@ router14.get("/analytics", requireAuth(["admin"]), async (req, res) => {
          (SELECT COUNT(*)::int FROM users WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS "newUsers"`,
       [days]
     );
-    const metrics = result.rows[0];
+    const metrics2 = result.rows[0];
     res.json({
       success: true,
       data: {
-        totalBusinesses: Number(metrics.totalBusinesses || 0),
-        totalPages: Number(metrics.totalPages || 0),
-        totalUsers: Number(metrics.totalUsers || 0),
-        activeAdmins: Number(metrics.activeAdmins || 0),
-        businessesTrend: Number(metrics.newBusinesses || 0),
-        usersTrend: Number(metrics.newUsers || 0)
+        totalBusinesses: Number(metrics2.totalBusinesses || 0),
+        totalPages: Number(metrics2.totalPages || 0),
+        totalUsers: Number(metrics2.totalUsers || 0),
+        activeAdmins: Number(metrics2.activeAdmins || 0),
+        businessesTrend: Number(metrics2.newBusinesses || 0),
+        usersTrend: Number(metrics2.newUsers || 0)
       }
     });
   } catch (error) {
@@ -12557,7 +13019,7 @@ router14.get("/analytics", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch analytics" });
   }
 });
-router14.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
+router15.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
   try {
     const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
     const result = await pool.query(
@@ -12577,17 +13039,18 @@ router14.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch activity log" });
   }
 });
-router14.use("/businesses", businesses_default2);
-router14.use("/categories", categories_default);
-router14.use("/artists", artists_default);
-router14.use("/campaigns", campaigns_default);
-router14.use("/jobs", jobs_default);
-router14.use("/gtm-events", gtm_events_default);
-router14.use("/verification", verification_default);
-router14.use("/security", security_default);
-router14.use("/users", users_default);
-router14.use("/roles", roles_default);
-router14.get(
+router15.use("/businesses", businesses_default2);
+router15.use("/categories", categories_default);
+router15.use("/artists", artists_default);
+router15.use("/campaigns", campaigns_default);
+router15.use("/jobs", jobs_default);
+router15.use("/gtm-events", gtm_events_default);
+router15.use("/verification", verification_default);
+router15.use("/security", security_default);
+router15.use("/users", users_default);
+router15.use("/roles", roles_default);
+router15.use("/communities", communities_default);
+router15.get(
   "/stats",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -12624,13 +13087,13 @@ router14.get(
     }
   })
 );
-var admin_default = router14;
+var admin_default = router15;
 
 // server/routes/api-v1/connections.ts
 init_db();
 init_schema();
 init_notification_service();
-import { Router as Router15 } from "express";
+import { Router as Router16 } from "express";
 import { eq as eq15, and as and8 } from "drizzle-orm";
 
 // server/middleware/rate-limiter.ts
@@ -12838,8 +13301,8 @@ console.log(
 );
 
 // server/routes/api-v1/connections.ts
-var router15 = Router15();
-router15.post(
+var router16 = Router16();
+router16.post(
   "/request",
   connectionRequestLimiter,
   async (req, res) => {
@@ -12890,7 +13353,7 @@ router15.post(
     }
   }
 );
-router15.post("/:id/accept", async (req, res) => {
+router16.post("/:id/accept", async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
@@ -12923,7 +13386,7 @@ router15.post("/:id/accept", async (req, res) => {
     });
   }
 });
-router15.post("/:id/decline", async (req, res) => {
+router16.post("/:id/decline", async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
@@ -12955,7 +13418,7 @@ router15.post("/:id/decline", async (req, res) => {
     });
   }
 });
-router15.get("/pending/:userId", async (req, res) => {
+router16.get("/pending/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const pending = await getPendingConnections(parseInt(userId));
@@ -12972,7 +13435,7 @@ router15.get("/pending/:userId", async (req, res) => {
     });
   }
 });
-router15.get("/network/:userId", async (req, res) => {
+router16.get("/network/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const connections2 = await getUserConnections(parseInt(userId));
@@ -12989,12 +13452,12 @@ router15.get("/network/:userId", async (req, res) => {
     });
   }
 });
-var connections_default = router15;
+var connections_default = router16;
 
 // server/routes/api-v1/subscription.ts
 init_db();
-import { Router as Router16 } from "express";
-var router16 = Router16();
+import { Router as Router17 } from "express";
+var router17 = Router17();
 var VALID_TIERS = [
   "free",
   "essential",
@@ -13151,7 +13614,7 @@ function getEffectiveTier(user) {
   }
   return user.subscription_tier || "free";
 }
-router16.get("/status", async (req, res) => {
+router17.get("/status", async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -13198,7 +13661,7 @@ router16.get("/status", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.post("/upgrade", async (req, res) => {
+router17.post("/upgrade", async (req, res) => {
   try {
     const { userId, targetTier, startTrial = false } = req.body;
     if (!userId || !targetTier) {
@@ -13275,7 +13738,7 @@ router16.post("/upgrade", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.post("/downgrade", async (req, res) => {
+router17.post("/downgrade", async (req, res) => {
   try {
     const { userId, targetTier } = req.body;
     if (!userId || !targetTier) {
@@ -13318,7 +13781,7 @@ router16.post("/downgrade", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.get("/feature-check", async (req, res) => {
+router17.get("/feature-check", async (req, res) => {
   try {
     const { userId, feature } = req.query;
     if (!userId || !feature) {
@@ -13359,7 +13822,7 @@ router16.get("/feature-check", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router16.get("/tiers", async (_req, res) => {
+router17.get("/tiers", async (_req, res) => {
   const tiers = VALID_TIERS.map((tier) => ({
     key: tier,
     order: TIER_ORDER[tier],
@@ -13374,7 +13837,7 @@ router16.get("/tiers", async (_req, res) => {
   }));
   res.json({ success: true, data: tiers });
 });
-router16.post("/cancel-trial", async (req, res) => {
+router17.post("/cancel-trial", async (req, res) => {
   try {
     const { userId } = req.body;
     if (!userId) {
@@ -13410,15 +13873,15 @@ router16.post("/cancel-trial", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var subscription_default = router16;
+var subscription_default = router17;
 
 // server/routes/api-v1/email-subscriptions.ts
 init_db();
 init_schema();
-import { Router as Router17 } from "express";
+import { Router as Router18 } from "express";
 import { eq as eq16, and as and9 } from "drizzle-orm";
 import crypto2 from "crypto";
-var router17 = Router17();
+var router18 = Router18();
 var VALID_TYPES = [
   "job_alerts",
   "contract_alerts",
@@ -13479,7 +13942,7 @@ async function getUserTier(userId) {
   }
   return user.subscription_tier || "free";
 }
-router17.post("/subscribe", async (req, res) => {
+router18.post("/subscribe", async (req, res) => {
   try {
     const { userId, type, frequency = "daily_digest", filters = {} } = req.body;
     if (!userId) {
@@ -13552,7 +14015,7 @@ router17.post("/subscribe", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.get("/my", async (req, res) => {
+router18.get("/my", async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -13580,7 +14043,7 @@ router17.get("/my", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.put("/:id", async (req, res) => {
+router18.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
@@ -13623,7 +14086,7 @@ router17.put("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.delete("/:id", async (req, res) => {
+router18.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
@@ -13649,7 +14112,7 @@ router17.delete("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router17.get("/unsubscribe/:token", async (req, res) => {
+router18.get("/unsubscribe/:token", async (req, res) => {
   try {
     const { token } = req.params;
     const [subscription] = await db.select().from(emailSubscriptions).where(eq16(emailSubscriptions.unsubscribeToken, token));
@@ -13690,7 +14153,7 @@ router17.get("/unsubscribe/:token", async (req, res) => {
     res.status(500).json({ success: false, error: "Something went wrong" });
   }
 });
-router17.get("/available", async (_req, res) => {
+router18.get("/available", async (_req, res) => {
   const channels = [
     {
       type: "job_alerts",
@@ -13735,7 +14198,7 @@ router17.get("/available", async (_req, res) => {
   ];
   res.json({ success: true, data: channels });
 });
-router17.get("/stats", async (req, res) => {
+router18.get("/stats", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -13767,13 +14230,13 @@ router17.get("/stats", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var email_subscriptions_default = router17;
+var email_subscriptions_default = router18;
 
 // server/routes/api-v1/payments.ts
 init_db();
-import { Router as Router18 } from "express";
+import { Router as Router19 } from "express";
 import Stripe from "stripe";
-var router18 = Router18();
+var router19 = Router19();
 var STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 var STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 var stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-02-24.acacia" }) : null;
@@ -13794,7 +14257,7 @@ function requireStripe(res) {
   }
   return true;
 }
-router18.post("/create-checkout", async (req, res) => {
+router19.post("/create-checkout", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const authenticatedUserId = req.user?.userId;
@@ -13868,7 +14331,7 @@ router18.post("/create-checkout", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/webhook", async (req, res) => {
+router19.post("/webhook", async (req, res) => {
   if (!stripe) {
     return res.status(503).json({ error: "Stripe not configured" });
   }
@@ -14056,7 +14519,7 @@ router18.post("/webhook", async (req, res) => {
   }
   res.json({ received: true });
 });
-router18.get("/billing-history", async (req, res) => {
+router19.get("/billing-history", async (req, res) => {
   try {
     const authenticatedUserId = req.user?.userId;
     const requestedUserId = req.query.userId;
@@ -14113,7 +14576,7 @@ router18.get("/billing-history", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/create-portal", async (req, res) => {
+router19.post("/create-portal", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const authenticatedUserId = req.user?.userId;
@@ -14269,7 +14732,7 @@ async function autoSavePaymentMethod(pmId, userId, customerId, opts = {}) {
     console.error(`\u274C Auto-save PM error for ${pmId}:`, error.message);
   }
 }
-router18.post("/add-card-session", async (req, res) => {
+router19.post("/add-card-session", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const userId = req.user?.userId;
@@ -14310,7 +14773,7 @@ router18.post("/add-card-session", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/setup-intent", async (req, res) => {
+router19.post("/setup-intent", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const { userId } = req.body;
@@ -14351,7 +14814,7 @@ router18.post("/setup-intent", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/save-card", async (req, res) => {
+router19.post("/save-card", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const {
@@ -14449,7 +14912,7 @@ router18.post("/save-card", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/my-cards", async (req, res) => {
+router19.get("/my-cards", async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -14474,7 +14937,7 @@ router18.get("/my-cards", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.put("/cards/:cardId/default", async (req, res) => {
+router19.put("/cards/:cardId/default", async (req, res) => {
   try {
     const userId = req.user?.userId;
     const { cardId } = req.params;
@@ -14502,7 +14965,7 @@ router18.put("/cards/:cardId/default", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/cards/:userId", async (req, res) => {
+router19.get("/cards/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const authenticatedUserId = req.user?.userId;
@@ -14510,8 +14973,8 @@ router18.get("/cards/:userId", async (req, res) => {
     if (!authenticatedUserId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
-    const isAdmin = authenticatedRole === "admin" || authenticatedRole === "superuser";
-    if (!isAdmin && String(userId) !== String(authenticatedUserId)) {
+    const isAdmin2 = authenticatedRole === "admin" || authenticatedRole === "superuser";
+    if (!isAdmin2 && String(userId) !== String(authenticatedUserId)) {
       return res.status(403).json({
         success: false,
         error: "Forbidden: cannot access another user's payment methods"
@@ -14535,7 +14998,7 @@ router18.get("/cards/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.delete("/cards/:cardId", async (req, res) => {
+router19.delete("/cards/:cardId", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const { cardId } = req.params;
@@ -14565,7 +15028,7 @@ router18.delete("/cards/:cardId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/charge", async (req, res) => {
+router19.post("/charge", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const {
@@ -14697,7 +15160,7 @@ router18.post("/charge", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.post("/refund", async (req, res) => {
+router19.post("/refund", async (req, res) => {
   if (!requireStripe(res)) return;
   try {
     const { chargeId, reason = "requested_by_customer" } = req.body;
@@ -14751,7 +15214,7 @@ router18.post("/refund", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/customers", requireAuth(["admin", "superuser"]), async (req, res) => {
+router19.get("/customers", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const search = req.query.search;
     const page = parseInt(req.query.page) || 1;
@@ -14822,7 +15285,7 @@ router18.get("/customers", requireAuth(["admin", "superuser"]), async (req, res)
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req, res) => {
+router19.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const status = req.query.status;
     const category = req.query.category;
@@ -14874,7 +15337,7 @@ router18.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req, re
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router18.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req, res) => {
+router19.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -14900,15 +15363,15 @@ router18.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req, res)
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var payments_default = router18;
+var payments_default = router19;
 
 // server/routes/api-v1/referral.ts
 init_db();
 init_schema();
-import { Router as Router19 } from "express";
+import { Router as Router20 } from "express";
 import { eq as eq17, sql as sql5 } from "drizzle-orm";
 import jwt2 from "jsonwebtoken";
-var router19 = Router19();
+var router20 = Router20();
 function generateReferralCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -14930,7 +15393,7 @@ function getUserId(req) {
     return null;
   }
 }
-router19.get("/code", async (req, res) => {
+router20.get("/code", async (req, res) => {
   const userId = getUserId(req);
   if (!userId)
     return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -14966,7 +15429,7 @@ router19.get("/code", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to get referral code" });
   }
 });
-router19.get("/stats", async (req, res) => {
+router20.get("/stats", async (req, res) => {
   const userId = getUserId(req);
   if (!userId)
     return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -14990,7 +15453,7 @@ router19.get("/stats", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to get referral stats" });
   }
 });
-router19.post("/apply", async (req, res) => {
+router20.post("/apply", async (req, res) => {
   const userId = getUserId(req);
   if (!userId)
     return res.status(401).json({ success: false, error: "Not authenticated" });
@@ -15017,13 +15480,13 @@ router19.post("/apply", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to apply referral code" });
   }
 });
-var referral_default = router19;
+var referral_default = router20;
 
 // server/routes/api-v1/cards.ts
 init_db();
-import { Router as Router20 } from "express";
+import { Router as Router21 } from "express";
 import Stripe2 from "stripe";
-var router20 = Router20();
+var router21 = Router21();
 var stripe2 = null;
 function initStripe() {
   if (!stripe2 && process.env.STRIPE_SECRET_KEY) {
@@ -15066,7 +15529,7 @@ var TIER_SPENDING_LIMITS = {
   max: { amount: 15e3, interval: "monthly" },
   enterprise: { amount: 5e4, interval: "monthly" }
 };
-router20.post("/cardholder", async (req, res) => {
+router21.post("/cardholder", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { userId } = req.body;
@@ -15116,7 +15579,7 @@ router20.post("/cardholder", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/issue", async (req, res) => {
+router21.post("/issue", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { userId, cardholderId, label } = req.body;
@@ -15221,7 +15684,7 @@ router20.post("/issue", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/my-cards", async (req, res) => {
+router21.get("/my-cards", async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -15246,7 +15709,7 @@ router20.get("/my-cards", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/:cardId/details", async (req, res) => {
+router21.get("/:cardId/details", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { cardId } = req.params;
@@ -15293,7 +15756,7 @@ router20.get("/:cardId/details", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/:cardId/freeze", async (req, res) => {
+router21.post("/:cardId/freeze", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { cardId } = req.params;
@@ -15327,7 +15790,7 @@ router20.post("/:cardId/freeze", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/:cardId/cancel", async (req, res) => {
+router21.post("/:cardId/cancel", async (req, res) => {
   if (!requireStripe2(res)) return;
   try {
     const { cardId } = req.params;
@@ -15359,7 +15822,7 @@ router20.post("/:cardId/cancel", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/points/balance", async (req, res) => {
+router21.get("/points/balance", async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -15431,7 +15894,7 @@ function getNextTierMultiplier(currentTier) {
   const nextTier = order[idx + 1];
   return { tier: nextTier, multiplier: TIER_MULTIPLIERS[nextTier] };
 }
-router20.get("/points/history", async (req, res) => {
+router21.get("/points/history", async (req, res) => {
   try {
     const userId = req.user?.userId;
     const page = parseInt(req.query.page) || 1;
@@ -15472,7 +15935,7 @@ router20.get("/points/history", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.get("/points/rewards", async (req, res) => {
+router21.get("/points/rewards", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM points_redemptions WHERE is_active = true ORDER BY points_cost ASC`
@@ -15486,7 +15949,7 @@ router20.get("/points/rewards", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/points/redeem", async (req, res) => {
+router21.post("/points/redeem", async (req, res) => {
   try {
     const { userId, rewardId } = req.body;
     if (!userId || !rewardId) {
@@ -15534,7 +15997,7 @@ router20.post("/points/redeem", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router20.post("/webhook/issuing", async (req, res) => {
+router21.post("/webhook/issuing", async (req, res) => {
   try {
     const event = req.body;
     switch (event.type) {
@@ -15612,7 +16075,7 @@ router20.post("/webhook/issuing", async (req, res) => {
     res.status(500).json({ received: false, error: error.message });
   }
 });
-router20.get("/config", async (_req, res) => {
+router21.get("/config", async (_req, res) => {
   res.json({
     success: true,
     data: {
@@ -15637,25 +16100,25 @@ router20.get("/config", async (_req, res) => {
     }
   });
 });
-var cards_default = router20;
+var cards_default = router21;
 
 // server/routes/api-v1/index.ts
-var router21 = Router21();
-router21.use("/admin", admin_default);
-router21.use("/connections", connections_default);
-router21.use("/subscription", subscription_default);
-router21.use("/email-subscriptions", email_subscriptions_default);
-router21.use("/payments/webhook", raw({ type: "application/json" }));
-router21.use("/payments", payments_default);
-router21.use("/referral", referral_default);
-router21.use("/cards/webhook/issuing", raw({ type: "application/json" }));
-router21.use("/cards", cards_default);
-var api_v1_default = router21;
+var router22 = Router22();
+router22.use("/admin", admin_default);
+router22.use("/connections", connections_default);
+router22.use("/subscription", subscription_default);
+router22.use("/email-subscriptions", email_subscriptions_default);
+router22.use("/payments/webhook", raw({ type: "application/json" }));
+router22.use("/payments", payments_default);
+router22.use("/referral", referral_default);
+router22.use("/cards/webhook/issuing", raw({ type: "application/json" }));
+router22.use("/cards", cards_default);
+var api_v1_default = router22;
 
 // server/routes/auth.ts
 init_db();
 init_schema();
-import { Router as Router23 } from "express";
+import { Router as Router24 } from "express";
 import jwt4 from "jsonwebtoken";
 import bcrypt2 from "bcryptjs";
 import crypto3 from "crypto";
@@ -15666,10 +16129,43 @@ init_email_service();
 // server/routes/capabilities.ts
 init_db();
 init_schema();
-import { Router as Router22 } from "express";
+import { Router as Router23 } from "express";
 import { z as z2 } from "zod";
 import { eq as eq18, sql as sql6 } from "drizzle-orm";
-var router22 = Router22();
+var router23 = Router23();
+function normalizeAccountRoleFromEmail(email, fallbackRole) {
+  const normalizedEmail = (email || "").toLowerCase();
+  const normalizedRole = (fallbackRole || "").toLowerCase();
+  if (normalizedEmail.includes("@versoair-gu") || normalizedEmail.includes("@versoair.gu") || normalizedEmail.includes("@versoair-general") || normalizedEmail.includes("@versoair-generaluser")) {
+    return "user";
+  }
+  if (normalizedEmail.includes("@versoair-geoa") || normalizedEmail.includes("@versoair.geoa") || normalizedEmail.includes("@versoair-geo-admin") || normalizedEmail.includes("@versoair-geo")) {
+    return "geo-admin";
+  }
+  if (normalizedEmail.includes("@versoair-supa") || normalizedEmail.includes("@versoair.supa") || normalizedEmail.includes("@versoair-superadmin") || normalizedEmail.includes("@versoair-admin")) {
+    return "superuser";
+  }
+  if (normalizedEmail.includes("@versoair-art") || normalizedEmail.includes("@versoair.art") || normalizedEmail.includes("@versoair-artist")) {
+    return "artist";
+  }
+  if (normalizedEmail.includes("@versoair-cr") || normalizedEmail.includes("@versoair.cr") || normalizedEmail.includes("@versoair-creator") || normalizedEmail.includes("@versoair-creator-user")) {
+    return "creator";
+  }
+  if ([
+    "admin",
+    "moderator",
+    "superuser",
+    "tsr",
+    "artist",
+    "creator",
+    "geo-admin",
+    "contractor",
+    "user"
+  ].includes(normalizedRole)) {
+    return normalizedRole;
+  }
+  return normalizedRole || "user";
+}
 async function computeUserCapabilities(userId) {
   const userResult = await db.execute(
     sql6`SELECT id, username, email, role, subscription_tier, subscription_status,
@@ -15679,6 +16175,10 @@ async function computeUserCapabilities(userId) {
   );
   const user = userResult.rows?.[0];
   if (!user) return null;
+  const effectiveRole = normalizeAccountRoleFromEmail(
+    user.email,
+    user.role || "user"
+  );
   const artistResult = await db.execute(
     sql6`SELECT id, stage_name FROM artist_profiles WHERE user_id = ${userId} LIMIT 1`
   );
@@ -15695,8 +16195,11 @@ async function computeUserCapabilities(userId) {
     isTrialing = true;
   }
   const portals = /* @__PURE__ */ new Set(["general", "streamer"]);
-  if (hasArtistProfile || user.role === "artist") portals.add("artist");
+  if (hasArtistProfile || effectiveRole === "artist") portals.add("artist");
   if (isContractor) portals.add("contractor");
+  if (effectiveRole === "creator" || effectiveRole === "geo-admin" || effectiveRole === "superuser" || effectiveRole === "admin") {
+    portals.add("streamer");
+  }
   if (effectiveTier !== "free" && ["active", "trialing"].includes(user.subscription_status || "active")) {
     portals.add("geo-admin");
   }
@@ -15704,10 +16207,13 @@ async function computeUserCapabilities(userId) {
   if (existingPortalAccess.includes("community") || user.username?.startsWith("community_")) {
     portals.add("community");
   }
-  if (user.role === "tsr") {
+  if (existingPortalAccess.includes("artisan")) {
+    portals.add("artisan");
+  }
+  if (user.role === "tsr" || effectiveRole === "geo-admin") {
     portals.add("geo-admin");
   }
-  if (["admin", "moderator", "superuser"].includes(user.role)) {
+  if (["admin", "moderator", "superuser"].includes(effectiveRole)) {
     portals.add("artist");
     portals.add("geo-admin");
     portals.add("contractor");
@@ -15725,14 +16231,14 @@ async function computeUserCapabilities(userId) {
     isContractor,
     hasOAuthAccount: !!user.oauth_provider,
     oauthProvider: user.oauth_provider || null,
-    canAccessBlog: portals.has("community") || portals.has("geo-admin") || ["admin", "moderator", "superuser"].includes(user.role),
-    role: user.role || "user"
+    canAccessBlog: portals.has("community") || portals.has("geo-admin") || ["admin", "moderator", "superuser"].includes(effectiveRole),
+    role: effectiveRole
   };
 }
 async function syncPortalAccess(userId, portals) {
   await db.update(users).set({ portalAccess: portals }).where(eq18(users.id, userId));
 }
-router22.get(
+router23.get(
   "/capabilities",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -15754,7 +16260,7 @@ var becomeArtistSchema = z2.object({
   spotifyUrl: z2.string().url().optional().or(z2.literal("")),
   instagramHandle: z2.string().max(100).optional()
 });
-router22.post(
+router23.post(
   "/become-artist",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -15895,7 +16401,7 @@ router22.post(
     });
   })
 );
-router22.post(
+router23.post(
   "/restore-staff-role",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -15944,7 +16450,7 @@ var becomeContractorSchema = z2.object({
   phone: z2.string().max(30).optional(),
   hourlyRate: z2.string().optional()
 });
-router22.post(
+router23.post(
   "/become-contractor",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -15987,7 +16493,7 @@ var upgradeSchema = z2.object({
   tier: z2.enum(["essential", "verified", "max", "enterprise"]),
   billingCycle: z2.enum(["monthly", "annual"]).default("monthly")
 });
-router22.post(
+router23.post(
   "/upgrade-subscription",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -16018,11 +16524,11 @@ router22.post(
     });
   })
 );
-var capabilities_default = router22;
+var capabilities_default = router23;
 
 // server/routes/auth.ts
 var JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
-var router23 = Router23();
+var router24 = Router24();
 async function isTsrWhitelisted(email) {
   try {
     const result = await db.execute(
@@ -16043,6 +16549,39 @@ function getTokenFromRequest(req) {
   if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
   if (req.cookies?.auth_token) return req.cookies.auth_token;
   return null;
+}
+function normalizeAccountRoleFromEmail2(email, fallbackRole) {
+  const normalizedEmail = (email || "").toLowerCase();
+  const normalizedRole = (fallbackRole || "").toLowerCase();
+  if (normalizedEmail.includes("@versoair-gu") || normalizedEmail.includes("@versoair.gu") || normalizedEmail.includes("@versoair-general") || normalizedEmail.includes("@versoair-generaluser")) {
+    return "user";
+  }
+  if (normalizedEmail.includes("@versoair-geoa") || normalizedEmail.includes("@versoair.geoa") || normalizedEmail.includes("@versoair-geo-admin") || normalizedEmail.includes("@versoair-geo")) {
+    return "geo-admin";
+  }
+  if (normalizedEmail.includes("@versoair-supa") || normalizedEmail.includes("@versoair.supa") || normalizedEmail.includes("@versoair-superadmin") || normalizedEmail.includes("@versoair-admin")) {
+    return "superuser";
+  }
+  if (normalizedEmail.includes("@versoair-art") || normalizedEmail.includes("@versoair.art") || normalizedEmail.includes("@versoair-artist")) {
+    return "artist";
+  }
+  if (normalizedEmail.includes("@versoair-cr") || normalizedEmail.includes("@versoair.cr") || normalizedEmail.includes("@versoair-creator") || normalizedEmail.includes("@versoair-creator-user")) {
+    return "creator";
+  }
+  if ([
+    "admin",
+    "moderator",
+    "superuser",
+    "tsr",
+    "artist",
+    "creator",
+    "geo-admin",
+    "contractor",
+    "user"
+  ].includes(normalizedRole)) {
+    return normalizedRole;
+  }
+  return normalizedRole || "user";
 }
 function setAuthCookie(res, token) {
   res.cookie("auth_token", token, {
@@ -16187,7 +16726,7 @@ async function finishLogin(user, effectiveLoginRole, req, res) {
     }
   });
 }
-router23.post(
+router24.post(
   "/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -16256,7 +16795,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -16269,10 +16808,30 @@ router23.post(
     const result = await db.execute(
       sql7`SELECT id, username, email, password, role, is_verified, display_name,
                  failed_login_attempts, locked_until, must_change_password,
-                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
-          FROM users WHERE LOWER(email) = LOWER(${email}) LIMIT 1`
+                 subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at,
+                 oauth_provider
+          FROM users WHERE LOWER(email) = LOWER(${email}) ORDER BY id`
     );
-    const user = result.rows?.[0];
+    const rows = result.rows || [];
+    const requestedAccountId = req.body?.accountId ? Number(req.body.accountId) : null;
+    const selectedUser = requestedAccountId ? rows.find((row) => Number(row.id) === Number(requestedAccountId)) || null : rows[0] || null;
+    if (rows.length > 1 && !requestedAccountId) {
+      const accounts = rows.map((row) => ({
+        id: Number(row.id),
+        email: row.email,
+        username: row.username,
+        role: row.role || "user",
+        name: row.display_name || row.username || null
+      }));
+      res.json({
+        success: true,
+        requiresAccountSelection: true,
+        accounts,
+        message: "Multiple accounts were found for this email. Please choose one."
+      });
+      return;
+    }
+    const user = selectedUser;
     if (user?.lockedUntil && new Date(user.lockedUntil) > /* @__PURE__ */ new Date()) {
       const unlockMins = Math.ceil(
         (new Date(user.lockedUntil).getTime() - Date.now()) / 6e4
@@ -16287,11 +16846,8 @@ router23.post(
       res.status(401).json({ success: false, message: "Invalid email or password" });
       return;
     }
-    const oauthCheck = await db.execute(
-      sql7`SELECT oauth_provider FROM users WHERE id = ${user.id} AND oauth_provider IS NOT NULL LIMIT 1`
-    );
-    if ((oauthCheck.rows?.length ?? 0) > 0) {
-      const provider = oauthCheck.rows[0].oauth_provider;
+    if (user?.oauth_provider) {
+      const provider = user.oauth_provider;
       res.status(400).json({
         success: false,
         message: `This account uses ${provider} sign-in. Please sign in with ${provider} instead.`,
@@ -16361,7 +16917,7 @@ router23.post(
     await finishLogin(user, effectiveLoginRole, req, res);
   })
 );
-router23.post(
+router24.post(
   "/verify-login-otp",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -16419,7 +16975,7 @@ router23.post(
     await finishLogin(user, user.role || "user", req, res);
   })
 );
-router23.post(
+router24.post(
   "/logout",
   asyncHandler(async (req, res) => {
     const token = getTokenFromRequest(req);
@@ -16434,7 +16990,7 @@ router23.post(
     res.json({ success: true });
   })
 );
-router23.get(
+router24.get(
   "/verify-email",
   asyncHandler(async (req, res) => {
     const { token } = req.query;
@@ -16510,7 +17066,7 @@ router23.get(
     }
   })
 );
-router23.post(
+router24.post(
   "/resend-verification",
   asyncHandler(async (req, res) => {
     const { email } = req.body;
@@ -16561,7 +17117,7 @@ router23.post(
     });
   })
 );
-router23.get(
+router24.get(
   "/verify",
   asyncHandler(async (req, res) => {
     const token = getTokenFromRequest(req);
@@ -16577,9 +17133,10 @@ router23.get(
     }
   })
 );
-router23.get(
+router24.get(
   "/session",
   asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "private, max-age=30");
     const token = getTokenFromRequest(req);
     if (!token) {
       res.status(401).json({ success: false, message: "No token provided" });
@@ -16595,7 +17152,7 @@ router23.get(
             FROM users WHERE id = ${Number(userId)} LIMIT 1`
       );
       const dbUser = dbResult.rows?.[0];
-      const isAdmin = (dbUser?.role || decoded.role) === "admin" || (dbUser?.role || decoded.role) === "superuser" || (dbUser?.role || decoded.role) === "moderator";
+      const isAdmin2 = (dbUser?.role || decoded.role) === "admin" || (dbUser?.role || decoded.role) === "superuser" || (dbUser?.role || decoded.role) === "moderator";
       let capabilities = null;
       try {
         capabilities = await computeUserCapabilities(Number(userId));
@@ -16605,6 +17162,10 @@ router23.get(
       const createdAt = dbUser?.created_at ? new Date(dbUser.created_at) : null;
       const isNewAccount = createdAt ? Date.now() - createdAt.getTime() < 5 * 60 * 1e3 : false;
       const userDisplayName = dbUser?.display_name || null;
+      const effectiveRole = normalizeAccountRoleFromEmail2(
+        dbUser?.email || decoded.email,
+        dbUser?.role || decoded.role || "user"
+      );
       res.json({
         success: true,
         user: {
@@ -16613,8 +17174,8 @@ router23.get(
           username: dbUser?.username || null,
           displayName: userDisplayName,
           name: userDisplayName || dbUser?.username || decoded.name || decoded.email?.split("@")[0] || "User",
-          isAdmin,
-          role: dbUser?.role || decoded.role || "user",
+          isAdmin: isAdmin2,
+          role: effectiveRole,
           isFirstLogin: isNewAccount && !userDisplayName,
           needsDisplayName: !userDisplayName,
           subscriptionTier: dbUser?.subscription_tier || "free",
@@ -16635,7 +17196,7 @@ router23.get(
     }
   })
 );
-router23.post(
+router24.post(
   "/forgot-password",
   forgotPasswordLimiter,
   asyncHandler(async (req, res) => {
@@ -16672,7 +17233,7 @@ router23.post(
     res.json(GENERIC_OK);
   })
 );
-router23.post(
+router24.post(
   "/admin-gate",
   asyncHandler(async (req, res) => {
     const { username, password } = req.body;
@@ -16746,7 +17307,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/geo-admin",
   asyncHandler(async (req, res) => {
     res.status(403).json({
@@ -16765,7 +17326,7 @@ var registerGeoAdminSchema = z3.object({
     "Username must be lowercase alphanumeric with underscores only"
   )
 });
-router23.post(
+router24.post(
   "/register-geoadmin",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -16840,7 +17401,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/reset-password",
   asyncHandler(async (req, res) => {
     const parsed = resetPasswordSchema.safeParse(req.body);
@@ -16904,7 +17465,7 @@ router23.post(
 var startTrialSchema = z3.object({
   tier: z3.enum(["essential", "verified", "max", "enterprise"])
 });
-router23.post(
+router24.post(
   "/start-trial",
   asyncHandler(async (req, res) => {
     const token = getTokenFromRequest(req);
@@ -16967,7 +17528,7 @@ router23.post(
     });
   })
 );
-router23.get(
+router24.get(
   "/account/profile",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -16993,7 +17554,7 @@ router23.get(
     res.json({ success: true, profile: user });
   })
 );
-router23.put(
+router24.put(
   "/account/profile",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17020,7 +17581,7 @@ router23.put(
     res.json({ success: true, message: "Profile updated" });
   })
 );
-router23.post(
+router24.post(
   "/account/set-display-name",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17080,7 +17641,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/account/change-password",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17145,7 +17706,7 @@ router23.post(
     res.json({ success: true, message: "Password changed successfully" });
   })
 );
-router23.get(
+router24.get(
   "/sessions",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17188,7 +17749,7 @@ router23.get(
     res.json({ success: true, sessions: enriched });
   })
 );
-router23.post(
+router24.post(
   "/logout-all",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17223,7 +17784,7 @@ router23.post(
     res.json({ success: true, message: "All sessions revoked" });
   })
 );
-router23.post(
+router24.post(
   "/logout/:sessionId",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17266,7 +17827,7 @@ router23.post(
     res.json({ success: true, message: "Session revoked" });
   })
 );
-router23.get(
+router24.get(
   "/admin/sessions",
   asyncHandler(async (req, res) => {
     const userRole = req.user?.role;
@@ -17287,7 +17848,7 @@ router23.get(
     res.json({ success: true, sessions: sessions.rows || [] });
   })
 );
-router23.get(
+router24.get(
   "/account/preferences",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17312,7 +17873,7 @@ router23.get(
     res.json({ success: true, preferences: prefs });
   })
 );
-router23.put(
+router24.put(
   "/account/preferences",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17346,7 +17907,7 @@ router23.put(
     res.json({ success: true, message: "Preferences saved" });
   })
 );
-router23.delete(
+router24.delete(
   "/account",
   asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
@@ -17382,7 +17943,7 @@ function requireSuperuser(req, res, next) {
     res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
 }
-router23.get(
+router24.get(
   "/admin/users",
   requireSuperuser,
   asyncHandler(async (_req, res) => {
@@ -17409,7 +17970,7 @@ router23.get(
     });
   })
 );
-router23.post(
+router24.post(
   "/admin/unlock-user",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -17425,7 +17986,7 @@ router23.post(
     res.json({ success: true, message: "Account unlocked" });
   })
 );
-router23.post(
+router24.post(
   "/admin/change-password",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -17452,7 +18013,7 @@ router23.post(
     res.json({ success: true, message: "Password changed successfully" });
   })
 );
-router23.post(
+router24.post(
   "/admin/change-role",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -17478,7 +18039,7 @@ router23.post(
     res.json({ success: true, message: `Role changed to ${newRole}` });
   })
 );
-router23.post(
+router24.post(
   "/admin/verify-user",
   requireSuperuser,
   asyncHandler(async (req, res) => {
@@ -17516,7 +18077,7 @@ var artistLoginSchema = z3.union([
   })
 ]);
 var SUPERUSER_ARTIST_CODE = "VA-jdcz-SYS_MASTER";
-router23.post(
+router24.post(
   "/artist/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -17713,7 +18274,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/artist/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -17803,7 +18364,10 @@ router23.post(
       res.status(400).json({ success: false, message: "Email or artist code required" });
       return;
     }
-    const effectiveRole = user.role === "artist" ? "artist" : user.role || "user";
+    const effectiveRole = normalizeAccountRoleFromEmail2(
+      user.email,
+      user.role === "artist" ? "artist" : user.role || "user"
+    );
     let artistProfile = null;
     try {
       const profiles = await db.select().from(artistProfiles).where(eq19(artistProfiles.userId, user.id)).limit(1);
@@ -17858,7 +18422,7 @@ var subscriberLoginSchema = z3.object({
   email: z3.string().email("Invalid email format"),
   password: z3.string().min(1, "Password is required")
 });
-router23.post(
+router24.post(
   "/subscriber/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -17917,7 +18481,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/subscriber/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -18016,13 +18580,14 @@ var communityRegisterSchema = z3.object({
   email: z3.string().email("Invalid email format"),
   password: z3.string().min(8, "Password must be at least 8 characters").max(128).regex(/[A-Z]/, "Password must contain at least one uppercase letter").regex(/[0-9]/, "Password must contain at least one number"),
   displayName: z3.string().min(2, "Display name must be at least 2 characters"),
-  interests: z3.array(z3.string()).optional()
+  interests: z3.array(z3.string()).optional(),
+  accountType: z3.enum(["community", "artisan"]).optional()
 });
 var communityLoginSchema = z3.object({
   email: z3.string().email("Invalid email format"),
   password: z3.string().min(1, "Password is required")
 });
-router23.post(
+router24.post(
   "/community/register",
   registerLimiter,
   asyncHandler(async (req, res) => {
@@ -18031,7 +18596,13 @@ router23.post(
       res.status(400).json({ success: false, message: parsed.error.errors[0].message });
       return;
     }
-    const { email, password, displayName, interests } = parsed.data;
+    const {
+      email,
+      password,
+      displayName,
+      interests,
+      accountType = "community"
+    } = parsed.data;
     const existing = await db.select({ id: users.id }).from(users).where(eq19(users.email, email.toLowerCase())).limit(1);
     if (existing.length > 0) {
       res.status(409).json({
@@ -18049,7 +18620,7 @@ router23.post(
       role: "user",
       subscriptionTier: "free",
       // community members start free
-      portalAccess: ["general", "community"],
+      portalAccess: accountType === "artisan" ? ["general", "community", "artisan"] : ["general", "community"],
       isVerified: false
     }).returning({
       id: users.id,
@@ -18082,7 +18653,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/community/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
@@ -18160,7 +18731,7 @@ router23.post(
     });
   })
 );
-router23.get(
+router24.get(
   "/tsr/whitelist",
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
@@ -18174,7 +18745,7 @@ router23.get(
     res.json({ success: true, entries: entries.rows });
   })
 );
-router23.post(
+router24.post(
   "/tsr/whitelist",
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
@@ -18211,7 +18782,7 @@ router23.post(
     res.json({ success: true, message: "Email added to TSR whitelist" });
   })
 );
-router23.delete(
+router24.delete(
   "/tsr/whitelist/:email",
   requireAuth(["admin", "superuser"]),
   asyncHandler(async (req, res) => {
@@ -18247,7 +18818,7 @@ router23.delete(
   })
 );
 var stepUpCodes = /* @__PURE__ */ new Map();
-router23.post(
+router24.post(
   "/step-up/request",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -18297,7 +18868,7 @@ router23.post(
     });
   })
 );
-router23.post(
+router24.post(
   "/step-up/verify",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -18325,17 +18896,17 @@ router23.post(
     });
   })
 );
-var auth_default = router23;
+var auth_default = router24;
 
 // server/routes/oauth.ts
 init_db();
 init_db();
 init_schema();
-import { Router as Router24 } from "express";
+import { Router as Router25 } from "express";
 import jwt5 from "jsonwebtoken";
 import crypto4 from "crypto";
 import { eq as eq20, sql as sql8 } from "drizzle-orm";
-var router24 = Router24();
+var router25 = Router25();
 (async () => {
   try {
     await pool.query(`
@@ -18453,7 +19024,7 @@ setInterval(
   },
   10 * 60 * 1e3
 );
-router24.get(
+router25.get(
   "/oauth/:provider",
   asyncHandler(async (req, res) => {
     const { provider } = req.params;
@@ -18660,19 +19231,19 @@ async function handleOAuthCallback(req, res) {
     res.redirect(`${appUrl}/auth/signin?mode=login&error=oauth_server_error`);
   }
 }
-router24.get(
+router25.get(
   "/oauth/:provider/callback",
   asyncHandler(async (req, res) => {
     await handleOAuthCallback(req, res);
   })
 );
-router24.post(
+router25.post(
   "/oauth/:provider/callback",
   asyncHandler(async (req, res) => {
     await handleOAuthCallback(req, res);
   })
 );
-router24.get(
+router25.get(
   "/oauth/status",
   asyncHandler(async (req, res) => {
     const authHeader = req.headers.authorization;
@@ -18804,11 +19375,11 @@ function getRolePermissions(role) {
       };
   }
 }
-var oauth_default = router24;
+var oauth_default = router25;
 
 // server/routes/social-api.ts
 init_db();
-import { Router as Router25 } from "express";
+import { Router as Router26 } from "express";
 import { desc as desc9, eq as eq21, isNull, and as and11, inArray, sql as sql9 } from "drizzle-orm";
 
 // shared/social-schema.ts
@@ -19262,7 +19833,7 @@ var insertFaqCategorySchema = createInsertSchema2(faqCategories);
 // server/routes/social-api.ts
 init_schema();
 init_notification_service();
-var router25 = Router25();
+var router26 = Router26();
 async function recordSocialAudit(event) {
   await pool.query(
     `INSERT INTO social_audit_events
@@ -19328,7 +19899,7 @@ async function syncFollowerCount(socialUserId) {
   const followers = await db.select({ id: socialFollowers.id }).from(socialFollowers).where(eq21(socialFollowers.followingId, socialUserId));
   await db.update(socialUsers).set({ followerCount: followers.length }).where(eq21(socialUsers.id, socialUserId));
 }
-router25.get("/posts", async (req, res) => {
+router26.get("/posts", async (req, res) => {
   try {
     const { page = 1, limit = 10, sort = "recent", postType } = req.query;
     const pageNum = parseInt(page) || 1;
@@ -19371,7 +19942,7 @@ router25.get("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch posts" });
   }
 });
-router25.get("/posts/following", async (req, res) => {
+router26.get("/posts/following", async (req, res) => {
   try {
     const appUserId = req.user?.userId;
     if (!appUserId) {
@@ -19422,7 +19993,7 @@ router25.get("/posts/following", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch feed" });
   }
 });
-router25.get("/posts/music", async (req, res) => {
+router26.get("/posts/music", async (req, res) => {
   try {
     const { page = 1, limit = 10, sort = "recent" } = req.query;
     const pageNum = parseInt(page) || 1;
@@ -19457,7 +20028,7 @@ router25.get("/posts/music", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch music feed" });
   }
 });
-router25.post("/posts", async (req, res) => {
+router26.post("/posts", async (req, res) => {
   try {
     const appUserId = req.user?.userId;
     const {
@@ -19524,7 +20095,7 @@ router25.post("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create post" });
   }
 });
-router25.post("/audit/screenshot", async (req, res) => {
+router26.post("/audit/screenshot", async (req, res) => {
   try {
     await recordSocialAudit({
       actorUserId: req.user?.userId,
@@ -19542,7 +20113,7 @@ router25.post("/audit/screenshot", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to record screenshot audit" });
   }
 });
-router25.get(
+router26.get(
   "/posts/:postId/media-download",
   async (req, res) => {
     try {
@@ -19568,43 +20139,75 @@ router25.get(
     }
   }
 );
-router25.get("/posts/:postId/media-download", async (req, res) => {
-  try {
-    const postId = Number(req.params.postId);
-    const [post] = await db.select({ imageUrls: socialPosts.imageUrls, videoUrl: socialPosts.videoUrl, allowMediaDownload: socialPosts.allowMediaDownload }).from(socialPosts).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
-    if (!post || !post.allowMediaDownload) {
-      await recordSocialAudit({ actorUserId: req.user?.userId, postId, eventType: "media_download", outcome: "denied" });
-      return res.status(403).json({ success: false, error: "The author has disabled media downloads" });
+router26.get(
+  "/posts/:postId/media-download",
+  async (req, res) => {
+    try {
+      const postId = Number(req.params.postId);
+      const [post] = await db.select({
+        imageUrls: socialPosts.imageUrls,
+        videoUrl: socialPosts.videoUrl,
+        allowMediaDownload: socialPosts.allowMediaDownload
+      }).from(socialPosts).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+      if (!post || !post.allowMediaDownload) {
+        await recordSocialAudit({
+          actorUserId: req.user?.userId,
+          postId,
+          eventType: "media_download",
+          outcome: "denied"
+        });
+        return res.status(403).json({
+          success: false,
+          error: "The author has disabled media downloads"
+        });
+      }
+      const mediaUrl = post.videoUrl || post.imageUrls?.[0];
+      if (!mediaUrl)
+        return res.status(404).json({ success: false, error: "No downloadable media found" });
+      await recordSocialAudit({
+        actorUserId: req.user?.userId,
+        postId,
+        eventType: "media_download",
+        outcome: "allowed"
+      });
+      return res.redirect(mediaUrl);
+    } catch (error) {
+      console.error("Error authorizing media download:", error);
+      return res.status(500).json({ success: false, error: "Failed to authorize media download" });
     }
-    const mediaUrl = post.videoUrl || post.imageUrls?.[0];
-    if (!mediaUrl) return res.status(404).json({ success: false, error: "No downloadable media found" });
-    await recordSocialAudit({ actorUserId: req.user?.userId, postId, eventType: "media_download", outcome: "allowed" });
-    return res.redirect(mediaUrl);
-  } catch (error) {
-    console.error("Error authorizing media download:", error);
-    return res.status(500).json({ success: false, error: "Failed to authorize media download" });
   }
-});
-router25.post("/posts/:postId/share", async (req, res) => {
+);
+router26.post("/posts/:postId/share", async (req, res) => {
   try {
     const postId = Number(req.params.postId);
     const [updatedPost] = await db.update(socialPosts).set({ shareCount: sql9`COALESCE(${socialPosts.shareCount}, 0) + 1` }).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).returning({ shareCount: socialPosts.shareCount });
-    if (!updatedPost) return res.status(404).json({ success: false, error: "Post not found" });
-    await recordSocialAudit({ actorUserId: req.user?.userId, postId, eventType: "post_share", outcome: "success" });
+    if (!updatedPost)
+      return res.status(404).json({ success: false, error: "Post not found" });
+    await recordSocialAudit({
+      actorUserId: req.user?.userId,
+      postId,
+      eventType: "post_share",
+      outcome: "success"
+    });
     return res.json({ success: true, shareCount: updatedPost.shareCount });
   } catch (error) {
     console.error("Error recording share:", error);
     return res.status(500).json({ success: false, error: "Failed to record share" });
   }
 });
-router25.get("/posts/:postId", async (req, res) => {
+router26.get("/posts/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await db.select().from(socialPosts).where(eq21(socialPosts.id, parseInt(postId))).limit(1);
     if (!post.length) {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
-    const comments = await db.select().from(socialComments).where(eq21(socialComments.postId, parseInt(postId))).orderBy(desc9(socialComments.createdAt));
+    const comments = await db.select().from(socialComments).where(
+      and11(
+        eq21(socialComments.postId, parseInt(postId)),
+        isNull(socialComments.deletedAt)
+      )
+    ).orderBy(desc9(socialComments.createdAt));
     res.json({
       success: true,
       data: {
@@ -19617,7 +20220,7 @@ router25.get("/posts/:postId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch post" });
   }
 });
-router25.post("/posts/:postId/like", async (req, res) => {
+router26.post("/posts/:postId/like", async (req, res) => {
   try {
     const { postId } = req.params;
     const appUserId = req.user?.userId;
@@ -19672,7 +20275,7 @@ router25.post("/posts/:postId/like", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to like post" });
   }
 });
-router25.delete("/posts/:postId/like", async (req, res) => {
+router26.delete("/posts/:postId/like", async (req, res) => {
   try {
     const { postId } = req.params;
     const appUserId = req.user?.userId;
@@ -19704,7 +20307,7 @@ router25.delete("/posts/:postId/like", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to unlike post" });
   }
 });
-router25.post("/posts/:postId/comments", async (req, res) => {
+router26.post("/posts/:postId/comments", async (req, res) => {
   try {
     const { postId } = req.params;
     const appUserId = req.user?.userId;
@@ -19712,17 +20315,18 @@ router25.post("/posts/:postId/comments", async (req, res) => {
     if (!appUserId) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
-    if (!content) {
+    if (!content || !String(content).trim()) {
       return res.status(400).json({
         success: false,
         error: "Missing required field: content"
       });
     }
+    const trimmedContent = String(content).trim();
     const authorId = await getSocialProfileId(Number(appUserId));
     const newComment = await db.insert(socialComments).values({
       postId: parseInt(postId),
       authorId,
-      content,
+      content: trimmedContent,
       parentCommentId
     }).returning();
     const post = await db.select().from(socialPosts).where(eq21(socialPosts.id, parseInt(postId))).limit(1);
@@ -19760,14 +20364,19 @@ router25.post("/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to add comment" });
   }
 });
-router25.get("/posts/:postId/comments", async (req, res) => {
+router26.get("/posts/:postId/comments", async (req, res) => {
   try {
     const { postId } = req.params;
     const { page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     const offset = (pageNum - 1) * limitNum;
-    const comments = await db.select().from(socialComments).where(eq21(socialComments.postId, parseInt(postId))).orderBy(desc9(socialComments.createdAt)).limit(limitNum).offset(offset);
+    const comments = await db.select().from(socialComments).where(
+      and11(
+        eq21(socialComments.postId, parseInt(postId)),
+        isNull(socialComments.deletedAt)
+      )
+    ).orderBy(desc9(socialComments.createdAt)).limit(limitNum).offset(offset);
     res.json({
       success: true,
       data: comments,
@@ -19781,7 +20390,87 @@ router25.get("/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch comments" });
   }
 });
-router25.get("/follow/following", async (req, res) => {
+router26.patch("/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const commentId = Number(req.params.commentId);
+    const { content } = req.body;
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
+    if (!trimmedContent) {
+      return res.status(400).json({ success: false, error: "Comment content is required" });
+    }
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const [existingComment] = await db.select().from(socialComments).where(
+      and11(
+        eq21(socialComments.id, commentId),
+        eq21(socialComments.postId, postId),
+        eq21(socialComments.authorId, authorProfileId),
+        isNull(socialComments.deletedAt)
+      )
+    ).limit(1);
+    if (!existingComment) {
+      return res.status(404).json({ success: false, error: "Comment not found" });
+    }
+    const [updatedComment] = await db.update(socialComments).set({
+      content: trimmedContent,
+      isEdited: true,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq21(socialComments.id, commentId)).returning();
+    res.json({
+      success: true,
+      data: updatedComment,
+      message: "Comment updated"
+    });
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    res.status(500).json({ success: false, error: "Failed to update comment" });
+  }
+});
+router26.delete("/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const commentId = Number(req.params.commentId);
+    if (!appUserId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const [existingComment] = await db.select().from(socialComments).where(
+      and11(
+        eq21(socialComments.id, commentId),
+        eq21(socialComments.postId, postId),
+        eq21(socialComments.authorId, authorProfileId),
+        isNull(socialComments.deletedAt)
+      )
+    ).limit(1);
+    if (!existingComment) {
+      return res.status(404).json({ success: false, error: "Comment not found" });
+    }
+    const [deletedComment] = await db.update(socialComments).set({
+      deletedAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq21(socialComments.id, commentId)).returning();
+    const [postRow] = await db.select({ commentCount: socialPosts.commentCount }).from(socialPosts).where(and11(eq21(socialPosts.id, postId), isNull(socialPosts.deletedAt))).limit(1);
+    if (postRow) {
+      await db.update(socialPosts).set({
+        commentCount: Math.max(0, (postRow.commentCount || 0) - 1)
+      }).where(eq21(socialPosts.id, postId));
+    }
+    res.json({
+      success: true,
+      data: deletedComment,
+      message: "Comment deleted"
+    });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ success: false, error: "Failed to delete comment" });
+  }
+});
+router26.get("/follow/following", async (req, res) => {
   try {
     const appUserId = req.user?.userId;
     if (!appUserId) {
@@ -19798,7 +20487,7 @@ router25.get("/follow/following", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch following list" });
   }
 });
-router25.post("/follow/:userId", async (req, res) => {
+router26.post("/follow/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const appUserId = req.user?.userId;
@@ -19878,7 +20567,7 @@ router25.post("/follow/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to follow user" });
   }
 });
-router25.delete("/follow/:userId", async (req, res) => {
+router26.delete("/follow/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const appUserId = req.user?.userId;
@@ -19909,7 +20598,7 @@ router25.delete("/follow/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to unfollow user" });
   }
 });
-router25.get("/users/:userId", async (req, res) => {
+router26.get("/users/:userId", async (req, res) => {
   try {
     const targetAppUserId = parseInt(req.params.userId, 10);
     if (!targetAppUserId || Number.isNaN(targetAppUserId)) {
@@ -20008,7 +20697,7 @@ router25.get("/users/:userId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch user" });
   }
 });
-router25.get("/users/:userId/tracks", async (req, res) => {
+router26.get("/users/:userId/tracks", async (req, res) => {
   try {
     const targetUserId = parseInt(req.params.userId, 10);
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
@@ -20034,7 +20723,7 @@ router25.get("/users/:userId/tracks", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch tracks" });
   }
 });
-router25.get("/users/:userId/posts", async (req, res) => {
+router26.get("/users/:userId/posts", async (req, res) => {
   try {
     const targetUserId = parseInt(req.params.userId, 10);
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
@@ -20063,14 +20752,14 @@ router25.get("/users/:userId/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch posts" });
   }
 });
-var social_api_default = router25;
+var social_api_default = router26;
 
 // server/routes/faq-api.ts
 init_db();
-import { Router as Router26 } from "express";
+import { Router as Router27 } from "express";
 import { desc as desc10, eq as eq22, and as and12, ilike as ilike6, isNull as isNull2, sql as sql10 } from "drizzle-orm";
-var router26 = Router26();
-router26.get("/categories", async (_req, res) => {
+var router27 = Router27();
+router27.get("/categories", async (_req, res) => {
   try {
     const categories = await db.select().from(faqCategories).orderBy(faqCategories.sortOrder);
     if (!categories.length) {
@@ -20132,7 +20821,7 @@ router26.get("/categories", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch categories" });
   }
 });
-router26.get("/", async (req, res) => {
+router27.get("/", async (req, res) => {
   try {
     const {
       page = 1,
@@ -20193,7 +20882,7 @@ router26.get("/", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch FAQ topics" });
   }
 });
-router26.get("/search", async (req, res) => {
+router27.get("/search", async (req, res) => {
   try {
     const { q, limit = 5 } = req.query;
     if (!q) {
@@ -20220,7 +20909,7 @@ router26.get("/search", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to search FAQ" });
   }
 });
-router26.get("/:id", async (req, res) => {
+router27.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
@@ -20274,7 +20963,7 @@ router26.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch FAQ topic" });
   }
 });
-router26.post("/", async (req, res) => {
+router27.post("/", async (req, res) => {
   try {
     const authorId = req.user?.userId;
     const { title, content, faqCategory = "general", tags } = req.body;
@@ -20309,7 +20998,7 @@ router26.post("/", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create FAQ topic" });
   }
 });
-router26.post("/:id/reply", async (req, res) => {
+router27.post("/:id/reply", async (req, res) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
@@ -20351,7 +21040,7 @@ router26.post("/:id/reply", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to post reply" });
   }
 });
-router26.post("/:id/resolve", async (req, res) => {
+router27.post("/:id/resolve", async (req, res) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
@@ -20369,13 +21058,13 @@ router26.post("/:id/resolve", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to resolve FAQ topic" });
   }
 });
-var faq_api_default = router26;
+var faq_api_default = router27;
 
 // server/routes/tickets.ts
 init_db();
-import { Router as Router27 } from "express";
+import { Router as Router28 } from "express";
 import { sql as sql11 } from "drizzle-orm";
-var router27 = Router27();
+var router28 = Router28();
 var inMemoryTickets = [];
 async function ensureTicketsTable() {
   try {
@@ -20394,7 +21083,7 @@ function calculateSLATargetHours(priority2) {
   };
   return slaMap[priority2.toLowerCase()] || 24;
 }
-router27.get("/", async (req, res) => {
+router28.get("/", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
@@ -20409,7 +21098,7 @@ router27.get("/", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/", async (req, res) => {
+router28.post("/", async (req, res) => {
   try {
     const payload = req.body || {};
     const priority2 = payload.priority || "medium";
@@ -20452,7 +21141,7 @@ router27.post("/", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.put("/:id", async (req, res) => {
+router28.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const payload = req.body || {};
@@ -20491,7 +21180,7 @@ router27.put("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.delete("/:id", async (req, res) => {
+router28.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const exists = await ensureTicketsTable();
@@ -20510,7 +21199,7 @@ router27.delete("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.put("/:id/assign", async (req, res) => {
+router28.put("/:id/assign", async (req, res) => {
   try {
     const { id } = req.params;
     const { assigneeId, team } = req.body;
@@ -20538,7 +21227,7 @@ router27.put("/:id/assign", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/:id/escalate", async (req, res) => {
+router28.post("/:id/escalate", async (req, res) => {
   try {
     const { id } = req.params;
     const exists = await ensureTicketsTable();
@@ -20565,7 +21254,7 @@ router27.post("/:id/escalate", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/:id/comments", async (req, res) => {
+router28.get("/:id/comments", async (req, res) => {
   try {
     const { id } = req.params;
     const exists = await ensureTicketsTable();
@@ -20585,7 +21274,7 @@ router27.get("/:id/comments", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/:id/comments", async (req, res) => {
+router28.post("/:id/comments", async (req, res) => {
   try {
     const { id } = req.params;
     const { body, authorName } = req.body || {};
@@ -20614,7 +21303,7 @@ router27.post("/:id/comments", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/stats/summary", async (req, res) => {
+router28.get("/stats/summary", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
@@ -20664,7 +21353,7 @@ router27.get("/stats/summary", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/sla/breaches", async (req, res) => {
+router28.get("/sla/breaches", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
@@ -20682,7 +21371,7 @@ router27.get("/sla/breaches", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/status/:status", async (req, res) => {
+router28.get("/status/:status", async (req, res) => {
   try {
     const { status } = req.params;
     const exists = await ensureTicketsTable();
@@ -20697,7 +21386,7 @@ router27.get("/status/:status", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.get("/priority/critical", async (req, res) => {
+router28.get("/priority/critical", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
@@ -20711,7 +21400,7 @@ router27.get("/priority/critical", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router27.post("/batch/update", async (req, res) => {
+router28.post("/batch/update", async (req, res) => {
   try {
     const { ids, updates } = req.body;
     if (!ids || !Array.isArray(ids)) {
@@ -20730,18 +21419,18 @@ router27.post("/batch/update", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var tickets_default = router27;
+var tickets_default = router28;
 
 // server/routes/jobs.ts
 init_db();
 init_schema();
 init_email_service();
-import { Router as Router28 } from "express";
+import { Router as Router29 } from "express";
 import { sql as sql12, eq as eq23, and as and13, or as or5, ilike as ilike7, desc as desc11, count as count9 } from "drizzle-orm";
 import jwt6 from "jsonwebtoken";
 var ADMIN_NOTIFICATION_EMAIL5 = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
-var router28 = Router28();
-router28.get("/", async (req, res) => {
+var router29 = Router29();
+router29.get("/", async (req, res) => {
   try {
     const {
       type,
@@ -20793,7 +21482,7 @@ router28.get("/", async (req, res) => {
     });
   }
 });
-router28.get("/search", async (req, res) => {
+router29.get("/search", async (req, res) => {
   try {
     const {
       search,
@@ -20941,7 +21630,7 @@ router28.get("/search", async (req, res) => {
     });
   }
 });
-router28.post("/:id/apply", async (req, res) => {
+router29.post("/:id/apply", async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -21007,21 +21696,21 @@ router28.post("/:id/apply", async (req, res) => {
     });
   }
 });
-router28.post("/:id/save", (req, res) => {
+router29.post("/:id/save", (req, res) => {
   res.json({
     success: true,
     message: "Job saved successfully",
     jobId: req.params.id
   });
 });
-router28.post("/:id/unsave", (req, res) => {
+router29.post("/:id/unsave", (req, res) => {
   res.json({
     success: true,
     message: "Job removed from saved list",
     jobId: req.params.id
   });
 });
-router28.post("/", async (req, res) => {
+router29.post("/", async (req, res) => {
   try {
     const {
       title,
@@ -21080,17 +21769,17 @@ router28.post("/", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-var jobs_default2 = router28;
+var jobs_default2 = router29;
 
 // server/routes/music.ts
 init_db();
 init_schema();
-import { Router as Router29 } from "express";
+import { Router as Router30 } from "express";
 import { eq as eq24 } from "drizzle-orm";
 import multer from "multer";
 import fs2 from "fs";
 init_notification_service();
-var router29 = Router29();
+var router30 = Router30();
 var storage = multer.memoryStorage();
 var upload = multer({
   storage,
@@ -21197,7 +21886,7 @@ async function artistsHaveCountryCode() {
   }
   return hasCountryCodeCol;
 }
-router29.get("/artists", async (req, res) => {
+router30.get("/artists", async (req, res) => {
   try {
     const { countryCode } = req.query;
     console.log(
@@ -21223,7 +21912,7 @@ router29.get("/artists", async (req, res) => {
     });
   }
 });
-router29.get("/tracks", async (_req, res) => {
+router30.get("/tracks", async (_req, res) => {
   try {
     await ensureTrackColumns();
     const result = await pool.query(
@@ -21261,7 +21950,7 @@ router29.get("/tracks", async (_req, res) => {
     });
   }
 });
-router29.get("/analytics", async (_req, res) => {
+router30.get("/analytics", async (_req, res) => {
   try {
     const analytics2 = await db.select().from(musicAnalytics).orderBy(musicAnalytics.recordedAt).limit(1);
     const analyticsData = analytics2[0] || {
@@ -21281,7 +21970,7 @@ router29.get("/analytics", async (_req, res) => {
     });
   }
 });
-router29.get("/artists/:id", async (req, res) => {
+router30.get("/artists/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const artist = await db.select().from(musicArtists).where(eq24(musicArtists.id, parseInt(id))).limit(1);
@@ -21299,7 +21988,7 @@ router29.get("/artists/:id", async (req, res) => {
     });
   }
 });
-router29.get("/my-artist", requireAuth(), async (req, res) => {
+router30.get("/my-artist", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const result = await pool.query(
@@ -21315,7 +22004,7 @@ router29.get("/my-artist", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch artist profile" });
   }
 });
-router29.post(
+router30.post(
   "/tracks/upload",
   requireAuth(),
   (req, res, next) => {
@@ -21466,7 +22155,7 @@ router29.post(
     }
   }
 );
-router29.get("/tracks/:id/download", async (req, res) => {
+router30.get("/tracks/:id/download", async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -21645,7 +22334,7 @@ router29.get("/tracks/:id/download", async (req, res) => {
 });
 var playCountDebounce = /* @__PURE__ */ new Map();
 var PLAY_DEBOUNCE_MS = 3e4;
-router29.post(
+router30.post(
   "/tracks/:id/purchase",
   requireAuth,
   async (req, res) => {
@@ -21788,7 +22477,7 @@ router29.post(
     }
   }
 );
-router29.get("/tracks/:id/stream", async (req, res) => {
+router30.get("/tracks/:id/stream", async (req, res) => {
   try {
     const origin = req.headers.origin;
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
@@ -21923,7 +22612,7 @@ router29.get("/tracks/:id/stream", async (req, res) => {
     });
   }
 });
-router29.get("/tracks/:id/monetization", async (req, res) => {
+router30.get("/tracks/:id/monetization", async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -21939,7 +22628,7 @@ router29.get("/tracks/:id/monetization", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch monetization data" });
   }
 });
-router29.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
+router30.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -21980,7 +22669,7 @@ router29.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to update monetization" });
   }
 });
-router29.get("/earnings", async (_req, res) => {
+router30.get("/earnings", async (_req, res) => {
   try {
     await ensureTrackColumns();
     const result = await pool.query(`
@@ -22015,7 +22704,7 @@ router29.get("/earnings", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch earnings" });
   }
 });
-router29.put(
+router30.put(
   "/tracks/:id/reupload",
   requireAuth(),
   upload.single("audio"),
@@ -22056,7 +22745,7 @@ router29.put(
     }
   }
 );
-router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
+router30.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -22125,7 +22814,7 @@ router29.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to edit track" });
   }
 });
-router29.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
+router30.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const { status } = req.body;
@@ -22164,7 +22853,7 @@ router29.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to update status" });
   }
 });
-router29.delete("/tracks/:id", requireAuth(), async (req, res) => {
+router30.delete("/tracks/:id", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -22203,7 +22892,7 @@ async function ensureAlbumsTable() {
     )
   `);
 }
-router29.get("/albums", async (req, res) => {
+router30.get("/albums", async (req, res) => {
   try {
     await ensureAlbumsTable();
     const { artist_id } = req.query;
@@ -22223,7 +22912,7 @@ router29.get("/albums", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.post("/albums", requireAuth(), async (req, res) => {
+router30.post("/albums", requireAuth(), async (req, res) => {
   try {
     await ensureAlbumsTable();
     const { title, genre, description, albumType, trackIds } = req.body;
@@ -22266,7 +22955,7 @@ router29.post("/albums", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.delete("/albums/:id", requireAuth(), async (req, res) => {
+router30.delete("/albums/:id", requireAuth(), async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query(
@@ -22295,7 +22984,7 @@ async function ensureCollabTable() {
     )
   `);
 }
-router29.get("/collaborations", requireAuth(), async (req, res) => {
+router30.get("/collaborations", requireAuth(), async (req, res) => {
   try {
     await ensureCollabTable();
     const userId = req.user?.id;
@@ -22324,7 +23013,7 @@ router29.get("/collaborations", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.post("/collaborations", requireAuth(), async (req, res) => {
+router30.post("/collaborations", requireAuth(), async (req, res) => {
   try {
     await ensureCollabTable();
     const userId = req.user?.id;
@@ -22368,7 +23057,7 @@ router29.post("/collaborations", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
+router30.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
   try {
     await ensureCollabTable();
     const { id } = req.params;
@@ -22387,7 +23076,7 @@ router29.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.get("/artists/search", async (req, res) => {
+router30.get("/artists/search", async (req, res) => {
   try {
     const { q, genre } = req.query;
     let query = `SELECT id, stage_name as name, genre, country_code as country 
@@ -22411,7 +23100,7 @@ router29.get("/artists/search", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router29.post("/purchase", requireAuth, async (req, res) => {
+router30.post("/purchase", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const { trackId } = req.body;
@@ -22506,7 +23195,7 @@ router29.post("/purchase", requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router29.get("/my-purchases", requireAuth, async (req, res) => {
+router30.get("/my-purchases", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -22524,11 +23213,11 @@ router29.get("/my-purchases", requireAuth, async (req, res) => {
     res.json({ success: true, purchases: [] });
   }
 });
-var music_default = router29;
+var music_default = router30;
 
 // server/routes/streamroyale.ts
 init_db();
-import { Router as Router30 } from "express";
+import { Router as Router31 } from "express";
 init_socket_config();
 
 // server/services/royalty-engine.ts
@@ -22858,7 +23547,7 @@ function setupRoyaltyEngine() {
 }
 
 // server/routes/streamroyale.ts
-var router30 = Router30();
+var router31 = Router31();
 function getWeekNumber2(d = /* @__PURE__ */ new Date()) {
   const date2 = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date2.setUTCDate(date2.getUTCDate() + 4 - (date2.getUTCDay() || 7));
@@ -23069,7 +23758,7 @@ async function ensureStreamRoyaleTables() {
     tablesEnsured = true;
   }
 }
-router30.post(
+router31.post(
   "/stream/heartbeat",
   optionalAuth,
   async (req, res) => {
@@ -23106,7 +23795,7 @@ router30.post(
     res.json({ success: true, sessionId, elapsed });
   }
 );
-router30.post(
+router31.post(
   "/stream/complete",
   optionalAuth,
   async (req, res) => {
@@ -23314,7 +24003,7 @@ async function checkBadgeMilestone(artistProfileId) {
     console.error("[STREAMROYALE] Badge check error:", err);
   }
 }
-router30.get("/pool/current", async (req, res) => {
+router31.get("/pool/current", async (req, res) => {
   await ensureStreamRoyaleTables();
   const { week, year } = getWeekNumber2();
   try {
@@ -23365,7 +24054,7 @@ router30.get("/pool/current", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch pool data" });
   }
 });
-router30.get("/leaderboard", async (req, res) => {
+router31.get("/leaderboard", async (req, res) => {
   await ensureStreamRoyaleTables();
   const {
     scope = "global",
@@ -23465,7 +24154,7 @@ router30.get("/leaderboard", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch leaderboard" });
   }
 });
-router30.get("/artist/me", optionalAuth, async (req, res) => {
+router31.get("/artist/me", optionalAuth, async (req, res) => {
   await ensureStreamRoyaleTables();
   const userId = req.user ? parseInt(req.user.userId) : null;
   if (!userId) {
@@ -23588,7 +24277,7 @@ router30.get("/artist/me", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch artist stats" });
   }
 });
-router30.post("/boost", optionalAuth, async (req, res) => {
+router31.post("/boost", optionalAuth, async (req, res) => {
   await ensureStreamRoyaleTables();
   const userId = req.user ? parseInt(req.user.userId) : null;
   if (!userId)
@@ -23630,7 +24319,7 @@ router30.post("/boost", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to apply boost" });
   }
 });
-router30.post("/tip", optionalAuth, async (req, res) => {
+router31.post("/tip", optionalAuth, async (req, res) => {
   await ensureStreamRoyaleTables();
   const userId = req.user ? parseInt(req.user.userId) : null;
   if (!userId)
@@ -23694,7 +24383,7 @@ router30.post("/tip", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to process tip" });
   }
 });
-router30.post(
+router31.post(
   "/payout/request",
   optionalAuth,
   async (req, res) => {
@@ -23749,7 +24438,7 @@ router30.post(
     }
   }
 );
-router30.get(
+router31.get(
   "/payout/history",
   optionalAuth,
   async (req, res) => {
@@ -23787,7 +24476,7 @@ router30.get(
     }
   }
 );
-router30.get("/plans", async (req, res) => {
+router31.get("/plans", async (req, res) => {
   await ensureStreamRoyaleTables();
   try {
     const plans = await pool.query(
@@ -23810,7 +24499,7 @@ router30.get("/plans", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch plans" });
   }
 });
-router30.get(
+router31.get(
   "/listener/status",
   optionalAuth,
   async (req, res) => {
@@ -23863,7 +24552,7 @@ router30.get(
     }
   }
 );
-router30.get(
+router31.get(
   "/admin/overview",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -23958,7 +24647,7 @@ router30.get(
     }
   }
 );
-router30.post(
+router31.post(
   "/admin/distribute",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -23975,7 +24664,7 @@ router30.post(
     }
   }
 );
-router30.put(
+router31.put(
   "/admin/payout/:id",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -24015,7 +24704,7 @@ router30.put(
     }
   }
 );
-router30.get(
+router31.get(
   "/admin/payouts",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -24072,7 +24761,7 @@ router30.get(
     }
   }
 );
-router30.post(
+router31.post(
   "/admin/add-to-pool",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -24101,12 +24790,12 @@ router30.post(
     }
   }
 );
-var streamroyale_default = router30;
+var streamroyale_default = router31;
 
 // server/routes/streaming.ts
 init_db();
-import { Router as Router31 } from "express";
-var router31 = Router31();
+import { Router as Router32 } from "express";
+var router32 = Router32();
 var MT_COLS = `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
   mt.duration, mt.streams, mt.play_count, mt.likes, mt.release_date, mt.genre,
   mt.file_path, mt.file_name, mt.file_size, mt.mime_type, mt.audio_url,
@@ -24115,7 +24804,7 @@ var MT_COLS = `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
   mt.is_explicit, mt.created_at,
   (mt.pochette IS NOT NULL) AS has_pochette,
   (mt.audio_data IS NOT NULL) AS has_audio_data`;
-router31.get("/tracks", async (req, res) => {
+router32.get("/tracks", async (req, res) => {
   try {
     const {
       genre,
@@ -24206,7 +24895,7 @@ router31.get("/tracks", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch tracks" });
   }
 });
-router31.get("/tracks/featured", async (_req, res) => {
+router32.get("/tracks/featured", async (_req, res) => {
   try {
     const featured = await pool.query(`
       SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
@@ -24248,7 +24937,7 @@ router31.get("/tracks/featured", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch featured tracks" });
   }
 });
-router31.get("/tracks/:id/preview", async (req, res) => {
+router32.get("/tracks/:id/preview", async (req, res) => {
   console.log("[PREVIEW] HIT - trackId:", req.params.id);
   try {
     const trackId = parseInt(req.params.id);
@@ -24300,7 +24989,7 @@ router31.get("/tracks/:id/preview", async (req, res) => {
     res.status(500).json({ error: "Failed to load preview" });
   }
 });
-router31.get("/tracks/:id", async (req, res) => {
+router32.get("/tracks/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const track = await pool.query(
@@ -24370,7 +25059,7 @@ router31.get("/tracks/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch track" });
   }
 });
-router31.get("/tracks/:id/pochette", async (req, res) => {
+router32.get("/tracks/:id/pochette", async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -24536,7 +25225,7 @@ async function getStreamBudget(userId) {
     upgradeHint
   };
 }
-router31.post("/record-play", async (req, res) => {
+router32.post("/record-play", async (req, res) => {
   try {
     const { trackId, duration, sessionId } = req.body;
     if (!trackId || !duration) {
@@ -24656,7 +25345,7 @@ router31.post("/record-play", async (req, res) => {
     res.status(500).json({ error: "Failed to record play" });
   }
 });
-router31.get("/budget", async (req, res) => {
+router32.get("/budget", async (req, res) => {
   try {
     const userId = req.user?.id || null;
     const budget = await getStreamBudget(userId);
@@ -24680,7 +25369,7 @@ router31.get("/budget", async (req, res) => {
     res.status(500).json({ error: "Failed to get budget" });
   }
 });
-router31.get("/paylist", async (req, res) => {
+router32.get("/paylist", async (req, res) => {
   try {
     const userId = req.user?.id || null;
     const budget = await getStreamBudget(userId);
@@ -24750,7 +25439,7 @@ router31.get("/paylist", async (req, res) => {
     });
   }
 });
-router31.post("/paylist/:trackId/access", async (req, res) => {
+router32.post("/paylist/:trackId/access", async (req, res) => {
   try {
     const trackId = parseInt(req.params.trackId);
     if (!trackId || isNaN(trackId)) {
@@ -24823,7 +25512,7 @@ router31.post("/paylist/:trackId/access", async (req, res) => {
     res.status(500).json({ error: "Failed to access track" });
   }
 });
-router31.get("/artists", async (req, res) => {
+router32.get("/artists", async (req, res) => {
   try {
     const {
       search,
@@ -24895,7 +25584,7 @@ router31.get("/artists", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artists" });
   }
 });
-router31.get("/artists/:id", async (req, res) => {
+router32.get("/artists/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const artist = await pool.query(
@@ -24991,7 +25680,7 @@ router31.get("/artists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artist" });
   }
 });
-router31.get("/albums/:id", async (req, res) => {
+router32.get("/albums/:id", async (req, res) => {
   try {
     const album = await pool.query(
       `
@@ -25020,7 +25709,7 @@ router31.get("/albums/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch album" });
   }
 });
-router31.get("/playlists", async (req, res) => {
+router32.get("/playlists", async (req, res) => {
   try {
     const userId = req.user?.id;
     let query = `
@@ -25050,7 +25739,7 @@ router31.get("/playlists", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch playlists" });
   }
 });
-router31.post("/playlists", async (req, res) => {
+router32.post("/playlists", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId)
@@ -25070,7 +25759,7 @@ router31.post("/playlists", async (req, res) => {
     res.status(500).json({ error: "Failed to create playlist" });
   }
 });
-router31.put("/playlists/:id", async (req, res) => {
+router32.put("/playlists/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
     const { name, description, isPublic } = req.body;
@@ -25093,7 +25782,7 @@ router31.put("/playlists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update playlist" });
   }
 });
-router31.delete("/playlists/:id", async (req, res) => {
+router32.delete("/playlists/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
     await pool.query(`DELETE FROM playlists WHERE id = $1 AND user_id = $2`, [
@@ -25105,7 +25794,7 @@ router31.delete("/playlists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete playlist" });
   }
 });
-router31.post("/playlists/:id/tracks", async (req, res) => {
+router32.post("/playlists/:id/tracks", async (req, res) => {
   try {
     const { trackId } = req.body;
     if (!trackId) return res.status(400).json({ error: "trackId required" });
@@ -25138,7 +25827,7 @@ router31.post("/playlists/:id/tracks", async (req, res) => {
     res.status(500).json({ error: "Failed to add track" });
   }
 });
-router31.delete(
+router32.delete(
   "/playlists/:playlistId/tracks/:trackId",
   async (req, res) => {
     try {
@@ -25164,7 +25853,7 @@ router31.delete(
     }
   }
 );
-router31.put("/playlists/:id/reorder", async (req, res) => {
+router32.put("/playlists/:id/reorder", async (req, res) => {
   try {
     const { trackIds } = req.body;
     if (!Array.isArray(trackIds))
@@ -25183,7 +25872,7 @@ router31.put("/playlists/:id/reorder", async (req, res) => {
     res.status(500).json({ error: "Failed to reorder" });
   }
 });
-router31.get("/playlists/:id", async (req, res) => {
+router32.get("/playlists/:id", async (req, res) => {
   try {
     const playlist = await pool.query(
       `
@@ -25212,7 +25901,7 @@ router31.get("/playlists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch playlist" });
   }
 });
-router31.post("/like", async (req, res) => {
+router32.post("/like", async (req, res) => {
   try {
     const userId = req.user?.id;
     const { trackId } = req.body;
@@ -25251,7 +25940,7 @@ router31.post("/like", async (req, res) => {
     res.status(500).json({ error: "Failed to toggle like" });
   }
 });
-router31.get("/liked", async (req, res) => {
+router32.get("/liked", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ tracks: [] });
@@ -25274,7 +25963,7 @@ router31.get("/liked", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch liked tracks" });
   }
 });
-router31.post(
+router32.post(
   "/comment",
   fanChatSlowMode,
   async (req, res) => {
@@ -25308,7 +25997,7 @@ router31.post(
     }
   }
 );
-router31.delete("/comment/:id", async (req, res) => {
+router32.delete("/comment/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
     await pool.query(
@@ -25320,7 +26009,7 @@ router31.delete("/comment/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete comment" });
   }
 });
-router31.post("/follow", async (req, res) => {
+router32.post("/follow", async (req, res) => {
   try {
     const userId = req.user?.id;
     const { artistId } = req.body;
@@ -25370,7 +26059,7 @@ router31.post("/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to toggle follow" });
   }
 });
-router31.get("/user/following", async (req, res) => {
+router32.get("/user/following", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ following: [] });
@@ -25385,7 +26074,7 @@ router31.get("/user/following", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch following" });
   }
 });
-router31.get("/user/liked-tracks", async (req, res) => {
+router32.get("/user/liked-tracks", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ likedTrackIds: [] });
@@ -25401,7 +26090,7 @@ router31.get("/user/liked-tracks", async (req, res) => {
   }
 });
 var VALID_REACTIONS = ["fire", "heart", "clap", "mindblown", "party", "sad"];
-router31.post("/track/:id/react", async (req, res) => {
+router32.post("/track/:id/react", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId)
@@ -25435,7 +26124,7 @@ router31.post("/track/:id/react", async (req, res) => {
     res.status(500).json({ error: "Failed to toggle reaction" });
   }
 });
-router31.get("/track/:id/reactions", async (req, res) => {
+router32.get("/track/:id/reactions", async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const userId = req.user?.id;
@@ -25469,7 +26158,7 @@ router31.get("/track/:id/reactions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reactions" });
   }
 });
-router31.get("/user/reactions", async (req, res) => {
+router32.get("/user/reactions", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ reactions: [] });
@@ -25487,7 +26176,7 @@ router31.get("/user/reactions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user reactions" });
   }
 });
-router31.get("/track/:id/thread", async (req, res) => {
+router32.get("/track/:id/thread", async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const { page = "1", limit = "50" } = req.query;
@@ -25575,7 +26264,7 @@ router31.get("/track/:id/thread", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch thread" });
   }
 });
-router31.get("/comment/:id/replies", async (req, res) => {
+router32.get("/comment/:id/replies", async (req, res) => {
   try {
     const commentId = parseInt(req.params.id);
     const replies = await pool.query(
@@ -25591,7 +26280,7 @@ router31.get("/comment/:id/replies", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch replies" });
   }
 });
-router31.get("/artist/:id/dashboard", async (req, res) => {
+router32.get("/artist/:id/dashboard", async (req, res) => {
   try {
     const artistId = parseInt(req.params.id);
     const userId = req.user?.id;
@@ -25668,7 +26357,7 @@ router31.get("/artist/:id/dashboard", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artist dashboard" });
   }
 });
-router31.get("/user/followed-artists", async (req, res) => {
+router32.get("/user/followed-artists", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ artists: [] });
@@ -25689,7 +26378,7 @@ router31.get("/user/followed-artists", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch followed artists" });
   }
 });
-router31.get("/history", async (req, res) => {
+router32.get("/history", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ history: [] });
@@ -25712,7 +26401,7 @@ router31.get("/history", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch history" });
   }
 });
-router31.get("/analytics/overview", async (_req, res) => {
+router32.get("/analytics/overview", async (_req, res) => {
   try {
     const stats = await pool.query(`
       SELECT 
@@ -25781,7 +26470,7 @@ router31.get("/analytics/overview", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch analytics" });
   }
 });
-router31.get("/analytics/artist/:id", async (req, res) => {
+router32.get("/analytics/artist/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const artist = await pool.query(
@@ -25869,7 +26558,7 @@ router31.get("/analytics/artist/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch artist analytics" });
   }
 });
-router31.get("/subscription/plans", async (_req, res) => {
+router32.get("/subscription/plans", async (_req, res) => {
   res.json({
     plans: [
       {
@@ -25893,6 +26582,8 @@ router31.get("/subscription/plans", async (_req, res) => {
           "No downloads"
         ],
         downloadsPerMonth: 0,
+        contestVoteWeight: 0.1,
+        contestVoteLabel: "10% of 1 vote point",
         audioQuality: "256kbps",
         ads: true,
         offline: false,
@@ -25925,6 +26616,8 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Supporter badge"
         ],
         downloadsPerMonth: 5,
+        contestVoteWeight: 0.35,
+        contestVoteLabel: "35% of 1 vote point",
         audioQuality: "320kbps",
         ads: false,
         offline: true,
@@ -25948,7 +26641,7 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Acc\xE8s Arcade",
           "Sorties en avant-premi\xE8re",
           "Badge Champion",
-          "Vote Arena \xD72"
+          "Vote Arena: 70% of 1 vote point"
         ],
         featuresEn: [
           "1,500 streams per week",
@@ -25958,9 +26651,11 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Arcade access",
           "Early access releases",
           "Champion badge",
-          "Arena vote \xD72"
+          "Arena vote: 70% of 1 vote point"
         ],
         downloadsPerMonth: 20,
+        contestVoteWeight: 0.7,
+        contestVoteLabel: "70% of 1 vote point",
         audioQuality: "FLAC",
         ads: false,
         offline: true,
@@ -25983,7 +26678,7 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Acc\xE8s Arcade",
           "Exclusivit\xE9s Patron",
           "Badge Patron dor\xE9",
-          "Vote Arena \xD73",
+          "Vote Arena: 100% of 1 vote point",
           "Support prioritaire",
           "Rencontre artistes VIP"
         ],
@@ -25995,11 +26690,13 @@ router31.get("/subscription/plans", async (_req, res) => {
           "Arcade access",
           "Patron exclusives",
           "Gold Patron badge",
-          "Arena vote \xD73",
+          "Arena vote: 100% of 1 vote point",
           "Priority support",
           "VIP artist meetups"
         ],
         downloadsPerMonth: -1,
+        contestVoteWeight: 1,
+        contestVoteLabel: "100% of 1 vote point",
         audioQuality: "FLAC",
         ads: false,
         offline: true,
@@ -26080,7 +26777,7 @@ router31.get("/subscription/plans", async (_req, res) => {
     }
   });
 });
-router31.get("/subscription/status", async (req, res) => {
+router32.get("/subscription/status", async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.json({ tier: "free", authenticated: false });
@@ -26098,7 +26795,7 @@ router31.get("/subscription/status", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch subscription" });
   }
 });
-router31.get("/search", async (req, res) => {
+router32.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
     if (!q)
@@ -26161,7 +26858,7 @@ router31.get("/search", async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
-router31.post("/play", async (req, res) => {
+router32.post("/play", async (req, res) => {
   try {
     const { trackId, duration, sessionId } = req.body;
     if (!trackId || !duration) {
@@ -26206,7 +26903,7 @@ router31.post("/play", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router31.get("/stats/:artistId", async (req, res) => {
+router32.get("/stats/:artistId", async (req, res) => {
   try {
     const { artistId } = req.params;
     const artist = await pool.query(
@@ -26234,7 +26931,7 @@ router31.get("/stats/:artistId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router31.get("/top", async (_req, res) => {
+router32.get("/top", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT mt.id, mt.title, mt.streams, mt.cover_art, mt.duration, mt.genre,
@@ -26250,13 +26947,13 @@ router31.get("/top", async (_req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-var streaming_default = router31;
+var streaming_default = router32;
 
 // server/routes/artist-contracts.ts
 init_db();
 init_email_service();
-import { Router as Router32 } from "express";
-var router32 = Router32();
+import { Router as Router33 } from "express";
+var router33 = Router33();
 var GRADE_TIERS = {
   S: {
     label: "Elite / Exclusive",
@@ -26394,7 +27091,7 @@ async function ensureTable() {
     console.error("artist_contracts table setup error:", err);
   }
 }
-router32.get("/grades", async (_req, res) => {
+router33.get("/grades", async (_req, res) => {
   res.json({
     grades: Object.entries(GRADE_TIERS).map(([key, tier]) => ({
       grade: key,
@@ -26403,7 +27100,7 @@ router32.get("/grades", async (_req, res) => {
     }))
   });
 });
-router32.post("/apply", async (req, res) => {
+router33.post("/apply", async (req, res) => {
   await ensureTable();
   try {
     const {
@@ -26522,7 +27219,7 @@ router32.post("/apply", async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la soumission" });
   }
 });
-router32.get("/status/:email", async (req, res) => {
+router33.get("/status/:email", async (req, res) => {
   await ensureTable();
   try {
     const result = await pool.query(
@@ -26539,7 +27236,7 @@ router32.get("/status/:email", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/my-contract", async (req, res) => {
+router33.get("/my-contract", async (req, res) => {
   await ensureTable();
   try {
     const userId = req.user?.id;
@@ -26568,7 +27265,7 @@ router32.get("/my-contract", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/check-artist/:artistId", async (req, res) => {
+router33.get("/check-artist/:artistId", async (req, res) => {
   await ensureTable();
   try {
     const artistId = parseInt(req.params.artistId);
@@ -26602,7 +27299,7 @@ router32.get("/check-artist/:artistId", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/admin/applications", async (req, res) => {
+router33.get("/admin/applications", async (req, res) => {
   await ensureTable();
   try {
     const status = req.query.status || "";
@@ -26674,7 +27371,7 @@ router32.get("/admin/applications", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/admin/applications/:id", async (req, res) => {
+router33.get("/admin/applications/:id", async (req, res) => {
   await ensureTable();
   try {
     const id = parseInt(req.params.id);
@@ -26693,7 +27390,7 @@ router32.get("/admin/applications/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.put("/admin/review/:id", async (req, res) => {
+router33.put("/admin/review/:id", async (req, res) => {
   await ensureTable();
   try {
     const id = parseInt(req.params.id);
@@ -26891,7 +27588,7 @@ router32.put("/admin/review/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur lors de l'examen" });
   }
 });
-router32.put("/admin/upgrade/:id", async (req, res) => {
+router33.put("/admin/upgrade/:id", async (req, res) => {
   await ensureTable();
   try {
     const id = parseInt(req.params.id);
@@ -26938,7 +27635,7 @@ router32.put("/admin/upgrade/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-router32.get("/admin/stats", async (_req, res) => {
+router33.get("/admin/stats", async (_req, res) => {
   await ensureTable();
   try {
     const result = await pool.query(`
@@ -26961,12 +27658,12 @@ router32.get("/admin/stats", async (_req, res) => {
     res.status(500).json({ error: "Erreur" });
   }
 });
-var artist_contracts_default = router32;
+var artist_contracts_default = router33;
 
 // server/routes/artists.ts
 init_db();
-import { Router as Router33 } from "express";
-var router33 = Router33();
+import { Router as Router34 } from "express";
+var router34 = Router34();
 var hasCountryCodeColumn = null;
 async function checkCountryCodeColumn() {
   if (hasCountryCodeColumn !== null) return hasCountryCodeColumn;
@@ -26984,7 +27681,7 @@ async function checkCountryCodeColumn() {
   );
   return hasCountryCodeColumn;
 }
-router33.get("/search", async (req, res) => {
+router34.get("/search", async (req, res) => {
   try {
     const {
       query = "",
@@ -27060,7 +27757,7 @@ router33.get("/search", async (req, res) => {
     });
   }
 });
-router33.get("/genres", async (_req, res) => {
+router34.get("/genres", async (_req, res) => {
   try {
     const result = await pool.query(
       "SELECT DISTINCT genre FROM artists WHERE genre IS NOT NULL AND genre != '' ORDER BY genre ASC"
@@ -27071,7 +27768,7 @@ router33.get("/genres", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch genres" });
   }
 });
-router33.get("/countries", async (_req, res) => {
+router34.get("/countries", async (_req, res) => {
   try {
     const hasCC = await checkCountryCodeColumn();
     if (!hasCC) {
@@ -27089,7 +27786,7 @@ router33.get("/countries", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch artist countries" });
   }
 });
-router33.get("/:id/details", async (req, res) => {
+router34.get("/:id/details", async (req, res) => {
   try {
     const { id } = req.params;
     const artistResult = await pool.query(
@@ -27110,15 +27807,15 @@ router33.get("/:id/details", async (req, res) => {
     });
   }
 });
-var artists_default2 = router33;
+var artists_default2 = router34;
 
 // server/routes/data-dispatch.ts
 init_db();
 init_schema();
-import { Router as Router34 } from "express";
+import { Router as Router35 } from "express";
 import { eq as eq25, sql as sql13 } from "drizzle-orm";
-var router34 = Router34();
-router34.post("/categories", async (req, res) => {
+var router35 = Router35();
+router35.post("/categories", async (req, res) => {
   try {
     console.log("Dispatching business categories...");
     const categories = [
@@ -27235,7 +27932,7 @@ router34.post("/categories", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to dispatch categories" });
   }
 });
-router34.get("/status", async (_req, res) => {
+router35.get("/status", async (_req, res) => {
   try {
     const categoryCount = await db.select({ count: sql13`count(*)` }).from(businessCategories).execute();
     const businessCount = await db.select({ count: sql13`count(*)` }).from(businesses).execute();
@@ -27264,7 +27961,7 @@ router34.get("/status", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to get dispatch status" });
   }
 });
-router34.post("/all", async (req, res) => {
+router35.post("/all", async (req, res) => {
   try {
     console.log("Starting full data dispatch...");
     const cats = await db.select({ count: sql13`count(*)` }).from(businessCategories).execute();
@@ -27279,16 +27976,16 @@ router34.post("/all", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to complete full dispatch" });
   }
 });
-var data_dispatch_default = router34;
+var data_dispatch_default = router35;
 
 // server/routes/settings.ts
 init_db();
 init_schema();
-import { Router as Router35 } from "express";
+import { Router as Router36 } from "express";
 import { eq as eq26, and as and14 } from "drizzle-orm";
 import jwt7 from "jsonwebtoken";
-var router35 = Router35();
-router35.get("/", async (req, res) => {
+var router36 = Router36();
+router36.get("/", async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -27332,7 +28029,7 @@ router35.get("/", async (req, res) => {
     });
   }
 });
-router35.get("/:sector", async (req, res) => {
+router36.get("/:sector", async (req, res) => {
   try {
     const { sector } = req.params;
     const authHeader = req.headers.authorization;
@@ -27379,7 +28076,7 @@ router35.get("/:sector", async (req, res) => {
     });
   }
 });
-router35.post("/:sector", async (req, res) => {
+router36.post("/:sector", async (req, res) => {
   try {
     const { sector } = req.params;
     const { settings } = req.body;
@@ -27439,13 +28136,13 @@ router35.post("/:sector", async (req, res) => {
     });
   }
 });
-var settings_default = router35;
+var settings_default = router36;
 
 // server/routes/home-stats.ts
 init_db();
-import { Router as Router36 } from "express";
-var router36 = Router36();
-router36.get("/stats", async (req, res) => {
+import { Router as Router37 } from "express";
+var router37 = Router37();
+router37.get("/stats", async (req, res) => {
   try {
     const { countryCode = "" } = req.query;
     const cc = countryCode.trim().toUpperCase();
@@ -27512,10 +28209,10 @@ router36.get("/stats", async (req, res) => {
     });
   }
 });
-var home_stats_default = router36;
+var home_stats_default = router37;
 
 // server/routes/ai-chat.ts
-import { Router as Router37 } from "express";
+import { Router as Router38 } from "express";
 import { z as z4 } from "zod";
 
 // server/services/ai-context.ts
@@ -29330,9 +30027,9 @@ async function getCachedAIReply(key) {
 }
 
 // server/routes/ai-chat.ts
-var router37 = Router37();
-router37.use(optionalAuth);
-router37.use(aiLimiter);
+var router38 = Router38();
+router38.use(optionalAuth);
+router38.use(aiLimiter);
 var chatSchema = z4.object({
   messages: z4.array(
     z4.object({
@@ -29344,7 +30041,7 @@ var chatSchema = z4.object({
 var askSchema = z4.object({
   question: z4.string().min(1).max(2e3)
 });
-router37.post("/chat", async (req, res) => {
+router38.post("/chat", async (req, res) => {
   try {
     const parsed = chatSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -29371,7 +30068,7 @@ router37.post("/chat", async (req, res) => {
     });
   }
 });
-router37.post("/ask", async (req, res) => {
+router38.post("/ask", async (req, res) => {
   try {
     const parsed = askSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -29398,7 +30095,7 @@ router37.post("/ask", async (req, res) => {
     });
   }
 });
-router37.post("/smart-chat", async (req, res) => {
+router38.post("/smart-chat", async (req, res) => {
   try {
     const parsed = chatSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -29470,7 +30167,7 @@ Detected sector: ${intent.sectorLabel || "general"} | Urgency: ${intent.urgency}
     });
   }
 });
-router37.get("/status", async (_req, res) => {
+router38.get("/status", async (_req, res) => {
   let ollamaOnline = false;
   try {
     const ollamaUrl = process.env.OLLAMA_URL ?? "http://localhost:11434";
@@ -29498,13 +30195,13 @@ router37.get("/status", async (_req, res) => {
     }
   });
 });
-router37.get("/connectors", async (_req, res) => {
+router38.get("/connectors", async (_req, res) => {
   return res.json({
     success: true,
     connectors: getConnectorStatuses()
   });
 });
-router37.post("/connectors/run", async (req, res) => {
+router38.post("/connectors/run", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
@@ -29587,7 +30284,7 @@ function matchFAQ(question) {
   }
   return best ? best.answer : null;
 }
-router37.get("/support/stream", async (req, res) => {
+router38.get("/support/stream", async (req, res) => {
   const user = req.user;
   if (!user) {
     res.status(401).end();
@@ -29859,13 +30556,13 @@ data: ${JSON.stringify({ error: msg })}
   }
   sendDone("fallback");
 });
-var ai_chat_default = router37;
+var ai_chat_default = router38;
 
 // server/routes/submission-requests.ts
 init_email_service();
 init_db();
-import { Router as Router38 } from "express";
-var router38 = Router38();
+import { Router as Router39 } from "express";
+var router39 = Router39();
 var ADMIN_EMAIL = process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
 var APP_URL = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "http://localhost:5003";
 var recentSubmissions = /* @__PURE__ */ new Map();
@@ -29877,7 +30574,7 @@ function isDuplicate(type, name) {
   recentSubmissions.set(key, Date.now());
   return false;
 }
-router38.post("/business", async (req, res) => {
+router39.post("/business", async (req, res) => {
   try {
     const {
       name,
@@ -29995,7 +30692,7 @@ router38.post("/business", async (req, res) => {
     });
   }
 });
-router38.post("/artist", async (req, res) => {
+router39.post("/artist", async (req, res) => {
   try {
     const { stageName, genre, labelStatus, spotifyUrl, countryCode, username } = req.body;
     if (!stageName?.trim()) {
@@ -30109,7 +30806,7 @@ Spotify: ${spotifyUrl || "N/A"}`,
     });
   }
 });
-router38.post("/job", async (req, res) => {
+router39.post("/job", async (req, res) => {
   try {
     const {
       title,
@@ -30245,12 +30942,12 @@ Remote: ${isRemote ? "Yes" : "No"}`,
     });
   }
 });
-var submission_requests_default = router38;
+var submission_requests_default = router39;
 
 // server/routes/evaluations.ts
 init_db();
 init_schema();
-import { Router as Router39 } from "express";
+import { Router as Router40 } from "express";
 import { z as z5 } from "zod";
 import { eq as eq28, sql as sql15, desc as desc13 } from "drizzle-orm";
 
@@ -30411,7 +31108,7 @@ function isoToPhoneCode(isoCode) {
 }
 
 // server/routes/evaluations.ts
-var router39 = Router39();
+var router40 = Router40();
 var submitDemoSchema = z5.object({
   projectTitle: z5.string().min(1, "Project title is required").max(200),
   projectNotes: z5.string().max(2e3).optional(),
@@ -30424,7 +31121,7 @@ var submitDemoSchema = z5.object({
   ).min(3, "Minimum 3 tracks required for evaluation").max(12, "Maximum 12 tracks per submission"),
   coverArtUrl: z5.string().url().optional()
 });
-router39.post(
+router40.post(
   "/artist/submit-demo",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -30485,7 +31182,7 @@ router39.post(
     });
   })
 );
-router39.get(
+router40.get(
   "/admin/evaluations",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -30525,7 +31222,7 @@ router39.get(
     });
   })
 );
-router39.get(
+router40.get(
   "/admin/evaluations/:id",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -30562,7 +31259,7 @@ var scoreSchema = z5.object({
   decision: z5.enum(["approved", "rejected", "resubmit"]),
   reviewerNotes: z5.string().max(2e3).optional()
 });
-router39.put(
+router40.put(
   "/admin/evaluations/:id/score",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -30648,7 +31345,7 @@ router39.put(
     });
   })
 );
-router39.get(
+router40.get(
   "/artist/my-evaluation",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -30678,7 +31375,7 @@ router39.get(
     });
   })
 );
-router39.get(
+router40.get(
   "/artist/division-status",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -30837,12 +31534,12 @@ function computeAIPreScore(tracks) {
   if (uniqueTitles.size === tracks.length) score += 0.5;
   return Math.min(10, Math.max(1, score));
 }
-var evaluations_default = router39;
+var evaluations_default = router40;
 
 // server/routes/notifications.ts
 init_db();
-import { Router as Router40 } from "express";
-var router40 = Router40();
+import { Router as Router41 } from "express";
+var router41 = Router41();
 async function ensureNotifTable() {
   await pool.query(
     `
@@ -30883,7 +31580,7 @@ function mapType(raw2) {
   };
   return map[raw2] || raw2;
 }
-router40.get("/", requireAuth(), async (req, res) => {
+router41.get("/", requireAuth(), async (req, res) => {
   try {
     await ensureNotifTable();
     const userId = parseInt(req.user.userId);
@@ -30913,7 +31610,7 @@ router40.get("/", requireAuth(), async (req, res) => {
     res.json({ success: true, notifications: [] });
   }
 });
-router40.post("/read-all", requireAuth(), async (req, res) => {
+router41.post("/read-all", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     await pool.query(
@@ -30925,7 +31622,7 @@ router40.post("/read-all", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-router40.post("/:id/read", requireAuth(), async (req, res) => {
+router41.post("/:id/read", requireAuth(), async (req, res) => {
   try {
     await pool.query(`UPDATE notifications SET read = true WHERE id = $1`, [
       req.params.id
@@ -30935,11 +31632,11 @@ router40.post("/:id/read", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-var notifications_default = router40;
+var notifications_default = router41;
 
 // server/routes/marketing.ts
 init_db();
-import { Router as Router41 } from "express";
+import { Router as Router42 } from "express";
 import multer2 from "multer";
 import path3 from "path";
 import fs4 from "fs";
@@ -31241,10 +31938,10 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
   }
   if (mimetype === "application/pdf") {
     try {
-      const fs9 = await import("fs");
+      const fs10 = await import("fs");
       const pdfParseModule = await import("pdf-parse");
       const pdfParse = pdfParseModule.default || pdfParseModule;
-      const buffer = fs9.readFileSync(filePath);
+      const buffer = fs10.readFileSync(filePath);
       const pdfData = await pdfParse(buffer);
       checks.push({
         name: "PDF pages",
@@ -31280,7 +31977,7 @@ async function advancedValidation(filePath, mimetype, productSpecs) {
 }
 
 // server/routes/marketing.ts
-var router41 = Router41();
+var router42 = Router42();
 var stripe3 = process.env.STRIPE_SECRET_KEY ? new Stripe3(process.env.STRIPE_SECRET_KEY) : null;
 var PRINT_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path3.join("/tmp", "uploads", "print") : path3.resolve("uploads", "print");
 try {
@@ -31290,11 +31987,46 @@ try {
 } catch (err) {
   console.warn(`\u26A0\uFE0F  Could not create print uploads dir: ${err.message}`);
 }
+var allowedPrintTypes = /* @__PURE__ */ new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/svg+xml",
+  "application/postscript"
+]);
+var allowedPrintExtensions = /* @__PURE__ */ new Set([
+  ".pdf",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".tif",
+  ".tiff",
+  ".svg",
+  ".eps",
+  ".ai"
+]);
+function sanitizeStoredName(originalName) {
+  const safe = (originalName || "print-file").replace(/[\\/]+/g, "/").split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").trim();
+  if (!safe || safe === "." || safe === "..") return "print-file.bin";
+  return safe.length > 150 ? safe.slice(0, 150) : safe;
+}
+function validatePrintFile(file) {
+  const extension = path3.extname(file.originalname || "").toLowerCase();
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (!allowedPrintTypes.has(file.mimetype) || !allowedPrintExtensions.has(extension)) {
+    throw new Error(`Unsupported print file format: ${file.mimetype}`);
+  }
+  return sanitizeStoredName(file.originalname);
+}
 var printStorage = multer2.diskStorage({
   destination: (_req, _file, cb) => cb(null, PRINT_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path3.extname(file.originalname);
+    const safeName = validatePrintFile(file);
+    const ext = path3.extname(safeName).toLowerCase();
     cb(null, `print-${uniqueSuffix}${ext}`);
   }
 });
@@ -31303,19 +32035,11 @@ var printUpload = multer2({
   limits: { fileSize: 200 * 1024 * 1024 },
   // 200 MB for print files
   fileFilter: (_req, file, cb) => {
-    const allowed = [
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-      "image/tiff",
-      "image/svg+xml",
-      "application/postscript"
-      // .ai / .eps
-    ];
-    if (allowed.includes(file.mimetype)) {
+    try {
+      validatePrintFile(file);
       cb(null, true);
-    } else {
-      cb(new Error(`Unsupported print file format: ${file.mimetype}`));
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
@@ -31327,14 +32051,6 @@ try {
 } catch (err) {
   console.warn(`\u26A0\uFE0F  Could not create listing uploads dir: ${err.message}`);
 }
-var listingStorage = multer2.diskStorage({
-  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path3.extname(file.originalname);
-    cb(null, `listing-${uniqueSuffix}${ext}`);
-  }
-});
 var ALLOWED_LISTING_IMAGES = /* @__PURE__ */ new Set([
   "image/jpeg",
   "image/png",
@@ -31348,26 +32064,62 @@ var ALLOWED_LISTING_VIDEOS = /* @__PURE__ */ new Set([
   "video/quicktime",
   "video/x-msvideo"
 ]);
+var ALLOWED_LISTING_IMAGE_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif",
+  ".gif"
+]);
+var ALLOWED_LISTING_VIDEO_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".avi"
+]);
+function validateListingMedia(file) {
+  const extension = path3.extname(file.originalname || "").toLowerCase();
+  const isImage = ALLOWED_LISTING_IMAGES.has(file.mimetype);
+  const isVideo = ALLOWED_LISTING_VIDEOS.has(file.mimetype);
+  const isImageExtAllowed = ALLOWED_LISTING_IMAGE_EXTENSIONS.has(extension);
+  const isVideoExtAllowed = ALLOWED_LISTING_VIDEO_EXTENSIONS.has(extension);
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (!isImage && !isVideo || isImage && !isImageExtAllowed || isVideo && !isVideoExtAllowed) {
+    throw new Error(
+      `Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`
+    );
+  }
+  return sanitizeStoredName(file.originalname);
+}
+var listingStorage = multer2.diskStorage({
+  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const safeName = validateListingMedia(file);
+    const ext = path3.extname(safeName).toLowerCase();
+    cb(null, `listing-${uniqueSuffix}${ext}`);
+  }
+});
 var listingUpload = multer2({
   storage: listingStorage,
   limits: { fileSize: 100 * 1024 * 1024 },
   // 100 MB max per file
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_LISTING_IMAGES.has(file.mimetype) || ALLOWED_LISTING_VIDEOS.has(file.mimetype)) {
+    try {
+      validateListingMedia(file);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Unsupported file format: ${file.mimetype}. Accepted: JPG, PNG, WebP, GIF, MP4, WebM, MOV`
-        )
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 }).fields([
   { name: "images", maxCount: 10 },
   { name: "videos", maxCount: 3 }
 ]);
-router41.get("/journal/listings", async (req, res) => {
+router42.get("/journal/listings", async (req, res) => {
   try {
     const { category, status, page = "1", limit = "20" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -31412,7 +32164,7 @@ router41.get("/journal/listings", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.post(
+router42.post(
   "/journal/listings",
   requireAuth(),
   (req, res, next) => {
@@ -31484,7 +32236,7 @@ router41.post(
     }
   }
 );
-router41.get(
+router42.get(
   "/journal/my-listings",
   requireAuth(),
   async (req, res) => {
@@ -31500,7 +32252,7 @@ router41.get(
     }
   }
 );
-router41.put(
+router42.put(
   "/journal/listings/:id",
   requireAuth(),
   async (req, res) => {
@@ -31566,7 +32318,7 @@ router41.put(
     }
   }
 );
-router41.delete(
+router42.delete(
   "/journal/listings/:id",
   requireAuth(),
   async (req, res) => {
@@ -31592,7 +32344,7 @@ router41.delete(
     }
   }
 );
-router41.get("/journal/pdf/:type", async (req, res) => {
+router42.get("/journal/pdf/:type", async (req, res) => {
   try {
     const type = req.params.type;
     if (type !== "weekly" && type !== "monthly") {
@@ -31625,7 +32377,7 @@ router41.get("/journal/pdf/:type", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.post(
+router42.post(
   "/journal/generate",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31642,7 +32394,7 @@ router41.post(
     }
   }
 );
-router41.get("/journal/editions", async (_req, res) => {
+router42.get("/journal/editions", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, type, listing_count, generated_at, pdf_url FROM journal_editions ORDER BY generated_at DESC LIMIT 20`
@@ -31652,7 +32404,7 @@ router41.get("/journal/editions", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.patch(
+router42.patch(
   "/journal/listings/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31674,7 +32426,7 @@ router41.patch(
     }
   }
 );
-router41.get("/packs", async (_req, res) => {
+router42.get("/packs", async (_req, res) => {
   try {
     const packs = await pool.query(
       `SELECT mp.*, 
@@ -31692,7 +32444,7 @@ router41.get("/packs", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.get("/packs/:id", async (req, res) => {
+router42.get("/packs/:id", async (req, res) => {
   try {
     const pack = await pool.query(
       `SELECT mp.*,
@@ -31713,7 +32465,7 @@ router41.get("/packs/:id", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.get("/print/products", async (_req, res) => {
+router42.get("/print/products", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM print_products WHERE is_active = true ORDER BY price_cents ASC`
@@ -31723,7 +32475,7 @@ router41.get("/print/products", async (_req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.post(
+router42.post(
   "/print/upload",
   requireAuth(),
   printUpload.single("file"),
@@ -31779,12 +32531,12 @@ router41.post(
     }
   }
 );
-router41.get(
+router42.get(
   "/print/jobs",
   requireAuth(),
   async (req, res) => {
     try {
-      const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
+      const isAdmin2 = req.user.role === "admin" || req.user.role === "superuser";
       const { status, page = "1", limit = "20" } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
       let query = `SELECT pj.*, pp.name as product_name, u.name as user_name
@@ -31794,7 +32546,7 @@ router41.get(
                  WHERE 1=1`;
       const params = [];
       let idx = 1;
-      if (!isAdmin) {
+      if (!isAdmin2) {
         query += ` AND pj.user_id = $${idx++}`;
         params.push(req.user.userId);
       }
@@ -31811,7 +32563,7 @@ router41.get(
     }
   }
 );
-router41.patch(
+router42.patch(
   "/print/jobs/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -31855,7 +32607,7 @@ router41.patch(
     }
   }
 );
-router41.get("/cart", requireAuth(), async (req, res) => {
+router42.get("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const result = await pool.query(
@@ -31886,7 +32638,7 @@ router41.get("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.post("/cart", requireAuth(), async (req, res) => {
+router42.post("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const { item_type, item_id, quantity = 1, metadata } = req.body;
@@ -31946,7 +32698,7 @@ router41.post("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.put("/cart/:id", requireAuth(), async (req, res) => {
+router42.put("/cart/:id", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     const { quantity } = req.body;
@@ -31966,7 +32718,7 @@ router41.put("/cart/:id", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.delete(
+router42.delete(
   "/cart/:id",
   requireAuth(),
   async (req, res) => {
@@ -31985,7 +32737,7 @@ router41.delete(
     }
   }
 );
-router41.delete("/cart", requireAuth(), async (req, res) => {
+router42.delete("/cart", requireAuth(), async (req, res) => {
   try {
     const userId = req.user.userId;
     await pool.query(`DELETE FROM cart_items WHERE user_id = $1`, [userId]);
@@ -31994,7 +32746,7 @@ router41.delete("/cart", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.post(
+router42.post(
   "/cart/merge",
   requireAuth(),
   async (req, res) => {
@@ -32081,7 +32833,7 @@ router41.post(
     }
   }
 );
-router41.post(
+router42.post(
   "/cart/checkout",
   requireAuth(),
   async (req, res) => {
@@ -32167,9 +32919,9 @@ router41.post(
     }
   }
 );
-router41.get("/orders", requireAuth(), async (req, res) => {
+router42.get("/orders", requireAuth(), async (req, res) => {
   try {
-    const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
+    const isAdmin2 = req.user.role === "admin" || req.user.role === "superuser";
     const { status, page = "1", limit = "20" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     let query = `SELECT o.*, u.name as user_name, u.email as user_email,
@@ -32183,7 +32935,7 @@ router41.get("/orders", requireAuth(), async (req, res) => {
                  WHERE 1=1`;
     const params = [];
     let idx = 1;
-    if (!isAdmin) {
+    if (!isAdmin2) {
       query += ` AND o.user_id = $${idx++}`;
       params.push(req.user.userId);
     }
@@ -32199,13 +32951,13 @@ router41.get("/orders", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.get(
+router42.get(
   "/orders/:id",
   requireAuth(),
   async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      const isAdmin = req.user.role === "admin" || req.user.role === "superuser";
+      const isAdmin2 = req.user.role === "admin" || req.user.role === "superuser";
       let query = `SELECT o.*,
                         json_agg(json_build_object(
                           'id', oi.id, 'item_type', oi.item_type, 'item_id', oi.item_id,
@@ -32215,7 +32967,7 @@ router41.get(
                  LEFT JOIN order_items oi ON oi.order_id = o.id
                  WHERE o.id = $1`;
       const params = [orderId];
-      if (!isAdmin) {
+      if (!isAdmin2) {
         query += ` AND o.user_id = $2`;
         params.push(req.user.userId);
       }
@@ -32230,7 +32982,7 @@ router41.get(
     }
   }
 );
-router41.patch(
+router42.patch(
   "/orders/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -32264,7 +33016,7 @@ router41.patch(
     }
   }
 );
-router41.post(
+router42.post(
   "/newsletters/subscribe",
   newsletterLimiter,
   async (req, res) => {
@@ -32288,7 +33040,7 @@ router41.post(
     }
   }
 );
-router41.post(
+router42.post(
   "/newsletters/unsubscribe",
   newsletterLimiter,
   async (req, res) => {
@@ -32307,7 +33059,7 @@ router41.post(
     }
   }
 );
-router41.get("/newsletters/archive", async (req, res) => {
+router42.get("/newsletters/archive", async (req, res) => {
   try {
     const { page = "1", limit = "10" } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -32324,7 +33076,7 @@ router41.get("/newsletters/archive", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router41.get(
+router42.get(
   "/newsletters/subscribers",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -32338,7 +33090,7 @@ router41.get(
     }
   }
 );
-router41.get(
+router42.get(
   "/newsletters/campaigns",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -32352,7 +33104,7 @@ router41.get(
     }
   }
 );
-router41.post(
+router42.post(
   "/newsletters/campaigns",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -32385,7 +33137,7 @@ router41.post(
     }
   }
 );
-router41.put(
+router42.put(
   "/newsletters/campaigns/:id",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -32420,7 +33172,7 @@ router41.put(
     }
   }
 );
-router41.post(
+router42.post(
   "/newsletters/campaigns/:id/send",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -32466,7 +33218,7 @@ router41.post(
     }
   }
 );
-router41.get(
+router42.get(
   "/analytics",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -32521,7 +33273,7 @@ router41.get(
     }
   }
 );
-router41.get(
+router42.get(
   "/printshop/queue",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -32561,7 +33313,7 @@ router41.get(
     }
   }
 );
-router41.delete(
+router42.delete(
   "/cart/purge-expired",
   requireAuth(["admin", "superuser"]),
   async (_req, res) => {
@@ -32579,15 +33331,15 @@ router41.delete(
     }
   }
 );
-var marketing_default = router41;
+var marketing_default = router42;
 
 // server/routes/user-history.ts
 init_db();
 init_schema();
-import { Router as Router42 } from "express";
+import { Router as Router43 } from "express";
 import { eq as eq29, desc as desc14, and as and16 } from "drizzle-orm";
-var router42 = Router42();
-router42.get(
+var router43 = Router43();
+router43.get(
   "/",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -32598,7 +33350,7 @@ router42.get(
     res.json({ success: true, history: rows });
   })
 );
-router42.post(
+router43.post(
   "/",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -32637,7 +33389,7 @@ router42.post(
     res.status(201).json({ success: true, action: "created", id: inserted.id });
   })
 );
-router42.delete(
+router43.delete(
   "/:id",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -32662,16 +33414,16 @@ router42.delete(
     res.json({ success: true, action: "deleted", id: deleted.id });
   })
 );
-var user_history_default = router42;
+var user_history_default = router43;
 
 // server/routes/track-upload.ts
 init_db();
-import { Router as Router43 } from "express";
+import { Router as Router44 } from "express";
 import multer3 from "multer";
 import path4 from "path";
 import fs5 from "fs";
 import crypto5 from "crypto";
-var router43 = Router43();
+var router44 = Router44();
 function resolveWritableDir(preferred, fallback) {
   for (const dir of [preferred, fallback]) {
     try {
@@ -32711,13 +33463,56 @@ var ALLOWED_IMAGE = /* @__PURE__ */ new Set([
   "image/webp",
   "image/avif"
 ]);
+var ALLOWED_AUDIO_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".mp3",
+  ".wav",
+  ".flac",
+  ".aac",
+  ".ogg",
+  ".mp4",
+  ".m4a",
+  ".webm"
+]);
+var ALLOWED_IMAGE_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif"
+]);
 var MAX_AUDIO_SIZE = 100 * 1024 * 1024;
 var MAX_COVER_SIZE = 10 * 1024 * 1024;
+function sanitizeStoredName2(originalName) {
+  const safeBase = (originalName || "upload").replace(/[\\/]+/g, "/").split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").trim();
+  if (!safeBase || safeBase === "." || safeBase === "..") {
+    return "upload.bin";
+  }
+  return safeBase.length > 150 ? safeBase.slice(0, 150) : safeBase;
+}
+function validateUploadFile(file, allowedMimeTypes, allowedExtensions) {
+  const extension = path4.extname(file.originalname || "").toLowerCase();
+  const isMimeAllowed = allowedMimeTypes.has(file.mimetype);
+  const isExtAllowed = allowedExtensions.has(extension);
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid upload filename.");
+  }
+  if (!isMimeAllowed || !isExtAllowed) {
+    throw new Error(
+      `Invalid file format: ${file.mimetype || "unknown"}. Allowed types: ${[...allowedExtensions].join(", ")}`
+    );
+  }
+  return sanitizeStoredName2(file.originalname);
+}
 var audioStorage = multer3.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
     const unique2 = crypto5.randomBytes(8).toString("hex");
-    const ext = path4.extname(file.originalname) || ".mp3";
+    const safeName = validateUploadFile(
+      file,
+      ALLOWED_AUDIO,
+      ALLOWED_AUDIO_EXTENSIONS
+    );
+    const ext = path4.extname(safeName).toLowerCase() || ".mp3";
     cb(null, `${Date.now()}_${unique2}${ext}`);
   }
 });
@@ -32725,14 +33520,11 @@ var uploadAudio = multer3({
   storage: audioStorage,
   limits: { fileSize: MAX_AUDIO_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_AUDIO.has(file.mimetype)) {
+    try {
+      validateUploadFile(file, ALLOWED_AUDIO, ALLOWED_AUDIO_EXTENSIONS);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Invalid audio format: ${file.mimetype}. Accepted: MP3, WAV, FLAC, AAC, OGG`
-        )
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
@@ -32740,7 +33532,12 @@ var coverStorage = multer3.diskStorage({
   destination: (_req, _file, cb) => cb(null, COVER_DIR),
   filename: (_req, file, cb) => {
     const unique2 = crypto5.randomBytes(8).toString("hex");
-    const ext = path4.extname(file.originalname) || ".jpg";
+    const safeName = validateUploadFile(
+      file,
+      ALLOWED_IMAGE,
+      ALLOWED_IMAGE_EXTENSIONS
+    );
+    const ext = path4.extname(safeName).toLowerCase() || ".jpg";
     cb(null, `cover_${Date.now()}_${unique2}${ext}`);
   }
 });
@@ -32748,14 +33545,11 @@ var uploadCover = multer3({
   storage: coverStorage,
   limits: { fileSize: MAX_COVER_SIZE },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_IMAGE.has(file.mimetype)) {
+    try {
+      validateUploadFile(file, ALLOWED_IMAGE, ALLOWED_IMAGE_EXTENSIONS);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          `Invalid image format: ${file.mimetype}. Accepted: JPEG, PNG, WebP`
-        )
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
@@ -32768,9 +33562,10 @@ var uploadFields = multer3({
     },
     filename: (_req, file, cb) => {
       const unique2 = crypto5.randomBytes(8).toString("hex");
-      const ext = path4.extname(file.originalname) || "";
+      const safeName = ALLOWED_IMAGE.has(file.mimetype) ? validateUploadFile(file, ALLOWED_IMAGE, ALLOWED_IMAGE_EXTENSIONS) : validateUploadFile(file, ALLOWED_AUDIO, ALLOWED_AUDIO_EXTENSIONS);
+      const ext = path4.extname(safeName).toLowerCase();
       const prefix = ALLOWED_IMAGE.has(file.mimetype) ? "cover" : "track";
-      cb(null, `${prefix}_${Date.now()}_${unique2}${ext}`);
+      cb(null, `${prefix}_${Date.now()}_${unique2}${ext || ".mp3"}`);
     }
   }),
   limits: { fileSize: MAX_AUDIO_SIZE }
@@ -32807,7 +33602,7 @@ async function getArtistSubscriptionTier(userId) {
   }
   return { tier: "spark", uploadsUsed: 0, maxUploads: 3 };
 }
-router43.post(
+router44.post(
   "/track",
   requireAuth(),
   (req, res, next) => {
@@ -32936,7 +33731,7 @@ router43.post(
     }
   }
 );
-router43.get("/my-tracks", requireAuth(), async (req, res) => {
+router44.get("/my-tracks", requireAuth(), async (req, res) => {
   try {
     const userId = req.user ? parseInt(req.user.userId) : null;
     if (!userId)
@@ -32976,7 +33771,7 @@ router43.get("/my-tracks", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch tracks" });
   }
 });
-router43.delete(
+router44.delete(
   "/track/:id",
   requireAuth(),
   async (req, res) => {
@@ -33025,12 +33820,12 @@ router43.delete(
     }
   }
 );
-var track_upload_default = router43;
+var track_upload_default = router44;
 
 // server/routes/artist-subscriptions.ts
 init_db();
-import { Router as Router44 } from "express";
-var router44 = Router44();
+import { Router as Router45 } from "express";
+var router45 = Router45();
 var ARTIST_TIERS = {
   spark: {
     name: "Spark",
@@ -33117,7 +33912,7 @@ var ARTIST_TIERS = {
     icon: "\u{1F451}"
   }
 };
-router44.get("/tiers", async (_req, res) => {
+router45.get("/tiers", async (_req, res) => {
   const tiers = Object.entries(ARTIST_TIERS).map(([key, tier]) => ({
     id: key,
     ...tier,
@@ -33125,7 +33920,7 @@ router44.get("/tiers", async (_req, res) => {
   }));
   res.json({ success: true, tiers });
 });
-router44.get(
+router45.get(
   "/my-subscription",
   optionalAuth,
   async (req, res) => {
@@ -33169,7 +33964,7 @@ router44.get(
     }
   }
 );
-router44.post(
+router45.post(
   "/subscribe",
   requireAuth(),
   async (req, res) => {
@@ -33297,7 +34092,7 @@ router44.post(
     }
   }
 );
-router44.post("/cancel", requireAuth(), async (req, res) => {
+router45.post("/cancel", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const result = await pool.query(
@@ -33320,7 +34115,7 @@ router44.post("/cancel", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to cancel" });
   }
 });
-router44.get(
+router45.get(
   "/subscription",
   optionalAuth,
   async (req, res) => {
@@ -33362,12 +34157,12 @@ router44.get(
     }
   }
 );
-var artist_subscriptions_default = router44;
+var artist_subscriptions_default = router45;
 
 // server/routes/payments.ts
 init_db();
-import { Router as Router45 } from "express";
-var router45 = Router45();
+import { Router as Router46 } from "express";
+var router46 = Router46();
 var PAYMENT_METHODS = [
   {
     id: "wallet",
@@ -33447,7 +34242,7 @@ var PAYMENT_METHODS = [
     requiresMinActivity: 500
   }
 ];
-router45.get("/methods", async (_req, res) => {
+router46.get("/methods", async (_req, res) => {
   let interacEnabled = false;
   let cryptoEnabled = false;
   let mobileMoneyEnabled = false;
@@ -33498,7 +34293,7 @@ router45.get("/methods", async (_req, res) => {
   }
   res.json({ success: true, methods });
 });
-router45.get("/wallet", requireAuth(), async (req, res) => {
+router46.get("/wallet", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const wallet = await pool.query(
@@ -33526,7 +34321,7 @@ router45.get("/wallet", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch wallet" });
   }
 });
-router45.post(
+router46.post(
   "/wallet/create",
   requireAuth(),
   async (req, res) => {
@@ -33561,7 +34356,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router46.post(
   "/wallet/deposit",
   requireAuth(),
   async (req, res) => {
@@ -33638,7 +34433,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router46.post(
   "/wallet/withdraw",
   requireAuth(),
   async (req, res) => {
@@ -33750,7 +34545,7 @@ router45.post(
     }
   }
 );
-router45.post(
+router46.post(
   "/wallet/transfer",
   requireAuth(),
   async (req, res) => {
@@ -33841,7 +34636,7 @@ router45.post(
     }
   }
 );
-router45.get(
+router46.get(
   "/transactions",
   requireAuth(),
   async (req, res) => {
@@ -33885,7 +34680,7 @@ router45.get(
     }
   }
 );
-router45.post(
+router46.post(
   "/method/add",
   requireAuth(),
   async (req, res) => {
@@ -33970,7 +34765,7 @@ router45.post(
     }
   }
 );
-router45.get(
+router46.get(
   "/method/list",
   requireAuth(),
   async (req, res) => {
@@ -33989,7 +34784,7 @@ router45.get(
     }
   }
 );
-router45.delete(
+router46.delete(
   "/method/:id",
   requireAuth(),
   async (req, res) => {
@@ -34010,7 +34805,7 @@ router45.delete(
     }
   }
 );
-router45.post(
+router46.post(
   "/bank-transfer",
   requireAuth(),
   async (req, res) => {
@@ -34062,7 +34857,7 @@ router45.post(
     }
   }
 );
-router45.get(
+router46.get(
   "/bank-transfers",
   requireAuth(),
   async (req, res) => {
@@ -34078,7 +34873,7 @@ router45.get(
     }
   }
 );
-router45.put(
+router46.put(
   "/bank-transfer/:id/review",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -34165,7 +34960,7 @@ router45.put(
     }
   }
 );
-router45.post(
+router46.post(
   "/interac/request",
   requireAuth(),
   async (req, res) => {
@@ -34237,7 +35032,7 @@ router45.post(
     }
   }
 );
-router45.get(
+router46.get(
   "/crypto/addresses",
   requireAuth(),
   async (_req, res) => {
@@ -34268,7 +35063,7 @@ router45.get(
     }
   }
 );
-router45.post(
+router46.post(
   "/crypto/deposit",
   requireAuth(),
   async (req, res) => {
@@ -34312,7 +35107,7 @@ router45.post(
     }
   }
 );
-router45.get("/mobile-money/providers", async (_req, res) => {
+router46.get("/mobile-money/providers", async (_req, res) => {
   try {
     const enabled = await pool.query(
       `SELECT setting_value FROM platform_settings WHERE setting_key = 'payment_mobile_money_enabled'`
@@ -34363,7 +35158,7 @@ router45.get("/mobile-money/providers", async (_req, res) => {
     });
   }
 });
-router45.post(
+router46.post(
   "/mobile-money/request",
   requireAuth(),
   async (req, res) => {
@@ -34429,7 +35224,7 @@ router45.post(
     }
   }
 );
-router45.get(
+router46.get(
   "/admin/settings",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -34447,7 +35242,7 @@ router45.get(
     }
   }
 );
-router45.put(
+router46.put(
   "/admin/settings/:key",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -34480,7 +35275,7 @@ var TIER_PRICES = {
   // $99.99/month
 };
 var TIER_DURATION_DAYS = 30;
-router45.get("/tier/prices", (_req, res) => {
+router46.get("/tier/prices", (_req, res) => {
   res.json({
     success: true,
     tiers: [
@@ -34527,7 +35322,7 @@ router45.get("/tier/prices", (_req, res) => {
     ]
   });
 });
-router45.post(
+router46.post(
   "/tier/upgrade",
   requireAuth(),
   async (req, res) => {
@@ -34607,12 +35402,12 @@ router45.post(
     }
   }
 );
-var payments_default2 = router45;
+var payments_default2 = router46;
 
 // server/routes/arena.ts
 init_db();
-import { Router as Router46 } from "express";
-var router46 = Router46();
+import { Router as Router47 } from "express";
+var router47 = Router47();
 var ROUND_NAMES = [
   "Round of 16",
   "Quarter-Finals",
@@ -34622,6 +35417,21 @@ var ROUND_NAMES = [
 var MAX_VOTES_PER_LISTENER = 100;
 var SOFT_VOTE_WINDOW_HOURS = 6;
 var LOCK_STREAM_THRESHOLD = 3;
+var CONTEST_VOTE_WEIGHTS = {
+  free: 0.1,
+  guest: 0.1,
+  supporter: 0.35,
+  champion: 0.7,
+  patron: 1
+};
+async function getContestVoteWeight(userId) {
+  const result = await pool.query(
+    `SELECT tier FROM streaming_subscriptions WHERE user_id = $1 LIMIT 1`,
+    [userId]
+  );
+  const tier = String(result.rows[0]?.tier || "free").toLowerCase();
+  return CONTEST_VOTE_WEIGHTS[tier] ?? CONTEST_VOTE_WEIGHTS.free;
+}
 var BADGE_HIERARCHY = [
   "initiate",
   "bronze",
@@ -34657,7 +35467,7 @@ function getWeekNumber3(date2) {
   );
   return { week: weekNo, year: d.getUTCFullYear() };
 }
-router46.get("/active", async (_req, res) => {
+router47.get("/active", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT ac.*,
@@ -34673,7 +35483,7 @@ router46.get("/active", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch arenas" });
   }
 });
-router46.get("/:id", async (req, res) => {
+router47.get("/:id", async (req, res) => {
   try {
     const contestId = parseInt(req.params.id);
     const contest = await pool.query(
@@ -34709,7 +35519,7 @@ router46.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch contest" });
   }
 });
-router46.get("/:id/bracket", async (req, res) => {
+router47.get("/:id/bracket", async (req, res) => {
   try {
     const contestId = parseInt(req.params.id);
     const contest = await pool.query(
@@ -34739,7 +35549,7 @@ router46.get("/:id/bracket", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch bracket" });
   }
 });
-router46.post(
+router47.post(
   "/create",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -34792,7 +35602,7 @@ router46.post(
     }
   }
 );
-router46.post(
+router47.post(
   "/:id/enter",
   requireAuth(),
   async (req, res) => {
@@ -34891,11 +35701,12 @@ router46.post(
     }
   }
 );
-router46.post("/:id/vote", requireAuth(), async (req, res) => {
+router47.post("/:id/vote", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const contestId = parseInt(req.params.id);
     const { artistProfileId } = req.body;
+    const voteWeight = await getContestVoteWeight(userId);
     if (!artistProfileId) {
       return res.status(400).json({ success: false, error: "artistProfileId required" });
     }
@@ -34975,21 +35786,28 @@ router46.post("/:id/vote", requireAuth(), async (req, res) => {
       );
     }
     await pool.query(
-      `INSERT INTO arena_votes (contest_id, user_id, artist_profile_id, stream_count, locked)
-       VALUES ($1, $2, $3, 1, $4)
+      `INSERT INTO arena_votes (contest_id, user_id, artist_profile_id, stream_count, locked, vote_weight)
+       VALUES ($1, $2, $3, 1, $4, $5)
        ON CONFLICT ON CONSTRAINT arena_votes_unique DO UPDATE
        SET stream_count = arena_votes.stream_count + 1,
+           vote_weight = EXCLUDED.vote_weight,
            locked = EXCLUDED.locked OR arena_votes.locked`,
-      [contestId, userId, artistProfileId, voteStatus === "locked"]
+      [contestId, userId, artistProfileId, voteStatus === "locked", voteWeight]
     );
     await pool.query(
-      `UPDATE arena_brackets SET vote_count = vote_count + 1, streams = streams + 1
+      `UPDATE arena_brackets
+       SET vote_count = vote_count + 1,
+           weighted_vote_count = COALESCE(weighted_vote_count, 0) + $4,
+           streams = streams + 1
        WHERE contest_id = $1 AND round = $2 AND artist_profile_id = $3`,
-      [contestId, currentRound, artistProfileId]
+      [contestId, currentRound, artistProfileId, voteWeight]
     );
     await pool.query(
-      `UPDATE arena_contests SET total_votes = COALESCE(total_votes, 0) + 1 WHERE id = $1`,
-      [contestId]
+      `UPDATE arena_contests
+         SET total_votes = COALESCE(total_votes, 0) + 1,
+           weighted_total_votes = COALESCE(weighted_total_votes, 0) + $2
+         WHERE id = $1`,
+      [contestId, voteWeight]
     );
     if (existingVote.rows.length === 0) {
       await pool.query(
@@ -35019,6 +35837,8 @@ router46.post("/:id/vote", requireAuth(), async (req, res) => {
       message: isNewlyLocked ? `\u{1F512} Vote locked for this artist after ${streamCount} streams!` : `Stream-vote recorded (${voteStatus})`,
       voteStatus,
       streamCount,
+      voteWeight,
+      voteWeightLabel: `${Math.round(voteWeight * 100)}% of 1 vote point`,
       isNewlyLocked,
       votesRemaining: MAX_VOTES_PER_LISTENER - totalUsed - 1,
       xpAwarded: existingVote.rows.length === 0 ? XP_REWARDS.VOTE : 0,
@@ -35033,7 +35853,7 @@ router46.post("/:id/vote", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to record vote" });
   }
 });
-router46.get(
+router47.get(
   "/:id/my-votes",
   requireAuth(),
   async (req, res) => {
@@ -35079,7 +35899,7 @@ router46.get(
     }
   }
 );
-router46.post(
+router47.post(
   "/:id/admin-unlock",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -35122,7 +35942,7 @@ router46.post(
     }
   }
 );
-router46.post(
+router47.post(
   "/:id/advance-round",
   requireAuth(["admin", "superuser"]),
   async (req, res) => {
@@ -35231,7 +36051,7 @@ router46.post(
     }
   }
 );
-router46.get("/history", async (req, res) => {
+router47.get("/history", async (req, res) => {
   try {
     const { page = "1", limit = "10" } = req.query;
     const pageNum = Math.max(1, parseInt(page));
@@ -35260,7 +36080,7 @@ router46.get("/history", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch arena history" });
   }
 });
-router46.get("/eligible-artists", async (_req, res) => {
+router47.get("/eligible-artists", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
@@ -35309,7 +36129,7 @@ router46.get("/eligible-artists", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch eligible artists" });
   }
 });
-router46.post(
+router47.post(
   "/:id/award-predictions",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -35447,7 +36267,7 @@ router46.post(
     }
   }
 );
-router46.get("/participation-stats", async (_req, res) => {
+router47.get("/participation-stats", async (_req, res) => {
   try {
     const stats = await pool.query(`
       SELECT 
@@ -35484,12 +36304,12 @@ router46.get("/participation-stats", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-var arena_default = router46;
+var arena_default = router47;
 
 // server/routes/vault.ts
 init_db();
-import { Router as Router47 } from "express";
-var router47 = Router47();
+import { Router as Router48 } from "express";
+var router48 = Router48();
 var VALID_RULE_TYPES = [
   "time_gate",
   "stream_gate",
@@ -35498,7 +36318,7 @@ var VALID_RULE_TYPES = [
   "badge_gate"
 ];
 var TIER_HIERARCHY = ["free", "supporter", "champion", "patron"];
-router47.post("/rules", requireAuth(), async (req, res) => {
+router48.post("/rules", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const { trackId, rules } = req.body;
@@ -35600,7 +36420,7 @@ router47.post("/rules", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to set vault rules" });
   }
 });
-router47.get(
+router48.get(
   "/track/:trackId",
   optionalAuth,
   async (req, res) => {
@@ -35640,7 +36460,7 @@ router47.get(
     }
   }
 );
-router47.post(
+router48.post(
   "/check-unlock",
   requireAuth(),
   async (req, res) => {
@@ -35775,7 +36595,7 @@ router47.post(
     }
   }
 );
-router47.delete(
+router48.delete(
   "/rules/:ruleId",
   requireAuth(),
   async (req, res) => {
@@ -35814,7 +36634,7 @@ router47.delete(
     }
   }
 );
-router47.get(
+router48.get(
   "/my-vaulted",
   requireAuth(),
   async (req, res) => {
@@ -35838,15 +36658,15 @@ router47.get(
     }
   }
 );
-var vault_default = router47;
+var vault_default = router48;
 
 // server/routes/collab-chains.ts
 init_db();
-import { Router as Router48 } from "express";
-var router48 = Router48();
+import { Router as Router49 } from "express";
+var router49 = Router49();
 var COLLAB_TYPES = ["open_verse", "remix", "feature"];
 var MAX_SPLIT_TOTAL = 100;
-router48.post("/request", requireAuth(), async (req, res) => {
+router49.post("/request", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const {
@@ -35921,7 +36741,7 @@ router48.post("/request", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create collab request" });
   }
 });
-router48.get("/open", optionalAuth, async (req, res) => {
+router49.get("/open", optionalAuth, async (req, res) => {
   try {
     const {
       genre,
@@ -35972,7 +36792,7 @@ router48.get("/open", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch open requests" });
   }
 });
-router48.get(
+router49.get(
   "/my-requests",
   requireAuth(),
   async (req, res) => {
@@ -36016,7 +36836,7 @@ router48.get(
     }
   }
 );
-router48.put(
+router49.put(
   "/:id/respond",
   requireAuth(),
   async (req, res) => {
@@ -36097,7 +36917,7 @@ router48.put(
     }
   }
 );
-router48.post(
+router49.post(
   "/:id/submit",
   requireAuth(),
   async (req, res) => {
@@ -36134,7 +36954,7 @@ router48.post(
     }
   }
 );
-router48.post(
+router49.post(
   "/:id/finalize",
   requireAuth(),
   async (req, res) => {
@@ -36203,7 +37023,7 @@ router48.post(
     }
   }
 );
-router48.get("/track/:trackId", async (req, res) => {
+router49.get("/track/:trackId", async (req, res) => {
   try {
     const trackId = parseInt(req.params.trackId);
     const chain = await pool.query(
@@ -36230,12 +37050,12 @@ router48.get("/track/:trackId", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch collab chain" });
   }
 });
-var collab_chains_default = router48;
+var collab_chains_default = router49;
 
 // server/routes/revenue-pulse.ts
 init_db();
-import { Router as Router49 } from "express";
-var router49 = Router49();
+import { Router as Router50 } from "express";
+var router50 = Router50();
 var BADGE_THRESHOLDS = [
   { badge: "initiate", streams: 0, bonusPct: 0, icon: "\u{1F331}", color: "#6b7280" },
   {
@@ -36305,7 +37125,7 @@ var LISTENER_TIERS = [
     label: "Patron (Unlimited)"
   }
 ];
-router49.get("/", optionalAuth, async (req, res) => {
+router50.get("/", optionalAuth, async (req, res) => {
   try {
     const userId = req.user ? parseInt(req.user.userId) : null;
     const currentPool = await pool.query(
@@ -36392,7 +37212,7 @@ router49.get("/", optionalAuth, async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to load revenue pulse" });
   }
 });
-router49.get("/pool", async (_req, res) => {
+router50.get("/pool", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT wp.*,
@@ -36418,7 +37238,7 @@ router49.get("/pool", async (_req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch pool" });
   }
 });
-router49.get("/my-impact", requireAuth(), async (req, res) => {
+router50.get("/my-impact", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const lifetime = await pool.query(
@@ -36477,7 +37297,7 @@ router49.get("/my-impact", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch impact" });
   }
 });
-router49.get("/leaderboard", async (req, res) => {
+router50.get("/leaderboard", async (req, res) => {
   try {
     const { limit = "25" } = req.query;
     const limitNum = Math.min(100, parseInt(limit) || 25);
@@ -36513,7 +37333,7 @@ router49.get("/leaderboard", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch leaderboard" });
   }
 });
-router49.get("/badges", async (_req, res) => {
+router50.get("/badges", async (_req, res) => {
   res.json({
     success: true,
     badges: BADGE_THRESHOLDS,
@@ -36525,13 +37345,13 @@ router49.get("/badges", async (_req, res) => {
     }
   });
 });
-var revenue_pulse_default = router49;
+var revenue_pulse_default = router50;
 
 // server/routes/wallet.ts
 init_db();
-import { Router as Router50 } from "express";
-var router50 = Router50();
-router50.get("/balance", requireAuth, async (req, res) => {
+import { Router as Router51 } from "express";
+var router51 = Router51();
+router51.get("/balance", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -36565,7 +37385,7 @@ router50.get("/balance", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to get wallet balance" });
   }
 });
-router50.get(
+router51.get(
   "/transactions",
   requireAuth,
   async (req, res) => {
@@ -36588,7 +37408,7 @@ router50.get(
     }
   }
 );
-router50.post("/deposit", requireAuth, async (req, res) => {
+router51.post("/deposit", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -36619,7 +37439,7 @@ router50.post("/deposit", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to process deposit" });
   }
 });
-router50.post(
+router51.post(
   "/game-reward",
   requireAuth,
   async (req, res) => {
@@ -36689,7 +37509,7 @@ router50.post(
     }
   }
 );
-router50.post("/ad-reward", async (req, res) => {
+router51.post("/ad-reward", async (req, res) => {
   try {
     const { userId, amount, transactionId, secret } = req.body;
     if (!secret || secret !== process.env.AD_REWARD_SECRET) {
@@ -36749,13 +37569,13 @@ router50.post("/ad-reward", async (req, res) => {
     res.status(500).json({ error: "Failed to credit ad reward" });
   }
 });
-var wallet_default = router50;
+var wallet_default = router51;
 
 // server/routes/games.ts
 init_db();
-import { Router as Router51 } from "express";
+import { Router as Router52 } from "express";
 init_socket_config();
-var router51 = Router51();
+var router52 = Router52();
 var TRIVIA_QUESTIONS = [
   {
     q: "Quel artiste a popularis\xE9 l'Afrobeats \xE0 l'international en 2020 ?",
@@ -36923,7 +37743,7 @@ async function settleMatch(matchId, winnerId, loserId, wagerAmount) {
   await pool.query("COMMIT");
   return { winnerPrize, platformCut };
 }
-router51.post("/challenge", requireAuth, async (req, res) => {
+router52.post("/challenge", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -37042,7 +37862,7 @@ router51.post("/challenge", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to create game" });
   }
 });
-router51.post("/:id/join", requireAuth, async (req, res) => {
+router52.post("/:id/join", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matchId = parseInt(req.params.id);
@@ -37120,7 +37940,7 @@ router51.post("/:id/join", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to join game" });
   }
 });
-router51.post("/:id/answer", requireAuth, async (req, res) => {
+router52.post("/:id/answer", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matchId = parseInt(req.params.id);
@@ -37261,7 +38081,7 @@ router51.post("/:id/answer", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to submit answer" });
   }
 });
-router51.get("/open", async (_req, res) => {
+router52.get("/open", async (_req, res) => {
   try {
     const matches = await pool.query(
       `SELECT gm.id, gm.game_type, gm.wager_amount, gm.round_count, gm.created_at,
@@ -37279,7 +38099,7 @@ router51.get("/open", async (_req, res) => {
     res.status(500).json({ error: "Failed to list matches" });
   }
 });
-router51.get("/my", requireAuth, async (req, res) => {
+router52.get("/my", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const matches = await pool.query(
@@ -37308,7 +38128,7 @@ router51.get("/my", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to list matches" });
   }
 });
-router51.post("/verify-age", requireAuth, async (req, res) => {
+router52.post("/verify-age", requireAuth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const { dateOfBirth } = req.body;
@@ -37338,7 +38158,7 @@ router51.post("/verify-age", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to verify age" });
   }
 });
-router51.get("/leaderboard", async (_req, res) => {
+router52.get("/leaderboard", async (_req, res) => {
   try {
     const leaders = await pool.query(
       `SELECT u.username,
@@ -37357,12 +38177,12 @@ router51.get("/leaderboard", async (_req, res) => {
     res.status(500).json({ error: "Failed to load leaderboard" });
   }
 });
-var games_default = router51;
+var games_default = router52;
 
 // server/routes/paypal.ts
 init_db();
-import { Router as Router52 } from "express";
-var router52 = Router52();
+import { Router as Router53 } from "express";
+var router53 = Router53();
 var PAYPAL_BASE = (process.env.PAYPAL_MODE || "sandbox") === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
 var PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
 var PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
@@ -37415,7 +38235,7 @@ async function getOrCreateWallet2(userId) {
   }
   return w.rows[0];
 }
-router52.get("/config", (_req, res) => {
+router53.get("/config", (_req, res) => {
   if (!PAYPAL_CLIENT_ID) {
     return res.status(503).json({
       error: "PayPal not configured",
@@ -37434,7 +38254,7 @@ router52.get("/config", (_req, res) => {
     }))
   });
 });
-router52.post(
+router53.post(
   "/create-order",
   requireAuth,
   async (req, res) => {
@@ -37525,7 +38345,7 @@ router52.post(
     }
   }
 );
-router52.post(
+router53.post(
   "/capture-order",
   requireAuth,
   async (req, res) => {
@@ -37630,7 +38450,7 @@ router52.post(
     }
   }
 );
-router52.get("/success", requireAuth, async (req, res) => {
+router53.get("/success", requireAuth, async (req, res) => {
   try {
     const orderId = req.query.token;
     const userId = req.user?.id;
@@ -37712,15 +38532,15 @@ router52.get("/success", requireAuth, async (req, res) => {
     res.redirect("/account/paypal?paypal=error");
   }
 });
-router52.get("/cancel", (_req, res) => {
+router53.get("/cancel", (_req, res) => {
   res.redirect("/account/paypal?paypal=cancelled");
 });
-var paypal_default = router52;
+var paypal_default = router53;
 
 // server/routes/listener.ts
 init_db();
-import { Router as Router53 } from "express";
-var router53 = Router53();
+import { Router as Router54 } from "express";
+var router54 = Router54();
 var LEVEL_THRESHOLDS = [
   0,
   100,
@@ -37746,7 +38566,7 @@ function calculateLevel(points) {
   }
   return level;
 }
-router53.get("/stats", requireAuth(), async (req, res) => {
+router54.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -37904,7 +38724,7 @@ router53.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router53.post(
+router54.post(
   "/bonuses/:id/claim",
   requireAuth(),
   async (req, res) => {
@@ -37950,7 +38770,7 @@ router53.post(
     }
   }
 );
-router53.post(
+router54.post(
   "/activity/listen",
   requireAuth(),
   async (req, res) => {
@@ -38025,14 +38845,14 @@ router53.post(
     }
   }
 );
-var listener_default = router53;
+var listener_default = router54;
 
 // server/routes/beatmaker.ts
 init_db();
-import { Router as Router54 } from "express";
+import { Router as Router55 } from "express";
 import { sql as sql16 } from "drizzle-orm";
-var router54 = Router54();
-router54.get("/requests", requireAuth(), async (req, res) => {
+var router55 = Router55();
+router55.get("/requests", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -38064,7 +38884,7 @@ router54.get("/requests", requireAuth(), async (req, res) => {
     res.json({ requests: [] });
   }
 });
-router54.post("/requests", requireAuth(), async (req, res) => {
+router55.post("/requests", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -38150,7 +38970,7 @@ router54.post("/requests", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create request" });
   }
 });
-router54.patch(
+router55.patch(
   "/requests/:id",
   requireAuth(),
   async (req, res) => {
@@ -38187,7 +39007,7 @@ router54.patch(
     }
   }
 );
-router54.get("/briefs", requireAuth(), async (req, res) => {
+router55.get("/briefs", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -38215,7 +39035,7 @@ router54.get("/briefs", requireAuth(), async (req, res) => {
     res.json({ briefs: [] });
   }
 });
-router54.post("/briefs", requireAuth(), async (req, res) => {
+router55.post("/briefs", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -38284,7 +39104,7 @@ router54.post("/briefs", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save brief" });
   }
 });
-router54.delete(
+router55.delete(
   "/briefs/:id",
   requireAuth(),
   async (req, res) => {
@@ -38305,7 +39125,7 @@ router54.delete(
     }
   }
 );
-router54.get("/producers", requireAuth(), async (req, res) => {
+router55.get("/producers", requireAuth(), async (req, res) => {
   try {
     const result = await db.execute(sql16`
       SELECT 
@@ -38330,13 +39150,13 @@ router54.get("/producers", requireAuth(), async (req, res) => {
     res.json({ producers: [] });
   }
 });
-var beatmaker_default = router54;
+var beatmaker_default = router55;
 
 // server/routes/versavids.ts
 init_db();
-import { Router as Router55 } from "express";
+import { Router as Router56 } from "express";
 import { sql as sql17 } from "drizzle-orm";
-var router55 = Router55();
+var router56 = Router56();
 async function ensureVersaVidsTables() {
   try {
     await db.execute(sql17`
@@ -38443,7 +39263,7 @@ async function ensureVersaVidsTables() {
   }
 }
 ensureVersaVidsTables();
-router55.get("/projects", requireAuth(), async (req, res) => {
+router56.get("/projects", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     const role = req.query.role || "client";
@@ -38475,7 +39295,7 @@ router55.get("/projects", requireAuth(), async (req, res) => {
     res.json({ success: true, projects: [] });
   }
 });
-router55.get("/projects/open", async (_req, res) => {
+router56.get("/projects/open", async (_req, res) => {
   try {
     const result = await db.execute(sql17`
       SELECT vp.*, u.display_name as client_name
@@ -38493,7 +39313,7 @@ router55.get("/projects/open", async (_req, res) => {
     res.json({ success: true, projects: [] });
   }
 });
-router55.post("/projects", requireAuth(), async (req, res) => {
+router56.post("/projects", requireAuth(), async (req, res) => {
   try {
     const userId = req.user?.userId;
     const {
@@ -38524,7 +39344,7 @@ router55.post("/projects", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create project" });
   }
 });
-router55.patch(
+router56.patch(
   "/projects/:id",
   requireAuth(),
   async (req, res) => {
@@ -38568,7 +39388,7 @@ router55.patch(
     }
   }
 );
-router55.get("/projects/:id", async (req, res) => {
+router56.get("/projects/:id", async (req, res) => {
   try {
     const projectId = parseInt(req.params.id);
     const [project] = (await db.execute(sql17`
@@ -38607,7 +39427,7 @@ router55.get("/projects/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch project" });
   }
 });
-router55.post("/briefs", requireAuth(), async (req, res) => {
+router56.post("/briefs", requireAuth(), async (req, res) => {
   try {
     const {
       project_id,
@@ -38665,7 +39485,7 @@ router55.post("/briefs", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save brief" });
   }
 });
-router55.post(
+router56.post(
   "/deliverables",
   requireAuth(),
   async (req, res) => {
@@ -38701,7 +39521,7 @@ router55.post(
     }
   }
 );
-router55.patch(
+router56.patch(
   "/deliverables/:id",
   requireAuth(),
   async (req, res) => {
@@ -38747,7 +39567,7 @@ router55.patch(
     }
   }
 );
-router55.get("/stats", async (_req, res) => {
+router56.get("/stats", async (_req, res) => {
   try {
     const result = await db.execute(sql17`
       SELECT
@@ -38771,13 +39591,13 @@ router55.get("/stats", async (_req, res) => {
     });
   }
 });
-var versavids_default = router55;
+var versavids_default = router56;
 
 // server/routes/intent-search.ts
-import { Router as Router56 } from "express";
+import { Router as Router57 } from "express";
 import { z as z6 } from "zod";
 init_db();
-var router56 = Router56();
+var router57 = Router57();
 var intentSearchSchema = z6.object({
   query: z6.string().min(2).max(500),
   limit: z6.number().min(1).max(20).optional().default(5),
@@ -38790,7 +39610,7 @@ var emergencyAlertSchema = z6.object({
   contactEmail: z6.string().email().optional(),
   location: z6.string().optional()
 });
-router56.post("/intent", optionalAuth, async (req, res) => {
+router57.post("/intent", optionalAuth, async (req, res) => {
   try {
     const parsed = intentSearchSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -38846,7 +39666,7 @@ router56.post("/intent", optionalAuth, async (req, res) => {
     });
   }
 });
-router56.post(
+router57.post(
   "/emergency-alert",
   optionalAuth,
   async (req, res) => {
@@ -38921,7 +39741,7 @@ router56.post(
     }
   }
 );
-router56.get("/status", async (_req, res) => {
+router57.get("/status", async (_req, res) => {
   let groqAvailable = false;
   let ollamaAvailable = false;
   if (process.env.GROQ_API_KEY) {
@@ -38951,10 +39771,10 @@ router56.get("/status", async (_req, res) => {
     }
   });
 });
-var intent_search_default = router56;
+var intent_search_default = router57;
 
 // server/routes/migrate.ts
-import { Router as Router57 } from "express";
+import { Router as Router58 } from "express";
 import { z as z7 } from "zod";
 init_db();
 
@@ -39086,12 +39906,12 @@ async function scrapeDirectoryUrl(url) {
 }
 
 // server/routes/migrate.ts
-var router57 = Router57();
-router57.use(requireAuth);
+var router58 = Router58();
+router58.use(requireAuth);
 var scrapeSchema = z7.object({
   url: z7.string().url().max(500)
 });
-router57.post("/scrape", async (req, res) => {
+router58.post("/scrape", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -39135,7 +39955,7 @@ var importSchema = z7.object({
   countryCode: z7.string().length(2).optional(),
   categoryId: z7.number().optional()
 });
-router57.post("/import", async (req, res) => {
+router58.post("/import", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -39188,7 +40008,7 @@ router57.post("/import", async (req, res) => {
     errors
   });
 });
-router57.get("/history", async (req, res) => {
+router58.get("/history", async (req, res) => {
   if (!req.user || !["admin", "superuser"].includes(req.user.role)) {
     return res.status(403).json({ success: false, error: "Admin access required" });
   }
@@ -39212,14 +40032,14 @@ router57.get("/history", async (req, res) => {
     });
   }
 });
-var migrate_default = router57;
+var migrate_default = router58;
 
 // server/routes/escrow.ts
-import { Router as Router58 } from "express";
+import { Router as Router59 } from "express";
 import { z as z8 } from "zod";
 init_db();
-var router58 = Router58();
-router58.use(requireAuth);
+var router59 = Router59();
+router59.use(requireAuth);
 async function ensureEscrowTable() {
   try {
     await pool.query(`
@@ -39257,7 +40077,7 @@ var createEscrowSchema = z8.object({
   description: z8.string().max(1e3).optional(),
   serviceDate: z8.string().optional()
 });
-router58.post("/create", async (req, res) => {
+router59.post("/create", async (req, res) => {
   const parsed = createEscrowSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -39303,7 +40123,7 @@ router58.post("/create", async (req, res) => {
     });
   }
 });
-router58.post("/:id/fund", async (req, res) => {
+router59.post("/:id/fund", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -39337,7 +40157,7 @@ router58.post("/:id/fund", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router58.post("/:id/release", async (req, res) => {
+router59.post("/:id/release", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -39375,7 +40195,7 @@ router58.post("/:id/release", async (req, res) => {
 var disputeSchema = z8.object({
   reason: z8.string().min(10).max(1e3)
 });
-router58.post("/:id/dispute", async (req, res) => {
+router59.post("/:id/dispute", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   const parsed = disputeSchema.safeParse(req.body);
@@ -39405,7 +40225,7 @@ router58.post("/:id/dispute", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router58.get("/my", async (req, res) => {
+router59.get("/my", async (req, res) => {
   const userId = parseInt(req.user.userId);
   try {
     const result = await pool.query(
@@ -39425,7 +40245,7 @@ router58.get("/my", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-router58.get("/:id", async (req, res) => {
+router59.get("/:id", async (req, res) => {
   const userId = parseInt(req.user.userId);
   const escrowId = parseInt(req.params.id);
   try {
@@ -39447,11 +40267,11 @@ router58.get("/:id", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-var escrow_default = router58;
+var escrow_default = router59;
 
 // server/routes/geo-seo.ts
 init_db();
-import { Router as Router59 } from "express";
+import { Router as Router60 } from "express";
 
 // server/services/json-ld-generator.ts
 function generateBusinessJsonLd(biz) {
@@ -39559,8 +40379,8 @@ function generateWebsiteJsonLd() {
 }
 
 // server/routes/geo-seo.ts
-var router59 = Router59();
-router59.get("/json-ld/business/:id", async (req, res) => {
+var router60 = Router60();
+router60.get("/json-ld/business/:id", async (req, res) => {
   const businessId = parseInt(req.params.id);
   if (isNaN(businessId)) {
     return res.status(400).json({ error: "Invalid business ID" });
@@ -39603,15 +40423,15 @@ router59.get("/json-ld/business/:id", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router59.get("/json-ld/organization", (_req, res) => {
+router60.get("/json-ld/organization", (_req, res) => {
   res.setHeader("Content-Type", "application/ld+json");
   return res.json(generateOrganizationJsonLd());
 });
-router59.get("/json-ld/website", (_req, res) => {
+router60.get("/json-ld/website", (_req, res) => {
   res.setHeader("Content-Type", "application/ld+json");
   return res.json(generateWebsiteJsonLd());
 });
-router59.get("/json-ld/search", async (req, res) => {
+router60.get("/json-ld/search", async (req, res) => {
   const query = req.query.q || "";
   const limit = Math.min(parseInt(req.query.limit) || 10, 50);
   try {
@@ -39660,7 +40480,7 @@ router59.get("/json-ld/search", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router59.get("/sitemap.xml", async (_req, res) => {
+router60.get("/sitemap.xml", async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, name, updated_at FROM businesses WHERE is_active = true ORDER BY updated_at DESC LIMIT 50000`
@@ -39735,16 +40555,16 @@ function robotsTxtHandler(req, res) {
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);
 }
-router59.get("/robots.txt", robotsTxtHandler);
-var geo_seo_default = router59;
+router60.get("/robots.txt", robotsTxtHandler);
+var geo_seo_default = router60;
 
 // server/routes/business-logo.ts
 init_db();
-import { Router as Router60 } from "express";
+import { Router as Router61 } from "express";
 import multer4 from "multer";
 import path5 from "path";
 import fs6 from "fs";
-var router60 = Router60();
+var router61 = Router61();
 var LOGO_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path5.join("/tmp", "uploads", "logos") : path5.resolve("uploads", "logos");
 try {
   if (!fs6.existsSync(LOGO_UPLOADS_DIR)) {
@@ -39753,11 +40573,44 @@ try {
 } catch (err) {
   console.warn(`\u26A0\uFE0F  Could not create logo uploads dir: ${err.message}`);
 }
+var allowedLogoTypes = /* @__PURE__ */ new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+  "image/gif"
+]);
+var allowedLogoExtensions = /* @__PURE__ */ new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".svg",
+  ".gif"
+]);
+function sanitizeStoredName3(originalName) {
+  const safe = (originalName || "logo").replace(/[\\/]+/g, "/").split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_").trim();
+  if (!safe || safe === "." || safe === "..") return "logo.bin";
+  return safe.length > 150 ? safe.slice(0, 150) : safe;
+}
+function validateLogoFile(file) {
+  const extension = path5.extname(file.originalname || "").toLowerCase();
+  if (!file.originalname || file.originalname.includes("..")) {
+    throw new Error("Invalid file name.");
+  }
+  if (!allowedLogoTypes.has(file.mimetype) || !allowedLogoExtensions.has(extension)) {
+    throw new Error(
+      `Invalid file type: ${file.mimetype}. Accepted: JPEG, PNG, WebP, SVG, GIF`
+    );
+  }
+  return sanitizeStoredName3(file.originalname);
+}
 var logoStorage = multer4.diskStorage({
   destination: (_req, _file, cb) => cb(null, LOGO_UPLOADS_DIR),
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path5.extname(file.originalname).toLowerCase();
+    const safeName = validateLogoFile(file);
+    const ext = path5.extname(safeName).toLowerCase() || ".png";
     cb(null, `logo-${uniqueSuffix}${ext}`);
   }
 });
@@ -39766,27 +40619,16 @@ var logoUpload = multer4({
   limits: { fileSize: 5 * 1024 * 1024 },
   // 5 MB max for logos
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/svg+xml",
-      "image/gif"
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
+    try {
+      validateLogoFile(file);
       cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Invalid file type. Accepted: JPEG, PNG, WebP, SVG, GIF"
-        ),
-        false
-      );
+    } catch (error) {
+      cb(new Error(error.message));
     }
   }
 });
 var PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
-router60.post(
+router61.post(
   "/upload",
   requireAuth(),
   (req, res, next) => {
@@ -39877,7 +40719,7 @@ router60.post(
     }
   }
 );
-router60.delete(
+router61.delete(
   "/:businessId",
   requireAuth(),
   async (req, res) => {
@@ -39917,7 +40759,7 @@ router60.delete(
     }
   }
 );
-router60.get("/file/:filename", (req, res) => {
+router61.get("/file/:filename", (req, res) => {
   const { filename } = req.params;
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
     return res.status(400).json({ success: false, message: "Invalid filename" });
@@ -39929,14 +40771,14 @@ router60.get("/file/:filename", (req, res) => {
   res.set("Cache-Control", "public, max-age=86400");
   res.sendFile(filePath);
 });
-var business_logo_default = router60;
+var business_logo_default = router61;
 
 // server/routes/inventory.ts
 init_db();
 init_schema();
-import { Router as Router61 } from "express";
-var router61 = Router61();
-router61.get("/products", requireAuth(), async (req, res) => {
+import { Router as Router62 } from "express";
+var router62 = Router62();
+router62.get("/products", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -40024,7 +40866,7 @@ router61.get("/products", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
-router61.get(
+router62.get(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -40049,7 +40891,7 @@ router61.get(
     }
   }
 );
-router61.post("/products", requireAuth(), async (req, res) => {
+router62.post("/products", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -40104,7 +40946,7 @@ router61.post("/products", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to create product" });
   }
 });
-router61.put(
+router62.put(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -40164,7 +41006,7 @@ router61.put(
     }
   }
 );
-router61.delete(
+router62.delete(
   "/products/:id",
   requireAuth(),
   async (req, res) => {
@@ -40186,7 +41028,7 @@ router61.delete(
     }
   }
 );
-router61.get("/alerts", requireAuth(), async (req, res) => {
+router62.get("/alerts", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -40216,7 +41058,7 @@ router61.get("/alerts", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alerts" });
   }
 });
-router61.get(
+router62.get(
   "/predictions",
   requireAuth(),
   async (req, res) => {
@@ -40250,7 +41092,7 @@ router61.get(
     }
   }
 );
-router61.get("/stats", requireAuth(), async (req, res) => {
+router62.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -40295,7 +41137,7 @@ router61.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
-router61.get("/settings", requireAuth(), async (req, res) => {
+router62.get("/settings", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const result = await pool.query(
@@ -40318,7 +41160,7 @@ router61.get("/settings", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
-router61.post("/settings", requireAuth(), async (req, res) => {
+router62.post("/settings", requireAuth(), async (req, res) => {
   try {
     const userId = Number(req.user?.userId);
     const { settings } = req.body;
@@ -40342,18 +41184,18 @@ router61.post("/settings", requireAuth(), async (req, res) => {
     res.status(500).json({ error: "Failed to save settings" });
   }
 });
-var inventory_default = router61;
+var inventory_default = router62;
 
 // server/routes/inbox.ts
 init_db();
 init_schema();
-import { Router as Router62 } from "express";
+import { Router as Router63 } from "express";
 import { eq as eq30, and as and17, desc as desc15, sql as sql18 } from "drizzle-orm";
 import multer5 from "multer";
 import path6 from "path";
 import fs7 from "fs";
 init_notification_service();
-var router62 = Router62();
+var router63 = Router63();
 var INBOX_UPLOADS_DIR = process.env.NODE_ENV === "production" ? path6.join("/tmp", "uploads", "inbox") : path6.resolve("uploads", "inbox");
 try {
   if (!fs7.existsSync(INBOX_UPLOADS_DIR)) {
@@ -40433,7 +41275,7 @@ async function resolveUserDisplay(userId) {
   if (!u) return null;
   return { name: u.displayName || u.username, avatar: null };
 }
-router62.get("/conversations", async (req, res) => {
+router63.get("/conversations", async (req, res) => {
   const userId = req.user.userId;
   try {
     const queued = await drainInboxQueue(userId);
@@ -40453,13 +41295,17 @@ router62.get("/conversations", async (req, res) => {
       }
     }
     const rows = await db.select().from(inboxConversations).where(eq30(inboxConversations.userId, Number(userId))).orderBy(desc15(inboxConversations.updatedAt));
-    return res.json({ success: true, conversations: rows });
+    const conversations = rows.map((conversation) => ({
+      ...conversation,
+      portal: conversation.type === "music_artist" ? "music" : "community"
+    }));
+    return res.json({ success: true, conversations });
   } catch (err) {
     console.error("[Inbox] GET /conversations error:", err?.message);
     return res.status(500).json({ success: false, error: "Failed to load conversations" });
   }
 });
-router62.get("/suggested-contacts", async (req, res) => {
+router63.get("/suggested-contacts", async (req, res) => {
   const tier = getTierFromUser(req.user);
   if (tier === "free") {
     return res.json({
@@ -40502,7 +41348,7 @@ router62.get("/suggested-contacts", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to load contacts" });
   }
 });
-router62.get(
+router63.get(
   "/conversations/:id/messages",
   async (req, res) => {
     const userId = req.user.userId;
@@ -40547,7 +41393,7 @@ router62.get(
     }
   }
 );
-router62.post(
+router63.post(
   "/conversations",
   marketplaceMessageLimiter,
   async (req, res) => {
@@ -40637,7 +41483,7 @@ router62.post(
     }
   }
 );
-router62.post(
+router63.post(
   "/attachments",
   inboxUpload.single("file"),
   async (req, res) => {
@@ -40648,7 +41494,7 @@ router62.post(
     res.json({ success: true, url });
   }
 );
-router62.get("/attachments/file/:filename", (req, res) => {
+router63.get("/attachments/file/:filename", (req, res) => {
   const { filename } = req.params;
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
     return res.status(400).json({ success: false, error: "Invalid filename" });
@@ -40660,7 +41506,7 @@ router62.get("/attachments/file/:filename", (req, res) => {
   res.set("Cache-Control", "public, max-age=86400");
   res.sendFile(filePath);
 });
-router62.post(
+router63.post(
   "/conversations/:id/messages",
   marketplaceMessageLimiter,
   async (req, res) => {
@@ -40795,7 +41641,7 @@ router62.post(
     }
   }
 );
-router62.post("/messages/:id/publish", async (req, res) => {
+router63.post("/messages/:id/publish", async (req, res) => {
   const userId = req.user.userId;
   const messageId = Number(req.params.id);
   if (isNaN(messageId)) {
@@ -40843,7 +41689,7 @@ router62.post("/messages/:id/publish", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to publish message" });
   }
 });
-router62.patch("/conversations/:id/read", async (req, res) => {
+router63.patch("/conversations/:id/read", async (req, res) => {
   const userId = req.user.userId;
   const convId = Number(req.params.id);
   if (isNaN(convId)) {
@@ -40872,7 +41718,7 @@ router62.patch("/conversations/:id/read", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to mark as read" });
   }
 });
-router62.get("/ensure-support-thread", async (req, res) => {
+router63.get("/ensure-support-thread", async (req, res) => {
   const userId = req.user.userId;
   const tier = getTierFromUser(req.user);
   try {
@@ -40914,13 +41760,13 @@ router62.get("/ensure-support-thread", async (req, res) => {
     return res.status(500).json({ success: false, error: "Failed to ensure support thread" });
   }
 });
-var inbox_default = router62;
+var inbox_default = router63;
 
 // server/routes/community.ts
 init_db();
-import { Router as Router63 } from "express";
-var router63 = Router63();
-router63.get("/posts", async (req, res) => {
+import { Router as Router64 } from "express";
+var router64 = Router64();
+router64.get("/posts", async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit || "50"), 100);
     const before = req.query.before ? parseInt(req.query.before) : null;
@@ -40949,7 +41795,7 @@ router63.get("/posts", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to load posts" });
   }
 });
-router63.post(
+router64.post(
   "/posts",
   requireAuth(),
   fanChatSlowMode,
@@ -40982,7 +41828,7 @@ router63.post(
     }
   }
 );
-router63.delete(
+router64.delete(
   "/posts/:id",
   requireAuth(),
   async (req, res) => {
@@ -41010,14 +41856,120 @@ router63.delete(
     }
   }
 );
-var community_default = router63;
+var community_default = router64;
 
 // server/routes/geo-actions.ts
 init_db();
 init_schema();
-import { Router as Router64 } from "express";
-import { eq as eq31, sql as sql19 } from "drizzle-orm";
-var router64 = Router64();
+import { Router as Router65 } from "express";
+import { eq as eq31, and as and18, sql as sql19 } from "drizzle-orm";
+var router65 = Router65();
+router65.use(requireJoelSuperadminForMutations);
+var BUSINESS_CHANGE_FIELDS = [
+  "name",
+  "categoryId",
+  "email",
+  "phone",
+  "description",
+  "address",
+  "countryCode",
+  "cityName",
+  "regionId",
+  "latitude",
+  "longitude",
+  "website",
+  "businessType",
+  "tags",
+  "isActive"
+];
+async function executeGeoAction(tx, action) {
+  if (action.entityType !== "business") {
+    throw new Error(`Unsupported geo action entity: ${action.entityType}`);
+  }
+  const entityId = action.entityId ? Number(action.entityId) : null;
+  const change = action.requestedChange || {};
+  if (action.actionType === "create") {
+    if (!change.name || !change.categoryId) {
+      throw new Error("Business creation requires name and categoryId");
+    }
+    const category = await tx.select({ id: businessCategories.id }).from(businessCategories).where(eq31(businessCategories.id, Number(change.categoryId))).limit(1);
+    if (!category.length) throw new Error("Business category does not exist");
+    const countryCode = change.countryCode ? String(change.countryCode).toUpperCase() : null;
+    const cityName = change.cityName || null;
+    const [created] = await tx.insert(businesses).values({
+      name: String(change.name),
+      categoryId: Number(change.categoryId),
+      email: change.email || null,
+      phone: change.phone || null,
+      description: change.description || null,
+      address: change.address || null,
+      countryCode,
+      cityName,
+      regionId: change.regionId ? Number(change.regionId) : null,
+      latitude: change.latitude == null ? null : String(change.latitude),
+      longitude: change.longitude == null ? null : String(change.longitude),
+      website: change.website || null,
+      businessType: change.businessType || null,
+      location: [cityName, countryCode].filter(Boolean).join(", ") || null,
+      tags: change.tags ? typeof change.tags === "string" ? JSON.stringify(
+        change.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+      ) : change.tags : null
+    }).returning({ id: businesses.id });
+    return created;
+  }
+  if (!entityId) throw new Error("Business action requires entityId");
+  if (action.actionType === "delete") {
+    const deleted = await tx.delete(businesses).where(eq31(businesses.id, entityId)).returning({ id: businesses.id });
+    if (!deleted.length) throw new Error("Business not found");
+    return deleted[0];
+  }
+  if (action.actionType !== "edit") {
+    throw new Error(`Unsupported business action: ${action.actionType}`);
+  }
+  const updateFields = {};
+  for (const field of BUSINESS_CHANGE_FIELDS) {
+    if (change[field] !== void 0) updateFields[field] = change[field];
+  }
+  if (updateFields.categoryId !== void 0) {
+    updateFields.categoryId = Number(updateFields.categoryId);
+  }
+  if (updateFields.regionId !== void 0 && updateFields.regionId !== null) {
+    updateFields.regionId = Number(updateFields.regionId);
+  }
+  if (updateFields.countryCode !== void 0) {
+    updateFields.countryCode = updateFields.countryCode ? String(updateFields.countryCode).toUpperCase() : null;
+  }
+  if (updateFields.latitude !== void 0 && updateFields.latitude !== null) {
+    updateFields.latitude = String(updateFields.latitude);
+  }
+  if (updateFields.longitude !== void 0 && updateFields.longitude !== null) {
+    updateFields.longitude = String(updateFields.longitude);
+  }
+  if (updateFields.businessType !== void 0) {
+    updateFields.attributes = updateFields.businessType ? { type: updateFields.businessType } : null;
+    delete updateFields.businessType;
+  }
+  if (updateFields.cityName !== void 0 || updateFields.countryCode !== void 0) {
+    const current = await tx.select({
+      cityName: businesses.cityName,
+      countryCode: businesses.countryCode
+    }).from(businesses).where(eq31(businesses.id, entityId)).limit(1);
+    if (!current.length) throw new Error("Business not found");
+    const city = updateFields.cityName ?? current[0].cityName;
+    const country = updateFields.countryCode ?? current[0].countryCode;
+    updateFields.location = [city, country].filter(Boolean).join(", ") || null;
+  }
+  if (updateFields.tags !== void 0 && typeof updateFields.tags === "string") {
+    updateFields.tags = JSON.stringify(
+      updateFields.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+    );
+  }
+  if (!Object.keys(updateFields).length)
+    throw new Error("No business changes supplied");
+  const [updated] = await tx.update(businesses).set(updateFields).where(eq31(businesses.id, entityId)).returning({ id: businesses.id });
+  if (!updated) throw new Error("Business not found");
+  return updated;
+}
 async function getGeoAccessLevel(userId) {
   const result = await db.execute(
     sql19`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`
@@ -41077,7 +42029,7 @@ async function getGeoAccessLevel(userId) {
     deleteDelayHours: 72
   };
 }
-router64.get(
+router65.get(
   "/access-level",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41086,7 +42038,7 @@ router64.get(
     res.json({ success: true, access });
   })
 );
-router64.post(
+router65.post(
   "/request",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41100,10 +42052,10 @@ router64.post(
       return;
     }
     const { actionType, entityType, entityId, requestedChange } = req.body;
-    if (!actionType || !entityType || !entityId) {
+    if (!actionType || !entityType || actionType !== "create" && !entityId) {
       res.status(400).json({
         success: false,
-        message: "actionType, entityType, and entityId are required"
+        message: "actionType and entityType are required; entityId is required for edit and delete"
       });
       return;
     }
@@ -41116,23 +42068,27 @@ router64.post(
       return;
     }
     if (!access.requiresQueue) {
-      const [inserted2] = await db.insert(geoActionRequests).values({
-        requestedBy: userId,
-        actionType,
-        entityType,
-        entityId: String(entityId),
-        requestedChange: requestedChange || null,
-        delayHours: 0,
-        status: "approved",
-        reviewedBy: userId,
-        reviewedAt: /* @__PURE__ */ new Date(),
-        reviewNotes: "Auto-approved (staff)",
-        expiresAt: null
-      }).returning();
+      const result = await db.transaction(async (tx) => {
+        const [inserted2] = await tx.insert(geoActionRequests).values({
+          requestedBy: userId,
+          actionType,
+          entityType,
+          entityId: entityId == null ? null : String(entityId),
+          requestedChange: requestedChange || null,
+          delayHours: 0,
+          status: "approved",
+          reviewedBy: userId,
+          reviewedAt: /* @__PURE__ */ new Date(),
+          reviewNotes: "Auto-approved (staff)",
+          expiresAt: null
+        }).returning();
+        const result2 = await executeGeoAction(tx, inserted2);
+        return { inserted: inserted2, result: result2 };
+      });
       res.json({
         success: true,
         message: "Action approved immediately (staff access)",
-        request: inserted2,
+        request: result.inserted,
         autoApproved: true
       });
       return;
@@ -41159,7 +42115,7 @@ router64.post(
     });
   })
 );
-router64.get(
+router65.get(
   "/my-requests",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41187,7 +42143,7 @@ router64.get(
     });
   })
 );
-router64.get(
+router65.get(
   "/pending",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -41216,7 +42172,7 @@ router64.get(
     });
   })
 );
-router64.post(
+router65.post(
   "/:id/approve",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -41235,23 +42191,33 @@ router64.post(
       });
       return;
     }
-    await db.update(geoActionRequests).set({
-      status: "approved",
-      reviewedBy: reviewerId,
-      reviewedAt: /* @__PURE__ */ new Date(),
-      reviewNotes: reviewNotes || "Approved"
-    }).where(eq31(geoActionRequests.id, requestId));
+    const result = await db.transaction(async (tx) => {
+      const [claimed] = await tx.update(geoActionRequests).set({
+        status: "approved",
+        reviewedBy: reviewerId,
+        reviewedAt: /* @__PURE__ */ new Date(),
+        reviewNotes: reviewNotes || "Approved"
+      }).where(
+        and18(
+          eq31(geoActionRequests.id, requestId),
+          eq31(geoActionRequests.status, "pending")
+        )
+      ).returning();
+      if (!claimed) throw new Error("Request is no longer pending");
+      return executeGeoAction(tx, claimed);
+    });
     console.log(
       `[GEO-ACTION] Request #${requestId} approved by user ${reviewerId}`
     );
     res.json({
       success: true,
-      message: "Request approved",
-      requestId
+      message: "Request approved and applied",
+      requestId,
+      result
     });
   })
 );
-router64.post(
+router65.post(
   "/:id/reject",
   requireAuth(["admin", "superuser", "moderator", "tsr"]),
   asyncHandler(async (req, res) => {
@@ -41286,15 +42252,15 @@ router64.post(
     });
   })
 );
-var geo_actions_default = router64;
+var geo_actions_default = router65;
 
 // server/routes/contractor-pipeline.ts
 init_db();
 init_schema();
-import { Router as Router65 } from "express";
+import { Router as Router66 } from "express";
 import { eq as eq32, sql as sql20 } from "drizzle-orm";
 import { z as z9 } from "zod";
-var router65 = Router65();
+var router66 = Router66();
 var applySchema = z9.object({
   name: z9.string().min(1, "Name is required").max(200),
   phone: z9.string().max(30).optional(),
@@ -41303,7 +42269,7 @@ var applySchema = z9.object({
   portfolioUrl: z9.string().url().max(500).optional().or(z9.literal("")),
   coverLetter: z9.string().max(2e3).optional()
 });
-router65.post(
+router66.post(
   "/apply",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41368,7 +42334,7 @@ router65.post(
     });
   })
 );
-router65.get(
+router66.get(
   "/my-application",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41388,7 +42354,7 @@ router65.get(
     res.json({ success: true, application: result.rows[0] });
   })
 );
-router65.get(
+router66.get(
   "/applications",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -41418,7 +42384,7 @@ router65.get(
     });
   })
 );
-router65.post(
+router66.post(
   "/applications/:id/approve",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -41465,7 +42431,7 @@ router65.post(
     });
   })
 );
-router65.post(
+router66.post(
   "/applications/:id/reject",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -41499,7 +42465,7 @@ router65.post(
     });
   })
 );
-router65.get(
+router66.get(
   "/contractors",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -41516,7 +42482,7 @@ router65.get(
     res.json({ success: true, contractors: contractors2.rows });
   })
 );
-router65.get(
+router66.get(
   "/assignments",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -41547,7 +42513,7 @@ router65.get(
     });
   })
 );
-router65.post(
+router66.post(
   "/assign",
   requireAuth(["admin", "superuser", "moderator"]),
   asyncHandler(async (req, res) => {
@@ -41585,7 +42551,7 @@ router65.post(
     });
   })
 );
-router65.get(
+router66.get(
   "/my-contracts",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41608,7 +42574,7 @@ router65.get(
     res.json({ success: true, contracts: contracts.rows });
   })
 );
-router65.post(
+router66.post(
   "/contracts/:id/accept",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41637,7 +42603,7 @@ router65.post(
     res.json({ success: true, message: "Contract accepted" });
   })
 );
-router65.post(
+router66.post(
   "/contracts/:id/decline",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41666,7 +42632,7 @@ router65.post(
     res.json({ success: true, message: "Contract declined" });
   })
 );
-router65.post(
+router66.post(
   "/contracts/:id/complete",
   requireAuth(),
   asyncHandler(async (req, res) => {
@@ -41695,13 +42661,13 @@ router65.post(
     res.json({ success: true, message: "Contract marked as completed" });
   })
 );
-var contractor_pipeline_default = router65;
+var contractor_pipeline_default = router66;
 
 // server/routes/purgatoire.ts
 init_db();
-import { Router as Router66 } from "express";
+import { Router as Router67 } from "express";
 init_notification_service();
-var router66 = Router66();
+var router67 = Router67();
 var APPROVE_ROLES = ["superuser", "admin"];
 var FLAG_ROLES = ["superuser", "admin", "moderator"];
 async function getUserRole(userId) {
@@ -41710,7 +42676,7 @@ async function getUserRole(userId) {
   ]);
   return result.rows[0]?.role || null;
 }
-router66.get("/queue", requireAuth(), async (req, res) => {
+router67.get("/queue", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -41765,7 +42731,7 @@ router66.get("/queue", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch queue" });
   }
 });
-router66.get("/stats", requireAuth(), async (req, res) => {
+router67.get("/stats", requireAuth(), async (req, res) => {
   try {
     const userId = parseInt(req.user.userId);
     const role = await getUserRole(userId);
@@ -41789,7 +42755,7 @@ router66.get("/stats", requireAuth(), async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
-router66.post(
+router67.post(
   "/:trackId/approve",
   requireAuth(),
   async (req, res) => {
@@ -41869,7 +42835,7 @@ router66.post(
     }
   }
 );
-router66.post(
+router67.post(
   "/:trackId/reject",
   requireAuth(),
   async (req, res) => {
@@ -41955,7 +42921,7 @@ router66.post(
     }
   }
 );
-router66.post(
+router67.post(
   "/:trackId/flag",
   requireAuth(),
   async (req, res) => {
@@ -41999,14 +42965,14 @@ router66.post(
     }
   }
 );
-var purgatoire_default = router66;
+var purgatoire_default = router67;
 
 // server/routes/ad-campaigns.ts
 init_db();
-import { Router as Router67 } from "express";
+import { Router as Router68 } from "express";
 import { sql as sql21 } from "drizzle-orm";
-var router67 = Router67();
-router67.get(
+var router68 = Router68();
+router68.get(
   "/",
   asyncHandler(async (req, res) => {
     const { countryCode, limit = "50" } = req.query;
@@ -42044,12 +43010,12 @@ router67.get(
     res.json({ success: true, data: campaigns });
   })
 );
-var ad_campaigns_default = router67;
+var ad_campaigns_default = router68;
 
 // server/routes/admin.ts
 init_db();
 init_schema();
-import { Router as Router68 } from "express";
+import { Router as Router69 } from "express";
 import { sql as sql22, eq as eq33, ilike as ilike8 } from "drizzle-orm";
 import * as os from "os";
 import { execSync } from "child_process";
@@ -42091,8 +43057,9 @@ var TABLE_NAME_MAP = {
   contractors: "contractors",
   payment_card_types: "paymentCardTypes"
 };
-var router68 = Router68();
-router68.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
+var router69 = Router69();
+router69.use(requireJoelSuperadminForMutations);
+router69.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
   try {
     const tables = [
       "users",
@@ -42159,7 +43126,7 @@ router68.get("/database-stats", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router68.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+router69.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const { search } = req.query;
@@ -42212,7 +43179,7 @@ router68.get("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router68.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
+router69.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const data = req.body;
@@ -42244,7 +43211,7 @@ router68.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router68.put(
+router69.put(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -42326,7 +43293,7 @@ router68.put(
     }
   }
 );
-router68.delete(
+router69.delete(
   "/table/:tableName/:id",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -42378,7 +43345,7 @@ router68.delete(
     }
   }
 );
-router68.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
+router69.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
   try {
     const { query: sqlQuery } = req.body;
     if (!sqlQuery || typeof sqlQuery !== "string") {
@@ -42431,7 +43398,7 @@ router68.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router68.get("/health", requireAuth(["admin"]), async (req, res) => {
+router69.get("/health", requireAuth(["admin"]), async (req, res) => {
   try {
     const connResult = await db.execute(
       sql22.raw(`SELECT count(*) as connections FROM pg_stat_activity`)
@@ -42486,7 +43453,7 @@ router68.get("/health", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router68.post("/backup", requireAuth(["admin"]), async (req, res) => {
+router69.post("/backup", requireAuth(["admin"]), async (req, res) => {
   try {
     const { type = "full" } = req.body;
     if (!["full", "partial"].includes(type)) {
@@ -42532,7 +43499,7 @@ router68.post("/backup", requireAuth(["admin"]), async (req, res) => {
     });
   }
 });
-router68.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
+router69.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
   try {
     const result = await db.execute(
       sql22.raw(`
@@ -42549,7 +43516,7 @@ router68.get("/category-stats", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router68.post(
+router69.post(
   "/preview-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -42576,7 +43543,7 @@ router68.post(
     }
   }
 );
-router68.post(
+router69.post(
   "/apply-category-mapping",
   requireAuth(["admin"]),
   async (req, res) => {
@@ -42607,7 +43574,7 @@ router68.post(
     }
   }
 );
-router68.get("/categories", requireAuth(["admin"]), async (req, res) => {
+router69.get("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     console.log("\u{1F50D} Fetching admin categories (no slug)");
     const result = await db.execute(
@@ -42623,7 +43590,7 @@ router68.get("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router68.post("/categories", requireAuth(["admin"]), async (req, res) => {
+router69.post("/categories", requireAuth(["admin"]), async (req, res) => {
   try {
     const { name, description, parent_id, slug } = req.body;
     if (!name)
@@ -42639,7 +43606,7 @@ router68.post("/categories", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router68.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+router69.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, parent_id, slug } = req.body;
@@ -42655,7 +43622,7 @@ router68.put("/categories/:id", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router68.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
+router69.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
   try {
     const { id: idStr } = req.params;
     const { force } = req.query;
@@ -42682,7 +43649,7 @@ router68.delete("/categories/:id", requireAuth(["admin"]), async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router68.get(
+router69.get(
   "/settings/smtp",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -42702,7 +43669,7 @@ router68.get(
     });
   })
 );
-router68.post(
+router69.post(
   "/settings/smtp",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -42742,7 +43709,7 @@ router68.post(
     });
   })
 );
-router68.post(
+router69.post(
   "/settings/smtp/test",
   requireAuth(["superuser", "admin"]),
   asyncHandler(async (req, res) => {
@@ -42789,13 +43756,13 @@ router68.post(
     }
   })
 );
-var admin_default2 = router68;
+var admin_default2 = router69;
 
 // server/routes/profiles.ts
 init_db();
 init_schema();
-import { Router as Router69 } from "express";
-import { eq as eq36 } from "drizzle-orm";
+import { Router as Router70 } from "express";
+import { and as and22, eq as eq36 } from "drizzle-orm";
 
 // server/services/profile-queries.ts
 init_db();
@@ -42835,6 +43802,9 @@ async function getPublicProfiles(filters = {}) {
     ).orderBy(desc19(unifiedProfiles.createdAt)).limit(limit).offset(offset);
   }
   return results;
+}
+async function getPartnerProfiles(ownerId2) {
+  return db.select().from(unifiedProfiles).where(eq34(unifiedProfiles.ownerId, ownerId2)).orderBy(desc19(unifiedProfiles.createdAt));
 }
 async function getAdminProfiles(filters = {}) {
   const conditions = [];
@@ -43016,14 +43986,68 @@ async function syncLegacyProfiles() {
 }
 
 // server/routes/profiles.ts
-var router69 = Router69();
+var router70 = Router70();
 var VALID_ACTIONS = ["approve", "reject", "suspend", "restore"];
 var TRANSITIONS = {
-  DRAFT: { approve: "DRAFT", reject: "DRAFT", suspend: "SUSPENDED", restore: "DRAFT" },
-  PENDING: { approve: "PUBLISHED", reject: "DRAFT", suspend: "SUSPENDED", restore: "PENDING" },
-  PUBLISHED: { approve: "PUBLISHED", reject: "DRAFT", suspend: "SUSPENDED", restore: "PUBLISHED" },
-  SUSPENDED: { approve: "PUBLISHED", reject: "DRAFT", suspend: "SUSPENDED", restore: "PUBLISHED" }
+  DRAFT: {
+    approve: "DRAFT",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "DRAFT"
+  },
+  PENDING: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PENDING"
+  },
+  PUBLISHED: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PUBLISHED"
+  },
+  SUSPENDED: {
+    approve: "PUBLISHED",
+    reject: "DRAFT",
+    suspend: "SUSPENDED",
+    restore: "PUBLISHED"
+  }
 };
+var EDITABLE_PROFILE_FIELDS = [
+  "name",
+  "displayName",
+  "category",
+  "description",
+  "bio",
+  "email",
+  "phone",
+  "website",
+  "address",
+  "cityName",
+  "countryCode",
+  "profileImageUrl",
+  "coverImageUrl",
+  "socialLinks",
+  "metadata"
+];
+function ownerId(req) {
+  return Number(req.user?.userId);
+}
+function pickEditableFields(body) {
+  return Object.fromEntries(
+    EDITABLE_PROFILE_FIELDS.filter((field) => body[field] !== void 0).map(
+      (field) => [field, body[field]]
+    )
+  );
+}
+function profilePayload(body) {
+  const fields = pickEditableFields(body);
+  if (fields.metadata !== void 0 && typeof fields.metadata !== "object") {
+    delete fields.metadata;
+  }
+  return fields;
+}
 function requireAdmin(req, res) {
   const user = req.user;
   if (!user || !["admin", "superadmin", "superuser"].includes(user.role)) {
@@ -43032,7 +44056,109 @@ function requireAdmin(req, res) {
   }
   return true;
 }
-router69.get("/api/profiles/search", async (req, res) => {
+router70.get("/api/my/profiles", requireAuth(), async (req, res) => {
+  try {
+    const profiles = await getPartnerProfiles(ownerId(req));
+    res.json({ success: true, data: profiles });
+  } catch (err) {
+    console.error("[my/profiles]", err);
+    res.status(500).json({ error: "Failed to fetch your profiles" });
+  }
+});
+router70.post("/api/my/profiles", requireAuth(), async (req, res) => {
+  const payload = profilePayload(req.body);
+  const name = String(payload.name || payload.displayName || "").trim();
+  if (!name) {
+    return res.status(400).json({ error: "Profile name is required" });
+  }
+  try {
+    const profile = await db.insert(unifiedProfiles).values({
+      ...payload,
+      name,
+      ownerId: ownerId(req),
+      accountType: "artisan",
+      slug: await generateUniqueSlug(name, "artisan"),
+      status: "DRAFT",
+      verificationStatus: "pending",
+      isVerified: false,
+      metadata: payload.metadata || {}
+    }).returning();
+    res.status(201).json({ success: true, data: profile[0] });
+  } catch (err) {
+    console.error("[my/profiles:create]", err);
+    res.status(500).json({ error: "Failed to create artisan profile" });
+  }
+});
+router70.put("/api/my/profiles/:id", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  if (!Number.isInteger(profileId)) {
+    return res.status(400).json({ error: "Invalid profile id" });
+  }
+  const payload = profilePayload(req.body);
+  if (payload.name !== void 0 && !String(payload.name).trim()) {
+    return res.status(400).json({ error: "Profile name cannot be empty" });
+  }
+  try {
+    const [profile] = await db.update(unifiedProfiles).set({ ...payload, updatedAt: /* @__PURE__ */ new Date() }).where(
+      and22(
+        eq36(unifiedProfiles.id, profileId),
+        eq36(unifiedProfiles.ownerId, ownerId(req)),
+        eq36(unifiedProfiles.accountType, "artisan")
+      )
+    ).returning();
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[my/profiles:update]", err);
+    res.status(500).json({ error: "Failed to update artisan profile" });
+  }
+});
+router70.post("/api/my/profiles/:id/submit", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  try {
+    const [profile] = await db.update(unifiedProfiles).set({
+      status: "PENDING",
+      verificationStatus: "pending",
+      isVerified: false,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(
+      and22(
+        eq36(unifiedProfiles.id, profileId),
+        eq36(unifiedProfiles.ownerId, ownerId(req)),
+        eq36(unifiedProfiles.accountType, "artisan"),
+        eq36(unifiedProfiles.status, "DRAFT")
+      )
+    ).returning();
+    if (!profile) {
+      return res.status(409).json({
+        error: "Only a draft artisan profile can be submitted"
+      });
+    }
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    console.error("[my/profiles:submit]", err);
+    res.status(500).json({ error: "Failed to submit artisan profile" });
+  }
+});
+router70.delete("/api/my/profiles/:id", requireAuth(), async (req, res) => {
+  const profileId = Number(req.params.id);
+  try {
+    const [profile] = await db.update(unifiedProfiles).set({ status: "DRAFT", updatedAt: /* @__PURE__ */ new Date() }).where(
+      and22(
+        eq36(unifiedProfiles.id, profileId),
+        eq36(unifiedProfiles.ownerId, ownerId(req)),
+        eq36(unifiedProfiles.accountType, "artisan"),
+        eq36(unifiedProfiles.status, "DRAFT")
+      )
+    ).returning({ id: unifiedProfiles.id });
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json({ success: true, id: profile.id });
+  } catch (err) {
+    console.error("[my/profiles:archive]", err);
+    res.status(500).json({ error: "Failed to archive artisan profile" });
+  }
+});
+router70.get("/api/profiles/search", async (req, res) => {
   try {
     const {
       q,
@@ -43056,7 +44182,7 @@ router69.get("/api/profiles/search", async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
-router69.get("/api/profiles/:slug", async (req, res) => {
+router70.get("/api/profiles/:slug", async (req, res) => {
   try {
     const profile = await getPublicProfileBySlug(req.params.slug);
     if (!profile) return res.status(404).json({ error: "Profile not found" });
@@ -43068,36 +44194,50 @@ router69.get("/api/profiles/:slug", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
-router69.get("/api/admin/profiles", async (req, res) => {
+router70.get("/api/admin/profiles", async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
     const { status, verificationStatus, accountType } = req.query;
-    const profiles = await getAdminProfiles({ status, verificationStatus, accountType });
+    const profiles = await getAdminProfiles({
+      status,
+      verificationStatus,
+      accountType
+    });
     res.json({ success: true, data: profiles, count: profiles.length });
   } catch (err) {
     console.error("[admin/profiles]", err);
     res.status(500).json({ error: "Failed to fetch profiles" });
   }
 });
-router69.get("/api/admin/profiles/pending", async (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  try {
-    const profiles = await getAdminProfiles({ status: "PENDING" });
-    res.json({ success: true, data: profiles, count: profiles.length });
-  } catch (err) {
-    console.error("[admin/profiles/pending]", err);
-    res.status(500).json({ error: "Failed to fetch pending profiles" });
+router70.get(
+  "/api/admin/profiles/pending",
+  async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      const profiles = await getAdminProfiles({ status: "PENDING" });
+      res.json({ success: true, data: profiles, count: profiles.length });
+    } catch (err) {
+      console.error("[admin/profiles/pending]", err);
+      res.status(500).json({ error: "Failed to fetch pending profiles" });
+    }
   }
-});
-router69.post(
+);
+router70.post(
   "/api/admin/profiles/:id/action",
   async (req, res) => {
     if (!requireAdmin(req, res)) return;
     const profileId = Number(req.params.id);
     const { action, notes } = req.body;
     const adminUser = req.user;
+    if (adminUser.role === "moderator" && action === "suspend") {
+      return res.status(403).json({
+        error: "Moderators may recommend suspension, but only Admin or Superuser can execute it"
+      });
+    }
     if (!VALID_ACTIONS.includes(action)) {
-      return res.status(400).json({ error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}` });
+      return res.status(400).json({
+        error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}`
+      });
     }
     try {
       const [profile] = await db.select().from(unifiedProfiles).where(eq36(unifiedProfiles.id, profileId)).limit(1);
@@ -43139,7 +44279,24 @@ router69.post(
     }
   }
 );
-router69.post("/api/admin/profiles/sync", async (req, res) => {
+router70.get(
+  "/api/admin/profiles/:id/history",
+  async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const profileId = Number(req.params.id);
+    if (!Number.isInteger(profileId)) {
+      return res.status(400).json({ error: "Invalid profile id" });
+    }
+    try {
+      const history = await db.select().from(profileApprovalActions).where(eq36(profileApprovalActions.profileId, profileId));
+      res.json({ success: true, data: history });
+    } catch (err) {
+      console.error("[admin/profiles/:id/history]", err);
+      res.status(500).json({ error: "Failed to fetch profile history" });
+    }
+  }
+);
+router70.post("/api/admin/profiles/sync", async (req, res) => {
   const user = req.user;
   if (!user || !["superadmin", "superuser"].includes(user.role)) {
     return res.status(403).json({ error: "Superadmin access required" });
@@ -43152,11 +44309,447 @@ router69.post("/api/admin/profiles/sync", async (req, res) => {
     res.status(500).json({ error: "Sync failed" });
   }
 });
-var profiles_default = router69;
+var profiles_default = router70;
+
+// server/routes/artisan-communities.ts
+init_db();
+import { Router as Router71 } from "express";
+var router71 = Router71();
+function isAdmin(req) {
+  return ["admin", "superuser", "moderator"].includes(req.user?.role || "");
+}
+router71.get("/", async (req, res) => {
+  try {
+    const search = String(req.query.q || "").trim();
+    const category = String(req.query.category || "").trim();
+    const values = [];
+    const filters = ["status = 'PUBLISHED'"];
+    if (search) {
+      values.push(`%${search}%`);
+      filters.push(
+        `(name ILIKE $${values.length} OR region ILIKE $${values.length} OR focus ILIKE $${values.length})`
+      );
+    }
+    if (category && category !== "all") {
+      values.push(category);
+      filters.push(`category = $${values.length}`);
+    }
+    const result = await pool.query(
+      `SELECT id, name, slug, region, category, focus, description, activities,
+              image_url, member_count, created_at
+       FROM artisan_communities
+       WHERE ${filters.join(" AND ")}
+       ORDER BY created_at DESC`,
+      values
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[artisan-communities:list]", error);
+    res.status(500).json({ error: "Failed to load communities" });
+  }
+});
+router71.get("/me", requireAuth(), async (req, res) => {
+  const userId = Number(req.user?.userId);
+  try {
+    const [memberships, requests] = await Promise.all([
+      pool.query(
+        `SELECT m.id, m.community_id, m.status, m.joined_at,
+                ac.name, ac.slug, ac.region, ac.category, ac.focus,
+                ac.description, ac.activities, ac.image_url, ac.member_count
+         FROM artisan_community_memberships m
+         JOIN artisan_communities ac ON ac.id = m.community_id
+         WHERE m.user_id = $1 AND m.status = 'ACTIVE'
+         ORDER BY m.joined_at DESC NULLS LAST, ac.name ASC`,
+        [userId]
+      ),
+      pool.query(
+        `SELECT jr.id, jr.community_id, jr.status, jr.message, jr.created_at,
+                ac.name, ac.slug, ac.region, ac.category, ac.focus
+         FROM artisan_community_join_requests jr
+         JOIN artisan_communities ac ON ac.id = jr.community_id
+         WHERE jr.user_id = $1 AND jr.status = 'PENDING'
+         ORDER BY jr.created_at DESC`,
+        [userId]
+      )
+    ]);
+    res.json({
+      success: true,
+      data: {
+        memberships: memberships.rows,
+        pendingRequests: requests.rows,
+        counts: {
+          joined: memberships.rowCount || 0,
+          pending: requests.rowCount || 0,
+          activities: memberships.rows.reduce(
+            (total, community) => total + (Array.isArray(community.activities) ? community.activities.length : 0),
+            0
+          )
+        }
+      }
+    });
+  } catch (error) {
+    console.error("[artisan-communities:me]", error);
+    res.status(500).json({ error: "Failed to load your community activity" });
+  }
+});
+router71.post("/:id/join", requireAuth(), async (req, res) => {
+  const communityId = Number(req.params.id);
+  const message = String(req.body?.message || "").trim().slice(0, 1e3);
+  if (!Number.isInteger(communityId)) {
+    return res.status(400).json({ error: "Invalid community id" });
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO artisan_community_join_requests (community_id, user_id, message)
+       SELECT $1, $2, $3
+       WHERE EXISTS (
+         SELECT 1 FROM artisan_communities
+         WHERE id = $1 AND status = 'PUBLISHED'
+       )
+       ON CONFLICT (community_id, user_id)
+       DO UPDATE SET message = EXCLUDED.message, status = 'PENDING', updated_at = NOW()
+       RETURNING id, community_id, status, created_at`,
+      [communityId, Number(req.user?.userId), message || null]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Community not found" });
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[artisan-communities:join]", error);
+    res.status(500).json({ error: "Failed to request membership" });
+  }
+});
+router71.post("/", requireAuth(), async (req, res) => {
+  if (!isAdmin(req))
+    return res.status(403).json({ error: "Admin access required" });
+  const {
+    name,
+    region,
+    category,
+    focus,
+    description,
+    activities = [],
+    imageUrl
+  } = req.body || {};
+  if (!name || !region || !category || !focus || !description) {
+    return res.status(400).json({
+      error: "Name, region, category, focus, and description are required"
+    });
+  }
+  try {
+    const slug = await generateUniqueSlug(String(name), "community");
+    const result = await pool.query(
+      `INSERT INTO artisan_communities
+         (owner_id, name, slug, region, category, focus, description, activities, image_url, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, 'DRAFT')
+       RETURNING *`,
+      [
+        Number(req.user?.userId),
+        String(name).trim(),
+        slug,
+        String(region).trim(),
+        String(category).trim(),
+        String(focus).trim(),
+        String(description).trim(),
+        JSON.stringify(Array.isArray(activities) ? activities : []),
+        imageUrl || null
+      ]
+    );
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[artisan-communities:create]", error);
+    res.status(500).json({ error: "Failed to create community" });
+  }
+});
+var artisan_communities_default = router71;
+
+// server/routes/events.ts
+init_db();
+import { Router as Router72 } from "express";
+var router72 = Router72();
+var reviewRoles2 = ["admin", "moderator", "superuser"];
+var organizerRoles = [
+  "admin",
+  "moderator",
+  "superuser",
+  "artist",
+  "user",
+  "listener"
+];
+function eventPayload(body) {
+  const title = String(body.title || "").trim();
+  const description = String(body.description || "").trim();
+  const startsAt = String(body.startsAt || "").trim();
+  const endsAt = body.endsAt ? String(body.endsAt).trim() : null;
+  const eventType = String(body.eventType || "COMMUNITY").trim().toUpperCase();
+  const venue = body.venue ? String(body.venue).trim() : null;
+  const city = body.city ? String(body.city).trim() : null;
+  const communityId = body.communityId ? Number(body.communityId) : null;
+  if (!title || !description || !startsAt || !Number.isFinite(Date.parse(startsAt))) {
+    return { error: "Title, description, and a valid start date are required" };
+  }
+  if (endsAt && !Number.isFinite(Date.parse(endsAt))) {
+    return { error: "End date must be valid" };
+  }
+  if (endsAt && Date.parse(endsAt) < Date.parse(startsAt)) {
+    return { error: "End date cannot be before start date" };
+  }
+  return {
+    value: {
+      title,
+      description,
+      startsAt: new Date(startsAt),
+      endsAt: endsAt ? new Date(endsAt) : null,
+      eventType,
+      venue,
+      city,
+      communityId: Number.isInteger(communityId) ? communityId : null
+    }
+  };
+}
+router72.get("/", async (req, res) => {
+  try {
+    const type = String(req.query.type || "").trim().toUpperCase();
+    const values = [];
+    const filters = ["e.status = 'PUBLISHED'", "e.starts_at >= NOW()"];
+    if (type) {
+      values.push(type);
+      filters.push(`e.event_type = $${values.length}`);
+    }
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.slug, e.description, e.event_type,
+              e.starts_at, e.ends_at, e.venue, e.city, e.image_url,
+              e.community_id, ac.name AS community_name,
+              (SELECT COUNT(*)::int FROM event_attendees ea
+               WHERE ea.event_id = e.id AND ea.status = 'GOING') AS attendee_count
+       FROM events e
+       LEFT JOIN artisan_communities ac ON ac.id = e.community_id
+       WHERE ${filters.join(" AND ")}
+       ORDER BY e.starts_at ASC
+       LIMIT 100`,
+      values
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[events:list]", error);
+    res.status(500).json({ error: "Failed to load events" });
+  }
+});
+router72.get("/me", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, slug, description, event_type, starts_at, ends_at,
+              venue, city, image_url, community_id, status, created_at, updated_at
+       FROM events WHERE organizer_id = $1 ORDER BY created_at DESC`,
+      [Number(req.user?.userId)]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[events:mine]", error);
+    res.status(500).json({ error: "Failed to load your events" });
+  }
+});
+router72.get("/admin", requireAuth(reviewRoles2), async (req, res) => {
+  try {
+    const status = String(req.query.status || "PENDING").trim().toUpperCase();
+    const allowedStatuses = [
+      "DRAFT",
+      "PENDING",
+      "PUBLISHED",
+      "REJECTED",
+      "SUSPENDED",
+      "ARCHIVED"
+    ];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid event status" });
+    }
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.slug, e.description, e.event_type,
+              e.starts_at, e.ends_at, e.venue, e.city, e.status,
+              e.created_at, e.updated_at,
+              COALESCE(u.display_name, u.username, u.email) AS organizer_name,
+              u.email AS organizer_email
+       FROM events e
+       LEFT JOIN users u ON u.id = e.organizer_id
+       WHERE e.status = $1
+       ORDER BY e.updated_at DESC NULLS LAST, e.created_at DESC`,
+      [status]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("[events:admin]", error);
+    res.status(500).json({ error: "Failed to load event review queue" });
+  }
+});
+router72.get("/:slug", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.slug, e.description, e.event_type,
+              e.starts_at, e.ends_at, e.venue, e.city, e.image_url,
+              e.community_id, ac.name AS community_name,
+              (SELECT COUNT(*)::int FROM event_attendees ea
+               WHERE ea.event_id = e.id AND ea.status = 'GOING') AS attendee_count
+       FROM events e
+       LEFT JOIN artisan_communities ac ON ac.id = e.community_id
+       WHERE e.slug = $1 AND e.status = 'PUBLISHED'`,
+      [req.params.slug]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Event not found" });
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:detail]", error);
+    res.status(500).json({ error: "Failed to load event" });
+  }
+});
+router72.post("/", requireAuth(organizerRoles), async (req, res) => {
+  const parsed = eventPayload(req.body || {});
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  try {
+    const value = parsed.value;
+    const slug = await generateUniqueSlug(value.title, "event");
+    const result = await pool.query(
+      `INSERT INTO events
+         (organizer_id, community_id, title, slug, description, event_type,
+          starts_at, ends_at, venue, city, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'DRAFT')
+       RETURNING *`,
+      [
+        Number(req.user?.userId),
+        value.communityId,
+        value.title,
+        slug,
+        value.description,
+        value.eventType,
+        value.startsAt,
+        value.endsAt,
+        value.venue,
+        value.city
+      ]
+    );
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by)
+       VALUES ($1, 'created', $2)`,
+      [result.rows[0].id, Number(req.user?.userId)]
+    );
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:create]", error);
+    res.status(500).json({ error: "Failed to create event" });
+  }
+});
+router72.post("/:id/submit", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE events SET status = 'PENDING', updated_at = NOW()
+       WHERE id = $1 AND organizer_id = $2 AND status = 'DRAFT'
+       RETURNING id, status`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Draft event not found" });
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by)
+       VALUES ($1, 'submitted', $2)`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:submit]", error);
+    res.status(500).json({ error: "Failed to submit event" });
+  }
+});
+router72.get("/:id/rsvp/status", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT EXISTS(
+         SELECT 1 FROM event_attendees
+         WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'
+       ) AS attending,
+       (SELECT COUNT(*)::int FROM event_attendees
+        WHERE event_id = $1 AND status = 'GOING') AS attendee_count`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:rsvp-status]", error);
+    res.status(500).json({ error: "Failed to load RSVP status" });
+  }
+});
+router72.post("/:id/rsvp", requireAuth(), async (req, res) => {
+  const eventId = Number(req.params.id);
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ error: "Invalid event id" });
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO event_attendees (event_id, user_id, status, updated_at)
+       SELECT id, $2, 'GOING', NOW() FROM events
+       WHERE id = $1 AND status = 'PUBLISHED'
+       ON CONFLICT (event_id, user_id)
+       DO UPDATE SET status = 'GOING', updated_at = NOW()
+       RETURNING event_id, status`,
+      [eventId, userId]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Published event not found" });
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:rsvp]", error);
+    res.status(500).json({ error: "Failed to RSVP to event" });
+  }
+});
+router72.delete("/:id/rsvp", requireAuth(), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE event_attendees SET status = 'CANCELLED', updated_at = NOW()
+       WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'
+       RETURNING event_id`,
+      [Number(req.params.id), Number(req.user?.userId)]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "RSVP not found" });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[events:rsvp-cancel]", error);
+    res.status(500).json({ error: "Failed to cancel RSVP" });
+  }
+});
+router72.post("/:id/status", requireAuth(reviewRoles2), async (req, res) => {
+  const status = String(req.body?.status || "").toUpperCase();
+  if (!["PUBLISHED", "REJECTED", "SUSPENDED", "ARCHIVED"].includes(status)) {
+    return res.status(400).json({ error: "Invalid event status" });
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE events SET status = $1, published_at = CASE WHEN $1 = 'PUBLISHED' THEN NOW() ELSE published_at END, updated_at = NOW()
+       WHERE id = $2 RETURNING id, status`,
+      [status, Number(req.params.id)]
+    );
+    if (!result.rowCount)
+      return res.status(404).json({ error: "Event not found" });
+    await pool.query(
+      `INSERT INTO event_audit (event_id, action, performed_by, reason)
+       VALUES ($1, $2, $3, $4)`,
+      [
+        Number(req.params.id),
+        `status_${status.toLowerCase()}`,
+        Number(req.user?.userId),
+        req.body?.reason || null
+      ]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("[events:status]", error);
+    res.status(500).json({ error: "Failed to update event" });
+  }
+});
+var events_default = router72;
 
 // server/routes/astrology.ts
-import { Router as Router70 } from "express";
-var router70 = Router70();
+import { Router as Router73 } from "express";
+var router73 = Router73();
 var astroCache = /* @__PURE__ */ new Map();
 var ASTRO_TTL = 10 * 60 * 1e3;
 var ASTRO_FETCH_TIMEOUT = 5e3;
@@ -43204,7 +44797,7 @@ async function fetchAstroWithRetries(sign) {
   }
   throw lastErr || new Error("Unknown upstream error");
 }
-router70.post(
+router73.get(
   "/astrology",
   asyncHandler(async (req, res) => {
     const sign = (req.query.sign || req.body.sign || "").toString().trim().toLowerCase();
@@ -43271,15 +44864,15 @@ router70.post(
     }
   })
 );
-var astrology_default = router70;
+var astrology_default = router73;
 
 // server/routes/business-search.ts
 init_schema();
 init_db();
-import { Router as Router71 } from "express";
-import { and as and22, eq as eq37, ilike as ilike10, or as or8, sql as sql23 } from "drizzle-orm";
-var router71 = Router71();
-router71.get(
+import { Router as Router74 } from "express";
+import { and as and23, eq as eq37, ilike as ilike10, or as or8, sql as sql23 } from "drizzle-orm";
+var router74 = Router74();
+router74.get(
   "/business/search",
   asyncHandler(async (req, res) => {
     const { query, category, location, page = "1", limit = "10" } = req.query;
@@ -43298,7 +44891,7 @@ router71.get(
         conditions.push(eq37(businesses.categoryId, categoryRecord[0].id));
       }
     }
-    const whereCondition = conditions.length > 0 ? and22(...conditions) : void 0;
+    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
     const countResult = await db.select({ count: sql23`count(*)` }).from(businesses).where(whereCondition);
     const totalCount = countResult[0]?.count || 0;
     const pageNum = parseInt(page, 10);
@@ -43352,7 +44945,7 @@ router71.get(
     });
   })
 );
-router71.get(
+router74.get(
   "/category/:slug/search",
   asyncHandler(async (req, res) => {
     const { slug } = req.params;
@@ -43436,7 +45029,7 @@ router71.get(
     });
   })
 );
-router71.get(
+router74.get(
   "/business/categories",
   asyncHandler(async (_req, res) => {
     try {
@@ -43461,7 +45054,7 @@ router71.get(
     }
   })
 );
-router71.get(
+router74.get(
   "/businesses/pool/:categoryName",
   asyncHandler(async (req, res) => {
     const { categoryName } = req.params;
@@ -43561,7 +45154,7 @@ router71.get(
     });
   })
 );
-router71.get(
+router74.get(
   "/business/locations",
   asyncHandler(async (_req, res) => {
     try {
@@ -43591,7 +45184,7 @@ router71.get(
     }
   })
 );
-router71.get(
+router74.get(
   "/business/test-connection",
   asyncHandler(async (_req, res) => {
     try {
@@ -43635,15 +45228,15 @@ router71.get(
     }
   })
 );
-var business_search_default = router71;
+var business_search_default = router74;
 
 // server/routes/categories.ts
 init_schema();
 init_db();
-import { Router as Router72 } from "express";
+import { Router as Router75 } from "express";
 import { sql as sql24 } from "drizzle-orm";
-var router72 = Router72();
-router72.get(
+var router75 = Router75();
+router75.get(
   "/business-categories",
   asyncHandler(async (req, res) => {
     const { countryCode } = req.query;
@@ -43666,7 +45259,7 @@ router72.get(
     res.json(result.rows);
   })
 );
-router72.get(
+router75.get(
   "/categories",
   asyncHandler(async (_req, res) => {
     const result = await db.select({
@@ -43680,15 +45273,15 @@ router72.get(
     res.json(result);
   })
 );
-var categories_default2 = router72;
+var categories_default2 = router75;
 
 // server/routes/commerce-ads.ts
 init_schema();
 init_db();
-import { Router as Router73 } from "express";
-import { and as and23, asc as asc3, desc as desc20, eq as eq38, ilike as ilike11, or as or9, sql as sql25 } from "drizzle-orm";
-var router73 = Router73();
-router73.get(
+import { Router as Router76 } from "express";
+import { and as and24, asc as asc3, desc as desc20, eq as eq38, ilike as ilike11, or as or9, sql as sql25 } from "drizzle-orm";
+var router76 = Router76();
+router76.get(
   "/ads/search",
   asyncHandler(async (req, res) => {
     const {
@@ -43719,7 +45312,7 @@ router73.get(
         conditions.push(eq38(businesses.categoryId, categoryRecord[0].id));
       }
     }
-    const whereCondition = conditions.length > 0 ? and23(...conditions) : void 0;
+    const whereCondition = conditions.length > 0 ? and24(...conditions) : void 0;
     let baseQuery = db.select({
       id: businesses.id,
       name: businesses.name,
@@ -43847,7 +45440,7 @@ router73.get(
     });
   })
 );
-router73.get(
+router76.get(
   "/analytics",
   asyncHandler(async (_req, res) => {
     console.log("\u{1F4CA} [COMMERCE] Fetching analytics from database...");
@@ -43971,14 +45564,14 @@ router73.get(
     });
   })
 );
-var commerce_ads_default = router73;
+var commerce_ads_default = router76;
 
 // server/routes/contact.ts
 init_schema();
 init_db();
-import { Router as Router74 } from "express";
-var router74 = Router74();
-router74.post(
+import { Router as Router77 } from "express";
+var router77 = Router77();
+router77.post(
   "/",
   contactFormLimiter,
   asyncHandler(async (req, res) => {
@@ -44036,15 +45629,15 @@ router74.post(
     });
   })
 );
-var contact_default = router74;
+var contact_default = router77;
 
 // server/routes/geo.ts
 init_schema();
 init_db();
-import { Router as Router75 } from "express";
+import { Router as Router78 } from "express";
 import { sql as sql26 } from "drizzle-orm";
-var router75 = Router75();
-router75.get(
+var router78 = Router78();
+router78.get(
   "/regions",
   asyncHandler(async (req, res) => {
     const { countryId } = req.query;
@@ -44061,7 +45654,7 @@ router75.get(
     res.json(result.rows);
   })
 );
-router75.get(
+router78.get(
   "/cities",
   asyncHandler(async (req, res) => {
     const { countryId, regionId } = req.query;
@@ -44096,7 +45689,7 @@ router75.get(
     res.json(result.rows);
   })
 );
-router75.get(
+router78.get(
   "/countries",
   asyncHandler(async (_req, res) => {
     try {
@@ -44139,14 +45732,14 @@ router75.get(
     }
   })
 );
-var geo_default = router75;
+var geo_default = router78;
 
 // server/routes/public-stats.ts
 init_db();
-import { Router as Router76 } from "express";
+import { Router as Router79 } from "express";
 import { sql as sql27 } from "drizzle-orm";
-var router76 = Router76();
-router76.get(
+var router79 = Router79();
+router79.get(
   "/dashboard-stats",
   asyncHandler(async (req, res) => {
     const { category, businessId } = req.query;
@@ -44649,15 +46242,15 @@ function generateBusinessStats(category, rating, reviewCount) {
     growthRate: (Math.random() * 15 + 5).toFixed(1)
   };
 }
-var public_stats_default = router76;
+var public_stats_default = router79;
 
 // server/routes/seed.ts
 init_schema();
 init_db();
-import { Router as Router77 } from "express";
+import { Router as Router80 } from "express";
 import { eq as eq39 } from "drizzle-orm";
-var router77 = Router77();
-router77.post(
+var router80 = Router80();
+router80.post(
   "/seed-categories",
   asyncHandler(async (_req, res) => {
     if (process.env.NODE_ENV !== "development") {
@@ -44708,43 +46301,39 @@ router77.post(
     });
   })
 );
-var seed_default = router77;
+var seed_default = router80;
 
 // server/routes/system.ts
 init_db();
-import { Router as Router78 } from "express";
+import { Router as Router81 } from "express";
 import { sql as sql28 } from "drizzle-orm";
-var router78 = Router78();
-router78.get(
+import fs8 from "node:fs";
+import path7 from "node:path";
+var router81 = Router81();
+function getAppVersion() {
+  if (process.env.APP_VERSION) return process.env.APP_VERSION;
+  try {
+    const packageJson = JSON.parse(
+      fs8.readFileSync(path7.join(process.cwd(), "package.json"), "utf8")
+    );
+    return packageJson.version || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+router81.get(
   "/status",
   asyncHandler(async (_req, res) => {
-    try {
-      const dbTest = await db.execute(sql28`SELECT NOW() as time`);
-      return res.json({
-        status: "ok",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: true,
-          time: dbTest.rows[0]?.time
-        }
-      });
-    } catch (error) {
-      return res.json({
-        status: "warning",
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running but database connection failed",
-        environment: process.env.NODE_ENV || "development",
-        database: {
-          connected: false,
-          error: error.message
-        }
-      });
-    }
+    return res.json({
+      status: "ok",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      message: "API is running",
+      environment: process.env.NODE_ENV || "development",
+      api: { connected: true }
+    });
   })
 );
-router78.get(
+router81.get(
   "/health",
   asyncHandler(async (_req, res) => {
     try {
@@ -44753,10 +46342,13 @@ router78.get(
         success: true,
         status: "ok",
         timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running",
+        message: "API and database are operational",
         environment: process.env.NODE_ENV || "development",
+        version: getAppVersion(),
+        frontend: { status: "served-by-api" },
+        api: { status: "ok" },
         database: {
-          connected: true,
+          status: "connected",
           time: dbTest.rows[0]?.time
         }
       });
@@ -44765,17 +46357,20 @@ router78.get(
         success: false,
         status: "error",
         timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Server is running but database connection failed",
+        message: "API is running but the database is unavailable",
         environment: process.env.NODE_ENV || "development",
+        version: getAppVersion(),
+        frontend: { status: "served-by-api" },
+        api: { status: "ok" },
         database: {
-          connected: false,
-          error: error.message
+          status: "unavailable",
+          error: error?.code || "connection_failed"
         }
       });
     }
   })
 );
-router78.get(
+router81.get(
   "/verify-db-counts",
   asyncHandler(async (_req, res) => {
     const [
@@ -44792,12 +46387,20 @@ router78.get(
       allReservations
     ] = await Promise.all([
       db.execute(sql28`SELECT COUNT(*) as count FROM businesses`),
-      db.execute(sql28`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`
+      ),
       db.execute(sql28`SELECT COUNT(*) as count FROM business_categories`),
-      db.execute(sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`),
-      db.execute(sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NULL`
+      ),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM business_categories WHERE parent_id IS NOT NULL`
+      ),
       db.execute(sql28`SELECT COUNT(*) as count FROM jobs`),
-      db.execute(sql28`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
+      db.execute(
+        sql28`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`
+      ),
       db.execute(
         sql28`SELECT COUNT(DISTINCT country_id) as count FROM businesses WHERE country_id IS NOT NULL AND is_active = true`
       ),
@@ -44810,14 +46413,20 @@ router78.get(
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
       counts: {
         businesses: {
-          total: parseInt(String(allBusinesses.rows[0]?.count || 0), 10),
+          total: parseInt(
+            String(allBusinesses.rows[0]?.count || 0),
+            10
+          ),
           active: parseInt(
             String(activeBusinesses.rows[0]?.count || 0),
             10
           )
         },
         categories: {
-          total: parseInt(String(allCategories.rows[0]?.count || 0), 10),
+          total: parseInt(
+            String(allCategories.rows[0]?.count || 0),
+            10
+          ),
           mainCategories: parseInt(
             String(mainCategories.rows[0]?.count || 0),
             10
@@ -44851,7 +46460,7 @@ router78.get(
     });
   })
 );
-router78.get("/simple-test", (_req, res) => {
+router81.get("/simple-test", (_req, res) => {
   res.json({
     message: "Server is working!",
     success: true,
@@ -44871,12 +46480,12 @@ router78.get("/simple-test", (_req, res) => {
     ]
   });
 });
-var system_default = router78;
+var system_default = router81;
 
 // server/routes/users.ts
-import { Router as Router79 } from "express";
+import { Router as Router82 } from "express";
 import jwt8 from "jsonwebtoken";
-var router79 = Router79();
+var router82 = Router82();
 var activeUsers = /* @__PURE__ */ new Map();
 var INACTIVE_THRESHOLD = 5 * 60 * 1e3;
 setInterval(() => {
@@ -44889,7 +46498,7 @@ setInterval(() => {
   });
   entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
 }, 6e4);
-router79.post("/users/heartbeat", (req, res) => {
+router82.post("/users/heartbeat", (req, res) => {
   const sessionId = req.body.sessionId || req.ip;
   activeUsers.set(sessionId, Date.now());
   res.json({
@@ -44898,7 +46507,7 @@ router79.post("/users/heartbeat", (req, res) => {
     sessionId
   });
 });
-router79.get("/users/active-count", (_req, res) => {
+router82.get("/users/active-count", (_req, res) => {
   const now = Date.now();
   const entriesToDelete = [];
   activeUsers.forEach((lastSeen, sessionId) => {
@@ -44913,7 +46522,7 @@ router79.get("/users/active-count", (_req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   });
 });
-router79.get("/user", (req, res) => {
+router82.get("/user", (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
@@ -44928,14 +46537,14 @@ router79.get("/user", (req, res) => {
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) throw new Error("JWT_SECRET not set");
       const decoded = jwt8.verify(token, jwtSecret);
-      const isAdmin = decoded.role === "admin" || decoded.role === "superuser";
+      const isAdmin2 = decoded.role === "admin" || decoded.role === "superuser";
       return res.json({
         success: true,
         user: {
           id: decoded.userId || "user",
           email: decoded.email || "",
           name: decoded.name || decoded.email?.split("@")[0] || "User",
-          isAdmin,
+          isAdmin: isAdmin2,
           role: decoded.role || "user"
         }
       });
@@ -44954,7 +46563,7 @@ router79.get("/user", (req, res) => {
     });
   }
 });
-var users_default2 = router79;
+var users_default2 = router82;
 
 // server/routes.ts
 async function registerRoutes(app2) {
@@ -45066,6 +46675,8 @@ async function registerRoutes(app2) {
   app2.use("/api/inventory", inventory_default);
   app2.use("/api/inbox", inbox_default);
   app2.use("/api/community", community_default);
+  app2.use("/api/communities", artisan_communities_default);
+  app2.use("/api/events", events_default);
   app2.use("/api/geo-actions", geo_actions_default);
   app2.use("/api/contractor-pipeline", contractor_pipeline_default);
   app2.get("/api/csrf-token", (req, res) => {
@@ -45664,8 +47275,8 @@ async function registerRoutes(app2) {
 
 // server/prod-static.ts
 import express from "express";
-import fs8 from "fs";
-import path7 from "path";
+import fs9 from "fs";
+import path8 from "path";
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -45676,23 +47287,23 @@ function log(message, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 function serveStatic(app2) {
-  const distPath = path7.join(process.cwd(), "dist", "public");
+  const distPath = path8.join(process.cwd(), "dist", "public");
   console.log(`[STATIC] Serving static files from: ${distPath}`);
-  console.log(`[STATIC] Directory exists: ${fs8.existsSync(distPath)}`);
-  if (fs8.existsSync(distPath)) {
+  console.log(`[STATIC] Directory exists: ${fs9.existsSync(distPath)}`);
+  if (fs9.existsSync(distPath)) {
     try {
-      const assets = fs8.readdirSync(distPath);
+      const assets = fs9.readdirSync(distPath);
       console.log(`[STATIC] Contents: ${assets.join(", ")}`);
     } catch (err) {
       console.warn("[STATIC] Could not list dist contents:", err);
     }
   }
-  if (!fs8.existsSync(distPath)) {
+  if (!fs9.existsSync(distPath)) {
     console.error(
       `[STATIC] dist/public not found. Contents of cwd (${process.cwd()}):`
     );
     try {
-      console.error(fs8.readdirSync(process.cwd()).join(", "));
+      console.error(fs9.readdirSync(process.cwd()).join(", "));
     } catch (e) {
       console.error("Could not read cwd");
     }
@@ -45704,18 +47315,25 @@ function serveStatic(app2) {
     express.static(distPath, {
       maxAge: "1y",
       immutable: true,
-      index: false
+      index: false,
       // Don't auto-serve index.html for directory requests
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html") || filePath.endsWith("/sw.js") || filePath.endsWith("/service-worker.js")) {
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        }
+      }
     })
   );
   app2.use("*", (req, res, next) => {
-    if (req.originalUrl.includes(".")) {
+    const acceptsHtml = req.accepts("html") === "html";
+    const isNavigation = req.method === "GET" || req.method === "HEAD";
+    if (!isNavigation || req.path.startsWith("/api/") || !acceptsHtml) {
       return next();
     }
-    fs8.readFile(path7.join(distPath, "index.html"), "utf-8", (err, html) => {
+    fs9.readFile(path8.join(distPath, "index.html"), "utf-8", (err, html) => {
       if (err) {
         console.error("[STATIC] Failed to read index.html:", err);
-        return res.sendFile(path7.join(distPath, "index.html"));
+        return res.sendFile(path8.join(distPath, "index.html"));
       }
       const siblingUrl = process.env.SIBLING_URL;
       const runtimeScript = siblingUrl ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>
@@ -46001,6 +47619,17 @@ async function ensureAllTables() {
       } catch (_) {
       }
     }
+    const ARENA_WEIGHT_ADDITIONS = [
+      `ALTER TABLE arena_votes ADD COLUMN IF NOT EXISTS vote_weight NUMERIC(6,4) DEFAULT 0.1`,
+      `ALTER TABLE arena_brackets ADD COLUMN IF NOT EXISTS weighted_vote_count NUMERIC(12,4) DEFAULT 0`,
+      `ALTER TABLE arena_contests ADD COLUMN IF NOT EXISTS weighted_total_votes NUMERIC(12,4) DEFAULT 0`
+    ];
+    for (const alt of ARENA_WEIGHT_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (_) {
+      }
+    }
     const PLAN_QUOTA_UPDATES = [
       ["Gratuit", 0],
       ["Supporter", 5],
@@ -46227,6 +47856,24 @@ var TABLE_STATEMENTS = [
       price DECIMAL(10,2),
       category VARCHAR(50),
       description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "geo_action_requests",
+    sql: `CREATE TABLE IF NOT EXISTS geo_action_requests (
+      id SERIAL PRIMARY KEY,
+      requested_by INTEGER NOT NULL REFERENCES users(id),
+      action_type VARCHAR(50) NOT NULL,
+      entity_type VARCHAR(50),
+      entity_id TEXT,
+      requested_change JSONB,
+      delay_hours INTEGER NOT NULL DEFAULT 24,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      reviewed_by INTEGER REFERENCES users(id),
+      reviewed_at TIMESTAMP,
+      review_notes TEXT,
+      expires_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW()
     )`
   },
@@ -46861,6 +48508,122 @@ var TABLE_STATEMENTS = [
       is_hidden BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT NOW()
     )`
+  },
+  {
+    table: "artisan_communities",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_communities (
+      id SERIAL PRIMARY KEY,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      name VARCHAR(180) NOT NULL,
+      slug VARCHAR(220) UNIQUE NOT NULL,
+      region VARCHAR(120) NOT NULL,
+      category VARCHAR(120) NOT NULL,
+      focus TEXT NOT NULL,
+      description TEXT NOT NULL,
+      activities JSONB DEFAULT '[]',
+      image_url TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+      member_count INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "artisan_community_join_requests",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_community_join_requests (
+      id SERIAL PRIMARY KEY,
+      community_id INTEGER NOT NULL REFERENCES artisan_communities(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      message TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (community_id, user_id)
+    )`
+  },
+  {
+    table: "artisan_community_memberships",
+    sql: `CREATE TABLE IF NOT EXISTS artisan_community_memberships (
+      id SERIAL PRIMARY KEY,
+      community_id INTEGER NOT NULL REFERENCES artisan_communities(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+      joined_at TIMESTAMP DEFAULT NOW(),
+      removed_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (community_id, user_id)
+    )`
+  },
+  {
+    table: "community_operation_audit",
+    sql: `CREATE TABLE IF NOT EXISTS community_operation_audit (
+      id SERIAL PRIMARY KEY,
+      entity_type VARCHAR(40) NOT NULL,
+      entity_id INTEGER NOT NULL,
+      action VARCHAR(40) NOT NULL,
+      performed_by INTEGER REFERENCES users(id),
+      reason TEXT,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "events",
+    sql: `CREATE TABLE IF NOT EXISTS events (
+      id SERIAL PRIMARY KEY,
+      organizer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      community_id INTEGER REFERENCES artisan_communities(id) ON DELETE SET NULL,
+      title VARCHAR(220) NOT NULL,
+      slug VARCHAR(260) UNIQUE NOT NULL,
+      description TEXT NOT NULL,
+      event_type VARCHAR(40) NOT NULL DEFAULT 'COMMUNITY',
+      starts_at TIMESTAMP NOT NULL,
+      ends_at TIMESTAMP,
+      venue VARCHAR(220),
+      city VARCHAR(120),
+      image_url TEXT,
+      status VARCHAR(30) NOT NULL DEFAULT 'DRAFT',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      published_at TIMESTAMP
+    )`
+  },
+  {
+    table: "event_audit",
+    sql: `CREATE TABLE IF NOT EXISTS event_audit (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      action VARCHAR(40) NOT NULL,
+      performed_by INTEGER REFERENCES users(id),
+      reason TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`
+  },
+  {
+    table: "event_attendees",
+    sql: `CREATE TABLE IF NOT EXISTS event_attendees (
+      id SERIAL PRIMARY KEY,
+      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(20) NOT NULL DEFAULT 'GOING',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE (event_id, user_id)
+    )`
+  },
+  {
+    table: "artisan_communities_seed",
+    sql: `INSERT INTO artisan_communities
+      (name, slug, region, category, focus, description, activities, status, member_count)
+      VALUES
+      ('Abidjan Textile Collective', 'abidjan-textile-collective-community', 'Abidjan', 'Textiles', 'Traditional weaving and fabric arts', 'A vibrant collective of weavers preserving traditional techniques while innovating with contemporary designs.', '["Weekly workshops","Market sales","Cultural exhibitions","Skill training"]', 'PUBLISHED', 245),
+      ('Yamoussoukro Ceramics Guild', 'yamoussoukro-ceramics-guild-community', 'Yamoussoukro', 'Ceramics', 'Pottery and clay crafts', 'Master potters teaching the next generation while creating stunning handcrafted pieces.', '["Pottery classes","Exhibitions","International orders","Apprenticeships"]', 'PUBLISHED', 156),
+      ('Korhogo Carvers Association', 'korhogo-carvers-association-community', 'Korhogo', 'Wood Carving', 'Traditional wood sculpture', 'Ancient wood carving traditions passed down through families, creating iconic African art.', '["Carving demonstrations","Art shows","Museum partnerships","Youth programs"]', 'PUBLISHED', 189),
+      ('Bouake Metalwork Artisans', 'bouake-metalwork-artisans-community', 'Bouake', 'Metalwork', 'Metal arts and sculpture', 'Skilled metalworkers creating decorative and functional pieces using traditional techniques.', '["Forging workshops","Large commissions","Art festivals","Technical training"]', 'PUBLISHED', 127),
+      ('San Pedro Leather Craftspeople', 'san-pedro-leather-craftspeople-community', 'San Pedro', 'Leather Work', 'Leather goods and accessories', 'Dedicated artisans crafting high-quality leather products with traditional methods.', '["Leather classes","Market participation","Custom orders","Sustainable practices"]', 'PUBLISHED', 98),
+      ('Daloa Jewelry Makers', 'daloa-jewelry-makers-community', 'Daloa', 'Jewelry', 'Traditional and contemporary jewelry', 'Gold, silver, and beaded jewelry artisans creating stunning wearable art.', '["Design workshops","Jewelry shows","International sales","Apprenticeships"]', 'PUBLISHED', 112)
+      ON CONFLICT (slug) DO NOTHING`
   },
   // ═══════════════════════════════════════════════
   // 18. USER SETTINGS
@@ -47571,7 +49334,7 @@ var logger = createLogger("app");
 init_db();
 init_schema();
 init_email_service();
-import { eq as eq41, and as and24, sql as sql30, inArray as inArray2 } from "drizzle-orm";
+import { eq as eq41, and as and25, sql as sql30, inArray as inArray2 } from "drizzle-orm";
 var DIGEST_CHECK_INTERVAL_MS = 60 * 60 * 1e3;
 var MAX_RETRIES = 3;
 var BATCH_SIZE = 50;
@@ -47622,7 +49385,7 @@ async function processDailyDigests() {
       emailSubscriptions,
       eq41(emailQueue.subscriptionId, emailSubscriptions.id)
     ).innerJoin(users, eq41(emailQueue.recipientUserId, users.id)).where(
-      and24(
+      and25(
         eq41(emailQueue.status, "pending"),
         eq41(emailSubscriptions.frequency, "daily_digest"),
         eq41(emailSubscriptions.isActive, true)
@@ -47671,7 +49434,7 @@ async function processWeeklyDigests() {
       emailSubscriptions,
       eq41(emailQueue.subscriptionId, emailSubscriptions.id)
     ).innerJoin(users, eq41(emailQueue.recipientUserId, users.id)).where(
-      and24(
+      and25(
         eq41(emailQueue.status, "pending"),
         eq41(emailSubscriptions.frequency, "weekly_digest"),
         eq41(emailSubscriptions.isActive, true)
@@ -47711,13 +49474,13 @@ async function processWeeklyDigests() {
 async function processGeoAdminReports() {
   console.log("[DIGEST] Generating GeoAdmin market reports...");
   try {
-    const metrics = await gatherPlatformMetrics();
+    const metrics2 = await gatherPlatformMetrics();
     const subscribers = await db.select({
       subscription: emailSubscriptions,
       email: users.email,
       username: users.username
     }).from(emailSubscriptions).innerJoin(users, eq41(emailSubscriptions.userId, users.id)).where(
-      and24(
+      and25(
         eq41(emailSubscriptions.type, "geoadmin_reports"),
         eq41(emailSubscriptions.isActive, true)
       )
@@ -47734,9 +49497,9 @@ async function processGeoAdminReports() {
     const report = {
       reportTitle: "Weekly Market Intelligence",
       period,
-      metrics: metrics.kpis,
-      topBusinesses: metrics.topBusinesses,
-      insights: metrics.insights
+      metrics: metrics2.kpis,
+      topBusinesses: metrics2.topBusinesses,
+      insights: metrics2.insights
     };
     let sent = 0;
     for (const sub of subscribers) {
@@ -47820,7 +49583,7 @@ async function sendDigestEmail(recipientEmail, items, digestType) {
 async function retryFailedItems() {
   try {
     const failedItems = await db.select().from(emailQueue).where(
-      and24(
+      and25(
         eq41(emailQueue.status, "failed"),
         sql30`${emailQueue.retryCount} < ${MAX_RETRIES}`
       )
@@ -48339,6 +50102,29 @@ function setupMarketplaceAutoApprove() {
   );
 }
 
+// server/services/session-cleanup.ts
+init_db();
+init_schema();
+import { lt } from "drizzle-orm";
+var log2 = createLogger("session-cleanup");
+function setupSessionCleanup(intervalMs = 30 * 60 * 1e3) {
+  log2.info(`Session cleanup job scheduled (every ${intervalMs}ms)`);
+  cleanupExpiredSessions();
+  setInterval(cleanupExpiredSessions, intervalMs);
+}
+async function cleanupExpiredSessions() {
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3);
+    const result = await db.delete(activeSessions).where(lt(activeSessions.expiresAt, sevenDaysAgo));
+    const deletedCount = result?.changes ?? 0;
+    if (deletedCount > 0) {
+      log2.info(`Cleaned up ${deletedCount} expired sessions`);
+    }
+  } catch (error) {
+    log2.error("Session cleanup failed:", error);
+  }
+}
+
 // server/middleware/csrf.ts
 import { randomBytes } from "crypto";
 var CSRF_COOKIE = "csrf_token";
@@ -48465,6 +50251,69 @@ function csrfProtect(req, res, next) {
   });
 }
 
+// server/utils/performance-monitor.ts
+var log3 = createLogger("perf-monitor");
+var SLOW_QUERY_THRESHOLD_MS = parseInt(
+  process.env.SLOW_QUERY_THRESHOLD_MS || "500",
+  10
+);
+var metrics = [];
+function getPerformanceStats() {
+  if (metrics.length === 0) {
+    return {
+      totalQueries: 0,
+      slowQueries: 0,
+      avgDurationMs: 0,
+      maxDurationMs: 0,
+      minDurationMs: 0
+    };
+  }
+  const durations = metrics.map((m) => m.durationMs);
+  const slowCount = metrics.filter((m) => m.slow).length;
+  return {
+    totalQueries: metrics.length,
+    slowQueries: slowCount,
+    avgDurationMs: durations.reduce((a, b) => a + b, 0) / durations.length,
+    maxDurationMs: Math.max(...durations),
+    minDurationMs: Math.min(...durations)
+  };
+}
+function getRecentSlowQueries(limit = 10) {
+  return metrics.filter((m) => m.slow).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, limit);
+}
+function performanceMiddleware() {
+  return (req, res, next) => {
+    const startTime = Date.now();
+    const originalEnd = res.end;
+    res.end = function(...args) {
+      const durationMs = Date.now() - startTime;
+      if (durationMs > 500) {
+        log3.warn(`\u26A0\uFE0F Slow request: ${req.method} ${req.path}`, {
+          durationMs,
+          statusCode: res.statusCode
+        });
+      }
+      originalEnd.apply(res, args);
+    };
+    next();
+  };
+}
+function startStatsReporter(intervalMinutes = 5) {
+  setInterval(
+    () => {
+      const stats = getPerformanceStats();
+      if (stats.totalQueries > 0) {
+        log3.info("\u{1F4CA} Performance stats (last interval)", stats);
+        const slowQueries = getRecentSlowQueries(3);
+        if (slowQueries.length > 0) {
+          log3.warn("\u{1F534} Top slow queries:", slowQueries);
+        }
+      }
+    },
+    intervalMinutes * 60 * 1e3
+  );
+}
+
 // server/index.ts
 dotenv2.config();
 var isProdEnv = process.env.NODE_ENV === "production";
@@ -48515,9 +50364,11 @@ var serverLog = createLogger("server");
 var app = express2();
 process.on("unhandledRejection", (reason) => {
   serverLog.error("Unhandled promise rejection:", reason);
+  process.exit(1);
 });
 process.on("uncaughtException", (error) => {
   serverLog.error("Uncaught exception:", error);
+  process.exit(1);
 });
 var isDev2 = process.env.NODE_ENV !== "production";
 if (!isDev2) {
@@ -48592,9 +50443,12 @@ app.use(express2.urlencoded({ extended: false, limit: "10mb" }));
 app.use(csrfSetCookie);
 app.use(csrfProtect);
 app.use(globalAuthGate);
+if (process.env.NODE_ENV === "production") {
+  app.use(performanceMiddleware());
+}
 app.use((req, res, next) => {
   const start = Date.now();
-  const path8 = req.path;
+  const path9 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -48603,8 +50457,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path8.startsWith("/api")) {
-      let line = `${req.method} ${path8} ${res.statusCode} in ${duration}ms`;
+    if (path9.startsWith("/api")) {
+      let line = `${req.method} ${path9} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         line += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -48645,6 +50499,12 @@ app.use((req, res, next) => {
   serverLog.info("Newsletter cron scheduled (hourly)");
   setupMarketplaceAutoApprove();
   serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
+  setupSessionCleanup();
+  serverLog.info("Session cleanup job scheduled (every 30 minutes)");
+  if (process.env.NODE_ENV === "production") {
+    startStatsReporter(5);
+    serverLog.info("Performance stats reporter started (every 5 minutes)");
+  }
   app.use((err, _req, res, _next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
