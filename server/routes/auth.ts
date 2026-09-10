@@ -473,24 +473,25 @@ router.post(
       expiresAt: tokenExpiry,
     });
 
-    // Send verification email (non-blocking — don't fail registration if email fails)
-    sendVerificationEmail(email.toLowerCase(), verificationToken)
-      .then((sent) => {
-        if (sent) {
-          console.log(`[AUTH] Verification email sent to ${email}`);
-        } else {
-          console.warn(`[AUTH] Failed to send verification email to ${email}`);
-        }
-      })
-      .catch((err) => {
-        console.error(`[AUTH] Verification email error for ${email}:`, err);
-      });
+    // Await delivery so the response accurately tells the client whether email was sent.
+    const emailSent = await sendVerificationEmail(
+      email.toLowerCase(),
+      verificationToken,
+    );
+    if (emailSent) {
+      console.log(`[AUTH] Verification email sent to ${email}`);
+    } else {
+      console.warn(`[AUTH] Verification email was not sent to ${email}`);
+    }
 
     // Do NOT auto-login — user must verify email first
     res.status(201).json({
       success: true,
       requiresVerification: true,
-      message: "Account created! Check your email for a verification link.",
+      emailSent,
+      message: emailSent
+        ? "Account created! Check your email for a verification link."
+        : "Account created, but the verification email could not be sent. Try resending it later.",
       user: {
         id: String(newUser.id),
         email: newUser.email,

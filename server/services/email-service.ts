@@ -492,7 +492,12 @@ export async function sendEmail(
   attachments?: Array<{ filename: string; path: string; contentType?: string }>,
 ): Promise<boolean> {
   if (!transporter) {
-    console.warn("[EMAIL] Transporter not initialized");
+    console.warn("[EMAIL] Transporter not initialized; retrying initialization");
+    await initializeEmailTransporter();
+  }
+
+  if (!transporter) {
+    console.warn("[EMAIL] SMTP is not configured");
     return false;
   }
 
