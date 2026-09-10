@@ -203,7 +203,7 @@ router.post(
         try {
           parsedOpeningHours = JSON.parse(openingHours);
         } catch {
-          parsedOpeningHours = openingHours;
+          parsedOpeningHours = { raw: openingHours };
         }
       } else {
         parsedOpeningHours = openingHours;
