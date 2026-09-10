@@ -1352,13 +1352,16 @@ const BusinessManagement = ({
           description: "Business added successfully",
         });
       } else {
+        const serverMessage =
+          data?.error?.message || data?.error || data?.message;
+        const safeMessage =
+          typeof serverMessage === "string" &&
+          serverMessage.toLowerCase().startsWith("failed query")
+            ? "The business could not be saved because the database schema is updating. Please retry in a few seconds."
+            : serverMessage;
         toast({
           title: "Error",
-          description:
-            data?.error?.message ||
-            data?.error ||
-            data?.message ||
-            `Failed to add business (HTTP ${response.status})`,
+          description: safeMessage || `Failed to add business (HTTP ${response.status})`,
           variant: "destructive",
         });
       }
@@ -1945,14 +1948,14 @@ const BusinessManagement = ({
 
       {/* Add Business Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="z-[110] w-[calc(100vw-1rem)] max-w-2xl max-h-[calc(100dvh-1rem)] overflow-hidden flex flex-col p-4 sm:max-h-[90vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>Add New Business</DialogTitle>
             <DialogDescription>
               Create a new business listing with full discovery metrics
             </DialogDescription>
           </DialogHeader>
-          <div className="overflow-y-auto overscroll-contain flex-1 pr-2 space-y-6">
+          <div className="min-h-0 overflow-y-auto overscroll-contain flex-1 pr-2 space-y-6">
             {/* ── Identity ── */}
             <div>
               <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -2427,7 +2430,7 @@ const BusinessManagement = ({
               />
             </div>
           </div>
-          <DialogFooter className="pt-4 border-t">
+          <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 gap-2 bg-background px-4 pb-[env(safe-area-inset-bottom)] pt-4 sm:-mx-6 sm:-mb-6 sm:px-6">
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               Cancel
             </Button>
