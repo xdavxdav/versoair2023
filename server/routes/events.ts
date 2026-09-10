@@ -308,7 +308,7 @@ router.post("/:id/status", requireAuth(reviewRoles), async (req, res) => {
   }
 });
 
-router.put("/:id", requireAuth(manageRoles), async (req, res) => {
+router.put("/:id", requireAuth(reviewRoles), async (req, res) => {
   const parsed = eventPayload(req.body || {});
   if (parsed.error) return res.status(400).json({ error: parsed.error });
   try {
