@@ -854,6 +854,58 @@ const TABLE_STATEMENTS: TableDef[] = [
       updated_at TIMESTAMP
     )`,
   },
+  {
+    table: "jobs_schema_compatibility",
+    sql: `DO $$
+    BEGIN
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS sector VARCHAR DEFAULT 'general';
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS country_code VARCHAR(2);
+
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'jobs' AND column_name = 'requirements'
+          AND data_type = 'ARRAY'
+      ) THEN
+        ALTER TABLE jobs ALTER COLUMN requirements TYPE TEXT
+          USING array_to_json(requirements)::text;
+      END IF;
+
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'jobs' AND column_name = 'benefits'
+          AND data_type = 'ARRAY'
+      ) THEN
+        ALTER TABLE jobs ALTER COLUMN benefits TYPE TEXT
+          USING array_to_json(benefits)::text;
+      END IF;
+
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'jobs' AND column_name = 'skills'
+          AND data_type = 'ARRAY'
+      ) THEN
+        ALTER TABLE jobs ALTER COLUMN skills TYPE TEXT
+          USING array_to_json(skills)::text;
+      END IF;
+    END $$`,
+  },
+  {
+    table: "jobs_search_trigger_compatibility",
+    sql: `CREATE OR REPLACE FUNCTION update_job_search_vector()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      NEW.search_vector =
+        setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE(NEW.location, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(NEW.requirements, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(NEW.skills, '')), 'C');
+      RETURN NEW;
+    END;
+    $$`,
+  },
 
   // ═══════════════════════════════════════════════
   // 7. SOCIAL NETWORKING
@@ -914,6 +966,19 @@ const TABLE_STATEMENTS: TableDef[] = [
       changes JSONB,
       ip_address VARCHAR,
       user_agent TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+
+  {
+    table: "data_audit_trail",
+    sql: `CREATE TABLE IF NOT EXISTS data_audit_trail (
+      id BIGSERIAL PRIMARY KEY,
+      table_name TEXT NOT NULL,
+      record_id TEXT NOT NULL,
+      operation VARCHAR(10) NOT NULL,
+      old_data JSONB,
+      new_data JSONB,
       created_at TIMESTAMP DEFAULT NOW()
     )`,
   },
