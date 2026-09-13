@@ -15,6 +15,81 @@ declare global {
 let sessionId: string = "";
 let userId: string | null = null;
 
+export type CampaignContext = {
+  audience?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+};
+
+const CAMPAIGN_STORAGE_KEY = "verso_campaign_context";
+const CAMPAIGN_KEYS: Array<keyof CampaignContext> = [
+  "audience",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+];
+
+/** Capture ad attribution once and keep it through signup and onboarding. */
+export function captureCampaignContext(): CampaignContext {
+  if (typeof window === "undefined") return {};
+
+  const current = new URLSearchParams(window.location.search);
+  const stored = sessionStorage.getItem(CAMPAIGN_STORAGE_KEY);
+  let context: CampaignContext = {};
+
+  if (stored) {
+    try {
+      context = JSON.parse(stored) as CampaignContext;
+    } catch {
+      context = {};
+    }
+  }
+
+  for (const key of CAMPAIGN_KEYS) {
+    const value = current.get(key);
+    if (value) context[key] = value.slice(0, 120);
+  }
+
+  if (Object.keys(context).length > 0) {
+    sessionStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(context));
+  }
+
+  return context;
+}
+
+export function getCampaignContext(): CampaignContext {
+  if (typeof window === "undefined") return {};
+  const stored = sessionStorage.getItem(CAMPAIGN_STORAGE_KEY);
+  if (!stored) return {};
+
+  try {
+    return JSON.parse(stored) as CampaignContext;
+  } catch {
+    return {};
+  }
+}
+
+export function withCampaignContext(href: string): string {
+  if (typeof window === "undefined" || !href.startsWith("/")) return href;
+
+  const [path, hash = ""] = href.split("#", 2);
+  const [pathname, query = ""] = path.split("?", 2);
+  const params = new URLSearchParams(query);
+  const context = getCampaignContext();
+
+  for (const key of CAMPAIGN_KEYS) {
+    if (context[key] && !params.has(key)) params.set(key, context[key]!);
+  }
+
+  const serialized = params.toString();
+  return `${pathname}${serialized ? `?${serialized}` : ""}${hash ? `#${hash}` : ""}`;
+}
+
 /**
  * Initialize GTM tracking session
  */

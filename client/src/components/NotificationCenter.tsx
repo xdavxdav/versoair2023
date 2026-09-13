@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch } from "@/lib/auth";
-import { useInboxSocket } from "@/hooks/use-inbox-socket";
+import {
+  useInboxSocket,
+  useNotificationSocket,
+  type SocketNotificationEvent,
+} from "@/hooks/use-inbox-socket";
 
 interface AppNotification {
   id: string;
@@ -61,25 +65,55 @@ export default function NotificationCenter() {
 
   const unread = notifications.filter((n) => !n.read).length;
 
-  // Fetch on first open
-  useEffect(() => {
-    if (!open || !user) return;
-    setLoading(true);
-    authenticatedFetch("/api/notifications")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.notifications) setNotifications(data.notifications);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [open, user]);
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const r = await authenticatedFetch("/api/notifications");
+      const data = await r.json();
+      if (data?.notifications && Array.isArray(data.notifications)) {
+        setNotifications(data.notifications);
+      }
+    } catch {
+      /* non-critical */
+    }
+  }, [user]);
 
-  // Live push via inbox socket — any new-message event bumps unread count
-  const handleLive = useCallback(() => {
+  // Fetch immediately on mount so red dot shows on page load
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications();
+  }, [user, fetchNotifications]);
+
+  // Live real-time notifications via WebSocket
+  const handleRealtimeNotification = useCallback(
+    (data: SocketNotificationEvent) => {
+      const typeKey = (data.type || "publish") as AppNotification["type"];
+      const newNotif: AppNotification = {
+        id: String(data.id || `live-notif-${Date.now()}`),
+        type: TYPE_ICON[typeKey] ? typeKey : "publish",
+        actorName: data.actorName || data.title || "Someone",
+        actorAvatar: data.actorAvatar || null,
+        text: data.text || data.message || "New notification",
+        entityUrl: data.entityUrl || undefined,
+        read: false,
+        createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
+      };
+
+      setNotifications((prev) => [
+        newNotif,
+        ...prev.filter((n) => n.id !== newNotif.id),
+      ]);
+    },
+    [],
+  );
+  useNotificationSocket(user ? handleRealtimeNotification : undefined);
+
+  // Live push via inbox socket for messages
+  const handleLiveMessage = useCallback(() => {
     if (!open) {
       setNotifications((prev) => [
         {
-          id: `live-${Date.now()}`,
+          id: `live-msg-${Date.now()}`,
           type: "message",
           actorName: "Someone",
           text: "sent you a message",
@@ -90,7 +124,7 @@ export default function NotificationCenter() {
       ]);
     }
   }, [open]);
-  useInboxSocket(user ? handleLive : undefined);
+  useInboxSocket(user ? handleLiveMessage : undefined);
 
   // Close on outside click
   useEffect(() => {
@@ -104,11 +138,27 @@ export default function NotificationCenter() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  // Mark all as read when opened so red dot disappears immediately when viewed
+  const handleOpenToggle = () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+
+    if (nextOpen && unread > 0) {
+      // Clear red dot locally immediately
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      authenticatedFetch("/api/notifications/read-all", {
+        method: "POST",
+      }).catch(() => {});
+      window.dispatchEvent(new CustomEvent("notifications:read"));
+    }
+  };
+
   const markAllRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     authenticatedFetch("/api/notifications/read-all", { method: "POST" }).catch(
       () => {},
     );
+    window.dispatchEvent(new CustomEvent("notifications:read"));
   };
 
   const markOne = (id: string) => {
@@ -126,7 +176,7 @@ export default function NotificationCenter() {
     <div ref={panelRef} className="relative">
       {/* Bell trigger */}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleOpenToggle}
         className="relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-white transition-colors"
         aria-label="Notifications"
       >
@@ -190,6 +240,7 @@ export default function NotificationCenter() {
                   key={n.id}
                   onClick={() => {
                     markOne(n.id);
+                    setOpen(false);
                     if (n.entityUrl) window.location.href = n.entityUrl;
                   }}
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${!n.read ? "bg-amber-500/5" : ""}`}
@@ -213,7 +264,7 @@ export default function NotificationCenter() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      {TYPE_ICON[n.type]}
+                      {TYPE_ICON[n.type] || TYPE_ICON.publish}
                       <p className="text-sm text-white truncate">
                         <span className="font-semibold">{n.actorName}</span>{" "}
                         {n.text}

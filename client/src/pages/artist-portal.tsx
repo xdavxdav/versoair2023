@@ -2094,33 +2094,57 @@ export default function ArtistPortal() {
             Albums & EPs
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {(albumsData || []).map((album: any) => (
-              <Card
-                key={album.id}
-                className="bg-white/5 backdrop-blur-sm border-white/10 hover:border-purple-400/30 hover:bg-white/10 transition-all cursor-pointer group"
-              >
-                <CardContent className="p-4">
-                  <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-purple-600/40 to-pink-600/40 flex items-center justify-center mb-3">
-                    <Music2 className="h-10 w-10 text-white/40" />
-                  </div>
-                  <p className="text-white font-medium text-sm truncate">
-                    {album.title}
-                  </p>
-                  <p className="text-purple-200/60 text-xs">
-                    {album.album_type?.toUpperCase() || "ALBUM"} •{" "}
-                    {album.track_count || album.total_tracks || 0} titres
-                  </p>
-                  {album.genre && (
-                    <Badge
-                      variant="outline"
-                      className="mt-1 border-purple-400/30 text-purple-300 text-[10px]"
-                    >
-                      {album.genre}
-                    </Badge>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+            {(albumsData || []).map((album: any) => {
+              const albumPochette =
+                album.pochette ||
+                (album.has_pochette
+                  ? `/api/streaming/albums/${album.id}/pochette`
+                  : null) ||
+                album.cover_art ||
+                album.coverArt;
+
+              return (
+                <Card
+                  key={album.id}
+                  className="bg-white/5 backdrop-blur-sm border-white/10 hover:border-purple-400/30 hover:bg-white/10 transition-all cursor-pointer group overflow-hidden"
+                >
+                  <CardContent className="p-4">
+                    <div className="w-full aspect-square rounded-xl bg-gradient-to-br from-purple-600/40 to-pink-600/40 flex items-center justify-center mb-3 overflow-hidden border border-white/5 relative">
+                      {albumPochette ? (
+                        <img
+                          src={albumPochette}
+                          alt={album.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <Music2 className="h-10 w-10 text-white/40" />
+                      )}
+                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white/90">
+                        {album.track_count || album.total_tracks || 0} titres
+                      </span>
+                    </div>
+                    <p className="text-white font-medium text-sm truncate group-hover:text-purple-300 transition-colors">
+                      {album.title}
+                    </p>
+                    <p className="text-purple-200/60 text-xs">
+                      {album.album_type?.toUpperCase() || "ALBUM"} •{" "}
+                      {album.track_count || album.total_tracks || 0} titres
+                    </p>
+                    {album.genre && (
+                      <Badge
+                        variant="outline"
+                        className="mt-1 border-purple-400/30 text-purple-300 text-[10px]"
+                      >
+                        {album.genre}
+                      </Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

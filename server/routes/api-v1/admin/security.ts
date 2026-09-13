@@ -139,6 +139,20 @@ router.post(
       return;
     }
 
+    if (role === "superuser") {
+      const ownerEmail = String(process.env.SUPERADMIN_EMAIL || "")
+        .trim()
+        .toLowerCase();
+      if (!ownerEmail || req.user?.email.toLowerCase() !== ownerEmail) {
+        res.status(403).json({
+          success: false,
+          message:
+            "Only the designated superadmin owner can grant superuser access",
+        });
+        return;
+      }
+    }
+
     // Prevent demoting self
     const requestingUserId = req.user?.userId;
     if (String(userId) === String(requestingUserId)) {

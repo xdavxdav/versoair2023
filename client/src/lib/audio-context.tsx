@@ -321,7 +321,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Load and play a track
   const loadAndPlay = useCallback(
-    (track: AudioTrack) => {
+    async (track: AudioTrack) => {
       const audio = audioRef.current;
       if (!audio) return;
 
@@ -329,12 +329,25 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setCurrentTrack(track);
       historyRef.current.push(track);
 
-      // Determine audio URL
+      // Determine audio URL (check direct streamUrl or local Blob first)
       let url: string;
-      if (track.file_path || (track as any).has_audio_data) {
-        url = `/api/music/tracks/${track.id}/stream`;
+      if ((track as any).streamUrl) {
+        url = (track as any).streamUrl;
       } else if (track.audio_url) {
         url = track.audio_url;
+      } else if (track.file_path || (track as any).has_audio_data || track.id) {
+        // Check if cached offline in IndexedDB
+        try {
+          const { getOfflineAudioUrl } = await import("@/lib/offline-storage");
+          const offlineBlobUrl = await getOfflineAudioUrl(track.id);
+          if (offlineBlobUrl) {
+            url = offlineBlobUrl;
+          } else {
+            url = `/api/music/tracks/${track.id}/stream`;
+          }
+        } catch {
+          url = `/api/music/tracks/${track.id}/stream`;
+        }
       } else {
         // No audio available — skip this track
         console.warn(`Track "${track.title}" has no audio file`);

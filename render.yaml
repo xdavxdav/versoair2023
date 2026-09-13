@@ -10,7 +10,7 @@ services:
     runtime: node
     plan: free
     healthCheckPath: /api/health
-    buildCommand: npm ci && npm run build && (npm run db:push || echo 'db:push skipped') && npm run seed
+    buildCommand: npm ci && npm run build && npm run db:push && npm run seed
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -23,11 +23,21 @@ services:
         generateValue: true
       - key: SESSION_SECRET
         generateValue: true
+      - key: SUPERADMIN_EMAIL
+        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: CORS_ORIGIN
         sync: false
       - key: PRODUCTION_URL
+        sync: false
+      - key: APP_PUBLIC_URL
+        sync: false
+      - key: MAIN_APP_URL
+        sync: false
+      - key: VERSOAIR_URL
+        sync: false
+      - key: MUSIC_APP_URL
         sync: false
       - key: VITE_API_URL
         sync: false

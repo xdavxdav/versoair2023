@@ -40,6 +40,21 @@ const Contact = lazy(() => import("@/pages/contact"));
 const Demo = lazy(() => import("@/pages/demo"));
 const Industries = lazy(() => import("@/pages/industries"));
 const Pricing = lazy(() => import("@/pages/pricing"));
+const ArtistsBetaPage = lazy(() =>
+  import("@/pages/beta-audience").then((module) => ({
+    default: module.ArtistsBetaPage,
+  })),
+);
+const BusinessesBetaPage = lazy(() =>
+  import("@/pages/beta-audience").then((module) => ({
+    default: module.BusinessesBetaPage,
+  })),
+);
+const ListenersBetaPage = lazy(() =>
+  import("@/pages/beta-audience").then((module) => ({
+    default: module.ListenersBetaPage,
+  })),
+);
 const Blog = lazy(() => import("@/pages/blog"));
 const FaqPage = lazy(() => import("@/pages/faq"));
 const Profile = lazy(() => import("@/pages/profile"));
@@ -453,6 +468,9 @@ function Router() {
       <Route path="/tour" component={Demo} />
       <Route path="/industries" component={Industries} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/for-artists" component={ArtistsBetaPage} />
+      <Route path="/for-businesses" component={BusinessesBetaPage} />
+      <Route path="/for-listeners" component={ListenersBetaPage} />
       <Route path="/blog" component={Blog} />
       <Route path="/faq" component={FaqPage} />
       <Route path="/profile">
@@ -478,7 +496,9 @@ function Router() {
         {() => <ProtectedRoute component={BillingPage} />}
       </Route>
       <Route path="/account/cards">
-        {() => <ProtectedRoute component={CardVaultPage} />}
+        {() => (
+          <ProtectedRoute component={CardVaultPage} roles={["superuser"]} />
+        )}
       </Route>
       <Route path="/account/paypal">
         {() => <ProtectedRoute component={PayPalPortal} />}
@@ -827,15 +847,18 @@ function AppContent() {
     currentPath === "/blog" || currentPath === "/marketplace";
   const isAuthPage = currentPath.startsWith("/auth");
   const isGeoAdminPage = currentPath.startsWith("/geo-admin");
+  const isMessagesPage = currentPath === "/messages";
   const showAccountBlogNavbar =
     isAuthed &&
     !isAuthPage &&
+    !isMessagesPage &&
     !isMusicPage &&
     !currentPath.startsWith("/admin") &&
     !isGeoAdminPage;
   const showContentNav =
     isContentNavPage &&
     isAuthed &&
+    !isMessagesPage &&
     !isBlogOrMarketplace &&
     !showAccountBlogNavbar;
   // Immersive pages — hide navbar, footer (keep motto), bubble menu
@@ -843,6 +866,7 @@ function AppContent() {
     currentPath === "/dashboard" ||
     currentPath === "/apply" ||
     currentPath === "/profile" ||
+    isMessagesPage ||
     currentPath.startsWith("/user/") ||
     currentPath === "/inventory";
   // Track when loading just finished so we can apply page-enter animation
@@ -1082,7 +1106,7 @@ function AppContent() {
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""}`}
+        } ${pageEnter ? "page-enter" : ""} ${isMessagesPage ? "h-screen min-h-0 overflow-hidden" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""}`}
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
@@ -1102,12 +1126,12 @@ function AppContent() {
         </Suspense>
       )}
       {/* Footer — hide on music pages; show only motto on immersive pages */}
-      {!isMusicPage && !isImmersivePage && (
+      {!isMusicPage && !isImmersivePage && !isMessagesPage && (
         <div>
           <Footer />
         </div>
       )}
-      {isImmersivePage && (
+      {isImmersivePage && !isMessagesPage && (
         <div className="bg-gray-950 py-6 text-center">
           <p
             className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none notranslate"

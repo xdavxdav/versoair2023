@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LogOut,
   Store,
@@ -173,6 +174,17 @@ export default function BlogNavbar({
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
 
+  // ── Musical Universe (MU / Play) button gestures ──
+  const muTapCountRef = useRef(0);
+  const muTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const muHoldStartRef = useRef(0);
+  const muHoldCompletedRef = useRef(false);
+  const [muHoldProgress, setMuHoldProgress] = useState(0);
+  const [isMuHolding, setIsMuHolding] = useState(false);
+  const [muHoldCountdown, setMuHoldCountdown] = useState(3);
+
   const marketplaceAuth =
     localStorage.getItem("blog_community_auth") === "true";
   const marketplaceUser = localStorage.getItem("blog_community_user") || "User";
@@ -218,6 +230,9 @@ export default function BlogNavbar({
       document.removeEventListener("pointerdown", handlePointerDown);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+      if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+      if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
     };
   }, []);
 
@@ -282,8 +297,130 @@ export default function BlogNavbar({
     [],
   );
 
+  // ── Musical Universe (MU / Play) button gestures:
+  // - Single tap → /stream
+  // - Double tap → /music/dashboard
+  // - Hold 3s → /stream with purple countdown
+  const handleMuTap = useCallback(() => {
+    if (muHoldCompletedRef.current) {
+      muHoldCompletedRef.current = false;
+      return;
+    }
+    muTapCountRef.current += 1;
+    if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+    muTapTimerRef.current = setTimeout(() => {
+      const count = muTapCountRef.current;
+      muTapCountRef.current = 0;
+      if (count >= 2) {
+        setLocation("/music/dashboard");
+      } else {
+        setLocation("/stream");
+      }
+    }, 300);
+  }, [setLocation]);
+
+  const handleMuPressStart = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
+      muHoldCompletedRef.current = false;
+      muHoldStartRef.current = Date.now();
+      setIsMuHolding(true);
+      setMuHoldProgress(0);
+      setMuHoldCountdown(3);
+      muHoldIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - muHoldStartRef.current;
+        const progress = Math.min((elapsed / 3000) * 100, 100);
+        setMuHoldProgress(progress);
+        setMuHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
+      }, 16);
+      muHoldTimerRef.current = setTimeout(() => {
+        if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+        setIsMuHolding(false);
+        setMuHoldProgress(0);
+        muHoldCompletedRef.current = true;
+        setLocation("/stream");
+      }, 3000);
+    },
+    [setLocation],
+  );
+
+  const handleMuPressEnd = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
+      if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+      setIsMuHolding(false);
+      setMuHoldProgress(0);
+    },
+    [],
+  );
+
   return (
     <>
+      {/* ═══ Full-screen darkening overlay during MU hold countdown ═══ */}
+      <AnimatePresence>
+        {isMuHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (muHoldProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="url(#blogMuHoldGradient)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - muHoldProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+                <defs>
+                  <linearGradient
+                    id="blogMuHoldGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {muHoldCountdown}
+                </span>
+              </motion.div>
+              <p className="text-purple-300/80 text-sm font-medium tracking-wide">
+                Lancement Musical Universe...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <nav
         ref={navRef}
         className={`fixed bottom-3 left-2 right-2 md:bottom-4 md:left-4 md:right-4 md:max-w-[calc(100%-2rem)] md:mx-auto bg-slate-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_16px_45px_rgba(0,0,0,0.45)] z-[100] transition-transform duration-300 ease-out ${
@@ -479,12 +616,51 @@ export default function BlogNavbar({
                 onMouseEnter={() => open("play")}
                 onMouseLeave={close}
               >
+                {isMuHolding && (
+                  <svg
+                    className="absolute pointer-events-none z-10"
+                    style={{
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%,-50%)",
+                      width: "48px",
+                      height: "48px",
+                    }}
+                    viewBox="0 0 48 48"
+                  >
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="21"
+                      fill="none"
+                      stroke="rgba(168,85,247,0.2)"
+                      strokeWidth="2"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="21"
+                      fill="none"
+                      stroke="#a855f7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 21}`}
+                      strokeDashoffset={`${2 * Math.PI * 21 * (1 - muHoldProgress / 100)}`}
+                      transform="rotate(-90 24 24)"
+                    />
+                  </svg>
+                )}
                 <button
                   type="button"
                   className={BTN}
-                  onClick={() => toggleMenu("play")}
+                  onClick={handleMuTap}
+                  onPointerDown={handleMuPressStart}
+                  onPointerUp={handleMuPressEnd}
+                  onPointerLeave={handleMuPressEnd}
+                  onPointerCancel={handleMuPressEnd}
+                  onContextMenu={(e) => e.preventDefault()}
                   onMouseEnter={() => open("play")}
-                  onMouseLeave={close}
+                  title="Tap=Stream Music · Double-tap=Artist Dashboard · Hold 3s=Musical Universe"
                 >
                   <span className="hidden lg:inline">Play</span>
                   <span className="lg:hidden">Play</span>

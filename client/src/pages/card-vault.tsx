@@ -472,11 +472,7 @@ export default function CardVaultPage() {
     refetchInterval: 60000,
   });
 
-  const isAdmin =
-    user?.role === "admin" ||
-    user?.role === "moderator" ||
-    user?.role === "superuser" ||
-    user?.isAdmin;
+  const isAdmin = user?.role === "superuser";
 
   if (!isAdmin) {
     return (
@@ -486,8 +482,8 @@ export default function CardVaultPage() {
             <Shield className="h-12 w-12 mx-auto text-red-400 mb-4" />
             <h2 className="text-xl font-bold mb-2">Access Restricted</h2>
             <p className="text-sm text-gray-500">
-              Card Vault is an admin-only dashboard for managing client payment
-              methods and running charges.
+              Card Vault is restricted to the superadmin account because it can
+              view payment methods and run charges.
             </p>
             <Link href="/">
               <Button className="mt-6">Back to Home</Button>

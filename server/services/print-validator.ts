@@ -86,7 +86,7 @@ export function basicValidation(file: Express.Multer.File): ValidationCheck[] {
  * Falls back gracefully if sharp is unavailable (native module)
  */
 export async function advancedValidation(
-  filePath: string,
+  filePathOrBuffer: string | Buffer,
   mimetype: string,
   productSpecs?: {
     width_mm: number;
@@ -102,7 +102,7 @@ export async function advancedValidation(
   if (mimetype.startsWith("image/")) {
     try {
       const sharp = (await import("sharp")).default;
-      const metadata = await sharp(filePath).metadata();
+      const metadata = await sharp(filePathOrBuffer).metadata();
 
       // DPI check
       const dpi = metadata.density || 0;
@@ -188,10 +188,11 @@ export async function advancedValidation(
   // --- PDF validation with pdf-parse ---
   if (mimetype === "application/pdf") {
     try {
-      const fs = await import("fs");
       const pdfParseModule = (await import("pdf-parse")) as any;
       const pdfParse = pdfParseModule.default || pdfParseModule;
-      const buffer = fs.readFileSync(filePath);
+      const buffer = Buffer.isBuffer(filePathOrBuffer)
+        ? filePathOrBuffer
+        : (await import("fs")).readFileSync(filePathOrBuffer);
       const pdfData = await pdfParse(buffer);
 
       checks.push({

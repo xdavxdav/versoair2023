@@ -27,7 +27,7 @@
  */
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireSuperuser } from "../middleware/auth";
 
 const router = Router();
 
@@ -928,7 +928,7 @@ router.get(
 // PUT /bank-transfer/:id/review — Admin approve/reject
 router.put(
   "/bank-transfer/:id/review",
-  requireAuth(["admin", "superuser"]),
+  requireSuperuser(),
   async (req: Request, res: Response) => {
     try {
       const requestId = parseInt(req.params.id);
@@ -1058,21 +1058,17 @@ router.post(
       } = req.body;
 
       if (!direction || !["deposit", "withdrawal"].includes(direction)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Direction must be 'deposit' or 'withdrawal'",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Direction must be 'deposit' or 'withdrawal'",
+        });
       }
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount < 5 || txnAmount > 3000) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Amount must be between $5 and $3,000 CAD",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Amount must be between $5 and $3,000 CAD",
+        });
       }
       if (!interacEmail) {
         return res
@@ -1088,12 +1084,10 @@ router.post(
         setting.rows[0]?.setting_value === "false" ||
         setting.rows[0]?.setting_value === false
       ) {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: "Interac e-Transfer is currently disabled",
-          });
+        return res.status(403).json({
+          success: false,
+          error: "Interac e-Transfer is currently disabled",
+        });
       }
 
       // Ensure wallet exists
@@ -1309,12 +1303,10 @@ router.get("/mobile-money/providers", async (_req: Request, res: Response) => {
 
     res.json({ success: true, enabled: true, providers });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch Mobile Money providers",
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch Mobile Money providers",
+    });
   }
 });
 
@@ -1331,12 +1323,10 @@ router.post(
       const { direction, amount, provider, phoneNumber, currency } = req.body;
 
       if (!direction || !["deposit", "withdrawal"].includes(direction)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Direction must be 'deposit' or 'withdrawal'",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Direction must be 'deposit' or 'withdrawal'",
+        });
       }
       if (
         !provider ||
@@ -1406,12 +1396,10 @@ router.post(
       });
     } catch (err: any) {
       console.error("[PAYMENTS] Mobile Money error:", err);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: "Failed to process Mobile Money request",
-        });
+      res.status(500).json({
+        success: false,
+        error: "Failed to process Mobile Money request",
+      });
     }
   },
 );
@@ -1426,7 +1414,7 @@ router.post(
  */
 router.get(
   "/admin/settings",
-  requireAuth(["admin", "superuser"]),
+  requireSuperuser(),
   async (req: Request, res: Response) => {
     try {
       const result = await pool.query(
@@ -1566,12 +1554,10 @@ router.post(
           .json({ success: false, error: "businessId and tier are required" });
       }
       if (!TIER_PRICES[tier]) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "Tier must be 'premium' or 'enterprise'",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "Tier must be 'premium' or 'enterprise'",
+        });
       }
 
       // Verify business belongs to user
@@ -1580,12 +1566,10 @@ router.post(
         [businessId, userId],
       );
       if (biz.rows.length === 0) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error: "Business not found or not owned by you",
-          });
+        return res.status(404).json({
+          success: false,
+          error: "Business not found or not owned by you",
+        });
       }
 
       const price = TIER_PRICES[tier];

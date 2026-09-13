@@ -261,6 +261,14 @@ async function getArtistSubscriptionTier(userId: number): Promise<{
 router.post(
   "/track",
   requireAuth(),
+  (_req: Request, res: Response) => {
+    return res.status(410).json({
+      success: false,
+      error:
+        "This upload endpoint has been retired. Use /api/music/tracks/upload so media is stored durably.",
+      replacement: "/api/music/tracks/upload",
+    });
+  },
   (req: Request, res: Response, next: Function) => {
     uploadFields(req, res, (err: any) => {
       if (err instanceof multer.MulterError) {

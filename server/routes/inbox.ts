@@ -19,7 +19,11 @@ import path from "path";
 import fs from "fs";
 import { db } from "../db";
 import * as schema from "@shared/schema";
-import { socialPosts } from "@shared/social-schema";
+import {
+  socialPosts,
+  socialUsers,
+  socialFollowers,
+} from "@shared/social-schema";
 import { enqueueInboxMessage, drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 import {
@@ -44,16 +48,7 @@ try {
 }
 
 const inboxUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, INBOX_UPLOADS_DIR),
-    filename: (_req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(
-        null,
-        `chat-${uniqueSuffix}${path.extname(file.originalname).toLowerCase()}`,
-      );
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
   fileFilter: (_req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -151,7 +146,20 @@ async function resolveUserDisplay(
     .limit(1);
 
   if (!u) return null;
-  return { name: u.displayName || u.username, avatar: null };
+
+  const [su] = await db
+    .select({
+      avatarUrl: socialUsers.avatarUrl,
+      displayName: socialUsers.displayName,
+    })
+    .from(socialUsers)
+    .where(eq(socialUsers.userId, userId))
+    .limit(1);
+
+  return {
+    name: su?.displayName || u.displayName || u.username,
+    avatar: su?.avatarUrl || null,
+  };
 }
 
 // ─── GET /api/inbox/conversations ────────────────────────────────────────────
@@ -197,6 +205,84 @@ router.get("/conversations", async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ success: false, error: "Failed to load conversations" });
+  }
+});
+
+// ─── GET /api/inbox/contacts ────────────────────────────────────────────────
+// Return contacts the user follows, mutual connections, or platform members for
+// starting a direct message thread. Ungated & available to all authenticated users.
+router.get("/contacts", async (req: Request, res: Response) => {
+  const userId = Number(req.user!.userId);
+  const search = ((req.query.q as string) ?? "").trim();
+  const limit = Math.min(Number(req.query.limit) || 40, 100);
+
+  try {
+    const contactsQuery = await db.execute(sql`
+      WITH user_following AS (
+        SELECT DISTINCT su_target.user_id AS target_user_id, true AS is_following
+        FROM social_users su_me
+        JOIN social_followers sf ON sf.follower_id = su_me.id
+        JOIN social_users su_target ON su_target.id = sf.following_id
+        WHERE su_me.user_id = ${userId}
+      ),
+      user_conns AS (
+        SELECT DISTINCT
+          CASE WHEN requester_id = ${userId} THEN receiver_id ELSE requester_id END AS target_user_id,
+          true AS is_connection
+        FROM connections
+        WHERE (requester_id = ${userId} OR receiver_id = ${userId})
+          AND status = 'accepted'
+      ),
+      existing_convs AS (
+        SELECT 
+          NULLIF(regexp_replace(participant_id, '[^0-9]', '', 'g'), '')::int AS target_user_id,
+          id AS conversation_id
+        FROM inbox_conversations
+        WHERE user_id = ${userId}
+      )
+      SELECT DISTINCT
+        u.id,
+        COALESCE(su.display_name, u.display_name, u.username) AS name,
+        u.username,
+        u.role,
+        COALESCE(su.avatar_url, null) AS avatar,
+        su.bio,
+        COALESCE(uf.is_following, false) AS "isFollowing",
+        COALESCE(uc.is_connection, false) AS "isConnection",
+        ec.conversation_id AS "conversationId"
+      FROM users u
+      LEFT JOIN social_users su ON su.user_id = u.id
+      LEFT JOIN user_following uf ON uf.target_user_id = u.id
+      LEFT JOIN user_conns uc ON uc.target_user_id = u.id
+      LEFT JOIN existing_convs ec ON ec.target_user_id = u.id
+      WHERE u.id != ${userId}
+        AND (
+          ${search ? sql`(u.username ILIKE ${"%" + search + "%"} OR u.display_name ILIKE ${"%" + search + "%"} OR su.display_name ILIKE ${"%" + search + "%"})` : sql`(uf.is_following = true OR uc.is_connection = true OR ec.conversation_id IS NOT NULL OR u.role IN ('artist', 'business', 'admin'))`}
+        )
+      ORDER BY 
+        (COALESCE(uf.is_following, false) OR COALESCE(uc.is_connection, false)) DESC,
+        u.id DESC
+      LIMIT ${limit}
+    `);
+
+    const contacts = (contactsQuery.rows || []).map((row: any) => ({
+      id: Number(row.id),
+      name: row.name || row.username || `Member #${row.id}`,
+      username: row.username || `user_${row.id}`,
+      role: row.role || "user",
+      avatar: row.avatar || null,
+      bio: row.bio || null,
+      isFollowing: Boolean(row.isFollowing),
+      isConnection: Boolean(row.isConnection),
+      conversationId: row.conversationId ? Number(row.conversationId) : null,
+    }));
+
+    return res.json({ success: true, contacts });
+  } catch (err: any) {
+    console.error("[Inbox] GET /contacts error:", err?.message);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to load contacts" });
   }
 });
 
@@ -333,10 +419,8 @@ router.get(
 );
 
 // ─── POST /api/inbox/conversations ───────────────────────────────────────────
-// Create a new conversation. Support threads auto-exist; this creates networking threads.
-// NOTE: `marketplace` (buyer<->seller listing DMs) AND `music_artist` (fan<->artist
-// direct chat) types are intentionally free/ungated for every tier — only rate-limited
-// for spam control. Only `business_network` is tier-gated.
+// Create or resume a conversation. Direct, community, marketplace, and music_artist
+// chats are ungated and free for all users. Only business_network is tier-gated.
 router.post(
   "/conversations",
   marketplaceMessageLimiter,
@@ -347,7 +431,7 @@ router.post(
       participantId,
       participantName,
       participantAvatar,
-      type = "business_network",
+      type = "direct",
       businessId,
     } = req.body;
 
@@ -358,7 +442,7 @@ router.post(
       });
     }
 
-    // Tier gate for business_network only — marketplace & music_artist DMs stay free
+    // Tier gate for business_network only — direct, marketplace & music_artist DMs stay free
     if (type === "business_network") {
       const limit = TIER_NETWORKING_LIMIT[tier];
       if (limit === 0) {
@@ -393,13 +477,12 @@ router.post(
 
     // Prevent duplicate conversations with same participant
     const [existing] = await db
-      .select({ id: schema.inboxConversations.id })
+      .select()
       .from(schema.inboxConversations)
       .where(
         and(
           eq(schema.inboxConversations.userId, Number(userId)),
           eq(schema.inboxConversations.participantId, String(participantId)),
-          eq(schema.inboxConversations.type, type),
         ),
       )
       .limit(1);
@@ -467,14 +550,55 @@ router.post(
         .status(400)
         .json({ success: false, error: "No file uploaded" });
     }
-    const url = `/api/inbox/attachments/file/${req.file.filename}`;
-    res.json({ success: true, url });
+    try {
+      const [attachment] = await db
+        .insert(schema.inboxAttachments)
+        .values({
+          data: req.file.buffer,
+          mimeType: req.file.mimetype,
+        })
+        .returning({ id: schema.inboxAttachments.id });
+
+      const url = `/api/inbox/attachments/file/${attachment.id}`;
+      return res.json({ success: true, url });
+    } catch (error) {
+      console.error("[Inbox] Attachment persistence error:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to store attachment" });
+    }
   },
 );
 
 // ─── GET /api/inbox/attachments/file/:filename — serve an uploaded chat image ─
 router.get("/attachments/file/:filename", (req: Request, res: Response) => {
   const { filename } = req.params;
+
+  if (/^\d+$/.test(filename)) {
+    db.select({
+      data: schema.inboxAttachments.data,
+      mimeType: schema.inboxAttachments.mimeType,
+    })
+      .from(schema.inboxAttachments)
+      .where(eq(schema.inboxAttachments.id, Number(filename)))
+      .limit(1)
+      .then(([attachment]) => {
+        if (!attachment) {
+          return res
+            .status(404)
+            .json({ success: false, error: "File not found" });
+        }
+        res.set("Cache-Control", "public, max-age=86400");
+        res.type(attachment.mimeType);
+        return res.send(attachment.data);
+      })
+      .catch((error) => {
+        console.error("[Inbox] Attachment read error:", error);
+        res.status(500).json({ success: false, error: "File unavailable" });
+      });
+    return;
+  }
+
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
     return res.status(400).json({ success: false, error: "Invalid filename" });
   }

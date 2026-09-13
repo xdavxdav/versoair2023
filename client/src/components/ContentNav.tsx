@@ -409,6 +409,21 @@ export default function ContentNav() {
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
   const [holdCountdown, setHoldCountdown] = useState(3); // 3 second countdown
+
+  // ── Musical Universe (MU / Play) button gestures:
+  // - Single tap → /stream (Musical Universe Stream)
+  // - Double tap → /music/dashboard
+  // - Hold 3s → /stream with full-screen purple darkening countdown
+  const muTapCountRef = useRef(0);
+  const muTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const muHoldStartRef = useRef(0);
+  const muHoldCompletedRef = useRef(false);
+  const [muHoldProgress, setMuHoldProgress] = useState(0);
+  const [isMuHolding, setIsMuHolding] = useState(false);
+  const [muHoldCountdown, setMuHoldCountdown] = useState(3);
+
   const [showTip, setShowTip] = useState(
     () => !localStorage.getItem("contentnav_tip_seen"),
   );
@@ -533,6 +548,52 @@ export default function ContentNav() {
     setHoldProgress(0);
   }, []);
 
+  const handleMuTap = useCallback(() => {
+    if (muHoldCompletedRef.current) {
+      muHoldCompletedRef.current = false;
+      return;
+    }
+    muTapCountRef.current += 1;
+    if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+    muTapTimerRef.current = setTimeout(() => {
+      const count = muTapCountRef.current;
+      muTapCountRef.current = 0;
+      if (count >= 2) {
+        setLocation("/music/dashboard");
+      } else {
+        setLocation("/stream");
+      }
+    }, 300);
+  }, [setLocation]);
+
+  const handleMuPressStart = useCallback(() => {
+    muHoldCompletedRef.current = false;
+    muHoldStartRef.current = Date.now();
+    setIsMuHolding(true);
+    setMuHoldProgress(0);
+    setMuHoldCountdown(3);
+    muHoldIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - muHoldStartRef.current;
+      const progress = Math.min((elapsed / 3000) * 100, 100);
+      setMuHoldProgress(progress);
+      setMuHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
+    }, 50);
+    muHoldTimerRef.current = setTimeout(() => {
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+      setIsMuHolding(false);
+      setMuHoldProgress(0);
+      muHoldCompletedRef.current = true;
+      setLocation("/stream");
+    }, 3000);
+  }, [setLocation]);
+
+  const handleMuPressEnd = useCallback(() => {
+    if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+    if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+    setIsMuHolding(false);
+    setMuHoldProgress(0);
+  }, []);
+
   const handleScroll = useCallback(() => {
     if (ticking.current) return;
     ticking.current = true;
@@ -623,6 +684,75 @@ export default function ContentNav() {
               {/* Label */}
               <p className="text-white/60 text-sm font-medium tracking-wide">
                 Retour à l'accueil...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ Full-screen darkening overlay during MU hold countdown ═══ */}
+      <AnimatePresence>
+        {isMuHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (muHoldProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            {/* Countdown circle */}
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                {/* Background ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                {/* Progress ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="url(#muHoldGradient)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - muHoldProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+                <defs>
+                  <linearGradient
+                    id="muHoldGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {/* Countdown number */}
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {muHoldCountdown}
+                </span>
+              </motion.div>
+              {/* Label */}
+              <p className="text-purple-300/80 text-sm font-medium tracking-wide">
+                Lancement Musical Universe...
               </p>
             </div>
           </motion.div>
@@ -729,6 +859,8 @@ export default function ContentNav() {
           {GROUPS.filter((g) => g.key !== "help").map((group) => {
             const active = group.match(location);
             const isOpen = openGroup === group.key;
+            const isPlayGroup = group.key === "play";
+
             return (
               <div
                 key={group.key}
@@ -736,7 +868,56 @@ export default function ContentNav() {
                 onMouseEnter={() => setOpenGroup(group.key)}
                 onMouseLeave={() => setOpenGroup(null)}
               >
-                <button className={active || isOpen ? ACTIVE : BASE}>
+                {isPlayGroup && isMuHolding && (
+                  <svg
+                    className="absolute pointer-events-none z-10"
+                    style={{
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%,-50%)",
+                      width: "48px",
+                      height: "48px",
+                    }}
+                    viewBox="0 0 48 48"
+                  >
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="20"
+                      fill="none"
+                      stroke="rgba(168,85,247,0.2)"
+                      strokeWidth="1.5"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="20"
+                      fill="none"
+                      stroke="#a855f7"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 20}`}
+                      strokeDashoffset={`${2 * Math.PI * 20 * (1 - muHoldProgress / 100)}`}
+                      transform="rotate(-90 24 24)"
+                    />
+                  </svg>
+                )}
+                <button
+                  onClick={isPlayGroup ? handleMuTap : undefined}
+                  onPointerDown={isPlayGroup ? handleMuPressStart : undefined}
+                  onPointerUp={isPlayGroup ? handleMuPressEnd : undefined}
+                  onPointerLeave={isPlayGroup ? handleMuPressEnd : undefined}
+                  onPointerCancel={isPlayGroup ? handleMuPressEnd : undefined}
+                  onContextMenu={
+                    isPlayGroup ? (e) => e.preventDefault() : undefined
+                  }
+                  className={active || isOpen ? ACTIVE : BASE}
+                  title={
+                    isPlayGroup
+                      ? "Tap=Stream Music · Double-tap=Artist Dashboard · Hold 3s=Musical Universe"
+                      : undefined
+                  }
+                >
                   <group.Icon className="h-4 md:h-4.5 lg:h-5 w-4 md:w-4.5 lg:w-5" />
                   {group.label}
                   <ChevronDown

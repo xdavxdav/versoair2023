@@ -1117,12 +1117,50 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
 // ALBUMS
 // ═══════════════════════════════════════════════════════════
 
+// GET /api/streaming/albums/:id/pochette — serve album pochette as image
+router.get("/albums/:id/pochette", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT pochette, cover_art FROM albums WHERE id = $1",
+      [parseInt(id)],
+    );
+    const pochette: string | null =
+      result.rows[0]?.pochette || result.rows[0]?.cover_art;
+    if (!pochette) {
+      return res
+        .status(404)
+        .json({ error: "No pochette found for this album" });
+    }
+
+    if (pochette.startsWith("data:")) {
+      const comma = pochette.indexOf(",");
+      const header = pochette.slice(0, comma);
+      const b64 = pochette.slice(comma + 1);
+      const contentType = header.split(":")[1]?.split(";")[0] || "image/jpeg";
+      const buf = Buffer.from(b64, "base64");
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("Content-Length", buf.length);
+      return res.end(buf);
+    }
+
+    res.redirect(302, pochette);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to serve album pochette" });
+  }
+});
+
 // GET /api/streaming/albums/:id
 router.get("/albums/:id", async (req: Request, res: Response) => {
   try {
     const album = await pool.query(
       `
-      SELECT a.*, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image, COALESCE(ma.verified, false) as artist_verified
+      SELECT a.*, 
+        (a.pochette IS NOT NULL) AS has_pochette,
+        COALESCE(ma.name, art.stage_name) as artist_name, 
+        ma.image_url as artist_image, 
+        COALESCE(ma.verified, false) as artist_verified
       FROM albums a
       LEFT JOIN music_artists ma ON a.artist_id = ma.id
       LEFT JOIN artists art ON a.artist_id = art.id

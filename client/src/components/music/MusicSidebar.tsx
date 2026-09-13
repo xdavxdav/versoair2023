@@ -65,11 +65,20 @@ const sidebarIconMap: Record<
   LayoutDashboard,
 };
 
-/* ─── Logo with hold-to-go-home gesture ─── */
-function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
+/* ─── Logo with single/double/hold-to-home gesture ─── */
+function LogoWithHoldToHome({
+  navigate,
+  isArtist = false,
+}: {
+  navigate: (to: string) => void;
+  isArtist?: boolean;
+}) {
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [fadeProgress, setFadeProgress] = useState(0); // 0=none, 1=fading, 2=black
   const fadeInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [fadeProgress, setFadeProgress] = useState(0);
+  const [holdCountdown, setHoldCountdown] = useState(3);
   const didHold = useRef(false);
 
   const clearHold = useCallback(() => {
@@ -86,14 +95,14 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
 
   const startHold = useCallback(() => {
     didHold.current = false;
-    // Start fade animation over 3s
     const start = Date.now();
+    setHoldCountdown(3);
     fadeInterval.current = setInterval(() => {
       const elapsed = Date.now() - start;
       const progress = Math.min(elapsed / 3000, 1);
       setFadeProgress(progress);
+      setHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
     }, 30);
-    // After 3s, go home
     holdTimer.current = setTimeout(() => {
       didHold.current = true;
       if (fadeInterval.current) {
@@ -101,28 +110,78 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
         fadeInterval.current = null;
       }
       setFadeProgress(1);
-      // Brief pause at full black then navigate
       setTimeout(() => {
         navigate("/");
-        // Reset fade after navigation
         setTimeout(() => setFadeProgress(0), 300);
-      }, 400);
+      }, 300);
     }, 3000);
   }, [navigate]);
 
   const handleTap = useCallback(() => {
-    if (didHold.current) return; // Was a hold, ignore
-    navigate("/music/dashboard");
-  }, [navigate]);
+    if (didHold.current) {
+      didHold.current = false;
+      return;
+    }
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      const count = tapCountRef.current;
+      tapCountRef.current = 0;
+      if (count >= 2) {
+        // Double tap → Public site home
+        navigate("/");
+      } else {
+        // Single tap → Music home (dashboard or stream)
+        navigate(isArtist ? "/music/dashboard" : "/stream");
+      }
+    }, 300);
+  }, [navigate, isArtist]);
 
   return (
     <>
-      {/* Full-screen black fade overlay */}
+      {/* Full-screen darkening overlay during 3s hold */}
       {fadeProgress > 0 && (
         <div
-          className="fixed inset-0 bg-black z-[9998] pointer-events-none transition-none"
-          style={{ opacity: fadeProgress }}
-        />
+          className="fixed inset-0 bg-black/95 z-[9998] flex items-center justify-center pointer-events-none transition-opacity duration-100"
+          style={{ opacity: fadeProgress * 0.95 }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                fill="none"
+                stroke="rgba(168,85,247,0.2)"
+                strokeWidth="6"
+              />
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                fill="none"
+                stroke="rgba(168,85,247,0.9)"
+                strokeWidth="6"
+                strokeDasharray={`${2 * Math.PI * 34}`}
+                strokeDashoffset={`${2 * Math.PI * 34 * (1 - fadeProgress)}`}
+                strokeLinecap="round"
+                transform="rotate(-90 40 40)"
+                style={{ transition: "stroke-dashoffset 0.05s linear" }}
+              />
+              <text
+                x="40"
+                y="46"
+                textAnchor="middle"
+                fill="white"
+                fontSize="20"
+                fontWeight="bold"
+              >
+                {holdCountdown}
+              </text>
+            </svg>
+            <span className="text-white/70 text-sm">Retour à l'accueil…</span>
+          </div>
+        </div>
       )}
       <div
         className="h-14 flex-shrink-0 flex items-center justify-center cursor-pointer group relative overflow-hidden select-none bg-[#0a0512] z-[2]"
@@ -143,7 +202,11 @@ function LogoWithHoldToHome({ navigate }: { navigate: (to: string) => void }) {
         }}
         onTouchCancel={clearHold}
         onContextMenu={(e) => e.preventDefault()}
-        title="Tap=Dashboard · Hold 3s=Home"
+        title={
+          isArtist
+            ? "Tap=Artist Dashboard · Double-tap=Public home · Hold 3s=Public home"
+            : "Tap=Music Universe · Double-tap=Public home · Hold 3s=Public home"
+        }
       >
         {/* Ambient glow behind logo on hover */}
         <div className="absolute inset-0 bg-gradient-to-b from-purple-500/20 via-fuchsia-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -306,8 +369,8 @@ export function MusicSidebar() {
 
       {/* Content */}
       <div className="relative flex flex-col h-full">
-        {/* Purple Eagle Logo — tap=dashboard, hold 3s=fade-to-black then home */}
-        <LogoWithHoldToHome navigate={navigate} />
+        {/* Purple Eagle Logo — tap=dashboard, double-tap=home, hold 3s=darken then home */}
+        <LogoWithHoldToHome navigate={navigate} isArtist={isArtist} />
 
         {/* ─── Core section ─── */}
         <nav className="px-2 space-y-1 pt-3 flex-shrink-0">

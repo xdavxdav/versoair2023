@@ -56,7 +56,7 @@ const TEST_USERS = [
   {
     username: "ceo_test",
     email: "ceo@versoair.test",
-    role: "superuser",
+    role: "admin",
     tier: "enterprise",
     gateUsername: "ceo_master",
     skipMustChange: true, // Exempt: self-creates password
@@ -524,14 +524,13 @@ const PAYMENT_CARD_TYPES = [
           params.push(true);
         }
 
-        // NOTE: password/role are intentionally NOT in the ON CONFLICT
-        // update — this script runs on every deploy (render.yaml build
-        // step), and must never clobber a password the account owner
-        // has already changed. Only a brand-new row gets the seed value.
+        // Keep passwords owner-controlled, but enforce the intended role for
+        // these reserved operational accounts on every deployment.
         const result = await pool.query(
           `INSERT INTO users (${insertCols}) VALUES (${insertVals})
            ON CONFLICT (email) DO UPDATE SET
              email = EXCLUDED.email
+             , role = EXCLUDED.role
              ${hasTier ? ", subscription_tier = EXCLUDED.subscription_tier" : ""}
              ${hasStatus ? ", subscription_status = EXCLUDED.subscription_status" : ""}
              ${hasVerified ? ", is_verified = EXCLUDED.is_verified" : ""}
