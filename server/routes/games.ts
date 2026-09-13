@@ -91,6 +91,11 @@ const TRIVIA_QUESTIONS = [
   },
 ];
 
+// Test season setting: increase this as the question bank grows.
+// The server remains the authority so clients cannot request an unsafe number.
+const TRIVIA_TEST_ROUNDS = 10;
+const TRIVIA_MAX_ROUNDS = 10;
+
 function pickRandomQuestions(count: number) {
   const shuffled = [...TRIVIA_QUESTIONS].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, shuffled.length));
@@ -293,7 +298,10 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
     }
 
     // Generate questions for trivia
-    const roundCount = Math.min(Math.max(parseInt(rounds) || 5, 3), 10);
+    const roundCount = Math.min(
+      Math.max(parseInt(rounds) || TRIVIA_TEST_ROUNDS, 3),
+      TRIVIA_MAX_ROUNDS,
+    );
     let gameState: Record<string, any> = {};
 
     if (gameType === "music_trivia") {
@@ -332,16 +340,21 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
       };
     }
 
+    // Free beta matches start immediately as solo games. Wagered matches
+    // retain the existing waiting-for-an-opponent flow.
+    const matchStatus = wager === 0 ? "active" : "waiting";
+
     // Create match
     const match = await pool.query(
       `INSERT INTO game_matches (game_type, player1_id, wager_amount, round_count, status, game_state, created_at)
-       VALUES ($1, $2, $3, $4, 'waiting', $5, NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
        RETURNING id, game_type, wager_amount, round_count, status, created_at`,
       [
         gameType,
         userId,
         wager.toFixed(2),
         roundCount,
+        matchStatus,
         JSON.stringify(gameState),
       ],
     );
@@ -443,9 +456,12 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
       }
     }
 
-    // Update match to active
-    await pool.query(
-      `UPDATE game_matches SET player2_id = $1, status = 'active', started_at = NOW() WHERE id = $2`,
+    // Update match to active and return the complete state to the joiner.
+    const joinedMatch = await pool.query(
+      `UPDATE game_matches
+       SET player2_id = $1, status = 'active', started_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
       [userId, matchId],
     );
 
@@ -472,7 +488,21 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
       });
     }
 
-    res.json({ success: true, message: "Joined match", matchId });
+    const joined = joinedMatch.rows[0];
+    const safeState = joined.game_state || {};
+    if (safeState.questions) {
+      safeState.questions = safeState.questions.map((question: any) => ({
+        q: question.q,
+        options: question.options,
+      }));
+    }
+
+    res.json({
+      success: true,
+      message: "Joined match",
+      matchId,
+      match: { ...joined, game_state: safeState },
+    });
   } catch (err: any) {
     console.error("[GAMES] Join error:", err);
     res.status(500).json({ error: "Failed to join game" });

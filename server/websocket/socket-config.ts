@@ -324,6 +324,33 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     });
   });
 
+  // Broadcast generic notifications (follows, likes, comments, mentions, etc.) in real-time
+  notificationEmitter.on("notification", (data: any) => {
+    if (!io || !data?.userId) return;
+
+    const roomName = `user_${data.userId}`;
+    console.log(
+      `[SOCKET] Broadcasting notification (${data.type}) to ${roomName}:`,
+      data.message,
+    );
+
+    io.to(roomName).emit("notification", {
+      id:
+        data.id ||
+        `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      type: data.type || "activity",
+      actorName: data.actorName || data.title || "Someone",
+      actorAvatar: data.actorAvatar || null,
+      title: data.title || data.actorName || "Notification",
+      message: data.message || "",
+      text: data.message || data.title || "",
+      entityUrl: data.entityUrl || data.actionUrl || null,
+      timestamp: data.timestamp || new Date().toISOString(),
+      createdAt: data.timestamp || new Date().toISOString(),
+      read: false,
+    });
+  });
+
   // Broadcast an inbox message to the recipient in real-time — powers live
   // updates in MessengerPanel/MessengerLauncher without polling.
   notificationEmitter.on("inbox_message", (data) => {
@@ -338,9 +365,14 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     io.to(roomName).emit("notification", {
       id: `inbox-${data.message?.id ?? Date.now()}`,
       type: "message",
+      actorName: data.message?.senderName || "Someone",
+      actorAvatar: data.message?.senderAvatar || null,
       title: `New message from ${data.message?.senderName || "someone"}`,
       message: data.message?.content?.slice(0, 100) || "",
+      text: data.message?.content?.slice(0, 100) || "sent you a message",
+      entityUrl: `/messages`,
       timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       read: false,
     });
   });

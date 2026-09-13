@@ -353,16 +353,26 @@ function IconButton({
   label,
   active,
   onClick,
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
   badge,
   className,
+  title,
 }: {
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   active?: boolean;
   onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerUp?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerLeave?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerCancel?: (e: React.PointerEvent<HTMLButtonElement>) => void;
   badge?: number;
   className?: string;
+  title?: string;
 }) {
   const content = (
     <div className="group/tip relative">
@@ -388,9 +398,18 @@ function IconButton({
     </div>
   );
 
-  if (onClick) {
+  if (onClick || onPointerDown) {
     return (
-      <button onClick={onClick} className="outline-none">
+      <button
+        onClick={onClick}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onPointerCancel={onPointerCancel}
+        onContextMenu={(e) => onPointerDown && e.preventDefault()}
+        className="outline-none"
+        title={title}
+      >
         {content}
       </button>
     );
@@ -427,6 +446,17 @@ export default function InstagramNav({
   const [isHolding, setIsHolding] = useState(false);
   const [holdCountdown, setHoldCountdown] = useState(5);
 
+  // ─── Musical Universe (MU / Stream) tap/hold gesture state ───
+  const muTapCountRef = useRef(0);
+  const muTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const muHoldStartRef = useRef(0);
+  const muHoldCompletedRef = useRef(false);
+  const [muHoldProgress, setMuHoldProgress] = useState(0);
+  const [isMuHolding, setIsMuHolding] = useState(false);
+  const [muHoldCountdown, setMuHoldCountdown] = useState(3);
+
   const toggleDrawer = useCallback(() => setDrawerOpen((p) => !p), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
@@ -435,6 +465,9 @@ export default function InstagramNav({
       if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+      if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+      if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
     };
   }, []);
 
@@ -469,24 +502,24 @@ export default function InstagramNav({
   const handleHomePressStart = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
       if (!event.isPrimary) return;
-    holdCompletedRef.current = false;
-    holdStartRef.current = Date.now();
-    setIsHolding(true);
-    setHoldProgress(0);
-    setHoldCountdown(5);
-    holdIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - holdStartRef.current;
-      const progress = Math.min((elapsed / 5000) * 100, 100);
-      setHoldProgress(progress);
-      setHoldCountdown(Math.max(0, Math.ceil(5 - elapsed / 1000)));
-    }, 16);
-    holdTimerRef.current = setTimeout(() => {
-      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
-      setIsHolding(false);
+      holdCompletedRef.current = false;
+      holdStartRef.current = Date.now();
+      setIsHolding(true);
       setHoldProgress(0);
-      holdCompletedRef.current = true;
-      setLocation("/");
-    }, 5000);
+      setHoldCountdown(5);
+      holdIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - holdStartRef.current;
+        const progress = Math.min((elapsed / 5000) * 100, 100);
+        setHoldProgress(progress);
+        setHoldCountdown(Math.max(0, Math.ceil(5 - elapsed / 1000)));
+      }, 16);
+      holdTimerRef.current = setTimeout(() => {
+        if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+        setIsHolding(false);
+        setHoldProgress(0);
+        holdCompletedRef.current = true;
+        setLocation("/");
+      }, 5000);
     },
     [setLocation],
   );
@@ -494,10 +527,68 @@ export default function InstagramNav({
   const handleHomePressEnd = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
       if (!event.isPrimary) return;
-    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
-    if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
-    setIsHolding(false);
-    setHoldProgress(0);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+      setIsHolding(false);
+      setHoldProgress(0);
+    },
+    [],
+  );
+
+  // Musical Universe (MU / Stream) button gestures:
+  // - Single tap → /stream
+  // - Double tap → /music/dashboard
+  // - Hold 3s → /stream with purple countdown
+  const handleMuTap = useCallback(() => {
+    if (muHoldCompletedRef.current) {
+      muHoldCompletedRef.current = false;
+      return;
+    }
+    muTapCountRef.current += 1;
+    if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+    muTapTimerRef.current = setTimeout(() => {
+      const count = muTapCountRef.current;
+      muTapCountRef.current = 0;
+      if (count >= 2) {
+        setLocation("/music/dashboard");
+      } else {
+        setLocation("/stream");
+      }
+    }, 300);
+  }, [setLocation]);
+
+  const handleMuPressStart = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
+      muHoldCompletedRef.current = false;
+      muHoldStartRef.current = Date.now();
+      setIsMuHolding(true);
+      setMuHoldProgress(0);
+      setMuHoldCountdown(3);
+      muHoldIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - muHoldStartRef.current;
+        const progress = Math.min((elapsed / 3000) * 100, 100);
+        setMuHoldProgress(progress);
+        setMuHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
+      }, 16);
+      muHoldTimerRef.current = setTimeout(() => {
+        if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+        setIsMuHolding(false);
+        setMuHoldProgress(0);
+        muHoldCompletedRef.current = true;
+        setLocation("/stream");
+      }, 3000);
+    },
+    [setLocation],
+  );
+
+  const handleMuPressEnd = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!event.isPrimary) return;
+      if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+      setIsMuHolding(false);
+      setMuHoldProgress(0);
     },
     [],
   );
@@ -572,6 +663,70 @@ export default function InstagramNav({
               </motion.div>
               <p className="text-white/60 text-sm font-medium tracking-wide">
                 Retour à l'accueil...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ Full-screen darkening overlay during MU hold countdown ═══ */}
+      <AnimatePresence>
+        {isMuHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (muHoldProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="url(#muHoldGradientNav)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - muHoldProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+                <defs>
+                  <linearGradient
+                    id="muHoldGradientNav"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {muHoldCountdown}
+                </span>
+              </motion.div>
+              <p className="text-purple-300/80 text-sm font-medium tracking-wide">
+                Lancement Musical Universe...
               </p>
             </div>
           </motion.div>
@@ -668,7 +823,12 @@ export default function InstagramNav({
           <IconButton
             icon={Music}
             label="Verso Air Stream"
-            onClick={onMusicPortalToggle}
+            onClick={handleMuTap}
+            onPointerDown={handleMuPressStart}
+            onPointerUp={handleMuPressEnd}
+            onPointerLeave={handleMuPressEnd}
+            onPointerCancel={handleMuPressEnd}
+            title="Tap=Stream Music · Double-tap=Artist Dashboard · Hold 3s=Musical Universe"
           />
           <IconButton
             icon={MapPin}

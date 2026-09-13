@@ -24,8 +24,9 @@ const router = Router();
 
 const intentSearchSchema = z.object({
   query: z.string().min(2).max(500),
-  limit: z.number().min(1).max(20).optional().default(5),
+  limit: z.number().min(1).max(20).optional().default(12),
   language: z.string().optional(),
+  countryCode: z.string().optional(),
 });
 
 const emergencyAlertSchema = z.object({
@@ -48,11 +49,14 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
       });
     }
 
-    const { query, limit, language } = parsed.data;
+    const { query, limit, language, countryCode } = parsed.data;
     const startTime = Date.now();
 
     // Step 1: Parse intent from natural language
     const intent = await parseUserIntent(query, language);
+    if (!intent.countryCode && countryCode) {
+      intent.countryCode = countryCode.toUpperCase();
+    }
 
     // Step 2: Search database with grounded knowledge
     const results = await searchRelevantBusinesses(intent, limit);

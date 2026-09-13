@@ -150,7 +150,11 @@ router.get("/sitemap.xml", async (_req: Request, res: Response) => {
       `SELECT id, name, updated_at FROM businesses WHERE is_active = true ORDER BY updated_at DESC LIMIT 50000`,
     );
 
-    const baseUrl = "https://verso-air.com";
+    const baseUrl = (
+      process.env.PRODUCTION_URL ||
+      process.env.RENDER_EXTERNAL_URL ||
+      "https://verso-air.com"
+    ).replace(/\/$/, "");
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -200,7 +204,7 @@ router.get("/sitemap.xml", async (_req: Request, res: Response) => {
         : new Date().toISOString().split("T")[0];
       xml += `
   <url>
-    <loc>${baseUrl}/businesses/${biz.id}</loc>
+    <loc>${baseUrl}/business/${biz.id}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -230,8 +234,11 @@ export function robotsTxtHandler(req: Request, res: Response) {
     process.env.APP_PUBLIC_URL ||
     process.env.VERSOAIR_URL
   )?.trim();
-  const origin = (configuredUrl || req.protocol + "://" + req.get("host")).replace(/\/+$/, "");
-  const robots = "User-agent: *\n" +
+  const origin = (
+    configuredUrl || req.protocol + "://" + req.get("host")
+  ).replace(/\/+$/, "");
+  const robots =
+    "User-agent: *\n" +
     "Allow: /\n" +
     "Allow: /businesses-directory\n" +
     "Allow: /commerce\n" +
@@ -250,7 +257,9 @@ export function robotsTxtHandler(req: Request, res: Response) {
     "Disallow: /account/\n" +
     "Disallow: /payments/\n" +
     "Disallow: /contracts\n" +
-    "\nSitemap: " + origin + "/api/seo/sitemap.xml\n";
+    "\nSitemap: " +
+    origin +
+    "/api/seo/sitemap.xml\n";
 
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);

@@ -29,9 +29,15 @@ import {
   Smile,
   Paperclip,
   Mic,
+  Plus,
+  UserCheck,
+  UserPlus,
+  SquarePen,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useInboxSocket } from "@/hooks/use-inbox-socket";
 
 /* -------------------------------------------------------------------------- */
 /* PORTAL THEME TOKENS */
@@ -87,15 +93,12 @@ export function HeaderMessagesButton({
   const { user, loading: isLoading } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    if (!user || isLoading) return;
-
-    let cancelled = false;
-
+  const fetchUnread = useCallback(() => {
+    if (!user) return;
     fetch("/api/inbox/conversations", { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
-        if (cancelled || !data?.success) return;
+        if (!data?.success) return;
         const count = (data.conversations || []).reduce(
           (sum: number, c: any) => sum + (c.unreadCount || 0),
           0,
@@ -103,11 +106,18 @@ export function HeaderMessagesButton({
         setUnreadCount(count);
       })
       .catch(() => {});
+  }, [user]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [user, isLoading]);
+  useEffect(() => {
+    if (!user || isLoading) return;
+    fetchUnread();
+  }, [user, isLoading, fetchUnread]);
+
+  // Real-time unread counter bump
+  const handleLiveMessage = useCallback(() => {
+    fetchUnread();
+  }, [fetchUnread]);
+  useInboxSocket(user ? handleLiveMessage : undefined);
 
   const handleClick = () => {
     if (!user) {
@@ -164,9 +174,9 @@ export function MessagesPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto flex h-screen max-w-[1200px] border-x border-white/[0.06]">
-        <div className="flex-1">
+    <div className="h-full min-h-0 bg-slate-950 text-white">
+      <div className="mx-auto flex h-full min-h-0 max-w-[1200px] border-x border-white/[0.06]">
+        <div className="flex h-full min-h-0 flex-1">
           <TwitterMessenger
             open={true}
             onClose={() => setLocation("/")}
@@ -200,6 +210,18 @@ interface Conversation {
   unreadCount: number;
 }
 
+interface Contact {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
+  avatar?: string | null;
+  bio?: string | null;
+  isFollowing: boolean;
+  isConnection: boolean;
+  conversationId?: number | null;
+}
+
 interface Message {
   id: string | number;
   conversationId: string;
@@ -228,7 +250,103 @@ export function TwitterMessenger({
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
   const [portalFilter, setPortalFilter] = useState<"all" | PortalKey>("all");
+
+  // New conversation modal state
+  const [showNewConvoModal, setShowNewConvoModal] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactSearch, setContactSearch] = useState("");
+  const [contactTab, setContactTab] = useState<"following" | "all">(
+    "following",
+  );
+  const [startingConvoId, setStartingConvoId] = useState<number | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const fetchContacts = useCallback(async (query = "") => {
+    setLoadingContacts(true);
+    try {
+      const q = query ? `?q=${encodeURIComponent(query)}` : "";
+      const res = await fetch(`/api/inbox/contacts${q}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data?.success && Array.isArray(data.contacts)) {
+        setContacts(data.contacts);
+      }
+    } catch {
+      /* non-critical */
+    } finally {
+      setLoadingContacts(false);
+    }
+  }, []);
+
+  const handleStartConversation = async (contact: Contact) => {
+    setStartingConvoId(contact.id);
+    try {
+      const res = await fetch("/api/inbox/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          participantId: contact.id,
+          participantName: contact.name,
+          participantAvatar: contact.avatar || null,
+          type: "direct",
+        }),
+      });
+      const data = await res.json();
+      if (data?.success && data.conversation) {
+        const conv: Conversation = {
+          id: String(data.conversation.id),
+          participantId: String(data.conversation.participantId || contact.id),
+          participantName: data.conversation.participantName || contact.name,
+          participantAvatar:
+            data.conversation.participantAvatar || contact.avatar || undefined,
+          type: (data.conversation.type || "direct") as "direct" | "group",
+          portal: resolvePortalKey(
+            data.conversation.portal,
+            data.conversation.type,
+          ),
+          lastMessage: data.conversation.lastMessage || "",
+          lastMessageAt:
+            data.conversation.lastMessageAt || new Date().toISOString(),
+          unreadCount: data.conversation.unreadCount || 0,
+        };
+
+        setConversations((prev) => {
+          const existingIdx = prev.findIndex(
+            (c) =>
+              String(c.id) === String(conv.id) ||
+              String(c.participantId) === String(contact.id),
+          );
+          if (existingIdx !== -1) {
+            const updated = [...prev];
+            updated[existingIdx] = { ...updated[existingIdx], ...conv };
+            return updated;
+          }
+          return [conv, ...prev];
+        });
+
+        setSelectedConv(conv);
+        setShowNewConvoModal(false);
+      } else {
+        toast({
+          title: "Could not start conversation",
+          description: data?.error || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Network error",
+        description: err?.message || "Failed to start conversation.",
+        variant: "destructive",
+      });
+    } finally {
+      setStartingConvoId(null);
+    }
+  };
 
   /* ── Load conversations ── */
   useEffect(() => {
@@ -264,6 +382,44 @@ export function TwitterMessenger({
       })
       .finally(() => setLoadingConvs(false));
   }, [open, user]);
+
+  // Real-time incoming messages
+  const handleLiveMessage = useCallback(
+    (evt: { conversationId: number; message: any }) => {
+      if (
+        selectedConv?.id &&
+        String(selectedConv.id) === String(evt.conversationId)
+      ) {
+        setMessages((prev) => [...prev, evt.message]);
+      }
+      setConversations((prev) => {
+        const idx = prev.findIndex(
+          (c) => String(c.id) === String(evt.conversationId),
+        );
+        if (idx === -1) {
+          fetch("/api/inbox/conversations", { credentials: "include" })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data?.success) setConversations(data.conversations || []);
+            });
+          return prev;
+        }
+        const updated = [...prev];
+        const isCurrent =
+          String(selectedConv?.id) === String(evt.conversationId);
+        updated[idx] = {
+          ...updated[idx],
+          lastMessage: evt.message.content,
+          lastMessageAt: evt.message.createdAt,
+          unreadCount: isCurrent ? 0 : (updated[idx].unreadCount || 0) + 1,
+        };
+        const [moved] = updated.splice(idx, 1);
+        return [moved, ...updated];
+      });
+    },
+    [selectedConv],
+  );
+  useInboxSocket(user ? handleLiveMessage : undefined);
 
   /* ── Load messages ── */
   useEffect(() => {
@@ -378,6 +534,23 @@ export function TwitterMessenger({
     );
   }, [conversations, portalFilter, search]);
 
+  const filteredContacts = useMemo(() => {
+    return contacts.filter((c) => {
+      if (contactTab === "following" && !c.isFollowing && !c.isConnection) {
+        return false;
+      }
+      if (contactSearch.trim()) {
+        const q = contactSearch.toLowerCase();
+        return (
+          c.name.toLowerCase().includes(q) ||
+          c.username.toLowerCase().includes(q) ||
+          (c.bio && c.bio.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [contacts, contactTab, contactSearch]);
+
   /* ── Auth wall ── */
   if (!user) {
     return (
@@ -426,7 +599,7 @@ export function TwitterMessenger({
   /* ── Panel Body ── */
   const panelBody = (
     <div
-      className={`flex ${inline ? "h-full" : "h-[85vh] sm:h-[600px]"} overflow-hidden bg-black`}
+      className={`flex ${inline ? "h-full" : "h-[85vh] sm:h-[600px]"} overflow-hidden bg-black relative`}
     >
       {/* LEFT SIDEBAR — Conversation List */}
       <div
@@ -436,12 +609,25 @@ export function TwitterMessenger({
         <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 px-4 py-3 backdrop-blur-md">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xl font-bold text-white">Messages</h2>
-            <button
-              onClick={onClose}
-              className="rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setShowNewConvoModal(true);
+                  fetchContacts();
+                }}
+                className="flex items-center gap-1.5 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 px-3 py-1.5 text-xs font-semibold transition-all hover:scale-[1.02]"
+                title="Start conversation with contacts"
+              >
+                <SquarePen className="h-3.5 w-3.5" />
+                <span>New Message</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Portal Filter Tabs */}
@@ -531,8 +717,18 @@ export function TwitterMessenger({
                 No conversations yet
               </p>
               <p className="mt-1 text-xs text-white/30">
-                Start messaging from a profile or listing.
+                Start messaging with contacts or members you follow.
               </p>
+              <button
+                onClick={() => {
+                  setShowNewConvoModal(true);
+                  fetchContacts();
+                }}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all hover:scale-105"
+              >
+                <Plus className="h-4 w-4" />
+                Start a Conversation
+              </button>
             </div>
           )}
 
@@ -795,12 +991,193 @@ export function TwitterMessenger({
             <div>
               <p className="text-xl font-bold text-white">Select a message</p>
               <p className="mt-1 max-w-xs text-sm text-white/35">
-                Choose from your existing conversations, or start a new one.
+                Choose from your existing conversations, or start a new one with
+                contacts you follow.
               </p>
+              <button
+                onClick={() => {
+                  setShowNewConvoModal(true);
+                  fetchContacts();
+                }}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all hover:scale-105"
+              >
+                <Plus className="h-4 w-4" />
+                New Conversation
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* NEW CONVERSATION / CONTACT PICKER MODAL */}
+      <AnimatePresence>
+        {showNewConvoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setShowNewConvoModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+              className="flex flex-col w-full max-w-md max-h-[80vh] rounded-2xl border border-white/10 bg-[#0d0d14] shadow-2xl overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-white/[0.02]">
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    New Message
+                  </h3>
+                  <p className="text-xs text-white/40">
+                    Select someone you follow or a platform contact
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowNewConvoModal(false)}
+                  className="rounded-full p-1.5 text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Tabs & Search */}
+              <div className="p-4 space-y-3 border-b border-white/[0.06]">
+                <div className="flex gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                  <button
+                    onClick={() => setContactTab("following")}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      contactTab === "following"
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                        : "text-white/50 hover:text-white"
+                    }`}
+                  >
+                    Following & Contacts
+                  </button>
+                  <button
+                    onClick={() => {
+                      setContactTab("all");
+                      if (contacts.length === 0) fetchContacts();
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      contactTab === "all"
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                        : "text-white/50 hover:text-white"
+                    }`}
+                  >
+                    All Members
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <input
+                    value={contactSearch}
+                    onChange={(e) => {
+                      setContactSearch(e.target.value);
+                      fetchContacts(e.target.value);
+                    }}
+                    placeholder="Search by name, @username, or role..."
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-4 text-xs text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Contact List */}
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[380px]">
+                {loadingContacts && (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-cyan-400/50" />
+                  </div>
+                )}
+
+                {!loadingContacts && filteredContacts.length === 0 && (
+                  <div className="py-12 text-center px-4 space-y-2">
+                    <Users className="h-8 w-8 text-white/20 mx-auto" />
+                    <p className="text-sm font-medium text-white/60">
+                      No contacts found
+                    </p>
+                    <p className="text-xs text-white/30 max-w-xs mx-auto">
+                      {contactTab === "following"
+                        ? "You are not following anyone yet, or no matches found."
+                        : "No platform members matched your search query."}
+                    </p>
+                    {contactTab === "following" && (
+                      <button
+                        onClick={() => setContactTab("all")}
+                        className="mt-2 text-xs text-cyan-400 hover:underline"
+                      >
+                        Browse all members
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {filteredContacts.map((contact) => (
+                  <button
+                    key={contact.id}
+                    onClick={() => handleStartConversation(contact)}
+                    disabled={startingConvoId === contact.id}
+                    className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-white/[0.06] border border-transparent hover:border-white/5 group"
+                  >
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-300 font-semibold text-sm border border-cyan-500/20 overflow-hidden">
+                      {contact.avatar ? (
+                        <img
+                          src={contact.avatar}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        contact.name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-white truncate group-hover:text-cyan-300 transition-colors">
+                          {contact.name}
+                        </span>
+                        {contact.isFollowing && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-1.5 py-0.2 text-[10px] font-medium text-cyan-300">
+                            <UserCheck className="h-2.5 w-2.5" />
+                            Following
+                          </span>
+                        )}
+                        {contact.isConnection && !contact.isFollowing && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 px-1.5 py-0.2 text-[10px] font-medium text-violet-300">
+                            Connected
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-white/40 truncate">
+                        @{contact.username}{" "}
+                        {contact.role && contact.role !== "user"
+                          ? `· ${contact.role}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div>
+                      {startingConvoId === contact.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                      ) : (
+                        <span className="text-xs font-semibold text-cyan-400/80 group-hover:text-cyan-300">
+                          Chat →
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 

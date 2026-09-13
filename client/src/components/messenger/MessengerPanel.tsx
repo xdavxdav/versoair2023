@@ -20,6 +20,10 @@ import {
   CheckCheck,
   Search,
   Paperclip,
+  SquarePen,
+  Plus,
+  Users,
+  UserCheck,
 } from "lucide-react";
 import { authenticatedFetch, getAuthToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -40,6 +44,18 @@ interface Conversation {
   lastMessage?: string | null;
   lastMessageAt?: string | null;
   unreadCount: number;
+}
+
+interface Contact {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
+  avatar?: string | null;
+  bio?: string | null;
+  isFollowing: boolean;
+  isConnection: boolean;
+  conversationId?: number | null;
 }
 
 interface InboxMessage {
@@ -112,11 +128,90 @@ export default function MessengerPanel({
   );
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Compose / Contact picker states
+  const [showCompose, setShowCompose] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactFilter, setContactFilter] = useState<"following" | "all">(
+    "following",
+  );
+  const [contactSearch, setContactSearch] = useState("");
+  const [startingConvoId, setStartingConvoId] = useState<number | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConvoRef = useRef<Conversation | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   activeConvoRef.current = activeConvo;
+
+  const fetchContacts = useCallback(async (q = "") => {
+    setLoadingContacts(true);
+    try {
+      const query = q ? `?q=${encodeURIComponent(q)}` : "";
+      const res = await authenticatedFetch(`/api/inbox/contacts${query}`);
+      const data = await res.json();
+      if (data?.success && Array.isArray(data.contacts)) {
+        setContacts(data.contacts);
+      }
+    } catch {
+      /* non-critical */
+    } finally {
+      setLoadingContacts(false);
+    }
+  }, []);
+
+  const handleStartConversation = async (contact: Contact) => {
+    setStartingConvoId(contact.id);
+    try {
+      const res = await authenticatedFetch("/api/inbox/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: contact.id,
+          participantName: contact.name,
+          participantAvatar: contact.avatar || null,
+          type: "direct",
+        }),
+      });
+      const data = await res.json();
+      if (data?.success && data.conversation) {
+        const conv: Conversation = {
+          id: Number(data.conversation.id),
+          type: data.conversation.type || "direct",
+          participantId: String(data.conversation.participantId || contact.id),
+          participantName: data.conversation.participantName || contact.name,
+          participantAvatar:
+            data.conversation.participantAvatar || contact.avatar || null,
+          lastMessage: data.conversation.lastMessage || null,
+          lastMessageAt:
+            data.conversation.lastMessageAt || new Date().toISOString(),
+          unreadCount: data.conversation.unreadCount || 0,
+        };
+
+        setConversations((prev) => {
+          const idx = prev.findIndex(
+            (c) =>
+              Number(c.id) === Number(conv.id) ||
+              String(c.participantId) === String(contact.id),
+          );
+          if (idx !== -1) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], ...conv };
+            return updated;
+          }
+          return [conv, ...prev];
+        });
+
+        setActiveConvo(conv);
+        setShowCompose(false);
+      }
+    } catch {
+      /* non-critical */
+    } finally {
+      setStartingConvoId(null);
+    }
+  };
 
   useEffect(() => {
     if (!open || !user) return;
@@ -345,6 +440,23 @@ export default function MessengerPanel({
     });
   }, [conversations, activeFilter, searchQuery]);
 
+  const filteredContacts = useMemo(() => {
+    return contacts.filter((c) => {
+      if (contactFilter === "following" && !c.isFollowing && !c.isConnection) {
+        return false;
+      }
+      if (contactSearch.trim()) {
+        const q = contactSearch.toLowerCase();
+        return (
+          c.name.toLowerCase().includes(q) ||
+          c.username.toLowerCase().includes(q) ||
+          (c.bio && c.bio.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [contacts, contactFilter, contactSearch]);
+
   const drawerUserId = activeConvo ? Number(activeConvo.participantId) : NaN;
   const canFollowFromDrawer =
     !!activeConvo &&
@@ -370,7 +482,7 @@ export default function MessengerPanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.25 }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl relative text-[15px]"
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl text-[15px]"
           >
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
@@ -380,6 +492,15 @@ export default function MessengerPanel({
                     setActiveConvo(null);
                     setShowProfileDrawer(false);
                   }}
+                  className="p-1 text-white/60 hover:text-white"
+                  aria-label="Back"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              {showCompose && !activeConvo && (
+                <button
+                  onClick={() => setShowCompose(false)}
                   className="p-1 text-white/60 hover:text-white"
                   aria-label="Back"
                 >
@@ -411,7 +532,11 @@ export default function MessengerPanel({
               )}
               <h2 className="flex-1 min-w-0 truncate">
                 <span className="text-white font-semibold text-[15px] block truncate">
-                  {activeConvo ? activeConvo.participantName : "Messages"}
+                  {activeConvo
+                    ? activeConvo.participantName
+                    : showCompose
+                      ? "New Message"
+                      : "Messages"}
                 </span>
                 {activeConvo && (
                   <span className="text-[11px] text-white/40">
@@ -423,6 +548,19 @@ export default function MessengerPanel({
                   </span>
                 )}
               </h2>
+              {!activeConvo && !showCompose && (
+                <button
+                  onClick={() => {
+                    setShowCompose(true);
+                    fetchContacts();
+                  }}
+                  className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                  aria-label="New message with contacts"
+                  title="New message"
+                >
+                  <SquarePen className="w-5 h-5" />
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="p-1 text-white/60 hover:text-white"
@@ -500,7 +638,143 @@ export default function MessengerPanel({
               )}
             </AnimatePresence>
 
-            {!activeConvo ? (
+            {showCompose && !activeConvo ? (
+              // ── Compose / Contact Picker view ──
+              <div className="flex-1 overflow-y-auto flex flex-col p-4 space-y-3">
+                {/* Tabs */}
+                <div className="flex gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                  <button
+                    onClick={() => setContactFilter("following")}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      contactFilter === "following"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        : "text-white/50 hover:text-white"
+                    }`}
+                  >
+                    Following & Contacts
+                  </button>
+                  <button
+                    onClick={() => {
+                      setContactFilter("all");
+                      if (contacts.length === 0) fetchContacts();
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      contactFilter === "all"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        : "text-white/50 hover:text-white"
+                    }`}
+                  >
+                    All Members
+                  </button>
+                </div>
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    value={contactSearch}
+                    onChange={(e) => {
+                      setContactSearch(e.target.value);
+                      fetchContacts(e.target.value);
+                    }}
+                    placeholder="Search people to message…"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Contacts list */}
+                <div className="flex-1 overflow-y-auto space-y-1">
+                  {loadingContacts && (
+                    <div className="flex items-center justify-center py-10 text-white/40">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    </div>
+                  )}
+
+                  {!loadingContacts && filteredContacts.length === 0 && (
+                    <div className="py-12 text-center text-white/40 space-y-2">
+                      <Users className="w-8 h-8 mx-auto opacity-30" />
+                      <p className="text-sm font-medium text-white/70">
+                        No contacts found
+                      </p>
+                      <p className="text-xs text-white/30">
+                        {contactFilter === "following"
+                          ? "You are not following anyone yet, or no matches found."
+                          : "No members matched your query."}
+                      </p>
+                      {contactFilter === "following" && (
+                        <button
+                          onClick={() => {
+                            setContactFilter("all");
+                            fetchContacts();
+                          }}
+                          className="mt-2 text-xs text-purple-400 hover:underline"
+                        >
+                          Browse all members
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {filteredContacts.map((contact) => (
+                    <button
+                      key={contact.id}
+                      onClick={() => handleStartConversation(contact)}
+                      disabled={startingConvoId === contact.id}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left border border-transparent hover:border-white/5 group"
+                    >
+                      <div className="relative w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-sm font-semibold text-purple-300 overflow-hidden shrink-0">
+                        {contact.avatar ? (
+                          <img
+                            src={contact.avatar}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          contact.name?.[0]?.toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm text-white truncate group-hover:text-purple-300 transition-colors">
+                            {contact.name}
+                          </span>
+                          {contact.isFollowing && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 px-1.5 py-0.2 text-[10px] font-medium text-purple-300">
+                              <UserCheck className="w-2.5 h-2.5" />
+                              Following
+                            </span>
+                          )}
+                          {contact.isConnection && !contact.isFollowing && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-1.5 py-0.2 text-[10px] font-medium text-cyan-300">
+                              Connected
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-white/40 truncate">
+                          @{contact.username}{" "}
+                          {contact.role && contact.role !== "user"
+                            ? `· ${contact.role}`
+                            : ""}
+                        </p>
+                      </div>
+                      <div>
+                        {startingConvoId === contact.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                        ) : (
+                          <span className="text-xs font-semibold text-purple-400 group-hover:text-purple-300">
+                            Chat →
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : !activeConvo ? (
               // ── Conversation list ──
               <div className="flex-1 overflow-y-auto flex flex-col">
                 {/* Search */}
@@ -547,21 +821,31 @@ export default function MessengerPanel({
                       Start a conversation
                     </p>
                     <p className="text-white/40 text-sm max-w-xs mx-auto">
-                      Messages from Marketplace sellers, artists, and the
-                      community will show up here.
+                      Send direct messages to contacts and people you follow.
                     </p>
+                    <button
+                      onClick={() => {
+                        setShowCompose(true);
+                        fetchContacts();
+                      }}
+                      className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/30 transition-all hover:scale-105"
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Message
+                    </button>
                     <div className="text-left rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5 text-[11px] leading-relaxed">
                       <p className="text-white/75 font-medium">Sample flow</p>
                       <p>
-                        1. Start a private message from Marketplace (Message
-                        Seller), Blog (Message), or Music/Artist pages.
+                        1. Tap New Message to chat directly with people you
+                        follow.
                       </p>
                       <p>
-                        2. The private thread appears in this inbox immediately.
+                        2. Or message sellers, artists, or community members
+                        from their profiles.
                       </p>
                       <p>
-                        3. Tap Publish on your own sent message to make it
-                        visible in the public community feed.
+                        3. Tap Publish on your own sent message to share it in
+                        the public community feed.
                       </p>
                     </div>
                   </div>

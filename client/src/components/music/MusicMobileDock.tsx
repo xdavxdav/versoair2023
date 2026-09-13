@@ -19,8 +19,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useMusicAccess } from "@/hooks/useMusicAccess";
 import { MUSIC_MOBILE_NAV_ITEMS, getActiveNavItem } from "@/lib/music-routes";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -36,29 +37,151 @@ interface MusicMobileDockProps {
 }
 
 export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
-  const [pathname] = useLocation();
+  const [pathname, navigate] = useLocation();
   const { user } = useAuthContext();
+  const { isArtist } = useMusicAccess();
   const dashboard = getDashboardDestination(user);
   const activeItem = getActiveNavItem(pathname);
   const [fabExpanded, setFabExpanded] = useState(false);
 
+  // ── Home/MU gestures: single tap = music home, double tap = public home, hold 3s = darken + countdown to public home ──
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdStartRef = useRef(0);
+  const holdCompletedRef = useRef(false);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const [holdCountdown, setHoldCountdown] = useState(3);
+
+  const handleHomeTap = useCallback(() => {
+    if (holdCompletedRef.current) {
+      holdCompletedRef.current = false;
+      return;
+    }
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      const count = tapCountRef.current;
+      tapCountRef.current = 0;
+      if (count >= 2) {
+        navigate("/");
+      } else {
+        navigate(isArtist ? "/music/dashboard" : "/stream");
+      }
+    }, 300);
+  }, [navigate, isArtist]);
+
+  const handleHomePressStart = useCallback(() => {
+    holdCompletedRef.current = false;
+    holdStartRef.current = Date.now();
+    setIsHolding(true);
+    setHoldProgress(0);
+    setHoldCountdown(3);
+    holdIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - holdStartRef.current;
+      const progress = Math.min((elapsed / 3000) * 100, 100);
+      setHoldProgress(progress);
+      setHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
+    }, 16);
+    holdTimerRef.current = setTimeout(() => {
+      if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+      setIsHolding(false);
+      setHoldProgress(0);
+      holdCompletedRef.current = true;
+      navigate("/");
+    }, 3000);
+  }, [navigate]);
+
+  const handleHomePressEnd = useCallback(() => {
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
+    setIsHolding(false);
+    setHoldProgress(0);
+  }, []);
+
   return (
     <>
+      {/* Full-screen darkening overlay during 3s hold */}
+      <AnimatePresence>
+        {isHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (holdProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0,0,0,0.95)" }}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <svg width="80" height="80" viewBox="0 0 80 80">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="34"
+                  fill="none"
+                  stroke="rgba(168,85,247,0.2)"
+                  strokeWidth="6"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="34"
+                  fill="none"
+                  stroke="rgba(168,85,247,0.9)"
+                  strokeWidth="6"
+                  strokeDasharray={`${2 * Math.PI * 34}`}
+                  strokeDashoffset={`${2 * Math.PI * 34 * (1 - holdProgress / 100)}`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 40 40)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+                <text
+                  x="40"
+                  y="46"
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize="20"
+                  fontWeight="bold"
+                >
+                  {holdCountdown}
+                </text>
+              </svg>
+              <span className="text-white/70 text-sm">Retour à l'accueil…</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mini top header */}
       <header className="fixed top-0 left-0 right-0 z-50 md:hidden">
         <div className="bg-[#0a0512]/90 backdrop-blur-xl border-b border-white/[0.06]">
           <div className="flex items-center justify-between px-4 h-14">
-            {/* Logo */}
-            <Link href="/music/dashboard">
+            {/* Logo with gestures */}
+            <div
+              onClick={handleHomeTap}
+              onPointerDown={handleHomePressStart}
+              onPointerUp={handleHomePressEnd}
+              onPointerLeave={handleHomePressEnd}
+              onPointerCancel={handleHomePressEnd}
+              onContextMenu={(e) => e.preventDefault()}
+              className="cursor-pointer"
+              title={
+                isArtist
+                  ? "Tap=Artist Dashboard · Double-tap=Public home · Hold 3s=Public home"
+                  : "Tap=Music Universe · Double-tap=Public home · Hold 3s=Public home"
+              }
+            >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
                   <Music2 className="w-4 h-4 text-white" />
                 </div>
                 <span className="font-semibold text-white text-sm">
                   Musical Universe
                 </span>
               </div>
-            </Link>
+            </div>
 
             {/* Right actions */}
             <div className="flex items-center gap-1">
@@ -90,7 +213,39 @@ export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
         {/* Safe area padding for notched phones */}
         <div className="relative pb-safe">
           <div className="flex items-center justify-around px-2 h-16">
-            {MUSIC_MOBILE_NAV_ITEMS.slice(0, 2).map((item) => (
+            {/* Home tab with gestures */}
+            <div
+              onClick={handleHomeTap}
+              onPointerDown={handleHomePressStart}
+              onPointerUp={handleHomePressEnd}
+              onPointerLeave={handleHomePressEnd}
+              onPointerCancel={handleHomePressEnd}
+              onContextMenu={(e) => e.preventDefault()}
+              className="cursor-pointer"
+            >
+              <motion.div
+                className="flex flex-col items-center gap-0.5 px-3 py-1 relative"
+                whileTap={{ scale: 0.95 }}
+              >
+                {(activeItem === "home" || activeItem === "stream") && (
+                  <motion.div
+                    layoutId="activeMobileTab"
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+                    transition={{ duration: 0.2 }}
+                  />
+                )}
+                <Home
+                  className={`w-5 h-5 ${activeItem === "home" || activeItem === "stream" ? "text-purple-400" : "text-white/50"}`}
+                />
+                <span
+                  className={`text-[10px] ${activeItem === "home" || activeItem === "stream" ? "text-purple-400" : "text-white/50"}`}
+                >
+                  Home
+                </span>
+              </motion.div>
+            </div>
+
+            {MUSIC_MOBILE_NAV_ITEMS.slice(1, 2).map((item) => (
               <NavItem
                 key={item.id}
                 item={item}

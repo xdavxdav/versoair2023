@@ -89,19 +89,9 @@ function validatePrintFile(file: Express.Multer.File) {
   return sanitizeStoredName(file.originalname);
 }
 
-const printStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, PRINT_UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const safeName = validatePrintFile(file);
-    const ext = path.extname(safeName).toLowerCase();
-    cb(null, `print-${uniqueSuffix}${ext}`);
-  },
-});
-
 const printUpload = multer({
-  storage: printStorage,
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB for print files
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB for print files
   fileFilter: (_req, file, cb) => {
     try {
       validatePrintFile(file);
@@ -180,19 +170,9 @@ function validateListingMedia(file: Express.Multer.File) {
   return sanitizeStoredName(file.originalname);
 }
 
-const listingStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, LISTING_UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const safeName = validateListingMedia(file);
-    const ext = path.extname(safeName).toLowerCase();
-    cb(null, `listing-${uniqueSuffix}${ext}`);
-  },
-});
-
 const listingUpload = multer({
-  storage: listingStorage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB max per file
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB max per file
   fileFilter: (_req, file, cb) => {
     try {
       validateListingMedia(file);
@@ -311,16 +291,28 @@ router.post(
         });
       }
 
-      // Collect uploaded file paths
+      // Collect uploaded file paths — persisted in Neon DB
       const files = req.files as
         | Record<string, Express.Multer.File[]>
         | undefined;
-      const imagePaths: string[] = (files?.images || []).map(
-        (f) => `/uploads/listings/${path.basename(f.path)}`,
-      );
-      const videoPaths: string[] = (files?.videos || []).map(
-        (f) => `/uploads/listings/${path.basename(f.path)}`,
-      );
+      const imagePaths: string[] = [];
+      for (const f of files?.images || []) {
+        const mRes = await pool.query(
+          `INSERT INTO marketplace_media (user_id, file_name, mime_type, file_data, file_size, media_type)
+           VALUES ($1, $2, $3, $4, $5, 'image') RETURNING id`,
+          [Number(userId), f.originalname, f.mimetype, f.buffer, f.size],
+        );
+        imagePaths.push(`/api/marketing/media/${mRes.rows[0].id}`);
+      }
+      const videoPaths: string[] = [];
+      for (const f of files?.videos || []) {
+        const mRes = await pool.query(
+          `INSERT INTO marketplace_media (user_id, file_name, mime_type, file_data, file_size, media_type)
+           VALUES ($1, $2, $3, $4, $5, 'video') RETURNING id`,
+          [Number(userId), f.originalname, f.mimetype, f.buffer, f.size],
+        );
+        videoPaths.push(`/api/marketing/media/${mRes.rows[0].id}`);
+      }
 
       const result = await pool.query(
         `INSERT INTO ad_journal_listings
@@ -716,8 +708,6 @@ router.post(
       const basicChecks = basicValidation(req.file);
       const basicFailed = basicChecks.some((c) => c.status === "fail");
       if (basicFailed) {
-        // Delete the rejected file
-        fs.unlinkSync(req.file.path);
         return res.status(400).json({
           success: false,
           error: "File validation failed",
@@ -729,10 +719,25 @@ router.post(
       let advancedResult = null;
       if (advanced_check === "true" || advanced_check === "1") {
         advancedResult = await advancedValidation(
-          req.file.path,
+          req.file.buffer,
           req.file.mimetype,
         );
       }
+
+      // Save print file buffer into Neon DB (Render ephemeral FS safe)
+      const printFileRes = await pool.query(
+        `INSERT INTO marketing_print_files (user_id, file_name, mime_type, file_data, file_size)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [
+          Number(req.user!.userId),
+          req.file.originalname,
+          req.file.mimetype,
+          req.file.buffer,
+          req.file.size,
+        ],
+      );
+      const fileId = printFileRes.rows[0].id;
+      const fileUrl = `/api/marketing/print/files/${fileId}`;
 
       // Create a print job record
       const result = await pool.query(
@@ -743,7 +748,7 @@ router.post(
         [
           req.user!.userId,
           product_id ? parseInt(product_id) : null,
-          req.file.path,
+          fileUrl,
           req.file.originalname,
           req.file.size,
           JSON.stringify({
@@ -765,6 +770,60 @@ router.post(
     }
   },
 );
+
+/**
+ * GET /api/marketing/print/files/:id
+ * Public: Serve uploaded print file directly from Neon DB
+ */
+router.get("/print/files/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT file_name, mime_type, file_data, file_size FROM marketing_print_files WHERE id = $1`,
+      [parseInt(id)],
+    );
+    if (!result.rows.length) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Print file not found" });
+    }
+    const { mime_type, file_data, file_name } = result.rows[0];
+    res.setHeader("Content-Type", mime_type || "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(file_name || "print.pdf")}"`,
+    );
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Content-Length", file_data.length);
+    res.end(file_data);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/marketing/media/:id
+ * Public: Serve marketplace listing image/video directly from Neon DB
+ */
+router.get("/media/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT mime_type, file_data, file_size FROM marketplace_media WHERE id = $1`,
+      [parseInt(id)],
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: "Media not found" });
+    }
+    const { mime_type, file_data } = result.rows[0];
+    res.setHeader("Content-Type", mime_type || "application/octet-stream");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Content-Length", file_data.length);
+    res.end(file_data);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /**
  * GET /api/marketing/print/jobs

@@ -13,10 +13,21 @@ import {
   index,
   unique,
   date,
+  customType,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
+
+const bytea = customType<{
+  dataType: "Buffer";
+  data: Buffer;
+  driverData: Buffer;
+}>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 // --- 1. GEOGRAPHY & IDENTITY ---
 export const countries = pgTable("countries", {
@@ -1898,6 +1909,7 @@ export const albums = pgTable(
       onDelete: "cascade",
     }),
     coverArt: text("cover_art"),
+    pochette: text("pochette"), // cover art image as base64 data-URI or image URL
     releaseDate: timestamp("release_date"),
     genre: text("genre"),
     description: text("description"),
@@ -3480,6 +3492,38 @@ export const inboxMessages = pgTable(
     readIdx: index("inbox_msg_read_idx").on(t.isRead),
   }),
 );
+
+export const inboxAttachments = pgTable("inbox_attachments", {
+  id: serial("id").primaryKey(),
+  data: bytea("data").notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const marketingPrintFiles = pgTable("marketing_print_files", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  fileName: text("file_name").notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  fileData: bytea("file_data").notNull(),
+  fileSize: integer("file_size").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const marketplaceMedia = pgTable("marketplace_media", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  fileName: text("file_name").notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  fileData: bytea("file_data").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mediaType: varchar("media_type", { length: 20 }).default("image"), // image, video
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const insertInboxMessageSchema = createInsertSchema(inboxMessages);
 export type InboxMessage = typeof inboxMessages.$inferSelect;

@@ -226,6 +226,8 @@ export async function ensureAllTables(): Promise<void> {
       `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tier VARCHAR DEFAULT 'free'`,
       `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tier_expires_at TIMESTAMP`,
       `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_url TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_data BYTEA`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS logo_mime VARCHAR(100)`,
       `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS verification_status VARCHAR DEFAULT 'unverified'`,
       `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS verification_documents JSONB DEFAULT '[]'`,
       `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS avg_response_time_hours DECIMAL`,
@@ -301,6 +303,7 @@ export async function ensureAllTables(): Promise<void> {
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
       `ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS allow_media_download BOOLEAN DEFAULT FALSE`,
+      `ALTER TABLE albums ADD COLUMN IF NOT EXISTS pochette TEXT`,
     ];
     for (const alt of INBOX_MESSAGES_ADDITIONS) {
       try {
@@ -510,11 +513,47 @@ const TABLE_STATEMENTS: TableDef[] = [
       tier VARCHAR DEFAULT 'free',
       tier_expires_at TIMESTAMP,
       logo_url TEXT,
+      logo_data BYTEA,
+      logo_mime VARCHAR(100),
       verification_status VARCHAR DEFAULT 'unverified',
       verification_documents JSONB DEFAULT '[]',
       avg_response_time_hours DECIMAL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "inbox_attachments",
+    sql: `CREATE TABLE IF NOT EXISTS inbox_attachments (
+      id SERIAL PRIMARY KEY,
+      data BYTEA NOT NULL,
+      mime_type VARCHAR(100) NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )`,
+  },
+  {
+    table: "marketing_print_files",
+    sql: `CREATE TABLE IF NOT EXISTS marketing_print_files (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      file_name TEXT NOT NULL,
+      mime_type VARCHAR(100) NOT NULL,
+      file_data BYTEA NOT NULL,
+      file_size INTEGER NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )`,
+  },
+  {
+    table: "marketplace_media",
+    sql: `CREATE TABLE IF NOT EXISTS marketplace_media (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      file_name TEXT NOT NULL,
+      mime_type VARCHAR(100) NOT NULL,
+      file_data BYTEA NOT NULL,
+      file_size INTEGER NOT NULL,
+      media_type VARCHAR(20) DEFAULT 'image',
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
     )`,
   },
   {
@@ -1740,6 +1779,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       title TEXT NOT NULL,
       artist_id INTEGER REFERENCES music_artists(id) ON DELETE CASCADE,
       cover_art TEXT,
+      pochette TEXT,
       release_date TIMESTAMP,
       genre TEXT,
       description TEXT,

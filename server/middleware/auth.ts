@@ -276,11 +276,25 @@ export async function globalAuthGate(
       });
     }
 
+    const [dbUser] = await db
+      .select({ email: schema.users.email, role: schema.users.role })
+      .from(schema.users)
+      .where(eq(schema.users.id, Number(userId)))
+      .limit(1);
+
+    if (!dbUser) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: { code: "INVALID_TOKEN", message: "Account not found" },
+      });
+    }
+
     req.user = {
       userId: String(userId),
       id: String(userId),
-      email: decoded.email,
-      role: decoded.role,
+      email: dbUser.email,
+      role: dbUser.role as AuthUser["role"],
     };
 
     // 4. Superuser gets unrestricted free pass
@@ -334,11 +348,25 @@ export function requireAuth(allowedRoles?: string[]) {
         });
       }
 
+      const [dbUser] = await db
+        .select({ email: schema.users.email, role: schema.users.role })
+        .from(schema.users)
+        .where(eq(schema.users.id, Number(userId)))
+        .limit(1);
+
+      if (!dbUser) {
+        return res.status(401).json({
+          success: false,
+          status: 401,
+          error: { code: "INVALID_TOKEN", message: "Account not found" },
+        });
+      }
+
       const user: AuthUser = {
         userId: String(userId),
         id: String(userId),
-        email: decoded.email,
-        role: decoded.role,
+        email: dbUser.email,
+        role: dbUser.role as AuthUser["role"],
       };
 
       // Superuser always has full access — bypass role checks
@@ -369,6 +397,11 @@ export function requireAuth(allowedRoles?: string[]) {
   };
 }
 
+/** Restrict highly sensitive financial and credential operations to superusers. */
+export function requireSuperuser() {
+  return requireAuth(["superuser"]);
+}
+
 /**
  * Allow read-only admin-panel access to authorized roles, but reserve every
  * mutation on admin/database routers for Joel's named superadmin account.
@@ -394,6 +427,7 @@ export function requireJoelSuperadminForMutations(
 
   void db
     .select({
+      email: schema.users.email,
       username: schema.users.username,
       gateUsername: schema.users.gateUsername,
       role: schema.users.role,
@@ -405,11 +439,18 @@ export function requireJoelSuperadminForMutations(
       const username = String(user?.username || "").toLowerCase();
       const gateUsername = String(user?.gateUsername || "").toLowerCase();
       const role = String(user?.role || "").toLowerCase();
-      const isJoel =
+      const configuredOwnerEmail = String(process.env.SUPERADMIN_EMAIL || "")
+        .trim()
+        .toLowerCase();
+      const isNamedOwner =
+        username === "joel_007" || gateUsername === "joel_007";
+      const isOwner =
         ["superuser", "superadmin"].includes(role) &&
-        (username === "joel_007" || gateUsername === "joel_007");
+        (configuredOwnerEmail
+          ? String(user?.email || "").toLowerCase() === configuredOwnerEmail
+          : process.env.NODE_ENV !== "production" && isNamedOwner);
 
-      if (!isJoel) {
+      if (!isOwner) {
         res.status(403).json({
           success: false,
           error: {

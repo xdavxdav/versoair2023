@@ -1,7 +1,7 @@
 {
   "name": "VersoAir Music & Games",
   "short_name": "VersoAir",
-  "description": "Stream, discover and support artists. Play skill-based games. Earn credits.",
+  "description": "Stream music, discover artists, and connect with local communities.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "categories": ["music", "entertainment", "games"],
   "icons": [
     {
-      "src": "https://i.ibb.co/gL34XNP5/Logo-page.png",
+      "src": "/Logo-page.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://i.ibb.co/gL34XNP5/Logo-page.png",
+      "src": "/Logo-page.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

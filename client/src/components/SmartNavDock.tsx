@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   House,
@@ -90,11 +91,145 @@ export function SmartNavDock({
   userStatus = "online",
   onSignOut,
 }: SmartNavDockProps) {
+  const [currentPath, setLocation] = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ALL_ITEMS.length);
   const dockRef = useRef<HTMLDivElement>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
+
+  // ── Home gestures: Single tap = /marketplace, Double tap = /blog, Hold 3s = / (public home)
+  const homeTapCountRef = useRef(0);
+  const homeTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const homeHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const homeHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+  const homeHoldStartRef = useRef(0);
+  const homeHoldCompletedRef = useRef(false);
+  const [homeHoldProgress, setHomeHoldProgress] = useState(0);
+  const [isHomeHolding, setIsHomeHolding] = useState(false);
+  const [homeHoldCountdown, setHomeHoldCountdown] = useState(3);
+
+  const handleHomeTap = useCallback(() => {
+    if (homeHoldCompletedRef.current) {
+      homeHoldCompletedRef.current = false;
+      return;
+    }
+    homeTapCountRef.current += 1;
+    if (homeTapTimerRef.current) clearTimeout(homeTapTimerRef.current);
+    homeTapTimerRef.current = setTimeout(() => {
+      const count = homeTapCountRef.current;
+      homeTapCountRef.current = 0;
+      if (count >= 2) {
+        setLocation("/blog");
+      } else {
+        if (currentPath === "/marketplace") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          setLocation("/marketplace");
+        }
+      }
+    }, 300);
+  }, [currentPath, setLocation]);
+
+  const handleHomePressStart = useCallback(() => {
+    homeHoldCompletedRef.current = false;
+    homeHoldStartRef.current = Date.now();
+    setIsHomeHolding(true);
+    setHomeHoldProgress(0);
+    setHomeHoldCountdown(3);
+    homeHoldIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - homeHoldStartRef.current;
+      const progress = Math.min((elapsed / 3000) * 100, 100);
+      setHomeHoldProgress(progress);
+      setHomeHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
+    }, 50);
+    homeHoldTimerRef.current = setTimeout(() => {
+      if (homeHoldIntervalRef.current)
+        clearInterval(homeHoldIntervalRef.current);
+      setIsHomeHolding(false);
+      setHomeHoldProgress(0);
+      homeHoldCompletedRef.current = true;
+      setLocation("/");
+    }, 3000);
+  }, [setLocation]);
+
+  const handleHomePressEnd = useCallback(() => {
+    if (homeHoldTimerRef.current) clearTimeout(homeHoldTimerRef.current);
+    if (homeHoldIntervalRef.current) clearInterval(homeHoldIntervalRef.current);
+    setIsHomeHolding(false);
+    setHomeHoldProgress(0);
+  }, []);
+
+  // ── Musical Universe (MU / Play) gestures: Single tap = /stream, Double tap = /music/dashboard, Hold 3s = /stream
+  const muTapCountRef = useRef(0);
+  const muTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const muHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const muHoldStartRef = useRef(0);
+  const muHoldCompletedRef = useRef(false);
+  const [muHoldProgress, setMuHoldProgress] = useState(0);
+  const [isMuHolding, setIsMuHolding] = useState(false);
+  const [muHoldCountdown, setMuHoldCountdown] = useState(3);
+
+  const handleMuTap = useCallback(() => {
+    if (muHoldCompletedRef.current) {
+      muHoldCompletedRef.current = false;
+      return;
+    }
+    muTapCountRef.current += 1;
+    if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+    muTapTimerRef.current = setTimeout(() => {
+      const count = muTapCountRef.current;
+      muTapCountRef.current = 0;
+      if (count >= 2) {
+        setLocation("/music/dashboard");
+      } else {
+        setLocation("/stream");
+      }
+    }, 300);
+  }, [setLocation]);
+
+  const handleMuPressStart = useCallback(() => {
+    muHoldCompletedRef.current = false;
+    muHoldStartRef.current = Date.now();
+    setIsMuHolding(true);
+    setMuHoldProgress(0);
+    setMuHoldCountdown(3);
+    muHoldIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - muHoldStartRef.current;
+      const progress = Math.min((elapsed / 3000) * 100, 100);
+      setMuHoldProgress(progress);
+      setMuHoldCountdown(Math.max(0, Math.ceil(3 - elapsed / 1000)));
+    }, 50);
+    muHoldTimerRef.current = setTimeout(() => {
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+      setIsMuHolding(false);
+      setMuHoldProgress(0);
+      muHoldCompletedRef.current = true;
+      setLocation("/stream");
+    }, 3000);
+  }, [setLocation]);
+
+  const handleMuPressEnd = useCallback(() => {
+    if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+    if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+    setIsMuHolding(false);
+    setMuHoldProgress(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (homeTapTimerRef.current) clearTimeout(homeTapTimerRef.current);
+      if (homeHoldTimerRef.current) clearTimeout(homeHoldTimerRef.current);
+      if (homeHoldIntervalRef.current)
+        clearInterval(homeHoldIntervalRef.current);
+      if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
+      if (muHoldTimerRef.current) clearTimeout(muHoldTimerRef.current);
+      if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
+    };
+  }, []);
 
   /* ── Measure available width and decide how many items fit ── */
   useEffect(() => {
@@ -158,6 +293,110 @@ export function SmartNavDock({
 
   return (
     <>
+      {/* ── Home hold darkening overlay ── */}
+      <AnimatePresence>
+        {isHomeHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (homeHoldProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="#22d3ee"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - homeHoldProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+              </svg>
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {homeHoldCountdown}
+                </span>
+              </motion.div>
+              <p className="text-white/60 text-sm font-medium tracking-wide">
+                Retour à l'accueil...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Musical Universe (MU / Play) hold darkening overlay ── */}
+      <AnimatePresence>
+        {isMuHolding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: (muHoldProgress / 100) * 0.85 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+            style={{ background: "rgba(0, 0, 0, 0.95)" }}
+          >
+            <div className="relative flex flex-col items-center gap-4">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  fill="none"
+                  stroke="#a855f7"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 54}`}
+                  strokeDashoffset={`${2 * Math.PI * 54 * (1 - muHoldProgress / 100)}`}
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 0.05s linear" }}
+                />
+              </svg>
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.3, repeat: Infinity }}
+              >
+                <span className="text-5xl font-bold text-white tabular-nums">
+                  {muHoldCountdown}
+                </span>
+              </motion.div>
+              <p className="text-purple-300/80 text-sm font-medium tracking-wide">
+                Lancement Musical Universe...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── MAIN DOCK ── */}
       <div
         ref={dockRef}
@@ -174,7 +413,20 @@ export function SmartNavDock({
       >
         {/* Primary items */}
         {primaryItems.map((item) => (
-          <NavItemButton key={item.id} item={item} />
+          <NavItemButton
+            key={item.id}
+            item={item}
+            onHomeTap={handleHomeTap}
+            onHomePressStart={handleHomePressStart}
+            onHomePressEnd={handleHomePressEnd}
+            isHomeHolding={isHomeHolding}
+            homeHoldProgress={homeHoldProgress}
+            onMuTap={handleMuTap}
+            onMuPressStart={handleMuPressStart}
+            onMuPressEnd={handleMuPressEnd}
+            isMuHolding={isMuHolding}
+            muHoldProgress={muHoldProgress}
+          />
         ))}
 
         {/* Overflow trigger */}
@@ -327,17 +579,80 @@ export function SmartNavDock({
 /* SUB-COMPONENTS */
 /* -------------------------------------------------------------------------- */
 
-function NavItemButton({ item }: { item: NavItem }) {
+function NavItemButton({
+  item,
+  onHomeTap,
+  onHomePressStart,
+  onHomePressEnd,
+  isHomeHolding,
+  homeHoldProgress,
+  onMuTap,
+  onMuPressStart,
+  onMuPressEnd,
+  isMuHolding,
+  muHoldProgress,
+}: {
+  item: NavItem;
+  onHomeTap?: () => void;
+  onHomePressStart?: () => void;
+  onHomePressEnd?: () => void;
+  isHomeHolding?: boolean;
+  homeHoldProgress?: number;
+  onMuTap?: () => void;
+  onMuPressStart?: () => void;
+  onMuPressEnd?: () => void;
+  isMuHolding?: boolean;
+  muHoldProgress?: number;
+}) {
   const Icon = item.icon;
-  const isLink = !!item.href;
+  const isHome = item.id === "home";
+  const isPlay = item.id === "play";
 
-  const baseClass = `flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 md:px-3.5 md:py-2.5 lg:px-4 lg:py-3 lg:text-base ${
+  const baseClass = `relative flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 md:px-3.5 md:py-2.5 lg:px-4 lg:py-3 lg:text-base ${
     item.isActive
       ? "border-cyan-500/25 bg-cyan-500/10 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.12)]"
-      : "border-transparent text-slate-500 hover:border-cyan-500/20 hover:bg-cyan-500/[0.07] hover:text-cyan-300 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]"
+      : isPlay
+        ? "border-transparent text-slate-500 hover:border-purple-500/30 hover:bg-purple-500/[0.08] hover:text-purple-300 hover:shadow-[0_0_12px_rgba(168,85,247,0.15)]"
+        : "border-transparent text-slate-500 hover:border-cyan-500/20 hover:bg-cyan-500/[0.07] hover:text-cyan-300 hover:shadow-[0_0_10px_rgba(34,211,238,0.08)]"
   }`;
 
-  if (isLink) {
+  if (isHome) {
+    return (
+      <button
+        onClick={onHomeTap}
+        onPointerDown={onHomePressStart}
+        onPointerUp={onHomePressEnd}
+        onPointerLeave={onHomePressEnd}
+        onPointerCancel={onHomePressEnd}
+        onContextMenu={(e) => e.preventDefault()}
+        className={baseClass}
+        title="Tap=Marketplace · Double-tap=Blog · Hold 3s=Home"
+      >
+        <Icon className="h-4 w-4 md:h-4.5 lg:h-5" />
+        <span className="hidden sm:inline">{item.label}</span>
+      </button>
+    );
+  }
+
+  if (isPlay) {
+    return (
+      <button
+        onClick={onMuTap}
+        onPointerDown={onMuPressStart}
+        onPointerUp={onMuPressEnd}
+        onPointerLeave={onMuPressEnd}
+        onPointerCancel={onMuPressEnd}
+        onContextMenu={(e) => e.preventDefault()}
+        className={baseClass}
+        title="Tap=Stream Music · Double-tap=Artist Dashboard · Hold 3s=Musical Universe"
+      >
+        <Icon className="h-4 w-4 md:h-4.5 lg:h-5 text-purple-400" />
+        <span className="hidden sm:inline">{item.label}</span>
+      </button>
+    );
+  }
+
+  if (item.href) {
     return (
       <a href={item.href} className={baseClass} title={item.label}>
         <Icon className="h-4 w-4 md:h-4.5 lg:h-5" />

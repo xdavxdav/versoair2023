@@ -67,6 +67,43 @@ export interface TypingEvent {
   isTyping: boolean;
 }
 
+export interface SocketNotificationEvent {
+  id?: string;
+  type: string;
+  actorName?: string;
+  actorAvatar?: string | null;
+  title?: string;
+  message?: string;
+  text?: string;
+  entityUrl?: string | null;
+  timestamp?: string;
+  createdAt?: string;
+  read?: boolean;
+}
+
+export function useNotificationSocket(
+  onNotification?: (data: SocketNotificationEvent) => void,
+) {
+  useEffect(() => {
+    if (!onNotification) return;
+    const socket = getSocket();
+    refCount++;
+
+    const handler = (data: SocketNotificationEvent) => onNotification(data);
+    socket.on("notification", handler);
+
+    return () => {
+      socket.off("notification", handler);
+      refCount--;
+      if (refCount <= 0) {
+        sharedSocket?.disconnect();
+        sharedSocket = null;
+        refCount = 0;
+      }
+    };
+  }, [onNotification]);
+}
+
 /** Listen for typing indicator events from the other participant. */
 export function useInboxTyping(onTyping?: (data: TypingEvent) => void) {
   useEffect(() => {

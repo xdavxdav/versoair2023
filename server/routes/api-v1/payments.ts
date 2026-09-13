@@ -24,7 +24,7 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
 import { pool } from "../../db";
-import { requireAuth } from "../../middleware/auth";
+import { requireAuth, requireSuperuser } from "../../middleware/auth";
 
 const router = Router();
 
@@ -1054,46 +1054,39 @@ router.put("/cards/:cardId/default", async (req: Request, res: Response) => {
  * Lists all saved payment methods for a user.
  * Only returns cards belonging to the authenticated user (or admin).
  */
-router.get("/cards/:userId", async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
-    const authenticatedUserId = req.user?.userId;
-    const authenticatedRole = req.user?.role;
+router.get(
+  "/cards/:userId",
+  requireSuperuser(),
+  async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const authenticatedUserId = req.user?.userId;
+      if (!authenticatedUserId) {
+        return res
+          .status(401)
+          .json({ success: false, error: "Authentication required" });
+      }
 
-    if (!authenticatedUserId) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Authentication required" });
-    }
-
-    // Only allow users to see their own cards (admins/superusers may see any)
-    const isAdmin = authenticatedRole === "admin" || authenticatedRole === "superuser";
-    if (!isAdmin && String(userId) !== String(authenticatedUserId)) {
-      return res.status(403).json({
-        success: false,
-        error: "Forbidden: cannot access another user's payment methods",
-      });
-    }
-
-    const result = await pool.query(
-      `SELECT spm.*, u.username, u.email
+      const result = await pool.query(
+        `SELECT spm.*, u.username, u.email
        FROM saved_payment_methods spm
        JOIN users u ON u.id = spm.user_id
        WHERE spm.user_id = $1 AND spm.status != 'deleted'
        ORDER BY spm.is_default DESC, spm.created_at DESC`,
-      [userId],
-    );
+        [userId],
+      );
 
-    res.json({
-      success: true,
-      data: result.rows,
-      count: result.rows.length,
-    });
-  } catch (error: any) {
-    console.error("❌ List cards error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      res.json({
+        success: true,
+        data: result.rows,
+        count: result.rows.length,
+      });
+    } catch (error: any) {
+      console.error("❌ List cards error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 // ─── DELETE CARD ────────────────────────────────────────────────────────────────
 
@@ -1149,169 +1142,165 @@ router.delete("/cards/:cardId", async (req: Request, res: Response) => {
  * POS-style charge against a pre-authorized saved card.
  * Body: { cardId, amount, currency?, description?, category?, processedBy? }
  */
-router.post("/charge", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
+router.post(
+  "/charge",
+  requireSuperuser(),
+  async (req: Request, res: Response) => {
+    if (!requireStripe(res)) return;
 
-  try {
-    const {
-      cardId,
-      amount,
-      currency = "USD",
-      description = "NGO Activity Charge",
-      category = "activity_fee",
-      processedBy,
-    } = req.body;
+    try {
+      const {
+        cardId,
+        amount,
+        currency = "USD",
+        description = "NGO Activity Charge",
+        category = "activity_fee",
+        processedBy,
+      } = req.body;
 
-    if (!cardId || !amount) {
-      return res
-        .status(400)
-        .json({ success: false, error: "cardId and amount are required" });
-    }
+      if (!cardId || !amount) {
+        return res
+          .status(400)
+          .json({ success: false, error: "cardId and amount are required" });
+      }
 
-    const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      return res.status(400).json({ success: false, error: "Invalid amount" });
-    }
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid amount" });
+      }
 
-    // Fetch the saved card
-    const cardResult = await pool.query(
-      `SELECT spm.*, u.email, u.username
+      // Fetch the saved card
+      const cardResult = await pool.query(
+        `SELECT spm.*, u.email, u.username
        FROM saved_payment_methods spm
        JOIN users u ON u.id = spm.user_id
        WHERE spm.id = $1 AND spm.status = 'active'`,
-      [cardId],
-    );
-
-    if (cardResult.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Active card not found" });
-    }
-
-    const card = cardResult.rows[0];
-
-    // Admin role check — admins can charge any card on demand
-    const callerId = req.user?.userId;
-    let isAdminCaller = false;
-    if (callerId) {
-      const roleCheck = await pool.query(
-        `SELECT role FROM users WHERE id = $1`,
-        [callerId],
+        [cardId],
       );
-      const callerRole = roleCheck.rows[0]?.role;
-      isAdminCaller = ["admin", "moderator", "superuser"].includes(callerRole);
-    }
 
-    // Non-admin callers must use pre-authorized cards only
-    if (!isAdminCaller && !card.preauthorized) {
-      return res.status(403).json({
-        success: false,
-        error: "Card is not pre-authorized for charges",
+      if (cardResult.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Active card not found" });
+      }
+
+      const card = cardResult.rows[0];
+
+      const isAdminCaller = true;
+
+      // Non-admin callers must use pre-authorized cards only
+      if (!isAdminCaller && !card.preauthorized) {
+        return res.status(403).json({
+          success: false,
+          error: "Card is not pre-authorized for charges",
+        });
+      }
+
+      // Check max charge amount (skip for admin-initiated charges)
+      if (
+        !isAdminCaller &&
+        card.max_charge_amount &&
+        amountNum > parseFloat(card.max_charge_amount)
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: `Amount exceeds max charge limit of ${card.currency} ${card.max_charge_amount}`,
+        });
+      }
+
+      // Create PaymentIntent with saved payment method (off-session charge)
+      const paymentIntent = await stripe!.paymentIntents.create({
+        amount: Math.round(amountNum * 100), // Convert to cents
+        currency: (currency || card.currency || "USD").toLowerCase(),
+        customer: card.stripe_customer_id,
+        payment_method: card.stripe_payment_method_id,
+        off_session: true,
+        confirm: true,
+        description,
+        metadata: {
+          source: "ngo_pos",
+          cardId: String(cardId),
+          userId: String(card.user_id),
+          category,
+          processedBy: processedBy ? String(processedBy) : "system",
+        },
       });
-    }
 
-    // Check max charge amount (skip for admin-initiated charges)
-    if (
-      !isAdminCaller &&
-      card.max_charge_amount &&
-      amountNum > parseFloat(card.max_charge_amount)
-    ) {
-      return res.status(403).json({
-        success: false,
-        error: `Amount exceeds max charge limit of ${card.currency} ${card.max_charge_amount}`,
-      });
-    }
-
-    // Create PaymentIntent with saved payment method (off-session charge)
-    const paymentIntent = await stripe!.paymentIntents.create({
-      amount: Math.round(amountNum * 100), // Convert to cents
-      currency: (currency || card.currency || "USD").toLowerCase(),
-      customer: card.stripe_customer_id,
-      payment_method: card.stripe_payment_method_id,
-      off_session: true,
-      confirm: true,
-      description,
-      metadata: {
-        source: "ngo_pos",
-        cardId: String(cardId),
-        userId: String(card.user_id),
-        category,
-        processedBy: processedBy ? String(processedBy) : "system",
-      },
-    });
-
-    // Record charge in ngo_charges table
-    const chargeResult = await pool.query(
-      `INSERT INTO ngo_charges
+      // Record charge in ngo_charges table
+      const chargeResult = await pool.query(
+        `INSERT INTO ngo_charges
        (payment_method_id, user_id, amount, currency, description, category,
         stripe_payment_intent_id, status, processed_by, receipt_url)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [
-        cardId,
-        card.user_id,
-        amountNum.toFixed(2),
-        (currency || card.currency || "USD").toUpperCase(),
-        description,
-        category,
-        paymentIntent.id,
-        paymentIntent.status === "succeeded" ? "succeeded" : "pending",
-        processedBy || null,
-        null, // receipt URL populated by webhook later
-      ],
-    );
+        [
+          cardId,
+          card.user_id,
+          amountNum.toFixed(2),
+          (currency || card.currency || "USD").toUpperCase(),
+          description,
+          category,
+          paymentIntent.id,
+          paymentIntent.status === "succeeded" ? "succeeded" : "pending",
+          processedBy || null,
+          null, // receipt URL populated by webhook later
+        ],
+      );
 
-    // Also record in main transactions table
-    await pool.query(
-      `INSERT INTO transactions (user_id, amount, type, status, reference)
+      // Also record in main transactions table
+      await pool.query(
+        `INSERT INTO transactions (user_id, amount, type, status, reference)
        VALUES ($1, $2, 'ngo_charge', $3, $4)`,
-      [
-        card.user_id,
-        amountNum.toFixed(2),
-        paymentIntent.status === "succeeded" ? "completed" : "pending",
-        paymentIntent.id,
-      ],
-    );
+        [
+          card.user_id,
+          amountNum.toFixed(2),
+          paymentIntent.status === "succeeded" ? "completed" : "pending",
+          paymentIntent.id,
+        ],
+      );
 
-    console.log(
-      `💰 POS Charge: ${currency} ${amountNum.toFixed(2)} → ${card.card_brand} ****${card.card_last4} (${card.username}) — ${description}`,
-    );
+      console.log(
+        `💰 POS Charge: ${currency} ${amountNum.toFixed(2)} → ${card.card_brand} ****${card.card_last4} (${card.username}) — ${description}`,
+      );
 
-    res.json({
-      success: true,
-      data: {
-        charge: chargeResult.rows[0],
-        paymentIntent: {
-          id: paymentIntent.id,
-          status: paymentIntent.status,
-          amount: amountNum,
-          currency: currency.toUpperCase(),
+      res.json({
+        success: true,
+        data: {
+          charge: chargeResult.rows[0],
+          paymentIntent: {
+            id: paymentIntent.id,
+            status: paymentIntent.status,
+            amount: amountNum,
+            currency: currency.toUpperCase(),
+          },
         },
-      },
-    });
-  } catch (error: any) {
-    console.error("❌ POS Charge error:", error);
-
-    // Handle card declined or authentication needed
-    if (error.type === "StripeCardError") {
-      return res.status(402).json({
-        success: false,
-        error: `Card declined: ${error.message}`,
-        code: error.code,
       });
-    }
+    } catch (error: any) {
+      console.error("❌ POS Charge error:", error);
 
-    if (error.code === "authentication_required") {
-      return res.status(402).json({
-        success: false,
-        error: "Card requires authentication. Cannot charge off-session.",
-        code: "authentication_required",
-      });
-    }
+      // Handle card declined or authentication needed
+      if (error.type === "StripeCardError") {
+        return res.status(402).json({
+          success: false,
+          error: `Card declined: ${error.message}`,
+          code: error.code,
+        });
+      }
 
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      if (error.code === "authentication_required") {
+        return res.status(402).json({
+          success: false,
+          error: "Card requires authentication. Cannot charge off-session.",
+          code: "authentication_required",
+        });
+      }
+
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 // ─── REFUND NGO CHARGE ──────────────────────────────────────────────────────────
 
@@ -1320,81 +1309,85 @@ router.post("/charge", async (req: Request, res: Response) => {
  * Refund a previous NGO POS charge.
  * Body: { chargeId, reason? }
  */
-router.post("/refund", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
+router.post(
+  "/refund",
+  requireSuperuser(),
+  async (req: Request, res: Response) => {
+    if (!requireStripe(res)) return;
 
-  try {
-    const { chargeId, reason = "requested_by_customer" } = req.body;
+    try {
+      const { chargeId, reason = "requested_by_customer" } = req.body;
 
-    if (!chargeId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "chargeId is required" });
-    }
+      if (!chargeId) {
+        return res
+          .status(400)
+          .json({ success: false, error: "chargeId is required" });
+      }
 
-    const chargeResult = await pool.query(
-      `SELECT * FROM ngo_charges WHERE id = $1`,
-      [chargeId],
-    );
+      const chargeResult = await pool.query(
+        `SELECT * FROM ngo_charges WHERE id = $1`,
+        [chargeId],
+      );
 
-    if (chargeResult.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Charge not found" });
-    }
+      if (chargeResult.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Charge not found" });
+      }
 
-    const charge = chargeResult.rows[0];
+      const charge = chargeResult.rows[0];
 
-    if (charge.status === "refunded") {
-      return res
-        .status(400)
-        .json({ success: false, error: "Charge already refunded" });
-    }
+      if (charge.status === "refunded") {
+        return res
+          .status(400)
+          .json({ success: false, error: "Charge already refunded" });
+      }
 
-    if (!charge.stripe_payment_intent_id) {
-      return res.status(400).json({
-        success: false,
-        error: "No Stripe payment intent for this charge",
+      if (!charge.stripe_payment_intent_id) {
+        return res.status(400).json({
+          success: false,
+          error: "No Stripe payment intent for this charge",
+        });
+      }
+
+      // Process refund via Stripe
+      const refund = await stripe!.refunds.create({
+        payment_intent: charge.stripe_payment_intent_id,
+        reason: reason as Stripe.RefundCreateParams.Reason,
       });
-    }
 
-    // Process refund via Stripe
-    const refund = await stripe!.refunds.create({
-      payment_intent: charge.stripe_payment_intent_id,
-      reason: reason as Stripe.RefundCreateParams.Reason,
-    });
-
-    // Update charge record
-    await pool.query(
-      `UPDATE ngo_charges
+      // Update charge record
+      await pool.query(
+        `UPDATE ngo_charges
        SET status = 'refunded', refunded_at = NOW(), refund_reason = $2
        WHERE id = $1`,
-      [chargeId, reason],
-    );
+        [chargeId, reason],
+      );
 
-    // Update transaction record
-    await pool.query(
-      `UPDATE transactions SET status = 'refunded' WHERE reference = $1`,
-      [charge.stripe_payment_intent_id],
-    );
+      // Update transaction record
+      await pool.query(
+        `UPDATE transactions SET status = 'refunded' WHERE reference = $1`,
+        [charge.stripe_payment_intent_id],
+      );
 
-    console.log(
-      `↩️ Refund processed: Charge ${chargeId} — ${charge.currency} ${charge.amount}`,
-    );
+      console.log(
+        `↩️ Refund processed: Charge ${chargeId} — ${charge.currency} ${charge.amount}`,
+      );
 
-    res.json({
-      success: true,
-      data: {
-        refundId: refund.id,
-        status: refund.status,
-        amount: parseFloat(charge.amount),
-      },
-    });
-  } catch (error: any) {
-    console.error("❌ Refund error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      res.json({
+        success: true,
+        data: {
+          refundId: refund.id,
+          status: refund.status,
+          amount: parseFloat(charge.amount),
+        },
+      });
+    } catch (error: any) {
+      console.error("❌ Refund error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 // ─── LIST ALL CUSTOMERS WITH SAVED CARDS ────────────────────────────────────────
 
@@ -1403,33 +1396,36 @@ router.post("/refund", async (req: Request, res: Response) => {
  * Admin-only: list all users who have saved payment methods.
  * Query: ?search=&page=1&limit=20
  */
-router.get("/customers", requireAuth(["admin", "superuser"]), async (req: Request, res: Response) => {
-  try {
-    const search = req.query.search as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const offset = (page - 1) * limit;
+router.get(
+  "/customers",
+  requireSuperuser(),
+  async (req: Request, res: Response) => {
+    try {
+      const search = req.query.search as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
 
-    let whereClause = "";
-    const params: any[] = [];
+      let whereClause = "";
+      const params: any[] = [];
 
-    if (search) {
-      params.push(`%${search}%`);
-      whereClause = `AND (u.username ILIKE $${params.length} OR u.email ILIKE $${params.length})`;
-    }
+      if (search) {
+        params.push(`%${search}%`);
+        whereClause = `AND (u.username ILIKE $${params.length} OR u.email ILIKE $${params.length})`;
+      }
 
-    const countResult = await pool.query(
-      `SELECT COUNT(DISTINCT spm.user_id) as total
+      const countResult = await pool.query(
+        `SELECT COUNT(DISTINCT spm.user_id) as total
        FROM saved_payment_methods spm
        JOIN users u ON u.id = spm.user_id
        WHERE spm.status != 'deleted' ${whereClause}`,
-      params,
-    );
+        params,
+      );
 
-    const total = parseInt(countResult.rows[0]?.total) || 0;
+      const total = parseInt(countResult.rows[0]?.total) || 0;
 
-    const dataResult = await pool.query(
-      `SELECT
+      const dataResult = await pool.query(
+        `SELECT
          u.id as user_id, u.username, u.email, u.subscription_tier,
          u.stripe_customer_id,
          COUNT(spm.id) as card_count,
@@ -1467,19 +1463,20 @@ router.get("/customers", requireAuth(["admin", "superuser"]), async (req: Reques
        GROUP BY u.id, u.username, u.email, u.subscription_tier, u.stripe_customer_id
        ORDER BY u.username ASC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      [...params, limit, offset],
-    );
+        [...params, limit, offset],
+      );
 
-    res.json({
-      success: true,
-      data: dataResult.rows,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-    });
-  } catch (error: any) {
-    console.error("❌ Customers list error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      res.json({
+        success: true,
+        data: dataResult.rows,
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      });
+    } catch (error: any) {
+      console.error("❌ Customers list error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 // ─── NGO CHARGE HISTORY ─────────────────────────────────────────────────────────
 
@@ -1488,43 +1485,46 @@ router.get("/customers", requireAuth(["admin", "superuser"]), async (req: Reques
  * Lists all NGO POS charges with filters.
  * Query: ?status=succeeded&category=donation&page=1&limit=50&userId=
  */
-router.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req: Request, res: Response) => {
-  try {
-    const status = req.query.status as string;
-    const category = req.query.category as string;
-    const userId = req.query.userId as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = (page - 1) * limit;
+router.get(
+  "/ngo-charges",
+  requireSuperuser(),
+  async (req: Request, res: Response) => {
+    try {
+      const status = req.query.status as string;
+      const category = req.query.category as string;
+      const userId = req.query.userId as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
 
-    const conditions: string[] = [];
-    const params: any[] = [];
+      const conditions: string[] = [];
+      const params: any[] = [];
 
-    if (status) {
-      params.push(status);
-      conditions.push(`nc.status = $${params.length}`);
-    }
-    if (category) {
-      params.push(category);
-      conditions.push(`nc.category = $${params.length}`);
-    }
-    if (userId) {
-      params.push(userId);
-      conditions.push(`nc.user_id = $${params.length}`);
-    }
+      if (status) {
+        params.push(status);
+        conditions.push(`nc.status = $${params.length}`);
+      }
+      if (category) {
+        params.push(category);
+        conditions.push(`nc.category = $${params.length}`);
+      }
+      if (userId) {
+        params.push(userId);
+        conditions.push(`nc.user_id = $${params.length}`);
+      }
 
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const countResult = await pool.query(
-      `SELECT COUNT(*) as total FROM ngo_charges nc ${whereClause}`,
-      params,
-    );
+      const countResult = await pool.query(
+        `SELECT COUNT(*) as total FROM ngo_charges nc ${whereClause}`,
+        params,
+      );
 
-    const total = parseInt(countResult.rows[0]?.total) || 0;
+      const total = parseInt(countResult.rows[0]?.total) || 0;
 
-    const dataResult = await pool.query(
-      `SELECT nc.*,
+      const dataResult = await pool.query(
+        `SELECT nc.*,
               u.username, u.email,
               spm.card_brand, spm.card_last4,
               admin.username as processed_by_name
@@ -1535,19 +1535,20 @@ router.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req: Requ
        ${whereClause}
        ORDER BY nc.created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      [...params, limit, offset],
-    );
+        [...params, limit, offset],
+      );
 
-    res.json({
-      success: true,
-      data: dataResult.rows,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-    });
-  } catch (error: any) {
-    console.error("❌ NGO charges list error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      res.json({
+        success: true,
+        data: dataResult.rows,
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      });
+    } catch (error: any) {
+      console.error("❌ NGO charges list error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 // ─── POS DASHBOARD STATS ────────────────────────────────────────────────────────
 
@@ -1555,9 +1556,12 @@ router.get("/ngo-charges", requireAuth(["admin", "superuser"]), async (req: Requ
  * GET /api/v1/payments/pos-stats
  * Summary stats for the POS terminal dashboard. Admin-only.
  */
-router.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req: Request, res: Response) => {
-  try {
-    const result = await pool.query(`
+router.get(
+  "/pos-stats",
+  requireSuperuser(),
+  async (req: Request, res: Response) => {
+    try {
+      const result = await pool.query(`
       SELECT
         (SELECT COUNT(DISTINCT user_id) FROM saved_payment_methods WHERE status = 'active') as total_customers,
         (SELECT COUNT(*) FROM saved_payment_methods WHERE status = 'active') as total_cards,
@@ -1573,14 +1577,15 @@ router.get("/pos-stats", requireAuth(["admin", "superuser"]), async (req: Reques
          AND created_at >= CURRENT_DATE) as revenue_today
     `);
 
-    res.json({
-      success: true,
-      data: result.rows[0],
-    });
-  } catch (error: any) {
-    console.error("❌ POS stats error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+      res.json({
+        success: true,
+        data: result.rows[0],
+      });
+    } catch (error: any) {
+      console.error("❌ POS stats error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
 
 export default router;

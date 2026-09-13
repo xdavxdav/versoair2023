@@ -103,10 +103,35 @@ interface LeaderboardEntry {
   total_matches: number;
 }
 interface TriviaQuestion {
-  round: number;
   question: string;
   options: string[];
   time_limit: number;
+  round?: number;
+}
+
+function normalizeMatch(raw: any): GameMatch {
+  const gameState = raw.game_state || raw.gameState || {};
+  const questions = (gameState.questions || []).map(
+    (question: any, index: number) => ({
+      question: question.question || question.q || "",
+      options: question.options || [],
+      time_limit: question.time_limit || 20,
+      round: question.round ?? index,
+    }),
+  );
+
+  return {
+    ...raw,
+    game_type: raw.game_type || raw.gameType,
+    wager_amount: String(raw.wager_amount ?? raw.wagerAmount ?? 0),
+    round_count: raw.round_count ?? raw.roundCount ?? questions.length,
+    current_round: raw.current_round ?? raw.currentRound ?? 0,
+    player1_id: raw.player1_id ?? raw.player1Id,
+    player2_id: raw.player2_id ?? raw.player2Id ?? null,
+    player1_score: raw.player1_score ?? raw.player1Score ?? 0,
+    player2_score: raw.player2_score ?? raw.player2Score ?? 0,
+    game_state: { ...gameState, questions },
+  } as GameMatch;
 }
 
 // ── Arcade Page ──
@@ -168,7 +193,7 @@ export default function ArcadePage() {
 
   // Must have artist portal OR streamer portal access
   const hasPortalAccess = canAccessArtist || canAccessStreamer || isGodTier;
-  const [wagerAmount, setWagerAmount] = useState("50");
+  const [wagerAmount] = useState("0");
   const [selectedGame, setSelectedGame] = useState<string>("trivia");
   const [activeMatch, setActiveMatch] = useState<GameMatch | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<TriviaQuestion | null>(
@@ -195,7 +220,7 @@ export default function ArcadePage() {
       icon: "🎵",
       color: "from-purple-600 to-fuchsia-600",
       borderColor: "border-purple-500",
-      rounds: 5,
+      rounds: 10,
       timePerRound: 20,
       minWager: 10,
       format: "1v1",
@@ -347,7 +372,7 @@ export default function ArcadePage() {
       if (!res.ok) return [];
       const json = await res.json();
       // API may return { success, data: [...] } or raw array
-      return Array.isArray(json) ? json : (json.data ?? []);
+      return Array.isArray(json) ? json : (json.matches ?? json.data ?? []);
     },
     enabled: !!user,
     refetchInterval: 8_000,
@@ -359,7 +384,9 @@ export default function ArcadePage() {
       const res = await authFetch("/api/games/my");
       if (!res.ok) return [];
       const json = await res.json();
-      return Array.isArray(json) ? json : (json.data ?? []);
+      return Array.isArray(json)
+        ? json.map(normalizeMatch)
+        : (json.matches ?? json.data ?? []).map(normalizeMatch);
     },
     enabled: !!user,
     refetchInterval: 10_000,
@@ -371,7 +398,7 @@ export default function ArcadePage() {
       const res = await authFetch("/api/games/leaderboard");
       if (!res.ok) return [];
       const json = await res.json();
-      return Array.isArray(json) ? json : (json.data ?? []);
+      return Array.isArray(json) ? json : (json.leaderboard ?? json.data ?? []);
     },
     staleTime: 30_000,
   });
@@ -422,56 +449,10 @@ export default function ArcadePage() {
       navigate("/artist-portal");
       return;
     }
-    // Portal access check
-    if (!hasPortalAccess) {
-      toast({
-        title: "Accès requis",
-        description: "Un compte Artiste ou Streamer est nécessaire pour jouer.",
-        variant: "destructive",
-      });
-      navigate("/artist-portal");
-      return;
-    }
-    // Tier check for artists
-    if (artistNeedsUpgrade) {
-      toast({
-        title: "Abonnement requis",
-        description: "Passez au tier Essential+ pour accéder aux duels.",
-        variant: "destructive",
-      });
-      navigate("/pricing");
-      return;
-    }
-    // Tier check for streamers
-    if (streamerNeedsUpgrade) {
-      toast({
-        title: "Abonnement requis",
-        description: "Passez au tier Supporter+ pour accéder aux duels.",
-        variant: "destructive",
-      });
-      navigate("/stream");
-      return;
-    }
-
-    const wager = parseInt(wagerAmount);
-    if (isNaN(wager) || wager < 10) {
-      toast({ title: "Mise minimum: 10 crédits", variant: "destructive" });
-      return;
-    }
-    const balance = parseFloat(wallet?.balance || "0");
-    if (wager > balance) {
-      toast({
-        title: "Solde insuffisant",
-        description: `Vous avez ${balance} crédits.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     const res = await authJson("/api/games/challenge", {
       game_type: "music_trivia",
-      wager_amount: wager,
-      round_count: 5,
+      wager_amount: 0,
+      round_count: 10,
     });
     const data = await res.json();
     if (!res.ok) {
@@ -492,9 +473,9 @@ export default function ArcadePage() {
     }
     toast({
       title: "Duel créé!",
-      description: `Match #${data.match.id} — en attente d'adversaire...`,
+      description: `Partie gratuite #${data.match.id} — bonne chance!`,
     });
-    setActiveMatch(data.match);
+    setActiveMatch(normalizeMatch(data.match));
     refetchWallet();
     refetchOpen();
     refetchMy();
@@ -522,7 +503,7 @@ export default function ArcadePage() {
         return;
       }
       toast({ title: "Rejoint!", description: "Le duel commence!" });
-      setActiveMatch(data.match);
+      setActiveMatch(normalizeMatch(data.match || data));
       refetchWallet();
       refetchOpen();
       refetchMy();
@@ -539,7 +520,8 @@ export default function ArcadePage() {
 
       const res = await authJson(`/api/games/${activeMatch.id}/answer`, {
         round: activeMatch.current_round,
-        answer_index: answerIndex,
+        answerIndex,
+        responseTimeMs: 0,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -555,20 +537,21 @@ export default function ArcadePage() {
 
       // Auto-advance to next round after 2.5s
       setTimeout(() => {
-        if (data.match_status === "completed") {
+        if (data.matchComplete || data.match_status === "completed") {
           setActiveMatch(null);
           setCurrentQuestion(null);
-          const isWinner = String(data.winner_id) === String(user?.id);
+          const isWinner =
+            String(data.winner ?? data.winner_id) === String(user?.id);
           toast({
             title: isWinner ? "🏆 Victoire!" : "Match terminé",
             description: isWinner
-              ? `Vous remportez ${data.payout || "le pot"}!`
+              ? "Vous gagnez des points!"
               : "Bien joué! Retentez votre chance.",
           });
           refetchWallet();
           refetchMy();
         } else if (data.match) {
-          setActiveMatch(data.match);
+          setActiveMatch(normalizeMatch(data.match));
         }
       }, 2500);
     },
@@ -948,92 +931,96 @@ export default function ArcadePage() {
                       Jeux Disponibles
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {ARCADE_GAMES.map((game) => (
-                        <motion.div
-                          key={game.id}
-                          whileHover={{ scale: game.available ? 1.02 : 1 }}
-                          whileTap={{ scale: game.available ? 0.98 : 1 }}
-                        >
-                          <Card
-                            className={`relative overflow-hidden cursor-pointer transition-all ${
-                              selectedGame === game.id && game.available
-                                ? `bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
-                                : game.available
-                                  ? "bg-black/40 border-purple-500/20 hover:border-purple-500/50"
-                                  : "bg-black/20 border-gray-700/30 opacity-60"
-                            }`}
-                            onClick={() =>
-                              game.available && setSelectedGame(game.id)
-                            }
+                      {ARCADE_GAMES.filter((game) => game.available).map(
+                        (game) => (
+                          <motion.div
+                            key={game.id}
+                            whileHover={{ scale: game.available ? 1.02 : 1 }}
+                            whileTap={{ scale: game.available ? 0.98 : 1 }}
                           >
-                            {game.comingSoon && (
-                              <div className="absolute top-2 right-2">
-                                <Badge className="bg-gray-600/80 text-gray-300 text-[10px] border-gray-500/40">
-                                  Bientôt
-                                </Badge>
-                              </div>
-                            )}
-                            {selectedGame === game.id && game.available && (
-                              <div className="absolute top-2 right-2">
-                                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                                  <CheckCircle2 className="w-4 h-4 text-white" />
+                            <Card
+                              className={`relative overflow-hidden cursor-pointer transition-all ${
+                                selectedGame === game.id && game.available
+                                  ? `bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
+                                  : game.available
+                                    ? "bg-black/40 border-purple-500/20 hover:border-purple-500/50"
+                                    : "bg-black/20 border-gray-700/30 opacity-60"
+                              }`}
+                              onClick={() =>
+                                game.available && setSelectedGame(game.id)
+                              }
+                            >
+                              {game.comingSoon && (
+                                <div className="absolute top-2 right-2">
+                                  <Badge className="bg-gray-600/80 text-gray-300 text-[10px] border-gray-500/40">
+                                    Bientôt
+                                  </Badge>
                                 </div>
-                              </div>
-                            )}
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div
-                                  className={`text-3xl ${game.available ? "" : "grayscale"}`}
-                                >
-                                  {game.icon}
+                              )}
+                              {selectedGame === game.id && game.available && (
+                                <div className="absolute top-2 right-2">
+                                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                    <CheckCircle2 className="w-4 h-4 text-white" />
+                                  </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4
-                                    className={`font-semibold truncate ${
-                                      selectedGame === game.id && game.available
-                                        ? "text-white"
-                                        : game.available
+                              )}
+                              <CardContent className="p-4">
+                                <div className="flex items-start gap-3">
+                                  <div
+                                    className={`text-3xl ${game.available ? "" : "grayscale"}`}
+                                  >
+                                    {game.icon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4
+                                      className={`font-semibold truncate ${
+                                        selectedGame === game.id &&
+                                        game.available
                                           ? "text-white"
+                                          : game.available
+                                            ? "text-white"
+                                            : "text-gray-500"
+                                      }`}
+                                    >
+                                      {game.name}
+                                    </h4>
+                                    <p
+                                      className={`text-xs mt-0.5 line-clamp-2 ${
+                                        selectedGame === game.id &&
+                                        game.available
+                                          ? "text-white/80"
                                           : "text-gray-500"
-                                    }`}
-                                  >
-                                    {game.name}
-                                  </h4>
-                                  <p
-                                    className={`text-xs mt-0.5 line-clamp-2 ${
-                                      selectedGame === game.id && game.available
-                                        ? "text-white/80"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    {game.description}
-                                  </p>
+                                      }`}
+                                    >
+                                      {game.description}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                              <div
-                                className={`flex items-center gap-2 mt-3 text-[10px] ${
-                                  selectedGame === game.id && game.available
-                                    ? "text-white/70"
-                                    : "text-gray-600"
-                                }`}
-                              >
-                                <span className="bg-black/20 px-2 py-0.5 rounded">
-                                  {game.format}
-                                </span>
-                                <span className="bg-black/20 px-2 py-0.5 rounded">
-                                  {game.rounds} rounds
-                                </span>
-                                <span className="bg-black/20 px-2 py-0.5 rounded">
-                                  {game.timePerRound}s
-                                </span>
-                                <span className="bg-black/20 px-2 py-0.5 rounded">
-                                  Min {game.minWager} cr
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
+                                <div
+                                  className={`flex items-center gap-2 mt-3 text-[10px] ${
+                                    selectedGame === game.id && game.available
+                                      ? "text-white/70"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                    {game.format}
+                                  </span>
+                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                    {game.rounds} rounds
+                                  </span>
+                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                    {game.timePerRound}s
+                                  </span>
+                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                    Min {game.minWager} cr
+                                  </span>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        ),
+                      )}
                     </div>
                   </div>
 
@@ -1077,28 +1064,9 @@ export default function ArcadePage() {
                         </div>
                       </div>
 
-                      {/* Wager selector */}
-                      <div>
-                        <label className="text-sm text-gray-400 mb-2 block">
-                          Montant de la mise
-                        </label>
-                        <div className="flex gap-2 flex-wrap">
-                          {["10", "25", "50", "100", "250"].map((amt) => (
-                            <Button
-                              key={amt}
-                              variant="outline"
-                              size="sm"
-                              className={`border-purple-500/30 ${
-                                wagerAmount === amt
-                                  ? "bg-purple-600/40 text-white border-purple-500"
-                                  : "text-gray-400 hover:text-white hover:border-purple-500/50"
-                              }`}
-                              onClick={() => setWagerAmount(amt)}
-                            >
-                              {amt} cr
-                            </Button>
-                          ))}
-                        </div>
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+                        Free beta mode: no deposits, wagers, subscriptions, or
+                        prizes. Play Trivia for points and practice.
                       </div>
 
                       <Button
@@ -1112,7 +1080,7 @@ export default function ArcadePage() {
                       >
                         <Swords className="w-5 h-5 mr-2" />
                         {currentGame.available
-                          ? `Lancer le Duel — ${wagerAmount} crédits`
+                          ? "Jouer gratuitement"
                           : "Bientôt disponible"}
                       </Button>
                     </CardContent>

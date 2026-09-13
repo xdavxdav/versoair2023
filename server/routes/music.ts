@@ -1421,6 +1421,7 @@ async function ensureAlbumsTable() {
       title TEXT NOT NULL,
       artist_id INTEGER,
       cover_art TEXT,
+      pochette TEXT,
       release_date TIMESTAMP,
       genre TEXT,
       description TEXT,
@@ -1430,6 +1431,9 @@ async function ensureAlbumsTable() {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  await pool
+    .query(`ALTER TABLE albums ADD COLUMN IF NOT EXISTS pochette TEXT`)
+    .catch(() => {});
 }
 
 // GET /api/music/albums — list albums (optionally by artist)
@@ -1438,6 +1442,7 @@ router.get("/albums", async (req, res) => {
     await ensureAlbumsTable();
     const { artist_id } = req.query;
     let query = `SELECT a.*, 
+      (a.pochette IS NOT NULL) AS has_pochette,
       (SELECT COUNT(*) FROM music_tracks WHERE album_id = a.id) as track_count
       FROM albums a`;
     const params: any[] = [];
@@ -1454,11 +1459,52 @@ router.get("/albums", async (req, res) => {
   }
 });
 
-// POST /api/music/albums — create album
+// GET /api/music/albums/:id — get single album
+router.get("/albums/:id", async (req, res) => {
+  try {
+    await ensureAlbumsTable();
+    const { id } = req.params;
+    const albumRes = await pool.query(
+      `SELECT a.*, (a.pochette IS NOT NULL) AS has_pochette,
+              COALESCE(art.stage_name, ma.name, 'Artist') AS artist_name
+       FROM albums a
+       LEFT JOIN artists art ON art.id = a.artist_id
+       LEFT JOIN music_artists ma ON ma.id = a.artist_id
+       WHERE a.id = $1 LIMIT 1`,
+      [parseInt(id)],
+    );
+    if (!albumRes.rows.length) {
+      return res.status(404).json({ success: false, error: "Album not found" });
+    }
+    const tracksRes = await pool.query(
+      `SELECT id, title, duration, track_number, genre, cover_art, (pochette IS NOT NULL) AS has_pochette
+       FROM music_tracks WHERE album_id = $1 ORDER BY track_number ASC`,
+      [parseInt(id)],
+    );
+    res.json({
+      success: true,
+      album: albumRes.rows[0],
+      tracks: tracksRes.rows,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/music/albums — create album with pochette
 router.post("/albums", requireAuth(), async (req, res) => {
   try {
     await ensureAlbumsTable();
-    const { title, genre, description, albumType, trackIds } = req.body;
+    const {
+      title,
+      genre,
+      description,
+      albumType,
+      trackIds,
+      pochette,
+      coverArt,
+      cover_art,
+    } = req.body;
     if (!title)
       return res.status(400).json({ success: false, error: "Title required" });
 
@@ -1473,9 +1519,11 @@ router.post("/albums", requireAuth(), async (req, res) => {
       if (artist.rows.length) artistId = artist.rows[0].id;
     }
 
+    const coverValue = pochette || coverArt || cover_art || null;
+
     const result = await pool.query(
-      `INSERT INTO albums (title, artist_id, genre, description, album_type, total_tracks)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO albums (title, artist_id, genre, description, album_type, total_tracks, cover_art, pochette)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         title,
         artistId,
@@ -1483,6 +1531,8 @@ router.post("/albums", requireAuth(), async (req, res) => {
         description || null,
         albumType || "album",
         (trackIds || []).length,
+        coverValue,
+        coverValue,
       ],
     );
 
@@ -1498,10 +1548,77 @@ router.post("/albums", requireAuth(), async (req, res) => {
       }
     }
 
-    console.log(`📀 [MUSIC] Album "${title}" created (id=${album.id})`);
+    console.log(
+      `📀 [MUSIC] Album "${title}" created with pochette (id=${album.id})`,
+    );
     res.json({ success: true, data: album });
   } catch (error: any) {
     console.error("❌ Create album error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PUT /api/music/albums/:id — update album with pochette & tracks
+router.put("/albums/:id", requireAuth(), async (req, res) => {
+  try {
+    await ensureAlbumsTable();
+    const { id } = req.params;
+    const {
+      title,
+      genre,
+      description,
+      albumType,
+      trackIds,
+      pochette,
+      coverArt,
+      cover_art,
+    } = req.body;
+
+    const coverValue = pochette || coverArt || cover_art;
+
+    const result = await pool.query(
+      `UPDATE albums
+       SET title = COALESCE($1, title),
+           genre = COALESCE($2, genre),
+           description = COALESCE($3, description),
+           album_type = COALESCE($4, album_type),
+           pochette = CASE WHEN $5::text IS NOT NULL THEN $5::text ELSE pochette END,
+           cover_art = CASE WHEN $5::text IS NOT NULL THEN $5::text ELSE cover_art END,
+           total_tracks = CASE WHEN $6::int IS NOT NULL THEN $6::int ELSE total_tracks END
+       WHERE id = $7 RETURNING *`,
+      [
+        title || null,
+        genre || null,
+        description || null,
+        albumType || null,
+        coverValue || null,
+        Array.isArray(trackIds) ? trackIds.length : null,
+        parseInt(id),
+      ],
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: "Album not found" });
+    }
+
+    if (Array.isArray(trackIds)) {
+      // Unlink previous tracks
+      await pool.query(
+        `UPDATE music_tracks SET album_id = NULL WHERE album_id = $1`,
+        [parseInt(id)],
+      );
+      // Re-link new tracks
+      for (const trackId of trackIds) {
+        await pool.query(
+          `UPDATE music_tracks SET album_id = $1 WHERE id = $2`,
+          [parseInt(id), trackId],
+        );
+      }
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error: any) {
+    console.error("❌ Update album error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

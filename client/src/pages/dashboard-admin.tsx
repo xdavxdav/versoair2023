@@ -1361,7 +1361,8 @@ const BusinessManagement = ({
             : serverMessage;
         toast({
           title: "Error",
-          description: safeMessage || `Failed to add business (HTTP ${response.status})`,
+          description:
+            safeMessage || `Failed to add business (HTTP ${response.status})`,
           variant: "destructive",
         });
       }

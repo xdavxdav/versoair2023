@@ -1783,65 +1783,74 @@ export default function Home() {
   })();
 
   // ═══ AI Intent Search Handler (Shared Brain) ═══
-  const handleAiSearch = useCallback(async () => {
-    const query = debouncedSearchQuery.trim();
-    if (!query || searchMode !== "ai") return;
+  const handleAiSearch = useCallback(
+    async (overrideQuery?: string) => {
+      const query = (
+        overrideQuery !== undefined ? overrideQuery : debouncedSearchQuery
+      ).trim();
+      if (!query || searchMode !== "ai") return;
 
-    setIsAiSearching(true);
-    setSearchError("");
-    setHasSearched(true);
+      setIsAiSearching(true);
+      setSearchError("");
+      setHasSearched(true);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/search/intent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query,
-          limit: 5,
-          language: effectiveAiLanguage,
-        }),
-      });
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/search/intent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            limit: 12,
+            language: effectiveAiLanguage,
+            countryCode: selectedCountry || undefined,
+          }),
+        });
 
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
 
-      const data = await response.json();
-      if (data.success) {
-        setAiResults(data);
-        // Also populate standard search results from AI matches for consistent display
-        if (data.results?.businesses?.length > 0) {
-          const mapped = data.results.businesses.map((b: any) => ({
-            id: b.id?.toString() || "",
-            title: b.name || "",
-            description: b.description || "",
-            category: b.categoryName || "",
-            location: b.city || b.country || "",
-            address: b.address || "",
-            phone: b.phone || "",
-            email: b.email || "",
-            rating: b.rating || 0,
-            reviews: 0,
-            tags: [],
-            latitude: 0,
-            longitude: 0,
-            created_at: new Date().toISOString(),
-          }));
-          setSearchResults(mapped);
-          setTotalDatabaseCount(data.results.totalMatches || mapped.length);
+        const data = await response.json();
+        if (data.success) {
+          setAiResults(data);
+          // Also populate standard search results from AI matches for consistent display
+          if (data.results?.businesses?.length > 0) {
+            const mapped = data.results.businesses.map((b: any) => ({
+              id: b.id?.toString() || "",
+              title: b.name || "",
+              description: b.description || "",
+              category: b.category || b.categoryName || "General",
+              location: b.location || b.city || b.country || "",
+              address: b.address || b.location || "",
+              phone: b.phone || "",
+              website: b.website || "",
+              email: b.email || "",
+              rating: b.rating ? Number(b.rating) : 0,
+              reviews: b.reviewCount || b.reviews || 0,
+              is_verified: b.isVerified ?? b.is_verified ?? false,
+              countryCode: b.countryCode || b.country_code || "",
+              tags: b.categorySlug ? [b.categorySlug] : [],
+              latitude: 0,
+              longitude: 0,
+              created_at: new Date().toISOString(),
+            }));
+            setSearchResults(mapped);
+            setTotalDatabaseCount(data.results.totalMatches || mapped.length);
+          } else {
+            setSearchResults([]);
+          }
         } else {
-          setSearchResults([]);
+          setSearchError(data.error || "AI search failed");
+          setAiResults(null);
         }
-      } else {
-        setSearchError(data.error || "AI search failed");
+      } catch (err: any) {
+        console.error("AI search error:", err);
+        setSearchError("AI search temporarily unavailable — try classic mode");
         setAiResults(null);
+      } finally {
+        setIsAiSearching(false);
       }
-    } catch (err: any) {
-      console.error("AI search error:", err);
-      setSearchError("AI search temporarily unavailable — try classic mode");
-      setAiResults(null);
-    } finally {
-      setIsAiSearching(false);
-    }
-  }, [debouncedSearchQuery, searchMode, effectiveAiLanguage]);
+    },
+    [debouncedSearchQuery, searchMode, effectiveAiLanguage, selectedCountry],
+  );
 
   // Trigger AI search when mode is AI and query changes
   useEffect(() => {
@@ -2114,7 +2123,12 @@ export default function Home() {
                     Classique
                   </button>
                   <button
-                    onClick={() => setSearchMode("ai")}
+                    onClick={() => {
+                      setSearchMode("ai");
+                      if (searchQuery.trim()) {
+                        handleAiSearch(searchQuery);
+                      }
+                    }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       searchMode === "ai"
                         ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25"
@@ -2145,6 +2159,15 @@ export default function Home() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (searchMode === "ai") {
+                            handleAiSearch(searchQuery);
+                          } else {
+                            handleSearch();
+                          }
+                        }
+                      }}
                       placeholder={
                         searchMode === "ai"
                           ? activeAiSearchPlaceholder

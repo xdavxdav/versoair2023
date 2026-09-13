@@ -73,18 +73,8 @@ function validateLogoFile(file: Express.Multer.File) {
   return sanitizeStoredName(file.originalname);
 }
 
-const logoStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, LOGO_UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const safeName = validateLogoFile(file);
-    const ext = path.extname(safeName).toLowerCase() || ".png";
-    cb(null, `logo-${uniqueSuffix}${ext}`);
-  },
-});
-
 const logoUpload = multer({
-  storage: logoStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max for logos
   fileFilter: (_req, file, cb) => {
     try {
@@ -159,7 +149,6 @@ router.post(
 
       if (ownerCheck.rows.length === 0) {
         // Remove uploaded file since we won't use it
-        fs.unlink(req.file.path, () => {});
         return res.status(403).json({
           success: false,
           message: "You don't own this business or it doesn't exist.",
@@ -176,7 +165,6 @@ router.post(
 
       if (!hasPaidTier) {
         // Remove uploaded file
-        fs.unlink(req.file.path, () => {});
         return res.status(403).json({
           success: false,
           message:
@@ -198,13 +186,15 @@ router.post(
       }
 
       // Build the URL path
-      const logoUrl = `/api/business-logo/file/${path.basename(req.file.path)}`;
+      const logoUrl = `/api/business-logo/file/${businessId}`;
 
-      // Update business with new logo_url
-      await pool.query(`UPDATE businesses SET logo_url = $1 WHERE id = $2`, [
-        logoUrl,
-        businessId,
-      ]);
+      // Store new logos in PostgreSQL so redeploys cannot delete them.
+      await pool.query(
+        `UPDATE businesses
+         SET logo_url = $1, logo_data = $2, logo_mime = $3
+         WHERE id = $4`,
+        [logoUrl, req.file.buffer, req.file.mimetype, businessId],
+      );
 
       res.json({
         success: true,
@@ -259,9 +249,12 @@ router.delete(
         fs.unlink(filePath, () => {}); // Delete file
       }
 
-      await pool.query(`UPDATE businesses SET logo_url = NULL WHERE id = $1`, [
-        businessId,
-      ]);
+      await pool.query(
+        `UPDATE businesses
+         SET logo_url = NULL, logo_data = NULL, logo_mime = NULL
+         WHERE id = $1`,
+        [businessId],
+      );
 
       res.json({ success: true, message: "Logo removed successfully." });
     } catch (error: any) {
@@ -280,6 +273,29 @@ router.delete(
  */
 router.get("/file/:filename", (req: Request, res: Response) => {
   const { filename } = req.params;
+
+  if (/^\d+$/.test(filename)) {
+    pool
+      .query(`SELECT logo_data, logo_mime FROM businesses WHERE id = $1`, [
+        Number(filename),
+      ])
+      .then((result) => {
+        const logo = result.rows[0];
+        if (!logo?.logo_data) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Logo not found" });
+        }
+        res.set("Cache-Control", "public, max-age=86400");
+        res.type(logo.logo_mime || "application/octet-stream");
+        return res.send(logo.logo_data);
+      })
+      .catch((error) => {
+        console.error("[LOGO] Database read error:", error);
+        res.status(500).json({ success: false, message: "Logo unavailable" });
+      });
+    return;
+  }
 
   // Sanitize: only allow safe filenames
   if (/[^a-zA-Z0-9._-]/.test(filename)) {
