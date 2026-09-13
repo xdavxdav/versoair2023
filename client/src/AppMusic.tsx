@@ -43,8 +43,9 @@ const Profile = lazy(() => import("@/pages/profile"));
 const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
 const AdminDashboard = lazy(() => import("@/pages/dashboard-admin"));
 
-// Streaming
-const StreamPage = lazy(() => import("@/pages/stream"));
+// Streaming — StreamPage is eagerly loaded as the primary landing route
+// to avoid extra network roundtrips and Suspense delay on cold load
+import StreamPage from "@/pages/stream";
 const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
 const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
 const LibraryPage = lazy(() => import("@/pages/library"));
@@ -262,7 +263,8 @@ function AppContent() {
     if (!isLoading && wasLoading.current) {
       setPageEnter(true);
       wasLoading.current = false;
-      setTimeout(() => setPageEnter(false), 600);
+      const t = setTimeout(() => setPageEnter(false), 500);
+      return () => clearTimeout(t);
     }
   }, [isLoading, isFadingOut]);
 
