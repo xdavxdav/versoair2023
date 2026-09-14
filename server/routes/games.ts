@@ -106,7 +106,12 @@ const TRIVIA_QUESTIONS = [
 const LYRICS_QUESTIONS = [
   {
     q: "Complétez : 'Premier Gaou n'est pas gaou oh, c'est le...'",
-    options: ["deuxième gaou qui est gnata", "dernier gaou qui pleure", "vrai gaou d'Abidjan", "gaou sans argent"],
+    options: [
+      "deuxième gaou qui est gnata",
+      "dernier gaou qui pleure",
+      "vrai gaou d'Abidjan",
+      "gaou sans argent",
+    ],
     answer: 0,
   },
   {
@@ -116,7 +121,12 @@ const LYRICS_QUESTIONS = [
   },
   {
     q: "Dans 'Essence' de Wizkid & Tems : 'You don't need no other body...'",
-    options: ["only you can hold me", "you dey make me feel alright", "baby girl you shine so bright", "say my body is your body"],
+    options: [
+      "only you can hold me",
+      "you dey make me feel alright",
+      "baby girl you shine so bright",
+      "say my body is your body",
+    ],
     answer: 0,
   },
   {
@@ -131,7 +141,12 @@ const LYRICS_QUESTIONS = [
   },
   {
     q: "Dans 'Calm Down' de Rema : 'Baby, calm down, calm down, girl this your body...'",
-    options: ["dey put my heart for lockdown", "e dey give me fever", "is sweet like sugar", "dey make me crazy"],
+    options: [
+      "dey put my heart for lockdown",
+      "e dey give me fever",
+      "is sweet like sugar",
+      "dey make me crazy",
+    ],
     answer: 0,
   },
 ];
@@ -144,7 +159,12 @@ const GUESS_QUESTIONS = [
   },
   {
     q: "Qui a composé la chanson mythique 'Soul Makossa' en 1972 ?",
-    options: ["Manu Dibango", "Francis Bebey", "André-Marie Tala", "Eboa Lotin"],
+    options: [
+      "Manu Dibango",
+      "Francis Bebey",
+      "André-Marie Tala",
+      "Eboa Lotin",
+    ],
     answer: 0,
   },
   {
@@ -197,10 +217,14 @@ const DECADE_QUESTIONS = [
 const TRIVIA_TEST_ROUNDS = 10;
 const TRIVIA_MAX_ROUNDS = 10;
 
-function pickRandomQuestions(gameType: string = "music_trivia", count: number = 5) {
+function pickRandomQuestions(
+  gameType: string = "music_trivia",
+  count: number = 5,
+) {
   let pool = TRIVIA_QUESTIONS;
   if (gameType === "lyrics") pool = LYRICS_QUESTIONS;
-  else if (gameType === "guess" || gameType === "artist") pool = GUESS_QUESTIONS;
+  else if (gameType === "guess" || gameType === "artist")
+    pool = GUESS_QUESTIONS;
   else if (gameType === "decade") pool = DECADE_QUESTIONS;
 
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
@@ -487,15 +511,14 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
     const m = match.rows[0];
 
     // Return match without answers
-    const safeState =
-      questionBasedGames.includes(gameType)
-        ? {
-            questions: (gameState.questions || []).map((q: any) => ({
-              q: q.q,
-              options: q.options,
-            })),
-          }
-        : gameState;
+    const safeState = questionBasedGames.includes(gameType)
+      ? {
+          questions: (gameState.questions || []).map((q: any) => ({
+            q: q.q,
+            options: q.options,
+          })),
+        }
+      : gameState;
 
     res.json({
       success: true,
