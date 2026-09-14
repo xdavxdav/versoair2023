@@ -351,10 +351,13 @@ export default function MusicLibrary() {
                   {(storageStats.usageBytes / (1024 * 1024)).toFixed(1)} MB
                 </span>
                 <span className="text-white/40">
-                  / {(storageStats.quotaBytes / (1024 * 1024 * 1024)).toFixed(1)} GB
+                  /{" "}
+                  {(storageStats.quotaBytes / (1024 * 1024 * 1024)).toFixed(1)}{" "}
+                  GB
                 </span>
                 <span className="text-xs text-purple-300/60">
-                  ({storageStats.trackCount} titre{storageStats.trackCount > 1 ? "s" : ""})
+                  ({storageStats.trackCount} titre
+                  {storageStats.trackCount > 1 ? "s" : ""})
                 </span>
               </div>
 
@@ -362,7 +365,9 @@ export default function MusicLibrary() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => handleBatchDownload(likedTracks, "Coups de cœur")}
+                  onClick={() =>
+                    handleBatchDownload(likedTracks, "Coups de cœur")
+                  }
                   disabled={batchProgress.running}
                   className="border-purple-500/30 hover:bg-purple-500/20 text-purple-200 text-xs gap-1.5 h-8"
                 >
@@ -397,7 +402,8 @@ export default function MusicLibrary() {
               <div className="flex items-center gap-2 text-xs text-purple-300 animate-pulse">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
                 <span>
-                  Téléchargement ({batchProgress.completed}/{batchProgress.total}):{" "}
+                  Téléchargement ({batchProgress.completed}/
+                  {batchProgress.total}):{" "}
                   <strong className="text-white">{batchProgress.title}</strong>
                 </span>
               </div>
