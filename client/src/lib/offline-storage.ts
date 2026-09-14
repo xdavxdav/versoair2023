@@ -248,7 +248,11 @@ export async function downloadBatchTracks(
     coverArt?: string | null;
     duration?: number;
   }>,
-  onProgress?: (completed: number, total: number, currentTrackTitle: string) => void,
+  onProgress?: (
+    completed: number,
+    total: number,
+    currentTrackTitle: string,
+  ) => void,
 ): Promise<{ successful: number; failed: number }> {
   let successful = 0;
   let failed = 0;
