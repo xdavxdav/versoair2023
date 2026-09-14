@@ -24,9 +24,12 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
 import { pool } from "../../db";
-import { requireAuth, requireSuperuser } from "../../middleware/auth";
+import { optionalAuth, requireAuth, requireSuperuser } from "../../middleware/auth";
 
 const router = Router();
+
+// Apply optional auth so req.user is reliably populated from JWT or cookies
+router.use(optionalAuth);
 
 // ─── STRIPE INIT ────────────────────────────────────────────────────────────────
 
@@ -75,7 +78,7 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
-    const authenticatedUserId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId || (req as any).user?.id;
     const { targetTier, billingCycle = "monthly" } = req.body;
 
     if (!authenticatedUserId) {
@@ -428,7 +431,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
  */
 router.get("/billing-history", async (req: Request, res: Response) => {
   try {
-    const authenticatedUserId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId || (req as any).user?.id;
     const requestedUserId = req.query.userId as string | undefined;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -508,7 +511,7 @@ router.post("/create-portal", async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
-    const authenticatedUserId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId || (req as any).user?.id;
     const requestedUserId = req.body?.userId;
 
     if (!authenticatedUserId) {
@@ -735,7 +738,7 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.userId || (req as any).user?.id;
     if (!userId) {
       return res
         .status(401)
@@ -977,7 +980,7 @@ router.post("/save-card", async (req: Request, res: Response) => {
  */
 router.get("/my-cards", async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.userId || (req as any).user?.id;
     if (!userId) {
       return res
         .status(401)
@@ -1011,7 +1014,7 @@ router.get("/my-cards", async (req: Request, res: Response) => {
  */
 router.put("/cards/:cardId/default", async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.userId || (req as any).user?.id;
     const { cardId } = req.params;
 
     if (!userId) {
@@ -1060,7 +1063,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
-      const authenticatedUserId = req.user?.userId;
+      const authenticatedUserId = req.user?.userId || (req as any).user?.id;
       if (!authenticatedUserId) {
         return res
           .status(401)
