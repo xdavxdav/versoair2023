@@ -102,8 +102,8 @@ export default function MusicLibrary() {
   const history = Array.isArray(historyData?.history)
     ? historyData.history
     : [];
-  const albums = Array.isArray(albumsData?.data)
-    ? albumsData.data
+  const albums = Array.isArray((albumsData as any)?.data)
+    ? (albumsData as any).data
     : Array.isArray(albumsData)
       ? albumsData
       : [];
@@ -310,10 +310,15 @@ export default function MusicLibrary() {
                         className="bg-purple-600 hover:bg-purple-500 text-white rounded-lg h-8 w-8"
                         onClick={() =>
                           audio.playTrack({
-                            id: track.id,
+                            id:
+                              typeof track.id === "string"
+                                ? parseInt(track.id, 10) || 0
+                                : track.id,
                             title: track.title,
-                            artist: { stageName: track.artistName },
-                            streamUrl: URL.createObjectURL(track.audioBlob),
+                            duration: track.duration || 0,
+                            artist_name: track.artistName,
+                            pochette: track.coverArt,
+                            audio_url: URL.createObjectURL(track.audioBlob),
                           })
                         }
                       >
