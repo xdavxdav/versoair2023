@@ -211,13 +211,16 @@ export default function Pricing() {
     setCheckoutLoading(true);
     try {
       const token =
-        localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("token");
       const res = await fetch("/api/v1/payments/create-checkout", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           userId: user.id,
           targetTier: checkoutTier,
