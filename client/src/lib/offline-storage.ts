@@ -178,6 +178,8 @@ export async function downloadTrackToDevice(
   trackId: number | string,
   title: string,
   artistName = "Artist",
+  coverArt?: string | null,
+  duration?: number,
 ): Promise<Blob> {
   const streamUrl = `/api/music/tracks/${trackId}/stream`;
   const res = await fetch(streamUrl, { credentials: "include" });
@@ -191,6 +193,8 @@ export async function downloadTrackToDevice(
       id: trackId,
       title,
       artistName,
+      coverArt,
+      duration,
     },
     blob,
   );
@@ -206,4 +210,83 @@ export async function downloadTrackToDevice(
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 
   return blob;
+}
+
+/**
+ * Get total offline storage usage and quota estimate in bytes
+ */
+export async function getOfflineStorageEstimate(): Promise<{
+  usageBytes: number;
+  quotaBytes: number;
+  trackCount: number;
+}> {
+  const tracks = await getOfflineTracks();
+  const trackCount = tracks.length;
+  const usageBytes = tracks.reduce((sum, t) => sum + (t.sizeBytes || 0), 0);
+
+  let quotaBytes = 1024 * 1024 * 1024; // 1GB default fallback
+  if (typeof navigator !== "undefined" && navigator.storage?.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      if (estimate.quota) quotaBytes = estimate.quota;
+    } catch {
+      // fallback
+    }
+  }
+
+  return { usageBytes, quotaBytes, trackCount };
+}
+
+/**
+ * Batch download multiple tracks sequentially with progress callback
+ */
+export async function downloadBatchTracks(
+  tracks: Array<{
+    id: number | string;
+    title: string;
+    artistName?: string;
+    coverArt?: string | null;
+    duration?: number;
+  }>,
+  onProgress?: (completed: number, total: number, currentTrackTitle: string) => void,
+): Promise<{ successful: number; failed: number }> {
+  let successful = 0;
+  let failed = 0;
+
+  for (let i = 0; i < tracks.length; i++) {
+    const t = tracks[i];
+    const artist = t.artistName || "Artist";
+    if (onProgress) onProgress(i, tracks.length, t.title);
+
+    try {
+      const isCached = await isTrackOffline(t.id);
+      if (!isCached) {
+        const streamUrl = `/api/music/tracks/${t.id}/stream`;
+        const res = await fetch(streamUrl, { credentials: "include" });
+        if (res.ok) {
+          const blob = await res.blob();
+          await saveTrackOffline(
+            {
+              id: t.id,
+              title: t.title,
+              artistName: artist,
+              coverArt: t.coverArt,
+              duration: t.duration,
+            },
+            blob,
+          );
+          successful++;
+        } else {
+          failed++;
+        }
+      } else {
+        successful++;
+      }
+    } catch {
+      failed++;
+    }
+  }
+
+  if (onProgress) onProgress(tracks.length, tracks.length, "Done");
+  return { successful, failed };
 }

@@ -1,11 +1,15 @@
-// Service Worker vanilla pour Verso Air
-const CACHE_NAME = 'versoair-v1';
+// Service Worker pour Verso Air & Musical Universe App Shell
+const CACHE_NAME = 'versoair-v2';
 const STATIC_ASSETS = [
   '/',
+  '/music',
+  '/stream',
   '/index.html',
+  '/music.html',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/33826.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -25,15 +29,27 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Audio stream and API endpoints are handled directly or via IndexedDB fallback
+  if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        if (event.request.method === 'GET' && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      });
+      // Network-first with stale-while-revalidate for HTML/JS app shell
+      const fetchPromise = fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => cached);
+
+      return cached || fetchPromise;
     })
   );
 });
