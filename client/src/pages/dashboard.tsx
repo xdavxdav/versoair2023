@@ -1600,7 +1600,7 @@ export default function UserDashboard() {
   const downloadProfilePicture = () => {
     const userName =
       userSession?.user?.displayName ||
-      userSession?.user?.username ||
+      (userSession?.user as any)?.username ||
       userSession?.user?.name ||
       "profile";
     const src = customAvatarUrl || (userSession?.user as any)?.avatar;
@@ -2722,7 +2722,7 @@ export default function UserDashboard() {
                             {(
                               userSession?.user?.displayName ||
                               userSession?.user?.name ||
-                              userSession?.user?.username ||
+                              (userSession?.user as any)?.username ||
                               "U"
                             )
                               .charAt(0)
