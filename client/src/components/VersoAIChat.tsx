@@ -195,7 +195,9 @@ export default function VersoAIChat() {
 
   // ── Voice & Speech States ──
   const [isListening, setIsListening] = useState(false);
-  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(
+    null,
+  );
   const [talkMode, setTalkMode] = useState(false); // Auto-reads AI replies out loud
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -257,8 +259,9 @@ export default function VersoAIChat() {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang =
-          navigator.language.startsWith("fr") ? "fr-FR" : "en-US";
+        recognition.lang = navigator.language.startsWith("fr")
+          ? "fr-FR"
+          : "en-US";
 
         recognition.onstart = () => {
           setIsListening(true);
@@ -295,42 +298,50 @@ export default function VersoAIChat() {
   }, [talkMode]);
 
   // ── Text-to-Speech Handler ──
-  const speakMessage = useCallback((messageId: string, text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const speakMessage = useCallback(
+    (messageId: string, text: string) => {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
 
-    if (speakingMessageId === messageId) {
+      if (speakingMessageId === messageId) {
+        window.speechSynthesis.cancel();
+        setSpeakingMessageId(null);
+        return;
+      }
+
       window.speechSynthesis.cancel();
-      setSpeakingMessageId(null);
-      return;
-    }
+      const clean = cleanTextForSpeech(text);
+      if (!clean) return;
 
-    window.speechSynthesis.cancel();
-    const clean = cleanTextForSpeech(text);
-    if (!clean) return;
+      const utterance = new SpeechSynthesisUtterance(clean);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+      const isFrench = /[\u00E0-\u00FF]|bonjour|merci|bienvenue|salut/i.test(
+        text,
+      );
+      utterance.lang = isFrench ? "fr-FR" : "en-US";
 
-    const isFrench = /[\u00E0-\u00FF]|bonjour|merci|bienvenue|salut/i.test(text);
-    utterance.lang = isFrench ? "fr-FR" : "en-US";
+      const voices = window.speechSynthesis.getVoices();
+      const matchedVoice = voices.find(
+        (v) =>
+          (isFrench ? v.lang.startsWith("fr") : v.lang.startsWith("en")) &&
+          (v.name.includes("Natural") ||
+            v.name.includes("Google") ||
+            v.name.includes("Premium") ||
+            true),
+      );
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+      }
 
-    const voices = window.speechSynthesis.getVoices();
-    const matchedVoice = voices.find(
-      (v) =>
-        (isFrench ? v.lang.startsWith("fr") : v.lang.startsWith("en")) &&
-        (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Premium") || true),
-    );
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
+      utterance.onend = () => setSpeakingMessageId(null);
+      utterance.onerror = () => setSpeakingMessageId(null);
 
-    utterance.onend = () => setSpeakingMessageId(null);
-    utterance.onerror = () => setSpeakingMessageId(null);
-
-    setSpeakingMessageId(messageId);
-    window.speechSynthesis.speak(utterance);
-  }, [speakingMessageId]);
+      setSpeakingMessageId(messageId);
+      window.speechSynthesis.speak(utterance);
+    },
+    [speakingMessageId],
+  );
 
   // ── Toggle Speech Recognition ──
   const toggleListening = () => {
@@ -364,7 +375,8 @@ export default function VersoAIChat() {
     };
 
     window.addEventListener("open-versoai-chat", handleOpenChat);
-    return () => window.removeEventListener("open-versoai-chat", handleOpenChat);
+    return () =>
+      window.removeEventListener("open-versoai-chat", handleOpenChat);
   }, []);
 
   // Notify App to hide header when fullscreen
@@ -633,7 +645,11 @@ export default function VersoAIChat() {
               {/* Talk Mode Toggle */}
               <button
                 onClick={() => setTalkMode(!talkMode)}
-                title={talkMode ? "Talk Mode ON (Auto-reads replies)" : "Talk Mode OFF"}
+                title={
+                  talkMode
+                    ? "Talk Mode ON (Auto-reads replies)"
+                    : "Talk Mode OFF"
+                }
                 className={`p-1.5 rounded-lg transition-all ${
                   talkMode
                     ? "bg-purple-600/30 text-purple-300 border border-purple-500/50"
@@ -821,7 +837,8 @@ export default function VersoAIChat() {
             {showQuickActions && !isLoading && (
               <div className="pt-2">
                 <p className="text-xs font-medium text-blue-400/80 mb-2 pl-8 flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Suggested topics:
+                  <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Suggested
+                  topics:
                 </p>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2 pl-8 pr-2">
                   {QUICK_ACTIONS.map((action) => (
@@ -857,7 +874,11 @@ export default function VersoAIChat() {
                 <button
                   type="button"
                   onClick={toggleListening}
-                  title={isListening ? "Stop listening" : "Talk with AI (Voice input)"}
+                  title={
+                    isListening
+                      ? "Stop listening"
+                      : "Talk with AI (Voice input)"
+                  }
                   className={`p-2.5 rounded-xl transition-all ${
                     isListening
                       ? "bg-red-500/80 text-white animate-pulse shadow-lg shadow-red-500/40"
