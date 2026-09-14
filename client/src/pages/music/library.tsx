@@ -37,6 +37,8 @@ import {
   getOfflineTracks,
   removeOfflineTrack,
   downloadTrackToDevice,
+  getOfflineStorageEstimate,
+  downloadBatchTracks,
   type OfflineTrackRecord,
 } from "@/lib/offline-storage";
 import { toast } from "@/hooks/use-toast";
@@ -76,6 +78,18 @@ export default function MusicLibrary() {
     null,
   );
 
+  const [storageStats, setStorageStats] = useState<{
+    usageBytes: number;
+    quotaBytes: number;
+    trackCount: number;
+  }>({ usageBytes: 0, quotaBytes: 1024 * 1024 * 1024, trackCount: 0 });
+  const [batchProgress, setBatchProgress] = useState<{
+    running: boolean;
+    completed: number;
+    total: number;
+    title: string;
+  }>({ running: false, completed: 0, total: 0, title: "" });
+
   const { data: playlistsData } = usePlaylists();
   const { data: likedData } = useLikedTracks();
   const { data: historyData } = useListeningHistory();
@@ -86,6 +100,8 @@ export default function MusicLibrary() {
   const loadOffline = useCallback(async () => {
     const list = await getOfflineTracks();
     setOfflineTracks(list);
+    const stats = await getOfflineStorageEstimate();
+    setStorageStats(stats);
   }, []);
 
   useEffect(() => {
@@ -158,6 +174,60 @@ export default function MusicLibrary() {
       title: "Supprimé du stockage local",
       description: "Le titre a été retiré de vos fichiers hors-ligne.",
     });
+  };
+
+  const handleBatchDownload = async (
+    tracksToDownload: Array<any>,
+    label = "la sélection",
+  ) => {
+    if (!tracksToDownload || tracksToDownload.length === 0) {
+      toast({
+        title: "Aucun titre à télécharger",
+        description: "La liste est vide.",
+      });
+      return;
+    }
+
+    setBatchProgress({
+      running: true,
+      completed: 0,
+      total: tracksToDownload.length,
+      title: tracksToDownload[0]?.title || "",
+    });
+
+    try {
+      const result = await downloadBatchTracks(
+        tracksToDownload.map((t) => ({
+          id: t.id,
+          title: t.title || "Titre",
+          artistName: t.artist_name || t.artistName || "Artiste",
+          coverArt: t.cover_art || t.pochette || t.coverArt,
+          duration: t.duration,
+        })),
+        (completed, total, title) => {
+          setBatchProgress({
+            running: completed < total,
+            completed,
+            total,
+            title,
+          });
+        },
+      );
+
+      toast({
+        title: "Téléchargement groupé terminé",
+        description: `${result.successful} titre(s) enregistré(s) pour l'écoute hors-ligne.`,
+      });
+      loadOffline();
+    } catch (err: any) {
+      toast({
+        title: "Erreur pendant le téléchargement",
+        description: err?.message || "Impossible de finaliser le lot.",
+        variant: "destructive",
+      });
+    } finally {
+      setBatchProgress({ running: false, completed: 0, total: 0, title: "" });
+    }
   };
 
   const makePlaylist = () => {
@@ -267,6 +337,71 @@ export default function MusicLibrary() {
             >
               <X className="h-4 w-4" />
             </Button>
+          </div>
+        )}
+
+        {/* Storage Quota & Batch Indicator Bar */}
+        {(activeTab === "all" || activeTab === "offline") && (
+          <div className="rounded-2xl border border-purple-500/20 bg-purple-950/20 p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-purple-200">
+                <Download className="w-4 h-4 text-purple-400" />
+                <span className="font-semibold">Stockage Hors-Ligne:</span>
+                <span className="text-white font-medium">
+                  {(storageStats.usageBytes / (1024 * 1024)).toFixed(1)} MB
+                </span>
+                <span className="text-white/40">
+                  / {(storageStats.quotaBytes / (1024 * 1024 * 1024)).toFixed(1)} GB
+                </span>
+                <span className="text-xs text-purple-300/60">
+                  ({storageStats.trackCount} titre{storageStats.trackCount > 1 ? "s" : ""})
+                </span>
+              </div>
+
+              {likedTracks.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBatchDownload(likedTracks, "Coups de cœur")}
+                  disabled={batchProgress.running}
+                  className="border-purple-500/30 hover:bg-purple-500/20 text-purple-200 text-xs gap-1.5 h-8"
+                >
+                  {batchProgress.running ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  Télécharger Coups de cœur ({likedTracks.length})
+                </Button>
+              )}
+            </div>
+
+            {/* Storage usage bar */}
+            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(
+                      3,
+                      (storageStats.usageBytes / storageStats.quotaBytes) * 100,
+                    ),
+                  )}%`,
+                }}
+              />
+            </div>
+
+            {/* Batch progress banner */}
+            {batchProgress.running && (
+              <div className="flex items-center gap-2 text-xs text-purple-300 animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
+                <span>
+                  Téléchargement ({batchProgress.completed}/{batchProgress.total}):{" "}
+                  <strong className="text-white">{batchProgress.title}</strong>
+                </span>
+              </div>
+            )}
           </div>
         )}
 
