@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { generateUniqueSlug } from "../services/profile-migration";
+import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
 const reviewRoles = ["admin", "moderator", "superuser"];
@@ -211,6 +212,11 @@ router.post("/:id/submit", requireAuth(), async (req, res) => {
        VALUES ($1, 'submitted', $2)`,
       [Number(req.params.id), Number(req.user?.userId)],
     );
+    notifyZapier("event_submission", {
+      eventId: result.rows[0].id,
+      status: result.rows[0].status,
+      submittedBy: Number(req.user?.userId),
+    });
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error("[events:submit]", error);

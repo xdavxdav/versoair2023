@@ -13,6 +13,7 @@ import {
   sendArtistApplicationConfirmation,
   sendArtistApplicationAdminNotification,
 } from "../services/email-service";
+import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
 
@@ -301,6 +302,14 @@ router.post("/apply", async (req: Request, res: Response) => {
     );
 
     const newApp = result.rows[0];
+
+    notifyZapier("artist_application", {
+      applicationId: newApp.id,
+      email,
+      stageName,
+      genre,
+      country,
+    });
 
     // ── Emails (non-blocking) ──────────────────────────────────────────────────
     const adminEmail =

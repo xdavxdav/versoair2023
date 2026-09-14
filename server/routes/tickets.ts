@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { sql } from "drizzle-orm";
+import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
 
@@ -94,6 +95,7 @@ router.post("/", async (req, res) => {
               VALUES (${payload.title || "Untitled"}, ${payload.description || ""}, ${payload.status || "open"}, ${priority}, ${payload.category || "general"}, ${payload.reporter || null}, ${payload.requesterEmail || null}, ${payload.assigneeId || null}, ${payload.team || null}, ${payload.source || "portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
               RETURNING *`,
         );
+        notifyZapier("ticket", inserted.rows[0]);
         return res.json(inserted.rows[0]);
       } catch (dbError: any) {
         console.error("❌ Database insert error:", dbError);
@@ -101,6 +103,7 @@ router.post("/", async (req, res) => {
     }
 
     inMemoryTickets.unshift(ticket);
+    notifyZapier("ticket", ticket);
     res.json(ticket);
   } catch (error: any) {
     console.error("❌ Create ticket failed:", error);
