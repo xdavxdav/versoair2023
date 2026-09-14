@@ -3,6 +3,7 @@ import * as schema from "@shared/schema";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { contactFormLimiter } from "../middleware/rate-limiter";
+import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
 
@@ -66,6 +67,8 @@ router.post(
     } catch (emailErr) {
       console.warn("[CONTACT] Email send failed (non-blocking):", emailErr);
     }
+
+    notifyZapier("contact", { name, email, phone, subject, message });
 
     res.json({
       success: true,
