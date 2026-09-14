@@ -234,13 +234,43 @@ export default function ArcadePage() {
       icon: "📝",
       color: "from-amber-600 to-orange-600",
       borderColor: "border-amber-500",
-      rounds: 5,
+      rounds: 6,
       timePerRound: 15,
       minWager: 10,
       format: "1v1",
       commission: "10%",
-      available: false,
-      comingSoon: true,
+      available: true,
+      comingSoon: false,
+    },
+    {
+      id: "guess",
+      name: "Name That Track",
+      description: "Identify the song and hit creators. Speed matters!",
+      icon: "🎧",
+      color: "from-cyan-600 to-blue-600",
+      borderColor: "border-cyan-500",
+      rounds: 5,
+      timePerRound: 12,
+      minWager: 15,
+      format: "1v1",
+      commission: "10%",
+      available: true,
+      comingSoon: false,
+    },
+    {
+      id: "decade",
+      name: "Decade Dash",
+      description: "Guess the release era: 70s, 80s, 90s, 2000s or 2010s-2020s!",
+      icon: "📅",
+      color: "from-violet-600 to-indigo-600",
+      borderColor: "border-violet-500",
+      rounds: 5,
+      timePerRound: 10,
+      minWager: 5,
+      format: "1v1",
+      commission: "10%",
+      available: true,
+      comingSoon: false,
     },
     {
       id: "beatmatch",
@@ -258,49 +288,19 @@ export default function ArcadePage() {
       comingSoon: true,
     },
     {
-      id: "guess",
-      name: "Name That Track",
-      description: "Identify the song from a short audio clip. Speed matters!",
-      icon: "🎧",
-      color: "from-cyan-600 to-blue-600",
-      borderColor: "border-cyan-500",
-      rounds: 7,
-      timePerRound: 10,
-      minWager: 15,
-      format: "1v1",
-      commission: "10%",
-      available: false,
-      comingSoon: true,
-    },
-    {
       id: "artist",
       name: "Artist Showdown",
-      description: "Who's the artist? Match tracks to their creators.",
+      description: "Who's the artist? Match tracks and albums to their creators.",
       icon: "🎤",
       color: "from-green-600 to-emerald-600",
       borderColor: "border-green-500",
-      rounds: 6,
+      rounds: 5,
       timePerRound: 12,
       minWager: 10,
       format: "1v1",
       commission: "10%",
-      available: false,
-      comingSoon: true,
-    },
-    {
-      id: "decade",
-      name: "Decade Dash",
-      description: "Guess the decade! 70s, 80s, 90s, 2000s or 2010s?",
-      icon: "📅",
-      color: "from-violet-600 to-indigo-600",
-      borderColor: "border-violet-500",
-      rounds: 10,
-      timePerRound: 8,
-      minWager: 5,
-      format: "1v1",
-      commission: "10%",
-      available: false,
-      comingSoon: true,
+      available: true,
+      comingSoon: false,
     },
   ];
 
@@ -449,10 +449,19 @@ export default function ArcadePage() {
       navigate("/artist-portal");
       return;
     }
+    const gameTypeMapping: Record<string, string> = {
+      trivia: "music_trivia",
+      lyrics: "lyrics",
+      guess: "guess",
+      decade: "decade",
+      artist: "artist",
+    };
+    const mappedType = gameTypeMapping[selectedGame] || "music_trivia";
+
     const res = await authJson("/api/games/challenge", {
-      game_type: "music_trivia",
+      game_type: mappedType,
       wager_amount: 0,
-      round_count: 10,
+      round_count: currentGame.rounds || 10,
     });
     const data = await res.json();
     if (!res.ok) {
@@ -479,7 +488,19 @@ export default function ArcadePage() {
     refetchWallet();
     refetchOpen();
     refetchMy();
-  }, [user, wagerAmount, wallet, toast, refetchWallet, refetchOpen, refetchMy]);
+  }, [
+    user,
+    isAuthenticated,
+    selectedGame,
+    currentGame.rounds,
+    wagerAmount,
+    wallet,
+    toast,
+    navigate,
+    refetchWallet,
+    refetchOpen,
+    refetchMy,
+  ]);
 
   // ── Join match ──
   const joinMatch = useCallback(

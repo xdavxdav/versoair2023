@@ -13,6 +13,8 @@ const router = Router();
 // ═══════════════════════════════════════════════════════════════════
 // TRIVIA QUESTION BANK (expandable — eventually from DB)
 // ═══════════════════════════════════════════════════════════════════
+// TRIVIA & SKILL QUESTION BANKS (Multi-genre & multi-category)
+// ═══════════════════════════════════════════════════════════════════
 const TRIVIA_QUESTIONS = [
   {
     q: "Quel artiste a popularisé l'Afrobeats à l'international en 2020 ?",
@@ -89,6 +91,105 @@ const TRIVIA_QUESTIONS = [
     options: ["Sarz", "Wizkid", "Masterkraft", "Tekno"],
     answer: 1,
   },
+  {
+    q: "Quel est le tempo habituel d'un morceau d'Amapiano ?",
+    options: ["110 - 116 BPM", "130 - 140 BPM", "85 - 95 BPM", "160 - 170 BPM"],
+    answer: 0,
+  },
+  {
+    q: "Quel instrument traditionnel ouest-africain est un xylophone sur calebasses ?",
+    options: ["Kora", "Balafon", "Djembe", "Ngoni"],
+    answer: 1,
+  },
+];
+
+const LYRICS_QUESTIONS = [
+  {
+    q: "Complétez : 'Premier Gaou n'est pas gaou oh, c'est le...'",
+    options: ["deuxième gaou qui est gnata", "dernier gaou qui pleure", "vrai gaou d'Abidjan", "gaou sans argent"],
+    answer: 0,
+  },
+  {
+    q: "Dans 'Ye' de Burna Boy : 'I can't come and kill myself, I make money...'",
+    options: ["everyday", "and flex", "for my life", "all the time"],
+    answer: 1,
+  },
+  {
+    q: "Dans 'Essence' de Wizkid & Tems : 'You don't need no other body...'",
+    options: ["only you can hold me", "you dey make me feel alright", "baby girl you shine so bright", "say my body is your body"],
+    answer: 0,
+  },
+  {
+    q: "Complétez : 'Sapés comme jamais, loulou et...' ",
+    options: ["gucci", "boutin", "prada", "versace"],
+    answer: 1,
+  },
+  {
+    q: "Dans 'Jerusalema' de Master KG : 'Jerusalema ikhaya lami, zungangishiyi...'",
+    options: ["la phantsi", "lana", "ebusuku", "kude"],
+    answer: 1,
+  },
+  {
+    q: "Dans 'Calm Down' de Rema : 'Baby, calm down, calm down, girl this your body...'",
+    options: ["dey put my heart for lockdown", "e dey give me fever", "is sweet like sugar", "dey make me crazy"],
+    answer: 0,
+  },
+];
+
+const GUESS_QUESTIONS = [
+  {
+    q: "Qui interprète le titre mondial 'Love Nwantiti' ?",
+    options: ["CKay", "Omah Lay", "Ruger", "Joeboy"],
+    answer: 0,
+  },
+  {
+    q: "Qui a composé la chanson mythique 'Soul Makossa' en 1972 ?",
+    options: ["Manu Dibango", "Francis Bebey", "André-Marie Tala", "Eboa Lotin"],
+    answer: 0,
+  },
+  {
+    q: "Qui chante 'Water' devenu viral sur TikTok et Grammy Winner ?",
+    options: ["Tyla", "Ayra Starr", "Tems", "Amaarae"],
+    answer: 0,
+  },
+  {
+    q: "Quel collectif ivoirien est célèbre pour le titre '1er Gaou' ?",
+    options: ["Magic System", "Tour 2 Garde", "Kiff No Beat", "Espoir 2000"],
+    answer: 0,
+  },
+  {
+    q: "Qui a sorti l'album acclamé 'Made in Lagos' en 2020 ?",
+    options: ["Wizkid", "Davido", "Burna Boy", "Olamide"],
+    answer: 0,
+  },
+];
+
+const DECADE_QUESTIONS = [
+  {
+    q: "Dans quelle décennie est sorti l'album 'Zombie' de Fela Kuti ?",
+    options: ["Années 1960", "Années 1970", "Années 1980", "Années 1990"],
+    answer: 1,
+  },
+  {
+    q: "Dans quelle décennie le Coupé-Décalé a-t-il explosé avec Douk Saga ?",
+    options: ["Années 1990", "Années 2000", "Années 2010", "Années 2020"],
+    answer: 1,
+  },
+  {
+    q: "Dans quelle décennie l'Amapiano est-il devenu un phénomène planétaire ?",
+    options: ["Années 2000", "Années 2010", "Années 2020", "Années 1990"],
+    answer: 2,
+  },
+  {
+    q: "Dans quelle décennie Bob Marley a-t-il sorti l'album 'Exodus' ?",
+    options: ["Années 1960", "Années 1970", "Années 1980", "Années 1990"],
+    answer: 1,
+  },
+  {
+    q: "Dans quelle décennie le titre 'Yéké Yéké' de Mory Kanté a-t-il dominé les charts européens ?",
+    options: ["Années 1970", "Années 1980", "Années 1990", "Années 2000"],
+    answer: 1,
+  },
 ];
 
 // Test season setting: increase this as the question bank grows.
@@ -96,8 +197,13 @@ const TRIVIA_QUESTIONS = [
 const TRIVIA_TEST_ROUNDS = 10;
 const TRIVIA_MAX_ROUNDS = 10;
 
-function pickRandomQuestions(count: number) {
-  const shuffled = [...TRIVIA_QUESTIONS].sort(() => Math.random() - 0.5);
+function pickRandomQuestions(gameType: string = "music_trivia", count: number = 5) {
+  let pool = TRIVIA_QUESTIONS;
+  if (gameType === "lyrics") pool = LYRICS_QUESTIONS;
+  else if (gameType === "guess" || gameType === "artist") pool = GUESS_QUESTIONS;
+  else if (gameType === "decade") pool = DECADE_QUESTIONS;
+
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
@@ -240,7 +346,17 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
     const rounds = req.body.rounds || req.body.round_count;
 
     // Validate game type
-    const validTypes = ["music_trivia", "prediction_market", "card_battle"];
+    const validTypes = [
+      "music_trivia",
+      "trivia",
+      "lyrics",
+      "guess",
+      "decade",
+      "artist",
+      "beatmatch",
+      "prediction_market",
+      "card_battle",
+    ];
     if (!validTypes.includes(gameType)) {
       return res.status(400).json({ error: "Invalid game type" });
     }
@@ -297,15 +413,24 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
       }
     }
 
-    // Generate questions for trivia
+    // Generate questions for trivia & skill games
     const roundCount = Math.min(
       Math.max(parseInt(rounds) || TRIVIA_TEST_ROUNDS, 3),
       TRIVIA_MAX_ROUNDS,
     );
     let gameState: Record<string, any> = {};
 
-    if (gameType === "music_trivia") {
-      const questions = pickRandomQuestions(roundCount);
+    const questionBasedGames = [
+      "music_trivia",
+      "trivia",
+      "lyrics",
+      "guess",
+      "decade",
+      "artist",
+    ];
+
+    if (questionBasedGames.includes(gameType)) {
+      const questions = pickRandomQuestions(gameType, roundCount);
       gameState = {
         questions: questions.map((q) => ({
           q: q.q,
@@ -363,9 +488,9 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
 
     // Return match without answers
     const safeState =
-      gameType === "music_trivia"
+      questionBasedGames.includes(gameType)
         ? {
-            questions: gameState.questions.map((q: any) => ({
+            questions: (gameState.questions || []).map((q: any) => ({
               q: q.q,
               options: q.options,
             })),
