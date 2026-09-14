@@ -279,6 +279,7 @@ const MobileMenuBubble = lazy(() =>
     default: m.MobileMenuBubble,
   })),
 );
+const VersoAIChat = lazy(() => import("@/components/VersoAIChat"));
 import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
@@ -319,6 +320,7 @@ const BETA_ROUTE_PREFIXES = [
   "/faq",
   "/sav",
   "/versoai",
+  "/ai",
   "/help",
   "/privacy",
   "/terms",
@@ -656,6 +658,7 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/sav" component={SAV} />
       <Route path="/versoai" component={VersoAI} />
+      <Route path="/ai">{() => <Redirect to="/versoai" />}</Route>
       <Route path="/help" component={HelpCenter} />
       <Route path="/help/account" component={AccountHelp} />
       <Route path="/help/payments" component={PaymentsHelp} />
@@ -1165,6 +1168,11 @@ function AppContent() {
           <MessengerLauncher hidden />
         </Suspense>
       )}
+
+      {/* Global VersoAI Assistant (Talk & Chat) */}
+      <Suspense fallback={null}>
+        <VersoAIChat />
+      </Suspense>
 
       {/* Notification bell — fixed top-right, visible on all non-auth pages.
           Dropped below the bar on /blog & /marketplace since BlogNavbar has
