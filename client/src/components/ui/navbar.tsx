@@ -360,6 +360,12 @@ export default function Navbar({
                     Divertissement
                   </Link>
                   <Link
+                    href="/events"
+                    className="block px-4 py-2 text-purple-600 hover:bg-purple-50 whitespace-nowrap font-medium"
+                  >
+                    🎉 Événements
+                  </Link>
+                  <Link
                     href="/businesses-directory"
                     className="col-span-2 block px-4 py-2 text-gray-600 hover:bg-gray-100 text-center border-t border-gray-100 mt-1 pt-2 font-medium"
                   >
@@ -605,6 +611,12 @@ export default function Navbar({
                       className="block px-3 py-2 text-sm text-gray-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors"
                     >
                       Divertissement
+                    </Link>
+                    <Link
+                      href="/events"
+                      className="block px-3 py-2 text-sm text-purple-700 hover:bg-purple-50 rounded-lg font-medium transition-colors"
+                    >
+                      🎉 Événements
                     </Link>
                   </div>
                   <div className="border-t border-amber-100 mt-2 pt-2 px-1">

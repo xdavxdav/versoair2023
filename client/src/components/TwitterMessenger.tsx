@@ -683,7 +683,7 @@ export function TwitterMessenger({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Direct Messages"
-              className="w-full rounded-full border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:border-cyan-500/30 focus:bg-white/[0.05] focus:outline-none transition-colors"
+              className="w-full rounded-full border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-4 text-[16px] text-white placeholder:text-white/30 focus:border-cyan-500/30 focus:bg-white/[0.05] focus:outline-none transition-colors [touch-action:manipulation]"
             />
           </div>
         </div>
@@ -949,9 +949,9 @@ export function TwitterMessenger({
                         sendMessage();
                       }
                     }}
-                    placeholder="Start a new message"
+                    placeholder="Start a new message…"
                     rows={1}
-                    className="max-h-32 flex-1 resize-none bg-transparent py-1 text-[15px] text-white placeholder:text-white/25 focus:outline-none"
+                    className="max-h-32 flex-1 resize-none bg-transparent py-1 text-[16px] text-white placeholder:text-white/35 focus:outline-none [touch-action:manipulation]"
                     style={{ minHeight: "24px" }}
                   />
                 </div>
@@ -1081,7 +1081,7 @@ export function TwitterMessenger({
                       fetchContacts(e.target.value);
                     }}
                     placeholder="Search by name, @username, or role..."
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-4 text-xs text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-4 text-[16px] text-white placeholder:text-white/30 focus:border-cyan-500/40 focus:outline-none [touch-action:manipulation]"
                     autoFocus
                   />
                 </div>

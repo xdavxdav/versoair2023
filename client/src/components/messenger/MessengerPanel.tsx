@@ -678,7 +678,7 @@ export default function MessengerPanel({
                       fetchContacts(e.target.value);
                     }}
                     placeholder="Search people to message…"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-[16px] text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 [touch-action:manipulation]"
                     autoFocus
                   />
                 </div>
@@ -785,7 +785,7 @@ export default function MessengerPanel({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search conversations…"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-[16px] text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 [touch-action:manipulation]"
                     />
                   </div>
                 </div>
@@ -1067,7 +1067,7 @@ export default function MessengerPanel({
                     }}
                     placeholder="Write a message…"
                     maxLength={2000}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[16px] text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 [touch-action:manipulation]"
                   />
                   <button
                     onClick={sendMessage}

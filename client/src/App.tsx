@@ -360,6 +360,8 @@ const BETA_ROUTE_PREFIXES = [
   "/artisans",
   "/artistes",
   "/programs",
+  "/events",
+  "/event/",
   "/communities",
   "/community",
   "/artisan-workshops",
