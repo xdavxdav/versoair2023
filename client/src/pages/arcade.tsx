@@ -260,7 +260,8 @@ export default function ArcadePage() {
     {
       id: "decade",
       name: "Decade Dash",
-      description: "Guess the release era: 70s, 80s, 90s, 2000s or 2010s-2020s!",
+      description:
+        "Guess the release era: 70s, 80s, 90s, 2000s or 2010s-2020s!",
       icon: "📅",
       color: "from-violet-600 to-indigo-600",
       borderColor: "border-violet-500",
@@ -290,7 +291,8 @@ export default function ArcadePage() {
     {
       id: "artist",
       name: "Artist Showdown",
-      description: "Who's the artist? Match tracks and albums to their creators.",
+      description:
+        "Who's the artist? Match tracks and albums to their creators.",
       icon: "🎤",
       color: "from-green-600 to-emerald-600",
       borderColor: "border-green-500",

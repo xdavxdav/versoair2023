@@ -1498,7 +1498,8 @@ export default function Home() {
           pinSpacing: true,
           scrub: 0.35, // Responsive 1:1 tracking without floaty lag
           start: "top top",
-          end: () => `+=${window.innerHeight * (NUM_PANELS - 1) * scrollMultiplier}`,
+          end: () =>
+            `+=${window.innerHeight * (NUM_PANELS - 1) * scrollMultiplier}`,
           invalidateOnRefresh: true,
           anticipatePin: 1,
           markers: false,
