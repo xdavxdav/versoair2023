@@ -68,6 +68,7 @@ const MOBILE_MENU_GROUPS = [
       ["Trade", "/commerce"],
       ["Accommodation", "/logement"],
       ["Entertainment", "/divertissement"],
+      ["Events", "/events"],
       ["Business Directory", "/businesses-directory"],
     ],
   },

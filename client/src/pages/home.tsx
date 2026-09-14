@@ -1459,15 +1459,15 @@ export default function Home() {
     initializeDatabase();
   }, [selectedCountry]);
 
-  // FIXED: Smooth zoom-out → slide → zoom-in effect
+  // FIXED: Smooth continuous 1:1 scroll without resize jitter
   useLayoutEffect(() => {
     if (!panelsWrapperRef.current || !panelsContainerRef.current) return;
 
-    // Let ScrollTrigger recalculate when the mobile viewport changes.
-    ScrollTrigger.config({ ignoreMobileResize: false });
-    // NOTE: normalizeScroll intentionally NOT used — it intercepts all
-    // touch/wheel events through JS causing jank. Each panel has
-    // touch-action: pan-y in its inline styles instead.
+    // Ignore mobile address bar collapse/expand to avoid jitter and re-pinning jumps
+    ScrollTrigger.config({
+      ignoreMobileResize: true,
+      autoRefreshEvents: "visibilitychange,orientationchange",
+    });
 
     // Kill all existing ScrollTriggers for panels
     ScrollTrigger.getAll().forEach((trigger: ScrollTrigger) => {
@@ -1483,13 +1483,10 @@ export default function Home() {
         force3D: true,
       });
 
-      // SIMPLIFIED: one continuous linear slide, driven 1:1 by scroll.
-      // The previous version layered separate zoom-out/slide/zoom-in tweens
-      // on manually-guessed time offsets ("start+=X-0.2") — at variable
-      // scroll speed or when reversing direction those overlapping tweens
-      // fell out of sync with each other and with the scrub lag, which is
-      // what caused the "fighting"/shifting feel. A single tween can't
-      // fight itself, so this is inherently smooth in both directions.
+      // Responsive scrub and distance for jitter-free 1:1 scrubbing
+      const isMobile = window.innerWidth < 768;
+      const scrollMultiplier = isMobile ? 0.75 : 0.9;
+
       gsap.to(panelsContainerRef.current, {
         x: `-${((NUM_PANELS - 1) * 100) / NUM_PANELS}%`,
         ease: "none",
@@ -1499,9 +1496,9 @@ export default function Home() {
           trigger: panelsWrapperRef.current,
           pin: true,
           pinSpacing: true,
-          scrub: 0.8,
+          scrub: 0.35, // Responsive 1:1 tracking without floaty lag
           start: "top top",
-          end: () => `+=${window.innerHeight * (NUM_PANELS - 1) * 1.0}`, // Longer scroll = slower, more deliberate transitions
+          end: () => `+=${window.innerHeight * (NUM_PANELS - 1) * scrollMultiplier}`,
           invalidateOnRefresh: true,
           anticipatePin: 1,
           markers: false,
@@ -1860,6 +1857,7 @@ export default function Home() {
   }, [handleAiSearch, searchMode, debouncedSearchQuery]);
 
   // Annuaire Musicale — fetch genres and countries on mount
+  // Annuaire Musicale — fetch genres, countries, and initial popular preview on mount
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -1868,10 +1866,42 @@ export default function Home() {
           fetch(`${API_BASE_URL}/api/artists/countries`),
         ]);
         const genresJson = await genresRes.json();
-        if (genresJson.success) setArtistAnnuaireGenres(genresJson.data || []);
+        if (genresJson.success && genresJson.data?.length > 0) {
+          setArtistAnnuaireGenres(genresJson.data);
+        } else {
+          setArtistAnnuaireGenres([
+            "Afrobeats",
+            "Amapiano",
+            "Coupé-Décalé",
+            "Highlife",
+            "Gqom",
+            "Zouk",
+            "Makossa",
+            "Ndombolo",
+            "Bikutsi",
+            "Reggae",
+          ]);
+        }
+
         const countriesJson = await countriesRes.json();
-        if (countriesJson.success)
-          setArtistAnnuaireCountries(countriesJson.data || []);
+        if (countriesJson.success && countriesJson.data?.length > 0) {
+          setArtistAnnuaireCountries(countriesJson.data);
+        } else {
+          setArtistAnnuaireCountries([
+            "CI",
+            "NG",
+            "SN",
+            "GH",
+            "CM",
+            "ZA",
+            "CD",
+            "FR",
+            "CA",
+          ]);
+        }
+
+        // Initial preview load of artists so the drawer is never empty on open
+        handleArtistAnnuaireSearch();
       } catch (e) {
         console.error("Failed to fetch artist filters:", e);
       }
