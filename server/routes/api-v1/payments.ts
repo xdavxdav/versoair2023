@@ -24,7 +24,11 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
 import { pool } from "../../db";
-import { optionalAuth, requireAuth, requireSuperuser } from "../../middleware/auth";
+import {
+  optionalAuth,
+  requireAuth,
+  requireSuperuser,
+} from "../../middleware/auth";
 
 const router = Router();
 

@@ -449,14 +449,18 @@ export default function Pricing() {
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl">{tier.icon}</span>
-                  <h3 className="text-lg font-bold text-slate-900">{tier.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {tier.name}
+                  </h3>
                 </div>
                 <p className="text-slate-500 text-xs mb-3">{tier.tagline}</p>
 
                 {/* Price */}
                 <div className="mb-1">
                   {tier.monthlyPrice === 0 ? (
-                    <span className="text-2xl font-bold text-slate-900">Free</span>
+                    <span className="text-2xl font-bold text-slate-900">
+                      Free
+                    </span>
                   ) : (
                     <>
                       <span className="text-2xl font-bold text-slate-900">
