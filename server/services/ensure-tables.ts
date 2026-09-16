@@ -1244,6 +1244,18 @@ const TABLE_STATEMENTS: TableDef[] = [
     )`,
   },
 
+  {
+    table: "push_subscriptions",
+    sql: `CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      endpoint TEXT NOT NULL UNIQUE,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+
   // ═══════════════════════════════════════════════
   // 16. DIGITAL PASSPORT VERIFICATION
   // ═══════════════════════════════════════════════

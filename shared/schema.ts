@@ -793,6 +793,18 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
 });
 
+// Browser/OS push notification subscriptions (Web Push API), one row per device/browser
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // --- 8. RELATION MAPS (Drizzle Query API) ---
 export const userRelations = relations(users, ({ many }) => ({
   businessesOwned: many(businesses),

@@ -80,3 +80,47 @@ self.addEventListener("fetch", (event) => {
     ).catch(() => caches.match(isNavigation ? "/index.html" : request)),
   );
 });
+
+// Push: show a system notification for messages sent via the Web Push API.
+self.addEventListener("push", (event) => {
+  let payload = {
+    title: "VersoAir",
+    body: "You have a new notification.",
+    url: "/",
+  };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch {
+    // Non-JSON payload — fall back to defaults above.
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/Logo-page.png",
+      badge: "/Logo-page.png",
+      data: { url: payload.url || "/" },
+    }),
+  );
+});
+
+// Notification click: focus an existing tab if open, otherwise open a new one.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(targetUrl) && "focus" in client) {
+            return client.focus();
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+      }),
+  );
+});

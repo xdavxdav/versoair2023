@@ -2,6 +2,7 @@ import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import { notificationEmitter } from "../services/notification-service";
+import { sendPushToUser } from "../services/push-service";
 
 let io: SocketIOServer | null = null;
 const userConnections = new Map<number, string[]>(); // userId -> [socketIds]
@@ -349,6 +350,22 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
       createdAt: data.timestamp || new Date().toISOString(),
       read: false,
     });
+  });
+
+  // Also deliver as a browser/OS push notification (works even when the app/tab is closed).
+  // Independent of the socket broadcast above — no-op if VAPID keys aren't configured.
+  notificationEmitter.on("notification", (data: any) => {
+    if (!data?.userId) return;
+    sendPushToUser(data.userId, {
+      title: data.title || data.actorName || "VersoAir",
+      body: data.message || data.title || "",
+      url: data.entityUrl || data.actionUrl || "/",
+    }).catch((err) =>
+      console.error(
+        "[PUSH] Failed to deliver push notification:",
+        err?.message || err,
+      ),
+    );
   });
 
   // Broadcast an inbox message to the recipient in real-time — powers live

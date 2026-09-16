@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
+  BellRing,
   X,
   Check,
   CheckCheck,
@@ -19,6 +20,7 @@ import {
   useNotificationSocket,
   type SocketNotificationEvent,
 } from "@/hooks/use-inbox-socket";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 interface AppNotification {
   id: string;
@@ -62,6 +64,7 @@ export default function NotificationCenter() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const push = usePushNotifications();
 
   const unread = notifications.filter((n) => !n.read).length;
 
@@ -203,6 +206,22 @@ export default function NotificationCenter() {
                 Notifications
               </span>
               <div className="flex items-center gap-2">
+                {push.isSupported && (
+                  <button
+                    onClick={() =>
+                      push.isSubscribed ? push.unsubscribe() : push.subscribe()
+                    }
+                    disabled={push.isLoading}
+                    className="flex items-center gap-1 text-xs text-white/50 hover:text-amber-300 transition-colors disabled:opacity-50"
+                    title={
+                      push.isSubscribed
+                        ? "Disable browser notifications"
+                        : "Enable browser notifications (even when the app is closed)"
+                    }
+                  >
+                    <BellRing className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 {unread > 0 && (
                   <button
                     onClick={markAllRead}

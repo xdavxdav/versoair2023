@@ -24,6 +24,7 @@ import submissionRequestsRouter from "./routes/submission-requests";
 import capabilitiesRouter from "./routes/capabilities";
 import evaluationsRouter from "./routes/evaluations";
 import notificationsRouter from "./routes/notifications";
+import pushRouter from "./routes/push";
 import marketingRouter from "./routes/marketing";
 import userHistoryRouter from "./routes/user-history";
 import trackUploadRouter from "./routes/track-upload";
@@ -182,6 +183,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/jobs", jobsRouter);
   app.use("/api/music", musicRouter);
   app.use("/api/notifications", notificationsRouter);
+  app.use("/api/push", pushRouter);
   app.use("/api/streamroyale", streamroyaleRouter);
 
   // ─── PREVIEW ROUTE (must come before streaming router to avoid :id catch) ───
