@@ -85,7 +85,27 @@ export function serveStatic(app: Express) {
       const runtimeScript = siblingUrl
         ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>\n  `
         : "";
-      const injected = html.replace("</head>", `${runtimeScript}</head>`);
+      let injected = html.replace("</head>", `${runtimeScript}</head>`);
+
+      // Crawlers (Facebook/WhatsApp/Slack/etc.) require absolute og:image/twitter:image URLs.
+      const origin = (
+        process.env.PRODUCTION_URL ||
+        process.env.APP_PUBLIC_URL ||
+        `${req.protocol}://${req.get("host")}`
+      ).replace(/\/+$/, "");
+      injected = injected.replace(
+        /(property="og:image"\s+content=")\/([^"]+)"/,
+        `$1${origin}/$2"`,
+      );
+      injected = injected.replace(
+        /(name="twitter:image"\s+content=")\/([^"]+)"/,
+        `$1${origin}/$2"`,
+      );
+      injected = injected.replace(
+        /(property="og:url"\s+content=")\/?([^"]*)"/,
+        `$1${origin}${req.originalUrl}"`,
+      );
+
       res.set("Content-Type", "text/html");
       res.send(injected);
     });
