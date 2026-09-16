@@ -12,6 +12,8 @@
     "check": "tsc",
     "check:api": "node scripts/check-api-contract.cjs",
     "db:push": "drizzle-kit push --force",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:seed-streaming": "node _seed_streaming_data.cjs",
     "db:seed-streaming:reset": "node _seed_streaming_data.cjs --reset",
     "db:seed-launch-businesses": "node scripts/seed-launch-businesses.cjs",

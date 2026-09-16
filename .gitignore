@@ -20,6 +20,7 @@ vite.config.ts.*
 !GEOADMIN_BUSINESS_MANAGEMENT.md
 !GEOADMIN_IMPLEMENTATION_COMPLETE.md
 *.sql
+!migrations/**/*.sql
 *.txt
 *.bak
 pwds*

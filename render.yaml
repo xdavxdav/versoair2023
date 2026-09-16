@@ -10,7 +10,7 @@ services:
     runtime: node
     plan: free
     healthCheckPath: /api/health
-    buildCommand: npm ci && npm run build && npm run db:push
+    buildCommand: npm ci && npm run build && npm run db:migrate
     startCommand: npm start
     envVars:
       - key: NODE_ENV
