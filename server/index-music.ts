@@ -186,9 +186,15 @@ app.use((req, res, next) => {
 (async () => {
   console.log("🔧 [SERVER] Starting server initialization...");
 
-  // Initialize email transporter for notifications
-  initializeEmailTransporter();
-  console.log("✅ [SERVER] Email service initialized");
+  // Non-blocking: SMTP setup isn't required to start serving requests/health checks
+  initializeEmailTransporter()
+    .then(() => console.log("✅ [SERVER] Email service initialized"))
+    .catch((err) =>
+      console.error(
+        "❌ [SERVER] Email service init failed (non-fatal):",
+        err.message,
+      ),
+    );
 
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
   await ensureAllTables();
@@ -197,35 +203,6 @@ app.use((req, res, next) => {
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
   console.log("✅ [SERVER] Routes registered successfully");
-
-  // Setup category integrity check (runs daily + on startup)
-  setupCategoryIntegrityCheck();
-  console.log("✅ [SERVER] Category integrity check scheduled");
-
-  // Start digest worker for batched email delivery
-  startDigestWorker();
-  console.log(
-    "✅ [SERVER] Digest worker started (hourly email queue processor)",
-  );
-
-  // Setup subscription expiry check (runs daily)
-  setupSubscriptionExpiryCron();
-  console.log("✅ [SERVER] Subscription expiry cron scheduled");
-
-  // Setup StreamRoyale royalty distribution engine (weekly Monday 06:00 UTC)
-  setupRoyaltyEngine();
-  console.log("✅ [SERVER] StreamRoyale royalty engine started");
-
-  // Setup marketing cron jobs (journal generation + newsletter dispatch)
-  setupJournalCron();
-  console.log("✅ [SERVER] Journal cron scheduled (weekly + monthly)");
-
-  setupNewsletterCron();
-  console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
-
-  // Setup marketplace auto-approve (approves pending listings after 24h)
-  setupMarketplaceAutoApprove();
-  console.log("✅ [SERVER] Marketplace auto-approve cron scheduled (hourly)");
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -273,6 +250,32 @@ app.use((req, res, next) => {
       console.log("🔒 [SERVER] CORS enabled for:", allowedOrigins);
       console.log("🌍 [SERVER] NODE_ENV:", process.env.NODE_ENV);
       log(`serving on port ${port}`);
+
+      // ---------- BACKGROUND JOBS (non-blocking, started after listen) ----------
+      setupCategoryIntegrityCheck();
+      console.log("✅ [SERVER] Category integrity check scheduled");
+
+      startDigestWorker();
+      console.log(
+        "✅ [SERVER] Digest worker started (hourly email queue processor)",
+      );
+
+      setupSubscriptionExpiryCron();
+      console.log("✅ [SERVER] Subscription expiry cron scheduled");
+
+      setupRoyaltyEngine();
+      console.log("✅ [SERVER] StreamRoyale royalty engine started");
+
+      setupJournalCron();
+      console.log("✅ [SERVER] Journal cron scheduled (weekly + monthly)");
+
+      setupNewsletterCron();
+      console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
+
+      setupMarketplaceAutoApprove();
+      console.log(
+        "✅ [SERVER] Marketplace auto-approve cron scheduled (hourly)",
+      );
     },
   );
 })().catch((err) => {

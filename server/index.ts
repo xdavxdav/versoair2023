@@ -250,9 +250,12 @@ app.use((req, res, next) => {
 (async () => {
   serverLog.info("Starting server initialization...");
 
-  // Initialize email transporter for notifications
-  await initializeEmailTransporter();
-  serverLog.info("Email service initialized");
+  // Non-blocking: SMTP setup isn't required to start serving requests/health checks
+  initializeEmailTransporter()
+    .then(() => serverLog.info("Email service initialized"))
+    .catch((err) =>
+      serverLog.error("Email service init failed (non-fatal):", err.message),
+    );
 
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
   await ensureAllTables();
@@ -272,43 +275,6 @@ app.use((req, res, next) => {
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
   serverLog.info("Routes registered successfully");
-
-  // Setup category integrity check (runs daily + on startup)
-  setupCategoryIntegrityCheck();
-  serverLog.info("Category integrity check scheduled");
-
-  // Start digest worker for batched email delivery
-  startDigestWorker();
-  serverLog.info("Digest worker started (hourly email queue processor)");
-
-  // Setup subscription expiry check (runs daily)
-  setupSubscriptionExpiryCron();
-  serverLog.info("Subscription expiry cron scheduled");
-
-  // Setup StreamRoyale royalty distribution engine (weekly Monday 06:00 UTC)
-  setupRoyaltyEngine();
-  serverLog.info("StreamRoyale royalty engine started");
-
-  // Setup marketing cron jobs (journal generation + newsletter dispatch)
-  setupJournalCron();
-  serverLog.info("Journal cron scheduled (weekly + monthly)");
-
-  setupNewsletterCron();
-  serverLog.info("Newsletter cron scheduled (hourly)");
-
-  // Setup marketplace auto-approve (approves pending listings after 24h)
-  setupMarketplaceAutoApprove();
-  serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
-
-  // Setup session cleanup (removes expired sessions every 30 mins)
-  setupSessionCleanup();
-  serverLog.info("Session cleanup job scheduled (every 30 minutes)");
-
-  // Start performance monitoring in production
-  if (process.env.NODE_ENV === "production") {
-    startStatsReporter(5); // Report every 5 minutes
-    serverLog.info("Performance stats reporter started (every 5 minutes)");
-  }
 
   // Error middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -349,6 +315,9 @@ app.use((req, res, next) => {
   }
 
   // ---------- START SERVER ----------
+  // Bind the port and start answering /api/health as early as possible.
+  // Secondary background jobs (crons, workers, stats) are started in the
+  // listen callback below, AFTER the server is already accepting traffic.
   const port = parseInt(process.env.PORT || "5003", 10);
 
   server.listen(
@@ -361,6 +330,36 @@ app.use((req, res, next) => {
       serverLog.info(`CORS enabled for: ${allowedOrigins}`);
       serverLog.info(`NODE_ENV: ${process.env.NODE_ENV}`);
       log(`serving on port ${port}`);
+
+      // ---------- BACKGROUND JOBS (non-blocking, started after listen) ----------
+      setupCategoryIntegrityCheck();
+      serverLog.info("Category integrity check scheduled");
+
+      startDigestWorker();
+      serverLog.info("Digest worker started (hourly email queue processor)");
+
+      setupSubscriptionExpiryCron();
+      serverLog.info("Subscription expiry cron scheduled");
+
+      setupRoyaltyEngine();
+      serverLog.info("StreamRoyale royalty engine started");
+
+      setupJournalCron();
+      serverLog.info("Journal cron scheduled (weekly + monthly)");
+
+      setupNewsletterCron();
+      serverLog.info("Newsletter cron scheduled (hourly)");
+
+      setupMarketplaceAutoApprove();
+      serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
+
+      setupSessionCleanup();
+      serverLog.info("Session cleanup job scheduled (every 30 minutes)");
+
+      if (process.env.NODE_ENV === "production") {
+        startStatsReporter(5); // Report every 5 minutes
+        serverLog.info("Performance stats reporter started (every 5 minutes)");
+      }
     },
   );
 })().catch((err) => {
