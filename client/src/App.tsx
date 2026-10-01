@@ -279,7 +279,6 @@ const MobileMenuBubble = lazy(() =>
     default: m.MobileMenuBubble,
   })),
 );
-const VersoAIChat = lazy(() => import("@/components/VersoAIChat"));
 import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
@@ -1171,10 +1170,9 @@ function AppContent() {
         </Suspense>
       )}
 
-      {/* Global VersoAI Assistant (Talk & Chat) */}
-      <Suspense fallback={null}>
-        <VersoAIChat />
-      </Suspense>
+      {/* VersoAI Assistant (Talk & Chat) — only on /versoai page.
+          The component is rendered directly in pages/versoai.tsx, so it
+          should NOT be mounted globally here. */}
 
       {/* Notification bell — fixed top-right, visible on all non-auth pages.
           Dropped below the bar on /blog & /marketplace since BlogNavbar has
