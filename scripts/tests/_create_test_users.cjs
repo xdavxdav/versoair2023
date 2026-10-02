@@ -1,116 +1,119 @@
 const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
+require("dotenv").config();
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-// Random per run — never hardcoded. Account is forced to change it on first login.
-const password =
-  crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12) +
-  "!" +
-  Math.floor(Math.random() * 90 + 10);
-const hash = bcrypt.hashSync(password, 12);
+if (!["development", "test"].includes(process.env.NODE_ENV)) {
+  throw new Error(
+    "GeoAdmin test accounts can only be seeded when NODE_ENV is development or test",
+  );
+}
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is required");
+}
 
 const testUsers = [
   {
-    username: "superadmin_test",
-    email: "superadmin@versoair.test",
+    username: process.env.GEOADMIN_SUPERUSER_USERNAME,
+    email: process.env.GEOADMIN_SUPERUSER_EMAIL,
+    password: process.env.GEOADMIN_SUPERUSER_PASSWORD,
     role: "superuser",
     tier: "enterprise",
     gateUsername: "joel_007",
   },
+  {
+    username: process.env.GEOADMIN_CEO_USERNAME,
+    email: process.env.GEOADMIN_CEO_EMAIL,
+    password: process.env.GEOADMIN_CEO_PASSWORD,
+    role: "admin",
+    tier: "enterprise",
+    gateUsername: "admin_025",
+  },
+  {
+    username: process.env.GEOADMIN_MODERATOR_USERNAME,
+    email: process.env.GEOADMIN_MODERATOR_EMAIL,
+    password: process.env.GEOADMIN_MODERATOR_PASSWORD,
+    role: "moderator",
+    tier: "enterprise",
+    gateUsername: "manager_001",
+  },
 ];
 
-(async () => {
-  console.log("\n🔐 Creating master account...\n");
-  console.log("Password:", password);
-  console.log("─".repeat(70));
-
-  // First, check which columns exist
-  const colResult = await pool.query(
-    "SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position",
-  );
-  const existingCols = colResult.rows.map((r) => r.column_name);
-
-  const hasVerified = existingCols.includes("is_verified");
-  const hasTier = existingCols.includes("subscription_tier");
-  const hasStatus = existingCols.includes("subscription_status");
-  const hasGateUsername = existingCols.includes("gate_username");
-  const hasMustChangePassword = existingCols.includes("must_change_password");
-
-  // Delete old test accounts
-  const oldEmails = [
-    "superadmin@versoair.test",
-    "operator@versoair.test",
-    "admin@versoair.test",
-    "moderator@versoair.test",
-    "owner@versoair.test",
-    "freeuser@versoair.test",
-  ];
-  for (const email of oldEmails) {
-    await pool.query("DELETE FROM users WHERE email = $1", [email]);
+for (const account of testUsers) {
+  if (!account.username || !account.email || !account.password) {
+    throw new Error("All GeoAdmin test account values must be set in .env");
   }
-  console.log("🗑️  Cleaned up old test accounts");
+  if (!/^[^@\s]+@[^@\s]+\.test$/i.test(account.email)) {
+    throw new Error(`Test account email must use the .test domain: ${account.email}`);
+  }
+  if (account.password.length < 12 || account.password.startsWith("REPLACE_")) {
+    throw new Error(
+      `Set a non-placeholder password of at least 12 characters for ${account.email}`,
+    );
+  }
+}
 
-  for (const u of testUsers) {
-    try {
-      let cols = "username, email, password, role, created_at";
-      let vals = "$1, $2, $3, $4, NOW()";
-      let params = [u.username, u.email, hash, u.role];
-      let idx = 5;
+if (
+  new Set(testUsers.map((account) => account.email.toLowerCase())).size !==
+    testUsers.length ||
+  new Set(testUsers.map((account) => account.username.toLowerCase())).size !==
+    testUsers.length ||
+  new Set(testUsers.map((account) => account.gateUsername)).size !==
+    testUsers.length
+) {
+  throw new Error("GeoAdmin test usernames, emails, and gate usernames must be unique");
+}
 
-      if (hasVerified) {
-        cols += ", is_verified";
-        vals += `, $${idx++}`;
-        params.push(true);
-      }
-      if (hasTier) {
-        cols += ", subscription_tier";
-        vals += `, $${idx++}`;
-        params.push(u.tier);
-      }
-      if (hasStatus) {
-        cols += ", subscription_status";
-        vals += `, $${idx++}`;
-        params.push("active");
-      }
-      if (hasGateUsername && u.gateUsername) {
-        cols += ", gate_username";
-        vals += `, $${idx++}`;
-        params.push(u.gateUsername);
-      }
-      if (hasMustChangePassword) {
-        cols += ", must_change_password";
-        vals += `, $${idx++}`;
-        params.push(true);
-      }
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-      const result = await pool.query(
-        `INSERT INTO users (${cols}) VALUES (${vals}) RETURNING id, username, email, role`,
-        params,
+async function seedGeoAdminTestUsers() {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    for (const account of testUsers) {
+      const passwordHash = await bcrypt.hash(account.password, 12);
+      const result = await client.query(
+        `INSERT INTO users (
+           username, email, password, role, is_verified, subscription_tier,
+           subscription_status, gate_username, must_change_password, created_at
+         )
+         VALUES ($1, $2, $3, $4, true, $5, 'active', $6, false, NOW())
+         ON CONFLICT (email) DO UPDATE SET
+           username = EXCLUDED.username,
+           password = EXCLUDED.password,
+           role = EXCLUDED.role,
+           is_verified = true,
+           subscription_tier = EXCLUDED.subscription_tier,
+           subscription_status = 'active',
+           gate_username = EXCLUDED.gate_username,
+           must_change_password = false
+         RETURNING id, username, email, role`,
+        [
+          account.username,
+          account.email.toLowerCase(),
+          passwordHash,
+          account.role,
+          account.tier,
+          account.gateUsername,
+        ],
       );
-      const row = result.rows[0];
+      const user = result.rows[0];
       console.log(
-        `✅ ${row.role.toUpperCase().padEnd(16)} | ${row.email.padEnd(30)} | id: ${row.id}`,
+        `Seeded ${user.role.padEnd(10)} ${user.username} (${user.email}); GeoAdmin username: ${account.gateUsername}`,
       );
-    } catch (err) {
-      console.error(`❌ Failed: ${u.username} — ${err.message}`);
     }
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
   }
+}
 
-  console.log("\n─".repeat(70));
-  console.log("\n📋 MASTER CREDENTIAL:");
-  console.log("─".repeat(70));
-  console.log(`  Email:    superadmin@versoair.test`);
-  console.log(`  Password: ${password}`);
-  console.log(`  Role:     superuser`);
-  console.log(`  Gate:     joel_007`);
-  console.log(
-    "\n  Works on: /auth/login, /auth/artist/login, /auth/community/login,",
-  );
-  console.log(
-    "            /auth/subscriber/login, /auth/admin-gate, /api/vault/authorize",
-  );
-  console.log("─".repeat(70));
-
-  await pool.end();
-})();
+seedGeoAdminTestUsers().catch((error) => {
+  console.error("Could not seed GeoAdmin test accounts:", error);
+  process.exitCode = 1;
+});

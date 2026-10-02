@@ -61,7 +61,13 @@ function extractToken(req: Request): string | null {
 /**
  * Check if a JWT token has been revoked in the active_sessions table.
  * Returns true if revoked, false if not found or not revoked.
- * Gracefully handles missing table (pre-migration).
+ *
+ * On a DB error (e.g. missing table pre-migration, connection failure), the
+ * behavior depends on environment:
+ *  - production: fail CLOSED — treat the request as revoked (reject it)
+ *    rather than silently letting a possibly-revoked session through.
+ *  - development: fail OPEN — don't block local work if the table hasn't
+ *    been migrated yet.
  */
 async function isSessionRevoked(token: string): Promise<boolean> {
   try {
@@ -74,9 +80,14 @@ async function isSessionRevoked(token: string): Promise<boolean> {
     // Legacy tokens (no session record) are allowed through
     if (!session) return false;
     return session.isRevoked === true;
-  } catch {
-    // Table doesn't exist yet or DB error — don't block
-    return false;
+  } catch (err) {
+    const isProd = process.env.NODE_ENV === "production";
+    console.error(
+      "[AUTH] Session revocation check failed — failing",
+      isProd ? "closed (blocking request)" : "open (dev mode)",
+      err,
+    );
+    return isProd;
   }
 }
 

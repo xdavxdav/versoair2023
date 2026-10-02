@@ -6,12 +6,6 @@ import jwt from "jsonwebtoken";
 
 const router = Router();
 
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
-  return secret;
-}
-
 // Helper: generate a short alphanumeric referral code
 function generateReferralCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
@@ -29,7 +23,7 @@ function getUserId(req: any): number | null {
       req.cookies?.auth_token ||
       req.headers.authorization?.replace("Bearer ", "");
     if (!token) return null;
-    const decoded = jwt.verify(token, getJwtSecret()) as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
     return decoded.userId || decoded.id || null;
   } catch {
     return null;

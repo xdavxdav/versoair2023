@@ -6,12 +6,6 @@ import jwt from "jsonwebtoken";
 
 const router = Router();
 
-function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
-  return secret;
-}
-
 // GET /api/settings — all settings for current user
 router.get("/", async (req, res) => {
   try {
@@ -23,7 +17,7 @@ router.get("/", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId: number | null = null;
     try {
-      const decoded: any = jwt.verify(token, getJwtSecret());
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
       userId = decoded.userId || decoded.sub;
     } catch {
       return res.status(401).json({ success: false, message: "Invalid token" });
@@ -79,7 +73,7 @@ router.get("/:sector", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId: number | null = null;
     try {
-      const decoded: any = jwt.verify(token, getJwtSecret());
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
       userId = decoded.userId || decoded.sub;
     } catch {
       return res.status(401).json({ success: false, message: "Invalid token" });
@@ -139,7 +133,7 @@ router.post("/:sector", async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     let userId: number | null = null;
     try {
-      const decoded: any = jwt.verify(token, getJwtSecret());
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
       userId = decoded.userId || decoded.sub;
     } catch {
       return res.status(401).json({ success: false, message: "Invalid token" });

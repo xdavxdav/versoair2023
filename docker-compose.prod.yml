@@ -1,13 +1,20 @@
 version: "3.8"
 
+# ─── Production deployment notes ──────────────────────────────────────────────
+# This file requires DB_USER, DB_PASSWORD, JWT_SECRET, SESSION_SECRET and
+# CORS_ORIGIN to be set in the environment (e.g. a real `.env` file, not
+# committed). There are intentionally NO insecure default fallbacks here —
+# `docker compose -f docker-compose.prod.yml up` will fail fast with a clear
+# "variable is not set" error instead of silently starting with weak secrets.
+
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: verso_air_db
     environment:
-      POSTGRES_USER: ${DB_USER:-verso_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-verso_password}
+      POSTGRES_USER: ${DB_USER:?DB_USER must be set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       POSTGRES_DB: ${DB_NAME:-versoair_business_intelligence}
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -22,7 +29,10 @@ services:
     networks:
       - verso_air_network
 
-  # Backend API Server
+  # Backend API Server (serves the built client bundle too — see Dockerfile's
+  # `production` stage / server/prod-static.ts. There is no separate frontend
+  # container in production; a dev-mode frontend service here would collide
+  # on the same port and ship an unbuilt, unoptimized client.)
   backend:
     build:
       context: .
@@ -32,19 +42,16 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-5003}
-      DATABASE_URL: postgresql://${DB_USER:-verso_user}:${DB_PASSWORD:-verso_password}@postgres:5432/${DB_NAME:-versoair_business_intelligence}
-      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      DATABASE_URL: postgresql://${DB_USER:?DB_USER must be set}:${DB_PASSWORD:?DB_PASSWORD must be set}@postgres:5432/${DB_NAME:-versoair_business_intelligence}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set to a random 64+ char hex value}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5003}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set to a random 64+ char hex value}
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN must be set to the real production origin(s)}
     ports:
       - "${PORT:-5003}:5003"
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./server:/app/server
-      - ./shared:/app/shared
-      - /app/node_modules
     networks:
       - verso_air_network
     healthcheck:
@@ -53,28 +60,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # Frontend Application (development)
-  frontend:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-      target: development
-    container_name: verso_air_ui
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://backend:5003}
-      VITE_APP_NAME: ${VITE_APP_NAME:-Verso Air Dashboard}
-    ports:
-      - "${VITE_PORT:-5003}:5003"
-    depends_on:
-      - backend
-    volumes:
-      - ./client/src:/app/src
-      - ./client/public:/app/public
-      - /app/node_modules
-    networks:
-      - verso_air_network
-
-  # Nginx Reverse Proxy (optional, for production)
+  # Nginx Reverse Proxy (optional — TLS termination in front of `backend`).
+  # Requires ./nginx.conf and certs under ./ssl to exist before enabling this
+  # profile; see nginx.conf.example in this repo for a working starting point.
   nginx:
     image: nginx:alpine
     container_name: verso_air_proxy
@@ -86,7 +74,6 @@ services:
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
-      - frontend
     networks:
       - verso_air_network
     profiles:

@@ -6,8 +6,17 @@ echo "=========================================="
 echo ""
 
 # Generate test JWT token
+# Must be signed with the SAME secret the target server is running with, or
+# every request below will fail with 401 Invalid token. Reads JWT_SECRET from
+# the environment instead of a hardcoded value.
 echo "1️⃣  Generating test JWT token..."
-TOKEN=$(node -e "const jwt = require('jsonwebtoken'); const token = jwt.sign({userId: '123', email: 'test@versoair.com', name: 'Test User', role: 'user'}, 'dev_secret_key_change_in_production', {expiresIn: '7d'}); console.log(token);" 2>/dev/null)
+if [ -z "$JWT_SECRET" ]; then
+  echo "❌ JWT_SECRET environment variable is not set."
+  echo "   Export the same JWT_SECRET the target server uses, e.g.:"
+  echo "     JWT_SECRET=\$(grep ^JWT_SECRET .env | cut -d= -f2-) ./scripts/tests/test-auth.sh"
+  exit 1
+fi
+TOKEN=$(JWT_SECRET="$JWT_SECRET" node -e "const jwt = require('jsonwebtoken'); const token = jwt.sign({userId: '123', email: 'test@versoair.com', name: 'Test User', role: 'user'}, process.env.JWT_SECRET, {expiresIn: '7d'}); console.log(token);" 2>/dev/null)
 
 if [ -z "$TOKEN" ]; then
   echo "❌ Failed to generate token"

@@ -279,6 +279,7 @@ const MobileMenuBubble = lazy(() =>
     default: m.MobileMenuBubble,
   })),
 );
+const VersoAIChat = lazy(() => import("@/components/VersoAIChat"));
 import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
@@ -990,18 +991,21 @@ function AppContent() {
                 </div>
 
                 {/* Right: Action buttons */}
-                <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
+                <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 justify-end">
                   <button
                     onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
-                    className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+                    aria-label="Open Verso Air Music Portal"
+                    title="Verso Air Music Portal"
+                    className="hover:text-amber-200 transition-colors flex items-center gap-1"
                   >
                     <span>🎵</span>
                     <span className="hidden sm:inline">Verso Air</span>
-                    <span className="sm:hidden">VA</span>
                   </button>
                   <button
                     onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
-                    className="hover:text-amber-200 transition-colors flex items-center space-x-1"
+                    aria-label="Open GPS Services"
+                    title="GPS Services"
+                    className="hover:text-amber-200 transition-colors flex items-center gap-1"
                   >
                     <span>📍</span>
                     <span className="hidden sm:inline">GPS Services</span>
@@ -1170,9 +1174,10 @@ function AppContent() {
         </Suspense>
       )}
 
-      {/* VersoAI Assistant (Talk & Chat) — only on /versoai page.
-          The component is rendered directly in pages/versoai.tsx, so it
-          should NOT be mounted globally here. */}
+      {/* Global VersoAI Assistant (Talk & Chat) */}
+      <Suspense fallback={null}>
+        <VersoAIChat />
+      </Suspense>
 
       {/* Notification bell — fixed top-right, visible on all non-auth pages.
           Dropped below the bar on /blog & /marketplace since BlogNavbar has

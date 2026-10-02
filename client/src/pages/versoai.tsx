@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
-import VersoAIChat from "@/components/VersoAIChat";
 import {
   Zap,
   Globe,
@@ -2014,8 +2013,6 @@ export default function Home() {
         }
       `}</style>
 
-      {/* VersoAI Chat Bubble - only on this page */}
-      <VersoAIChat />
     </div>
   );
 }

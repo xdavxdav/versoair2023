@@ -6,8 +6,12 @@ services:
       - "5002:5002" # Maps container port 5002 to host port 5002
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-versoair}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env file}@db:5432/${POSTGRES_DB:-versoair_business_intelligence}
-      - SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET in your .env file}
+      # DATABASE_URL built from this file's own DB_PASSWORD below — do not
+      # hardcode credentials here.
+      - DATABASE_URL=postgresql://versoair:${DB_PASSWORD:?DB_PASSWORD must be set}@db:5432/versoair_business_intelligence
+      # No hardcoded default — set SESSION_SECRET in your shell/.env before
+      # running this file (e.g. `export SESSION_SECRET=$(openssl rand -hex 32)`).
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET must be set}
       - PORT=5002
     depends_on:
       db:
@@ -24,9 +28,9 @@ services:
     image: postgres:15
     container_name: my_postgres_db
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-versoair}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env file}
-      - POSTGRES_DB=${POSTGRES_DB:-versoair_business_intelligence}
+      - POSTGRES_USER=versoair
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set}
+      - POSTGRES_DB=versoair_business_intelligence
     ports:
       - "5432:5432"
     volumes:
@@ -44,8 +48,8 @@ services:
     image: dpage/pgadmin4
     container_name: verso_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@versoair.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in your .env file}
+      PGADMIN_DEFAULT_EMAIL: admin@versoair.com
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?PGADMIN_PASSWORD must be set}
     ports:
       - "8080:80"
     depends_on:
@@ -60,4 +64,3 @@ volumes:
 networks:
   verso-network:
     driver: bridge
-

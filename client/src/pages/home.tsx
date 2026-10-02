@@ -101,15 +101,8 @@ gsap.registerPlugin(ScrollTrigger);
 // Luxurious gold gradient text styles
 const goldTextStyles = `
   @keyframes shine {
-    0% {
-      background-position: -50rem 0;
-    }
-    25% {
-      background-position: -50rem 0;
-    }
-    100% {
-      background-position: 30rem 0;
-    }
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
   }
 
   .gold-text {
@@ -122,93 +115,42 @@ const goldTextStyles = `
     line-height: 1.1;
     white-space: normal;
     text-align: center;
-    color: transparent;
-    background-color: #E8A95B;
-    background-image: 
-      radial-gradient(ellipse farthest-corner at right bottom, white 0%, #F0BB7A 20%, #E8A95B 60%, transparent 80%),
-      radial-gradient(ellipse farthest-corner at left top, white 0%, #F0BB7A 50%, #DE9945 75%, #E8A95B 100%);
-    background-size: 100% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    margin: 0;
-    position: relative;
-  }
-
-  .gold-text::before {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
     color: #E8A95B;
-    z-index: -1;
     text-shadow:
       0 -1px 0 rgba(240, 187, 122, 0.75),
       0 1px 0 rgba(222, 153, 69, 0.75),
-      0 2px 0 rgba(222, 153, 69, 0.70),
+      0 2px 0 rgba(222, 153, 69, 0.7),
       0 3px 0 rgba(222, 153, 69, 0.65),
-      0 4px 0 rgba(222, 153, 69, 0.55),
-      0 4px 2px rgba(222, 153, 69, 0.55),
-      0 0.075em 0.1em rgba(26, 35, 39, 0.3),
-      0 0.15em 0.3em rgba(222, 153, 69, 0.2);
+      0 4px 2px rgba(26, 35, 39, 0.3);
+    margin: 0;
+    position: relative;
   }
 
   .gold-text__shine {
     display: inline-block;
     position: relative;
-    z-index: 1;
-  }
-
-  .gold-text__shine::after {
-    content: attr(data-text);
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 5;
-    background-image: 
-      linear-gradient(100deg,
-        transparent 0%,
-        transparent 6rem,
-        white 11rem,
-        transparent 11.15rem,
-        transparent 15rem,
-        rgba(255,255,255,0.3) 20rem,
-        transparent 25rem,
-        transparent 27rem,
-        rgba(255,255,255,0.6) 32rem,
-        white 33rem,
-        rgba(255,255,255,0.3) 33.15rem,
-        transparent 38rem,
-        transparent 40rem,
-        rgba(255,255,255,0.3) 45rem,
-        transparent 50rem,
-        transparent 100%);
+    color: transparent;
+    background-image: linear-gradient(
+      100deg,
+      #DE9945 0%,
+      #F0BB7A 35%,
+      #fff 48%,
+      #F0BB7A 53%,
+      #DE9945 65%,
+      #E8A95B 100%
+    );
+    background-size: 200% 100%;
     background-clip: text;
-    background-size: 60rem 100%;
-    background-repeat: no-repeat;
     -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     animation: shine 4s infinite linear;
   }
 
-  .gold-text__shine::before {
-    content: attr(data-text);
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    color: transparent;
-    background-image: 
-      linear-gradient(to bottom,
-        rgba(255,255,255,0.5) 0%,
-        transparent 35%,
-        transparent 75%,
-        #DE9945 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    animation: none;
+  @media (prefers-reduced-motion: reduce) {
+    .gold-text__shine {
+      animation: none;
+      background-position: 50% 0;
+    }
   }
 
   @media (min-width: 769px) {
@@ -223,20 +165,9 @@ const goldTextStyles = `
     }
   }
 
-  /* ── Mobile: kill pseudo-element layers that cause duplication ── */
   @media (max-width: 640px) {
     .gold-text {
       font-size: 1.35rem;
-      /* Make the gold color visible directly instead of pseudo-layer trick */
-      color: #E8A95B;
-      -webkit-text-fill-color: #E8A95B;
-    }
-    .gold-text::before {
-      content: none;
-    }
-    .gold-text__shine::after,
-    .gold-text__shine::before {
-      content: none;
     }
   }
 
@@ -3101,13 +3032,9 @@ export default function Home() {
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
                     <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3 notranslate"
-                      data-text="ArtiHuman Foundation"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                     >
-                      <span
-                        className="gold-text__shine"
-                        data-text="ArtiHuman Foundation"
-                      >
+                      <span className="gold-text__shine">
                         ArtiHuman Foundation
                       </span>
                     </h2>
@@ -3294,13 +3221,9 @@ export default function Home() {
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
                     <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3 notranslate"
-                      data-text="Marché Artisanal"
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
                     >
-                      <span
-                        className="gold-text__shine notranslate"
-                        data-text="Marché Artisanal"
-                      >
+                      <span className="gold-text__shine">
                         Marché Artisanal
                       </span>
                     </h2>
@@ -3481,12 +3404,8 @@ export default function Home() {
                   <div className="text-center mb-[1vw]">
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
-                      data-text="Tableau d'impact"
                     >
-                      <span
-                        className="gold-text__shine"
-                        data-text="Tableau d'impact"
-                      >
+                      <span className="gold-text__shine">
                         Tableau d'impact
                       </span>
                     </h2>
@@ -3687,12 +3606,8 @@ export default function Home() {
                   <div className="text-center mb-[1vw]">
                     <h2
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
-                      data-text="S'impliquer"
                     >
-                      <span
-                        className="gold-text__shine"
-                        data-text="S'impliquer"
-                      >
+                      <span className="gold-text__shine">
                         S'impliquer
                       </span>
                     </h2>

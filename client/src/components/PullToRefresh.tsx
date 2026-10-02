@@ -79,7 +79,7 @@ export default function PullToRefresh() {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center pointer-events-none"
+      className="fixed top-0 left-0 right-0 z-[50] flex items-center justify-center pointer-events-none"
       style={{
         height: `${pullDistance}px`,
         transition: isPulling.current ? "none" : "height 0.25s ease-out",

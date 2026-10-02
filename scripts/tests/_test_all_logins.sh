@@ -1,10 +1,12 @@
 #!/bin/bash
+: "${VERSO_TEST_PASSWORD:?Set VERSO_TEST_PASSWORD to the superadmin password first}"
 # Test all 4 login endpoints for needsDisplayName + name field
+# (the password is interpolated into JSON, so it must not contain " or \)
 
 echo "=== 1. General Login (/auth/login) ==="
 curl -s -X POST http://localhost:5003/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"superadmin@versoair.test","password":"JoeyD000"}' \
+  -d "{\"email\":\"superadmin@versoair.test\",\"password\":\"$VERSO_TEST_PASSWORD\"}" \
   | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
@@ -20,7 +22,7 @@ echo ""
 echo "=== 2. Artist Login (/auth/artist/login) ==="
 curl -s -X POST http://localhost:5003/auth/artist/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"superadmin@versoair.test","password":"JoeyD000"}' \
+  -d "{\"email\":\"superadmin@versoair.test\",\"password\":\"$VERSO_TEST_PASSWORD\"}" \
   | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
@@ -37,7 +39,7 @@ echo ""
 echo "=== 3. Subscriber Login (/auth/subscriber/login) ==="
 curl -s -X POST http://localhost:5003/auth/subscriber/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"superadmin@versoair.test","password":"JoeyD000"}' \
+  -d "{\"email\":\"superadmin@versoair.test\",\"password\":\"$VERSO_TEST_PASSWORD\"}" \
   | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
@@ -53,7 +55,7 @@ echo ""
 echo "=== 4. Community Login (/auth/community/login) ==="
 curl -s -X POST http://localhost:5003/auth/community/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"superadmin@versoair.test","password":"JoeyD000"}' \
+  -d "{\"email\":\"superadmin@versoair.test\",\"password\":\"$VERSO_TEST_PASSWORD\"}" \
   | python3 -c "
 import sys, json
 d = json.load(sys.stdin)

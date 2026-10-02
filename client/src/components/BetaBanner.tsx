@@ -52,13 +52,13 @@ export default function BetaBanner() {
 
   return (
     <div className="relative z-[120] overflow-hidden border-b border-[#8c5d17]/70 bg-gradient-to-r from-[#d99d34] via-[#f0b94b] to-[#be7418] text-[#17110c] shadow-[0_12px_30px_rgba(79,50,16,0.28)] transition-all duration-300 ease-out">
-      <div className="flex flex-col items-stretch gap-2 px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-          <span className="inline-flex shrink-0 items-center rounded-full border border-[#1a140d]/25 bg-[#1a140d]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#1a140d]">
+      <div className="flex flex-col gap-2 px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2 text-left">
+          <span className="inline-flex shrink-0 items-center rounded-full border border-[#1a140d]/25 bg-[#1a140d]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#1a140d] max-[360px]:tracking-normal sm:px-2 sm:text-[10px] sm:tracking-[0.18em]">
             Post-beta
           </span>
 
-          <p className="min-w-0 flex-1 truncate text-center text-[13px] font-semibold sm:text-sm">
+          <p className="min-w-0 flex-1 truncate text-left text-[13px] font-semibold sm:text-center sm:text-sm">
             <span className="font-black">Verso Air</span>
             <span className="mx-1.5 text-[#3a2b14] max-[360px]:hidden">—</span>
             <span className="max-[360px]:hidden">
@@ -67,7 +67,7 @@ export default function BetaBanner() {
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 sm:justify-start">
+        <div className="flex items-center justify-end gap-2 shrink-0">
           <button
             type="button"
             onClick={openFeedback}
@@ -86,7 +86,7 @@ export default function BetaBanner() {
             }}
             aria-label="Close product status banner"
             title="Close"
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#1a140d]/15 bg-white/20 text-[#1a140d] transition-colors duration-200 hover:bg-white/35"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#1a140d]/15 bg-white/20 text-[#1a140d] transition-colors duration-200 hover:bg-white/35"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

@@ -16,53 +16,41 @@
 
 const pg = require("pg");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
+const {
+  STAFF_ACCOUNTS,
+  loadEnv,
+  generatePassword,
+  resolveEmail,
+  readEnvPassword,
+} = require("./staff-credentials.cjs");
+
+loadEnv();
+
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: IS_PRODUCTION ? { rejectUnauthorized: false } : false,
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// 1. TEST USERS
+// 1. STAFF ACCOUNTS (superadmin, CEO, moderator)
 // ════════════════════════════════════════════════════════════════════════════
-// Random per run — never hardcoded/committed. The account is forced to set
-// its own permanent password on first login (must_change_password below),
-// EXCEPT for exempt users (skipMustChange=true) who can self-create & own password.
-const PASSWORD =
-  process.env.SEED_SUPERADMIN_PASSWORD ||
-  crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12) +
-    "!" +
-    Math.floor(Math.random() * 90 + 10);
-
-const CEO_PASSWORD =
-  process.env.SEED_CEO_PASSWORD ||
-  crypto.randomBytes(9).toString("base64").replace(/[+/=]/g, "").slice(0, 12) +
-    "!" +
-    Math.floor(Math.random() * 90 + 10);
-
-const TEST_USERS = [
-  {
-    username: "superadmin_test",
-    email: "superadmin@versoair.test",
-    role: "superuser",
-    tier: "enterprise",
-    gateUsername: "joel_007",
-    skipMustChange: true, // Exempt: self-creates password
-  },
-  {
-    username: "ceo_test",
-    email: "ceo@versoair.test",
-    role: "admin",
-    tier: "enterprise",
-    gateUsername: "ceo_master",
-    skipMustChange: true, // Exempt: self-creates password
-    password: CEO_PASSWORD, // CEO gets custom password env var
-  },
-];
+// Passwords come from SEED_*_PASSWORD (validated against the staff policy in
+// staff-credentials.cjs). If unset, a strong random one is generated outside
+// production; in production nothing is generated, so no secret ever lands in
+// deploy logs — the account is skipped until the variable is provided.
+// Existing accounts are never overwritten; use `npm run staff:reset-password`.
+const TEST_USERS = Object.entries(STAFF_ACCOUNTS).map(([key, acct]) => {
+  const email = resolveEmail(key);
+  let password = readEnvPassword(key);
+  let source = "env";
+  if (!password && !IS_PRODUCTION) {
+    password = generatePassword();
+    source = "generated";
+  }
+  return { ...acct, key, email, password, source };
+});
 
 // ════════════════════════════════════════════════════════════════════════════
 // 2. COUNTRIES
@@ -465,6 +453,8 @@ const PAYMENT_CARD_TYPES = [
 (async () => {
   console.log("\n🌱 Production Seed (structural data) — starting...\n");
 
+  const seedResults = [];
+
   try {
     const client = await pool.connect();
     console.log("✅ Database connected");
@@ -484,14 +474,31 @@ const PAYMENT_CARD_TYPES = [
     // ════════════════════════════════════════════════════════════════════
     // SEED 1: SUPERADMIN USER
     // ════════════════════════════════════════════════════════════════════
-    console.log("\n👤 Seeding superadmin user...");
-    const hash = bcrypt.hashSync(PASSWORD, 12);
+    console.log("\n👤 Seeding staff accounts...");
 
     for (const u of TEST_USERS) {
+      const result = {
+        key: u.key,
+        label: u.label,
+        email: u.email,
+        username: u.username,
+        passwordEnv: u.passwordEnv,
+        status: "failed",
+        password: null,
+        source: u.source,
+      };
+      seedResults.push(result);
+
+      if (!u.password) {
+        result.status = "skipped";
+        console.warn(
+          `  ⚠️  ${u.email}: skipped — set ${u.passwordEnv} to create this account in production`,
+        );
+        continue;
+      }
+
       try {
-        // Use custom password if provided (e.g., CEO account), otherwise use global PASSWORD
-        const userPassword = u.password || PASSWORD;
-        const hash = bcrypt.hashSync(userPassword, 12);
+        const hash = bcrypt.hashSync(u.password, 12);
 
         let insertCols = "username, email, password, role, created_at";
         let insertVals = "$1, $2, $3, $4, NOW()";
@@ -524,9 +531,10 @@ const PAYMENT_CARD_TYPES = [
           params.push(true);
         }
 
-        // Keep passwords owner-controlled, but enforce the intended role for
-        // these reserved operational accounts on every deployment.
-        const result = await pool.query(
+        // Passwords stay owner-controlled (never updated here), but the
+        // intended role is enforced on every deployment for these reserved
+        // accounts. `xmax = 0` is true only for freshly inserted rows.
+        const queryResult = await pool.query(
           `INSERT INTO users (${insertCols}) VALUES (${insertVals})
            ON CONFLICT (email) DO UPDATE SET
              email = EXCLUDED.email
@@ -535,11 +543,14 @@ const PAYMENT_CARD_TYPES = [
              ${hasStatus ? ", subscription_status = EXCLUDED.subscription_status" : ""}
              ${hasVerified ? ", is_verified = EXCLUDED.is_verified" : ""}
              ${hasGateUsername && u.gateUsername ? ", gate_username = EXCLUDED.gate_username" : ""}
-           RETURNING id`,
+           RETURNING id, (xmax = 0) AS inserted`,
           params,
         );
+        const row = queryResult.rows[0];
+        result.status = row.inserted ? "created" : "existing";
+        if (row.inserted) result.password = u.password;
         console.log(
-          `  ✅ ${u.role.padEnd(16)} | ${u.email} (id=${result.rows[0].id})`,
+          `  ✅ ${u.role.padEnd(16)} | ${u.email} (id=${row.id}, ${result.status})`,
         );
       } catch (err) {
         console.error(`  ❌ ${u.email}: ${err.message}`);
@@ -694,24 +705,32 @@ const PAYMENT_CARD_TYPES = [
   ℹ️  All business data (listings, artists, jobs, properties,
      reviews, etc.) will be populated by real users.
 `);
-    console.log("📋 ADMIN ACCOUNT CREDENTIALS:");
+    console.log("📋 STAFF ACCOUNTS:");
     console.log("─".repeat(60));
-
-    // Print superadmin (exempt — no forced change)
-    const superadmin = TEST_USERS[0];
-    console.log(`✅ ${superadmin.role.toUpperCase()} (EXEMPT — self-create)`);
-    console.log(`   Email:    ${superadmin.email}`);
-    console.log(`   Password: ${PASSWORD}`);
-    console.log(`   Status:   Direct access (no forced change) ✓`);
-
-    // Print CEO (exempt — no forced change)
-    if (TEST_USERS[1]) {
-      const ceo = TEST_USERS[1];
-      console.log(`\n✅ ${ceo.role.toUpperCase()} (EXEMPT — self-create)`);
-      console.log(`   Email:    ${ceo.email}`);
-      console.log(`   Password: ${CEO_PASSWORD}`);
-      console.log(`   Status:   Direct access (no forced change) ✓`);
+    for (const r of seedResults) {
+      console.log(`\n${r.label.toUpperCase()}  <${r.email}>  (${r.username})`);
+      if (r.status === "created" && r.source === "generated") {
+        console.log(`   Password: ${r.password}`);
+        console.log("   ⚠️  Shown once — store it in a password manager now.");
+      } else if (r.status === "created") {
+        console.log(`   Password: set from ${r.passwordEnv}`);
+      } else if (r.status === "existing") {
+        console.log("   Already existed — password left UNCHANGED.");
+        console.log(
+          `   To set a new one: npm run staff:reset-password -- --account ${r.key} --generate`,
+        );
+      } else if (r.status === "skipped") {
+        console.log(`   Not created — set ${r.passwordEnv} and re-run.`);
+      } else {
+        console.log("   FAILED — see error above.");
+      }
     }
+    console.log(
+      "\nℹ️  admin/moderator logins need a one-time code emailed to the account:",
+    );
+    console.log(
+      "   use real, reachable addresses (SEED_CEO_EMAIL / SEED_MODERATOR_EMAIL) and configure SMTP.",
+    );
 
     console.log("═".repeat(60) + "\n");
   } catch (err) {

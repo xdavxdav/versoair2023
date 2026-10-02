@@ -95,49 +95,21 @@ export function QuickSignIn({
     }
   };
 
-  // Demo accounts — only available in development builds (Vite tree-shakes in production)
+  // Dev shortcuts — only available in development builds (Vite tree-shakes in
+  // production). They pre-fill the email only: no password lives in source.
   const demoAccounts = import.meta.env.DEV
     ? [
-        {
-          label: "Superadmin",
-          email: "superadmin@versoair.test",
-          password: "JoeyD000",
-        },
-        { label: "CEO", email: "ceo@versoair.test", password: "CEO2026!" },
+        { label: "Superadmin", email: "superadmin@versoair.test" },
+        { label: "CEO", email: "ceo@versoair.test" },
+        { label: "Moderator", email: "moderator@versoair.test" },
       ]
     : [];
 
-  const quickLogin = async (email: string, password: string) => {
-    setEmail(email);
-    setPassword(password);
-    setIsLoading(true);
-    try {
-      const res = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
-
-      toast({
-        title: "Connecté ✓",
-        description: `Bienvenue, ${data.user?.username || "User"}!`,
-      });
-      await restoreAuth();
-      onClose();
-      if (onSuccess) onSuccess();
-      if (redirectTo) window.location.href = redirectTo;
-    } catch (err: any) {
-      toast({
-        title: "Erreur",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const fillDemoAccount = (demoEmail: string) => {
+    setMode("signin");
+    setEmail(demoEmail);
+    setPassword("");
+    setShowPassword(false);
   };
 
   return createPortal(
@@ -258,7 +230,7 @@ export function QuickSignIn({
                   {/* Quick access for dev */}
                   <div className="pt-4 border-t border-white/10">
                     <p className="text-xs text-white/30 text-center mb-3 flex items-center justify-center gap-1">
-                      <Sparkles className="w-3 h-3" /> Accès rapide (dev)
+                      <Sparkles className="w-3 h-3" /> Accès rapide (dev) — email seulement
                     </p>
                     <div className="flex gap-2">
                       {demoAccounts.map((acc) => (
@@ -267,7 +239,7 @@ export function QuickSignIn({
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => quickLogin(acc.email, acc.password)}
+                          onClick={() => fillDemoAccount(acc.email)}
                           disabled={isLoading}
                           className="flex-1 text-xs border-purple-500/30 text-purple-300 hover:bg-purple-500/20 hover:text-white"
                         >

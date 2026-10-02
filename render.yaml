@@ -10,13 +10,15 @@ services:
     runtime: node
     plan: free
     healthCheckPath: /api/health
+    # NOTE: Migrations are intentionally NOT run here. Running `db:migrate` on
+    # every build makes schema changes an uncontrolled side effect of an
+    # ordinary deploy (no review gate, no concurrency protection, no backup
+    # step). Apply migrations as a separate, deliberate release step instead:
+    #   1. Back up the production database.
+    #   2. Run `npm run db:migrate` once, by hand or via a one-off Render job,
+    #      against the target database, outside of the web build.
+    #   3. Only then deploy the application code that depends on the new schema.
     buildCommand: npm ci && npm run build
-    # Migrations run as a separate, observable pre-deploy step (not part of the
-    # ordinary build), so a failed/slow migration can't silently corrupt a build
-    # artifact and Render guarantees only one pre-deploy command runs per deploy.
-    # See VERSOAIR_MASTER_REMEDIATION_PLAN.md P0.3 for the full rationale and the
-    # follow-up recommendation to gate this behind manual release approval in CI.
-    preDeployCommand: npm run db:migrate
     startCommand: npm start
     envVars:
       - key: NODE_ENV

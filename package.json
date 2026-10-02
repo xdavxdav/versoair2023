@@ -18,6 +18,7 @@
     "db:seed-streaming:reset": "node _seed_streaming_data.cjs --reset",
     "db:seed-launch-businesses": "node scripts/seed-launch-businesses.cjs",
     "db:seed-admin-test": "node scripts/seed-admin-test-data.cjs",
+    "db:seed-geoadmin-test": "node scripts/tests/_create_test_users.cjs",
     "seed": "node scripts/seed-production.cjs"
   },
   "dependencies": {

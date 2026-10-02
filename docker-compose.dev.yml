@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: versoair_business_intelligence
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_only_password_change_me}
     ports:
       - "5432:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
     container_name: verso-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@versoair.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-dev_only_password_change_me}
     ports:
       - "8080:80"
     depends_on:
