@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
 const ADMIN_NOTIFICATION_EMAIL =
-  process.env.SMTP_USER || process.env.ADMIN_EMAIL || "luqjoey@gmail.com";
+  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "luqjoey@gmail.com";
 const router = Router();
 
 // GET /api/jobs — list all jobs

@@ -64,3 +64,19 @@ verify the live site:
 ```bash
 npm run seo:validate-sitemap -- https://www.versoair.com
 ```
+
+## Production mail setup
+
+Use these env vars in Render:
+
+- `ADMIN_EMAIL`: destination inbox for admin/platform notifications (recommended:
+  `admin@versoair.com`, routed by Cloudflare to your real mailbox)
+- `SMTP_HOST=smtp-mail.outlook.com`
+- `SMTP_PORT=587`
+- `SMTP_USER=<your_hotmail_outlook_mailbox>`
+- `SMTP_PASS=<app_password_or_mail_password>`
+- `SMTP_FROM=<same_as_smtp_user_or_verified_sender>`
+
+Cloudflare Email Routing handles inbound aliases (for example
+`admin@versoair.com`, `support@versoair.com`, `noreply@versoair.com`) and can
+forward them to the mailbox used by `SMTP_USER`.

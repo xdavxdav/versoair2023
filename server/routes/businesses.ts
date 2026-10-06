@@ -1144,7 +1144,11 @@ router.post(
     }
 
     // 4. Send approval-request email to admin SMTP address
-    const adminEmail = process.env.SMTP_USER || process.env.SMTP_FROM || "";
+    const adminEmail =
+      process.env.ADMIN_EMAIL ||
+      process.env.SMTP_FROM ||
+      process.env.SMTP_USER ||
+      "";
     if (adminEmail) {
       try {
         await sendBusinessApprovalRequestEmail(
