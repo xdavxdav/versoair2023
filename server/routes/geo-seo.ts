@@ -144,7 +144,7 @@ router.get("/json-ld/search", async (req: Request, res: Response) => {
 
 // ─── Dynamic XML Sitemap ─────────────────────────────────────────────────────
 
-router.get("/sitemap.xml", async (_req: Request, res: Response) => {
+export async function sitemapXmlHandler(_req: Request, res: Response) {
   try {
     const result = await pool.query(
       `SELECT id, name, updated_at FROM businesses WHERE is_active = true ORDER BY updated_at DESC LIMIT 50000`,
@@ -223,7 +223,9 @@ router.get("/sitemap.xml", async (_req: Request, res: Response) => {
         `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`,
       );
   }
-});
+}
+
+router.get("/sitemap.xml", sitemapXmlHandler);
 
 // ─── Robots.txt ──────────────────────────────────────────────────────────────
 
@@ -248,7 +250,7 @@ export function robotsTxtHandler(req: Request, res: Response) {
     "Allow: /finances\n" +
     "Allow: /divertissement\n" +
     "Disallow: /api/\n" +
-    "Allow: /api/seo/sitemap.xml\n" +
+    "Allow: /sitemap.xml\n" +
     "Disallow: /auth/\n" +
     "Disallow: /admin/\n" +
     "Disallow: /dashboard\n" +
@@ -259,7 +261,7 @@ export function robotsTxtHandler(req: Request, res: Response) {
     "Disallow: /contracts\n" +
     "\nSitemap: " +
     origin +
-    "/api/seo/sitemap.xml\n";
+    "/sitemap.xml\n";
 
   res.setHeader("Content-Type", "text/plain");
   return res.send(robots);

@@ -29,6 +29,14 @@ const testUsers = [
     gateUsername: "admin_025",
   },
   {
+    username: process.env.GEOADMIN_CEO2_USERNAME,
+    email: process.env.GEOADMIN_CEO2_EMAIL,
+    password: process.env.GEOADMIN_CEO2_PASSWORD,
+    role: "admin",
+    tier: "enterprise",
+    gateUsername: "admin_026",
+  },
+  {
     username: process.env.GEOADMIN_MODERATOR_USERNAME,
     email: process.env.GEOADMIN_MODERATOR_EMAIL,
     password: process.env.GEOADMIN_MODERATOR_PASSWORD,

@@ -3,6 +3,7 @@ import { db, pool } from "../db";
 import { validateBusinessCategory } from "../services/business-validation";
 import { eq } from "drizzle-orm";
 import { businesses, auditLogs, users } from "@shared/schema";
+import { requireAuth } from "../middleware/auth";
 import { generateBusinessPDF } from "../services/pdf-generator";
 import {
   sendBusinessApprovalRequestEmail,
@@ -611,7 +612,10 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
 });
 
 // CREATE business
-router.post("/api/businesses", async (req: Request, res: Response) => {
+router.post(
+  "/api/businesses",
+  requireAuth(["admin", "moderator"]),
+  async (req: Request, res: Response) => {
   try {
     const {
       name,
@@ -678,14 +682,24 @@ router.post("/api/businesses", async (req: Request, res: Response) => {
       details: (error as Error).message,
     });
   }
-});
+  },
+);
 
 // UPDATE business
-router.put("/api/businesses/:id", async (req: Request, res: Response) => {
+router.put(
+  "/api/businesses/:id",
+  requireAuth(["admin", "moderator"]),
+  async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const businessId = parseInt(id);
-    const adminId = 1; // In production: extract from auth session (Clerk/NextAuth)
+    const actorId = Number(req.user?.id);
+    if (!Number.isFinite(actorId) || actorId <= 0) {
+      return res.status(401).json({
+        success: false,
+        error: "Authenticated user required",
+      });
+    }
     const ipAddress = req.headers["x-forwarded-for"] || req.ip || "unknown";
 
     // Transaction: Get old data, update, and audit log in one go
@@ -768,7 +782,7 @@ router.put("/api/businesses/:id", async (req: Request, res: Response) => {
 
       // 4. Log the change to auditLogs
       await tx.insert(auditLogs).values({
-        userId: adminId,
+        userId: actorId,
         action: "UPDATE_BUSINESS_PROFILE",
         entityType: "business",
         entityId: businessId.toString(),
@@ -795,10 +809,14 @@ router.put("/api/businesses/:id", async (req: Request, res: Response) => {
       error: error.message || "Failed to update business",
     });
   }
-});
+  },
+);
 
 // DELETE business
-router.delete("/api/businesses/:id", async (req: Request, res: Response) => {
+router.delete(
+  "/api/businesses/:id",
+  requireAuth(["admin"]),
+  async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -811,7 +829,8 @@ router.delete("/api/businesses/:id", async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         error: "Business not found",
-      });
+        },
+      );
     }
 
     res.json({
@@ -1018,7 +1037,10 @@ router.get("/api/database/tables", async (req: Request, res: Response) => {
  * Creates the business with approval_status='pending',
  * auto-generates a PDF, and emails the admin SMTP address.
  */
-router.post("/api/businesses/submit", async (req: Request, res: Response) => {
+router.post(
+  "/api/businesses/submit",
+  requireAuth(["admin", "moderator"]),
+  async (req: Request, res: Response) => {
   try {
     const {
       name,
@@ -1034,9 +1056,15 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
       cityName,
       businessType,
       tags = [],
-      username, // the geo-admin user who submitted
-      userId, // the geo-admin user id
+      username, // ignored for actor identity (derived from auth)
     } = req.body;
+    const actorId = Number(req.user?.id);
+    if (!Number.isFinite(actorId) || actorId <= 0) {
+      return res.status(401).json({
+        success: false,
+        error: "Authenticated user required",
+      });
+    }
 
     if (!name || !categoryId) {
       return res.status(400).json({
@@ -1068,7 +1096,7 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
         cityName || null,
         businessType || null,
         JSON.stringify(tags),
-        userId || null,
+        actorId,
       ],
     );
 
@@ -1099,7 +1127,10 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
         countryCode,
         phone,
         email,
-        submittedBy: username || "GeoAdmin User",
+        submittedBy:
+          (typeof username === "string" && username.trim()) ||
+          req.user?.email ||
+          "GeoAdmin User",
         submittedAt: new Date().toISOString(),
       });
 
@@ -1122,7 +1153,10 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
             businessId: newBusiness.id,
             businessName: name,
             categoryName,
-            submittedBy: username || "GeoAdmin User",
+            submittedBy:
+              (typeof username === "string" && username.trim()) ||
+              req.user?.email ||
+              "GeoAdmin User",
             description,
             address,
             cityName,
@@ -1140,15 +1174,23 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
     // 5. Audit log
     try {
       await db.insert(auditLogs).values({
-        userId: userId || null,
+        userId: actorId,
         action: "BUSINESS_SUBMITTED_FOR_APPROVAL",
         entityType: "business",
         entityId: String(newBusiness.id),
-        changes: { name, categoryId, countryCode, cityName, username },
+        changes: {
+          name,
+          categoryId,
+          countryCode,
+          cityName,
+          username:
+            (typeof username === "string" && username.trim()) || req.user?.email,
+        },
         ipAddress: String(
           req.headers["x-forwarded-for"] || req.ip || "unknown",
         ),
-      });
+        },
+      );
     } catch {
       /* audit is best-effort */
     }
@@ -1172,36 +1214,48 @@ router.post("/api/businesses/submit", async (req: Request, res: Response) => {
 /**
  * GET pending businesses (for admin dashboard review)
  */
-router.get("/api/businesses/pending", async (_req: Request, res: Response) => {
-  try {
-    const result = await pool.query(
-      `SELECT b.*, bc.name as category_name, u.username as submitted_by_username
-         FROM businesses b
-         LEFT JOIN business_categories bc ON b.category_id = bc.id
-         LEFT JOIN users u ON b.submitted_by = u.id
-         WHERE b.approval_status = 'pending'
-         ORDER BY b.created_at DESC`,
-    );
+router.get(
+  "/api/businesses/pending",
+  requireAuth(["admin", "moderator"]),
+  async (_req: Request, res: Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT b.*, bc.name as category_name, u.username as submitted_by_username
+           FROM businesses b
+           LEFT JOIN business_categories bc ON b.category_id = bc.id
+           LEFT JOIN users u ON b.submitted_by = u.id
+           WHERE b.approval_status = 'pending'
+           ORDER BY b.created_at DESC`,
+      );
 
-    res.json({ success: true, data: result.rows, count: result.rows.length });
-  } catch (error) {
-    console.error("Error fetching pending businesses:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch pending businesses",
-    });
-  }
-});
+      res.json({ success: true, data: result.rows, count: result.rows.length });
+    } catch (error) {
+      console.error("Error fetching pending businesses:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch pending businesses",
+      });
+    }
+  },
+);
 
 /**
  * APPROVE a pending business (SupUser / SuperUser)
  */
 router.put(
   "/api/businesses/:id/approve",
+  requireAuth(["admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { approvedBy, notes } = req.body; // userId of the approver
+      const { notes } = req.body; // actor is derived from auth
+      const actorId = Number(req.user?.id);
+      if (!Number.isFinite(actorId) || actorId <= 0) {
+        return res.status(401).json({
+          success: false,
+          error: "Authenticated user required",
+        });
+      }
 
       const result = await pool.query(
         `UPDATE businesses
@@ -1212,7 +1266,7 @@ router.put(
              updated_at = NOW()
          WHERE id = $3 AND approval_status = 'pending'
          RETURNING *`,
-        [approvedBy || null, notes || null, id],
+        [actorId, notes || null, id],
       );
 
       if (result.rows.length === 0) {
@@ -1248,7 +1302,7 @@ router.put(
       // Audit log
       try {
         await db.insert(auditLogs).values({
-          userId: approvedBy || null,
+          userId: actorId,
           action: "BUSINESS_APPROVED",
           entityType: "business",
           entityId: String(id),
@@ -1282,10 +1336,18 @@ router.put(
  */
 router.put(
   "/api/businesses/:id/reject",
+  requireAuth(["admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { rejectedBy, reason } = req.body;
+      const { reason } = req.body;
+      const actorId = Number(req.user?.id);
+      if (!Number.isFinite(actorId) || actorId <= 0) {
+        return res.status(401).json({
+          success: false,
+          error: "Authenticated user required",
+        });
+      }
 
       const result = await pool.query(
         `UPDATE businesses
@@ -1296,7 +1358,7 @@ router.put(
              updated_at = NOW()
          WHERE id = $3 AND approval_status = 'pending'
          RETURNING *`,
-        [rejectedBy || null, reason || null, id],
+        [actorId, reason || null, id],
       );
 
       if (result.rows.length === 0) {
@@ -1332,7 +1394,7 @@ router.put(
       // Audit log
       try {
         await db.insert(auditLogs).values({
-          userId: rejectedBy || null,
+          userId: actorId,
           action: "BUSINESS_REJECTED",
           entityType: "business",
           entityId: String(id),

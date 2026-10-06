@@ -101,6 +101,7 @@ export function QuickSignIn({
     ? [
         { label: "Superadmin", email: "superadmin@versoair.test" },
         { label: "CEO", email: "ceo@versoair.test" },
+        { label: "CEO 2", email: "ceo2@versoair.test" },
         { label: "Moderator", email: "moderator@versoair.test" },
       ]
     : [];

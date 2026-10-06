@@ -43,7 +43,7 @@ import versavidsRouter from "./routes/versavids";
 import intentSearchRouter from "./routes/intent-search";
 import migrateRouter from "./routes/migrate";
 import escrowRouter from "./routes/escrow";
-import geoSeoRouter, { robotsTxtHandler } from "./routes/geo-seo";
+import geoSeoRouter, { robotsTxtHandler, sitemapXmlHandler } from "./routes/geo-seo";
 import businessLogoRouter from "./routes/business-logo";
 import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
@@ -116,16 +116,19 @@ export async function registerRoutes(app: Express) {
   app.use("/", profilesRouter);
 
   // ═══════════════════════════════════════════════════════════
-  // 🔐 VAULT AUTHORIZATION — superadmin@versoair.test ONLY
+  // 🔐 VAULT AUTHORIZATION — SUPERADMIN_EMAIL ONLY
   // Even other superusers are denied. No exceptions.
   // ═══════════════════════════════════════════════════════════
   app.get("/api/vault/authorize", requireAuth(), async (req, res) => {
-    const VAULT_MASTER_EMAIL = "superadmin@versoair.test";
+    const VAULT_MASTER_EMAIL = String(process.env.SUPERADMIN_EMAIL || "")
+      .trim()
+      .toLowerCase();
     const user = req.user;
 
     if (
       !user ||
-      user.email !== VAULT_MASTER_EMAIL ||
+      !VAULT_MASTER_EMAIL ||
+      user.email.toLowerCase() !== VAULT_MASTER_EMAIL ||
       user.role !== "superuser"
     ) {
       console.log(
@@ -268,6 +271,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/migrate", migrateRouter); // Market Raider — competitor scraping & import
   app.use("/api/escrow", escrowRouter); // Escrow — trustless transaction engine
   app.use("/api/seo", geoSeoRouter); // GEO SEO — JSON-LD, sitemap, robots.txt
+  app.get("/sitemap.xml", sitemapXmlHandler);
   app.get("/robots.txt", robotsTxtHandler);
   app.use("/api/inventory", inventoryRouter); // Inventory — sector-adaptive product & stock management
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
