@@ -87,6 +87,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ScrollToTop from "@/components/ScrollToTop";
+import { SeoHead } from "@/components/seo/SeoHead";
 import { useMusicArtists } from "@/hooks/use-music";
 import { searchBusinesses, Business } from "@/lib/business-data";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -1904,6 +1905,11 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
+      <SeoHead
+        title="VersoAir | Business Directory & Advertising Platform"
+        description="VersoAir is the all-in-one platform for local businesses, artists, music streaming, and community. Discover verified businesses and grow your visibility."
+        canonicalPath="/"
+      />
       {/* Hero Section */}
       <div className="relative flex min-h-[clamp(36rem,78vh,52rem)] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
         <video

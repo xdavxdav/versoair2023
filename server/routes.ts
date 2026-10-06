@@ -43,7 +43,12 @@ import versavidsRouter from "./routes/versavids";
 import intentSearchRouter from "./routes/intent-search";
 import migrateRouter from "./routes/migrate";
 import escrowRouter from "./routes/escrow";
-import geoSeoRouter, { robotsTxtHandler, sitemapXmlHandler } from "./routes/geo-seo";
+import geoSeoRouter, {
+  robotsTxtHandler,
+  sitemapBusinessesHandler,
+  sitemapPagesHandler,
+  sitemapXmlHandler,
+} from "./routes/geo-seo";
 import businessLogoRouter from "./routes/business-logo";
 import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
@@ -272,6 +277,8 @@ export async function registerRoutes(app: Express) {
   app.use("/api/escrow", escrowRouter); // Escrow — trustless transaction engine
   app.use("/api/seo", geoSeoRouter); // GEO SEO — JSON-LD, sitemap, robots.txt
   app.get("/sitemap.xml", sitemapXmlHandler);
+  app.get("/sitemap-pages.xml", sitemapPagesHandler);
+  app.get("/sitemap-businesses-:page.xml", sitemapBusinessesHandler);
   app.get("/robots.txt", robotsTxtHandler);
   app.use("/api/inventory", inventoryRouter); // Inventory — sector-adaptive product & stock management
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)

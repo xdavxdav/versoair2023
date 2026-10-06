@@ -2,19 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import dotenv from "dotenv";
 import { Pool } from "pg";
+import { PUBLIC_STATIC_ROUTES } from "../utils/seo-routes";
 
 dotenv.config();
 
-const BASE_ROUTES = [
-  "/",
-  "/businesses-directory",
-  "/commerce",
-  "/hotellerie",
-  "/batiment",
-  "/automobile",
-  "/finances",
-  "/divertissement",
-];
+const BASE_ROUTES = PUBLIC_STATIC_ROUTES.map((route) => route.path);
 
 async function buildRouteList() {
   const databaseUrl = process.env.DATABASE_URL;
