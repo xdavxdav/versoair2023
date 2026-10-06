@@ -9,7 +9,6 @@ import {
   ArrowRight,
   CheckCircle,
   Users,
-  Building2,
   Award,
   Heart,
   Music,
@@ -35,6 +34,8 @@ const stagger = {
 
 const viewport = { once: true, margin: "-80px" };
 
+// TODO(pending-verification): replace John Doe placeholder partners with
+// verified partner organizations before public promotion.
 const TIERS = [
   {
     tier: "Platinum",
@@ -44,16 +45,10 @@ const TIERS = [
     glow: "shadow-slate-400/20",
     partners: [
       {
-        name: "UNESCO",
-        desc: "United Nations cultural heritage preservation & artisan empowerment",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Globe,
-        country: "Paris, France",
-      },
-      {
-        name: "World Bank Group",
-        desc: "Financing sustainable community development across West Africa",
-        icon: Building2,
-        country: "Washington DC, USA",
+        country: "Location pending",
       },
     ],
   },
@@ -65,22 +60,22 @@ const TIERS = [
     glow: "shadow-amber-400/20",
     partners: [
       {
-        name: "African Union",
-        desc: "Pan-African solidarity and economic integration framework",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Users,
-        country: "Addis Ababa, Ethiopia",
+        country: "Location pending",
       },
       {
-        name: "Cultural Heritage Fund",
-        desc: "Preservation of traditional Ivorian crafts and cultural identity",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Award,
-        country: "Abidjan, Côte d'Ivoire",
+        country: "Location pending",
       },
       {
-        name: "Artisan Alliance",
-        desc: "Global cooperative network for traditional craftspeople",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Handshake,
-        country: "Geneva, Switzerland",
+        country: "Location pending",
       },
     ],
   },
@@ -92,28 +87,28 @@ const TIERS = [
     glow: "shadow-emerald-400/20",
     partners: [
       {
-        name: "Global Crafts Network",
-        desc: "Connecting artisan markets worldwide to Ivorian craftspeople",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Globe,
-        country: "Amsterdam, Netherlands",
+        country: "Location pending",
       },
       {
-        name: "Verso Air Music Label",
-        desc: "Amplifying Ivorian musical talent on the international stage",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Music,
-        country: "Abidjan, Côte d'Ivoire",
+        country: "Location pending",
       },
       {
-        name: "West Africa Arts Council",
-        desc: "Promoting visual arts and cultural exchange across the region",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Palette,
-        country: "Dakar, Senegal",
+        country: "Location pending",
       },
       {
-        name: "Community Impact Fund",
-        desc: "Micro-grants and seed funding for grassroots initiatives",
+        name: "John Doe Organization",
+        desc: "Partner description pending confirmation",
         icon: Heart,
-        country: "Lagos, Nigeria",
+        country: "Location pending",
       },
     ],
   },
@@ -123,13 +118,15 @@ const BENEFITS = [
   {
     icon: TrendingUp,
     title: "Co-branded Visibility",
-    desc: "Logo placement across all ArtiHuman platforms, events and publications — reaching 50,000+ community members.",
+    // TODO(pending-verification): reach figure must come from real metrics.
+    desc: "Logo placement across ArtiHuman platforms, events and publications. Reach figures to be published once verified.",
     color: "from-indigo-500 to-purple-600",
   },
   {
     icon: Users,
     title: "Network Access",
-    desc: "Direct introductions to 800+ artisan communities, NGOs and cultural organisations across Côte d'Ivoire.",
+    // TODO(pending-verification): community count must come from real data.
+    desc: "Introductions to artisan communities, NGOs and cultural organisations. Network size to be published once verified.",
     color: "from-emerald-500 to-teal-600",
   },
   {
@@ -158,32 +155,31 @@ const BENEFITS = [
   },
 ];
 
+// TODO(pending-verification): replace John Doe placeholder testimonials with
+// approved quotes from real partners before public promotion.
 const TESTIMONIALS = [
   {
-    quote:
-      "Partnering with ArtiHuman has been transformative. We've seen authentic cultural impact that aligns perfectly with our heritage mission.",
-    author: "Dr. Aminata Diallo",
-    role: "Regional Director",
-    org: "UNESCO West Africa",
-    avatar: "AD",
+    quote: "Partner testimonial pending confirmation.",
+    author: "John Doe",
+    role: "Role pending",
+    org: "Organization pending",
+    avatar: "JD",
     color: "from-indigo-500 to-purple-600",
   },
   {
-    quote:
-      "The artisan network they've built is extraordinary. Our investment reaches real families in real communities — exactly what we look for.",
-    author: "James Osei",
-    role: "Development Officer",
-    org: "World Bank Group",
-    avatar: "JO",
+    quote: "Partner testimonial pending confirmation.",
+    author: "John Doe",
+    role: "Role pending",
+    org: "Organization pending",
+    avatar: "JD",
     color: "from-amber-500 to-orange-500",
   },
   {
-    quote:
-      "Through this partnership, our artists gained international exposure while staying rooted in Ivorian tradition. C'est magnifique.",
-    author: "Kouadio Yves",
-    role: "CEO",
-    org: "Verso Air Music Label",
-    avatar: "KY",
+    quote: "Partner testimonial pending confirmation.",
+    author: "John Doe",
+    role: "Role pending",
+    org: "Organization pending",
+    avatar: "JD",
     color: "from-emerald-500 to-teal-600",
   },
 ];

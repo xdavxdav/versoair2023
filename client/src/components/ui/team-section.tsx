@@ -7,29 +7,31 @@ interface TeamMember {
   department: string;
 }
 
+// TODO(pending-verification): replace John Doe placeholder team members with
+// verified team profiles before public promotion.
 const teamMembers: (TeamMember & { id: string })[] = [
   {
     id: "sarah-johnson",
-    name: "Sarah Johnson",
-    role: "Directrice générale",
+    name: "John Doe",
+    role: "Rôle à confirmer",
     department: "Direction exécutive",
   },
   {
     id: "michael-chen",
-    name: "Michael Chen",
-    role: "Directeur technique",
+    name: "John Doe",
+    role: "Rôle à confirmer",
     department: "Ingénierie",
   },
   {
     id: "emma-rodriguez",
-    name: "Emma Rodriguez",
-    role: "Directrice marketing",
+    name: "John Doe",
+    role: "Rôle à confirmer",
     department: "Marketing",
   },
   {
     id: "david-kim",
-    name: "David Kim",
-    role: "VP Succès client",
+    name: "John Doe",
+    role: "Rôle à confirmer",
     department: "Succès client",
   },
 ];

@@ -16,7 +16,6 @@ import {
   lazy,
 } from "react";
 import QuickSignIn from "@/components/QuickSignIn";
-import BetaBanner from "@/components/BetaBanner";
 import { LanguageProvider } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import { AudioProvider } from "@/lib/audio-context";
@@ -275,7 +274,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
-      <BetaBanner />
       {!hideMusicShell && (
         <div
           className="sticky top-0 left-0 right-0 z-[60] flex flex-col"

@@ -495,11 +495,12 @@ const ResponsiveFooter = ({
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-32 bg-amber-500/[0.03] blur-3xl rounded-full pointer-events-none" />
 
       <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
-        {/* Impact Metrics */}
+        {/* Impact Metrics — TODO(pending-verification): restore real figures
+            from verified program data before public promotion */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
           <div className="text-center">
             <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
-              150+
+              —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
               Communautés touchées
@@ -507,7 +508,7 @@ const ResponsiveFooter = ({
           </div>
           <div className="text-center">
             <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
-              2,400+
+              —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
               Artisans soutenus
@@ -515,7 +516,7 @@ const ResponsiveFooter = ({
           </div>
           <div className="text-center">
             <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
-              35
+              —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
               Pays actifs
@@ -523,7 +524,7 @@ const ResponsiveFooter = ({
           </div>
           <div className="text-center">
             <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
-              80+
+              —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
               Programmes en cours
@@ -4281,12 +4282,14 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-8">
             {[
-              { name: "UNESCO", href: "/partners" },
-              { name: "World Bank", href: "/partners" },
-              { name: "African Union", href: "/partners" },
-              { name: "Cultural Heritage", href: "/partners" },
-              { name: "Artisan Alliance", href: "/partners" },
-              { name: "Global Crafts", href: "/partners" },
+              // TODO(pending-verification): replace John Doe placeholders with
+              // verified partner names before public promotion.
+              { name: "John Doe — Partenaire 1", href: "/partners" },
+              { name: "John Doe — Partenaire 2", href: "/partners" },
+              { name: "John Doe — Partenaire 3", href: "/partners" },
+              { name: "John Doe — Partenaire 4", href: "/partners" },
+              { name: "John Doe — Partenaire 5", href: "/partners" },
+              { name: "John Doe — Partenaire 6", href: "/partners" },
             ].map((partner, i) => (
               <Link key={i} to={partner.href}>
                 <motion.div

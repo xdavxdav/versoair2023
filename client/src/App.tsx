@@ -9,7 +9,6 @@ import { CountryProvider } from "@/contexts/CountryContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AudioProvider, useAudio } from "@/lib/audio-context";
 import AudioPlayer from "@/components/audio/AudioPlayer";
-import BetaBanner from "@/components/BetaBanner";
 import InactivityGuard from "@/components/InactivityGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import {
@@ -62,8 +61,8 @@ const UserProfile = lazy(() => import("@/pages/user-profile"));
 const Marketplace = lazy(() => import("@/pages/marketplace"));
 const ArtAndArtisanat = lazy(() => import("@/pages/art-and-artisanat"));
 const ArtisanProfilePage = lazy(() => import("@/pages/artisan-profile"));
-const Partners = lazy(() => import("@/pages/partners"));
 const SystemStatus = lazy(() => import("@/pages/status"));
+const Partners = lazy(() => import("@/pages/partners"));
 const GetInvolved = lazy(() => import("@/pages/get-involved"));
 const ArtiHumanFoundation = lazy(() => import("@/pages/artihuman-foundation"));
 const Impact = lazy(() => import("@/pages/impact"));
@@ -488,9 +487,9 @@ function Router() {
       <Route path="/orders">
         {() => <Redirect to="/marketing/order-tracking" />}
       </Route>
-      <Route path="/partners" component={Partners} />
       <Route path="/import-business" component={ImportBusiness} />
       <Route path="/status" component={SystemStatus} />
+      <Route path="/partners" component={Partners} />
       <Route path="/get-involved" component={GetInvolved} />
       <Route path="/ong-culturelle" component={OngCulturelle} />
       <Route path="/artihuman-foundation" component={ArtiHumanFoundation} />
@@ -920,7 +919,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BetaBanner />
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages

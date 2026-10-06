@@ -1122,11 +1122,6 @@ export default function Sante() {
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
-                  <div className="text-sm text-red-300">
-                    {databaseConnected
-                      ? "✅ Live PostgreSQL Data"
-                      : "✅ Real Database Data"}
-                  </div>
                 </div>
 
                 {/* Loading State */}

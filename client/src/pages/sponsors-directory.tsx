@@ -156,38 +156,40 @@ const SPONSORSHIP_TYPES = [
   },
 ];
 
+// TODO(pending-verification): replace John Doe placeholder sponsors with
+// verified sponsor organizations and approved amounts before public promotion.
 const ACTIVE_SPONSORS = [
   {
-    name: "UNESCO",
+    name: "John Doe Organization",
     tier: "Patron",
-    amount: "$250,000+/year",
+    amount: "Amount pending",
     rating: 5,
-    description: "Cultural heritage preservation and education programs",
-    logo: "🌍",
+    description: "Sponsor description pending confirmation",
+    logo: "🤝",
   },
   {
-    name: "Global Consulting Group",
+    name: "John Doe Organization",
     tier: "Ambassador",
-    amount: "$120,000/year",
+    amount: "Amount pending",
     rating: 5,
-    description: "Business mentorship and development programs",
-    logo: "💼",
+    description: "Sponsor description pending confirmation",
+    logo: "🤝",
   },
   {
-    name: "Innovate Labs",
+    name: "John Doe Organization",
     tier: "Supporter",
-    amount: "$75,000/year",
+    amount: "Amount pending",
     rating: 4.5,
-    description: "Technology and startup ecosystem support",
-    logo: "🚀",
+    description: "Sponsor description pending confirmation",
+    logo: "🤝",
   },
   {
-    name: "Cultural Heritage Fund",
+    name: "John Doe Organization",
     tier: "Friend",
-    amount: "$15,000/year",
+    amount: "Amount pending",
     rating: 4.5,
-    description: "Artisan apprenticeship and training initiatives",
-    logo: "🎨",
+    description: "Sponsor description pending confirmation",
+    logo: "🤝",
   },
 ];
 

@@ -327,20 +327,22 @@ export default function OngCulturelle() {
             className="grid md:grid-cols-3 gap-8"
           >
             {[
+              // TODO(pending-verification): impact figures must come from
+              // verified program data before public promotion.
               {
-                number: "500+",
+                number: "—",
                 label: "Talents Africains Soutenus",
-                desc: "Musiciens, artistes, conteurs—tous bénéficient de nos programmes",
+                desc: "Chiffres en cours de vérification — publication dès confirmation",
               },
               {
-                number: "50+",
+                number: "—",
                 label: "Concerts Mondiaux Organisés",
-                desc: "De Lagos à Los Angeles, nos artistes se produisent sur les plus grandes scènes",
+                desc: "Chiffres en cours de vérification — publication dès confirmation",
               },
               {
-                number: "10,000+",
+                number: "—",
                 label: "Personnes Éduquées",
-                desc: "Langues, instruments, danses traditionnelles—nous transmettons le savoir",
+                desc: "Chiffres en cours de vérification — publication dès confirmation",
               },
             ].map((stat, idx) => (
               <motion.div

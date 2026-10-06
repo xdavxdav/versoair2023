@@ -740,13 +740,8 @@ function ArtistContractsPage() {
             >
               artists@versoair.com
             </a>{" "}
-            | Phone:{" "}
-            <a
-              href="tel:+1-555-VERSO-AIR"
-              className="text-purple-200 hover:text-white underline"
-            >
-              +1 (555) VERSO-AIR
-            </a>
+            {/* TODO(pending-verification): publish real monitored number */}|{" "}
+            Phone: John Doe — number pending
           </p>
 
           <div className="mt-8">

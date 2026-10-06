@@ -195,8 +195,9 @@ export default function HelpCenter() {
             {
               icon: <Phone className="h-8 w-8" />,
               title: "Phone Support",
-              description: "Available 8AM-10PM EST",
-              contact: "+1 (555) VERSO-AIR",
+              description: "Phone line being set up — use email meanwhile",
+              // TODO(pending-verification): publish real monitored number
+              contact: "John Doe — number pending",
             },
             {
               icon: <Users className="h-8 w-8" />,

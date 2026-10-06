@@ -139,9 +139,10 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-slate-900">Phone</h3>
-                    <p className="text-slate-600">+1 (555) VERSO-AIR</p>
+                    {/* TODO(pending-verification): publish real monitored number */}
+                    <p className="text-slate-600">John Doe — number pending</p>
                     <p className="text-sm text-slate-500">
-                      Mon-Fri, 8AM-6PM EST
+                      Use email while our phone line is being set up
                     </p>
                   </div>
                 </div>
@@ -165,11 +166,11 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-slate-900">
-                      Address
+                      Location
                     </h3>
-                    <p className="text-slate-600">Verso Air Headquarters</p>
+                    <p className="text-slate-600">Toronto, Canada</p>
                     <p className="text-sm text-slate-500">
-                      Global Operations Center
+                      Serving businesses across Canada
                     </p>
                   </div>
                 </div>

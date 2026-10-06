@@ -261,29 +261,28 @@ const HOW_IT_WORKS = [
   },
 ];
 
+// TODO(pending-verification): replace John Doe placeholder testimonials with
+// approved quotes from real sponsors before public promotion.
 const TESTIMONIALS = [
   {
-    quote:
-      "Sponsoring ArtiHuman aligned our CSR strategy with authentic community impact. Our team loves the transparency and real-time metrics.",
-    author: "Sarah Chen",
-    role: "VP Corporate Responsibility",
-    org: "Global Fortune 500 Tech Company",
+    quote: "Sponsor testimonial pending confirmation.",
+    author: "John Doe",
+    role: "Role pending",
+    org: "Organization pending",
     color: "from-indigo-500 to-purple-600",
   },
   {
-    quote:
-      "This partnership opened new markets for us while preserving cultural heritage. Win-win in every sense.",
-    author: "Kwesi Mensah",
-    role: "CEO",
-    org: "West African Crafts Collective",
+    quote: "Sponsor testimonial pending confirmation.",
+    author: "John Doe",
+    role: "Role pending",
+    org: "Organization pending",
     color: "from-amber-500 to-orange-500",
   },
   {
-    quote:
-      "The artisan network they connected us with became our most loyal supplier base. Plus, real impact for families.",
-    author: "Marina Rossi",
-    role: "Director of Sourcing",
-    org: "International Design House",
+    quote: "Sponsor testimonial pending confirmation.",
+    author: "John Doe",
+    role: "Role pending",
+    org: "Organization pending",
     color: "from-emerald-500 to-teal-600",
   },
 ];

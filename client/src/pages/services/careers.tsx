@@ -1136,18 +1136,6 @@ export default function Careers() {
         <section className="relative py-5 sm:py-6 bg-gradient-to-r from-blue-50/50 via-white to-cyan-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center">
-              <motion.div
-                variants={fadeInUp}
-                initial="hidden"
-                animate="visible"
-              >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full mb-3 border border-blue-200">
-                  <Zap className="h-3.5 w-3.5 text-blue-600" />
-                  <span className="text-xs font-semibold bg-gradient-to-r from-blue-700 to-cyan-700 bg-clip-text text-transparent">
-                    Live PostgreSQL Job Portal
-                  </span>
-                </div>
-              </motion.div>
               <motion.h2
                 variants={fadeInUp}
                 initial="hidden"
