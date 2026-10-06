@@ -20,8 +20,9 @@
     "db:seed-admin-test": "node scripts/seed-admin-test-data.cjs",
     "db:seed-geoadmin-test": "node scripts/tests/_create_test_users.cjs",
     "seo:routes": "node --import tsx server/scripts/prerender-routes.ts",
+    "seo:validate-prerender": "node --import tsx server/scripts/validate-prerender-seo.ts",
     "prerender:snap": "node --import tsx server/scripts/run-react-snap.ts",
-    "build:prerender": "npm run seo:routes && npm run build && npm run prerender:snap",
+    "build:prerender": "npm run seo:routes && npm run build && npm run prerender:snap && npm run seo:validate-prerender",
     "seed": "node scripts/seed-production.cjs"
   },
   "dependencies": {

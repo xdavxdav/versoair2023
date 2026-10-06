@@ -27,11 +27,19 @@ Run full prerender pipeline (route list → build → react-snap):
 npm run build:prerender
 ```
 
+This now also runs a post-prerender SEO validation pass that checks each
+generated route for:
+
+- `<title>`
+- `<meta name="description">`
+- `<link rel="canonical">` (matching `https://www.versoair.com/<route>`)
+
 Or run react-snap directly after a normal build:
 
 ```bash
 npm run build
 npm run prerender:snap
+npm run seo:validate-prerender
 ```
 
 `prerender:snap` reads `dist/public/prerender-routes.json` and uses it as the
