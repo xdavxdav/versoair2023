@@ -85,6 +85,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
 import SectorBusinessCard from "@/components/SectorBusinessCard";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 // Database API configuration
 const API_BASE_URL = "";
@@ -592,6 +593,11 @@ export default function Automobile() {
 
   return (
     <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-gray-900 via-purple-900/20 to-gray-900 text-white">
+      <SeoHead
+        title="Automobile Directory | VersoAir"
+        description="Browse automobile businesses, dealerships, repair services, and mobility providers listed on VersoAir."
+        canonicalPath="/automobile"
+      />
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"

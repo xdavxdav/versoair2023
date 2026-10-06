@@ -56,6 +56,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 const API_BASE_URL = "";
 
@@ -713,6 +714,11 @@ export default function BusinessesDirectory() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <SeoHead
+        title="Businesses Directory | VersoAir"
+        description="Explore verified businesses by category and location on VersoAir. Discover services, contact details, and trusted local providers."
+        canonicalPath="/businesses-directory"
+      />
       {/* Header */}
       <header className="bg-[#0A1628] text-white">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">

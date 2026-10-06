@@ -79,6 +79,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
 import SectorBusinessCard from "@/components/SectorBusinessCard";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 // Database API configuration
 const API_BASE_URL = "";
@@ -700,6 +701,11 @@ export default function CommerceBusinessAds() {
 
   return (
     <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
+      <SeoHead
+        title="Commerce Directory | VersoAir"
+        description="Browse commerce businesses, retailers, and service providers on VersoAir with category insights and verified listings."
+        canonicalPath="/commerce"
+      />
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"

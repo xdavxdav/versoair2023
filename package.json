@@ -19,6 +19,7 @@
     "db:seed-launch-businesses": "node scripts/seed-launch-businesses.cjs",
     "db:seed-admin-test": "node scripts/seed-admin-test-data.cjs",
     "db:seed-geoadmin-test": "node scripts/tests/_create_test_users.cjs",
+    "seo:routes": "node --import tsx server/scripts/prerender-routes.ts",
     "seed": "node scripts/seed-production.cjs"
   },
   "dependencies": {

@@ -72,6 +72,7 @@ import { SettingsModal } from "@/components/SettingsModal";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
 import SectorBusinessCard from "@/components/SectorBusinessCard";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 // Database API configuration - SAME AS COMMERCE
 const API_BASE_URL = "";
@@ -573,6 +574,11 @@ export default function Hotellerie() {
 
   return (
     <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
+      <SeoHead
+        title="Hospitality Directory | VersoAir"
+        description="Find hotels, hospitality services, and food businesses on VersoAir with verified profiles and sector analytics."
+        canonicalPath="/hotellerie"
+      />
       {/* Database Connection Status */}
       <div
         className="fixed bottom-4 right-4 z-50"

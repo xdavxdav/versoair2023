@@ -49,6 +49,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { FicheTechnique } from "@/components/FicheTechnique";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -380,6 +381,50 @@ export default function BusinessDetailPage() {
     return "";
   }, [business?.latitude, business?.longitude]);
 
+  const canonicalPath = businessId ? `/business/${businessId}` : "/businesses-directory";
+  const metaTitle = business?.name
+    ? `${business.name} | VersoAir`
+    : "Business Profile | VersoAir";
+  const metaDescription = (() => {
+    const baseDescription =
+      business?.description?.trim() ||
+      "Discover business details, contact information, and service highlights on VersoAir.";
+    const locationHint = [business?.location, business?.address]
+      .filter(Boolean)
+      .join(" • ");
+    const combined = locationHint
+      ? `${baseDescription} ${locationHint}`
+      : baseDescription;
+    return combined.slice(0, 160);
+  })();
+  const businessJsonLd = business
+    ? {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: business.name,
+        description: business.description || undefined,
+        url: `https://www.versoair.com${canonicalPath}`,
+        telephone: business.phone || undefined,
+        email: business.email || undefined,
+        address: business.address
+          ? {
+              "@type": "PostalAddress",
+              streetAddress: business.address,
+              addressLocality: business.location || undefined,
+            }
+          : undefined,
+        aggregateRating:
+          rating > 0
+            ? {
+                "@type": "AggregateRating",
+                ratingValue: Number(rating.toFixed(1)),
+                reviewCount:
+                  (business.reviews && business.reviews.length) || reviewCount || 1,
+              }
+            : undefined,
+      }
+    : undefined;
+
   /* ── Helpers ─────────────────────────────────────────────────── */
 
   const copyToClipboard = (value: string) => {
@@ -394,6 +439,11 @@ export default function BusinessDetailPage() {
   if (isLoading) {
     return (
       <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-100">
+        <SeoHead
+          title="Loading Business Profile | VersoAir"
+          description="Loading business information from the VersoAir directory."
+          canonicalPath={canonicalPath}
+        />
         <GraffitiBackground />
         <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-16 space-y-6">
           <Skeleton className="h-10 w-2/3 bg-white/5" />
@@ -423,6 +473,11 @@ export default function BusinessDetailPage() {
     });
     return (
       <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-100 items-center justify-center px-4">
+        <SeoHead
+          title="Business Not Found | VersoAir"
+          description="The requested business profile is unavailable or no longer listed on VersoAir."
+          canonicalPath={canonicalPath}
+        />
         <GraffitiBackground />
         <Card className="relative z-10 bg-white/5 backdrop-blur-xl border-white/10 max-w-md shadow-2xl">
           <CardHeader>
@@ -459,6 +514,12 @@ export default function BusinessDetailPage() {
 
   return (
     <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-100">
+      <SeoHead
+        title={metaTitle}
+        description={metaDescription}
+        canonicalPath={canonicalPath}
+        jsonLd={businessJsonLd}
+      />
       <GraffitiBackground />
 
       <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-10 space-y-10">
