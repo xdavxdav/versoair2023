@@ -11,6 +11,7 @@ import {
 } from "@/lib/animations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,11 +30,7 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const res = await apiRequest("POST", "/api/contact", formData);
       const data = await res.json();
 
       if (data.success) {
