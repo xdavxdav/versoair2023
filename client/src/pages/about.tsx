@@ -39,6 +39,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useAboutStats } from "@/hooks/use-about-stats";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 // Platform sectors – these match the actual routes in your app
 const PLATFORM_SECTORS = [
@@ -255,6 +256,114 @@ const FeatureHighlight = ({
 );
 
 // Helper to format numbers nicely
+// ─── Company identity — four questions ───────────────────────────────────────
+// Facts below verified against the official Certificate & Articles of
+// Incorporation (Ontario, Business Corporations Act), October 5, 2026.
+// If a fact changes, update it here AND in the legal pages.
+const COMPANY_COPY = {
+  fr: {
+    badge: "L'entreprise",
+    heading: "Verso Air Inc. — l'entreprise derrière la plateforme",
+    questions: [
+      {
+        icon: Building,
+        q: "Qui est VERSO AIR INC. ?",
+        a: "VERSO AIR INC. est une société par actions constituée en Ontario, Canada (numéro de société de l'Ontario 1001767617), en vigueur depuis le 5 octobre 2026. Fondée par Joel Vanga, elle est établie à North York, Toronto. Ces informations sont vérifiables auprès du registre des entreprises de l'Ontario.",
+      },
+      {
+        icon: Briefcase,
+        q: "Que vend exactement l'entreprise ?",
+        a: "Des services de visibilité pour entreprises : un annuaire commercial public, des espaces publicitaires et des tableaux d'analytique sectorielle (business intelligence). Les fonctionnalités annoncées correspondent aux produits réellement disponibles — ni plus, ni moins.",
+      },
+      {
+        icon: MapPin,
+        q: "À qui s'adresse-t-elle ?",
+        a: "Aux entreprises et organisations de Toronto et du Canada d'abord. La plateforme grandit secteur par secteur, ville par ville, à mesure que des inscriptions réelles et vérifiées s'ajoutent.",
+      },
+      {
+        icon: Shield,
+        q: "Pourquoi lui faire confiance ?",
+        a: "Parce que tout est vérifiable : une société enregistrée en Ontario, des coordonnées réelles (support@versoair.com, boîte surveillée), des chiffres générés depuis la base de données en direct, et aucune prétention sans preuve. VERSO AIR™ — protection de marque à venir.",
+      },
+    ],
+  },
+  en: {
+    badge: "The Company",
+    heading: "Verso Air Inc. — the company behind the platform",
+    questions: [
+      {
+        icon: Building,
+        q: "Who is VERSO AIR INC.?",
+        a: "VERSO AIR INC. is a corporation incorporated in Ontario, Canada (Ontario Corporation Number 1001767617), effective October 5, 2026. Founded by Joel Vanga, it is based in North York, Toronto. These facts are verifiable through the Ontario Business Registry.",
+      },
+      {
+        icon: Briefcase,
+        q: "What exactly does the company sell?",
+        a: "Business visibility services: a public business directory, advertising placements, and sector analytics dashboards (business intelligence). Every advertised feature matches a product that is actually available — no more, no less.",
+      },
+      {
+        icon: MapPin,
+        q: "Who is it selling to?",
+        a: "Businesses and organizations in Toronto and Canada first. The platform grows sector by sector, city by city, as real, verified listings are added.",
+      },
+      {
+        icon: Shield,
+        q: "Why should someone trust it?",
+        a: "Because everything is checkable: a registered Ontario corporation, real contact information (support@versoair.com, a monitored inbox), figures generated live from the database, and no claim without evidence. VERSO AIR™ — trademark protection coming soon.",
+      },
+    ],
+  },
+} as const;
+
+function CompanySection() {
+  const { currentLang } = useLanguage();
+  const copy = currentLang === "en" ? COMPANY_COPY.en : COMPANY_COPY.fr;
+
+  return (
+    <section className="py-16 md:py-20 relative bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10 md:mb-14"
+        >
+          <Badge className="mb-4 px-4 py-2 bg-emerald-50 border-emerald-200 text-emerald-700">
+            {copy.badge}
+          </Badge>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900">
+            {copy.heading}
+          </h2>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          {copy.questions.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 md:p-8 shadow-sm"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-md">
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">
+                  {item.q}
+                </h3>
+                <p className="text-slate-600 leading-relaxed">{item.a}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -382,10 +491,10 @@ export default function About() {
               className="text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed"
             >
               Au service des annuaires d'entreprises et de l'analytique à
-              Abidjan & en Côte d'Ivoire — connectant les secteurs du commerce,
-              de l'hôtellerie, de l'automobile, de la construction, de la
-              finance, de la santé et du divertissement grâce à l'intelligence
-              de données en temps réel.
+              Toronto et partout au Canada — connectant les secteurs du
+              commerce, de l'hôtellerie, de l'automobile, de la construction,
+              de la finance, de la santé et du divertissement grâce à
+              l'intelligence de données en temps réel.
             </motion.p>
 
             {/* Quick Stats — ALL from live database */}
@@ -465,6 +574,9 @@ export default function About() {
           </div>
         </div>
       </div>
+
+      {/* Company identity — the four questions */}
+      <CompanySection />
 
       {/* Live Data Dashboard Strip */}
       {!loading && (
