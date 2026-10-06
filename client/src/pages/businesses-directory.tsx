@@ -566,8 +566,14 @@ const CategoryCard = ({
 
 export default function BusinessesDirectory() {
   const [, setLocation] = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("search") ?? "";
+  });
+  const [locationQuery, setLocationQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("location") ?? "";
+  });
   const { selectedCountry } = useCountry();
   const continentAdj = getContinentAdjective(selectedCountry || "");
   const continentName = getContinentForCountry(selectedCountry || "");

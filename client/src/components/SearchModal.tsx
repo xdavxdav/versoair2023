@@ -12,6 +12,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  Store,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -22,6 +23,14 @@ interface SearchResult {
   commentCount: number;
   isResolved: boolean;
   createdAt: string;
+}
+
+interface BusinessResult {
+  id: number;
+  name: string;
+  description?: string;
+  location?: string;
+  city_name?: string;
 }
 
 interface SearchModalProps {
@@ -50,6 +59,7 @@ const categoryLabels: Record<string, string> = {
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [businessResults, setBusinessResults] = useState<BusinessResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [, navigate] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,28 +89,32 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     };
   }, [isOpen, onClose]);
 
-  // Live search with debounce
+  // Live search with debounce — businesses (primary) + FAQ topics (secondary)
   const searchFaq = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults([]);
+      setBusinessResults([]);
       return;
     }
 
     setIsSearching(true);
-    try {
-      const res = await fetch(
-        `/api/faq/search?q=${encodeURIComponent(searchQuery)}&limit=6`,
-      );
-      const data = await res.json();
-      if (data.success) {
-        setResults(data.data);
-      }
-    } catch {
-      // Fallback: show empty — user can still submit to go to FAQ page
+    const encoded = encodeURIComponent(searchQuery);
+    const [faqRes, bizRes] = await Promise.allSettled([
+      fetch(`/api/faq/search?q=${encoded}&limit=4`).then((r) => r.json()),
+      fetch(`/api/businesses?search=${encoded}&limit=4`).then((r) => r.json()),
+    ]);
+
+    if (faqRes.status === "fulfilled" && faqRes.value?.success) {
+      setResults(faqRes.value.data);
+    } else {
       setResults([]);
-    } finally {
-      setIsSearching(false);
     }
+    if (bizRes.status === "fulfilled" && bizRes.value?.success) {
+      setBusinessResults(bizRes.value.data);
+    } else {
+      setBusinessResults([]);
+    }
+    setIsSearching(false);
   }, []);
 
   // Debounced search on input change
@@ -114,15 +128,17 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     };
   }, [query, searchFaq]);
 
-  // Handle form submission
+  // Handle form submission → business directory (primary search target)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       onClose();
-      navigate(`/faq?search=${encodeURIComponent(query.trim())}`);
+      navigate(
+        `/businesses-directory?search=${encodeURIComponent(query.trim())}`,
+      );
     } else {
       onClose();
-      navigate("/faq");
+      navigate("/businesses-directory");
     }
   };
 
@@ -130,6 +146,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const goToTopic = (id: number) => {
     onClose();
     navigate(`/faq?topic=${id}`);
+  };
+
+  // Navigate to a business detail page
+  const goToBusiness = (id: number) => {
+    onClose();
+    navigate(`/business/${id}`);
   };
 
   return createPortal(
@@ -169,7 +191,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search FAQ topics, questions..."
+                  placeholder="Search businesses, help topics..."
                   className="w-full bg-transparent text-white placeholder-slate-400 py-4 pl-12 pr-12 text-base focus:outline-none"
                   autoComplete="off"
                 />
@@ -202,49 +224,80 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     />
                   </div>
                 </div>
-              ) : results.length > 0 ? (
+              ) : results.length > 0 || businessResults.length > 0 ? (
                 <div className="py-2">
-                  <p className="px-4 py-2 text-xs text-slate-500 uppercase tracking-wider">
-                    FAQ Results
-                  </p>
-                  {results.map((result) => (
-                    <button
-                      key={result.id}
-                      onClick={() => goToTopic(result.id)}
-                      className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 group"
-                    >
-                      <MessageCircleQuestion className="w-4 h-4 mt-0.5 text-cyan-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate group-hover:text-cyan-300 transition-colors">
-                          {result.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span
-                            className={`text-xs ${categoryColors[result.faqCategory] || "text-slate-400"}`}
-                          >
-                            {categoryLabels[result.faqCategory] ||
-                              result.faqCategory}
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            · {result.commentCount || 0} replies
-                          </span>
-                          {result.isResolved && (
-                            <CheckCircle2 className="w-3 h-3 text-green-400" />
-                          )}
-                        </div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors mt-1" />
-                    </button>
-                  ))}
+                  {businessResults.length > 0 && (
+                    <>
+                      <p className="px-4 py-2 text-xs text-slate-500 uppercase tracking-wider">
+                        Businesses
+                      </p>
+                      {businessResults.map((biz) => (
+                        <button
+                          key={biz.id}
+                          onClick={() => goToBusiness(biz.id)}
+                          className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 group"
+                        >
+                          <Store className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate group-hover:text-emerald-300 transition-colors">
+                              {biz.name}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                              {[biz.city_name || biz.location]
+                                .filter(Boolean)
+                                .join("")}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 transition-colors mt-1" />
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {results.length > 0 && (
+                    <>
+                      <p className="px-4 py-2 text-xs text-slate-500 uppercase tracking-wider">
+                        Help Topics
+                      </p>
+                      {results.map((result) => (
+                        <button
+                          key={result.id}
+                          onClick={() => goToTopic(result.id)}
+                          className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 group"
+                        >
+                          <MessageCircleQuestion className="w-4 h-4 mt-0.5 text-cyan-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate group-hover:text-cyan-300 transition-colors">
+                              {result.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span
+                                className={`text-xs ${categoryColors[result.faqCategory] || "text-slate-400"}`}
+                              >
+                                {categoryLabels[result.faqCategory] ||
+                                  result.faqCategory}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                · {result.commentCount || 0} replies
+                              </span>
+                              {result.isResolved && (
+                                <CheckCircle2 className="w-3 h-3 text-green-400" />
+                              )}
+                            </div>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors mt-1" />
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               ) : query.trim() ? (
                 <div className="py-8 text-center">
-                  <MessageCircleQuestion className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                  <Search className="w-8 h-8 text-slate-600 mx-auto mb-2" />
                   <p className="text-slate-400 text-sm">
-                    No matching topics found
+                    No matching businesses or topics found
                   </p>
                   <p className="text-slate-500 text-xs mt-1">
-                    Press Enter to search on the FAQ page
+                    Press Enter to search the business directory
                   </p>
                 </div>
               ) : (
@@ -254,6 +307,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     Quick Links
                   </p>
                   {[
+                    {
+                      label: "Browse the Business Directory",
+                      path: "/businesses-directory",
+                    },
                     { label: "Browse all FAQ topics", path: "/faq" },
                     { label: "Visit Community Blog", path: "/blog" },
                   ].map((link) => (
