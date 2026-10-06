@@ -364,6 +364,93 @@ function CompanySection() {
   );
 }
 
+const BRAND_ROADMAP = {
+  fr: {
+    badge: "Changements à venir",
+    heading: "Notre architecture de marque — déploiement immédiat",
+    intro:
+      "Nous alignons maintenant l'identité juridique, la marque principale et l'univers musical pour rendre la structure plus claire publiquement.",
+    items: [
+      {
+        title: "VERSO AIR INC.",
+        text: "L'entité juridique et corporate. C'est l'identité de confiance utilisée pour les pages légales, le contact, la facturation et les communications officielles.",
+      },
+      {
+        title: "VERSO AIR™",
+        text: "La marque parapluie de la plateforme : annuaire, intelligence d'affaires, publicité, produits et services. Protection de marque en préparation.",
+      },
+      {
+        title: "TMU — The Musical Universe™",
+        text: "Le sous-univers musical de VERSO AIR : artistes, studio, label, expériences créatives et futur merchandising. Déploiement progressif imminent.",
+      },
+    ],
+  },
+  en: {
+    badge: "Upcoming changes",
+    heading: "Our brand architecture — rolling out immediately",
+    intro:
+      "We are now aligning the legal identity, master brand, and music universe so the structure is clear publicly.",
+    items: [
+      {
+        title: "VERSO AIR INC.",
+        text: "The legal and corporate entity. This is the trust identity used across legal pages, contact, billing, and official communications.",
+      },
+      {
+        title: "VERSO AIR™",
+        text: "The umbrella platform brand for the directory, business intelligence, advertising, products, and services. Trademark protection is in preparation.",
+      },
+      {
+        title: "TMU — The Musical Universe™",
+        text: "The music sub-universe of VERSO AIR: artists, studio, label, creative experiences, and future merchandising. Rolling out imminently.",
+      },
+    ],
+  },
+} as const;
+
+function BrandRoadmapSection() {
+  const { currentLang } = useLanguage();
+  const copy = currentLang === "en" ? BRAND_ROADMAP.en : BRAND_ROADMAP.fr;
+
+  return (
+    <section className="py-14 md:py-16 relative bg-slate-50 border-y border-slate-200">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10"
+        >
+          <Badge className="mb-4 px-4 py-2 bg-amber-50 border-amber-200 text-amber-700">
+            {copy.badge}
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            {copy.heading}
+          </h2>
+          <p className="text-slate-600 max-w-3xl mx-auto">{copy.intro}</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {copy.items.map((item, i) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <h3 className="text-lg font-bold text-slate-900 mb-3 notranslate">
+                {item.title}
+              </h3>
+              <p className="text-slate-600 leading-relaxed">{item.text}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -577,6 +664,8 @@ export default function About() {
 
       {/* Company identity — the four questions */}
       <CompanySection />
+
+      <BrandRoadmapSection />
 
       {/* Live Data Dashboard Strip */}
       {!loading && (

@@ -1027,7 +1027,7 @@ function AppContent() {
                           className="notranslate flex-shrink-0 px-4 md:px-8"
                           translate="no"
                         >
-                          Welcome to Verso Air™ — Verso Air Business
+                          Welcome to VERSO AIR™ — Business Intelligence
                         </span>
                         <span
                           className="notranslate flex-shrink-0 px-4 md:px-8"

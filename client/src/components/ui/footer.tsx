@@ -198,7 +198,7 @@ export default function Footer() {
 
           <p className="text-xs text-slate-600">
             © {new Date().getFullYear()}{" "}
-            <span className="notranslate">Verso Air™</span>. Tous droits
+            <span className="notranslate">VERSO AIR INC.</span>. Tous droits
             réservés.
           </p>
         </div>

@@ -38,7 +38,7 @@ export default function CookiePolicy() {
               Cookies are small text files stored on your device when you visit
               a website. They help the website remember your preferences, keep
               you logged in, and understand how you interact with the site.
-              Verso Air™ uses cookies to provide a secure, personalized
+              VERSO AIR INC. uses cookies to provide a secure, personalized
               experience across our Platform.
             </p>
           </section>
@@ -301,7 +301,7 @@ export default function CookiePolicy() {
             </h2>
             <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
               <p className="text-white font-medium">
-                Verso Air™ — Privacy Team
+                VERSO AIR INC. — Privacy Team
               </p>
               <p className="text-slate-500 text-sm">
                 Email: privacy@versoair.com

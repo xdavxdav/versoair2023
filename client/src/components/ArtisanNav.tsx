@@ -72,7 +72,7 @@ export default function ArtisanNav() {
                   Portail <span className="text-emerald-400">Artisans</span>
                 </h1>
                 <p className="text-[10px] text-emerald-300/60 -mt-0.5">
-                  Verso Air™ Community
+                  VERSO AIR™ Community
                 </p>
               </div>
             </div>

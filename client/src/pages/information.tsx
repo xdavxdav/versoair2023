@@ -1,5 +1,5 @@
 /**
- * Information Hub — Single-page legal & info center for Verso Air™
+ * Information Hub — Single-page legal & info center for VERSO AIR INC.
  *
  * Tab carousel: Overview | Terms | Privacy | GDPR | Cookies | Trademark |
  *               Competition | Contracts | Jurisdiction | FAQ
@@ -190,14 +190,14 @@ function OverviewTab() {
     <div className="space-y-6">
       <p className="text-slate-700 leading-relaxed text-lg">
         Bienvenue au{" "}
-        <strong className="text-slate-900">Centre d'Information Verso Air™</strong>{" "}
+        <strong className="text-slate-900">Centre d'Information VERSO AIR INC.</strong>{" "}
         — votre référence unique pour tous les documents juridiques, politiques
         de la plateforme, règles de concours, conditions des contrats artistes
         et informations de conformité réglementaire.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <InfoCard icon={Building2} title="À Propos de Verso Air™">
+        <InfoCard icon={Building2} title="À Propos de VERSO AIR INC.">
           <p>
             Verso Air est une plateforme d'intelligence d'affaires full-stack
             pour l'analytique multi-sectorielle — commerce, hôtellerie,
@@ -287,7 +287,7 @@ function TermsTab() {
 
       <SectionHeading number="1" title="Acceptance of Terms" />
       <p className="text-slate-700 leading-relaxed">
-        By accessing or using Verso Air™ (the "Platform"), including all
+        By accessing or using VERSO AIR INC. (the "Platform"), including all
         sub-platforms (StreamRoyale, Marketplace, Geo Admin, VersoAI, Artist
         Portal), you agree to be bound by these Terms of Service ("Terms"). If
         you do not agree, you must discontinue use immediately. These Terms

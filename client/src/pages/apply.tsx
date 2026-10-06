@@ -215,7 +215,7 @@ const MUSICAL_PORTALS: Portal[] = [
     id: "artist",
     name: "Artist / Music Label",
     description:
-      "Join Verso Air™ Music Label — upload tracks, track royalties, and compete in StreamRoyale.",
+      "Join TMU — The Musical Universe™ — upload tracks, track royalties, and compete in StreamRoyale.",
     icon: Music,
     color: "purple",
     gradient: "from-violet-500 to-fuchsia-500",
@@ -955,7 +955,7 @@ export default function ApplyPage() {
               Choose Your Path
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Join Verso Air™
+              Join VERSO AIR™
             </h1>
             <p className="text-xl text-white/60 max-w-2xl mx-auto">
               Select the account type that best fits your needs. Each portal
@@ -1027,8 +1027,8 @@ export default function ApplyPage() {
                               '<span class="notranslate">GeoAdmin</span>',
                             )
                             .replace(
-                              /Verso Air™/g,
-                              '<span class="notranslate">Verso Air™</span>',
+                              /VERSO AIR™/g,
+                              '<span class="notranslate">VERSO AIR™</span>',
                             )
                             .replace(
                               /Verso Air/g,
@@ -1192,8 +1192,8 @@ export default function ApplyPage() {
                                         '<span class="notranslate">StreamRoyale</span>',
                                       )
                                       .replace(
-                                        /Verso Air™/g,
-                                        '<span class="notranslate">Verso Air™</span>',
+                                        /VERSO AIR™/g,
+                                        '<span class="notranslate">VERSO AIR™</span>',
                                       )
                                       .replace(
                                         /Verso Air/g,

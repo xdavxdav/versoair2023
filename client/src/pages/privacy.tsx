@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
               1. Introduction
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              Verso Air™ ("we," "our," or "us") operates the Verso Air business
+              VERSO AIR INC. ("we," "our," or "us") operates the VERSO AIR™ business
               intelligence platform, including all related services such as the
               Business Directory, Geo Admin Portal, Artist Portal
               (StreamRoyale), Marketplace, and VersoAI assistant (collectively,
@@ -257,7 +257,7 @@ export default function PrivacyPolicy() {
             </p>
             <div className="bg-white/5 rounded-xl p-4 mt-2 border border-slate-300">
               <p className="text-white font-medium">
-                Verso Air™ — Privacy Team
+                VERSO AIR INC. — Privacy Team
               </p>
               <p className="text-slate-500 text-sm">
                 Email: privacy@versoair.com

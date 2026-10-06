@@ -60,7 +60,7 @@ const PORTAL_MESSAGES: Record<
     emoji: "🌍",
   },
   artist: {
-    headline: "Bienvenue au Verso Air™ Music Label!",
+    headline: "Bienvenue dans TMU — The Musical Universe™ !",
     subheadline: "Votre voyage musical commence ici. Le monde vous attend.",
     features: [
       "Téléversez vos morceaux illimités",

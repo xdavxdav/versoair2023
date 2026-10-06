@@ -302,11 +302,11 @@ export default function GDPRCompliance() {
           <section>
             <h2 className="text-xl font-semibold text-amber-600 border-b border-gray-800 pb-2">Data Controller</h2>
             <p className="text-slate-700 leading-relaxed">
-              Verso Air™ acts as the data controller for personal data processed through the Platform.
+              VERSO AIR INC. acts as the data controller for personal data processed through the Platform.
             </p>
             <div className="bg-slate-100 rounded-lg p-4 border border-gray-800 mt-3">
               <p className="text-slate-900 font-medium">Data Controller</p>
-              <p className="text-slate-500 text-sm">Verso Air™</p>
+              <p className="text-slate-500 text-sm">VERSO AIR INC.</p>
               <p className="text-slate-500 text-sm">Data Protection Officer: dpo@versoair.com</p>
             </div>
           </section>

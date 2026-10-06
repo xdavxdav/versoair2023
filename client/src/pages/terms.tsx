@@ -37,7 +37,7 @@ export default function TermsOfService() {
               1. Acceptance of Terms
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              By accessing or using the Verso Air™ platform ("Platform"),
+              By accessing or using the VERSO AIR INC. platform ("Platform"),
               including the Business Directory, Analytics Dashboards,
               StreamRoyale Artist Portal, Marketplace, VersoAI assistant, and
               any associated services, you agree to be bound by these Terms of
@@ -322,7 +322,7 @@ export default function TermsOfService() {
               14. Contact
             </h2>
             <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
-              <p className="text-white font-medium">Verso Air™ — Legal Team</p>
+              <p className="text-white font-medium">VERSO AIR INC. — Legal Team</p>
               <p className="text-slate-500 text-sm">
                 Email: legal@versoair.com
               </p>
