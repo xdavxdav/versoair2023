@@ -268,7 +268,7 @@ const COMPANY_COPY = {
       {
         icon: Building,
         q: "Qui est VERSO AIR INC. ?",
-        a: "VERSO AIR INC. est une société par actions constituée en Ontario, Canada (numéro de société de l'Ontario 1001767617), en vigueur depuis le 5 octobre 2026. Fondée par Joel Vanga, elle est établie à North York, Toronto. Ces informations sont vérifiables auprès du registre des entreprises de l'Ontario.",
+        a: "VERSO AIR INC. est une société par actions constituée en Ontario, Canada (numéro de société de l'Ontario 1001767617), en vigueur depuis le 5 octobre 2026. Une idée de Boussou Elvis Jonathan (fondateur), propulsée par Joel Vanga (co-fondateur), elle est établie à North York, Toronto. Ces informations sont vérifiables auprès du registre des entreprises de l'Ontario.",
       },
       {
         icon: Briefcase,
@@ -294,7 +294,7 @@ const COMPANY_COPY = {
       {
         icon: Building,
         q: "Who is VERSO AIR INC.?",
-        a: "VERSO AIR INC. is a corporation incorporated in Ontario, Canada (Ontario Corporation Number 1001767617), effective October 5, 2026. Founded by Joel Vanga, it is based in North York, Toronto. These facts are verifiable through the Ontario Business Registry.",
+        a: "VERSO AIR INC. is a corporation incorporated in Ontario, Canada (Ontario Corporation Number 1001767617), effective October 5, 2026. An idea by Boussou Elvis Jonathan (founder), powered by Joel Vanga (co-founder), it is based in North York, Toronto. These facts are verifiable through the Ontario Business Registry.",
       },
       {
         icon: Briefcase,
