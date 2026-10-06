@@ -8,7 +8,8 @@ export interface AuthUser {
 
 ## SEO prerender route list
 
-Generate a deterministic route list for prerender tools from live directory data:
+Generate the route list for prerender tools (the shared public static routes in
+`server/utils/seo-routes.ts`; no database required):
 
 ```bash
 npm run seo:routes
@@ -19,7 +20,9 @@ This command writes:
 - `client/public/prerender-routes.json`
 - `client/public/prerender-routes.txt`
 
-Routes include base directory/category pages and all active `/business/:id` pages.
+Dynamic `/business/:id` pages are intentionally **not** prerendered: react-snap has
+no API/database behind it, so they would snapshot as error pages without JSON-LD.
+They are listed in the sitemap and render their `<SeoHead>` + JSON-LD client-side.
 
 Run full prerender pipeline (route list → build → react-snap):
 
@@ -32,7 +35,13 @@ generated route for:
 
 - `<title>`
 - `<meta name="description">`
-- `<link rel="canonical">` (matching `https://www.versoair.com/<route>`)
+- `<link rel="canonical">` (matching `https://www.versoair.com/<route>`), with no
+  conflicting duplicates
+- `og:title`, `og:description`, `og:url`, `twitter:card`
+- JSON-LD (`LocalBusiness` or subtype) on `/business/:id` routes, if any are present
+- duplicate titles / canonicals across routes
+
+The build fails (non-zero exit) if any check fails.
 
 Or run react-snap directly after a normal build:
 
@@ -43,4 +52,15 @@ npm run seo:validate-prerender
 ```
 
 `prerender:snap` reads `dist/public/prerender-routes.json` and uses it as the
-exact include list (`crawl: false`) so data-driven routes are not missed.
+exact include list (`crawl: false`).
+
+## Sitemap
+
+`/sitemap.xml` is a sitemap index (`/sitemap-pages.xml` plus
+`/sitemap-businesses-N.xml`, 10,000 active businesses per file). `robots.txt`
+always points at the canonical `https://www.versoair.com` origin. After deploying,
+verify the live site:
+
+```bash
+npm run seo:validate-sitemap -- https://www.versoair.com
+```

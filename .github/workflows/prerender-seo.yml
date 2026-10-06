@@ -9,24 +9,6 @@ on:
 jobs:
   prerender-seo:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: versoair_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d versoair_ci"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/versoair_ci
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,18 +22,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare minimal prerender dataset
-        run: |
-          psql "$DATABASE_URL" <<'SQL'
-          CREATE TABLE IF NOT EXISTS businesses (
-            id BIGSERIAL PRIMARY KEY,
-            is_active BOOLEAN NOT NULL DEFAULT TRUE,
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          );
-          INSERT INTO businesses (is_active, updated_at)
-          VALUES (TRUE, NOW()), (TRUE, NOW()), (FALSE, NOW())
-          ON CONFLICT DO NOTHING;
-          SQL
+      - name: Type check
+        run: npx tsc --noEmit
 
       - name: Build + prerender + SEO validation
         run: npm run build:prerender

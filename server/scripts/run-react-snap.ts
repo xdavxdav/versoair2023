@@ -52,6 +52,7 @@ async function run() {
     crawl: false,
     skipThirdPartyRequests: true,
     removeBlobs: true,
+    puppeteerArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   console.log("[react-snap] Done.");
