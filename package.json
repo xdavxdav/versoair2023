@@ -20,6 +20,8 @@
     "db:seed-admin-test": "node scripts/seed-admin-test-data.cjs",
     "db:seed-geoadmin-test": "node scripts/tests/_create_test_users.cjs",
     "seo:routes": "node --import tsx server/scripts/prerender-routes.ts",
+    "prerender:snap": "node --import tsx server/scripts/run-react-snap.ts",
+    "build:prerender": "npm run seo:routes && npm run build && npm run prerender:snap",
     "seed": "node scripts/seed-production.cjs"
   },
   "dependencies": {
@@ -152,6 +154,7 @@
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
     "puppeteer": "^24.36.0",
+    "react-snap": "^1.23.0",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.3",
     "typescript": "5.6.3",
