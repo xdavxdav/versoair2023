@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   ShoppingCart,
   Trash2,
@@ -22,32 +22,19 @@ export default function CartPage() {
     updateQuantity,
     removeItem,
     clearCart,
-    checkout,
-    isCheckingOut,
   } = useCart();
   const { toast } = useToast();
-  const token =
-    localStorage.getItem("auth_token") || localStorage.getItem("authToken");
-  const isLoggedIn = !!token;
+  const [, setLocation] = useLocation();
 
+  // TODO(pending-payments): restore checkout() once the Stripe/PayPal payment
+  // lifecycle is operational and tested end-to-end (incl. refunds).
   const handleCheckout = async () => {
-    if (!isLoggedIn) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to complete your purchase.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      await checkout();
-    } catch (err: any) {
-      toast({
-        title: "Checkout failed",
-        description: err.message,
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Online payment coming soon",
+      description:
+        "Send us your order request and our team will confirm it with you.",
+    });
+    setLocation("/contact");
   };
 
   if (isLoading) {
@@ -226,18 +213,15 @@ export default function CartPage() {
                     className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold"
                     size="lg"
                     onClick={handleCheckout}
-                    disabled={isCheckingOut}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
-                    {isCheckingOut ? "Processing..." : "Checkout"}
+                    Request Order
                   </Button>
 
-                  {!isLoggedIn && (
-                    <p className="text-yellow-400 text-xs text-center">
-                      ⚠️ Sign in to complete your purchase. Your cart is saved
-                      locally.
-                    </p>
-                  )}
+                  <p className="text-slate-400 text-xs text-center">
+                    Online payment is being finalized — submit a request and
+                    our team will confirm your order.
+                  </p>
                 </CardContent>
               </Card>
             </div>

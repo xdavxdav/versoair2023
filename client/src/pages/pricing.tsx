@@ -263,7 +263,7 @@ export default function Pricing() {
       return;
     }
     if (tier === "enterprise") {
-      setCheckoutTier("enterprise");
+      setLocation("/contact");
       return;
     }
 
@@ -288,8 +288,15 @@ export default function Pricing() {
       return;
     }
 
-    // Trial used or expired → open checkout modal
-    setCheckoutTier(tier);
+    // Trial used or expired → request plan via contact
+    // TODO(pending-payments): restore Stripe checkout modal (setCheckoutTier)
+    // once the payment lifecycle is operational and tested end-to-end.
+    toast({
+      title: "Online payment coming soon",
+      description:
+        "Our team will set up your plan — reach out and we'll get you started.",
+    });
+    setLocation("/contact");
   };
 
   // ─── Button label logic ─────────────────────────────────────────────────────
@@ -307,7 +314,7 @@ export default function Pricing() {
 
     if (!hasUsedTrial) return "Start 7-Day Free Trial";
 
-    return "Subscribe Now";
+    return "Request This Plan";
   };
 
   const getButtonDisabled = (tierKey: TierKey) => {
