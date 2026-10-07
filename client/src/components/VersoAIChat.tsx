@@ -603,7 +603,7 @@ export default function VersoAIChat() {
       {/* ── Chat Window ── */}
       {isOpen && (
         <div
-          className={`fixed z-[9995] flex flex-col bg-slate-950/95 backdrop-blur-2xl border border-blue-500/30 shadow-2xl shadow-blue-950/70 transition-all duration-200 overscroll-contain
+          className={`fixed z-[80] md:z-[9995] flex flex-col bg-slate-950/95 backdrop-blur-2xl border border-blue-500/30 shadow-2xl shadow-blue-950/70 transition-all duration-200 overscroll-contain
             ${
               isExpanded
                 ? "inset-0 rounded-none"
@@ -923,7 +923,7 @@ export default function VersoAIChat() {
 
       {/* ── Floating Trigger Button (hidden when chat is open) ── */}
       {!isOpen && (
-        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-[9990] group">
+        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-[80] md:z-[9990] group">
           <button
             onClick={() => setIsOpen(true)}
             className="relative w-14 h-14 bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 rounded-full shadow-2xl shadow-blue-900/60 hover:shadow-blue-500/60 hover:scale-105 flex items-center justify-center transition-all border border-blue-400/30"
