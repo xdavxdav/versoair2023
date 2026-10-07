@@ -249,6 +249,7 @@ const AdminPrintshop = lazy(() => import("@/pages/admin-printshop"));
 // 🧩 Layout Components
 // ─────────────────────────────────────────────────────
 import Footer from "@/components/ui/footer";
+import VHeartzFooter from "@/components/ui/vheartz-footer";
 import Navbar from "@/components/ui/navbar";
 const BlogNavbar = lazy(() => import("@/components/BlogNavbar"));
 const LocationPanel = lazy(() => import("@/components/ui/location-panel"));
@@ -840,6 +841,16 @@ function AppContent() {
   const { currentTrack } = useAudio();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
+  const normalizedPath = currentPath.replace(/\/+$/, "") || "/";
+  const isVHeartzPage = [
+    "/vheartz",
+    "/vheatrz",
+    "/artihuman-foundation",
+    "/ong-culturelle",
+    "/get-involved",
+    "/partners",
+    "/sponsorship",
+  ].includes(normalizedPath);
   const isVersoAIPage = currentPath.replace(/\/+$/, "") === "/versoai";
 
   // Contextual page title — read by any header/navbar that needs a dynamic title
@@ -1192,7 +1203,7 @@ function AppContent() {
       {/* Footer — hide on music pages; show only motto on immersive pages */}
       {!isMusicPage && !isImmersivePage && !isMessagesPage && (
         <div>
-          <Footer />
+          {isVHeartzPage ? <VHeartzFooter /> : <Footer />}
         </div>
       )}
       {isImmersivePage && !isMessagesPage && (

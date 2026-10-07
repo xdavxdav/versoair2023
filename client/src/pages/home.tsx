@@ -4369,8 +4369,6 @@ export default function Home() {
         </div>
       </section>
 
-      <ResponsiveFooter countryMeta={countryMeta} />
-
       <AnimatePresence>
         {showCookieConsent && (
           <CookieConsentBanner
