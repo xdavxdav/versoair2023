@@ -5,6 +5,17 @@ import { getSiteOrigin } from "../utils/site-origin";
 // Well under the protocol limit of 50,000 URLs / 50 MB per file.
 export const BUSINESSES_PER_SITEMAP = 10_000;
 
+// These three values are emitted together only by the retired launch-data
+// generator.  Keep the exclusion in the read path as well as in the data
+// cleanup migration: production deployments intentionally do not run
+// migrations, and synthetic businesses must never re-enter a public index.
+const SYNTHETIC_BUSINESS_PREDICATE = `
+  NOT (
+    email LIKE 'contact+%@versoair.local'
+    AND website LIKE '%.example.com'
+    AND phone LIKE '+1-555-%'
+  )`;
+
 type QueryFn = (
   sql: string,
   params?: unknown[],
@@ -95,7 +106,9 @@ export function createSitemapHandlers(query: QueryFn) {
         const { rows } = await query(
           `SELECT COUNT(*)::int AS total
            FROM businesses
-           WHERE is_active = true AND is_verified = true`,
+           WHERE is_active = true
+             AND is_verified = true
+             AND ${SYNTHETIC_BUSINESS_PREDICATE}`,
         );
         return sendXml(
           res,
@@ -121,7 +134,9 @@ export function createSitemapHandlers(query: QueryFn) {
       try {
         const { rows } = await query(
           `SELECT id FROM businesses
-           WHERE is_active = true AND is_verified = true
+           WHERE is_active = true
+             AND is_verified = true
+             AND ${SYNTHETIC_BUSINESS_PREDICATE}
            ORDER BY id ASC
            LIMIT $1 OFFSET $2`,
           [BUSINESSES_PER_SITEMAP, (page - 1) * BUSINESSES_PER_SITEMAP],

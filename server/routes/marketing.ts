@@ -19,6 +19,20 @@ import {
 
 const router = Router();
 
+// Operational accounts are allowed to administer the marketplace, but their
+// test/internal content must not be presented as a public seller offering.
+const INTERNAL_MARKETPLACE_USERNAMES = ["joel_007", "admin_025"] as const;
+const INTERNAL_MARKETPLACE_ACCOUNT_EXCLUSION = `
+  AND NOT EXISTS (
+    SELECT 1
+    FROM users marketplace_owner
+    WHERE marketplace_owner.id = jl.user_id
+      AND (
+        LOWER(COALESCE(marketplace_owner.username, '')) IN ('${INTERNAL_MARKETPLACE_USERNAMES.join("', '")}')
+        OR LOWER(COALESCE(marketplace_owner.gate_username, '')) IN ('${INTERNAL_MARKETPLACE_USERNAMES.join("', '")}')
+      )
+  )`;
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Stripe instance (shared with payments module)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -215,6 +229,7 @@ router.get("/journal/listings", async (req: Request, res: Response) => {
     const filterStatus = status || "active";
     query += ` AND jl.status = $${idx++}`;
     params.push(filterStatus);
+    query += INTERNAL_MARKETPLACE_ACCOUNT_EXCLUSION;
 
     query += ` ORDER BY jl.is_premium DESC, jl.created_at DESC`;
     query += ` LIMIT $${idx++} OFFSET $${idx++}`;
@@ -223,12 +238,13 @@ router.get("/journal/listings", async (req: Request, res: Response) => {
     const result = await pool.query(query, params);
 
     // Get total count for pagination
-    let countQuery = `SELECT COUNT(*) FROM ad_journal_listings WHERE status = $1`;
+    let countQuery = `SELECT COUNT(*) FROM ad_journal_listings jl WHERE status = $1`;
     const countParams: any[] = [filterStatus];
     if (category) {
       countQuery += ` AND category = $2`;
       countParams.push(category);
     }
+    countQuery += INTERNAL_MARKETPLACE_ACCOUNT_EXCLUSION;
     const countResult = await pool.query(countQuery, countParams);
 
     res.json({

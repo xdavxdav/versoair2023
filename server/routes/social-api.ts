@@ -4,7 +4,7 @@
 
 import { Router, Request, Response } from "express";
 import { db, pool } from "../../server/db";
-import { desc, eq, isNull, and, inArray, sql } from "drizzle-orm";
+import { desc, eq, isNull, and, inArray, notInArray, or, sql } from "drizzle-orm";
 import {
   socialPosts,
   socialComments,
@@ -22,6 +22,34 @@ import {
 } from "../services/notification-service";
 
 const router = Router();
+
+const INTERNAL_PUBLIC_ACCOUNT_USERNAMES = ["joel_007", "admin_025"] as const;
+
+async function getInternalSocialProfileIds(): Promise<number[]> {
+  const accounts = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      or(
+        inArray(users.username, [...INTERNAL_PUBLIC_ACCOUNT_USERNAMES]),
+        inArray(users.gateUsername, [...INTERNAL_PUBLIC_ACCOUNT_USERNAMES]),
+      ),
+    );
+
+  if (accounts.length === 0) return [];
+
+  const profiles = await db
+    .select({ id: socialUsers.id })
+    .from(socialUsers)
+    .where(
+      inArray(
+        socialUsers.userId,
+        accounts.map((account) => account.id),
+      ),
+    );
+
+  return profiles.map((profile) => profile.id);
+}
 
 async function recordSocialAudit(event: {
   actorUserId?: number | string;
@@ -138,6 +166,10 @@ router.get("/posts", async (req: Request, res: Response) => {
     const offset = (pageNum - 1) * limitNum;
 
     const conditions = [isNull(socialPosts.deletedAt)];
+    const internalProfileIds = await getInternalSocialProfileIds();
+    if (internalProfileIds.length > 0) {
+      conditions.push(notInArray(socialPosts.authorId, internalProfileIds));
+    }
     if (postType && typeof postType === "string") {
       conditions.push(eq(socialPosts.postType, postType));
     }
