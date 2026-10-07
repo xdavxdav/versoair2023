@@ -1,12 +1,8 @@
 /**
  * 💎 Pricing & Checkout — GeoAdmin Subscription Tiers
  *
- * Full checkout flow:
- *   1. Browse tiers with monthly/annual toggle
- *   2. Authenticated → "Start 7-Day Trial" (no card needed) or "Subscribe"
- *   3. Unauthenticated → "Sign in to subscribe"
- *   4. After trial expires → payment method selector (13 methods, country-aware)
- *   5. Stripe checkout session → redirect → success/cancel toast
+ * Commercial availability is currently handled by the team. Online checkout
+ * and trials stay gated until the payment lifecycle is verified end to end.
  *
  * Subscriptions are ONLY for GeoAdmin access — not general accounts.
  */
@@ -91,7 +87,6 @@ export default function Pricing() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const highlightTier = (params.get("tier") as TierKey) || null;
-  const planParam = (params.get("plan") as TierKey) || null;
   const source = params.get("source") || null;
   const status = params.get("status") || null;
   const [, setLocation] = useLocation();
@@ -113,7 +108,7 @@ export default function Pricing() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
   );
-  const [checkoutTier, setCheckoutTier] = useState<TierKey | null>(planParam);
+  const [checkoutTier, setCheckoutTier] = useState<TierKey | null>(null);
   const [selectedPayment, setSelectedPayment] =
     useState<PaymentMethodId | null>(null);
   const [startingTrial, setStartingTrial] = useState(false);
@@ -267,36 +262,9 @@ export default function Pricing() {
       return;
     }
 
-    // Not signed in → go to apply page with redirect back
-    if (!isAuthenticated) {
-      setLocation(`/apply?redirect=/pricing&plan=${tier}`);
-      return;
-    }
-
-    // Already on this tier or higher
-    if (TIER_ORDER.indexOf(currentTier) >= TIER_ORDER.indexOf(tier)) {
-      toast({
-        title: "Already subscribed",
-        description: `You're already on the ${TIERS[currentTier].name} plan or higher.`,
-      });
-      return;
-    }
-
-    // Never used trial → start trial
-    if (!hasUsedTrial) {
-      handleStartTrial(tier);
-      return;
-    }
-
-    // Trial used or expired → request plan via contact
-    // TODO(pending-payments): restore Stripe checkout modal (setCheckoutTier)
-    // once the payment lifecycle is operational and tested end-to-end.
-    toast({
-      title: "Online payment coming soon",
-      description:
-        "Our team will set up your plan — reach out and we'll get you started.",
-    });
-    setLocation("/contact");
+    // TODO(pending-payments): restore trial and checkout only once payment,
+    // fulfilment, cancellation, and support flows have been verified live.
+    setLocation(`/contact?subject=${encodeURIComponent(`${TIERS[tier].name} plan inquiry`)}`);
   };
 
   // ─── Button label logic ─────────────────────────────────────────────────────
@@ -306,21 +274,16 @@ export default function Pricing() {
       return isAuthenticated ? "Go to GeoAdmin" : "Get Started";
     if (tierKey === "enterprise") return "Contact Sales";
 
-    if (!isAuthenticated) return "Sign up to subscribe";
-
     if (currentTier === tierKey) return "Current Plan ✓";
     if (TIER_ORDER.indexOf(currentTier) > TIER_ORDER.indexOf(tierKey))
       return "Downgrade";
 
-    if (!hasUsedTrial) return "Start 7-Day Free Trial";
-
-    return "Request This Plan";
+    return "Ask about this plan";
   };
 
   const getButtonDisabled = (tierKey: TierKey) => {
     if (tierKey === "free" || tierKey === "enterprise") return false;
     if (currentTier === tierKey) return true;
-    if (startingTrial) return true;
     return false;
   };
 
@@ -352,7 +315,7 @@ export default function Pricing() {
             your reach on GeoAdmin.
           </p>
           <p className="text-sm text-slate-500 max-w-lg mx-auto mb-8">
-            All paid tiers include a 7-day free trial — no credit card required.
+            Plan availability and activation are confirmed with our team.
           </p>
 
           {/* Current status banner */}
@@ -530,44 +493,17 @@ export default function Pricing() {
         </div>
       </div>
 
-      {/* ═══ PAYMENT METHODS OVERVIEW ═══ */}
+      {/* ═══ PAYMENT AVAILABILITY ═══ */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-slate-900 mb-2">
-            Accepted Payment Methods
+            Online payment availability
           </h2>
           <p className="text-sm text-slate-400">
-            {flag} Auto-detected: {countryCode} • {availableMethods.length}{" "}
-            methods available in your region
+            Online checkout is not available yet. Contact the team to discuss a
+            plan and the available arrangements.
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
-          {sortedMethods.map((m) => (
-            <div
-              key={m.id}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-                m.available
-                  ? "bg-white/[0.04] border-white/[0.08] text-slate-900"
-                  : "bg-white/[0.02] border-white/[0.04] text-slate-600"
-              }`}
-            >
-              <PaymentLogo methodId={m.id} size={18} />
-              <span className="text-xs font-medium">{m.name}</span>
-              {m.comingSoon && (
-                <span className="text-[9px] text-amber-400 font-medium">
-                  Soon
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <p className="text-center text-[11px] text-slate-600">
-          Wallet • PayPal • Apple Pay • Google Pay • Cash App • Venmo • Interac
-          • PIX • SEPA • Bank Transfer • Credit Card (Q2) • Crypto (Q2) • Mobile
-          Money (Q3)
-        </p>
       </div>
 
       {/* ═══ FAQ ═══ */}
@@ -584,11 +520,11 @@ export default function Pricing() {
             },
             {
               q: "Do you offer a free trial?",
-              a: "Yes! All paid plans come with a 7-day free trial. No credit card required. Try any tier risk-free.",
+              a: "Trial availability has not been announced. Contact us to discuss the right plan for your needs.",
             },
             {
-              q: "How many payment methods are available?",
-              a: "We support 13+ payment methods including Platform Wallet, PayPal, Apple Pay, Google Pay, Cash App, Venmo, Interac (Canada), PIX (Brazil), SEPA (Europe), Bank Transfer, and more coming soon like Stripe cards, Crypto, and Mobile Money for Africa.",
+              q: "Can I pay online?",
+              a: "Online checkout is not available yet. The team will confirm availability and next steps directly.",
             },
             {
               q: "Can I upgrade or downgrade anytime?",

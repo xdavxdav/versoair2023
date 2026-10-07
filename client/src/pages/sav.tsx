@@ -486,125 +486,16 @@ export default function SAV() {
 
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <>
-            {/* Enhanced Analytics Cards */}
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={defaultViewport}
-              className="grid lg:grid-cols-4 gap-6 mb-12"
-            >
-              <AnalyticsCard
-                title="Average Response Time"
-                value="1.2 min"
-                change="-30s improvement"
-                trend="up"
-                color="green"
-              />
-              <AnalyticsCard
-                title="First Contact Resolution"
-                value="89%"
-                change="+3% this month"
-                trend="up"
-                color="blue"
-              />
-              <AnalyticsCard
-                title="Customer Satisfaction"
-                value="4.8/5"
-                change="+0.2 improvement"
-                trend="up"
-                color="purple"
-              />
-              <AnalyticsCard
-                title="Active Support Cases"
-                value="18"
-                change="-8 from last week"
-                trend="down"
-                color="orange"
-              />
-            </motion.div>
-
-            {/* Charts Section */}
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={defaultViewport}
-              className="grid lg:grid-cols-2 gap-8 mb-12"
-            >
-              <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <TrendingUp className="h-6 w-6 text-blue-600" />
-                    Support Ticket Trends
-                  </h3>
-                  <Select value={chartPeriod} onValueChange={setChartPeriod}>
-                    <SelectTrigger className="w-36">
-                      <SelectValue placeholder="Period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="day">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="quarter">This Quarter</SelectItem>
-                      <SelectItem value="year">This Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="relative w-full h-[300px]">
-                  <canvas ref={chartRef} className="absolute inset-0"></canvas>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Target className="h-6 w-6 text-green-600" />
-                  Issue Distribution & Resolution
-                </h3>
-                <div className="space-y-6">
-                  {commonIssues.map((item, index) => (
-                    <div key={index}>
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center gap-3">
-                          <span className="font-medium text-gray-700">
-                            {item.issue}
-                          </span>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              item.trend === "up"
-                                ? "bg-red-100 text-red-700"
-                                : item.trend === "down"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {item.trend === "up"
-                              ? "↗ Increasing"
-                              : item.trend === "down"
-                                ? "↘ Decreasing"
-                                : "→ Stable"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm text-gray-500">
-                            {item.resolution}
-                          </span>
-                          <span className="font-bold text-gray-900">
-                            {item.percentage}
-                          </span>
-                        </div>
-                      </div>
-                      <ProgressBar
-                        percent={parseInt(item.width, 10) || 0}
-                        className={`h-3 ${item.color}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </>
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-8 text-center mb-12">
+            <Headphones className="h-9 w-9 text-blue-600 mx-auto mb-3" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Support performance metrics are not published yet
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              We will publish response, resolution, and satisfaction data only
+              after it is collected and independently reviewed.
+            </p>
+          </div>
         )}
 
         {/* Services Tab */}

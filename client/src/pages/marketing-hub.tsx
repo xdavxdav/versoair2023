@@ -223,13 +223,13 @@ export default function MarketingHub() {
           {[
             {
               icon: Zap,
-              title: "Fast Turnaround",
-              desc: "Most orders processed within 48 hours",
+              title: "Clear planning",
+              desc: "Delivery timing is confirmed with you before work begins",
             },
             {
               icon: TrendingUp,
-              title: "Proven Results",
-              desc: "Help businesses reach thousands of local customers",
+              title: "Local visibility",
+              desc: "Build a practical marketing plan for your audience",
             },
             {
               icon: Star,

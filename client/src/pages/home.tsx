@@ -3195,25 +3195,8 @@ export default function Home() {
                       <div className="space-y-1 sm:space-y-2">
                         {[
                           {
-                            name: "Set de poterie artisanale",
-                            price: `149.99 ${countryMeta.currencySymbol}`,
-                            rating: 4.8,
-                            badge: "Meilleure vente",
-                            emoji: "🏺",
-                          },
-                          {
-                            name: "Textiles tissés main",
-                            price: `89.99 ${countryMeta.currencySymbol}`,
-                            rating: 4.9,
-                            badge: "Nouveauté",
-                            emoji: "🧵",
-                          },
-                          {
-                            name: "Sculptures en bois",
-                            price: `199.99 ${countryMeta.currencySymbol}`,
-                            rating: 5.0,
-                            badge: "Premium",
-                            emoji: "🪵",
+                            name: "Catalogue en préparation",
+                            emoji: "✦",
                           },
                         ].map((item, idx) => (
                           <motion.div
@@ -3228,8 +3211,7 @@ export default function Home() {
                             <span className="text-white/90 text-xs sm:text-sm">
                               <span className="font-bold text-amber-300">
                                 {item.emoji} {item.name}
-                              </span>{" "}
-                              — {item.price}
+                              </span>
                             </span>
                           </motion.div>
                         ))}
@@ -3717,8 +3699,8 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {(homeStats.featuredArtisans.length > 0
-              ? homeStats.featuredArtisans.map((a: any) => {
+            {homeStats.featuredArtisans.length > 0 ? (
+              homeStats.featuredArtisans.map((a: any) => {
                   const initials = (a.name || "??")
                     .split(/\s+/)
                     .map((w: string) => w[0])
@@ -3731,44 +3713,13 @@ export default function Home() {
                     specialty: a.genre || "Artisanat",
                     image: initials,
                     location: countryMeta.name,
-                    rating: 4.9,
                     color: [
                       "from-indigo-500 to-purple-600",
                       "from-amber-500 to-orange-600",
                       "from-emerald-500 to-teal-600",
                     ][homeStats.featuredArtisans.indexOf(a) % 3],
                   };
-                })
-              : [
-                  {
-                    name: "Artisan en vedette",
-                    role: "Tisserand",
-                    specialty: "Textiles traditionnels",
-                    image: "FA",
-                    location: countryMeta.name,
-                    rating: 4.9,
-                    color: "from-indigo-500 to-purple-600",
-                  },
-                  {
-                    name: "Artisan en vedette",
-                    role: "Sculpteur sur bois",
-                    specialty: "Sculptures traditionnelles",
-                    image: "FA",
-                    location: countryMeta.name,
-                    rating: 4.8,
-                    color: "from-amber-500 to-orange-600",
-                  },
-                  {
-                    name: "Artisan en vedette",
-                    role: "Artiste potier",
-                    specialty: "Poterie traditionnelle",
-                    image: "FA",
-                    location: countryMeta.name,
-                    rating: 4.9,
-                    color: "from-emerald-500 to-teal-600",
-                  },
-                ]
-            ).map((artisan, i) => (
+                }).map((artisan, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -3803,19 +3754,6 @@ export default function Home() {
                       <MapPin className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" />
                       <span>{artisan.location}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm md:text-base">
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, j) => (
-                          <Star
-                            key={j}
-                            className={`w-3 h-3 md:w-4 md:h-4 ${j < Math.floor(artisan.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-600"}`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-gray-300 font-semibold">
-                        {artisan.rating}
-                      </span>
-                    </div>
                   </div>
                   <Link to="/artisans">
                     <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-1 md:gap-2 text-sm md:text-base group-hover:shadow-lg group-hover:shadow-emerald-500/30">
@@ -3825,7 +3763,12 @@ export default function Home() {
                   </Link>
                 </div>
               </motion.div>
-            ))}
+                ))
+            ) : (
+              <p className="col-span-full text-center text-gray-400 py-8">
+                Les profils d&apos;artisans vérifiés apparaîtront ici.
+              </p>
+            )}
           </div>
         </div>
       </section>
