@@ -11,9 +11,9 @@ export const BUSINESSES_PER_SITEMAP = 10_000;
 // migrations, and synthetic businesses must never re-enter a public index.
 const SYNTHETIC_BUSINESS_PREDICATE = `
   NOT (
-    email LIKE 'contact+%@versoair.local'
-    AND website LIKE '%.example.com'
-    AND phone LIKE '+1-555-%'
+    COALESCE(email LIKE 'contact+%@versoair.local', false)
+    AND COALESCE(website LIKE '%.example.com', false)
+    AND COALESCE(phone LIKE '+1-555-%', false)
   )`;
 
 type QueryFn = (
