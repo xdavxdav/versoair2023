@@ -370,6 +370,7 @@ function isBetaRoute(pathname: string) {
 }
 
 function getPageTitle(pathname: string) {
+  if (pathname.startsWith("/vheartz")) return "vHeartz";
   if (
     pathname.startsWith("/music") ||
     pathname.startsWith("/stream") ||
@@ -408,6 +409,7 @@ function getDocumentTitle(pathname: string) {
   const path = pathname.split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
   const titles: Record<string, string> = {
     "/": "Verso Air Inc.",
+    "/vheartz": "vHeartz",
     "/about": "About Verso Air",
     "/about-us": "About Verso Air",
     "/businesses-directory": "Business Directory",
@@ -838,6 +840,7 @@ function AppContent() {
   const { currentTrack } = useAudio();
   const [currentPath] = useLocation();
   const isHomePage = currentPath === "/" || currentPath === "";
+  const isVersoAIPage = currentPath.replace(/\/+$/, "") === "/versoai";
 
   // Contextual page title — read by any header/navbar that needs a dynamic title
   const pageTitle = getPageTitle(currentPath);
@@ -1228,7 +1231,7 @@ function AppContent() {
       )}
 
       {/* Global VersoAI Assistant (Talk & Chat) */}
-      {!isHomePage && !isImmersivePage && (
+      {isVersoAIPage && (
         <Suspense fallback={null}>
           <VersoAIChat />
         </Suspense>
