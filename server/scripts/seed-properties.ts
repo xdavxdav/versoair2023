@@ -419,6 +419,10 @@ const ivoryCoastProperties = [
 
 async function seedProperties() {
   try {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Sample property data must not be seeded in production");
+    }
+
     console.log("🌱 Starting property seed for Ivory Coast...");
 
     // Clear existing properties (optional - comment out if you want to keep existing data)
@@ -447,7 +451,7 @@ async function seedProperties() {
         area: prop.area,
         guests: prop.guests,
         amenities: prop.amenities,
-        verified: prop.verified,
+        verified: false,
         instantBook: prop.instantBook,
         freeCancellation: prop.freeCancellation,
         discount: prop.discount,

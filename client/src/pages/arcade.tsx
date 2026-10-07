@@ -743,11 +743,11 @@ export default function ArcadePage() {
               {isAuthenticated ? (
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-                  onClick={() => setShowDeposit(true)}
+                  disabled
+                  className="bg-gray-700 text-gray-300"
                 >
                   <CircleDollarSign className="w-4 h-4 mr-1" />
-                  Déposer
+                  Dépôts désactivés en bêta
                 </Button>
               ) : (
                 <Button

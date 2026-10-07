@@ -36,42 +36,8 @@ interface ArcadeWallet {
   lastActivity: string;
 }
 
-// Mock data for display
-const MOCK_WALLETS: ArcadeWallet[] = [
-  {
-    userId: 1,
-    username: "joel_007",
-    balance: 5000,
-    totalWagered: 12500,
-    totalWon: 14200,
-    winRate: 62.3,
-    frozen: false,
-    lastActivity: "2 min ago",
-  },
-  {
-    userId: 2,
-    username: "CEO",
-    balance: 2500,
-    totalWagered: 8000,
-    totalWon: 6500,
-    winRate: 48.1,
-    frozen: false,
-    lastActivity: "15 min ago",
-  },
-  {
-    userId: 3,
-    username: "manager_001",
-    balance: 750,
-    totalWagered: 3200,
-    totalWon: 2800,
-    winRate: 44.5,
-    frozen: false,
-    lastActivity: "1h ago",
-  },
-];
-
 export default function GameControlPanel() {
-  const [wallets] = useState<ArcadeWallet[]>(MOCK_WALLETS);
+  const [wallets] = useState<ArcadeWallet[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWallet, setSelectedWallet] = useState<number | null>(null);
 
@@ -104,29 +70,31 @@ export default function GameControlPanel() {
           <StatBox
             icon={<Wallet className="w-4 h-4" />}
             label="Total Balance"
-            value={`$${totalBalance.toLocaleString()}`}
+            value={wallets.length ? `$${totalBalance.toLocaleString()}` : "—"}
             color="purple"
           />
           <StatBox
             icon={<TrendingUp className="w-4 h-4" />}
             label="Total Wagered"
-            value={`$${totalWagered.toLocaleString()}`}
+            value={wallets.length ? `$${totalWagered.toLocaleString()}` : "—"}
             color="amber"
           />
           <StatBox
             icon={<DollarSign className="w-4 h-4" />}
             label="Total Won"
-            value={`$${totalWon.toLocaleString()}`}
+            value={wallets.length ? `$${totalWon.toLocaleString()}` : "—"}
             color="green"
           />
           <StatBox
             icon={<BarChart3 className="w-4 h-4" />}
             label="Avg Win Rate"
-            value={`${avgWinRate.toFixed(1)}%`}
+            value={wallets.length ? `${avgWinRate.toFixed(1)}%` : "—"}
             color="blue"
           />
         </div>
 
+        {wallets.length ? (
+          <>
         {/* Search */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -235,6 +203,12 @@ export default function GameControlPanel() {
             </tbody>
           </table>
         </div>
+          </>
+        ) : (
+          <p className="rounded-lg border border-gray-800 p-4 text-sm text-gray-400">
+            Wallet data is not connected.
+          </p>
+        )}
 
         {/* Game Economy Controls */}
         <div className="mt-6 pt-4 border-t border-gray-800/50 space-y-4">

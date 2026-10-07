@@ -19,14 +19,12 @@ export function useMusicArtists(countryCode?: string) {
   });
 }
 
-// GET all music tracks
+// GET the authenticated artist's tracks, including drafts
 export function useMusicTracks() {
   return useQuery({
-    queryKey: ["music", "tracks"],
+    queryKey: ["music", "my-tracks"],
     queryFn: async () => {
-      const response = await fetch("/api/music/tracks", {
-        credentials: "include",
-      });
+      const response = await authenticatedFetch("/api/music/my-tracks");
       if (!response.ok) throw new Error("Failed to fetch music tracks");
       const data = await response.json();
       return data.data as MusicTrack[];
@@ -168,6 +166,7 @@ export function useInvalidateTracks() {
   const queryClient = useQueryClient();
   return () => {
     queryClient.invalidateQueries({ queryKey: ["music", "tracks"] });
+    queryClient.invalidateQueries({ queryKey: ["music", "my-tracks"] });
     queryClient.invalidateQueries({ queryKey: ["music", "earnings"] });
     queryClient.invalidateQueries({ queryKey: ["music", "analytics"] });
     queryClient.invalidateQueries({ queryKey: ["music", "my-artist"] });

@@ -917,9 +917,7 @@ export default function DatabaseExpert({
 }) {
   const { logout } = useAuthContext();
   const normalizedRole = role?.toLowerCase() || "subscriber";
-  const isSuperAdmin =
-    ["superadmin", "superuser"].includes(normalizedRole) &&
-    username?.trim().toLowerCase() === "joel_007";
+  const isSuperAdmin = ["superadmin", "superuser"].includes(normalizedRole);
   const canManage = isSuperAdmin;
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<{

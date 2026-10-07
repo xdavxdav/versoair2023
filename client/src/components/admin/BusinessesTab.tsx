@@ -15,7 +15,9 @@ export default function BusinessesTab() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/businesses?limit=30&page=1&sortBy=created_at&order=DESC");
+        const res = await fetch(
+          "/api/businesses?includeUnverified=true&limit=30&page=1&sortBy=created_at&order=DESC",
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         setRows(Array.isArray(json.data) ? json.data : []);

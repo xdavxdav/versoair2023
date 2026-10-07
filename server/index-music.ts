@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // ─── Set sibling URL for runtime injection into HTML ─────────────────────────
-// On Render: set MAIN_APP_URL=https://your-main-service.onrender.com in dashboard
+// In production, set MAIN_APP_URL to the main app's public custom-domain URL.
 // Locally defaults to localhost:5003
 if (!process.env.SIBLING_URL && process.env.NODE_ENV !== "production") {
   process.env.SIBLING_URL = process.env.MAIN_APP_URL || "http://localhost:5003";
@@ -67,7 +67,6 @@ if (!isDev) {
           scriptSrc: [
             "'self'",
             "'unsafe-inline'",
-            "'unsafe-eval'",
             "https://www.googletagmanager.com",
             "https://cdn.jsdelivr.net",
             // Google Translate engine scripts

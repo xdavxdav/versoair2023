@@ -741,7 +741,7 @@ function ArtistContractsPage() {
               support@versoair.com
             </a>{" "}
             {/* TODO(pending-verification): publish real monitored number */}|{" "}
-            Phone: +1 (437) 435-9726 (Canada) · +225 05 64 60 64 01 (CI)
+            Phone: +1 (437) 435-9726 (Canada)
           </p>
 
           <div className="mt-8">

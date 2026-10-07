@@ -2,37 +2,24 @@ import React from "react";
 import { Link } from "wouter";
 
 interface TeamMember {
+  id: string;
   name: string;
   role: string;
   department: string;
 }
 
-// TODO(pending-verification): replace John Doe placeholder team members with
-// verified team profiles before public promotion.
-const teamMembers: (TeamMember & { id: string })[] = [
+const teamMembers: TeamMember[] = [
   {
-    id: "sarah-johnson",
-    name: "John Doe",
-    role: "Rôle à confirmer",
-    department: "Direction exécutive",
+    id: "boussou-elvis-jonathan",
+    name: "Boussou Elvis Jonathan",
+    role: "Directeur",
+    department: "VERSO AIR INC.",
   },
   {
-    id: "michael-chen",
-    name: "John Doe",
-    role: "Rôle à confirmer",
-    department: "Ingénierie",
-  },
-  {
-    id: "emma-rodriguez",
-    name: "John Doe",
-    role: "Rôle à confirmer",
-    department: "Marketing",
-  },
-  {
-    id: "david-kim",
-    name: "John Doe",
-    role: "Rôle à confirmer",
-    department: "Succès client",
+    id: "joel-vanga",
+    name: "Joel Vanga",
+    role: "Directeur",
+    department: "VERSO AIR INC.",
   },
 ];
 
@@ -49,23 +36,21 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
         {showHeader && (
           <div className="text-center mb-8 sm:mb-12 px-4 sm:px-0">
             <span className="inline-block px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-xs sm:text-sm font-medium text-white mb-3 sm:mb-4">
-              Notre équipe
+              Les fondateurs
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
-              Rencontrez nos experts
+              Direction de VERSO AIR INC.
             </h2>
             <p className="text-sm sm:text-lg text-white/90 max-w-3xl mx-auto leading-relaxed">
-              Notre équipe dédiée de professionnels en analytique et d'experts
-              sectoriels travaille ensemble pour offrir des solutions complètes
-              d'intelligence d'affaires qui stimulent la croissance et
-              l'innovation dans tous les secteurs.
+              VERSO AIR INC. est dirigée par Boussou Elvis Jonathan et Joel
+              Vanga.
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           {teamMembers.map((member, index) => (
-            <Link key={index} href={`/team/${member.id}`}>
+            <Link key={index} href="/contact">
               <div className="group bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl relative cursor-pointer">
                 {/* Avatar Placeholder */}
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center group-hover:bg-white/30 transition-colors duration-300">
@@ -100,9 +85,9 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
 
         {/* Call to action */}
         <div className="text-center mt-12">
-          <Link href="/signin">
+          <Link href="/contact">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors duration-300 cursor-pointer group">
-              <span className="font-medium">Rejoignez notre équipe</span>
+              <span className="font-medium">En savoir plus sur l’entreprise</span>
               <svg
                 className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300"
                 fill="none"

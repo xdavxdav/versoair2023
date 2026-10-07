@@ -559,7 +559,6 @@ export default function ArtistPortal() {
         username === "admin_001" ||
         username === "superadmin" ||
         username === "CEO" ||
-        username === "admin_025" ||
         role === "admin" ||
         role === "superadmin" ||
         role === "ceo";

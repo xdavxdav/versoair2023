@@ -33,7 +33,7 @@ import { MessagesPage } from "@/components/TwitterMessenger";
 // cold visit hits first, so lazy-loading it just adds an extra network
 // round-trip behind the Suspense fallback, making the initial load feel
 // much longer than it needs to be.
-import Home from "@/pages/home";
+import Home from "@/pages/company-home";
 const About = lazy(() => import("@/pages/about"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Demo = lazy(() => import("@/pages/demo"));
@@ -81,7 +81,6 @@ const Finances = lazy(() => import("@/pages/finances"));
 const Divertissement = lazy(() => import("@/pages/divertissement"));
 const Sante = lazy(() => import("@/pages/sante"));
 const Logement = lazy(() => import("@/pages/logement"));
-const Reservations = lazy(() => import("@/pages/reservations"));
 const BusinessesDirectory = lazy(() => import("@/pages/businesses-directory"));
 const BusinessDetail = lazy(() => import("@/pages/business-detail"));
 const CategoryDetail = lazy(() => import("@/pages/category-detail"));
@@ -191,7 +190,6 @@ const AdCampaignsPage = lazy(() => import("@/pages/ad-campaigns"));
 // 📖 Developer & Docs (lazy-loaded)
 // ─────────────────────────────────────────────────────
 const APIDocumentation = lazy(() => import("@/pages/api"));
-const Documentation = lazy(() => import("@/pages/docs"));
 const APITestPage = lazy(() => import("@/pages/api-test"));
 
 // ─────────────────────────────────────────────────────
@@ -206,8 +204,6 @@ const InformationHub = lazy(() => import("@/pages/information"));
 // ─────────────────────────────────────────────────────
 // 👥 Team & Sponsors (lazy-loaded)
 // ─────────────────────────────────────────────────────
-const TeamMember = lazy(() => import("@/pages/team-member"));
-const Sponsor = lazy(() => import("@/pages/sponsor"));
 const SponsorsDirectory = lazy(() => import("@/pages/sponsors-directory"));
 const Sponsorship = lazy(() => import("@/pages/sponsorship"));
 
@@ -266,11 +262,6 @@ const TestimonialsFloating = lazy(
 const TeamSection = lazy(() =>
   import("@/components/ui/team-section").then((m) => ({
     default: m.TeamSection,
-  })),
-);
-const SponsorsSection = lazy(() =>
-  import("@/components/ui/sponsors-section").then((m) => ({
-    default: m.SponsorsSection,
   })),
 );
 const MobileMenuBubble = lazy(() =>
@@ -411,6 +402,61 @@ function getPageTitle(pathname: string) {
   return "Verso Air";
 }
 
+function getDocumentTitle(pathname: string) {
+  const path = pathname.split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
+  const titles: Record<string, string> = {
+    "/": "Verso Air Inc.",
+    "/about": "About Verso Air",
+    "/about-us": "About Verso Air",
+    "/businesses-directory": "Business Directory",
+    "/commerce": "Commerce Directory",
+    "/hotellerie": "Hospitality Directory",
+    "/batiment": "Construction Directory",
+    "/automobile": "Automotive Directory",
+    "/finances": "Financial Services Directory",
+    "/divertissement": "Entertainment Directory",
+    "/services/careers": "Careers",
+    "/career": "Careers",
+    "/help": "Help Center",
+    "/docs": "Help Center",
+    "/contact": "Contact Verso Air",
+    "/marketplace": "Marketplace",
+    "/logement": "Property Listings",
+    "/reservations": "Property Reservations",
+    "/stream": "Music Streaming",
+    "/artist-portal": "Artist Portal",
+    "/geo-admin": "Geo Admin",
+    "/messages": "Messages",
+    "/pricing": "Plans and Pricing",
+    "/partners": "Partners",
+    "/privacy": "Privacy Policy",
+    "/terms": "Terms of Service",
+    "/cookies": "Cookie Policy",
+  };
+  if (titles[path]) return titles[path];
+  if (path.startsWith("/business/")) return "Business Profile";
+  if (path.startsWith("/profiles/")) return "Community Profile";
+  if (path.startsWith("/user/")) return "Member Profile";
+
+  const sectionTitle = getPageTitle(path);
+  const segments = path.split("/").filter(Boolean);
+  const lastSegment = segments[segments.length - 1];
+  if (sectionTitle !== "Verso Air" && sectionTitle !== "Verso Air Business") {
+    if (lastSegment) {
+      return lastSegment
+        .replace(/[-_]+/g, " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase());
+    }
+    return sectionTitle;
+  }
+
+  return lastSegment
+    ? lastSegment
+        .replace(/[-_]+/g, " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase())
+    : sectionTitle;
+}
+
 // MessagesRoute now uses the real MessagesPage component from TwitterMessenger
 // No need for a wrapper function — MessagesPage handles auth and rendering
 
@@ -526,7 +572,7 @@ function Router() {
       <Route path="/divertissement" component={Divertissement} />
       <Route path="/sante" component={Sante} />
       <Route path="/logement" component={Logement} />
-      <Route path="/reservations" component={Reservations} />
+      <Route path="/reservations">{() => <Redirect to="/contact" />}</Route>
       <Route path="/businesses-directory" component={BusinessesDirectory} />
       <Route path="/business/:id" component={BusinessDetail} />
       <Route path="/category/:slug" component={CategoryDetail} />
@@ -673,7 +719,7 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/api" component={APIDocumentation} />
       <Route path="/api-test" component={APITestPage} />
-      <Route path="/docs" component={Documentation} />
+      <Route path="/docs">{() => <Redirect to="/help" />}</Route>
 
       {/* ═══════════════════════════════════════════════
           ⚖️ LEGAL PAGES
@@ -687,9 +733,11 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           👥 TEAM & SPONSORS
           ═══════════════════════════════════════════════ */}
-      <Route path="/team/:memberId" component={TeamMember} />
+      <Route path="/team/:memberId">{() => <Redirect to="/about" />}</Route>
       <Route path="/sponsor" component={SponsorsDirectory} />
-      <Route path="/sponsor/:sponsorId" component={Sponsor} />
+      <Route path="/sponsor/:sponsorId">
+        {() => <Redirect to="/sponsor" />}
+      </Route>
       <Route path="/sponsorship" component={Sponsorship} />
 
       {/* ═══════════════════════════════════════════════
@@ -785,12 +833,12 @@ function AppContent() {
 
   // Contextual page title — read by any header/navbar that needs a dynamic title
   const pageTitle = getPageTitle(currentPath);
+  const documentTitle = getDocumentTitle(currentPath);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    document.title =
-      pageTitle === "Verso Air" ? "Verso Air" : `${pageTitle} — Verso Air`;
-  }, [pageTitle]);
+    document.title = `${documentTitle} — Verso Air`;
+  }, [documentTitle]);
 
   const isContentNavPage = isContentNavPath(currentPath);
   // Musical Universe pages have their own dedicated chrome (MusicSidebar /
@@ -923,7 +971,8 @@ function AppContent() {
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
-      {!isMusicPage &&
+      {!isHomePage &&
+        !isMusicPage &&
         !currentPath.startsWith("/community") &&
         !currentPath.startsWith("/profile") &&
         !currentPath.startsWith("/user/") &&
@@ -1036,8 +1085,8 @@ function AppContent() {
                           Analyze • Optimize • Visualize • Grow
                         </span>
                         <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                          8 Secteurs d'Industrie • Analytique en Direct •
-                          Toronto & Canada
+                          8 secteurs prévus • Annonces après vérification •
+                          Toronto
                         </span>
                         <span className="hidden md:inline-flex flex-shrink-0 px-8">
                           Commerce • Hôtellerie • Construction • Automobile •
@@ -1067,7 +1116,8 @@ function AppContent() {
       )}
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
-      {!isAuthed &&
+      {!isHomePage &&
+        !isAuthed &&
         !isAuthPage &&
         !showContentNav &&
         !isBlogOrMarketplace &&
@@ -1127,7 +1177,6 @@ function AppContent() {
           <div>
             <TestimonialsFloating />
             <TeamSection />
-            <SponsorsSection />
           </div>
         </Suspense>
       )}
@@ -1147,13 +1196,14 @@ function AppContent() {
               letterSpacing: "0.4em",
             }}
           >
-            STRΔΦGHT TΩ THΞ PΩΦΠT
+            Straight to the point
           </p>
         </div>
       )}
 
       {/* Mobile Menu Bubble — hide whenever a dedicated account/content nav is active. */}
-      {!isImmersivePage &&
+      {!isHomePage &&
+        !isImmersivePage &&
         !isMusicPage &&
         !isBlogOrMarketplace &&
         !showAccountBlogNavbar &&
@@ -1173,9 +1223,11 @@ function AppContent() {
       )}
 
       {/* Global VersoAI Assistant (Talk & Chat) */}
-      <Suspense fallback={null}>
-        <VersoAIChat />
-      </Suspense>
+      {!isHomePage && (
+        <Suspense fallback={null}>
+          <VersoAIChat />
+        </Suspense>
+      )}
 
       {/* Notification bell — fixed top-right, visible on all non-auth pages.
           Dropped below the bar on /blog & /marketplace since BlogNavbar has

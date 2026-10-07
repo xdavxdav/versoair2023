@@ -283,7 +283,7 @@ export default function AuthModal({
                         autoCorrect="off"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Email, joel_007, or admin_025"
+                        placeholder="Email or username"
                         className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors font-handstyle"
                       />
                     </div>

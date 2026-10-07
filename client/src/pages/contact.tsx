@@ -136,12 +136,12 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-slate-900">Phone</h3>
-                    {/* TODO(pending-verification): publish real monitored number */}
-                    <p className="text-slate-600">+1 (437) 435-9726 — Canada</p>
-                    <p className="text-slate-600">+225 05 64 60 64 01 — Côte d'Ivoire</p>
-                    <p className="text-sm text-slate-500">
-                      Mon–Fri, 8AM–6PM EST
-                    </p>
+                    <a
+                      href="tel:+14374359726"
+                      className="block text-slate-600 underline"
+                    >
+                      +1 (437) 435-9726 — Canada
+                    </a>
                   </div>
                 </div>
 
@@ -151,10 +151,12 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-slate-900">Email</h3>
-                    <p className="text-slate-600">support@versoair.com</p>
-                    <p className="text-sm text-slate-500">
-                      We'll respond within 24 hours
-                    </p>
+                    <a
+                      href="mailto:support@versoair.com"
+                      className="text-slate-600 underline"
+                    >
+                      support@versoair.com
+                    </a>
                   </div>
                 </div>
 
@@ -168,7 +170,7 @@ export default function Contact() {
                     </h3>
                     <p className="text-slate-600">Toronto, Canada</p>
                     <p className="text-sm text-slate-500">
-                      Serving businesses across Canada
+                      Toronto launch focus
                     </p>
                   </div>
                 </div>

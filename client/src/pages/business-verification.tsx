@@ -345,7 +345,7 @@ export default function BusinessVerificationPage() {
                           contactName: e.target.value,
                         })
                       }
-                      placeholder="John Doe"
+                      placeholder="Full name"
                     />
                   </div>
                   <div>
@@ -372,7 +372,7 @@ export default function BusinessVerificationPage() {
                           contactPhone: e.target.value,
                         })
                       }
-                      placeholder="+225 123 456 789"
+                      placeholder="International phone number"
                     />
                   </div>
                 </div>

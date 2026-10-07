@@ -86,9 +86,9 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
       return;
     }
 
-    // Step 1: Validate 2FA — code must match + username must be in admin list
+    // Validate the entry format locally; the server verifies the account and password.
     const validation = validateAdminAccess(input, generatedCode);
-    if (!validation.isValid || !validation.user) {
+    if (!validation.isValid || !validation.username) {
       setError(validation.error || "Invalid credentials");
       return;
     }
@@ -102,7 +102,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          username: validation.user.username,
+          username: validation.username,
           password: adminPassword,
         }),
       });
@@ -112,7 +112,7 @@ export function AdminAccessGate({ onAccessGranted }: AdminAccessGateProps) {
       if (res.ok && data.token) {
         setAuthToken(data.token);
         await initializeCsrfToken();
-        onAccessGranted(validation.user.username);
+        onAccessGranted(validation.username);
       } else {
         setError(data.message || "Server rejected access.");
       }

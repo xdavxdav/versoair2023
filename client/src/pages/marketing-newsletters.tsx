@@ -128,8 +128,8 @@ export default function NewslettersPage() {
             },
             {
               icon: Clock,
-              title: "Regular Updates",
-              desc: "Delivered weekly so you never miss important news",
+              title: "News and Updates",
+              desc: "Updates will be shared as they become available",
             },
           ].map((item) => (
             <Card key={item.title} className="bg-gray-800/30 border-gray-700">

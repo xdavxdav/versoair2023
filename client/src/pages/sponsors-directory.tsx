@@ -58,7 +58,7 @@ const SPONSORSHIP_RULES = {
     color: "from-blue-500 to-blue-600",
     icon: Unlock,
     message: "Can sponsor artisan programs, workshops, or events",
-    maxAmount: "$5,000 - $15,000/year",
+    maxAmount: "Pricing to be confirmed",
   },
   verified: {
     tier: "Pro Verified",
@@ -68,7 +68,7 @@ const SPONSORSHIP_RULES = {
     color: "from-emerald-500 to-emerald-600",
     icon: CheckCircle,
     message: "Full access to Friend → Supporter tier sponsorship",
-    maxAmount: "$50,000+/year",
+    maxAmount: "Pricing to be confirmed",
   },
   max: {
     tier: "Pro Max",
@@ -78,7 +78,7 @@ const SPONSORSHIP_RULES = {
     color: "from-amber-500 to-amber-600",
     icon: Star,
     message: "Access to Ambassador & above tiers with strategic partnerships",
-    maxAmount: "$100,000+/year",
+    maxAmount: "Pricing to be confirmed",
   },
   enterprise: {
     tier: "Enterprise",
@@ -89,7 +89,7 @@ const SPONSORSHIP_RULES = {
     icon: Award,
     message:
       "Premium Patron tier + dedicated partnership manager + co-branding",
-    maxAmount: "$100,000 - $500,000+/year",
+    maxAmount: "Pricing to be confirmed",
   },
 };
 
@@ -103,7 +103,7 @@ const SPONSORSHIP_TYPES = [
     icon: Gift,
     color: "from-rose-500 to-pink-500",
     examples: [
-      "Workshop sponsorship ($1K-$5K)",
+      "Workshop sponsorship (pricing to be confirmed)",
       "Artisan apprenticeship support",
       "Cultural event co-hosting",
       "Community program funding",
@@ -156,42 +156,14 @@ const SPONSORSHIP_TYPES = [
   },
 ];
 
-// TODO(pending-verification): replace John Doe placeholder sponsors with
-// verified sponsor organizations and approved amounts before public promotion.
-const ACTIVE_SPONSORS = [
-  {
-    name: "John Doe Organization",
-    tier: "Patron",
-    amount: "Amount pending",
-    rating: 5,
-    description: "Sponsor description pending confirmation",
-    logo: "🤝",
-  },
-  {
-    name: "John Doe Organization",
-    tier: "Ambassador",
-    amount: "Amount pending",
-    rating: 5,
-    description: "Sponsor description pending confirmation",
-    logo: "🤝",
-  },
-  {
-    name: "John Doe Organization",
-    tier: "Supporter",
-    amount: "Amount pending",
-    rating: 4.5,
-    description: "Sponsor description pending confirmation",
-    logo: "🤝",
-  },
-  {
-    name: "John Doe Organization",
-    tier: "Friend",
-    amount: "Amount pending",
-    rating: 4.5,
-    description: "Sponsor description pending confirmation",
-    logo: "🤝",
-  },
-];
+const ACTIVE_SPONSORS: {
+  name: string;
+  tier: string;
+  amount: string;
+  rating: number;
+  description: string;
+  logo: string;
+}[] = [];
 
 export default function SponsorsDirectory() {
   const { isAuthenticated, user, tier, loading } = useSubscription();

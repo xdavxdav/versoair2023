@@ -109,7 +109,7 @@ export default function OngCulturelle() {
               </h3>
               <p className="text-slate-300 leading-relaxed">
                 Nous mettons en lumière les talents cachés de nos terres—les
-                musiciens des rues d'Abidjan, les sculpteurs des villages, les
+                musiciens des villes, les sculpteurs des villages, les
                 conteurs de nos ancêtres. Leurs créations? Elles voyagent
                 maintenant vers New York, Paris, Toronto. L'Afrique danse sur
                 les scènes du monde entier.

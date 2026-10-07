@@ -680,7 +680,6 @@ export default function Finance() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
@@ -1116,7 +1115,7 @@ export default function Finance() {
                     </span>
                   </h2>
                   <div className="text-sm text-purple-300">
-                    ✅ Données réelles ({searchResults.length} entreprises)
+                    {searchResults.length} résultat(s) dans le répertoire
                   </div>
                 </div>
 

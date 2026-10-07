@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { db, pool } from "../db";
 import { properties } from "@shared/schema";
 import { eq, and, gte, lte, like, desc, asc, or } from "drizzle-orm";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
@@ -32,16 +33,18 @@ router.get("/api/properties", async (req: Request, res: Response) => {
     const offset = (pageNum - 1) * limitNum;
 
     // Build filters
-    const filters = [];
+    const filters = [
+      eq(properties.verified, true),
+      eq(properties.verificationStatus, "verified"),
+    ];
 
     // Search by name or description
     if (search) {
-      filters.push(
-        or(
-          like(properties.name, `${search}%`),
-          like(properties.description, `${search}%`),
-        ),
+      const searchFilter = or(
+        like(properties.name, `${search}%`),
+        like(properties.description, `${search}%`),
       );
+      if (searchFilter) filters.push(searchFilter);
     }
 
     // Filter by city
@@ -137,7 +140,13 @@ router.get("/api/properties/:id", async (req: Request, res: Response) => {
     const property = await db
       .select()
       .from(properties)
-      .where(eq(properties.id, Number(id)));
+      .where(
+        and(
+          eq(properties.id, Number(id)),
+          eq(properties.verified, true),
+          eq(properties.verificationStatus, "verified"),
+        ),
+      );
 
     if (!property || property.length === 0) {
       return res.status(404).json({
@@ -241,7 +250,13 @@ router.get(
       const props = await db
         .select()
         .from(properties)
-        .where(eq(properties.city, city))
+        .where(
+          and(
+            eq(properties.city, city),
+            eq(properties.verified, true),
+            eq(properties.verificationStatus, "verified"),
+          ),
+        )
         .limit(Number(limit));
 
       res.json({
@@ -261,6 +276,7 @@ router.get(
 // GET unverified properties (for admin verification)
 router.get(
   "/api/admin/verification/pending",
+  requireAuth(["admin", "moderator"]),
   async (req: Request, res: Response) => {
     try {
       const pendingProperties = await db
@@ -287,13 +303,14 @@ router.get(
 // POST verify a property
 router.post(
   "/api/admin/verification/:id/verify",
+  requireAuth(["admin", "moderator"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
       const result = await db
         .update(properties)
-        .set({ verified: true })
+        .set({ verified: true, verificationStatus: "verified" })
         .where(eq(properties.id, parseInt(id)))
         .returning();
 
@@ -322,13 +339,14 @@ router.post(
 // POST reject a property
 router.post(
   "/api/admin/verification/:id/reject",
+  requireAuth(["admin", "moderator"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
       const result = await db
         .update(properties)
-        .set({ verified: false })
+        .set({ verified: false, verificationStatus: "rejected" })
         .where(eq(properties.id, parseInt(id)))
         .returning();
 
@@ -360,9 +378,33 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const [cities, types, categories] = await Promise.all([
-        db.selectDistinct({ city: properties.city }).from(properties),
-        db.selectDistinct({ type: properties.type }).from(properties),
-        db.selectDistinct({ category: properties.category }).from(properties),
+        db
+          .selectDistinct({ city: properties.city })
+          .from(properties)
+          .where(
+            and(
+              eq(properties.verified, true),
+              eq(properties.verificationStatus, "verified"),
+            ),
+          ),
+        db
+          .selectDistinct({ type: properties.type })
+          .from(properties)
+          .where(
+            and(
+              eq(properties.verified, true),
+              eq(properties.verificationStatus, "verified"),
+            ),
+          ),
+        db
+          .selectDistinct({ category: properties.category })
+          .from(properties)
+          .where(
+            and(
+              eq(properties.verified, true),
+              eq(properties.verificationStatus, "verified"),
+            ),
+          ),
       ]);
 
       res.json({

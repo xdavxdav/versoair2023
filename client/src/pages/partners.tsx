@@ -34,23 +34,26 @@ const stagger = {
 
 const viewport = { once: true, margin: "-80px" };
 
-// TODO(pending-verification): replace John Doe placeholder partners with
-// verified partner organizations before public promotion.
-const TIERS = [
+const TIERS: {
+  tier: string;
+  color: string;
+  ring: string;
+  badge: string;
+  glow: string;
+  partners: {
+    name: string;
+    desc: string;
+    icon: typeof Globe;
+    country: string;
+  }[];
+}[] = [
   {
     tier: "Platinum",
     color: "from-slate-300 to-slate-100",
     ring: "border-slate-300/60",
     badge: "bg-gradient-to-r from-slate-400 to-slate-200 text-slate-900",
     glow: "shadow-slate-400/20",
-    partners: [
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Globe,
-        country: "Location pending",
-      },
-    ],
+    partners: [],
   },
   {
     tier: "Gold",
@@ -58,26 +61,7 @@ const TIERS = [
     ring: "border-amber-400/60",
     badge: "bg-gradient-to-r from-yellow-500 to-amber-400 text-amber-900",
     glow: "shadow-amber-400/20",
-    partners: [
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Users,
-        country: "Location pending",
-      },
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Award,
-        country: "Location pending",
-      },
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Handshake,
-        country: "Location pending",
-      },
-    ],
+    partners: [],
   },
   {
     tier: "Silver",
@@ -85,32 +69,7 @@ const TIERS = [
     ring: "border-emerald-400/60",
     badge: "bg-gradient-to-r from-emerald-500 to-teal-400 text-emerald-900",
     glow: "shadow-emerald-400/20",
-    partners: [
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Globe,
-        country: "Location pending",
-      },
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Music,
-        country: "Location pending",
-      },
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Palette,
-        country: "Location pending",
-      },
-      {
-        name: "John Doe Organization",
-        desc: "Partner description pending confirmation",
-        icon: Heart,
-        country: "Location pending",
-      },
-    ],
+    partners: [],
   },
 ];
 
@@ -155,39 +114,19 @@ const BENEFITS = [
   },
 ];
 
-// TODO(pending-verification): replace John Doe placeholder testimonials with
-// approved quotes from real partners before public promotion.
-const TESTIMONIALS = [
-  {
-    quote: "Partner testimonial pending confirmation.",
-    author: "John Doe",
-    role: "Role pending",
-    org: "Organization pending",
-    avatar: "JD",
-    color: "from-indigo-500 to-purple-600",
-  },
-  {
-    quote: "Partner testimonial pending confirmation.",
-    author: "John Doe",
-    role: "Role pending",
-    org: "Organization pending",
-    avatar: "JD",
-    color: "from-amber-500 to-orange-500",
-  },
-  {
-    quote: "Partner testimonial pending confirmation.",
-    author: "John Doe",
-    role: "Role pending",
-    org: "Organization pending",
-    avatar: "JD",
-    color: "from-emerald-500 to-teal-600",
-  },
-];
+const TESTIMONIALS: {
+  quote: string;
+  author: string;
+  role: string;
+  org: string;
+  avatar: string;
+  color: string;
+}[] = [];
 
 const PARTNER_TIERS_INFO = [
   {
     name: "Platinum",
-    price: "From $50,000 / yr",
+    price: "Discuss terms with us",
     color: "from-slate-700 to-slate-600",
     border: "border-slate-400/40",
     highlight: false,
@@ -202,7 +141,7 @@ const PARTNER_TIERS_INFO = [
   },
   {
     name: "Gold",
-    price: "From $20,000 / yr",
+    price: "Discuss terms with us",
     color: "from-amber-600 to-yellow-500",
     border: "border-amber-400/60",
     highlight: true,
@@ -217,7 +156,7 @@ const PARTNER_TIERS_INFO = [
   },
   {
     name: "Silver",
-    price: "From $8,000 / yr",
+    price: "Discuss terms with us",
     color: "from-emerald-600 to-teal-500",
     border: "border-emerald-400/40",
     highlight: false,
@@ -232,12 +171,7 @@ const PARTNER_TIERS_INFO = [
   },
 ];
 
-const STATS = [
-  { value: "50+", label: "Active Partners", icon: Handshake },
-  { value: "18", label: "Countries Reached", icon: Globe },
-  { value: "800+", label: "Artisans Supported", icon: Users },
-  { value: "$2M+", label: "Co-invested Funds", icon: TrendingUp },
-];
+const STATS: { value: string; label: string; icon: typeof Handshake }[] = [];
 
 export default function Partners() {
   return (
@@ -358,11 +292,11 @@ export default function Partners() {
               Our Ecosystem
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
-              Trusted by World Leaders
+              Partnership announcements
             </h2>
             <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-              From global institutions to local innovators — our partners share
-              one vision.
+              No partner organizations or testimonials are published until
+              their participation is confirmed.
             </p>
           </motion.div>
 
@@ -676,7 +610,6 @@ export default function Partners() {
                 </span>
                 <span className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
-                  +225 27 20 21 22 23
                 </span>
               </div>
             </div>

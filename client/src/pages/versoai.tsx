@@ -1786,10 +1786,10 @@ export default function Home() {
               <ul className="space-y-3">
                 <li>
                   <a
-                    href="/docs"
+                    href="/help"
                     className="text-blue-200/70 hover:text-slate-900 transition-colors text-sm"
                   >
-                    Documentation
+                    Help Center
                   </a>
                 </li>
                 <li>

@@ -8,9 +8,7 @@ import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
-import UserProfileCard from "@/components/UserProfileCard";
 import CreatePostModal from "@/components/CreatePostModal";
-import UserConnectionModal from "@/components/UserConnectionModal";
 import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
 import AdBanner from "@/components/AdBanner";
@@ -18,39 +16,6 @@ import { useSocialFeed } from "@/hooks/use-social-feed";
 import { authenticatedFetch } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import { isContentNavPath } from "@/components/ContentNav";
-
-const TEST_ACCOUNTS = [
-  {
-    id: 23,
-    name: "Verso Air Superadmin",
-    profession: "Platform Superadmin",
-    bio: "Test account for community posts, comments, and private threads.",
-    avatar: "https://api.dicebear.com/9.x/initials/svg?seed=Superadmin",
-    followerCount: 0,
-    followingCount: 0,
-    postCount: 0,
-    engagementScore: 0,
-    satisfactionRating: 5,
-    verified: true,
-    premiumMember: true,
-    loginName: "joel_007",
-  },
-  {
-    id: 24,
-    name: "Verso Air CEO",
-    profession: "Chief Executive Officer",
-    bio: "Test account for community posts, comments, and private threads.",
-    avatar: "https://api.dicebear.com/9.x/initials/svg?seed=CEO",
-    followerCount: 0,
-    followingCount: 0,
-    postCount: 0,
-    engagementScore: 0,
-    satisfactionRating: 5,
-    verified: true,
-    premiumMember: true,
-    loginName: "admin_025",
-  },
-];
 
 export default function BlogPage() {
   // ═══ Unified auth: AuthContext (main/artist/geo-admin) OR community session ═══
@@ -100,8 +65,6 @@ export default function BlogPage() {
 
   // Blog state
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
   const [currentPath] = useLocation();
 
@@ -119,7 +82,6 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
   const [connectedUsers, setConnectedUsers] = useState<number[]>([]);
-  const [followPendingIds, setFollowPendingIds] = useState<number[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -132,17 +94,10 @@ export default function BlogPage() {
     setIsAuthLoading(true);
     setAuthError("");
     try {
-      const isStaffLogin =
-        !isSignUp &&
-        TEST_ACCOUNTS.some((account) => account.loginName === identifier);
-      const endpoint = isStaffLogin
-        ? "/auth/admin-gate"
-        : isSignUp
-          ? "/auth/community/register"
-          : "/auth/community/login";
-      const body: Record<string, any> = isStaffLogin
-        ? { username: identifier, password }
-        : { email: identifier, password };
+      const endpoint = isSignUp
+        ? "/auth/community/register"
+        : "/auth/community/login";
+      const body: Record<string, any> = { email: identifier, password };
       if (isSignUp) {
         body.displayName =
           identifier.split("@")[0].charAt(0).toUpperCase() +
@@ -272,96 +227,6 @@ export default function BlogPage() {
     );
   }, []);
 
-  const handleShowUserModal = (user: any) => {
-    setSelectedUser(user);
-    setIsConnectionModalOpen(true);
-  };
-
-  const setFollowState = async (userId: number, shouldFollow: boolean) => {
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      throw new Error("Sign in to follow other members");
-    }
-    // Optimistic update — flip the UI instantly, roll back only on failure
-    const wasConnected = connectedUsers.includes(userId);
-    setConnectedUsers((prev) =>
-      shouldFollow
-        ? prev.includes(userId)
-          ? prev
-          : [...prev, userId]
-        : prev.filter((id) => id !== userId),
-    );
-    setFollowPendingIds((prev) =>
-      prev.includes(userId) ? prev : [...prev, userId],
-    );
-    try {
-      const response = await authenticatedFetch(
-        `/api/social/follow/${userId}`,
-        { method: shouldFollow ? "POST" : "DELETE" },
-      );
-      const data = await response.json().catch(() => ({ success: false }));
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Could not update this connection");
-      }
-      toast({
-        title: shouldFollow ? "Following" : "Unfollowed",
-        description: shouldFollow
-          ? "You'll now see their activity in your feed"
-          : "You've unfollowed this member",
-      });
-    } catch (err) {
-      // Roll back to previous state
-      setConnectedUsers((prev) =>
-        wasConnected
-          ? prev.includes(userId)
-            ? prev
-            : [...prev, userId]
-          : prev.filter((id) => id !== userId),
-      );
-      toast({
-        title: "Something went wrong",
-        description:
-          err instanceof Error
-            ? err.message
-            : "Could not update this connection",
-        variant: "destructive",
-      });
-      throw err;
-    } finally {
-      setFollowPendingIds((prev) => prev.filter((id) => id !== userId));
-    }
-  };
-
-  const handleConnectUser = (userId: number) => setFollowState(userId, true);
-
-  const handleDisconnectUser = (userId: number) =>
-    setFollowState(userId, false);
-
-  const handleMessageUser = async (userId: number) => {
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    const account = TEST_ACCOUNTS.find((item) => item.id === userId);
-    if (!account) return;
-
-    try {
-      const response = await authenticatedFetch("/api/inbox/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: account.id,
-          participantName: account.name,
-          participantAvatar: account.avatar,
-          type: "marketplace",
-        }),
-      });
-      if (response.ok) window.dispatchEvent(new Event("messenger:open"));
-    } catch {
-      // The inbox panel exposes retryable failures from its normal UI.
-    }
-  };
-
   const handleComment = async (postId: number, content: string) => {
     const response = await authenticatedFetch(
       `/api/social/posts/${postId}/comments`,
@@ -450,37 +315,6 @@ export default function BlogPage() {
       toast({
         title: "Share cancelled",
         description: "You can still copy the link manually.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleShareUser = async (userId: number) => {
-    const account = TEST_ACCOUNTS.find((item) => item.id === userId);
-    if (!account) return;
-
-    const shareText = `Meet ${account.name} on Verso Air`;
-    const shareUrl = `${window.location.origin}/user/${userId}`;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: account.name,
-          text: shareText,
-          url: shareUrl,
-        });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(`${shareText} — ${shareUrl}`);
-      }
-
-      toast({
-        title: "Profile shared",
-        description: `You shared ${account.name}'s profile.`,
-      });
-    } catch {
-      toast({
-        title: "Share cancelled",
-        description: "Your profile link was not sent.",
         variant: "destructive",
       });
     }
@@ -662,47 +496,6 @@ export default function BlogPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Who to Follow */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm transition-colors"
-            >
-              <h2 className="mb-3 text-lg font-semibold text-slate-800">
-                Who to Follow
-              </h2>
-              <div className="space-y-3">
-                {TEST_ACCOUNTS.map((user, index) => (
-                  <motion.div
-                    key={user.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    onClick={() => handleShowUserModal(user)}
-                    className="cursor-pointer"
-                  >
-                    <UserProfileCard
-                      user={user as any}
-                      isFollowing={connectedUsers.includes(user.id)}
-                      isFollowPending={followPendingIds.includes(user.id)}
-                      onFollow={(id) => {
-                        void handleConnectUser(id).catch(() => {});
-                      }}
-                      onUnfollow={(id) => {
-                        void handleDisconnectUser(id).catch(() => {});
-                      }}
-                      onMessage={() => handleMessageUser(user.id)}
-                    />
-                    <p className="mt-1 text-xs text-slate-500">
-                      Staff test sign-in:{" "}
-                      <span className="text-cyan-700">{user.loginName}</span>
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
             {/* Trending Topics */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -790,22 +583,6 @@ export default function BlogPage() {
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
         onSubmit={handleCreatePost}
-      />
-
-      <UserConnectionModal
-        isOpen={isConnectionModalOpen}
-        user={selectedUser}
-        isConnected={
-          selectedUser ? connectedUsers.includes(selectedUser.id) : false
-        }
-        onClose={() => {
-          setIsConnectionModalOpen(false);
-          setSelectedUser(null);
-        }}
-        onConnect={handleConnectUser}
-        onDisconnect={handleDisconnectUser}
-        onMessage={handleMessageUser}
-        onShare={handleShareUser}
       />
 
       <AuthModal

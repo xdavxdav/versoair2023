@@ -8,21 +8,40 @@ const isProdEnv = process.env.NODE_ENV === "production";
 const isLocalUrl = (url?: string) =>
   !!url &&
   /^https?:\/\/(?:localhost|127(?:\.\d+){3})(?::\d+)?(?:\/|$)/i.test(url);
+const isRenderUrl = (url?: string) => {
+  if (!url) return false;
+  try {
+    return new URL(url).hostname.toLowerCase().endsWith(".onrender.com");
+  } catch {
+    return false;
+  }
+};
 const configuredSiblingUrl = process.env.SIBLING_URL?.trim();
 
-// Never inject a local development URL into a production deployment.
-if (!configuredSiblingUrl || (isProdEnv && isLocalUrl(configuredSiblingUrl))) {
+// Never inject a local or provider-internal Render URL into production HTML.
+if (
+  !configuredSiblingUrl ||
+  (isProdEnv &&
+    (isLocalUrl(configuredSiblingUrl) || isRenderUrl(configuredSiblingUrl)))
+) {
   const configuredMusicUrl = process.env.MUSIC_APP_URL?.trim();
   const publicAppUrl = (
-    process.env.RENDER_EXTERNAL_URL ||
     process.env.PRODUCTION_URL ||
     process.env.APP_PUBLIC_URL ||
-    process.env.VERSOAIR_URL
+    process.env.VERSOAIR_URL ||
+    process.env.RENDER_EXTERNAL_URL
   )?.trim();
   const musicUrl =
-    (configuredMusicUrl && !(isProdEnv && isLocalUrl(configuredMusicUrl))
+    (configuredMusicUrl &&
+    !(
+      isProdEnv &&
+      (isLocalUrl(configuredMusicUrl) || isRenderUrl(configuredMusicUrl))
+    )
       ? configuredMusicUrl
-      : publicAppUrl) || (!isProdEnv ? "http://localhost:5004" : undefined);
+      : publicAppUrl &&
+          !(isProdEnv && isRenderUrl(publicAppUrl))
+        ? publicAppUrl
+        : undefined) || (!isProdEnv ? "http://localhost:5004" : undefined);
 
   if (musicUrl) {
     const cleanMusicUrl = musicUrl.replace(/\/+$/, "");
@@ -125,7 +144,6 @@ if (!isDev) {
           scriptSrc: [
             "'self'",
             "'unsafe-inline'",
-            "'unsafe-eval'",
             "https://www.googletagmanager.com",
             "https://cdn.jsdelivr.net",
             // Google Translate engine scripts

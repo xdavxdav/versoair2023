@@ -229,16 +229,10 @@ export default function MarketplacePage() {
     setIsAuthLoading(true);
     setAuthError("");
     try {
-      const isStaffLogin =
-        !isSignUp && ["joel_007", "admin_025"].includes(identifier);
-      const endpoint = isStaffLogin
-        ? "/auth/admin-gate"
-        : isSignUp
-          ? "/auth/community/register"
-          : "/auth/community/login";
-      const body: Record<string, any> = isStaffLogin
-        ? { username: identifier, password }
-        : { email: identifier, password };
+      const endpoint = isSignUp
+        ? "/auth/community/register"
+        : "/auth/community/login";
+      const body: Record<string, any> = { email: identifier, password };
       if (isSignUp) {
         body.displayName =
           identifier.split("@")[0].charAt(0).toUpperCase() +

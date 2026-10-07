@@ -304,52 +304,28 @@ export default function CulturalPrograms() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              {
-                name: "Aba Kouassi",
-                role: "Urban Artist",
-                quote:
-                  "The urban art program gave me a platform to express myself and support my family. My murals are now in galleries!",
-                program: "Urban Art Initiative",
-              },
-              {
-                name: "Youssouf Diallo",
-                role: "Musician",
-                quote:
-                  "I went from playing in the streets to recording my first album. This program changed my life completely.",
-                program: "Music Education & Performance",
-              },
-              {
-                name: "Marie Traore",
-                role: "Theater Director",
-                quote:
-                  "We've created plays that tell our community's stories. The impact has been incredible and deeply meaningful.",
-                program: "Community Theater",
-              },
-            ].map((testimonial, idx) => (
+              "Urban Art Initiative",
+              "Music Education & Performance",
+              "Community Theater",
+            ].map((program) => (
               <Card
-                key={idx}
+                key={program}
                 className="border-0 shadow-lg hover:shadow-xl transition-shadow"
               >
                 <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-400">
-                        ★
-                      </span>
-                    ))}
-                  </div>
                   <p className="text-gray-700 italic mb-6">
-                    "{testimonial.quote}"
+                    A participant testimonial will appear here after it has
+                    been received and approved for publication.
                   </p>
                   <div className="border-t pt-4">
                     <p className="font-bold text-gray-900">
-                      {testimonial.name}
+                      Témoignage à venir
                     </p>
                     <p className="text-sm text-emerald-600 font-medium">
-                      {testimonial.role}
+                      Participant identity pending verification
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      {testimonial.program}
+                      {program} · Testimonial pending approval
                     </p>
                   </div>
                 </CardContent>

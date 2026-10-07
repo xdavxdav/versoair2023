@@ -146,7 +146,9 @@ function AudioVisualizer({
   // Allocate data array when analyser changes
   useEffect(() => {
     if (analyser) {
-      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+      dataArrayRef.current = new Uint8Array(
+        new ArrayBuffer(analyser.frequencyBinCount),
+      );
     } else {
       dataArrayRef.current = null;
     }
@@ -2805,7 +2807,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-bold text-xl tracking-tight leading-tight">
-                          Nooka
+                          Votre nom d’artiste
                         </h3>
                         <p className="text-white/35 text-sm font-medium mt-0.5">
                           Genre • Style
@@ -2813,7 +2815,7 @@ export default function ArtistPortalWelcome() {
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                           <span className="text-emerald-400/80 text-[10px] font-medium">
-                            Artiste inaugural — lancement imminent
+                            Aperçu du profil artiste
                           </span>
                         </div>
                       </div>
@@ -2828,7 +2830,7 @@ export default function ArtistPortalWelcome() {
                         <div className="flex items-center gap-1 text-purple-400/50">
                           <Shield className="w-2.5 h-2.5" />
                           <span className="text-[8px] font-medium">
-                            Vérifié
+                            Profil en préparation
                           </span>
                         </div>
                       </div>
@@ -2837,69 +2839,10 @@ export default function ArtistPortalWelcome() {
                       </p>
                     </div>
 
-                    {/* Stats row — TODO(launch): targets for the inaugural
-                        artist campaign; replace with live data at launch */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <p className="text-white font-bold text-base leading-none">
-                          1.2M
-                        </p>
-                        <p className="text-white/20 text-[9px] mt-1 uppercase tracking-wider font-medium">
-                          Écoutes
-                        </p>
-                      </div>
-                      <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <p className="text-white font-bold text-base leading-none">
-                          38
-                        </p>
-                        <p className="text-white/20 text-[9px] mt-1 uppercase tracking-wider font-medium">
-                          Titres
-                        </p>
-                      </div>
-                      <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                        <p className="text-white font-bold text-base leading-none">
-                          28.7K
-                        </p>
-                        <p className="text-white/20 text-[9px] mt-1 uppercase tracking-wider font-medium">
-                          Auditeurs
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Division + earnings bar — target preview */}
-                    <div className="flex items-center gap-3 mb-4 px-1">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-white/30 text-[9px] uppercase tracking-wider font-semibold">
-                            Division Or
-                          </span>
-                          <span className="text-amber-400 text-[10px] font-bold">
-                            78%
-                          </span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                          <motion.div
-                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-400"
-                            initial={{ width: 0 }}
-                            whileInView={{ width: "78%" }}
-                            viewport={{ once: true }}
-                            transition={{
-                              duration: 1.2,
-                              delay: 0.5,
-                              ease: "easeOut",
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-emerald-400 font-bold text-sm leading-none">
-                          $4.2K
-                        </p>
-                        <p className="text-white/15 text-[8px] mt-0.5">
-                          revenus
-                        </p>
-                      </div>
-                    </div>
+                    <p className="text-amber-200/80 text-[10px] leading-relaxed mb-4">
+                      Profil de lancement en préparation — aucun résultat
+                      d’audience ou de revenu n’est publié.
+                    </p>
 
                     {/* Footer: QR + member since */}
                     <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">

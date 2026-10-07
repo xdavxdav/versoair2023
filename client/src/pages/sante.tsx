@@ -679,7 +679,6 @@ export default function Sante() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">

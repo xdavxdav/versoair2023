@@ -215,7 +215,7 @@ const MUSICAL_PORTALS: Portal[] = [
     id: "artist",
     name: "Artist / Music Label",
     description:
-      "Join TMU — The Musical Universe™ — upload tracks, track royalties, and compete in StreamRoyale.",
+      "Join VERSO AIR™ to access music tools, royalty information, and artist programs.",
     icon: Music,
     color: "purple",
     gradient: "from-violet-500 to-fuchsia-500",

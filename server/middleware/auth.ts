@@ -182,7 +182,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/streamroyale/", // StreamRoyale public data (leaderboard, pool stats)
   "/api/jobs/search", // Public career portal
   "/api/commerce/", // Commerce search & analytics
-  "/api/properties/", // Property search & analytics
+  "/api/properties/", // Public verified property sub-routes
   "/api/streaming/tracks", // Streaming browse — tracks, featured, detail
   "/api/streaming/artists", // Streaming browse — artist listing & profiles
   "/api/streaming/albums/", // Streaming browse — album details
@@ -209,6 +209,7 @@ function isPublicPath(path: string, method: string): boolean {
     return true;
   // Prefix match for public data endpoints — GET only (read-only)
   if (method === "GET") {
+    if (path === "/api/properties") return true;
     for (const prefix of PUBLIC_PATH_PREFIXES) {
       if (path.startsWith(prefix)) return true;
     }

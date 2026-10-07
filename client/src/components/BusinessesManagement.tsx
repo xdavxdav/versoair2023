@@ -917,7 +917,7 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    placeholder="+225-XX-XX-XX-XX"
+                    placeholder="International phone number"
                   />
                 </div>
                 <div>

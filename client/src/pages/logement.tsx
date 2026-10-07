@@ -143,7 +143,7 @@ async function searchLogementProperties(params: {
     const result = await response.json();
     return {
       data: result.data || [],
-      total: result.total || 0,
+      total: result.pagination?.total ?? result.total ?? 0,
       success: true,
     };
   } catch (error) {
@@ -153,40 +153,9 @@ async function searchLogementProperties(params: {
 }
 
 async function fetchLogementAnalytics(): Promise<LogementAnalytics> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/analytics/logement`);
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to fetch logement analytics:", error);
-    return {
-      total_revenue: 3200000,
-      total_properties: 890,
-      average_rating: 4.6,
-      occupancy_rate: 87,
-      year_over_year_growth: 12.5,
-      top_categories: [
-        { category: "Apartments", revenue: 1200000, properties_count: 450 },
-        { category: "Houses", revenue: 1100000, properties_count: 280 },
-        { category: "Studios", revenue: 600000, properties_count: 160 },
-      ],
-      monthly_trends: [
-        { month: "Jan", revenue: 250000, bookings: 150 },
-        { month: "Feb", revenue: 280000, bookings: 165 },
-        { month: "Mar", revenue: 300000, bookings: 180 },
-      ],
-      top_regions: [
-        { region: "Abidjan", revenue: 1600000, percentage: 50 },
-        { region: "Yamoussoukro", revenue: 800000, percentage: 25 },
-        { region: "Bouaké", revenue: 640000, percentage: 20 },
-      ],
-      property_types: [
-        { type: "Apartment", count: 450, percentage: 50 },
-        { type: "House", count: 280, percentage: 32 },
-        { type: "Studio", count: 160, percentage: 18 },
-      ],
-    };
-  }
+  const response = await fetch(`${API_BASE_URL}/api/analytics/logement`);
+  if (!response.ok) throw new Error(`API error: ${response.status}`);
+  return response.json();
 }
 
 async function testDatabaseConnection(): Promise<{
@@ -263,7 +232,7 @@ export default function Logement() {
     checkConnection();
   }, []);
 
-  const { data: analytics, isLoading } = useQuery({
+  const { data: analytics, isError: analyticsUnavailable } = useQuery({
     queryKey: ["logement-analytics"],
     queryFn: fetchLogementAnalytics,
     refetchInterval: autoRefresh ? 300000 : false,
@@ -588,10 +557,16 @@ export default function Logement() {
                 value={
                   analytics
                     ? `XOF ${(analytics.total_revenue / 1000000).toFixed(1)}M`
-                    : "Loading..."
+                    : analyticsUnavailable
+                      ? "N/D"
+                      : "Loading..."
                 }
                 change={
-                  analytics ? `${analytics.year_over_year_growth}% YoY` : ""
+                  analytics
+                    ? `${analytics.year_over_year_growth}% YoY`
+                    : analyticsUnavailable
+                      ? "Données indisponibles"
+                      : ""
                 }
                 trend="up"
                 color="green"
@@ -599,22 +574,22 @@ export default function Logement() {
               />
               <AnalyticsCard
                 title="Total Properties"
-                value={analytics?.total_properties || 0}
-                change="Across all types"
+                value={analytics?.total_properties ?? (analyticsUnavailable ? "N/D" : 0)}
+                change={analyticsUnavailable ? "Données indisponibles" : "Across all types"}
                 color="blue"
                 icon={Home}
               />
               <AnalyticsCard
                 title="Average Rating"
-                value={analytics?.average_rating || 0}
-                change="From reviews"
+                value={analytics?.average_rating ?? (analyticsUnavailable ? "N/D" : 0)}
+                change={analyticsUnavailable ? "Données indisponibles" : "From reviews"}
                 color="purple"
                 icon={Star}
               />
               <AnalyticsCard
                 title="Occupancy Rate"
-                value={`${analytics?.occupancy_rate || 0}%`}
-                change="Current"
+                value={analytics ? `${analytics.occupancy_rate}%` : analyticsUnavailable ? "N/D" : "0%"}
+                change={analyticsUnavailable ? "Données indisponibles" : "Current"}
                 trend="up"
                 color="cyan"
                 icon={TrendingUp}

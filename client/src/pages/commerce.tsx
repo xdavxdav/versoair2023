@@ -669,8 +669,8 @@ export default function CommerceBusinessAds() {
   const commerceFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "Données en direct",
-      description: "Données commerciales en direct depuis la base Verso Air",
+      title: "Annuaire commercial",
+      description: "Consultez les entreprises répertoriées dans le secteur commercial.",
     },
     {
       icon: <Store className="h-8 w-8" />,
@@ -828,7 +828,6 @@ export default function CommerceBusinessAds() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
@@ -1242,9 +1241,7 @@ export default function CommerceBusinessAds() {
                     </span>
                   </h2>
                   <div className="text-sm text-blue-300">
-                    {databaseConnected
-                      ? "✅ Données en direct"
-                      : "✅ Données réelles"}
+                    {searchResults.length} résultat(s) dans le répertoire
                   </div>
                 </div>
 

@@ -83,9 +83,9 @@ export default function SAV() {
         "Compatibility issues resolution",
       ],
       stats: {
-        responseTime: "15min",
-        resolutionRate: "92%",
-        satisfaction: "4.7",
+        responseTime: "Not yet published",
+        resolutionRate: "Not yet published",
+        satisfaction: "Not yet published",
       },
     },
     {
@@ -104,9 +104,9 @@ export default function SAV() {
         "Customization error corrections",
       ],
       stats: {
-        responseTime: "30min",
-        resolutionRate: "88%",
-        satisfaction: "4.5",
+        responseTime: "Not yet published",
+        resolutionRate: "Not yet published",
+        satisfaction: "Not yet published",
       },
     },
     {
@@ -125,9 +125,9 @@ export default function SAV() {
         "Family plan management support",
       ],
       stats: {
-        responseTime: "10min",
-        resolutionRate: "95%",
-        satisfaction: "4.8",
+        responseTime: "Not yet published",
+        resolutionRate: "Not yet published",
+        satisfaction: "Not yet published",
       },
     },
     {
@@ -146,9 +146,9 @@ export default function SAV() {
         "Personal data management requests",
       ],
       stats: {
-        responseTime: "8min",
-        resolutionRate: "90%",
-        satisfaction: "4.6",
+        responseTime: "Not yet published",
+        resolutionRate: "Not yet published",
+        satisfaction: "Not yet published",
       },
     },
   ];
@@ -157,33 +157,33 @@ export default function SAV() {
     {
       name: "Live Chat",
       icon: <MessageSquare className="h-8 w-8" />,
-      availability: "24/7",
-      response: "Instant",
-      description: "Real-time chat with support agents",
+      availability: "Contact us for availability",
+      response: "Not published",
+      description: "Contact Verso Air for assistance",
       color: "bg-green-100 text-green-700",
     },
     {
       name: "Phone Support",
       icon: <Phone className="h-8 w-8" />,
-      availability: "8AM-10PM",
-      response: "< 2min",
-      description: "Direct phone support in multiple languages",
+      availability: "Contact us for availability",
+      response: "Not published",
+      description: "Contact Verso Air by phone",
       color: "bg-blue-100 text-blue-700",
     },
     {
       name: "Email Support",
       icon: <Mail className="h-8 w-8" />,
-      availability: "24/7",
-      response: "< 4 hours",
-      description: "Detailed written support with attachments",
+      availability: "Contact us for availability",
+      response: "Not published",
+      description: "Email support for written requests",
       color: "bg-purple-100 text-purple-700",
     },
     {
       name: "Help Center",
       icon: <HelpCircle className="h-8 w-8" />,
-      availability: "24/7",
-      response: "Immediate",
-      description: "Self-service knowledge base and guides",
+      availability: "Online",
+      response: "Self-service",
+      description: "Browse the help centre and published guides",
       color: "bg-orange-100 text-orange-700",
     },
   ];
@@ -364,7 +364,7 @@ export default function SAV() {
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
                 <ShieldCheck className="h-4 w-4 text-white" />
                 <span className="text-sm font-medium text-white">
-                  Premium Support Guarantee
+                  Customer Support
                 </span>
               </div>
             </motion.div>
@@ -377,7 +377,7 @@ export default function SAV() {
             >
               Service Après-Vente
               <br />
-              <span className="text-yellow-300">Premium Support 24/7</span>
+              <span className="text-yellow-300">Support Information</span>
             </motion.h1>
             <motion.p
               variants={fadeInUp}
@@ -386,9 +386,8 @@ export default function SAV() {
               transition={{ delay: 0.2 }}
               className="text-xl text-white/90 max-w-3xl mx-auto mb-10"
             >
-              Comprehensive customer support ecosystem delivering exceptional
-              service across all products and digital platforms with
-              industry-leading response times.
+              Contact Verso Air for assistance. Response times, service levels,
+              and support hours have not yet been published.
             </motion.p>
             <motion.div
               variants={fadeInUp}
@@ -670,19 +669,19 @@ export default function SAV() {
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span className="text-sm">
-                              {category.stats.responseTime} response
+                              Response: {category.stats.responseTime}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <CheckCircle className="h-4 w-4" />
                             <span className="text-sm">
-                              {category.stats.resolutionRate} resolution
+                              Resolution data: {category.stats.resolutionRate}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4" />
                             <span className="text-sm">
-                              {category.stats.satisfaction}/5 rating
+                              Satisfaction data: {category.stats.satisfaction}
                             </span>
                           </div>
                         </div>
@@ -816,13 +815,13 @@ export default function SAV() {
                         Phone Support
                       </h4>
                       <p className="text-gray-600 text-sm mt-1">
-                        Available 8AM-10PM, 7 days a week
+                        Contact us to confirm current availability
                       </p>
                       <a
-                        href="tel:+18001234567"
+                        href="tel:+14374359726"
                         className="text-blue-600 font-bold text-lg mt-2 block"
                       >
-                        +1 (800) 123-4567
+                        +1 437-435-9726
                       </a>
                     </div>
                   </div>
@@ -834,13 +833,13 @@ export default function SAV() {
                         Email Support
                       </h4>
                       <p className="text-gray-600 text-sm mt-1">
-                        Response within 4 hours, 24/7
+                        Response times are not currently published
                       </p>
                       <a
-                        href="mailto:support@company.com"
+                        href="mailto:support@versoair.com"
                         className="text-green-600 font-bold text-lg mt-2 block"
                       >
-                        support@company.com
+                        support@versoair.com
                       </a>
                     </div>
                   </div>
@@ -850,7 +849,7 @@ export default function SAV() {
                     <div>
                       <h4 className="font-semibold text-gray-900">Live Chat</h4>
                       <p className="text-gray-600 text-sm mt-1">
-                        Instant response, 24/7 availability
+                        Chat availability is not currently published
                       </p>
                       <Button className="mt-3 bg-purple-600 hover:bg-purple-700">
                         Start Live Chat
@@ -867,7 +866,7 @@ export default function SAV() {
                   <form className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Your Name *</label>
-                      <Input placeholder="John Doe" required />
+                      <Input placeholder="Your full name" required />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
@@ -952,8 +951,8 @@ export default function SAV() {
                     Need Immediate Assistance?
                   </h3>
                   <p className="text-white/90">
-                    Our premium support team is available 24/7 to resolve your
-                    issues
+                    Contact our team for support. Availability and response
+                    times are not currently published.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-4">
@@ -1003,7 +1002,7 @@ export default function SAV() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Full Name *</label>
-                    <Input placeholder="John Doe" required />
+                    <Input placeholder="Your full name" required />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">

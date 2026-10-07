@@ -216,7 +216,7 @@ export default function CommandCenter() {
                     emoji="🧪"
                   />
                   <RouteLink path="/api" label="API Documentation" emoji="📖" />
-                  <RouteLink path="/docs" label="Platform Docs" emoji="📚" />
+                  <RouteLink path="/help" label="Help Center" emoji="📚" />
                   <RouteLink
                     path="/status"
                     label="System Status Page"
@@ -676,8 +676,8 @@ export default function CommandCenter() {
                     emoji="🧪"
                   />
                   <RouteLink
-                    path="/docs"
-                    label="Platform Documentation"
+                    path="/help"
+                    label="Help Center"
                     emoji="📚"
                   />
                 </div>

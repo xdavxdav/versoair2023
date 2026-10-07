@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { ADMIN_USERS } from "@/lib/admin-auth";
 
 export default function GeoAdminPage() {
   const { isAuthenticated, loading, tier, tierName, user, refetch } =
@@ -27,23 +26,15 @@ export default function GeoAdminPage() {
   const { logout } = useAuthContext();
   const [startingTrial, setStartingTrial] = useState(false);
 
-  // GeoAdmins are tech agents / moderators / IT staff — full access granted based on role
-  // Also check localStorage geoadmin_username against ADMIN_USERS (set by auth gate)
-  const storedAdminUsername = localStorage.getItem("geoadmin_username");
-  const gateAdminUser = storedAdminUsername
-    ? ADMIN_USERS.find((a) => a.username === storedAdminUsername)
-    : null;
-
+  // Admin access is determined by the authenticated server-issued user role.
   const isGeoAdmin =
     user?.isAdmin ||
     user?.role === "admin" ||
     user?.role === "superuser" ||
-    user?.role === "moderator" ||
-    !!gateAdminUser;
+    user?.role === "moderator";
 
   // Superuser always has full access regardless of tier
-  const isSuperuser =
-    user?.role === "superuser" || gateAdminUser?.role === "SuperAdmin";
+  const isSuperuser = user?.role === "superuser";
 
   // Initialize CSRF token on component mount
   useEffect(() => {
@@ -129,22 +120,23 @@ export default function GeoAdminPage() {
     return localStorage.getItem("geoadmin_username") || null;
   });
 
-  // Best available display name: gate admin name > subscription user > localStorage username > fallback
+  // Best available display name: current authenticated user > stored gate username > fallback
   const displayName =
-    gateAdminUser?.name ||
     user?.name ||
     user?.username ||
     user?.email?.split("@")[0] ||
+    username ||
     null;
 
   // Role label for UI display
   const displayRole =
-    gateAdminUser?.role ||
-    (user?.role === "superuser"
+    user?.role === "superuser"
       ? "SuperAdmin"
       : user?.role === "admin"
         ? "Admin"
-        : null);
+        : user?.role === "moderator"
+          ? "Moderator"
+          : null;
 
   // Maintain session across route changes - only restore if geoadmin_session is active
   useEffect(() => {
@@ -463,7 +455,6 @@ export default function GeoAdminPage() {
                   <CheckCircle className="inline-block h-3.5 w-3.5 mr-1.5" />
                   Connected as {isSuperuser ? "SuperAdmin" : "Geo Admin"}
                   {displayName ? ` — ${displayName}` : ""}
-                  {gateAdminUser?.name ? ` (${gateAdminUser.name})` : ""}
                 </>
               ) : (
                 <>
@@ -502,11 +493,7 @@ export default function GeoAdminPage() {
                 <>
                   <Shield className="inline-block h-4 w-4 mr-1.5" />
                   SuperAdmin — unrestricted access
-                  {gateAdminUser?.name
-                    ? ` (${gateAdminUser.name})`
-                    : displayName
-                      ? ` (${displayName})`
-                      : ""}
+                  {displayName ? ` (${displayName})` : ""}
                 </>
               ) : (
                 <>

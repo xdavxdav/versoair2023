@@ -7410,7 +7410,7 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2">
                 <DatabaseIcon className="h-4 w-4" />
                 <span>
-                  VersoAir Business Platform v2.0 • PostgreSQL Connected
+                  Verso Air Admin Dashboard
                 </span>
               </div>
               <div className="flex items-center gap-4 mt-2 sm:mt-0">

@@ -43,38 +43,38 @@ const viewport = { once: true, margin: "-80px" };
 const WHY_SPONSOR = [
   {
     icon: Users,
-    title: "Access to 800+ Artisans",
-    desc: "Direct network to traditional craftspeople across 12 regions of Côte d'Ivoire — partners for authentic sourcing, cultural collaboration, or workforce development.",
+    title: "Partnership conversations",
+    desc: "Discuss potential creative and community-focused collaborations with VERSO AIR INC.",
     color: "from-indigo-500 to-purple-600",
   },
   {
     icon: Megaphone,
     title: "Brand Visibility & Impact",
-    desc: "Logo placement across all platforms, social media, events, and marketing materials reaching 50,000+ engaged community members monthly.",
+    desc: "Potential visibility opportunities can be discussed once channels and audience data are verified.",
     color: "from-amber-500 to-orange-600",
   },
   {
     icon: Heart,
     title: "Measurable Social Impact",
-    desc: "Quarterly impact reports showing real outcomes — families supported, artisans trained, cultural traditions preserved. Document your ESG commitments.",
+    desc: "Any impact reporting or outcome claims will be defined only after programs and measurement are confirmed.",
     color: "from-rose-500 to-pink-600",
   },
   {
     icon: Globe,
     title: "International Visibility",
-    desc: "Featured at global cultural forums, UNESCO events, and pan-African initiatives. Position your brand as a leader in cultural sustainability.",
+    desc: "Possible event participation is subject to confirmed programs and third-party approval.",
     color: "from-teal-500 to-emerald-600",
   },
   {
     icon: TrendingUp,
     title: "Market Access & Growth",
-    desc: "Reach emerging artisan entrepreneurs, cultural markets, and West African economic corridors expanding at 12%+ annually.",
+    desc: "Potential market collaborations can be discussed; no market reach or growth figures are published.",
     color: "from-cyan-500 to-blue-600",
   },
   {
     icon: Briefcase,
     title: "Strategic Partnership Opportunities",
-    desc: "Co-develop programs, training initiatives, product lines, or B2B channels that tap into $500M+ African cultural economy.",
+    desc: "Potential collaboration scope and terms would be agreed directly with VERSO AIR INC.",
     color: "from-violet-500 to-fuchsia-600",
   },
 ];
@@ -83,7 +83,7 @@ const SPONSORSHIP_TIERS = [
   {
     name: "PATRON",
     subtitle: "Cultural Champion",
-    investment: "$100,000+/year",
+    investment: "Pricing to be confirmed",
     color: "from-slate-700 to-slate-600",
     border: "border-slate-400/50",
     badge: "bg-gradient-to-r from-slate-600 to-slate-500 text-white",
@@ -104,7 +104,7 @@ const SPONSORSHIP_TIERS = [
   {
     name: "AMBASSADOR",
     subtitle: "Cultural Leader",
-    investment: "$50,000–$100,000/year",
+    investment: "Pricing to be confirmed",
     color: "from-amber-600 to-yellow-500",
     border: "border-amber-400/60",
     badge: "bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-900",
@@ -126,7 +126,7 @@ const SPONSORSHIP_TIERS = [
   {
     name: "SUPPORTER",
     subtitle: "Cultural Partner",
-    investment: "$15,000–$50,000/year",
+    investment: "Pricing to be confirmed",
     color: "from-emerald-600 to-teal-500",
     border: "border-emerald-400/50",
     badge: "bg-gradient-to-r from-emerald-500 to-teal-400 text-emerald-900",
@@ -147,7 +147,7 @@ const SPONSORSHIP_TIERS = [
   {
     name: "FRIEND",
     subtitle: "Cultural Contributor",
-    investment: "Custom (from $5,000)",
+    investment: "Pricing to be confirmed",
     color: "from-sky-600 to-blue-500",
     border: "border-sky-400/50",
     badge: "bg-gradient-to-r from-sky-500 to-blue-400 text-sky-900",
@@ -261,28 +261,26 @@ const HOW_IT_WORKS = [
   },
 ];
 
-// TODO(pending-verification): replace John Doe placeholder testimonials with
-// approved quotes from real sponsors before public promotion.
 const TESTIMONIALS = [
   {
     quote: "Sponsor testimonial pending confirmation.",
-    author: "John Doe",
-    role: "Role pending",
-    org: "Organization pending",
+    author: "Testimonial pending approval",
+    role: "",
+    org: "",
     color: "from-indigo-500 to-purple-600",
   },
   {
     quote: "Sponsor testimonial pending confirmation.",
-    author: "John Doe",
-    role: "Role pending",
-    org: "Organization pending",
+    author: "Testimonial pending approval",
+    role: "",
+    org: "",
     color: "from-amber-500 to-orange-500",
   },
   {
     quote: "Sponsor testimonial pending confirmation.",
-    author: "John Doe",
-    role: "Role pending",
-    org: "Organization pending",
+    author: "Testimonial pending approval",
+    role: "",
+    org: "",
     color: "from-emerald-500 to-teal-600",
   },
 ];
@@ -792,11 +790,10 @@ export default function Sponsorship() {
               </span>
               <span className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                +225 27 20 21 22 23
               </span>
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Abidjan, Côte d'Ivoire
+                Location details pending confirmation
               </span>
             </div>
           </motion.div>

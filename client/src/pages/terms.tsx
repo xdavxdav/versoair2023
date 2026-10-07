@@ -213,7 +213,7 @@ export default function TermsOfService() {
               </li>
               <li>
                 The <span className="notranslate">Verso Air</span> brand,{" "}
-                <span className="notranslate">"STRΔΦGHT TΩ THΞ PΩΦΠT"</span>{" "}
+                <span className="notranslate">"Straight to the point"</span>{" "}
                 tagline, design elements, and source code are proprietary
               </li>
               <li>

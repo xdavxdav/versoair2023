@@ -189,13 +189,13 @@ export default function HelpCenter() {
             {
               icon: <Mail className="h-8 w-8" />,
               title: "Email Support",
-              description: "Response within 24 hours",
+              description: "Contact us for current response availability",
               contact: "support@versoair.com",
             },
             {
               icon: <Phone className="h-8 w-8" />,
               title: "Phone Support",
-              description: "Mon–Fri, 8AM–6PM EST · CI: +225 05 64 60 64 01",
+              description: "Contact us for current phone availability",
               // TODO(pending-verification): publish real monitored number
               contact: "+1 (437) 435-9726 (Canada)",
             },

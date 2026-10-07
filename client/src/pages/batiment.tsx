@@ -197,12 +197,6 @@ async function fetchBatimentAnalytics(): Promise<BatimentAnalytics> {
       ],
       top_regions: [
         {
-          region: "Abidjan",
-          revenue: 925000,
-          percentage: 28,
-          contractor_count: 52,
-        },
-        {
           region: "Yamoussoukro",
           revenue: 680000,
           percentage: 21,
@@ -866,9 +860,8 @@ export default function BatimentDashboard() {
     },
     {
       icon: <Database className="h-8 w-8" />,
-      title: "Données en direct",
-      description:
-        "Enregistrements de construction en direct depuis la base Verso Air",
+      title: "Annuaire construction",
+      description: "Consultez les entreprises répertoriées dans le secteur de la construction.",
     },
   ];
 
@@ -1004,7 +997,6 @@ export default function BatimentDashboard() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
 
       {/* Enhanced Search and Filter Section - SAME LAYOUT */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
@@ -1476,9 +1468,7 @@ export default function BatimentDashboard() {
                     </span>
                   </h2>
                   <div className="text-sm text-blue-300">
-                    {databaseConnected
-                      ? "✅ Données en direct"
-                      : "✅ Données réelles"}
+                    Résultats du répertoire
                   </div>
                 </div>
 
@@ -1838,55 +1828,7 @@ export default function BatimentDashboard() {
                           {region.contractor_count || 0} entrepreneurs
                         </div>
                       </div>
-                    )) || (
-                      <>
-                        {[
-                          {
-                            region: "Abidjan",
-                            revenue: 850000,
-                            percentage: 30,
-                            facility_count: 45,
-                          },
-                          {
-                            region: "Yamoussoukro",
-                            revenue: 625000,
-                            percentage: 22,
-                            facility_count: 32,
-                          },
-                          {
-                            region: "Bouaké",
-                            revenue: 485000,
-                            percentage: 17,
-                            facility_count: 28,
-                          },
-                          {
-                            region: "Daloa",
-                            revenue: 425000,
-                            percentage: 15,
-                            facility_count: 25,
-                          },
-                        ].map((region, index) => (
-                          <div key={index}>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="font-medium text-white">
-                                {region.region}
-                              </span>
-                              <span className="font-semibold text-blue-300">
-                                €{region.revenue.toLocaleString()}
-                              </span>
-                            </div>
-                            <ProgressBar
-                              percent={region.percentage || 0}
-                              className="h-2"
-                            />
-                            <div className="text-right text-sm text-blue-400 mt-1">
-                              {region.percentage}% • {region.facility_count}{" "}
-                              entreprises
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
+                    ))}
                   </div>
                 </CardContent>
               </Card>

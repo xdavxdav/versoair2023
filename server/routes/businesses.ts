@@ -221,7 +221,18 @@ router.get("/api/location/ip-data", async (req: Request, res: Response) => {
 // ============================================================================
 
 // GET all businesses with pagination and filtering
-router.get("/api/businesses", async (req: Request, res: Response) => {
+router.get(
+  "/api/businesses",
+  (req: Request, res: Response, next) => {
+    if (req.query.includeUnverified === "true") {
+      return requireAuth(["admin", "moderator", "superuser"])(req, res, next);
+    }
+    if (req.query.userId || req.query.ownerId) {
+      return requireAuth()(req, res, next);
+    }
+    next();
+  },
+  async (req: Request, res: Response) => {
   try {
     const {
       page = 1,
@@ -241,9 +252,31 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
 
     const offset = ((Number(page) - 1) * Number(limit)) as number;
 
-    // Build WHERE clause
+    const isStaff = ["admin", "moderator", "superuser"].includes(
+      req.user?.role || "",
+    );
+    const sortOrder = String(order).toUpperCase() === "ASC" ? "ASC" : "DESC";
+    const userIdFilter = req.query.userId || req.query.ownerId;
+    const requestedOwnerId = userIdFilter ? Number(userIdFilter) : null;
+    const authenticatedUserId = Number(req.user?.userId);
+    if (
+      requestedOwnerId !== null &&
+      (!Number.isSafeInteger(requestedOwnerId) ||
+        (!isStaff && requestedOwnerId !== authenticatedUserId))
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "You may only view businesses owned by your account",
+      });
+    }
+
+    // Public listings include only active, verified businesses. Staff can opt
+    // into the pending queue explicitly; owners can still view their own records.
     let whereClause = "WHERE 1=1";
     const params: any[] = [];
+    if (!isStaff && requestedOwnerId === null) {
+      whereClause += " AND b.is_active = true AND b.is_verified = true";
+    }
 
     if (search) {
       // Use full-text search with ts_rank when search_vector exists,
@@ -338,10 +371,9 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
     }
 
     // userId / ownerId filter — fetch businesses owned by a specific user
-    const userIdFilter = req.query.userId || req.query.ownerId;
     if (userIdFilter) {
       whereClause += " AND b.owner_id = $" + (params.length + 1);
-      params.push(Number(userIdFilter));
+      params.push(requestedOwnerId);
     }
 
     // Verified-only filter (used by sector pages "Vérifié" dropdown)
@@ -462,7 +494,7 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
           ELSE 2
         END ASC,
         ${tierOrder}
-        b.${sortField === "verified_first" ? "rating" : sortField} ${order}
+        b.${sortField === "verified_first" ? "rating" : sortField} ${sortOrder}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
 
@@ -491,12 +523,24 @@ router.get("/api/businesses", async (req: Request, res: Response) => {
       details: (error as Error).message,
     });
   }
-});
+  },
+);
 
 // GET single business
-router.get("/api/businesses/:id", async (req: Request, res: Response) => {
+router.get(
+  "/api/businesses/:id",
+  (req: Request, res: Response, next) => {
+    if (req.query.includeUnverified === "true") {
+      return requireAuth(["admin", "moderator", "superuser"])(req, res, next);
+    }
+    next();
+  },
+  async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const includeUnverified =
+      req.query.includeUnverified === "true" &&
+      ["admin", "moderator", "superuser"].includes(req.user?.role || "");
 
     // Keep the core business profile available even when optional detail
     // tables have not been provisioned in an older production database.
@@ -506,15 +550,17 @@ router.get("/api/businesses/:id", async (req: Request, res: Response) => {
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
       WHERE b.id = $1
+        AND ($2::boolean OR (b.is_active = true AND b.is_verified = true))
     `,
-      [id],
+      [id, includeUnverified],
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: "Business not found",
-      });
+        },
+      );
     }
 
     const PUBLIC_BUSINESS_DETAIL_FIELDS = [

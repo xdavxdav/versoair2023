@@ -392,49 +392,11 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
         .status(400)
         .json({ error: "Wager must be between 0 and 100 credits" });
     }
-
-    // Contract gate: user must have signed contract + valid platform ID to wager
     if (wager > 0) {
-      const contract = await pool.query(
-        `SELECT ac.status, ac.grade, ap.artist_code
-         FROM artist_contracts ac
-         JOIN artist_profiles ap ON ap.id = ac.artist_id
-         WHERE ap.user_id = $1 AND ac.status = 'approved'
-         LIMIT 1`,
-        [userId],
-      );
-      if (contract.rows.length === 0) {
-        return res.status(403).json({
-          error:
-            "Contrat requis — signez un contrat artiste ou utilisateur pour accéder aux mises.",
-          requiresContract: true,
-        });
-      }
-    }
-
-    // Age check for wagering
-    if (wager > 0) {
-      const user = await pool.query(
-        "SELECT date_of_birth, age_verified_at FROM users WHERE id = $1",
-        [userId],
-      );
-      const u = user.rows[0];
-      if (!u?.age_verified_at) {
-        return res.status(403).json({
-          error: "Age verification required for wagering",
-          requiresAgeVerification: true,
-        });
-      }
-    }
-
-    // Hold wager
-    if (wager > 0) {
-      const holdResult = await holdWager(userId, wager);
-      if (!holdResult) {
-        return res
-          .status(402)
-          .json({ error: "Insufficient credits", requiresDeposit: true });
-      }
+      return res.status(403).json({
+        error: "Wagering is disabled while free beta is in effect",
+        requiresLegalReview: true,
+      });
     }
 
     // Generate questions for trivia & skill games
@@ -489,9 +451,7 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
       };
     }
 
-    // Free beta matches start immediately as solo games. Wagered matches
-    // retain the existing waiting-for-an-opponent flow.
-    const matchStatus = wager === 0 ? "active" : "waiting";
+    const matchStatus = "active";
 
     // Create match
     const match = await pool.query(
@@ -557,6 +517,12 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
     }
 
     const m = match.rows[0];
+    if (parseFloat(m.wager_amount || "0") > 0) {
+      return res.status(403).json({
+        error: "Wagered matches are paused during free beta",
+        requiresAdminReview: true,
+      });
+    }
     if (m.player1_id === userId) {
       return res.status(400).json({ error: "Cannot join your own match" });
     }
@@ -674,6 +640,12 @@ router.post("/:id/answer", requireAuth, async (req: Request, res: Response) => {
     }
 
     const m = match.rows[0];
+    if (parseFloat(m.wager_amount || "0") > 0) {
+      return res.status(403).json({
+        error: "Wagered matches are paused during free beta",
+        requiresAdminReview: true,
+      });
+    }
     if (m.player1_id !== userId && m.player2_id !== userId) {
       return res.status(403).json({ error: "Not a participant" });
     }

@@ -1055,7 +1055,7 @@ export default function ImmobilierPortal() {
                               hostPhone: e.target.value,
                             })
                           }
-                          placeholder="+225 07 XX XX XX XX"
+                          placeholder="International phone number"
                           className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
                         />
                       </div>

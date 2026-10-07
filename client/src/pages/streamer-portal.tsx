@@ -1208,19 +1208,19 @@ function StreamerWalletSection() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">{format(0)}</p>
+            <p className="text-2xl font-bold text-white">—</p>
             <p className="text-xs text-gray-400">Balance</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-400">{format(0)}</p>
+            <p className="text-2xl font-bold text-green-400">—</p>
             <p className="text-xs text-gray-400">Earnings</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-400">0</p>
+            <p className="text-2xl font-bold text-purple-400">—</p>
             <p className="text-xs text-gray-400">Streams</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-amber-400">0</p>
+            <p className="text-2xl font-bold text-amber-400">—</p>
             <p className="text-xs text-gray-400">Tips</p>
           </div>
         </div>

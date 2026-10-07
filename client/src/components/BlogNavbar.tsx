@@ -28,7 +28,7 @@ const navLinks = [
   { href: "/", label: "Home", icon: ShoppingBag },
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/businesses-directory", label: "Annuaire", icon: Store },
-  { href: "/sav", label: "SAV 24/7", icon: Headphones },
+  { href: "/sav", label: "Support", icon: Headphones },
 ];
 
 /* ── mobile quick-nav pills ── */
@@ -118,7 +118,7 @@ const MOBILE_MENU_GROUPS = [
     key: "help",
     label: "Support",
     items: [
-      ["24/7 Customer Service", "/sav"],
+      ["Customer Support", "/sav"],
       ["VersoAI", "/versoai"],
     ],
   },
@@ -812,7 +812,7 @@ export default function BlogNavbar({
                 >
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/sav">
-                    <a className={ITEM}>SAV 24/7</a>
+                    <a className={ITEM}>Support</a>
                   </Link>
                   <Link href="/versoai">
                     <a className={ITEM}>VersoAI</a>

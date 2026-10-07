@@ -384,7 +384,7 @@ function TermsTab() {
       <p className="text-slate-700 leading-relaxed">
         All content, code, designs, trademarks, logos, and branding on the
         Platform are the property of Verso Air Inc. or its licensors. The Verso
-        Air name, logo (eagle design), "STRΔΦGHT TΩ THΞ PΩΦΠT" tagline, and
+        Air name, logo (eagle design), "Straight to the point" tagline, and
         StreamRoyale are trademarks of Verso Air Inc. Unauthorized use,
         reproduction, or distribution is prohibited and may result in legal
         action. Users retain ownership of content they upload but grant Verso
@@ -1748,7 +1748,7 @@ function FaqTab() {
         },
         {
           q: "Can I use the Verso Air logo on my materials?",
-          a: "Registered artists may use the 'Featured on Verso Air' badge in their promotional materials. The Verso Air logo, eagle design, and STRΔΦGHT TΩ THΞ PΩΦΠT tagline may not be used without written permission.",
+          a: "Registered artists may use the 'Featured on Verso Air' badge in their promotional materials. The Verso Air logo, eagle design, and 'Straight to the point' tagline may not be used without written permission.",
         },
         {
           q: "What happens if someone copies my music on the platform?",

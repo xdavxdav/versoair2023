@@ -281,27 +281,6 @@ export default function HousingReservations() {
       )
     : searchHistory.slice(0, 5);
 
-  // ─── Browse Time Limit for unauthenticated users ──────────────────────────
-  const BROWSE_LIMIT_SECONDS = 10 * 60; // 10 minutes
-  const BROWSE_START_KEY = "reservations_browse_start";
-
-  const isAuthenticated =
-    !!localStorage.getItem("auth_token") || !!localStorage.getItem("authToken");
-
-  const [, setBrowseTimeLeft] = useState<number>(() => {
-    if (isAuthenticated) return Infinity;
-    const start = localStorage.getItem(BROWSE_START_KEY);
-    if (!start) {
-      localStorage.setItem(BROWSE_START_KEY, String(Date.now()));
-      return BROWSE_LIMIT_SECONDS;
-    }
-    const elapsed = Math.floor((Date.now() - Number(start)) / 1000);
-    return Math.max(0, BROWSE_LIMIT_SECONDS - elapsed);
-  });
-
-  // Browse gating removed (claim audit #44): public browsing stays open;
-  // sign-in is only required when the user actually books.
-
   // Persist favorites to localStorage whenever they change
   useEffect(() => {
     if (clientName) {
@@ -742,12 +721,6 @@ export default function HousingReservations() {
     },
   ];
 
-  // Initialize properties
-  useEffect(() => {
-    setAllProperties(mockProperties);
-    setDisplayedProperties(mockProperties.slice(0, 6));
-  }, []);
-
   // Handle client name submission
   const handleClientNameSubmit = () => {
     if (tempClientName.trim()) {
@@ -808,7 +781,7 @@ export default function HousingReservations() {
         return response.json();
       } catch (error) {
         console.error("Error fetching properties:", error);
-        return { success: false, data: mockProperties };
+        return { success: false, data: [] };
       }
     },
     enabled: true,
@@ -817,8 +790,9 @@ export default function HousingReservations() {
   // Update properties from API when data loads
   useEffect(() => {
     if (apiProperties) {
-      const propertiesToUse =
-        apiProperties.data || apiProperties || mockProperties;
+      const propertiesToUse = Array.isArray(apiProperties.data)
+        ? apiProperties.data
+        : [];
       setAllProperties(propertiesToUse);
       setDisplayedProperties(propertiesToUse.slice(0, 6));
     }
@@ -1580,15 +1554,6 @@ export default function HousingReservations() {
       </motion.nav>
 
       {/* Main Content */}
-
-      {/* Browse time limit banner for unauthenticated users */}
-          {" — "}
-          <a href="/auth/signin" className="underline font-semibold">
-            Sign in
-          </a>{" "}
-          for unlimited access
-        </div>
-      )}
 
       <main className="container mx-auto px-4 py-8">
         {/* Results Header */}

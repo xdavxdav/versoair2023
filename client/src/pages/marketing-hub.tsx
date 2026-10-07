@@ -35,7 +35,7 @@ export default function MarketingHub() {
     {
       title: "Free Ad Journal",
       description:
-        "Publish your business in our free print & digital journal distributed across your area.",
+        "Submit a business listing for review in the Verso Air journal.",
       icon: Newspaper,
       color: "text-blue-400",
       bgColor: "bg-blue-500/10",
@@ -93,8 +93,8 @@ export default function MarketingHub() {
             </h1>
             <p className="text-lg text-gray-400 mb-8">
               Free ad journal, professional marketing packs, premium print
-              services, and targeted newsletters — everything you need to reach
-              more customers.
+              services, and newsletters. Availability and publication timing
+              depend on service readiness.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link href="/marketing/journal">

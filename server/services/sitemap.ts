@@ -22,12 +22,6 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-function isoDate(value: unknown): string | null {
-  if (!value) return null;
-  const date = new Date(value as string | number | Date);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString().split("T")[0];
-}
-
 export function buildPagesSitemap(origin: string): string {
   const urls = PUBLIC_STATIC_ROUTES.map(
     (r) =>
@@ -38,15 +32,13 @@ export function buildPagesSitemap(origin: string): string {
 
 export function buildBusinessesSitemap(
   origin: string,
-  rows: Array<{ id: number | string; updated_at?: unknown }>,
+  rows: Array<{ id: number | string }>,
 ): string {
   const urls = rows
-    .map((row) => {
-      const lastmod = isoDate(row.updated_at);
-      return `  <url>\n    <loc>${escapeXml(`${origin}/business/${row.id}`)}</loc>${
-        lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""
-      }\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>`;
-    })
+    .map(
+      (row) =>
+        `  <url>\n    <loc>${escapeXml(`${origin}/business/${row.id}`)}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>`,
+    )
     .join("\n");
   return `${XML_HEADER}<urlset xmlns="${URLSET_NS}">${urls ? `\n${urls}\n` : "\n"}</urlset>\n`;
 }
@@ -54,7 +46,6 @@ export function buildBusinessesSitemap(
 export function buildSitemapIndex(
   origin: string,
   businessCount: number,
-  lastmod: string | null,
 ): string {
   const chunks = Math.ceil(businessCount / BUSINESSES_PER_SITEMAP);
   const locs = [
@@ -67,9 +58,7 @@ export function buildSitemapIndex(
   const entries = locs
     .map(
       (loc) =>
-        `  <sitemap>\n    <loc>${escapeXml(loc)}</loc>${
-          lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""
-        }\n  </sitemap>`,
+        `  <sitemap>\n    <loc>${escapeXml(loc)}</loc>\n  </sitemap>`,
     )
     .join("\n");
   return `${XML_HEADER}<sitemapindex xmlns="${URLSET_NS}">\n${entries}\n</sitemapindex>\n`;
@@ -93,7 +82,7 @@ function sendXml(res: Response, xml: string) {
   return res.status(200).send(xml);
 }
 
-// Only active businesses are public; this must match the prerender route query.
+// Only active, verified businesses belong in public search indexes.
 export function createSitemapHandlers(query: QueryFn) {
   const fail = (res: Response, err: unknown) => {
     console.error("[sitemap] Failed:", err);
@@ -104,15 +93,15 @@ export function createSitemapHandlers(query: QueryFn) {
     async index(_req: Request, res: Response) {
       try {
         const { rows } = await query(
-          `SELECT COUNT(*)::int AS total, MAX(updated_at) AS last_updated
-           FROM businesses WHERE is_active = true`,
+          `SELECT COUNT(*)::int AS total
+           FROM businesses
+           WHERE is_active = true AND is_verified = true`,
         );
         return sendXml(
           res,
           buildSitemapIndex(
             getSiteOrigin(),
             rows[0]?.total ?? 0,
-            isoDate(rows[0]?.last_updated),
           ),
         );
       } catch (err) {
@@ -131,8 +120,8 @@ export function createSitemapHandlers(query: QueryFn) {
       }
       try {
         const { rows } = await query(
-          `SELECT id, updated_at FROM businesses
-           WHERE is_active = true
+          `SELECT id FROM businesses
+           WHERE is_active = true AND is_verified = true
            ORDER BY id ASC
            LIMIT $1 OFFSET $2`,
           [BUSINESSES_PER_SITEMAP, (page - 1) * BUSINESSES_PER_SITEMAP],
@@ -141,7 +130,13 @@ export function createSitemapHandlers(query: QueryFn) {
         if (rows.length === 0 && page > 1) {
           return res.status(404).type("text/plain").send("Not found");
         }
-        return sendXml(res, buildBusinessesSitemap(getSiteOrigin(), rows as any));
+        return sendXml(
+          res,
+          buildBusinessesSitemap(
+            getSiteOrigin(),
+            rows as Array<{ id: number | string }>,
+          ),
+        );
       } catch (err) {
         return fail(res, err);
       }

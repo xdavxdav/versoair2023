@@ -253,25 +253,25 @@ export default function BillingPage() {
           <BillingStatCard
             icon={<Wallet className="w-5 h-5" />}
             label="Wallet Balance"
-            value={format(0)}
+            value="—"
             color="purple"
           />
           <BillingStatCard
             icon={<TrendingUp className="w-5 h-5" />}
             label="Total Spent"
-            value={format(totalSpent)}
+            value={transactions.length ? format(totalSpent) : "—"}
             color="green"
           />
           <BillingStatCard
             icon={<Receipt className="w-5 h-5" />}
             label="Transactions"
-            value={String(transactions.length)}
+            value={transactions.length ? String(transactions.length) : "—"}
             color="blue"
           />
           <BillingStatCard
             icon={<Clock className="w-5 h-5" />}
             label="Pending"
-            value={String(pendingTx.length)}
+            value={transactions.length ? String(pendingTx.length) : "—"}
             color="amber"
           />
         </div>

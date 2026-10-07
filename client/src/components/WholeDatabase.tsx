@@ -99,7 +99,9 @@ export function WholeDatabase() {
   }>({
     queryKey: ["all-businesses"],
     queryFn: async () => {
-      const response = await fetch("/api/businesses?limit=10000");
+      const response = await fetch(
+        "/api/businesses?includeUnverified=true&limit=10000",
+      );
       if (!response.ok) throw new Error("Failed to fetch businesses");
       return response.json();
     },

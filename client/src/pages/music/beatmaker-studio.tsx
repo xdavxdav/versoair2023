@@ -1,5 +1,5 @@
 /**
- * Beatmaker Studio — Sur-Mesure Beats by TMU — The Musical Universe™
+ * Beatmaker Studio — Sur-Mesure Beats by VERSO AIR™
  * Role-based creative service marketplace
  * Roles: Rapper, Composer, DJ, Producer, Singer, Sound Engineer
  * Auth-gated Quick Submit with wildcard popup for unauthenticated users
@@ -448,7 +448,7 @@ export default function BeatmakerStudio() {
           </p>
           <div className="flex items-center justify-center gap-2 mt-2">
             <span className="text-[10px] font-bold tracking-widest text-purple-400/60 uppercase">
-              Sur-Mesure by TMU — The Musical Universe™
+              Sur-Mesure by VERSO AIR™
             </span>
             <span className="px-1.5 py-0.5 text-[8px] font-black tracking-wider rounded bg-gradient-to-r from-amber-500 to-amber-600 text-black uppercase">
               GODS

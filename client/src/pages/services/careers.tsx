@@ -114,15 +114,6 @@ import {
 // Database API configuration - Use the same as other pages
 const API_BASE_URL = "";
 
-// PostgreSQL Database Configuration - Use the same database as other pages
-const DB_CONFIG = {
-  user: "versoair",
-  password: "versoair2025",
-  host: "localhost",
-  port: 5432,
-  database: "versoair_business_intelligence", // Same database as commerce page
-};
-
 // TRACE: Define TypeScript interfaces for database tables
 interface Job {
   id: string;
@@ -524,14 +515,7 @@ export default function Careers() {
           console.error("Health check error:", error);
           return {
             success: false,
-            message: "Failed to connect to database",
-            database: {
-              connected: false,
-              name: DB_CONFIG.database,
-              host: DB_CONFIG.host,
-              port: String(DB_CONFIG.port),
-              user: DB_CONFIG.user,
-            },
+            message: "Database health check unavailable",
           };
         }
       },
@@ -680,12 +664,12 @@ export default function Careers() {
     },
   });
 
-  // TRACE: Refresh jobs from database
+  // Refresh the published job list.
   const refreshJobs = () => {
     refetchJobs();
     toast({
       title: "Jobs refreshed!",
-      description: "Latest opportunities loaded from PostgreSQL database.",
+      description: "The latest published job listings have been loaded.",
     });
   };
 
@@ -1156,11 +1140,7 @@ export default function Careers() {
                 transition={{ delay: 0.2 }}
                 className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto leading-relaxed"
               >
-                Discover {filteredJobs.length} real opportunities across all
-                industries.
-                <span className="font-semibold text-emerald-600 ml-2 hidden sm:inline">
-                  ✅ Updated in real time
-                </span>
+                Browse currently published job listings.
               </motion.p>
             </div>
           </div>
@@ -1415,11 +1395,6 @@ export default function Careers() {
                       <Target className="h-4 w-4 inline mr-2 text-blue-600" />
                       {filteredJobs.length} jobs match your criteria
                     </p>
-                    {!databaseHealth?.database?.connected && (
-                      <p className="text-xs text-amber-600 mt-2 font-medium">
-                        ⚠️ Connect to PostgreSQL for real data
-                      </p>
-                    )}
                   </div>
                 </CardFooter>
               </Card>
@@ -1769,8 +1744,8 @@ export default function Careers() {
                           No jobs found
                         </h4>
                         <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                          No jobs match your criteria. Try adjusting your
-                          filters.
+                          No current jobs are published. Please check back
+                          later.
                         </p>
                         <div className="space-y-4 max-w-sm mx-auto">
                           <Button

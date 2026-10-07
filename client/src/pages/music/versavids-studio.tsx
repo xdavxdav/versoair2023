@@ -1,5 +1,5 @@
 /**
- * VersaVids Studio — Video Production by TMU — The Musical Universe™
+ * VersaVids Studio — Video Production by VERSO AIR™
  * Role-based creative video service marketplace
  * Roles: Director, Editor, Animator, Colorist, VFX Artist, Sound Designer
  * Auth-gated Quick Submit with wildcard popup for unauthenticated users
@@ -477,7 +477,7 @@ export default function VersaVidsStudio() {
           </p>
           <div className="flex items-center justify-center gap-2 mt-2">
             <span className="text-[10px] font-bold tracking-widest text-amber-400/60 uppercase">
-              Video Production by TMU — The Musical Universe™
+              Video Production by VERSO AIR™
             </span>
             <span className="px-1.5 py-0.5 text-[8px] font-black tracking-wider rounded bg-gradient-to-r from-amber-500 to-amber-600 text-black uppercase">
               GODS

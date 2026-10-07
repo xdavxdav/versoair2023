@@ -19,7 +19,9 @@ router.get("/stats", async (req, res) => {
 
     /* ── aggregate counts ── */
     const bizCountParams = cc ? [cc] : [];
-    const bizCountFilter = cc ? `WHERE country_code = $1` : "";
+    const bizCountFilter = cc
+      ? `WHERE country_code = $1 AND is_active = true AND is_verified = true`
+      : `WHERE is_active = true AND is_verified = true`;
 
     const [bizRes, artisanRes, catRes] = await Promise.all([
       pool.query(
@@ -29,16 +31,31 @@ router.get("/stats", async (req, res) => {
       // Artisan count from the unified index (published craft artisans)
       cc
         ? pool.query(
-            `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1`,
+            `SELECT COUNT(*)::int AS count FROM unified_profiles up
+             WHERE up.account_type = 'artisan' AND up.status = 'PUBLISHED'
+               AND up.is_verified = true AND up.verification_status = 'approved'
+               AND up.country_code = $1
+               AND NOT EXISTS (
+                 SELECT 1 FROM users u
+                 WHERE u.id = up.owner_id
+                   AND LOWER(u.role) IN ('admin', 'moderator', 'superadmin', 'superuser')
+               )`,
             [cc],
           )
         : pool.query(
-            `SELECT COUNT(*)::int AS count FROM unified_profiles WHERE account_type = 'artisan' AND status = 'PUBLISHED'`,
+            `SELECT COUNT(*)::int AS count FROM unified_profiles up
+             WHERE up.account_type = 'artisan' AND up.status = 'PUBLISHED'
+               AND up.is_verified = true AND up.verification_status = 'approved'
+               AND NOT EXISTS (
+                 SELECT 1 FROM users u
+                 WHERE u.id = up.owner_id
+                   AND LOWER(u.role) IN ('admin', 'moderator', 'superadmin', 'superuser')
+               )`,
           ),
       pool.query(
         cc
-          ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND category_id IS NOT NULL`
-          : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE category_id IS NOT NULL`,
+          ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND is_active = true AND is_verified = true AND category_id IS NOT NULL`
+          : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE is_active = true AND is_verified = true AND category_id IS NOT NULL`,
         bizCountParams,
       ),
     ]);
@@ -47,39 +64,34 @@ router.get("/stats", async (req, res) => {
     const artisanCount = artisanRes.rows[0]?.count ?? 0;
     const categoryCount = catRes.rows[0]?.count ?? 0;
 
-    /* ── featured artisans: prefer unified_profiles, fall back to music artists ── */
-    let featuredArtisans: any[] = [];
-    try {
-      const unified = cc
-        ? await pool.query(
-            `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
-             WHERE account_type = 'artisan' AND status = 'PUBLISHED' AND country_code = $1
-             ORDER BY RANDOM() LIMIT 3`,
-            [cc],
-          )
-        : await pool.query(
-            `SELECT id, name, category AS genre, logo_url, city_name FROM unified_profiles
-             WHERE account_type = 'artisan' AND status = 'PUBLISHED'
-             ORDER BY RANDOM() LIMIT 3`,
-          );
-
-      if (unified.rows.length > 0) {
-        featuredArtisans = unified.rows;
-      } else {
-        // Fallback: legacy music artists table
-        const fallback = cc
-          ? await pool.query(
-              `SELECT id, stage_name AS name, genre FROM artists WHERE country_code = $1 ORDER BY RANDOM() LIMIT 3`,
-              [cc],
-            )
-          : await pool.query(
-              `SELECT id, stage_name AS name, genre FROM artists ORDER BY RANDOM() LIMIT 3`,
-            );
-        featuredArtisans = fallback.rows;
-      }
-    } catch (_) {
-      // unified_profiles may not exist on first boot — safe to ignore
-    }
+    /* ── only verified public artisan profiles are featured ── */
+    const unified = cc
+      ? await pool.query(
+          `SELECT up.id, up.name, up.category AS genre, up.logo_url, up.city_name
+           FROM unified_profiles up
+           WHERE up.account_type = 'artisan' AND up.status = 'PUBLISHED'
+             AND up.country_code = $1 AND up.is_verified = true
+             AND up.verification_status = 'approved'
+             AND NOT EXISTS (
+               SELECT 1 FROM users u
+               WHERE u.id = up.owner_id
+                 AND LOWER(u.role) IN ('admin', 'moderator', 'superadmin', 'superuser')
+             )
+           ORDER BY RANDOM() LIMIT 3`,
+          [cc],
+        )
+      : await pool.query(
+          `SELECT up.id, up.name, up.category AS genre, up.logo_url, up.city_name
+           FROM unified_profiles up
+           WHERE up.account_type = 'artisan' AND up.status = 'PUBLISHED'
+             AND up.is_verified = true AND up.verification_status = 'approved'
+             AND NOT EXISTS (
+               SELECT 1 FROM users u
+               WHERE u.id = up.owner_id
+                 AND LOWER(u.role) IN ('admin', 'moderator', 'superadmin', 'superuser')
+             )
+           ORDER BY RANDOM() LIMIT 3`,
+        );
 
     res.json({
       success: true,
@@ -87,7 +99,7 @@ router.get("/stats", async (req, res) => {
       businessCount,
       artisanCount,
       categoryCount,
-      featuredArtisans,
+      featuredArtisans: unified.rows,
     });
   } catch (error: any) {
     console.error("Home stats error:", error);

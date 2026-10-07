@@ -542,8 +542,8 @@ export default function Hotellerie() {
   const hospitalityFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "Données en direct",
-      description: "Données hôtelières en direct depuis la base Verso Air",
+      title: "Annuaire hôtelier",
+      description: "Consultez les établissements répertoriés dans le secteur hôtelier.",
     },
     {
       icon: <Hotel className="h-8 w-8" />,
@@ -692,7 +692,6 @@ export default function Hotellerie() {
             </AnimatePresence>
           </div>
         </div>
-      </div>
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
@@ -1112,9 +1111,7 @@ export default function Hotellerie() {
                     </span>
                   </h2>
                   <div className="text-sm text-purple-300">
-                    {databaseConnected
-                      ? "✅ Données en direct"
-                      : "✅ Données réelles"}
+                    {searchResults.length} résultat(s) dans le répertoire
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db, pool } from "../db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -148,15 +148,20 @@ router.get("/artists", async (req, res) => {
     );
 
     const hasCC = await artistsHaveCountryCode();
-    const ccSelect = hasCC ? ", country_code" : "";
-    let query = `SELECT id, stage_name AS name, genre, label_status, spotify_url, business_id, user_id${ccSelect} FROM artists`;
+    let query = `SELECT a.id, a.stage_name AS name, a.genre, a.label_status,
+      a.spotify_url, a.business_id, a.user_id${hasCC ? ", a.country_code" : ""} FROM artists a
+      WHERE NOT EXISTS (
+        SELECT 1 FROM users u
+        WHERE u.id = a.user_id
+          AND LOWER(COALESCE(u.role, '')) IN ('admin', 'moderator', 'superadmin', 'superuser')
+      )`;
     const params: any[] = [];
 
     if (hasCC && countryCode && countryCode !== "all") {
-      query += ` WHERE country_code = $1`;
+      query += ` AND a.country_code = $1`;
       params.push(countryCode.toUpperCase());
     }
-    query += ` ORDER BY stage_name ASC`;
+    query += ` ORDER BY a.stage_name ASC`;
 
     const result = await pool.query(query, params);
     res.json({ success: true, data: result.rows, count: result.rows.length });
@@ -175,30 +180,35 @@ router.get("/tracks", async (_req, res) => {
   try {
     await ensureTrackColumns();
     const result = await pool.query(
-      `SELECT id, title, artist_id, duration, streams, play_count, release_date, genre,
-              file_path, file_name, file_size, mime_type, description, price,
-              downloads, revenue, status, bpm, musical_key, mood, cover_art, created_at,
-              pochette, bts_content, flop_notes, credits, recording_location,
+      `SELECT id, title, artist_id, album_id, duration, streams, play_count, release_date, genre,
+              file_path, file_size, description, price, downloads, status, bpm,
+              musical_key, mood, cover_art, created_at,
               (audio_data IS NOT NULL) AS has_audio_data
-       FROM music_tracks ORDER BY id DESC`,
+       FROM music_tracks WHERE status = 'published' ORDER BY id DESC`,
     );
-    // Mark which tracks have a real uploaded file (disk OR persistent DB)
+    // Never expose storage paths or moderation notes through the public catalog.
     const tracks = result.rows.map((t: any) => ({
-      ...t,
       hasAudio: !!t.file_path || !!t.has_audio_data,
+      id: t.id,
+      title: t.title,
       artistId: t.artist_id,
+      artist_id: t.artist_id,
+      albumId: t.album_id,
+      duration: t.duration,
+      streams: t.streams,
       playCount: t.play_count,
       releaseDate: t.release_date,
-      fileName: t.file_name,
+      genre: t.genre,
       fileSize: t.file_size,
-      mimeType: t.mime_type,
+      description: t.description,
+      price: t.price,
+      downloads: t.downloads,
+      status: t.status,
+      bpm: t.bpm,
       musicalKey: t.musical_key,
+      mood: t.mood,
       coverArt: t.cover_art,
-      pochette: t.pochette,
-      btsContent: t.bts_content,
-      flopNotes: t.flop_notes,
-      credits: t.credits,
-      recordingLocation: t.recording_location,
+      createdAt: t.created_at,
     }));
     res.json({ success: true, data: tracks, count: tracks.length });
   } catch (error: any) {
@@ -207,6 +217,62 @@ router.get("/tracks", async (_req, res) => {
       success: false,
       error: "Failed to fetch music tracks",
       details: error.message,
+    });
+  }
+});
+
+// GET /api/music/my-tracks — authenticated artist's tracks, including drafts.
+router.get("/my-tracks", requireAuth(), async (req, res) => {
+  try {
+    await ensureTrackColumns();
+    const userId = Number(req.user?.userId);
+    if (!Number.isInteger(userId)) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Not authenticated" });
+    }
+
+    const result = await pool.query(
+      `SELECT mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
+              mt.duration, mt.streams, mt.play_count, mt.likes, mt.release_date,
+              mt.genre, mt.file_path, mt.file_name, mt.file_size, mt.mime_type,
+              mt.description, mt.price, mt.downloads, mt.revenue, mt.status,
+              mt.bpm, mt.musical_key, mt.mood, mt.cover_art, mt.created_at,
+              mt.pochette, mt.bts_content, mt.flop_notes, mt.credits,
+              mt.recording_location, mt.reviewed_by, mt.reviewed_at,
+              mt.moderation_notes, mt.rejection_reason,
+              (mt.audio_data IS NOT NULL) AS has_audio_data
+       FROM music_tracks mt
+       JOIN artists a ON a.id = mt.artist_id
+       WHERE a.user_id = $1
+       ORDER BY mt.id DESC`,
+      [userId],
+    );
+
+    const tracks = result.rows.map((track: any) => ({
+      ...track,
+      hasAudio: !!track.file_path || !!track.has_audio_data,
+      artistId: track.artist_id,
+      playCount: track.play_count,
+      releaseDate: track.release_date,
+      fileName: track.file_name,
+      fileSize: track.file_size,
+      mimeType: track.mime_type,
+      musicalKey: track.musical_key,
+      coverArt: track.cover_art,
+      createdAt: track.created_at,
+      recordingLocation: track.recording_location,
+      reviewedBy: track.reviewed_by,
+      reviewedAt: track.reviewed_at,
+      moderationNotes: track.moderation_notes,
+      rejectionReason: track.rejection_reason,
+    }));
+    res.json({ success: true, data: tracks, count: tracks.length });
+  } catch (error: any) {
+    console.error("❌ Get my music tracks error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch your music tracks",
     });
   }
 });
@@ -257,10 +323,38 @@ router.get("/artists/:id", async (req, res) => {
     const tracks = await db
       .select()
       .from(schema.musicTracks)
-      .where(eq(schema.musicTracks.artistId, parseInt(id)))
+      .where(
+        and(
+          eq(schema.musicTracks.artistId, parseInt(id)),
+          eq(schema.musicTracks.status, "published"),
+        ),
+      )
       .orderBy(schema.musicTracks.id);
 
-    res.json({ success: true, data: { ...artist[0], tracks } });
+    const publicTracks = tracks.map((track) => ({
+      id: track.id,
+      title: track.title,
+      artistId: track.artistId,
+      albumId: track.albumId,
+      trackNumber: track.trackNumber,
+      duration: track.duration,
+      streams: track.streams,
+      playCount: track.playCount,
+      likes: track.likes,
+      releaseDate: track.releaseDate,
+      genre: track.genre,
+      description: track.description,
+      price: track.price,
+      downloads: track.downloads,
+      bpm: track.bpm,
+      musicalKey: track.musicalKey,
+      mood: track.mood,
+      coverArt: track.coverArt,
+      isExplicit: track.isExplicit,
+      createdAt: track.createdAt,
+    }));
+
+    res.json({ success: true, data: { ...artist[0], tracks: publicTracks } });
   } catch (error: any) {
     console.error("❌ Get artist error:", error);
     res.status(500).json({
@@ -920,7 +1014,7 @@ router.get("/tracks/:id/stream", async (req, res) => {
       // NEVER "SELECT *" here — audio_data is a multi-MB BYTEA and pulling it
       // just to read metadata made every request transfer the whole file twice
       // (8s for a 101-byte range request). Fetch only what this handler needs.
-      `SELECT id, artist_id, file_path, mime_type,
+      `SELECT id, artist_id, file_path, mime_type, status,
               octet_length(audio_data) AS audio_size
          FROM music_tracks WHERE id = $1`,
       [parseInt(id)],
@@ -960,6 +1054,10 @@ router.get("/tracks/:id/stream", async (req, res) => {
       }
     } catch {
       /* token missing/invalid — treat as non-owner listener */
+    }
+
+    if (track.status !== "published" && !isSelfStream) {
+      return res.status(404).json({ success: false, error: "Track not found" });
     }
 
     // Only increment play count for real listeners (not artist previewing own track)

@@ -1451,20 +1451,6 @@ const TABLE_STATEMENTS: TableDef[] = [
       UNIQUE (event_id, user_id)
     )`,
   },
-  {
-    table: "artisan_communities_seed",
-    sql: `INSERT INTO artisan_communities
-      (name, slug, region, category, focus, description, activities, status, member_count)
-      VALUES
-      ('Abidjan Textile Collective', 'abidjan-textile-collective-community', 'Abidjan', 'Textiles', 'Traditional weaving and fabric arts', 'A vibrant collective of weavers preserving traditional techniques while innovating with contemporary designs.', '["Weekly workshops","Market sales","Cultural exhibitions","Skill training"]', 'PUBLISHED', 245),
-      ('Yamoussoukro Ceramics Guild', 'yamoussoukro-ceramics-guild-community', 'Yamoussoukro', 'Ceramics', 'Pottery and clay crafts', 'Master potters teaching the next generation while creating stunning handcrafted pieces.', '["Pottery classes","Exhibitions","International orders","Apprenticeships"]', 'PUBLISHED', 156),
-      ('Korhogo Carvers Association', 'korhogo-carvers-association-community', 'Korhogo', 'Wood Carving', 'Traditional wood sculpture', 'Ancient wood carving traditions passed down through families, creating iconic African art.', '["Carving demonstrations","Art shows","Museum partnerships","Youth programs"]', 'PUBLISHED', 189),
-      ('Bouake Metalwork Artisans', 'bouake-metalwork-artisans-community', 'Bouake', 'Metalwork', 'Metal arts and sculpture', 'Skilled metalworkers creating decorative and functional pieces using traditional techniques.', '["Forging workshops","Large commissions","Art festivals","Technical training"]', 'PUBLISHED', 127),
-      ('San Pedro Leather Craftspeople', 'san-pedro-leather-craftspeople-community', 'San Pedro', 'Leather Work', 'Leather goods and accessories', 'Dedicated artisans crafting high-quality leather products with traditional methods.', '["Leather classes","Market participation","Custom orders","Sustainable practices"]', 'PUBLISHED', 98),
-      ('Daloa Jewelry Makers', 'daloa-jewelry-makers-community', 'Daloa', 'Jewelry', 'Traditional and contemporary jewelry', 'Gold, silver, and beaded jewelry artisans creating stunning wearable art.', '["Design workshops","Jewelry shows","International sales","Apprenticeships"]', 'PUBLISHED', 112)
-      ON CONFLICT (slug) DO NOTHING`,
-  },
-
   // ═══════════════════════════════════════════════
   // 18. USER SETTINGS
   // ═══════════════════════════════════════════════

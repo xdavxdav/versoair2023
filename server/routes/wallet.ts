@@ -131,88 +131,14 @@ router.post("/deposit", requireAuth, async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// POST /api/wallet/game-reward — Credit wallet from game win
-// (called by games.ts after match completion)
-// ═══════════════════════════════════════════════════════════════════
-router.post(
-  "/game-reward",
-  requireAuth,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).user?.id;
-      if (!userId) return res.status(401).json({ error: "Not authenticated" });
-
-      const { amount, matchId, description } = req.body;
-      const creditAmount = parseFloat(amount);
-      if (!creditAmount || creditAmount <= 0) {
-        return res.status(400).json({ error: "Invalid reward amount" });
-      }
-
-      // Daily cap: max 50 credits/day from games
-      const today = await pool.query(
-        `SELECT COALESCE(SUM(ABS(CAST(amount AS NUMERIC))), 0) as daily_total
-       FROM wallet_transactions
-       WHERE user_id = $1
-         AND transaction_type IN ('arena_reward', 'game_reward')
-         AND created_at > NOW() - INTERVAL '24 hours'`,
-        [userId],
-      );
-      const dailyTotal = parseFloat(today.rows[0]?.daily_total || "0");
-      if (dailyTotal + creditAmount > 50) {
-        return res
-          .status(429)
-          .json({ error: "Daily game reward limit reached (50 credits)" });
-      }
-
-      // Get or create wallet
-      let wallet = await pool.query(
-        "SELECT * FROM platform_wallets WHERE user_id = $1",
-        [userId],
-      );
-      if (wallet.rows.length === 0) {
-        wallet = await pool.query(
-          `INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked)
-         VALUES ($1, '0.00', 'USD', true) RETURNING *`,
-          [userId],
-        );
-      }
-
-      const w = wallet.rows[0];
-      const balanceBefore = parseFloat(w.balance || "0");
-      const balanceAfter = balanceBefore + creditAmount;
-
-      // Credit wallet + log transaction
-      await pool.query("BEGIN");
-      await pool.query(
-        "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-        [balanceAfter.toFixed(2), creditAmount.toFixed(2), userId],
-      );
-      await pool.query(
-        `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
-       VALUES ($1, $2, 'arena_reward', $3, $4, $5, $6, 'game', $7, 'completed')`,
-        [
-          userId,
-          w.id,
-          creditAmount.toFixed(2),
-          balanceBefore.toFixed(2),
-          balanceAfter.toFixed(2),
-          description || "Game reward",
-          String(matchId || ""),
-        ],
-      );
-      await pool.query("COMMIT");
-
-      res.json({
-        success: true,
-        credited: creditAmount,
-        newBalance: balanceAfter,
-      });
-    } catch (err: any) {
-      await pool.query("ROLLBACK").catch(() => {});
-      console.error("[WALLET] Game reward error:", err);
-      res.status(500).json({ error: "Failed to credit game reward" });
-    }
-  },
+// Arbitrary client-supplied game rewards are disabled. Payouts require a
+// reviewed, idempotent settlement flow before wagering can be enabled.
+router.post("/game-reward", requireAuth, (_req: Request, res: Response) =>
+  res.status(403).json({
+    success: false,
+    error: "Game rewards are disabled during free beta",
+    requiresLegalReview: true,
+  }),
 );
 
 // ═══════════════════════════════════════════════════════════════════

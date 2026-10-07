@@ -5,9 +5,15 @@
  */
 
 import { db } from "../db";
-import { unifiedProfiles } from "@shared/schema";
-import { eq, and, or, ilike, desc, asc } from "drizzle-orm";
+import { unifiedProfiles, users } from "@shared/schema";
+import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
 import type { UnifiedProfile } from "@shared/schema";
+
+const nonStaffOwner = sql`NOT EXISTS (
+  SELECT 1 FROM ${users}
+  WHERE ${users.id} = ${unifiedProfiles.ownerId}
+    AND LOWER(${users.role}) IN ('admin', 'moderator', 'superadmin', 'superuser')
+)`;
 
 export interface PublicProfileFilters {
   category?: string;
@@ -31,7 +37,12 @@ export async function getPublicProfiles(
     offset = 0,
   } = filters;
 
-  const conditions = [eq(unifiedProfiles.status, "PUBLISHED")];
+  const conditions = [
+    eq(unifiedProfiles.status, "PUBLISHED"),
+    eq(unifiedProfiles.isVerified, true),
+    eq(unifiedProfiles.verificationStatus, "approved"),
+    nonStaffOwner,
+  ];
 
   if (accountType)
     conditions.push(eq(unifiedProfiles.accountType, accountType));
@@ -55,6 +66,9 @@ export async function getPublicProfiles(
       .where(
         and(
           eq(unifiedProfiles.status, "PUBLISHED"),
+          eq(unifiedProfiles.isVerified, true),
+          eq(unifiedProfiles.verificationStatus, "approved"),
+          nonStaffOwner,
           ...(accountType
             ? [eq(unifiedProfiles.accountType, accountType)]
             : []),
@@ -133,6 +147,9 @@ export async function getPublicProfileBySlug(
       and(
         eq(unifiedProfiles.slug, slug),
         eq(unifiedProfiles.status, "PUBLISHED"),
+        eq(unifiedProfiles.isVerified, true),
+        eq(unifiedProfiles.verificationStatus, "approved"),
+        nonStaffOwner,
       ),
     )
     .limit(1);

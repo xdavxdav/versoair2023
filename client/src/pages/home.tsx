@@ -56,10 +56,6 @@ import {
   Menu,
   Phone,
   Mail,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
   Globe as GlobeIcon,
   Eye,
   ExternalLink,
@@ -552,44 +548,9 @@ const ResponsiveFooter = ({
               Soutenir les artisans et élever les communautés grâce à
               l'innovation humanitaire à travers {countryMeta.nameFr}.
             </p>
-            <div className="flex gap-2">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
-              >
-                <Facebook size={14} />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Twitter"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
-              >
-                <Twitter size={14} />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
-              >
-                <Instagram size={14} />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="w-8 h-8 rounded-lg bg-white/[0.04] border border-slate-800 flex items-center justify-center text-gray-600 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
-              >
-                <Linkedin size={14} />
-              </a>
-            </div>
+            <p className="text-xs text-gray-500">
+              Réseaux sociaux bientôt disponibles
+            </p>
           </div>
 
           {/* Programs */}
@@ -1110,7 +1071,7 @@ const MOTTO_TRANSLATIONS: Record<string, string> = {
   si: "කෙලින්ම කාරණයට",
 };
 
-const ENGLISH_MOTTO = "STRΔΦGHT TΩ THΞ PΩΦΠT";
+const ENGLISH_MOTTO = "Straight to the point";
 
 function MottoFlip() {
   const { currentLang } = useLanguage();
@@ -1908,7 +1869,7 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       <SeoHead
         title="VersoAir | Business Directory & Advertising Platform"
-        description="VersoAir is the all-in-one platform for local businesses, artists, music streaming, and community. Discover verified businesses and grow your visibility."
+        description="Verso Air Inc. is preparing a Toronto-focused platform for business visibility and creative projects. Directory listings and metrics will be published as they become available and verified."
         canonicalPath="/"
       />
       {/* Hero Section */}
@@ -1976,33 +1937,6 @@ export default function Home() {
               Soutenir les artisans et élever les communautés grâce à
               l'innovation humanitaire à travers {countryMeta.nameFr}
             </motion.p>
-
-            {databaseConnected !== null && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-5"
-              >
-                <div
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
-                    databaseConnected
-                      ? "bg-emerald-950/55 text-emerald-100 ring-1 ring-emerald-200/30"
-                      : "bg-yellow-950/55 text-yellow-100 ring-1 ring-yellow-200/30"
-                  }`}
-                >
-                  <div
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      databaseConnected ? "bg-emerald-300" : "bg-yellow-300"
-                    }`}
-                  />
-                  <span>
-                    {databaseConnected
-                      ? "✅ Connecté à PostgreSQL"
-                      : "❌ Connexion à la base de données échouée"}
-                  </span>
-                </div>
-              </motion.div>
-            )}
 
             {!isAuthenticated && (
               <motion.div
@@ -2841,8 +2775,7 @@ export default function Home() {
                     </div>
 
                     <p className="text-gray-600 mt-4 text-sm md:text-base">
-                      Explorez notre base de données complète de{" "}
-                      {totalDatabaseCount}+ communautés artisanales
+                      {totalDatabaseCount} communauté(s) dans le répertoire
                     </p>
                   </motion.div>
                 </div>
@@ -4273,24 +4206,16 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4"
             >
-              Partenaires & Sponsors
+              Partenariats
             </motion.h2>
             <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Organisations soutenant les communautés artisanales à travers{" "}
-              {countryMeta.name}
+              Aucun partenaire confirmé n’est affiché pour le moment.
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-8">
-            {[
-              // TODO(pending-verification): replace John Doe placeholders with
-              // verified partner names before public promotion.
-              { name: "John Doe — Partenaire 1", href: "/partners" },
-              { name: "John Doe — Partenaire 2", href: "/partners" },
-              { name: "John Doe — Partenaire 3", href: "/partners" },
-              { name: "John Doe — Partenaire 4", href: "/partners" },
-              { name: "John Doe — Partenaire 5", href: "/partners" },
-              { name: "John Doe — Partenaire 6", href: "/partners" },
-            ].map((partner, i) => (
+            {(
+              [] as { name: string; href: string }[]
+            ).map((partner, i) => (
               <Link key={i} to={partner.href}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}

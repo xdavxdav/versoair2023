@@ -38,7 +38,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ScrollToTop from "@/components/ScrollToTop";
-import { useAboutStats } from "@/hooks/use-about-stats";
 import { useLanguage } from "@/components/LanguageSwitcher";
 
 // Platform sectors – these match the actual routes in your app
@@ -273,17 +272,17 @@ const COMPANY_COPY = {
       {
         icon: Briefcase,
         q: "Que vend exactement l'entreprise ?",
-        a: "Des services de visibilité pour entreprises : un annuaire commercial public, des espaces publicitaires et des tableaux d'analytique sectorielle (business intelligence). Les fonctionnalités annoncées correspondent aux produits réellement disponibles — ni plus, ni moins.",
+        a: "VERSO AIR INC. prépare une plateforme numérique de visibilité pour les entreprises. L’annuaire, les espaces publicitaires et les outils d’analytique seront présentés au fur et à mesure de leur disponibilité et de la vérification des données.",
       },
       {
         icon: MapPin,
         q: "À qui s'adresse-t-elle ?",
-        a: "Aux entreprises et organisations de Toronto et du Canada d'abord. La plateforme grandit secteur par secteur, ville par ville, à mesure que des inscriptions réelles et vérifiées s'ajoutent.",
+        a: "Le lancement est axé sur Toronto. L’expansion vers d’autres secteurs et villes dépendra de la disponibilité des services et de données vérifiées.",
       },
       {
         icon: Shield,
         q: "Pourquoi lui faire confiance ?",
-        a: "Parce que tout est vérifiable : une société enregistrée en Ontario, des coordonnées réelles (support@versoair.com, boîte surveillée), des chiffres générés depuis la base de données en direct, et aucune prétention sans preuve. VERSO AIR™ — protection de marque à venir.",
+        a: "L’identité de VERSO AIR INC. peut être vérifiée auprès du registre des entreprises de l’Ontario. Les services, les annonces et les indicateurs seront présentés clairement selon leur état réel. VERSO AIR™ — protection de marque en préparation.",
       },
     ],
   },
@@ -299,17 +298,17 @@ const COMPANY_COPY = {
       {
         icon: Briefcase,
         q: "What exactly does the company sell?",
-        a: "Business visibility services: a public business directory, advertising placements, and sector analytics dashboards (business intelligence). Every advertised feature matches a product that is actually available — no more, no less.",
+        a: "VERSO AIR INC. is preparing a digital platform for business visibility. The directory, advertising placements, and analytics tools will be introduced as they become available and their data is verified.",
       },
       {
         icon: MapPin,
         q: "Who is it selling to?",
-        a: "Businesses and organizations in Toronto and Canada first. The platform grows sector by sector, city by city, as real, verified listings are added.",
+        a: "The initial launch focus is Toronto. Expansion to other sectors and cities will depend on service availability and verified data.",
       },
       {
         icon: Shield,
         q: "Why should someone trust it?",
-        a: "Because everything is checkable: a registered Ontario corporation, real contact information (support@versoair.com, a monitored inbox), figures generated live from the database, and no claim without evidence. VERSO AIR™ — trademark protection coming soon.",
+        a: "The identity of VERSO AIR INC. can be verified through Ontario’s business registry. Services, listings, and metrics will be described according to their actual status. VERSO AIR™ — trademark protection in preparation.",
       },
     ],
   },
@@ -369,7 +368,7 @@ const BRAND_ROADMAP = {
     badge: "Changements à venir",
     heading: "Notre architecture de marque — déploiement immédiat",
     intro:
-      "Nous alignons maintenant l'identité juridique, la marque principale et l'univers musical pour rendre la structure plus claire publiquement.",
+      "Nous clarifions l'identité juridique de l'entreprise et la marque publique de sa plateforme.",
     items: [
       {
         title: "VERSO AIR INC.",
@@ -380,8 +379,8 @@ const BRAND_ROADMAP = {
         text: "La marque parapluie de la plateforme : annuaire, intelligence d'affaires, publicité, produits et services. Protection de marque en préparation.",
       },
       {
-        title: "TMU — The Musical Universe™",
-        text: "Le sous-univers musical de VERSO AIR : artistes, studio, label, expériences créatives et futur merchandising. Déploiement progressif imminent.",
+        title: "Projets futurs",
+        text: "Les autres produits et services seront annoncés lorsqu'ils seront prêts.",
       },
     ],
   },
@@ -389,7 +388,7 @@ const BRAND_ROADMAP = {
     badge: "Upcoming changes",
     heading: "Our brand architecture — rolling out immediately",
     intro:
-      "We are now aligning the legal identity, master brand, and music universe so the structure is clear publicly.",
+      "We are clarifying the company's legal identity and the public brand for its platform.",
     items: [
       {
         title: "VERSO AIR INC.",
@@ -400,8 +399,8 @@ const BRAND_ROADMAP = {
         text: "The umbrella platform brand for the directory, business intelligence, advertising, products, and services. Trademark protection is in preparation.",
       },
       {
-        title: "TMU — The Musical Universe™",
-        text: "The music sub-universe of VERSO AIR: artists, studio, label, creative experiences, and future merchandising. Rolling out imminently.",
+        title: "Future projects",
+        text: "Additional products and services will be announced when they are ready.",
       },
     ],
   },
@@ -451,28 +450,12 @@ function BrandRoadmapSection() {
   );
 }
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
-}
-
 export default function About() {
   const [activeSector, setActiveSector] = useState(() => {
     const saved = sessionStorage.getItem("aboutActiveSector");
     return saved || "commerce";
   });
   const heroRef = useRef(null);
-
-  // Fetch live statistics from the database
-  const {
-    categoryStats,
-    overallStats,
-    musicStats,
-    dbStats,
-    topLocations,
-    loading,
-  } = useAboutStats();
 
   // Save tab state whenever it changes
   useEffect(() => {
@@ -496,14 +479,6 @@ export default function About() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Compute live stats for display
-  const totalBusinesses = overallStats?.total_businesses ?? 0;
-  const totalCategories = overallStats?.total_categories ?? 0;
-  const avgRating = overallStats?.avg_rating ?? 0;
-  const totalReviews = overallStats?.total_reviews ?? 0;
-  const totalRecords = dbStats?.totalRecords ?? 0;
-  const activeTables = dbStats?.activeTables ?? 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f3efe9] text-slate-900 overflow-hidden">
@@ -577,62 +552,22 @@ export default function About() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed"
             >
-              Au service des annuaires d'entreprises et de l'analytique à
-              Toronto et partout au Canada — connectant les secteurs du
-              commerce, de l'hôtellerie, de l'automobile, de la construction,
-              de la finance, de la santé et du divertissement grâce à
-              l'intelligence de données en temps réel.
+              VERSO AIR INC. prépare le lancement à Toronto d’une plateforme
+              numérique dédiée à la visibilité des entreprises et aux projets
+              créatifs.
             </motion.p>
 
-            {/* Quick Stats — ALL from live database */}
+            {/* Keep a future-data container without publishing unverified records. */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-wrap justify-center gap-8 mb-12"
+              className="mx-auto mb-12 max-w-2xl text-center"
             >
-              {[
-                {
-                  value: totalBusinesses,
-                  label: "Entreprises Enregistrées",
-                  icon: Building,
-                },
-                {
-                  value: totalCategories,
-                  label: "Catégories d'Entreprises",
-                  icon: Database,
-                },
-                {
-                  value: avgRating,
-                  label: "Note Moyenne",
-                  icon: Star,
-                  suffix: "★",
-                  isDecimal: true,
-                },
-                {
-                  value: totalReviews,
-                  label: "Total d'Avis",
-                  icon: Users,
-                },
-              ].map((stat, i) => {
-                const Icon = stat.icon;
-                const displayValue = loading
-                  ? "..."
-                  : stat.isDecimal
-                    ? `${stat.value}${stat.suffix || ""}`
-                    : `${formatNumber(stat.value)}${stat.suffix || ""}`;
-                return (
-                  <div key={i} className="text-center group">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                      <Icon className="h-7 w-7 text-slate-300" />
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900 mb-1">
-                      {displayValue}
-                    </div>
-                    <div className="text-sm text-slate-400">{stat.label}</div>
-                  </div>
-                );
-              })}
+              <p className="text-slate-300">
+                Directory listings, categories, ratings, and review totals will
+                be published after the underlying records are verified.
+              </p>
             </motion.div>
 
             {/* CTA Buttons — real routes */}
@@ -667,71 +602,15 @@ export default function About() {
 
       <BrandRoadmapSection />
 
-      {/* Live Data Dashboard Strip */}
-      {!loading && (
-        <section className="relative py-8 border-y border-slate-800/50 bg-slate-100/30 backdrop-blur-sm">
+      {/* Future-data container — figures remain unpublished pending verification. */}
+      <section className="relative py-8 border-y border-slate-800/50 bg-slate-100/30 backdrop-blur-sm">
           <div className="max-w-[95vw] mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              className="flex flex-wrap justify-center gap-6 md:gap-12 text-center"
-            >
-              <div>
-                <div className="text-lg font-bold text-emerald-400">
-                  {totalRecords.toLocaleString()}
-                </div>
-                <div className="text-xs text-slate-400">Enregistrements BD</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-blue-400">
-                  {activeTables}
-                </div>
-                <div className="text-xs text-slate-400">Tables Actives</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-purple-400">
-                  {categoryStats.length}
-                </div>
-                <div className="text-xs text-slate-400">
-                  Catégories avec Annonces
-                </div>
-              </div>
-              {musicStats && (
-                <>
-                  <div>
-                    <div className="text-lg font-bold text-pink-400">
-                      {musicStats.totalArtists}
-                    </div>
-                    <div className="text-xs text-slate-400">
-                      Artistes Musicaux
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-lg font-bold text-violet-400">
-                      {formatNumber(musicStats.totalStreams)}
-                    </div>
-                    <div className="text-xs text-slate-400">
-                      Écoutes Totales
-                    </div>
-                  </div>
-                </>
-              )}
-              {topLocations.length > 0 && (
-                <div>
-                  <div className="text-lg font-bold text-amber-400">
-                    {topLocations.length}+
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Zones Urbaines Couvertes
-                  </div>
-                </div>
-              )}
-            </motion.div>
+            <p className="text-center text-sm text-slate-400">
+              Public directory and activity figures are being reviewed before
+              publication.
+            </p>
           </div>
-        </section>
-      )}
+      </section>
 
       {/* Sector Showcase */}
       <section className="py-20 relative">
@@ -746,13 +625,12 @@ export default function About() {
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  {PLATFORM_SECTORS.length} Secteurs Intégrés
+                  {PLATFORM_SECTORS.length} secteurs de la plateforme
                 </span>
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Chaque secteur mène à un tableau de bord analytique dédié avec
-                des données en temps réel, recherche et fonctionnalités
-                d'annuaire.
+                Les services, annonces et indicateurs seront présentés lorsque
+                leurs données auront été vérifiées et seront disponibles.
               </p>
             </div>
           </FloatingElement>
@@ -827,10 +705,10 @@ export default function About() {
                                     </p>
                                     <div className="flex flex-wrap gap-2 mb-6">
                                       {[
-                                        "Annuaire en Direct",
-                                        "Recherche & Filtres",
-                                        "Tableau de Bord Analytique",
-                                        "Parcourir par Catégorie",
+                                        "Annuaire prévu",
+                                        "Recherche & filtres prévus",
+                                        "Outils en préparation",
+                                        "Annonces vérifiées",
                                       ].map((tag, i) => (
                                         <Badge
                                           key={i}
@@ -855,22 +733,18 @@ export default function About() {
                                   <div className="space-y-4">
                                     <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
                                       <div className="text-2xl font-bold text-slate-900 mb-1">
-                                        {loading
-                                          ? "..."
-                                          : totalBusinesses.toLocaleString()}
+                                        Bientôt
                                       </div>
                                       <div className="text-sm text-slate-400">
-                                        Total d'Entreprises Enregistrées
+                                        Annonces après vérification
                                       </div>
                                     </div>
                                     <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
                                       <div className="text-2xl font-bold text-slate-900 mb-1">
-                                        {loading
-                                          ? "..."
-                                          : `${avgRating.toFixed(1)}★`}
+                                        Bientôt
                                       </div>
                                       <div className="text-sm text-slate-400">
-                                        Note Moyenne des Entreprises
+                                        Avis après vérification
                                       </div>
                                     </div>
                                   </div>
@@ -889,136 +763,17 @@ export default function About() {
         </div>
       </section>
 
-      {/* Top Categories from Database */}
-      {categoryStats.length > 0 && (
-        <section className="py-16 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#f3efe9] to-[#efe7dd]" />
-          <div className="relative max-w-[95vw] mx-auto px-4">
-            <FloatingElement>
-              <div className="text-center mb-12">
-                <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
-                  <BarChart3 className="h-3 w-3 mr-2" />
-                  Données en Direct
-                </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                    Top des Catégories d'Entreprises
-                  </span>
-                </h2>
-                <p className="text-slate-400 max-w-2xl mx-auto">
-                  Répartition en temps réel des catégories parmi{" "}
-                  {totalBusinesses.toLocaleString()} entreprises dans{" "}
-                  {totalCategories.toLocaleString()} catégories.
-                </p>
-              </div>
-            </FloatingElement>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categoryStats.slice(0, 12).map(
-                (
-                  cat: {
-                    name: string;
-                    count: number;
-                    growth: string;
-                    status: string;
-                  },
-                  index: number,
-                ) => (
-                  <motion.div
-                    key={cat.name}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                    viewport={{ once: true }}
-                    className="flex items-center justify-between p-4 rounded-xl bg-slate-100/40 border border-slate-800/50 hover:border-slate-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-sm font-bold text-purple-300">
-                        {index + 1}
-                      </div>
-                      <span className="text-slate-900 font-medium text-sm">
-                        {cat.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant="secondary"
-                        className="bg-white/10 text-slate-900/80"
-                      >
-                        {cat.count} {cat.count === 1 ? "annonce" : "annonces"}
-                      </Badge>
-                      <span className="text-xs text-emerald-400">
-                        {cat.growth}
-                      </span>
-                    </div>
-                  </motion.div>
-                ),
-              )}
-            </div>
-
-            {categoryStats.length > 12 && (
-              <div className="text-center mt-8">
-                <Link href="/businesses-directory">
-                  <Button
-                    variant="outline"
-                    className="border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15"
-                  >
-                    Voir les {totalCategories} Catégories
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Top Locations */}
-      {topLocations.length > 0 && (
-        <section className="py-12 relative">
-          <div className="relative max-w-[95vw] mx-auto px-4">
-            <FloatingElement>
-              <div className="text-center mb-10">
-                <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
-                  <MapPin className="h-3 w-3 mr-2" />
-                  Couverture Géographique
-                </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                    Où Sont Nos Entreprises
-                  </span>
-                </h2>
-              </div>
-            </FloatingElement>
-
-            <div className="flex flex-wrap justify-center gap-4">
-              {topLocations.map(
-                (loc: { location: string; count: number }, i: number) => (
-                  <motion.div
-                    key={loc.location}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: i * 0.08 }}
-                    viewport={{ once: true }}
-                    className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-800/30 border border-slate-700/50 hover:border-slate-600 transition-all"
-                  >
-                    <MapPin className="h-5 w-5 text-amber-400" />
-                    <div>
-                      <div className="text-slate-900 font-semibold">
-                        {loc.location}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {loc.count}{" "}
-                        {loc.count === 1 ? "entreprise" : "entreprises"}
-                      </div>
-                    </div>
-                  </motion.div>
-                ),
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+      <section className="py-12">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <h2 className="mb-3 text-2xl font-bold text-slate-900">
+            Annuaire et données publiques
+          </h2>
+          <p className="text-slate-600">
+            Les annonces, notes et indicateurs géographiques seront affichés
+            après vérification des données et des entreprises participantes.
+          </p>
+        </div>
+      </section>
 
       {/* Core Features */}
       <section className="py-20 relative">
@@ -1029,17 +784,16 @@ export default function About() {
             <div className="text-center mb-16">
               <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
                 <Zap className="h-3 w-3 mr-2" />
-                Fonctionnalités de la Plateforme
+                Fonctionnalités prévues
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  Ce Qui Fait Tourner la Plateforme
+                  Ce Que VERSO AIR Prépare
                 </span>
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Des fonctionnalités intégrées dans chaque tableau de bord
-                sectoriel — recherche, analytique, données en temps réel, et
-                plus encore.
+                Les services et outils seront lancés progressivement, après
+                validation de leur disponibilité et de leurs données.
               </p>
             </div>
           </FloatingElement>
@@ -1047,42 +801,42 @@ export default function About() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             <FeatureHighlight
               icon={BarChart3}
-              title="Analytique en Temps Réel"
-              description="Statistiques commerciales en direct, suivi des revenus et tableaux de bord de performance mis à jour depuis PostgreSQL en temps réel"
+              title="Analytique d'entreprise"
+              description="Outils d'analyse destinés aux entreprises, à déployer après validation."
               color="text-blue-400"
             />
             <FeatureHighlight
               icon={Globe}
-              title="Recherche Multi-Sectorielle"
-              description="Recherche dans toutes les catégories d'entreprises avec filtres par localisation, note et spécialisation"
+              title="Recherche dans l'annuaire"
+              description="Recherche et filtres prévus pour les annonces d'entreprises vérifiées."
               color="text-cyan-400"
               delay={0.1}
             />
             <FeatureHighlight
               icon={Shield}
-              title="Authentification par Session"
-              description="Authentification sécurisée avec sessions Express et accès basé sur les rôles pour les tableaux de bord admin"
+              title="Accès aux comptes"
+              description="Fonctionnalités de compte et d'accès en cours de préparation."
               color="text-green-400"
               delay={0.2}
             />
             <FeatureHighlight
               icon={Activity}
-              title="Notifications WebSocket"
-              description="Mises à jour en temps réel via Socket.io pour les notifications et le rafraîchissement des données"
+              title="Mises à jour"
+              description="Les notifications et mises à jour seront annoncées lorsqu'elles seront disponibles."
               color="text-purple-400"
               delay={0.3}
             />
             <FeatureHighlight
               icon={Users}
-              title="Annuaire d'Entreprises"
-              description="Gestion complète des annonces avec catégories, avis, notes, horaires et coordonnées"
+              title="Annuaire d'entreprises"
+              description="Un annuaire public est prévu; les annonces seront publiées après vérification."
               color="text-pink-400"
               delay={0.4}
             />
             <FeatureHighlight
               icon={Lightbulb}
-              title="Tableaux de Bord Data-Driven"
-              description="Visualisations Chart.js avec tendances de revenus, répartitions par catégorie et indicateurs de performance par secteur"
+              title="Tableaux de bord"
+              description="Des outils de visualisation sont prévus; aucun indicateur de performance n'est publié pour le moment."
               color="text-yellow-400"
               delay={0.5}
             />
@@ -1153,10 +907,8 @@ export default function About() {
 
           <FloatingElement delay={0.4}>
             <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Parcourez {totalBusinesses.toLocaleString()} entreprises dans{" "}
-              {totalCategories.toLocaleString()} catégories, ou contactez-nous
-              pour découvrir comment votre entreprise peut rejoindre la
-              plateforme.
+              VERSO AIR INC. prépare ses services numériques pour Toronto.
+              Contactez-nous pour en savoir plus sur les prochaines étapes.
             </p>
           </FloatingElement>
 
@@ -1184,18 +936,10 @@ export default function About() {
             </Link>
           </motion.div>
 
-          {/* Trust Indicators — REAL facts */}
+          {/* Company location remains public; unverified directory claims do not. */}
           <FloatingElement delay={0.8}>
             <div className="mt-12 pt-8 border-t border-slate-800">
               <div className="flex flex-wrap justify-center items-center gap-8 text-slate-400 text-sm">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-400" />
-                  <span>{totalBusinesses} Entreprises Vérifiées</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-400" />
-                  <span>{avgRating.toFixed(1)}★ Note Moyenne</span>
-                </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-cyan-400" />
                   <span>Toronto, Canada</span>

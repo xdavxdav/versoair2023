@@ -601,7 +601,6 @@ export default function StreamPage() {
     user?.username === "admin_001" ||
     user?.username === "superadmin" ||
     user?.username === "CEO" ||
-    user?.username === "admin_025" || // CEO account
     user?.role === "admin" ||
     user?.role === "superadmin" ||
     user?.role === "ceo";

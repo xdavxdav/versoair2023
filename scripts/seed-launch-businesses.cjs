@@ -25,6 +25,12 @@ if (!Number.isFinite(targetCount) || targetCount <= 0) {
   console.error("❌ Invalid --count value");
   process.exit(1);
 }
+if (process.env.NODE_ENV === "production") {
+  console.error(
+    "❌ Synthetic launch businesses must not be seeded in production",
+  );
+  process.exit(1);
+}
 
 const pool = new pg.Pool({
   connectionString: DATABASE_URL,
@@ -187,11 +193,11 @@ async function run() {
           `https://${websiteSlug}.example.com`,
           rating,
           reviewsCount,
-          i % 3 === 0,
+          false,
           true,
           i % 8 === 0 ? "premium" : "free",
           i % 11 === 0,
-          "approved",
+          "pending",
         ],
       );
 
