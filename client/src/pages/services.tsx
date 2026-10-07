@@ -104,11 +104,9 @@ export default function Services() {
         "Third-party platform integration",
       ],
       integrations: [
-        "CRM systems (Salesforce, HubSpot)",
-        "ERP solutions (SAP, Oracle)",
-        "Payment processors",
-        "Marketing automation tools",
-        "IoT device networks",
+        "RESTful API access",
+        "Custom connector development",
+        "Data import/export",
       ],
     },
     {
@@ -118,14 +116,10 @@ export default function Services() {
       features: [
         "GDPR/CCPA compliance",
         "End-to-end encryption",
-        "SOC 2 Type II certified",
         "Regular security audits",
         "Role-based access control",
       ],
       certifications: [
-        "ISO 27001 certified",
-        "HIPAA compliant options",
-        "PCI DSS Level 1",
         "GDPR data processing agreements",
       ],
     },
@@ -259,7 +253,7 @@ export default function Services() {
       title: "Cloud Infrastructure",
       icon: <Cloud className="h-6 w-6" />,
       details:
-        "AWS-based secure cloud infrastructure with 99.9% uptime guarantee",
+        "Secure cloud-hosted infrastructure with continuous monitoring",
     },
     {
       title: "API Ecosystem",
@@ -270,7 +264,7 @@ export default function Services() {
     {
       title: "Mobile Access",
       icon: <Smartphone className="h-6 w-6" />,
-      details: "Native iOS and Android apps for on-the-go analytics access",
+      details: "Mobile-responsive web access for on-the-go analytics",
     },
   ];
 
@@ -284,7 +278,7 @@ export default function Services() {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/70 px-4 py-2 backdrop-blur-sm">
               <Award className="h-4 w-4 text-amber-600" />
               <span className="text-sm font-medium text-amber-700">
-                Trusted by 500+ Enterprises
+                Business intelligence for growing companies
               </span>
             </div>
           </motion.div>

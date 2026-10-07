@@ -37,7 +37,7 @@ const META: Record<string, CountryMeta> = {
     currency: "CAD",
     currencySymbol: "C$",
     flag: "🇨🇦",
-    phone: "+1 613 555 0100",
+    phone: "+1 (437) 435-9726",
     tld: ".ca",
   },
   MX: {

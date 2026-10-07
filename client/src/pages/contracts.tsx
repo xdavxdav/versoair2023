@@ -735,13 +735,13 @@ function ArtistContractsPage() {
           <p className="text-purple-300 text-sm">
             For inquiries:{" "}
             <a
-              href="mailto:artists@versoair.com"
+              href="mailto:support@versoair.com"
               className="text-purple-200 hover:text-white underline"
             >
-              artists@versoair.com
+              support@versoair.com
             </a>{" "}
             {/* TODO(pending-verification): publish real monitored number */}|{" "}
-            Phone: John Doe — number pending
+            Phone: +1 (437) 435-9726 (Canada) · +225 05 64 60 64 01 (CI)
           </p>
 
           <div className="mt-8">

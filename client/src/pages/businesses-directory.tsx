@@ -1267,7 +1267,7 @@ export default function BusinessesDirectory() {
             </div>
 
             <p className="text-gray-400 text-sm text-center">
-              © 2024 Verso Air Business Directory. Your gateway to{" "}
+              © {new Date().getFullYear()} VERSO AIR INC. Business Directory. Your gateway to{" "}
               {continentAdj}
               businesses.
             </p>

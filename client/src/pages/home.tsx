@@ -716,7 +716,7 @@ const ResponsiveFooter = ({
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Mail size={14} className="text-emerald-500/50" />
-                contact@artihuman{countryMeta.tld}
+                support@versoair.com
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <GlobeIcon size={14} className="text-emerald-500/50" />
@@ -745,8 +745,8 @@ const ResponsiveFooter = ({
         <div className="text-center">
           <p className="text-gray-600 text-xs">
             © {new Date().getFullYear()}{" "}
-            <span className="notranslate">ArtiHuman Foundation</span>. Tous
-            droits réservés.
+            <span className="notranslate">VERSO AIR INC.</span> Tous droits
+            réservés.
           </p>
         </div>
       </div>

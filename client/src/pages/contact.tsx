@@ -137,9 +137,10 @@ export default function Contact() {
                   <div>
                     <h3 className="mb-1 font-semibold text-slate-900">Phone</h3>
                     {/* TODO(pending-verification): publish real monitored number */}
-                    <p className="text-slate-600">John Doe — number pending</p>
+                    <p className="text-slate-600">+1 (437) 435-9726 — Canada</p>
+                    <p className="text-slate-600">+225 05 64 60 64 01 — Côte d'Ivoire</p>
                     <p className="text-sm text-slate-500">
-                      Use email while our phone line is being set up
+                      Mon–Fri, 8AM–6PM EST
                     </p>
                   </div>
                 </div>

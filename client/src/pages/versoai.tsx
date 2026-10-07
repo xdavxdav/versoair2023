@@ -701,23 +701,23 @@ export default function Home() {
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Coverage",
+      title: "Location Intelligence",
       description:
-        "Location intelligence and market analysis across 50+ countries",
+        "Location-aware market analysis, launching in Toronto and Canada first",
       color: "from-purple-500 to-purple-600",
     },
     {
       icon: <Shield className="h-8 w-8" />,
       title: "Enterprise Security",
       description:
-        "Military-grade encryption and compliance with global data regulations",
+        "Encryption in transit and at rest, with privacy-focused data handling",
       color: "from-green-500 to-green-600",
     },
     {
       icon: <Cloud className="h-8 w-8" />,
       title: "Cloud Infrastructure",
       description:
-        "Scalable platform with 99.9% uptime and seamless integration",
+        "Scalable cloud platform with continuous monitoring",
       color: "from-orange-500 to-orange-600",
     },
     {
@@ -729,8 +729,8 @@ export default function Home() {
     },
     {
       icon: <Headphones className="h-8 w-8" />,
-      title: "24/7 Support",
-      description: "Dedicated support team and comprehensive training programs",
+      title: "Responsive Support",
+      description: "Email-based support with a monitored inbox and clear response path",
       color: "from-cyan-500 to-cyan-600",
     },
   ];
@@ -889,28 +889,8 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-slate-900 mb-2">500+</div>
-                  <div className="text-sm text-blue-400">
-                    Enterprise Clients
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-slate-900 mb-2">
-                    99.9%
-                  </div>
-                  <div className="text-sm text-blue-400">Platform Uptime</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-slate-900 mb-2">45%</div>
-                  <div className="text-sm text-blue-400">Faster Decisions</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-slate-900 mb-2">24/7</div>
-                  <div className="text-sm text-blue-400">AI Support</div>
-                </div>
-              </div>
+              {/* TODO(pending-verification): publish platform metrics only
+                  when backed by real monitoring and customer data. */}
             </div>
 
             {/* Visualization - Solar System */}
@@ -1650,8 +1630,8 @@ export default function Home() {
               Ready to Transform Your Business with VersoAI?
             </h2>
             <p className="text-xl text-blue-200/80 mb-10 max-w-2xl mx-auto">
-              Join thousands of enterprises already leveraging Verso Air for
-              strategic advantage
+              Be among the first businesses in Toronto and Canada to build
+              with Verso Air
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="/signin">

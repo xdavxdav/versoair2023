@@ -31,7 +31,7 @@ const sponsors = {
     contributions: ["Details pending confirmation"],
     achievements: ["Details pending confirmation"],
     contact: {
-      email: "support@versoair.com",
+      email: "admin@versoair.com",
       phone: "Number pending",
     },
   },
@@ -49,7 +49,7 @@ const sponsors = {
     contributions: ["Details pending confirmation"],
     achievements: ["Details pending confirmation"],
     contact: {
-      email: "support@versoair.com",
+      email: "admin@versoair.com",
       phone: "Number pending",
     },
   },
@@ -67,7 +67,7 @@ const sponsors = {
     contributions: ["Details pending confirmation"],
     achievements: ["Details pending confirmation"],
     contact: {
-      email: "support@versoair.com",
+      email: "admin@versoair.com",
       phone: "Number pending",
     },
   },
@@ -85,7 +85,7 @@ const sponsors = {
     contributions: ["Details pending confirmation"],
     achievements: ["Details pending confirmation"],
     contact: {
-      email: "support@versoair.com",
+      email: "admin@versoair.com",
       phone: "Number pending",
     },
   },

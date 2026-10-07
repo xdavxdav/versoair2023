@@ -307,7 +307,7 @@ export default function News() {
                 With environmental concerns rising, companies ignoring
                 sustainability risk long-term decline in consumer trust.
               </p>
-              <span className="text-sm text-gray-500">By Jane Doe</span>
+              <span className="text-sm text-gray-500">By VERSO AIR INC. Editorial Team</span>
             </motion.div>
             <motion.div
               variants={staggerItem}
@@ -321,7 +321,7 @@ export default function News() {
                 Remote-first policies combined with hybrid flexibility continue
                 to redefine corporate culture globally.
               </p>
-              <span className="text-sm text-gray-500">By Mark Rivera</span>
+              <span className="text-sm text-gray-500">By VERSO AIR INC. Editorial Team</span>
             </motion.div>
           </motion.div>
         </div>

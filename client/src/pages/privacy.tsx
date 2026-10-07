@@ -208,7 +208,7 @@ export default function PrivacyPolicy() {
                 GDPR page
               </Link>
               . To exercise any rights, contact us at{" "}
-              <strong className="text-white">privacy@versoair.com</strong>.
+              <strong className="text-white">helpmeee@versoair.com</strong>.
             </p>
           </section>
 
@@ -260,7 +260,7 @@ export default function PrivacyPolicy() {
                 VERSO AIR INC. — Privacy Team
               </p>
               <p className="text-slate-500 text-sm">
-                Email: privacy@versoair.com
+                Email: helpmeee@versoair.com
               </p>
               <p className="text-slate-500 text-sm">
                 Platform:{" "}

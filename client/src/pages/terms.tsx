@@ -324,7 +324,7 @@ export default function TermsOfService() {
             <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
               <p className="text-white font-medium">VERSO AIR INC. — Legal Team</p>
               <p className="text-slate-500 text-sm">
-                Email: legal@versoair.com
+                Email: helpmeee@versoair.com
               </p>
               <p className="text-slate-500 text-sm">
                 Platform:{" "}

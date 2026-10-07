@@ -32,8 +32,8 @@ export default function GuaranteeHelp() {
             </div>
             <div className="space-y-4">
               <div className="p-4 bg-green-50 rounded-lg">
-                <h3 className="font-medium text-green-900 mb-2">99.9% Uptime Guarantee</h3>
-                <p className="text-green-800 text-sm">Our platform maintains 99.9% uptime with redundant servers and automatic failover. If we fall below this standard, you receive service credits.</p>
+                <h3 className="font-medium text-green-900 mb-2">Platform Reliability</h3>
+                <p className="text-green-800 text-sm">Our platform is continuously monitored for availability. Live service status is published on our system status page.</p>
               </div>
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h3 className="font-medium text-blue-900 mb-2">Data Accuracy Promise</h3>
@@ -77,7 +77,7 @@ export default function GuaranteeHelp() {
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2">Data Security</h3>
-                <p className="text-gray-800 text-sm">Bank-level encryption (AES-256) for all data. SOC 2 Type II certified with regular security audits and penetration testing.</p>
+                <p className="text-gray-800 text-sm">Encryption for data in transit and at rest, with regular security reviews. Formal certifications will be published here once obtained.</p>
               </div>
               <div className="p-4 bg-yellow-50 rounded-lg">
                 <h3 className="font-medium text-yellow-900 mb-2">Compliance Standards</h3>

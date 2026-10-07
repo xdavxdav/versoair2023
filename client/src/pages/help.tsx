@@ -195,9 +195,9 @@ export default function HelpCenter() {
             {
               icon: <Phone className="h-8 w-8" />,
               title: "Phone Support",
-              description: "Phone line being set up — use email meanwhile",
+              description: "Mon–Fri, 8AM–6PM EST · CI: +225 05 64 60 64 01",
               // TODO(pending-verification): publish real monitored number
-              contact: "John Doe — number pending",
+              contact: "+1 (437) 435-9726 (Canada)",
             },
             {
               icon: <Users className="h-8 w-8" />,
