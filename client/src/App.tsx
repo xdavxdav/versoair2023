@@ -33,7 +33,7 @@ import { MessagesPage } from "@/components/TwitterMessenger";
 // cold visit hits first, so lazy-loading it just adds an extra network
 // round-trip behind the Suspense fallback, making the initial load feel
 // much longer than it needs to be.
-import Home from "@/pages/company-home";
+import Home from "@/pages/home";
 const About = lazy(() => import("@/pages/about"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Demo = lazy(() => import("@/pages/demo"));
@@ -979,8 +979,7 @@ function AppContent() {
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
-      {!isHomePage &&
-        !isMusicPage &&
+      {!isMusicPage &&
         !currentPath.startsWith("/community") &&
         !currentPath.startsWith("/profile") &&
         !currentPath.startsWith("/user/") &&
@@ -1124,8 +1123,7 @@ function AppContent() {
       )}
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
-      {!isHomePage &&
-        !isAuthed &&
+      {!isAuthed &&
         !isAuthPage &&
         !showContentNav &&
         !isBlogOrMarketplace &&
@@ -1210,8 +1208,7 @@ function AppContent() {
       )}
 
       {/* Mobile Menu Bubble — hide whenever a dedicated account/content nav is active. */}
-      {!isHomePage &&
-        !isImmersivePage &&
+      {!isImmersivePage &&
         !isMusicPage &&
         !isBlogOrMarketplace &&
         !showAccountBlogNavbar &&
@@ -1231,7 +1228,7 @@ function AppContent() {
       )}
 
       {/* Global VersoAI Assistant (Talk & Chat) */}
-      {!isHomePage && (
+      {!isImmersivePage && (
         <Suspense fallback={null}>
           <VersoAIChat />
         </Suspense>
