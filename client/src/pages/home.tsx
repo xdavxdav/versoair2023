@@ -3463,9 +3463,9 @@ export default function Home() {
                                 : "—",
                             label: "catégories d'industrie",
                           },
-                          { stat: "98%", label: "programmes actifs" },
-                          { stat: "95%", label: "formation professionnelle" },
-                          { stat: "87%", label: "événements culturels" },
+                          { stat: "—", label: "programmes actifs" },
+                          { stat: "—", label: "formation professionnelle" },
+                          { stat: "—", label: "événements culturels" },
                         ].map((item, idx) => (
                           <motion.div
                             key={idx}
@@ -3645,12 +3645,12 @@ export default function Home() {
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
                         {[
-                          { stat: "245+", label: "bénévoles actifs" },
+                          { stat: "—", label: "bénévoles actifs" },
                           {
-                            stat: "$125K+",
+                            stat: "—",
                             label: "récoltés pour les communautés",
                           },
-                          { stat: "50+", label: "organisations partenaires" },
+                          { stat: "—", label: "organisations partenaires" },
                           {
                             stat: "Cultural",
                             label: "programmes du patrimoine",
