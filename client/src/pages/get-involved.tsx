@@ -323,8 +323,8 @@ export default function GetInvolved() {
         </div>
       </section>
 
-      {/* ONG Culturelle Banner */}
-      <section className="py-16 px-4 bg-gradient-to-r from-amber-900/20 to-orange-900/20 border-y border-amber-500/30">
+      {/* Company-first banner */}
+      <section className="py-16 px-4 bg-gradient-to-r from-slate-900 to-slate-800 border-y border-slate-700">
         <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={fadeInUp}
@@ -333,16 +333,18 @@ export default function GetInvolved() {
             viewport={defaultViewport}
             className="text-center"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
-              Découvrez Notre ONG Culturelle
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Company-first launch, evidence-led growth
             </h2>
             <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
-              Célébrer la culture africaine. Partager les talents. Unir le monde
-              à travers la musique, l'art et la tradition.
+              We publish new services and partnerships only when they are ready,
+              verified, and aligned with the actual launch offer. A future
+              vHeatrz vision for cultural and community initiatives remains
+              separate from VERSO AIR’s current company launch.
             </p>
-            <Link href="/ong-culturelle">
+            <Link href="/about">
               <Button className="bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold py-3 px-8 rounded-lg">
-                En Savoir Plus
+                About VERSO AIR
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>

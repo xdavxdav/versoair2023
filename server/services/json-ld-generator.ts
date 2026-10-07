@@ -8,6 +8,8 @@
  * for Google, Bing, ChatGPT, Perplexity, and Claude search crawlers.
  */
 
+import { getSiteOrigin } from "../utils/site-origin";
+
 interface BusinessJsonLd {
   id: number;
   name: string;
@@ -35,12 +37,13 @@ interface BusinessJsonLd {
  * Generate JSON-LD for a single business listing (LocalBusiness schema)
  */
 export function generateBusinessJsonLd(biz: BusinessJsonLd): object {
+  const siteOrigin = getSiteOrigin();
   const ld: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `https://verso-air.com/businesses/${biz.id}`,
+    "@id": `${siteOrigin}/businesses/${biz.id}`,
     name: biz.name,
-    url: `https://verso-air.com/businesses/${biz.id}`,
+    url: `${siteOrigin}/businesses/${biz.id}`,
   };
 
   if (biz.description) ld.description = biz.description.substring(0, 500);
@@ -88,8 +91,8 @@ export function generateBusinessJsonLd(biz: BusinessJsonLd): object {
   // Brand/verification
   ld.brand = {
     "@type": "Brand",
-    name: "Verso Air",
-    url: "https://verso-air.com",
+    name: "VERSO AIR™",
+    url: siteOrigin,
   };
 
   return ld;
@@ -99,16 +102,16 @@ export function generateBusinessJsonLd(biz: BusinessJsonLd): object {
  * Generate JSON-LD for the organization (Verso Air itself)
  */
 export function generateOrganizationJsonLd(): object {
+  const siteOrigin = getSiteOrigin();
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Verso Air",
-    alternateName: "Verso Air Business Intelligence",
-    url: "https://verso-air.com",
-    logo: "https://verso-air.com/logo.png",
+    name: "VERSO AIR INC.",
+    alternateName: "VERSO AIR™",
+    url: siteOrigin,
+    logo: `${siteOrigin}/Logo-page.png`,
     description:
-      "Multi-sector business directory and intelligence platform covering commerce, hospitality, construction, automotive, finance, entertainment, healthcare, and real estate across 50+ countries.",
-    foundingDate: "2024",
+      "VERSO AIR INC. is preparing a Toronto-focused digital platform for business visibility and directory discovery. Services and listings will be introduced as they become available and verified.",
     sameAs: [
       "https://twitter.com/versoair",
       "https://linkedin.com/company/versoair",
@@ -117,12 +120,9 @@ export function generateOrganizationJsonLd(): object {
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
-      availableLanguage: ["English", "French", "Spanish"],
+      availableLanguage: ["English", "French"],
     },
-    areaServed: {
-      "@type": "GeoShape",
-      name: "Global",
-    },
+    areaServed: "Toronto, Ontario, Canada",
   };
 }
 
@@ -150,16 +150,17 @@ export function generateSearchResultsJsonLd(
  * Generate WebSite schema with search action (for Google Sitelinks Search Box)
  */
 export function generateWebsiteJsonLd(): object {
+  const siteOrigin = getSiteOrigin();
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Verso Air",
-    url: "https://verso-air.com",
+    name: "VERSO AIR INC.",
+    url: siteOrigin,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://verso-air.com/?search={search_term_string}",
+        urlTemplate: `${siteOrigin}/?search={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },

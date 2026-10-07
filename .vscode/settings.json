@@ -9,6 +9,15 @@
   "tailwindCSS.experimental.classRegex": [
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
   ],
+  "tailwindCSS.experimental.configFile": {
+    "tailwind.config.ts": "client/src/**"
+  },
+  "tailwindCSS.files.exclude": [
+    "**/node_modules/**",
+    "**/.hg/**",
+    "**/.svn/**",
+    "VersoAIR.tm/**"
+  ],
   "files.associations": {
     "*.css": "tailwindcss"
   },

@@ -377,8 +377,8 @@ export default function CommandCenter() {
                     emoji="🎭"
                   />
                   <RouteLink
-                    path="/artihuman-foundation"
-                    label="ArtiHuman Foundation"
+                    path="/vheatrz"
+                    label="vHeatrz (future organization)"
                     emoji="🌍"
                   />
                   <RouteLink path="/impact" label="Impact" emoji="💡" />
