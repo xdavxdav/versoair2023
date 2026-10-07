@@ -64,7 +64,7 @@ const ArtisanProfilePage = lazy(() => import("@/pages/artisan-profile"));
 const SystemStatus = lazy(() => import("@/pages/status"));
 const Partners = lazy(() => import("@/pages/partners"));
 const GetInvolved = lazy(() => import("@/pages/get-involved"));
-const VHeatrzPage = lazy(() => import("@/pages/vheatrz"));
+const VheartzPage = lazy(() => import("@/pages/vheartz"));
 const Impact = lazy(() => import("@/pages/impact"));
 const HubPage = lazy(() => import("@/pages/hub"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -331,6 +331,7 @@ const BETA_ROUTE_PREFIXES = [
   "/ong-culturelle",
   "/artihuman-foundation",
   "/vheatrz",
+  "/vheartz",
   "/impact",
   "/tickets",
   "/business/",
@@ -539,9 +540,12 @@ function Router() {
       <Route path="/partners" component={Partners} />
       <Route path="/get-involved" component={GetInvolved} />
       <Route path="/ong-culturelle" component={OngCulturelle} />
-      <Route path="/vheatrz" component={VHeatrzPage} />
+      <Route path="/vheartz" component={VheartzPage} />
+      <Route path="/vheatrz">
+        {() => <Redirect to="/vheartz" />}
+      </Route>
       <Route path="/artihuman-foundation">
-        {() => <Redirect to="/vheatrz" />}
+        {() => <Redirect to="/vheartz" />}
       </Route>
       <Route path="/impact" component={Impact} />
       <Route path="/tickets" component={Tickets} />

@@ -477,27 +477,243 @@ const MagneticInput = ({ children, className }: MagneticInputProps) => {
   );
 };
 
-const OrganizationFooter = () => (
-  <footer className="border-t border-slate-200 bg-[#f3efe9] text-slate-900">
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <div>
-        <Link to="/vheatrz" className="font-semibold tracking-wide">
-          vHeatrz
-        </Link>
-        <p className="mt-1 text-sm text-slate-600">
-          An upcoming organization, distinct from VERSO AIR INC.
-        </p>
+// NGO Impact Footer
+const ResponsiveFooter = ({
+  countryMeta,
+}: {
+  countryMeta: ReturnType<typeof getCountryMeta>;
+}) => {
+  const { isAuthenticated } = useSubscription();
+
+  return (
+    <footer className="relative overflow-hidden border-t border-slate-200 bg-[#f3efe9] text-slate-900">
+      <div className="h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30rem] h-32 bg-amber-500/[0.03] blur-3xl rounded-full pointer-events-none" />
+
+      <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+        {/* Impact Metrics — TODO(pending-verification): restore real figures
+            from verified program data before public promotion */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              —
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Communautés touchées
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              —
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Artisans soutenus
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              —
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Pays actifs
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              —
+            </p>
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
+              Programmes en cours
+            </p>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-800/60 mb-12" />
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+          {/* Brand */}
+          <div>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <span className="text-white font-bold text-xs tracking-tight">
+                  VH
+                </span>
+              </div>
+              <span className="font-bold text-lg tracking-tight notranslate">
+                vheartz
+              </span>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">
+              Une future organisation distincte de VERSO AIR INC., portée par
+              une vision culturelle et communautaire.
+            </p>
+            <p className="text-xs text-gray-500">
+              Détails à venir à l’approche du lancement
+            </p>
+          </div>
+
+          {/* Programs */}
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              Vision et initiatives
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/programs"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Initiatives culturelles
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/artisan"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Création et savoir-faire
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/programs"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Échanges communautaires
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/commerce"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors notranslate"
+                >
+                  Arts et artisanat
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/programs"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Projets à venir
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Get Involved */}
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              Participer plus tard
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Collaborations
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Participation
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Partenariats
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/support"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                >
+                  Nouvelles de lancement
+                </Link>
+              </li>
+              {isAuthenticated ? (
+                <li>
+                  <Link
+                    to="/geo-admin"
+                    className="text-emerald-400 text-sm inline-flex items-center gap-1.5"
+                  >
+                    <Database size={13} /> Geo Admin
+                  </Link>
+                </li>
+              ) : (
+                <li>
+                  <Link
+                    to="/geo-admin"
+                    className="text-gray-600 text-sm inline-flex items-center gap-1.5 group"
+                  >
+                    <Lock size={12} /> Geo Admin
+                    <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
+                      Se connecter
+                    </span>
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {/* Contact & Newsletter */}
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
+              Contact
+            </h4>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <Phone size={14} className="text-emerald-500/50" />
+                {countryMeta.phone}
+              </li>
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <Mail size={14} className="text-emerald-500/50" />
+                support@versoair.com
+              </li>
+              <li className="flex items-center gap-2 text-gray-400 text-sm">
+                <GlobeIcon size={14} className="text-emerald-500/50" />
+                {countryMeta.flag} {countryMeta.name}
+              </li>
+            </ul>
+
+            <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mb-3">
+              Infolettre
+            </p>
+            <div className="flex">
+              <input
+                type="email"
+                placeholder="Votre email"
+                className="flex-1 min-w-0 px-3 py-2 rounded-l-lg bg-white/[0.03] border border-slate-800 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/40"
+              />
+              <button className="bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 rounded-r-lg text-sm font-medium hover:from-emerald-400 hover:to-teal-500 transition-all">
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-800/60 mb-6" />
+
+        <div className="text-center">
+          <p className="text-gray-600 text-xs">
+            © {new Date().getFullYear()}{" "}
+            <span className="notranslate">VERSO AIR INC.</span> Tous droits
+            réservés.
+          </p>
+        </div>
       </div>
-      <p className="max-w-xl text-sm leading-relaxed text-slate-600">
-        vHeatrz will carry forward a vision for cultural and community
-        initiatives. Program details will be shared closer to launch.
-      </p>
-    </div>
-    <p className="pb-6 text-center text-xs text-slate-500">
-      © {new Date().getFullYear()} vHeatrz · Upcoming organization
-    </p>
-  </footer>
-);
+    </footer>
+  );
+};
 
 // Filter options
 const categoryOptions: FilterOption[] = [
@@ -1653,7 +1869,7 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       <SeoHead
         title="VersoAir | Business Directory & Advertising Platform"
-        description="VERSO AIR INC. is preparing a Toronto-focused platform for business visibility and directory discovery. Services and listings will be published as they become available and verified."
+        description="Verso Air Inc. is preparing a Toronto-focused platform for business visibility and creative projects. Directory listings and metrics will be published as they become available and verified."
         canonicalPath="/"
       />
       {/* Hero Section */}
@@ -1699,7 +1915,7 @@ export default function Home() {
               className="mb-4 md:mb-6"
             >
               <span className="inline-flex rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100 shadow-[0_0_0_1px_rgba(253,224,71,0.12)] md:px-4 md:py-2 md:text-sm">
-                Toronto launch focus • Verified company identity
+                vheartz • vision culturelle et communautaire à venir
               </span>
             </motion.div>
 
@@ -1707,9 +1923,9 @@ export default function Home() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl"
+              className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
-              VERSO AIR INC.
+              vheartz
             </motion.h1>
 
             <motion.p
@@ -1718,8 +1934,8 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.4 }}
               className="mx-auto max-w-3xl px-2 text-base text-white/90 sm:text-lg md:text-xl lg:text-2xl"
             >
-              Business visibility, trusted local listings, and launch-ready digital
-              services for Toronto and Canada.
+              Une organisation à venir, distincte de VERSO AIR INC., avec une
+              vision culturelle et communautaire.
             </motion.p>
 
             {!isAuthenticated && (
@@ -1729,20 +1945,20 @@ export default function Home() {
                 transition={{ delay: 0.8 }}
                 className="mt-6 flex flex-col justify-center gap-3 px-2 sm:flex-row md:mt-8"
               >
-                <Link to="/about" className="w-full sm:w-auto">
+                <Link to="/get-involved" className="w-full sm:w-auto">
                   <Button className="w-full rounded-xl bg-white px-6 py-4 text-base font-bold text-slate-900 shadow-2xl transition-all hover:scale-[1.02] hover:bg-slate-100 sm:w-auto md:px-10 md:py-6 md:text-lg">
-                    À propos
+                    S'impliquer
                   </Button>
                 </Link>
                 <Button
                   asChild
                   className="w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4 text-base font-bold text-slate-950 shadow-2xl transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-orange-400 sm:w-auto md:px-10 md:py-6 md:text-lg"
                 >
-                  <Link to="/contact">Nous joindre</Link>
+                  <Link to="/apply">✨ Postuler</Link>
                 </Button>
-                <Link to="/services" className="w-full sm:w-auto">
+                <Link to="/ong-culturelle" className="w-full sm:w-auto">
                   <Button className="w-full rounded-xl border-2 border-white/60 bg-transparent px-6 py-4 text-base font-bold text-white transition-all hover:bg-white/5 sm:w-auto md:px-10 md:py-6 md:text-lg">
-                    Nos services
+                    En savoir plus
                   </Button>
                 </Link>
               </motion.div>
@@ -2740,7 +2956,7 @@ export default function Home() {
               width: `${NUM_PANELS * 100}%`,
             }}
           >
-            {/* PANEL 1: Company launch - Toronto / Canada */}
+            {/* PANEL 1: vheartz future organization - Emerald Gradient */}
             <div
               className="panel h-[100svh] flex-shrink-0 relative overflow-hidden"
               style={{
@@ -2750,20 +2966,27 @@ export default function Home() {
                 touchAction: "pan-y",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-amber-700" />
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(245,158,11,0.45)_0%,_transparent_60%)]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <h2 className="mb-1 sm:mb-2 md:mb-3 text-3xl font-black text-white sm:text-4xl md:text-6xl">
-                      VERSO AIR INC.
+                    <h2
+                      className="gold-text mb-1 sm:mb-2 md:mb-3"
+                    >
+                      <span className="gold-text__shine">
+                        vheartz
+                      </span>
                     </h2>
-                    <div className="hidden sm:inline-block" style={{ animation: "spin 20s linear infinite" }}>
-                      <Sparkles className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-amber-200" />
+                    <div
+                      className="hidden sm:inline-block"
+                      style={{ animation: "spin 20s linear infinite" }}
+                    >
+                      <Sparkles className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-white" />
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Verified business visibility, directory discovery, and launch-ready
-                      services for Toronto and Canada.
+                      Une vision culturelle et communautaire en préparation,
+                      distincte du lancement de VERSO AIR INC.
                     </p>
                   </div>
 
@@ -2907,13 +3130,13 @@ export default function Home() {
                           En savoir plus
                         </motion.button>
                       </Link>
-                      <Link to="/vheatrz">
+                      <Link to="/vheartz">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Nous soutenir
+                          Découvrir vheartz
                         </motion.button>
                       </Link>
                     </div>
@@ -3460,13 +3683,13 @@ export default function Home() {
                           Commencez à faire la différence
                         </motion.button>
                       </Link>
-                      <Link to="/vheatrz">
+                      <Link to="/vheartz">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Nous soutenir
+                          Découvrir vheartz
                         </motion.button>
                       </Link>
                     </div>
@@ -4146,7 +4369,7 @@ export default function Home() {
         </div>
       </section>
 
-      <OrganizationFooter />
+      <ResponsiveFooter countryMeta={countryMeta} />
 
       <AnimatePresence>
         {showCookieConsent && (

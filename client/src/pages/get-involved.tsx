@@ -19,7 +19,7 @@ const COMMUNITY_ACTIVITIES = [
     title: "Volunteer",
     subtitle: "Share Your Skills",
     description:
-      "Join our team of passionate volunteers helping artisan communities across Côte d'Ivoire. Share your expertise in business, technology, or marketing.",
+      "Explore future ways to contribute to cultural and community initiatives as vheartz develops. Details will be shared when confirmed.",
     images: [
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
@@ -27,29 +27,29 @@ const COMMUNITY_ACTIVITIES = [
     ],
     cta: "Join Team",
     details:
-      "Help mentor artisans, conduct workshops, or manage community projects. Work alongside passionate professionals making real impact.",
+      "Possible future contributions may include mentoring, workshops, or community projects; no volunteer program is currently open.",
   },
   {
     id: 2,
-    title: "Donate",
-    subtitle: "Support Our Mission",
+    title: "Giving (future)",
+    subtitle: "No current donation program",
     description:
-      "Help us empower businesses through better data insights and community development programs. Every contribution makes a difference.",
+      "Information about any future giving or community programs will be published once confirmed.",
     images: [
       "https://images.unsplash.com/photo-1559027615-cd2628902d4a?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1559027615-cd2628902d4a?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1559027615-cd2628902d4a?w=800&h=600&fit=crop",
     ],
-    cta: "Donate Now",
+    cta: "Details to come",
     details:
-      "Your generous donation supports scholarships, equipment, and training programs for artisan communities.",
+      "No donation program is currently announced. Please contact us for verified information.",
   },
   {
     id: 3,
     title: "Partner",
     subtitle: "Build With Us",
     description:
-      "Build integrations and expand the Verso Air ecosystem. Partner with us to create innovative solutions.",
+      "Explore potential integrations or collaborations; availability and scope require confirmation.",
     images: [
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
@@ -57,7 +57,7 @@ const COMMUNITY_ACTIVITIES = [
     ],
     cta: "Learn More",
     details:
-      "Join our partner ecosystem and help us build the future of African business intelligence.",
+      "Contact us to discuss a possible collaboration with VERSO AIR INC.",
   },
   {
     id: 4,
@@ -72,7 +72,7 @@ const COMMUNITY_ACTIVITIES = [
     ],
     cta: "Send Feedback",
     details:
-      "We actively listen to our community. Share your suggestions to improve our platform.",
+      "Share suggestions or feedback with VERSO AIR INC. through the contact page.",
   },
 ];
 
@@ -317,14 +317,13 @@ export default function GetInvolved() {
             transition={{ delay: 0.2 }}
             className="text-xl text-slate-300 text-center max-w-2xl mx-auto leading-relaxed"
           >
-            Be part of something bigger. Join our community and help empower
-            businesses across Africa.
+            Learn about future ways to participate in the VERSO AIR community.
           </motion.p>
         </div>
       </section>
 
-      {/* Company-first banner */}
-      <section className="py-16 px-4 bg-gradient-to-r from-slate-900 to-slate-800 border-y border-slate-700">
+      {/* ONG Culturelle Banner */}
+      <section className="py-16 px-4 bg-gradient-to-r from-amber-900/20 to-orange-900/20 border-y border-amber-500/30">
         <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={fadeInUp}
@@ -333,18 +332,17 @@ export default function GetInvolved() {
             viewport={defaultViewport}
             className="text-center"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Company-first launch, evidence-led growth
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
+              Découvrez Notre ONG Culturelle
             </h2>
             <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
-              We publish new services and partnerships only when they are ready,
-              verified, and aligned with the actual launch offer. A future
-              vHeatrz vision for cultural and community initiatives remains
-              separate from VERSO AIR’s current company launch.
+              La future organisation <span className="notranslate">vheartz</span>{" "}
+              porte une vision culturelle et communautaire. Ses initiatives
+              restent en préparation et seront annoncées une fois confirmées.
             </p>
-            <Link href="/about">
+            <Link href="/vheartz">
               <Button className="bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold py-3 px-8 rounded-lg">
-                About VERSO AIR
+                En Savoir Plus
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -420,7 +418,7 @@ export default function GetInvolved() {
             viewport={defaultViewport}
             className="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-16"
           >
-            Community Benefits
+            Potential Community Features
           </motion.h2>
 
           <motion.div
@@ -431,12 +429,12 @@ export default function GetInvolved() {
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {[
-              "Exclusive webinars and training",
-              "Early access to new features",
-              "Direct line to our product team",
-              "Community recognition and badges",
-              "Networking opportunities",
-              "Special discounts on premium plans",
+              "Learning resources may be considered",
+              "Feature previews depend on product availability",
+              "Product feedback through available channels",
+              "Community recognition, if introduced",
+              "Networking opportunities, if established",
+              "No discounts or benefits are currently promised",
             ].map((benefit, idx) => (
               <motion.div
                 key={idx}
@@ -471,7 +469,7 @@ export default function GetInvolved() {
                 Ready to Make an Impact?
               </h2>
               <p className="text-slate-300 mb-8 text-lg">
-                Join thousands of community members making a real difference
+                Find out more about the future vision of vheartz.
               </p>
               <Link href="/contact">
                 <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all">
