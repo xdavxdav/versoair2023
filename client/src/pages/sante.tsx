@@ -567,30 +567,6 @@ export default function Sante() {
 
   return (
     <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-red-900 to-slate-900 text-white">
-      {/* Database Connection Status */}
-      <div
-        className="fixed bottom-4 right-4 z-50"
-        title={
-          databaseConnected
-            ? "Base de données connectée"
-            : "Base de données hors ligne"
-        }
-      >
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
-        />
-      </div>
-
-      {/* Hero + Carousel Container */}
-      <div className="relative min-h-[100dvh] md:min-h-0 md:h-[600px] flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden py-8 md:py-0">
-        <div
-          className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out`}
-          style={{
-            backgroundImage: `url(${enterprises[currentIndex]?.image})`,
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/90 to-orange-900/90"></div>
-        </div>
 
         <div className="relative z-10">
           <motion.div
@@ -619,8 +595,8 @@ export default function Sante() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Base de données PostgreSQL en temps réel avec{" "}
-            {totalResults.toLocaleString()}+ établissements de santé
+            Données en temps réel avec{" "}
+            {totalResults > 0 ? `${totalResults.toLocaleString()}+ ` : ""}établissements de santé
           </motion.p>
 
           {/* Database Stats */}
@@ -639,7 +615,7 @@ export default function Sante() {
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Enregistrements
+                  {totalResults > 0 ? `${totalResults.toLocaleString()}+ ` : ""}Enregistrements
                 </div>
               </CardContent>
             </Card>
@@ -1185,7 +1161,7 @@ export default function Sante() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-red-300 mb-2">
-                              Recherche dans la base PostgreSQL...
+                              Recherche en cours...
                             </h3>
                             <p className="text-gray-300">
                               Récupération des prestataires de santé...
@@ -1601,7 +1577,7 @@ export default function Sante() {
                   <li className="flex items-center justify-between">
                     <span className="text-red-300">Total Dossiers Santé</span>
                     <span className="font-semibold text-white">
-                      {totalResults.toLocaleString()}+
+                      {totalResults > 0 ? `${totalResults.toLocaleString()}+` : "Bientôt"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">

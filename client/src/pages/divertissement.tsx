@@ -568,7 +568,7 @@ export default function Entertainment() {
   const entertainmentFeatures = [
     {
       icon: <Database className="h-8 w-8" />,
-      title: "Base de données PostgreSQL",
+      title: "Données en direct",
       description: "Données divertissement en direct depuis la base Verso Air",
     },
     {
@@ -605,32 +605,6 @@ export default function Entertainment() {
         description="Find entertainment, media, music, and events businesses across markets on VersoAir."
         canonicalPath="/divertissement"
       />
-      {/* Database Connection Status */}
-      <div
-        className="fixed bottom-4 right-4 z-50"
-        title={
-          databaseConnected
-            ? "Base de données connectée"
-            : "Base de données hors ligne"
-        }
-      >
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${databaseConnected ? "bg-green-500" : "bg-red-500"}`}
-        />
-      </div>
-
-      {/* Hero + Carousel Container */}
-      <div className="relative min-h-[100dvh] md:min-h-0 md:h-[600px] flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden py-8 md:py-0">
-        {/* eslint-disable-next-line */}
-        <div
-          className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out`}
-          /* webhint-disable-next-line hint-no-inline-styles */
-          style={{
-            backgroundImage: `url(${enterprises[currentIndex]?.image})`,
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-pink-900/90"></div>
-        </div>
 
         <div className="relative z-10 w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto">
           <motion.div
@@ -659,8 +633,8 @@ export default function Entertainment() {
             transition={{ duration: 1, delay: 0.4 }}
             className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
           >
-            Base de données PostgreSQL en temps réel avec{" "}
-            {totalResults.toLocaleString()}+ entreprises musique, cinéma et
+            Données en temps réel avec{" "}
+            {totalResults > 0 ? `${totalResults.toLocaleString()}+ ` : ""}entreprises musique, cinéma et
             divertissement
           </motion.p>
 
@@ -680,7 +654,7 @@ export default function Entertainment() {
                   </span>
                 </div>
                 <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
-                  {totalResults.toLocaleString()}+ Entrées
+                  {totalResults > 0 ? `${totalResults.toLocaleString()}+ ` : ""}Entrées
                 </div>
               </CardContent>
             </Card>
@@ -1094,7 +1068,7 @@ export default function Entertainment() {
                   </h2>
                   <div className="text-sm text-purple-300">
                     {databaseConnected
-                      ? "✅ Données PostgreSQL en direct"
+                      ? "✅ Données en direct"
                       : "✅ Données réelles"}
                   </div>
                 </div>
@@ -1160,7 +1134,7 @@ export default function Entertainment() {
                               </div>
                             </div>
                             <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-300 mb-2">
-                              Recherche dans la base PostgreSQL...
+                              Recherche en cours...
                             </h3>
                             <p className="text-gray-300">
                               Récupération des entreprises de divertissement...
@@ -1633,7 +1607,7 @@ export default function Entertainment() {
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
-              Connexion base de données PostgreSQL
+              Connexion aux données en direct
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
@@ -1646,7 +1620,7 @@ export default function Entertainment() {
                       Total enregistrements divertissement
                     </span>
                     <span className="font-semibold text-white">
-                      {totalResults.toLocaleString()}+
+                      {totalResults > 0 ? `${totalResults.toLocaleString()}+` : "Bientôt"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">

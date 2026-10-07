@@ -288,7 +288,7 @@ export default function HousingReservations() {
   const isAuthenticated =
     !!localStorage.getItem("auth_token") || !!localStorage.getItem("authToken");
 
-  const [browseTimeLeft, setBrowseTimeLeft] = useState<number>(() => {
+  const [, setBrowseTimeLeft] = useState<number>(() => {
     if (isAuthenticated) return Infinity;
     const start = localStorage.getItem(BROWSE_START_KEY);
     if (!start) {
@@ -298,24 +298,9 @@ export default function HousingReservations() {
     const elapsed = Math.floor((Date.now() - Number(start)) / 1000);
     return Math.max(0, BROWSE_LIMIT_SECONDS - elapsed);
   });
-  const [browseExpired, setBrowseExpired] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) return;
-    const interval = setInterval(() => {
-      const start = Number(
-        localStorage.getItem(BROWSE_START_KEY) || Date.now(),
-      );
-      const elapsed = Math.floor((Date.now() - start) / 1000);
-      const remaining = Math.max(0, BROWSE_LIMIT_SECONDS - elapsed);
-      setBrowseTimeLeft(remaining);
-      if (remaining <= 0) {
-        setBrowseExpired(true);
-        clearInterval(interval);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  // Browse gating removed (claim audit #44): public browsing stays open;
+  // sign-in is only required when the user actually books.
 
   // Persist favorites to localStorage whenever they change
   useEffect(() => {
@@ -1597,44 +1582,11 @@ export default function HousingReservations() {
       {/* Main Content */}
 
       {/* Browse time limit banner for unauthenticated users */}
-      {!isAuthenticated && !browseExpired && browseTimeLeft < 300 && (
-        <div className="bg-amber-500/90 text-white text-center py-2 px-4 text-sm sticky top-0 z-40">
-          <Clock className="inline h-4 w-4 mr-1" />
-          Browse time remaining: {Math.floor(browseTimeLeft / 60)}:
-          {String(browseTimeLeft % 60).padStart(2, "0")}
           {" — "}
           <a href="/auth/signin" className="underline font-semibold">
             Sign in
           </a>{" "}
           for unlimited access
-        </div>
-      )}
-
-      {/* Browse expired overlay */}
-      {browseExpired && !isAuthenticated && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
-            <Clock className="h-16 w-16 mx-auto text-amber-500 mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Browse Time Expired</h2>
-            <p className="text-gray-600 mb-6">
-              Your 10-minute preview has ended. Sign in to continue browsing,
-              save favorites, and make reservations.
-            </p>
-            <div className="space-y-3">
-              <a
-                href="/auth/signin"
-                className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                Sign In to Continue
-              </a>
-              <a
-                href="/pricing"
-                className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                View Plans
-              </a>
-            </div>
-          </div>
         </div>
       )}
 

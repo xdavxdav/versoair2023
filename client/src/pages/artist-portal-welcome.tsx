@@ -2813,7 +2813,7 @@ export default function ArtistPortalWelcome() {
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                           <span className="text-emerald-400/80 text-[10px] font-medium">
-                            Actif maintenant
+                            Artiste inaugural — lancement imminent
                           </span>
                         </div>
                       </div>
@@ -2837,7 +2837,8 @@ export default function ArtistPortalWelcome() {
                       </p>
                     </div>
 
-                    {/* Stats row */}
+                    {/* Stats row — TODO(launch): targets for the inaugural
+                        artist campaign; replace with live data at launch */}
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       <div className="text-center py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                         <p className="text-white font-bold text-base leading-none">
@@ -2865,7 +2866,7 @@ export default function ArtistPortalWelcome() {
                       </div>
                     </div>
 
-                    {/* Division + earnings bar */}
+                    {/* Division + earnings bar — target preview */}
                     <div className="flex items-center gap-3 mb-4 px-1">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">

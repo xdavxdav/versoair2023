@@ -1036,8 +1036,8 @@ function AppContent() {
                           Analyze • Optimize • Visualize • Grow
                         </span>
                         <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                          24 Secteurs d'Industrie • Analytique en Direct •
-                          Couverture Mondiale
+                          8 Secteurs d'Industrie • Analytique en Direct •
+                          Toronto & Canada
                         </span>
                         <span className="hidden md:inline-flex flex-shrink-0 px-8">
                           Commerce • Hôtellerie • Construction • Automobile •

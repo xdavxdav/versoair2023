@@ -1140,7 +1140,7 @@ export default function About() {
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/10 mb-8">
               <Star className="h-4 w-4 text-purple-300" />
               <span className="text-slate-900/90">
-                La Plateforme d'Intelligence d'Affaires pour la Côte d'Ivoire
+                La Plateforme d'Intelligence d'Affaires pour Toronto et le Canada
               </span>
             </div>
           </FloatingElement>
@@ -1198,7 +1198,7 @@ export default function About() {
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-cyan-400" />
-                  <span>Abidjan, Côte d'Ivoire</span>
+                  <span>Toronto, Canada</span>
                 </div>
               </div>
             </div>
