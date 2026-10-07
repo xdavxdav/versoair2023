@@ -64,7 +64,7 @@ const ArtisanProfilePage = lazy(() => import("@/pages/artisan-profile"));
 const SystemStatus = lazy(() => import("@/pages/status"));
 const Partners = lazy(() => import("@/pages/partners"));
 const GetInvolved = lazy(() => import("@/pages/get-involved"));
-const VheartzPage = lazy(() => import("@/pages/vheartz"));
+const VHeartzPage = lazy(() => import("@/pages/vheartz"));
 const Impact = lazy(() => import("@/pages/impact"));
 const HubPage = lazy(() => import("@/pages/hub"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -540,7 +540,7 @@ function Router() {
       <Route path="/partners" component={Partners} />
       <Route path="/get-involved" component={GetInvolved} />
       <Route path="/ong-culturelle" component={OngCulturelle} />
-      <Route path="/vheartz" component={VheartzPage} />
+      <Route path="/vheartz" component={VHeartzPage} />
       <Route path="/vheatrz">
         {() => <Redirect to="/vheartz" />}
       </Route>
@@ -1228,7 +1228,7 @@ function AppContent() {
       )}
 
       {/* Global VersoAI Assistant (Talk & Chat) */}
-      {!isImmersivePage && (
+      {!isHomePage && !isImmersivePage && (
         <Suspense fallback={null}>
           <VersoAIChat />
         </Suspense>

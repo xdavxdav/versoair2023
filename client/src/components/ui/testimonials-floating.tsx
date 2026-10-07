@@ -25,12 +25,29 @@ export default function TestimonialsFloating() {
       <div
         className={`max-w-[calc(100vw-1rem)] rounded-xl border bg-white shadow-2xl transition-all duration-300 ${
           isMinimized
-            ? "h-16 w-72"
-            : "min-h-64 w-[min(24rem,calc(100vw-1rem))]"
+            ? "h-12 w-12 sm:h-16 sm:w-72"
+            : "max-h-[45svh] w-[min(24rem,calc(100vw-1rem))] overflow-y-auto sm:min-h-64 sm:max-h-none sm:overflow-visible"
         }`}
       >
-        <div className="flex items-center justify-between rounded-t-xl border-b bg-gradient-to-r from-primary/5 to-secondary/5 p-3 sm:p-4">
-          <div className="flex items-center gap-2">
+        <div
+          className={`flex items-center justify-between rounded-t-xl border-b bg-gradient-to-r from-primary/5 to-secondary/5 ${
+            isMinimized ? "p-0 sm:p-4" : "p-3 sm:p-4"
+          }`}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Expand testimonials"
+            onClick={() => setIsMinimized(false)}
+            className="h-12 w-12 rounded-xl bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 hover:bg-primary sm:hidden"
+          >
+            <Quote className="h-5 w-5" />
+          </Button>
+          <div
+            className={`items-center gap-2 ${
+              isMinimized ? "hidden sm:flex" : "flex"
+            }`}
+          >
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-primary to-secondary sm:h-8 sm:w-8">
               <Quote className="h-3 w-3 text-white sm:h-4 sm:w-4" />
             </div>
@@ -38,7 +55,11 @@ export default function TestimonialsFloating() {
               Avis clients et utilisateurs
             </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div
+            className={`items-center gap-1 ${
+              isMinimized ? "hidden sm:flex" : "flex"
+            }`}
+          >
             <Button
               variant="ghost"
               size="icon"

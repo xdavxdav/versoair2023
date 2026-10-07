@@ -19,7 +19,7 @@ const COMMUNITY_ACTIVITIES = [
     title: "Volunteer",
     subtitle: "Share Your Skills",
     description:
-      "Explore future ways to contribute to cultural and community initiatives as vheartz develops. Details will be shared when confirmed.",
+      "Explore future ways to contribute to cultural and community initiatives as vHeartz develops. Details will be shared when confirmed.",
     images: [
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
@@ -336,7 +336,7 @@ export default function GetInvolved() {
               Découvrez Notre ONG Culturelle
             </h2>
             <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
-              La future organisation <span className="notranslate">vheartz</span>{" "}
+              La future organisation <span className="notranslate">vHeartz</span>{" "}
               porte une vision culturelle et communautaire. Ses initiatives
               restent en préparation et seront annoncées une fois confirmées.
             </p>
@@ -469,7 +469,7 @@ export default function GetInvolved() {
                 Ready to Make an Impact?
               </h2>
               <p className="text-slate-300 mb-8 text-lg">
-                Find out more about the future vision of vheartz.
+                Find out more about the future vision of vHeartz.
               </p>
               <Link href="/contact">
                 <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all">

@@ -325,7 +325,7 @@ export default function Sponsorship() {
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
           >
-            <span className="notranslate">vheartz</span> is in development.
+            <span className="notranslate">vHeartz</span> is in development.
             The sponsorship models below are illustrative concepts only; no
             sponsorship program, partner network, or benefits are currently
             available.
@@ -768,7 +768,7 @@ export default function Sponsorship() {
             <p className="text-white/85 text-lg mb-8 max-w-2xl mx-auto">
               The concepts on this page are not active offers. Contact VERSO
               AIR INC. to ask about confirmed company information; future
-              vheartz programs will be announced when ready.
+              vHeartz programs will be announced when ready.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Link to="/contact">
@@ -788,7 +788,7 @@ export default function Sponsorship() {
               </span>
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                No vheartz program location has been announced
+                No vHeartz program location has been announced
               </span>
             </div>
           </motion.div>

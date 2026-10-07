@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
 
-export default function VheartzPage() {
+export default function VHeartzPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
         <div className="max-w-[95vw] mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center notranslate">
-            vheartz
+            vHeartz
           </h1>
           <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
             A future cultural and community-focused organization, distinct from VERSO AIR INC.
@@ -26,7 +26,7 @@ export default function VheartzPage() {
             Our Vision
           </h2>
           <p className="text-slate-300 leading-relaxed">
-            <span className="notranslate">vheartz</span> is in development. Its
+            <span className="notranslate">vHeartz</span> is in development. Its
             future vision is to support cultural heritage, creative communities,
             and sustainable opportunities. Programs and launch details will be
             announced when confirmed.
@@ -130,7 +130,7 @@ export default function VheartzPage() {
             Follow the vision
           </h2>
           <p className="text-slate-300 mb-8">
-            vheartz is in development. Confirmed information will be shared here.
+            vHeartz is in development. Confirmed information will be shared here.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/contact">

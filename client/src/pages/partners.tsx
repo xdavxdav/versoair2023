@@ -210,7 +210,7 @@ export default function Partners() {
           >
             Explore Future Collaboration{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              with vheartz
+              with vHeartz
             </span>
           </motion.h1>
 
@@ -220,7 +220,7 @@ export default function Partners() {
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
           >
-            <span className="notranslate">vheartz</span> is a future cultural
+            <span className="notranslate">vHeartz</span> is a future cultural
             and community-focused organization in development. Partnership
             concepts are exploratory; no partner commitments or programs are
             currently announced.

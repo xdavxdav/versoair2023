@@ -378,7 +378,7 @@ export default function CommandCenter() {
                   />
                   <RouteLink
                     path="/vheartz"
-                    label="vheartz (future organization)"
+                    label="vHeartz (future organization)"
                     emoji="🌍"
                   />
                   <RouteLink path="/impact" label="Impact" emoji="💡" />

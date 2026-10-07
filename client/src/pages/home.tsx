@@ -541,7 +541,7 @@ const ResponsiveFooter = ({
                 </span>
               </div>
               <span className="font-bold text-lg tracking-tight notranslate">
-                vheartz
+                vHeartz
               </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
@@ -1915,7 +1915,7 @@ export default function Home() {
               className="mb-4 md:mb-6"
             >
               <span className="inline-flex rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100 shadow-[0_0_0_1px_rgba(253,224,71,0.12)] md:px-4 md:py-2 md:text-sm">
-                vheartz • vision culturelle et communautaire à venir
+                vHeartz • vision culturelle et communautaire à venir
               </span>
             </motion.div>
 
@@ -1925,7 +1925,7 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.2 }}
               className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
-              vheartz
+              vHeartz
             </motion.h1>
 
             <motion.p
@@ -2956,7 +2956,7 @@ export default function Home() {
               width: `${NUM_PANELS * 100}%`,
             }}
           >
-            {/* PANEL 1: vheartz future organization - Emerald Gradient */}
+            {/* PANEL 1: vHeartz future organization - Emerald Gradient */}
             <div
               className="panel h-[100svh] flex-shrink-0 relative overflow-hidden"
               style={{
@@ -2975,7 +2975,7 @@ export default function Home() {
                       className="gold-text mb-1 sm:mb-2 md:mb-3"
                     >
                       <span className="gold-text__shine">
-                        vheartz
+                        vHeartz
                       </span>
                     </h2>
                     <div
@@ -3136,7 +3136,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Découvrir vheartz
+                          Découvrir vHeartz
                         </motion.button>
                       </Link>
                     </div>
@@ -3689,7 +3689,7 @@ export default function Home() {
                           whileTap={{ scale: 0.95 }}
                           className="border-2 border-white text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-white/10 transition-all duration-300 text-xs sm:text-sm"
                         >
-                          Découvrir vheartz
+                          Découvrir vHeartz
                         </motion.button>
                       </Link>
                     </div>

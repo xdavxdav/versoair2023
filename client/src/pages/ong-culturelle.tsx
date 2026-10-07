@@ -40,7 +40,7 @@ export default function OngCulturelle() {
             <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
               <div className="w-2 h-2 bg-amber-400 rounded-full" />
               <span className="text-amber-300 text-sm font-medium">
-                Vision à venir • vheartz
+                Vision à venir • vHeartz
               </span>
             </div>
           </motion.div>
@@ -52,7 +52,7 @@ export default function OngCulturelle() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-bold text-white mb-6 text-center leading-tight"
           >
-            Vision culturelle de vheartz
+            Vision culturelle de vHeartz
           </motion.h1>
 
           <motion.p
@@ -82,7 +82,7 @@ export default function OngCulturelle() {
               Notre Rêve
             </h2>
             <p className="text-lg text-slate-300 leading-relaxed max-w-4xl mx-auto text-center">
-              vheartz est en préparation. Sa vision est celle d'un monde où les
+              vHeartz est en préparation. Sa vision est celle d'un monde où les
               talents et les cultures se rencontrent, où les histoires se
               partagent et où les formes artistiques dialoguent au-delà des
               frontières.{" "}
@@ -256,7 +256,7 @@ export default function OngCulturelle() {
                 <span className="text-amber-400 font-semibold">
                   "La culture, c'est notre force."
                 </span>{" "}
-                Cette conviction guide la réflexion de vheartz : les cultures,
+                Cette conviction guide la réflexion de vHeartz : les cultures,
                 les arts et les histoires méritent d'être partagés avec soin,
                 dans le respect de leurs créateurs et de leurs communautés.
               </p>
@@ -269,7 +269,7 @@ export default function OngCulturelle() {
 
               <p>
                 <span className="text-amber-400 font-semibold">
-                  vheartz est une organisation en préparation.
+                  vHeartz est une organisation en préparation.
                 </span>{" "}
                 Sa vision est de favoriser, à terme, des échanges entre
                 patrimoine, création contemporaine et communautés.
