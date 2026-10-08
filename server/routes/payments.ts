@@ -12,7 +12,7 @@
  *   GET  /api/payments/methods         — Available payment methods & status
  *   GET  /api/payments/wallet          — Current user's wallet
  *   POST /api/payments/wallet/create   — Initialize wallet
- *   POST /api/payments/wallet/deposit  — Add funds (from external source)
+ *   POST /api/payments/wallet/deposit  — Disabled; deposits require verified checkout
  *   POST /api/payments/wallet/withdraw — Cash out
  *   POST /api/payments/wallet/transfer — Internal transfer (tip, purchase)
  *   GET  /api/payments/transactions    — Transaction history
@@ -28,6 +28,10 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, requireSuperuser } from "../middleware/auth";
+import {
+  onlinePaymentsEnabled,
+  rejectUnavailablePayment,
+} from "../utils/commercial-gates";
 
 const router = Router();
 
@@ -151,6 +155,14 @@ router.get("/methods", async (_req: Request, res: Response) => {
   }
 
   const methods = PAYMENT_METHODS.map((m) => {
+    if (!onlinePaymentsEnabled()) {
+      return {
+        ...m,
+        status: "coming_soon",
+        availableSoon: true,
+        comingSoonMessage: "Online payments are not currently available.",
+      };
+    }
     if (m.id === "crypto")
       return {
         ...m,
@@ -272,103 +284,21 @@ router.post(
   },
 );
 
-// POST /wallet/deposit — Add funds
+// Wallet credits must only be added after a provider-confirmed payment.
 router.post(
   "/wallet/deposit",
   requireAuth(),
-  async (req: Request, res: Response) => {
-    try {
-      const userId = parseInt(req.user!.userId);
-      const { amount, paymentMethod, externalReference, description } =
-        req.body;
-
-      const depositAmount = parseFloat(amount);
-      if (!depositAmount || depositAmount <= 0) {
-        return res
-          .status(400)
-          .json({ success: false, error: "Valid positive amount required" });
-      }
-
-      // Validate payment method
-      const method = paymentMethod || "wallet";
-      const methodConfig = PAYMENT_METHODS.find((m) => m.id === method);
-      if (!methodConfig) {
-        return res
-          .status(400)
-          .json({ success: false, error: "Invalid payment method" });
-      }
-      if (methodConfig.availableSoon) {
-        return res.status(400).json({
-          success: false,
-          availableSoon: true,
-          message:
-            methodConfig.comingSoonMessage ||
-            `${methodConfig.name} — AVAILABLE SOON`,
-        });
-      }
-      if (depositAmount < methodConfig.minDeposit) {
-        return res.status(400).json({
-          success: false,
-          error: `Minimum deposit for ${methodConfig.name}: $${methodConfig.minDeposit}`,
-        });
-      }
-
-      // Get or create wallet
-      let wallet = await pool.query(
-        `SELECT id, balance FROM platform_wallets WHERE user_id = $1`,
-        [userId],
-      );
-      if (wallet.rows.length === 0) {
-        wallet = await pool.query(
-          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id, balance`,
-          [userId],
-        );
-      }
-
-      const walletId = wallet.rows[0].id;
-      const balanceBefore = wallet.rows[0].balance || "0.00";
-      const balanceAfter = (parseFloat(balanceBefore) + depositAmount).toFixed(
-        2,
-      );
-
-      // Credit wallet
-      await pool.query(
-        `UPDATE platform_wallets SET balance = $1, total_deposited = total_deposited + $2, last_transaction_at = NOW(), updated_at = NOW()
-       WHERE id = $3`,
-        [balanceAfter, depositAmount, walletId],
-      );
-
-      // Record transaction
-      const txn = await pool.query(
-        `INSERT INTO wallet_transactions (wallet_id, user_id, type, amount, balance_before, balance_after, payment_method, external_reference, description, related_entity_type, status)
-       VALUES ($1, $2, 'deposit', $3, $4, $5, $6, $7, $8, 'wallet', $9)
-       RETURNING id, created_at`,
-        [
-          walletId,
-          userId,
-          depositAmount,
-          balanceBefore,
-          balanceAfter,
-          method,
-          externalReference || null,
-          description || `Deposit via ${methodConfig.name}`,
-          method === "bank" ? "pending" : "completed",
-        ],
-      );
-
-      res.json({
-        success: true,
-        message:
-          method === "bank"
-            ? "Bank transfer deposit submitted — pending admin verification"
-            : `$${depositAmount.toFixed(2)} deposited to wallet`,
-        transaction: txn.rows[0],
-        newBalance: balanceAfter,
-      });
-    } catch (err: any) {
-      console.error("[PAYMENTS] Deposit error:", err);
-      res.status(500).json({ success: false, error: "Failed to deposit" });
+  (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
     }
+    res.status(503).json({
+      success: false,
+      code: "VERIFIED_CHECKOUT_REQUIRED",
+      error:
+        "Wallet deposits are only available through a verified payment checkout.",
+    });
   },
 );
 
@@ -855,6 +785,10 @@ router.post(
           error: "Direction must be 'deposit' or 'withdrawal'",
         });
       }
+      if (direction === "deposit" && !onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
+      }
 
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount <= 0) {
@@ -1063,6 +997,10 @@ router.post(
           error: "Direction must be 'deposit' or 'withdrawal'",
         });
       }
+      if (direction === "deposit" && !onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
+      }
       const txnAmount = parseFloat(amount);
       if (!txnAmount || txnAmount < 5 || txnAmount > 3000) {
         return res.status(400).json({
@@ -1192,6 +1130,10 @@ router.post(
   requireAuth(),
   async (req: Request, res: Response) => {
     try {
+      if (!onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
+      }
       const userId = parseInt(req.user!.userId);
       const { coin, txHash, amount } = req.body;
 
@@ -1327,6 +1269,10 @@ router.post(
           success: false,
           error: "Direction must be 'deposit' or 'withdrawal'",
         });
+      }
+      if (direction === "deposit" && !onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
       }
       if (
         !provider ||
@@ -1545,6 +1491,10 @@ router.post(
   requireAuth(),
   async (req: Request, res: Response) => {
     try {
+      if (!onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
+      }
       const userId = parseInt(req.user!.userId);
       const { businessId, tier } = req.body;
 

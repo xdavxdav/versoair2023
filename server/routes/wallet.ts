@@ -5,6 +5,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import { onlinePaymentsEnabled } from "../utils/commercial-gates";
 
 const router = Router();
 
@@ -85,6 +86,13 @@ router.get(
 // ═══════════════════════════════════════════════════════════════════
 router.post("/deposit", requireAuth, async (req: Request, res: Response) => {
   try {
+    if (!onlinePaymentsEnabled()) {
+      return res.status(503).json({
+        success: false,
+        error: "Wallet deposits are currently unavailable",
+      });
+    }
+
     const userId = (req as any).user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 

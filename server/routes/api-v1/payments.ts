@@ -29,6 +29,10 @@ import {
   requireAuth,
   requireSuperuser,
 } from "../../middleware/auth";
+import {
+  onlinePaymentsEnabled,
+  rejectUnavailablePayment,
+} from "../../utils/commercial-gates";
 
 const router = Router();
 
@@ -79,6 +83,10 @@ function requireStripe(res: Response): res is Response {
  * Body: { userId, targetTier, billingCycle: 'monthly' | 'annual' }
  */
 router.post("/create-checkout", async (req: Request, res: Response) => {
+  if (!onlinePaymentsEnabled()) {
+    rejectUnavailablePayment(res);
+    return;
+  }
   if (!requireStripe(res)) return;
 
   try {
@@ -1153,6 +1161,10 @@ router.post(
   "/charge",
   requireSuperuser(),
   async (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
+    }
     if (!requireStripe(res)) return;
 
     try {

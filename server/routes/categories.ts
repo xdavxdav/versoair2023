@@ -3,6 +3,7 @@ import * as schema from "@shared/schema";
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.get(
               FROM business_categories bc
               LEFT JOIN businesses b ON b.category_id = bc.id
                 AND UPPER(b.country_code) = UPPER(${String(countryCode)})
+                AND ${sql.raw(publicBusinessVisibilitySql("b"))}
               GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
               ORDER BY bc.name`,
           )
@@ -27,6 +29,7 @@ router.get(
                 COUNT(b.id)::int AS business_count
               FROM business_categories bc
               LEFT JOIN businesses b ON b.category_id = bc.id
+                AND ${sql.raw(publicBusinessVisibilitySql("b"))}
               GROUP BY bc.id, bc.name, bc.slug, bc.description, bc.parent_id
               ORDER BY bc.name`,
           );

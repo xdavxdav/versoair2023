@@ -491,7 +491,7 @@ const contractTypes = [
     description:
       "For independent artists who want to maintain full creative control",
     features: [
-      "Worldwide digital distribution",
+      "Distribution territories depend on the written agreement",
       "Streaming platform optimization",
       "Basic promotional support",
       "Royalty split: 85% artist / 15% label",

@@ -10,6 +10,7 @@ import {
   notifyTrackPublished,
   notifyTrackDownload,
 } from "../services/notification-service";
+import { onlinePaymentsEnabled } from "../utils/commercial-gates";
 
 const router = Router();
 // Mounted at /api/music
@@ -821,6 +822,13 @@ router.post(
   "/tracks/:id/purchase",
   requireAuth,
   async (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      return res.status(503).json({
+        success: false,
+        error: "Track purchases are currently unavailable",
+      });
+    }
+
     try {
       const userId = (req as any).user?.id;
       const trackId = parseInt(req.params.id);
@@ -1900,6 +1908,13 @@ router.get("/artists/search", async (req, res) => {
 // POST /api/music/purchase — Simplified purchase (trackId in body)
 // ═════════════════════════════════════════════════════════════════════
 router.post("/purchase", requireAuth, async (req: any, res: any) => {
+  if (!onlinePaymentsEnabled()) {
+    return res.status(503).json({
+      success: false,
+      error: "Track purchases are currently unavailable",
+    });
+  }
+
   try {
     const userId = (req as any).user?.id;
     const { trackId } = req.body;

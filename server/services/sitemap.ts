@@ -1,20 +1,10 @@
 import type { Request, Response } from "express";
 import { PRIVATE_PATH_PREFIXES, PUBLIC_STATIC_ROUTES } from "../utils/seo-routes";
 import { getSiteOrigin } from "../utils/site-origin";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
 // Well under the protocol limit of 50,000 URLs / 50 MB per file.
 export const BUSINESSES_PER_SITEMAP = 10_000;
-
-// These three values are emitted together only by the retired launch-data
-// generator.  Keep the exclusion in the read path as well as in the data
-// cleanup migration: production deployments intentionally do not run
-// migrations, and synthetic businesses must never re-enter a public index.
-const SYNTHETIC_BUSINESS_PREDICATE = `
-  NOT (
-    COALESCE(email LIKE 'contact+%@versoair.local', false)
-    AND COALESCE(website LIKE '%.example.com', false)
-    AND COALESCE(phone LIKE '+1-555-%', false)
-  )`;
 
 type QueryFn = (
   sql: string,
@@ -105,10 +95,8 @@ export function createSitemapHandlers(query: QueryFn) {
       try {
         const { rows } = await query(
           `SELECT COUNT(*)::int AS total
-           FROM businesses
-           WHERE is_active = true
-             AND is_verified = true
-             AND ${SYNTHETIC_BUSINESS_PREDICATE}`,
+           FROM businesses b
+           WHERE ${publicBusinessVisibilitySql("b")}`,
         );
         return sendXml(
           res,
@@ -133,10 +121,8 @@ export function createSitemapHandlers(query: QueryFn) {
       }
       try {
         const { rows } = await query(
-          `SELECT id FROM businesses
-           WHERE is_active = true
-             AND is_verified = true
-             AND ${SYNTHETIC_BUSINESS_PREDICATE}
+          `SELECT b.id FROM businesses b
+           WHERE ${publicBusinessVisibilitySql("b")}
            ORDER BY id ASC
            LIMIT $1 OFFSET $2`,
           [BUSINESSES_PER_SITEMAP, (page - 1) * BUSINESSES_PER_SITEMAP],

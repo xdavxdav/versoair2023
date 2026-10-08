@@ -3449,7 +3449,7 @@ export default function UserDashboard() {
                           : 0)}
                     </div>
                     <span className="text-xs text-slate-500 font-medium">
-                      Worldwide reach
+                      Countries represented in available data
                     </span>
                   </div>
                 </>
@@ -4839,13 +4839,6 @@ export default function UserDashboard() {
         isOpen={showComparisonModal}
         onClose={() => setShowComparisonModal(false)}
         currentTier={currentTier}
-        onSelectTier={(tier: TierKey) => {
-          alert(
-            `Upgrade to ${TIERS[tier].name} \u2014 Payment integration coming soon!`,
-          );
-          setShowComparisonModal(false);
-        }}
-        hiddenSearches={hiddenSearches}
       />
       {renderDossierModal()}
       <AccountSettingsModal

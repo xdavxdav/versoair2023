@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { useCountry } from "@/contexts/CountryContext";
 import {
   getContinentAdjective,
   getContinentForCountry,
@@ -59,6 +58,15 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 const API_BASE_URL = "";
+const configuredDirectoryCountryCode =
+  import.meta.env.VITE_DIRECTORY_COUNTRY_CODE?.trim().toUpperCase() || "CA";
+const DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(
+  configuredDirectoryCountryCode,
+)
+  ? configuredDirectoryCountryCode
+  : "CA";
+const DIRECTORY_MARKET_LABEL =
+  import.meta.env.VITE_DIRECTORY_MARKET_LABEL?.trim() || "Toronto, Canada";
 
 interface Business {
   id: string;
@@ -574,9 +582,8 @@ export default function BusinessesDirectory() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("location") ?? "";
   });
-  const { selectedCountry } = useCountry();
-  const continentAdj = getContinentAdjective(selectedCountry || "");
-  const continentName = getContinentForCountry(selectedCountry || "");
+  const continentAdj = getContinentAdjective(DIRECTORY_COUNTRY_CODE);
+  const continentName = getContinentForCountry(DIRECTORY_COUNTRY_CODE);
   const [selectedCategory, setSelectedCategory] = useState<
     (typeof categories)[0] | null
   >(null);
@@ -587,6 +594,12 @@ export default function BusinessesDirectory() {
   const [searchResults, setSearchResults] = useState<Business[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchMode, setSearchMode] = useState<"standard" | "ai">("standard");
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [aiIntent, setAiIntent] = useState<{
+    sectorLabel?: string | null;
+    location?: string | null;
+  } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
@@ -618,13 +631,16 @@ export default function BusinessesDirectory() {
       setSelectedSubcategory(null);
       setSearchQuery("");
       setLocationQuery("");
+      setSearchMode("standard");
+      setSearchError(null);
+      setAiIntent(null);
       setCurrentPage(1);
       setIsSearching(true);
       setHasSearched(true);
 
       const result = await searchBusinessesByCategory({
         category: category.id,
-        countryCode: selectedCountry || undefined,
+        countryCode: DIRECTORY_COUNTRY_CODE,
         limit: 12,
         page: 1,
       });
@@ -635,7 +651,7 @@ export default function BusinessesDirectory() {
       }
       setIsSearching(false);
     },
-    [selectedCountry],
+    [],
   );
 
   const handleSubcategoryClick = useCallback(
@@ -647,6 +663,9 @@ export default function BusinessesDirectory() {
       setSelectedSubcategory(subcategory);
       setSearchQuery("");
       setLocationQuery("");
+      setSearchMode("standard");
+      setSearchError(null);
+      setAiIntent(null);
       setCurrentPage(1);
       setIsSearching(true);
       setHasSearched(true);
@@ -654,7 +673,7 @@ export default function BusinessesDirectory() {
       const result = await searchBusinessesByCategory({
         subcategorySlug: subcategory.categoryId,
         category: parentCategory.id,
-        countryCode: selectedCountry || undefined,
+        countryCode: DIRECTORY_COUNTRY_CODE,
         limit: 12,
         page: 1,
       });
@@ -665,20 +684,109 @@ export default function BusinessesDirectory() {
       }
       setIsSearching(false);
     },
-    [selectedCountry],
+    [],
   );
 
   const handleSearch = useCallback(
     async (page: number = 1) => {
+      const combinedQuery = [searchQuery.trim(), locationQuery.trim()]
+        .filter(Boolean)
+        .join(" ");
+      if (searchMode === "ai" && combinedQuery.length < 2) {
+        setSearchError("Describe a service or business you are looking for.");
+        setHasSearched(true);
+        return;
+      }
+
       setIsSearching(true);
       setCurrentPage(page);
+      setSearchError(null);
 
+      if (searchMode === "ai") {
+        setSelectedCategory(null);
+        setSelectedSubcategory(null);
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/search/intent`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: combinedQuery,
+              countryCode: DIRECTORY_COUNTRY_CODE,
+              limit: 12,
+            }),
+          });
+          let payload: any;
+          try {
+            payload = await response.json();
+          } catch {
+            throw new Error(
+              response.ok
+                ? "AI search returned an invalid response."
+                : `AI search is unavailable (HTTP ${response.status}).`,
+            );
+          }
+          if (!response.ok || !payload.success) {
+            throw new Error(
+              payload.error || `AI search failed (${response.status}).`,
+            );
+          }
+
+          const businesses = payload.results.businesses as Array<{
+            id: string | number;
+            name: string;
+            description: string;
+            category: string;
+            location: string;
+            country: string;
+            rating: number | null;
+            reviewCount: number;
+            phone: string | null;
+            isVerified: boolean;
+          }>;
+          setSearchResults(
+            businesses.map((business) => ({
+              id: String(business.id),
+              title: business.name,
+              description: business.description,
+              category: business.category,
+              location: [business.location, business.country]
+                .filter(Boolean)
+                .join(", "),
+              address: "",
+              phone: business.phone || "",
+              email: "",
+              rating: business.rating || 0,
+              reviews: business.reviewCount,
+              tags: [business.category].filter(Boolean),
+              status: business.isVerified ? "verified" : "active",
+            })),
+          );
+          setTotalResults(payload.results.totalMatches);
+          setAiIntent(payload.intent);
+          setHasSearched(true);
+        } catch (error) {
+          console.error("AI directory search failed:", error);
+          setSearchResults([]);
+          setTotalResults(0);
+          setSearchError(
+            error instanceof Error
+              ? error.message
+              : "AI search is temporarily unavailable. Try standard search.",
+          );
+          setHasSearched(true);
+        } finally {
+          setIsSearching(false);
+        }
+        return;
+      }
+
+      setAiIntent(null);
       const result = await searchBusinessesByCategory({
         subcategorySlug: selectedSubcategory?.categoryId,
         category: selectedCategory?.id,
         query: searchQuery,
         location: locationQuery,
-        countryCode: selectedCountry || undefined,
+        countryCode: DIRECTORY_COUNTRY_CODE,
         page,
         limit: 12,
       });
@@ -686,6 +794,11 @@ export default function BusinessesDirectory() {
       if (result.success) {
         setSearchResults(result.data);
         setTotalResults(result.total);
+        setHasSearched(true);
+      } else {
+        setSearchResults([]);
+        setTotalResults(0);
+        setSearchError("Search is temporarily unavailable. Please try again.");
         setHasSearched(true);
       }
       setIsSearching(false);
@@ -695,34 +808,37 @@ export default function BusinessesDirectory() {
       selectedSubcategory,
       searchQuery,
       locationQuery,
-      selectedCountry,
+      searchMode,
     ],
   );
 
-  // Auto-search on typing (debounced 500ms)
+  // Keep standard search responsive; AI intent search runs on explicit submit.
   useEffect(() => {
-    if (!searchQuery && !locationQuery) return;
+    if (searchMode !== "standard" || (!searchQuery && !locationQuery)) return;
     const timer = setTimeout(() => {
       handleSearch(1);
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery, locationQuery]);
+  }, [searchMode, searchQuery, locationQuery, handleSearch]);
 
   const clearSearch = () => {
     setSelectedCategory(null);
     setSelectedSubcategory(null);
     setSearchQuery("");
     setLocationQuery("");
+    setSearchMode("standard");
     setSearchResults([]);
     setHasSearched(false);
     setCurrentPage(1);
+    setSearchError(null);
+    setAiIntent(null);
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <SeoHead
         title="Businesses Directory | VersoAir"
-        description="Explore verified businesses by category and location on VersoAir. Discover services, contact details, and trusted local providers."
+        description={`The Verso Air business directory is preparing its first market in ${DIRECTORY_MARKET_LABEL}. Listings and expansion depend on verified local availability.`}
         canonicalPath="/businesses-directory"
       />
       {/* Header */}
@@ -781,7 +897,7 @@ export default function BusinessesDirectory() {
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
               <Globe className="w-4 h-4 text-sky-400" />
               <span className="text-sm text-gray-300">
-                Your gateway to {continentAdj} businesses
+                Planned first market: {DIRECTORY_MARKET_LABEL} ({continentName})
               </span>
             </div>
 
@@ -793,8 +909,14 @@ export default function BusinessesDirectory() {
             </h1>
 
             <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
-              Discover professionals and businesses across {continentName}
-              by category
+              Listings appear only after local businesses meet our verification
+              checks and the planned market is ready.
+            </p>
+            <p className="text-sm text-gray-400 max-w-2xl mx-auto -mt-6 mb-10">
+              The first planned market is {DIRECTORY_MARKET_LABEL}. Other
+              markets will open only when local availability and listings are
+              verified; expansion is region by region, not continent-wide or
+              worldwide.
             </p>
           </motion.div>
 
@@ -811,7 +933,11 @@ export default function BusinessesDirectory() {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
                     type="text"
-                    placeholder="Business name, service..."
+                    placeholder={
+                      searchMode === "ai"
+                        ? "Try: an emergency plumber near downtown Toronto"
+                        : "Business name, service..."
+                    }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -832,10 +958,53 @@ export default function BusinessesDirectory() {
                 <Button
                   onClick={() => handleSearch()}
                   disabled={isSearching}
-                  className="hidden"
+                  className="h-14 px-5 bg-sky-600 hover:bg-sky-700 text-white"
                 >
-                  <Search className="w-5 h-5" />
+                  {isSearching ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Search className="w-5 h-5" />
+                  )}
+                  <span className="ml-2">Search</span>
                 </Button>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 pt-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={searchMode === "standard" ? "default" : "outline"}
+                    onClick={() => setSearchMode("standard")}
+                    aria-pressed={searchMode === "standard"}
+                    className={
+                      searchMode === "standard"
+                        ? "bg-slate-800 text-white"
+                        : "text-slate-700"
+                    }
+                  >
+                    <Search className="w-4 h-4 mr-1.5" />
+                    Keyword search
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={searchMode === "ai" ? "default" : "outline"}
+                    onClick={() => setSearchMode("ai")}
+                    aria-pressed={searchMode === "ai"}
+                    className={
+                      searchMode === "ai"
+                        ? "bg-indigo-700 text-white hover:bg-indigo-800"
+                        : "text-indigo-700"
+                    }
+                  >
+                    <Sparkles className="w-4 h-4 mr-1.5" />
+                    AI-assisted search
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 text-left sm:text-right">
+                  AI search interprets your request; results are verified
+                  businesses in the planned market only.
+                </p>
               </div>
             </div>
           </motion.div>
@@ -862,8 +1031,15 @@ export default function BusinessesDirectory() {
                     Click on a category to explore businesses in that sector
                   </p>
                 </div>
-                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap notranslate">
-                  List Your Business
+                <Button
+                  onClick={() =>
+                    setLocation(
+                      "/contact?subject=Business%20directory%20listing%20eligibility%20review",
+                    )
+                  }
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap notranslate"
+                >
+                  Request Listing Review
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -926,6 +1102,24 @@ export default function BusinessesDirectory() {
                     Showing {searchResults.length} of{" "}
                     {totalResults.toLocaleString()} businesses
                   </p>
+                  {searchMode === "ai" && aiIntent && (
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      {aiIntent.sectorLabel && (
+                        <Badge variant="secondary">
+                          {aiIntent.sectorLabel}
+                        </Badge>
+                      )}
+                      {aiIntent.location && (
+                        <Badge variant="secondary">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {aiIntent.location}
+                        </Badge>
+                      )}
+                      <Badge className="bg-emerald-100 text-emerald-800">
+                        Verified listings only
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 <Button
                   onClick={clearSearch}
@@ -933,7 +1127,7 @@ export default function BusinessesDirectory() {
                   className="border-gray-300"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Clear Search
+                  Clear filters
                 </Button>
               </div>
             </motion.div>
@@ -947,6 +1141,23 @@ export default function BusinessesDirectory() {
                     className="bg-gray-200 rounded-xl h-64 animate-pulse"
                   />
                 ))}
+              </div>
+            ) : searchError ? (
+              <div
+                role="alert"
+                className="mx-auto max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-950"
+              >
+                <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+                <p>{searchError}</p>
+                {searchMode === "ai" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setSearchMode("standard")}
+                    className="mt-4"
+                  >
+                    Switch to keyword search
+                  </Button>
+                )}
               </div>
             ) : searchResults.length > 0 ? (
               <>
@@ -1045,7 +1256,7 @@ export default function BusinessesDirectory() {
                 </div>
 
                 {/* Pagination */}
-                {totalResults > 12 && (
+                {searchMode === "standard" && totalResults > 12 && (
                   <div className="flex justify-center items-center gap-2">
                     <Button
                       variant="outline"
@@ -1076,13 +1287,15 @@ export default function BusinessesDirectory() {
                   No Businesses Found
                 </h3>
                 <p className="text-gray-500 mb-6">
-                  Try a different search or browse other categories
+                  {searchMode === "ai"
+                    ? "No verified businesses match that request in the planned market yet. Try another service or location, or browse categories."
+                    : "Try a different search or browse other categories."}
                 </p>
                 <Button
                   onClick={clearSearch}
                   className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700"
                 >
-                  Browse Categories
+                  Clear filters and browse categories
                 </Button>
               </div>
             )}
@@ -1267,9 +1480,8 @@ export default function BusinessesDirectory() {
             </div>
 
             <p className="text-gray-400 text-sm text-center">
-              © {new Date().getFullYear()} VERSO AIR INC. Business Directory. Your gateway to{" "}
-              {continentAdj}
-              businesses.
+              © {new Date().getFullYear()} VERSO AIR INC. Business Directory.
+              Market availability depends on verified local listings.
             </p>
 
             <div className="flex gap-4 text-sm text-gray-400">

@@ -3,6 +3,7 @@ import * as schema from "@shared/schema";
 import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { db, pool } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get(
 
     console.log("🔍 [BUSINESS] Search:", { query, category, location });
 
-    const conditions: any[] = [];
+    const conditions: any[] = [sql.raw(publicBusinessVisibilitySql("businesses"))];
     if (query && typeof query === "string") {
       const searchCondition = or(
         ilike(schema.businesses.name, `${query}%`),
@@ -31,6 +32,15 @@ router.get(
       if (categoryRecord.length > 0) {
         conditions.push(eq(schema.businesses.categoryId, categoryRecord[0].id));
       }
+    }
+
+    if (location && typeof location === "string") {
+      const locationCondition = or(
+        ilike(schema.businesses.location, `%${location}%`),
+        ilike(schema.businesses.address, `%${location}%`),
+        ilike(schema.businesses.cityName, `%${location}%`),
+      );
+      if (locationCondition) conditions.push(locationCondition);
     }
 
     const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
@@ -57,6 +67,11 @@ router.get(
         phone: schema.businesses.phone,
         email: schema.businesses.email,
         website: schema.businesses.website,
+        rating: schema.businesses.rating,
+        reviewsCount: schema.businesses.reviewsCount,
+        latitude: schema.businesses.latitude,
+        longitude: schema.businesses.longitude,
+        tags: schema.businesses.tags,
       })
       .from(schema.businesses)
       .leftJoin(
@@ -78,11 +93,13 @@ router.get(
       address: business.address || "",
       phone: business.phone || "",
       email: business.email || "",
-      rating: 4.5,
-      reviews: 0,
-      tags: [],
-      latitude: 0,
-      longitude: 0,
+      rating: Number(business.rating || 0),
+      reviews: Number(business.reviewsCount || 0),
+      tags: Array.isArray(business.tags) ? business.tags : [],
+      latitude:
+        business.latitude == null ? undefined : Number(business.latitude),
+      longitude:
+        business.longitude == null ? undefined : Number(business.longitude),
       created_at: business.createdAt?.toISOString(),
       website: business.website || "",
     }));
@@ -90,7 +107,7 @@ router.get(
     res.json({
       success: true,
       data: formattedResults,
-      total: formattedResults.length,
+      total: totalCount,
       totalInDatabase: totalCount,
       query: query?.toString() || "",
       category: category?.toString() || "",
@@ -128,7 +145,10 @@ router.get(
     const limitNum = Math.max(1, parseInt(limit as string, 10) || 10);
     const offset = (pageNum - 1) * limitNum;
 
-    const whereConditions: string[] = ["b.category_id = $1"];
+    const whereConditions: string[] = [
+      "b.category_id = $1",
+      publicBusinessVisibilitySql("b"),
+    ];
     const params: any[] = [category.id];
     let paramIndex = 2;
 
@@ -340,34 +360,21 @@ router.get(
   asyncHandler(async (_req, res) => {
     try {
       const locResult = await db.execute(
-        sql`SELECT DISTINCT location FROM businesses
-            WHERE location IS NOT NULL AND TRIM(location) != ''
-            ORDER BY location LIMIT 100`,
+        sql`SELECT DISTINCT b.location FROM businesses b
+            WHERE b.location IS NOT NULL
+              AND TRIM(b.location) != ''
+              AND ${sql.raw(publicBusinessVisibilitySql("b"))}
+            ORDER BY b.location LIMIT 100`,
       );
-      let locations = (locResult.rows as any[])
+      const locations = (locResult.rows as any[])
         .map((r) => r.location)
         .filter(Boolean);
-
-      if (locations.length === 0) {
-        const cityResult = await db.execute(
-          sql`SELECT DISTINCT name FROM cities ORDER BY name LIMIT 50`,
-        );
-        locations = (cityResult.rows as any[])
-          .map((r) => r.name)
-          .filter(Boolean);
-      }
-
-      if (locations.length === 0) {
-        locations = ["Abidjan", "Yamoussoukro", "Bouaké", "Daloa", "San-Pédro"];
-      }
-
       return res.json({ success: true, locations, count: locations.length });
     } catch (error) {
       console.error("❌ Failed to fetch locations:", error);
-      return res.json({
-        success: true,
-        locations: ["Abidjan", "Yamoussoukro", "Bouaké"],
-        count: 3,
+      return res.status(500).json({
+        success: false,
+        error: "Failed to fetch available business locations",
       });
     }
   }),

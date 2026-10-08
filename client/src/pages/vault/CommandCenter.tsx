@@ -751,7 +751,7 @@ export default function CommandCenter() {
                 <ApiEndpoint
                   method="POST"
                   path="/auth/start-trial"
-                  desc="Start 7-day free trial"
+                  desc="Trial activation is disabled pending verified terms"
                 />
               </SectionBlock>
 
@@ -1467,7 +1467,7 @@ export default function CommandCenter() {
                   />
                   <InfoRow
                     label="Trial System"
-                    value="7-day free trial per tier"
+                    value="Trial terms and activation are currently disabled"
                   />
                   <InfoRow
                     label="Trial Expiry Check"

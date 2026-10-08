@@ -16,6 +16,10 @@ import {
   basicValidation,
   advancedValidation,
 } from "../services/print-validator";
+import {
+  onlinePaymentsEnabled,
+  rejectUnavailablePayment,
+} from "../utils/commercial-gates";
 
 const router = Router();
 
@@ -1249,6 +1253,10 @@ router.post(
   requireAuth(),
   async (req: Request, res: Response) => {
     try {
+      if (!onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
+      }
       if (!stripe) {
         return res
           .status(503)

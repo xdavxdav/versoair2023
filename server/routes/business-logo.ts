@@ -9,6 +9,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { pool } from "../db";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
@@ -276,9 +277,12 @@ router.get("/file/:filename", (req: Request, res: Response) => {
 
   if (/^\d+$/.test(filename)) {
     pool
-      .query(`SELECT logo_data, logo_mime FROM businesses WHERE id = $1`, [
-        Number(filename),
-      ])
+      .query(
+        `SELECT b.logo_data, b.logo_mime
+         FROM businesses b
+         WHERE b.id = $1 AND ${publicBusinessVisibilitySql("b")}`,
+        [Number(filename)],
+      )
       .then((result) => {
         const logo = result.rows[0];
         if (!logo?.logo_data) {

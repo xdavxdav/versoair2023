@@ -23,6 +23,14 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: ONLINE_PAYMENTS_ENABLED
+        value: "false"
+      - key: FREE_TRIALS_ENABLED
+        value: "false"
+      - key: VITE_DIRECTORY_COUNTRY_CODE
+        value: CA
+      - key: VITE_DIRECTORY_MARKET_LABEL
+        value: "Toronto, Canada"
       - key: DATABASE_URL
         fromDatabase:
           name: versoair-db

@@ -1,817 +1,91 @@
-import { Button } from "@/components/ui/button";
+import { ArrowRight, CheckCircle2, ClipboardList, Globe } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import {
-  fadeInUp,
-  staggerContainer,
-  staggerItemScale,
-  defaultViewport,
-} from "@/lib/animations";
-import {
-  BarChart3,
-  MapPin,
-  Cog,
-  Shield,
-  Headphones,
-  Rocket,
-  Database,
-  Cloud,
-  Wifi,
-  Cpu,
-  Users,
-  Globe,
-  Target,
-  Zap,
-  Lock,
-  Server,
-  Code,
-  Palette,
-  TrendingUp,
-  FileText,
-  MessageSquare,
-  Smartphone,
-  ShieldCheck,
-  BarChart,
-  Network,
-  Building,
-  Car,
-  CreditCard,
-  Film,
-  Package,
-  Coffee,
-  HardHat,
-  DollarSign,
-  Music,
-  Award,
-  CheckCircle,
-  ExternalLink,
-  ArrowRight,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function Services() {
-  const services = [
-    {
-      category: "Business Intelligence Platform",
-      icon: <BarChart3 className="h-8 w-8" />,
-      description: "Comprehensive analytics and data visualization platform",
-      features: [
-        "Multi-industry dashboard templates",
-        "Real-time data processing",
-        "Custom KPI configuration",
-        "Predictive analytics",
-        "Automated reporting",
-      ],
-      solutions: [
-        { name: "Commerce Analytics", path: "/commerce", icon: <Package /> },
-        { name: "Hospitality Suite", path: "/hotellerie", icon: <Coffee /> },
-        { name: "Construction Hub", path: "/batiment", icon: <HardHat /> },
-        { name: "Automotive Insights", path: "/automobile", icon: <Car /> },
-        { name: "Finance Dashboard", path: "/finances", icon: <DollarSign /> },
-        {
-          name: "Entertainment Analytics",
-          path: "/divertissement",
-          icon: <Music />,
-        },
-      ],
-    },
-    {
-      category: "Location Intelligence Services",
-      icon: <MapPin className="h-8 w-8" />,
-      description: "Advanced geospatial analytics and location-based insights",
-      features: [
-        "GPS mapping and tracking",
-        "WiFi network analysis",
-        "Location-based customer insights",
-        "Territory management",
-        "Route optimization",
-      ],
-      useCases: [
-        "Retail site selection",
-        "Delivery route planning",
-        "Network coverage analysis",
-        "Competitive positioning",
-      ],
-    },
-    {
-      category: "Data Integration & API",
-      icon: <Cog className="h-8 w-8" />,
-      description: "Seamless integration with your existing systems",
-      features: [
-        "RESTful API access",
-        "Custom connector development",
-        "ETL pipeline configuration",
-        "Real-time data sync",
-        "Third-party platform integration",
-      ],
-      integrations: [
-        "RESTful API access",
-        "Custom connector development",
-        "Data import/export",
-      ],
-    },
-    {
-      category: "Security & Compliance",
-      icon: <Shield className="h-8 w-8" />,
-      description: "Enterprise-grade security and regulatory compliance",
-      features: [
-        "GDPR/CCPA compliance",
-        "End-to-end encryption",
-        "Regular security audits",
-        "Role-based access control",
-      ],
-      certifications: [
-        "GDPR data processing agreements",
-      ],
-    },
-    {
-      category: "Technical Support & Services",
-      icon: <Headphones className="h-8 w-8" />,
-      description: "24/7 support and professional services",
-      features: [
-        "Dedicated success managers",
-        "Implementation support",
-        "Training programs",
-        "Performance optimization",
-        "Proactive monitoring",
-      ],
-      serviceLevels: [
-        "Basic: Business hours support",
-        "Professional: 24/7 email & chat",
-        "Enterprise: Dedicated account manager",
-        "Premier: On-site training available",
-      ],
-    },
-    {
-      category: "Growth & Consulting",
-      icon: <Rocket className="h-8 w-8" />,
-      description: "Strategic consulting and optimization services",
-      features: [
-        "Business intelligence strategy",
-        "Data maturity assessment",
-        "ROI optimization",
-        "Team training & enablement",
-        "Custom solution design",
-      ],
-      offerings: [
-        "Executive workshops",
-        "Team training sessions",
-        "Implementation planning",
-        "Performance reviews",
-      ],
-    },
-  ];
-
-  const industries = [
-    {
-      name: "Commerce & Retail",
-      icon: <Package className="h-6 w-6" />,
-      path: "/commerce",
-      description: "Optimize sales, inventory, and customer experience",
-      metrics: [
-        "Sales Performance",
-        "Inventory Turnover",
-        "Customer LTV",
-        "Conversion Rates",
-      ],
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      name: "Hospitality",
-      icon: <Coffee className="h-6 w-6" />,
-      path: "/hotellerie",
-      description: "Maximize occupancy and guest satisfaction",
-      metrics: [
-        "Occupancy Rates",
-        "Revenue per Room",
-        "Guest Satisfaction",
-        "Staff Efficiency",
-      ],
-      color: "from-green-500 to-green-600",
-    },
-    {
-      name: "Construction",
-      icon: <HardHat className="h-6 w-6" />,
-      path: "/batiment",
-      description: "Streamline projects and ensure safety compliance",
-      metrics: [
-        "Project Timelines",
-        "Safety Incidents",
-        "Resource Allocation",
-        "Budget Compliance",
-      ],
-      color: "from-orange-500 to-orange-600",
-    },
-    {
-      name: "Automotive",
-      icon: <Car className="h-6 w-6" />,
-      path: "/automobile",
-      description: "Enhance fleet management and sales performance",
-      metrics: [
-        "Fleet Utilization",
-        "Maintenance Costs",
-        "Sales Volume",
-        "Customer Retention",
-      ],
-      color: "from-red-500 to-red-600",
-    },
-    {
-      name: "Finance",
-      icon: <DollarSign className="h-6 w-6" />,
-      path: "/finances",
-      description: "Improve risk assessment and investment decisions",
-      metrics: [
-        "Risk Exposure",
-        "Portfolio Performance",
-        "Compliance Rate",
-        "Transaction Volume",
-      ],
-      color: "from-purple-500 to-purple-600",
-    },
-    {
-      name: "Entertainment",
-      icon: <Music className="h-6 w-6" />,
-      path: "/divertissement",
-      description: "Analyze audience behavior and content performance",
-      metrics: [
-        "Audience Engagement",
-        "Content Performance",
-        "Event Attendance",
-        "Revenue Streams",
-      ],
-      color: "from-pink-500 to-pink-600",
-    },
-  ];
-
-  const technicalCapabilities = [
-    {
-      title: "Data Processing",
-      icon: <Cpu className="h-6 w-6" />,
-      details:
-        "Process millions of data points in real-time with our scalable infrastructure",
-    },
-    {
-      title: "Cloud Infrastructure",
-      icon: <Cloud className="h-6 w-6" />,
-      details:
-        "Secure cloud-hosted infrastructure with continuous monitoring",
-    },
-    {
-      title: "API Ecosystem",
-      icon: <Code className="h-6 w-6" />,
-      details:
-        "Comprehensive REST API with SDKs for all major programming languages",
-    },
-    {
-      title: "Mobile Access",
-      icon: <Smartphone className="h-6 w-6" />,
-      details: "Mobile-responsive web access for on-the-go analytics",
-    },
-  ];
-
   return (
     <div className="flex min-h-screen flex-col bg-[#f3efe9] text-slate-900">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-[linear-gradient(135deg,#f8f5f1_0%,#f3efe9_28%,#efe7dd_100%)] py-24">
+      <SeoHead
+        title="Business Directory Listing | VersoAir"
+        description="Request an eligibility review for a business directory listing with VersoAir. Inclusion, availability, requirements, and fees are confirmed individually."
+        canonicalPath="/services"
+      />
+
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#f8f5f1_0%,#f3efe9_28%,#efe7dd_100%)] px-4 py-20 sm:py-28">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),transparent_30%)]" />
-        <div className="relative mx-auto max-w-[95vw] px-6 text-center">
-          <motion.div variants={fadeInUp} initial="hidden" animate="visible">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/70 px-4 py-2 backdrop-blur-sm">
-              <Award className="h-4 w-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-700">
-                Business intelligence for growing companies
-              </span>
-            </div>
-          </motion.div>
-          <motion.h1
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: 0.1 }}
-            className="mb-6 text-5xl font-bold text-slate-900 md:text-6xl"
-          >
-            Verso Air Services
-            <br />
-            <span className="text-amber-600">
-              Business Intelligence Solutions
-            </span>
-          </motion.h1>
-          <motion.p
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: 0.2 }}
-            className="mx-auto mb-10 max-w-3xl text-xl text-slate-600"
-          >
-            Comprehensive analytics platform serving multiple industries with
-            enterprise-grade security, real-time insights, and scalable
-            solutions.
-          </motion.p>
-          <motion.div
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-          >
-            <Link href="/signin">
-              <Button className="bg-amber-600 px-8 py-6 text-lg text-white hover:bg-amber-500 hover:shadow-xl">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/demo">
-              <Button
-                variant="outline"
-                className="border-2 border-slate-300 bg-white px-8 py-6 text-lg text-slate-800 hover:bg-slate-100"
-              >
-                Request Demo
-                <ExternalLink className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Platform Overview */}
-      <section className="bg-white py-20">
-        <div className="max-w-[95vw] mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Verso Air Platform Overview
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              A unified platform delivering actionable insights across all
-              business functions
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative mx-auto max-w-4xl text-center"
+        >
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/70 px-4 py-2 text-sm font-medium text-amber-800 backdrop-blur-sm">
+            <Globe className="h-4 w-4" />
+            Business directory
           </div>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={defaultViewport}
-            className="grid lg:grid-cols-3 gap-8 mb-16"
-          >
-            {technicalCapabilities.map((capability, index) => (
-              <motion.div
-                key={index}
-                variants={staggerItemScale}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-shadow"
-              >
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-                  {capability.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-4">
-                  {capability.title}
-                </h3>
-                <p className="text-gray-600">{capability.details}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Core Services Grid */}
-          <div className="space-y-8">
-            {services.map((service, index) => (
-              <div
-                key={index}
-                className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 p-8 hover:border-primary/30 transition-all"
-              >
-                <div className="flex flex-col md:flex-row md:items-start gap-8">
-                  <div className="md:w-1/4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mb-6 text-white">
-                      {service.icon}
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                      {service.category}
-                    </h3>
-                    <p className="text-gray-600">{service.description}</p>
-                  </div>
-
-                  <div className="md:w-3/4">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          Key Features
-                        </h4>
-                        <ul className="space-y-3">
-                          {service.features.map((feature, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-center gap-3 text-gray-600"
-                            >
-                              <div className="w-2 h-2 bg-primary rounded-full"></div>
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div>
-                        {service.solutions && (
-                          <>
-                            <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                              <Target className="h-5 w-5 text-blue-500" />
-                              Industry Solutions
-                            </h4>
-                            <div className="grid grid-cols-2 gap-3">
-                              {service.solutions.map((solution, idx) => (
-                                <Link key={idx} href={solution.path}>
-                                  <div className="bg-gray-50 hover:bg-primary/5 rounded-lg p-3 cursor-pointer transition-colors">
-                                    <div className="flex items-center gap-2">
-                                      <div className="text-gray-600">
-                                        {solution.icon}
-                                      </div>
-                                      <span className="text-sm font-medium">
-                                        {solution.name}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          </>
-                        )}
-
-                        {service.useCases && (
-                          <>
-                            <h4 className="font-semibold text-gray-900 mb-4 mt-6 flex items-center gap-2">
-                              <Zap className="h-5 w-5 text-orange-500" />
-                              Use Cases
-                            </h4>
-                            <ul className="space-y-2">
-                              {service.useCases.map((useCase, idx) => (
-                                <li key={idx} className="text-sm text-gray-600">
-                                  • {useCase}
-                                </li>
-                              ))}
-                            </ul>
-                          </>
-                        )}
-
-                        {service.integrations && (
-                          <>
-                            <h4 className="font-semibold text-gray-900 mb-4 mt-6 flex items-center gap-2">
-                              <Network className="h-5 w-5 text-purple-500" />
-                              Supported Integrations
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {service.integrations.map((integration, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
-                                >
-                                  {integration}
-                                </span>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          <h1 className="mb-6 text-4xl font-bold md:text-6xl">
+            Request a listing review
+          </h1>
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-600 md:text-xl">
+            Businesses may request an eligibility review for the VersoAir
+            directory. Each request is reviewed before any listing is accepted.
+          </p>
+          <p className="mx-auto mb-8 max-w-2xl text-sm text-slate-500">
+            A request does not guarantee inclusion, placement, audience reach,
+            or business results. Availability, requirements, and any fees are
+            confirmed with you before proceeding.
+          </p>
+          <Link href="/contact?subject=Business%20directory%20listing%20eligibility%20review">
+            <Button className="bg-amber-600 px-6 py-5 text-white hover:bg-amber-700">
+              Request an eligibility review
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        </motion.div>
       </section>
 
-      {/* Industries Section */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-[95vw] mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Industry-Specific Solutions
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Tailored analytics for your specific industry challenges and
-              opportunities
-            </p>
+      <section className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-12 md:grid-cols-2 md:py-16">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+            <ClipboardList className="h-6 w-6" />
           </div>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={defaultViewport}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {industries.map((industry, index) => (
-              <Link key={index} href={industry.path}>
-                <motion.div
-                  variants={staggerItemScale}
-                  whileHover={{ y: -8, scale: 1.03 }}
-                  className={`bg-gradient-to-br ${industry.color} rounded-2xl p-8 text-white hover:shadow-2xl transition-all duration-300 cursor-pointer`}
-                >
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                      {industry.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">{industry.name}</h3>
-                      <p className="text-white/80 text-sm mt-1">
-                        {industry.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-white/90">
-                      Key Metrics Tracked:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {industry.metrics.map((metric, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-white/10 rounded-full text-sm backdrop-blur-sm"
-                        >
-                          {metric}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t border-white/20">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/80">
-                        View solution details
-                      </span>
-                      <ArrowRight className="h-5 w-5" />
-                    </div>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </motion.div>
+          <h2 className="mb-3 text-xl font-semibold">What happens next</h2>
+          <ol className="space-y-3 text-sm leading-relaxed text-slate-600">
+            <li className="flex gap-3">
+              <span className="font-semibold text-amber-700">1.</span>
+              Send your business name, website, location, and category.
+            </li>
+            <li className="flex gap-3">
+              <span className="font-semibold text-amber-700">2.</span>
+              The team reviews eligibility and confirms current availability.
+            </li>
+            <li className="flex gap-3">
+              <span className="font-semibold text-amber-700">3.</span>
+              Any listing requirements and fees are shared before you decide.
+            </li>
+          </ol>
         </div>
-      </section>
 
-      {/* Pricing Tiers */}
-      <section className="py-20 bg-white">
-        <div className="max-w-[95vw] mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Service Packages
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Choose the package that fits your business needs and scale as you
-              grow
-            </p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={defaultViewport}
-            className="grid md:grid-cols-3 gap-8"
-          >
-            <motion.div
-              variants={staggerItemScale}
-              whileHover={{ y: -5 }}
-              className="border-2 border-gray-200 rounded-2xl p-8 hover:border-primary/30 transition-all"
+          <h2 className="mb-3 text-xl font-semibold">Other services</h2>
+          <p className="text-sm leading-relaxed text-slate-600">
+            GeoAdmin subscriptions, analytics, integrations, and consulting are
+            not currently offered for online purchase. Their scope, availability,
+            and terms have not been finalized.
+          </p>
+          <Link href="/pricing">
+            <Button
+              variant="outline"
+              className="mt-5 border-slate-300 text-slate-800"
             >
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Starter
-                </h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  $499<span className="text-lg text-gray-600">/month</span>
-                </div>
-                <p className="text-gray-600">Perfect for small businesses</p>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Up to 5 users</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Basic analytics dashboard</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Email support</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Monthly data updates</span>
-                </li>
-              </ul>
-              <Link href="/auth/signin?plan=starter">
-                <Button className="w-full">Get Started</Button>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              variants={staggerItemScale}
-              whileHover={{ y: -5 }}
-              className="border-2 border-primary rounded-2xl p-8 bg-gradient-to-b from-primary/5 to-white relative"
-            >
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  MOST POPULAR
-                </span>
-              </div>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Professional
-                </h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  $1,499<span className="text-lg text-gray-600">/month</span>
-                </div>
-                <p className="text-gray-600">For growing businesses</p>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Up to 25 users</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Advanced analytics & reporting</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Priority support</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Real-time data updates</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Custom dashboard creation</span>
-                </li>
-              </ul>
-              <Link href="/auth/signin?plan=professional">
-                <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-                  Start Free Trial
-                </Button>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              variants={staggerItemScale}
-              whileHover={{ y: -5 }}
-              className="border-2 border-gray-200 rounded-2xl p-8 hover:border-gray-800 transition-all"
-            >
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  Enterprise
-                </h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  Custom<span className="text-lg text-gray-600">/pricing</span>
-                </div>
-                <p className="text-gray-600">For large organizations</p>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Unlimited users</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Full platform customization</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Dedicated account manager</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>On-premise deployment options</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>White-label solutions</span>
-                </li>
-              </ul>
-              <Link href="/contact">
-                <Button className="w-full" variant="outline">
-                  Contact Sales
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Service Links & Resources */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-[95vw] mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Additional Resources
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Everything you need to succeed with Verso Air
-            </p>
-          </div>
-
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={defaultViewport}
-            className="grid md:grid-cols-3 gap-8"
-          >
-            <Link href="/services/news">
-              <motion.div
-                variants={staggerItemScale}
-                whileHover={{ y: -6, scale: 1.02 }}
-                className="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-primary hover:shadow-xl transition-all duration-300 cursor-pointer group"
-              >
-                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors">
-                  <FileText className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4">News & Updates</h3>
-                <p className="text-gray-600 mb-6">
-                  Platform updates, industry insights, and company announcements
-                </p>
-                <div className="flex items-center text-primary font-medium">
-                  Read Latest Updates
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </div>
-              </motion.div>
-            </Link>
-
-            <Link href="/services/careers">
-              <motion.div
-                variants={staggerItemScale}
-                whileHover={{ y: -6, scale: 1.02 }}
-                className="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-green-500 hover:shadow-xl transition-all duration-300 cursor-pointer group"
-              >
-                <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-100 transition-colors">
-                  <Users className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Careers</h3>
-                <p className="text-gray-600 mb-6">
-                  Join our team of data experts, engineers, and business
-                  professionals
-                </p>
-                <div className="flex items-center text-green-600 font-medium">
-                  View Open Positions
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </div>
-              </motion.div>
-            </Link>
-
-            <Link href="/services/contractors">
-              <motion.div
-                variants={staggerItemScale}
-                whileHover={{ y: -6, scale: 1.02 }}
-                className="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-purple-500 hover:shadow-xl transition-all duration-300 cursor-pointer group"
-              >
-                <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-100 transition-colors">
-                  <TrendingUp className="h-8 w-8 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Partner Program</h3>
-                <p className="text-gray-600 mb-6">
-                  Become a certified partner, consultant, or implementation
-                  specialist
-                </p>
-                <div className="flex items-center text-purple-600 font-medium">
-                  Join Partner Network
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </div>
-              </motion.div>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="bg-[linear-gradient(135deg,#f8f5f1_0%,#f3efe9_28%,#efe7dd_100%)] py-20">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <div className="rounded-3xl border border-amber-200 bg-white/80 p-12 shadow-[0_20px_45px_rgba(15,23,42,0.04)] backdrop-blur-sm">
-            <h2 className="mb-6 text-4xl font-bold text-slate-900">
-              Ready to Transform Your Business?
-            </h2>
-            <p className="mx-auto mb-10 max-w-2xl text-xl text-slate-600">
-              Schedule a personalized demo to see how Verso Air can solve your
-              specific business challenges.
-            </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link href="/demo">
-                <Button className="bg-amber-600 px-10 py-6 text-lg text-white hover:bg-amber-500 hover:shadow-2xl">
-                  Request Personalized Demo
-                  <ExternalLink className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/sav">
-                <Button
-                  variant="outline"
-                  className="border-2 border-slate-300 bg-white px-10 py-6 text-lg text-slate-800 hover:bg-slate-100"
-                >
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  Contact Support
-                </Button>
-              </Link>
-            </div>
-          </div>
+              View availability information
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
     </div>

@@ -10,6 +10,7 @@ import {
   sendBusinessApprovedEmail,
   sendBusinessRejectedEmail,
 } from "../services/email-service";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
 const router = Router();
 
@@ -25,6 +26,35 @@ async function bizHasColumn(col: string): Promise<boolean> {
     _bizColCache[col] = false;
   }
   return _bizColCache[col]!;
+}
+
+async function requireBusinessOwnerOrStaff(
+  req: Request,
+  res: Response,
+  businessId: string,
+): Promise<boolean> {
+  const result = await pool.query(
+    "SELECT owner_id FROM businesses WHERE id = $1",
+    [businessId],
+  );
+  const business = result.rows[0];
+  if (!business) {
+    res.status(404).json({ success: false, error: "Business not found" });
+    return false;
+  }
+
+  const requesterId = Number(req.user?.userId);
+  const isStaff = ["admin", "moderator", "superuser"].includes(
+    req.user?.role || "",
+  );
+  if (!isStaff && (!requesterId || Number(business.owner_id) !== requesterId)) {
+    res.status(403).json({
+      success: false,
+      error: "You do not have access to this business",
+    });
+    return false;
+  }
+  return true;
 }
 
 async function ensureBusinessDetailTables(): Promise<void> {
@@ -275,7 +305,7 @@ router.get(
     let whereClause = "WHERE 1=1";
     const params: any[] = [];
     if (!isStaff && requestedOwnerId === null) {
-      whereClause += " AND b.is_active = true AND b.is_verified = true";
+      whereClause += ` AND ${publicBusinessVisibilitySql("b")}`;
     }
 
     if (search) {
@@ -550,7 +580,7 @@ router.get(
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
       WHERE b.id = $1
-        AND ($2::boolean OR (b.is_active = true AND b.is_verified = true))
+        AND ($2::boolean OR (${publicBusinessVisibilitySql("b")}))
     `,
       [id, includeUnverified],
     );
@@ -908,7 +938,8 @@ router.get(
         ROUND(MAX(rating)::numeric, 2) as max_rating,
         COUNT(DISTINCT category_id) as total_categories,
         SUM(reviews) as total_reviews
-      FROM businesses
+      FROM businesses b
+      WHERE ${publicBusinessVisibilitySql("b")}
     `);
 
       res.json({
@@ -944,7 +975,8 @@ router.get(
         FROM businesses b
         LEFT JOIN business_categories bc ON b.category_id = bc.id
         LEFT JOIN users u ON b.owner_id = u.id
-        WHERE b.category_id = $1 AND b.is_active = true
+        WHERE b.category_id = $1
+          AND ${publicBusinessVisibilitySql("b")}
         ORDER BY
           CASE COALESCE(u.subscription_tier, 'free')
             WHEN 'enterprise' THEN 1
@@ -1476,9 +1508,13 @@ router.put(
 /**
  * DOWNLOAD business registration PDF
  */
-router.get("/api/businesses/:id/pdf", async (req: Request, res: Response) => {
+router.get(
+  "/api/businesses/:id/pdf",
+  requireAuth(),
+  async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!(await requireBusinessOwnerOrStaff(req, res, id))) return;
     const result = await pool.query(
       "SELECT pdf_path, name FROM businesses WHERE id = $1",
       [id],
@@ -1508,7 +1544,8 @@ router.get("/api/businesses/:id/pdf", async (req: Request, res: Response) => {
       error: "Failed to download PDF",
     });
   }
-});
+  },
+);
 
 // ============================================================================
 // BUSINESS ADMIN MESSAGES (Teams-style conversation thread)
@@ -1519,9 +1556,11 @@ router.get("/api/businesses/:id/pdf", async (req: Request, res: Response) => {
  */
 router.get(
   "/api/businesses/:id/messages",
+  requireAuth(),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      if (!(await requireBusinessOwnerOrStaff(req, res, id))) return;
       const result = await pool.query(
         `SELECT * FROM business_messages
          WHERE business_id = $1
@@ -1543,16 +1582,17 @@ router.get(
  */
 router.post(
   "/api/businesses/:id/messages",
+  requireAuth(),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { senderId, senderName, senderRole, message, messageType } =
-        req.body;
+      const { message, messageType } = req.body;
+      if (!(await requireBusinessOwnerOrStaff(req, res, id))) return;
 
-      if (!message || !senderName || !senderRole) {
+      if (typeof message !== "string" || !message.trim()) {
         return res.status(400).json({
           success: false,
-          error: "Missing required fields: message, senderName, senderRole",
+          error: "Message is required",
         });
       }
 
@@ -1563,10 +1603,10 @@ router.post(
          RETURNING *`,
         [
           id,
-          senderId || null,
-          senderName,
-          senderRole,
-          message,
+          req.user!.userId,
+          req.user!.email,
+          req.user!.role,
+          message.trim(),
           messageType || "text",
         ],
       );
@@ -1584,9 +1624,11 @@ router.post(
  */
 router.get(
   "/api/businesses/:id/dossier",
+  requireAuth(),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      if (!(await requireBusinessOwnerOrStaff(req, res, id))) return;
       const result = await pool.query(
         `SELECT b.*,
             bc.name as category_name,

@@ -302,7 +302,8 @@ export default function GeoAdminAuthGate({
               insights.
             </p>
             <p className="text-sm text-slate-500">
-              Every subscription tier unlocks your own Geo Admin view.
+              GeoAdmin plan access and current availability are confirmed with
+              the team.
             </p>
           </div>
 
@@ -338,13 +339,8 @@ export default function GeoAdminAuthGate({
                         isActive ? "text-emerald-400/80" : "text-slate-600"
                       }`}
                     >
-                      {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}/mo`}
+                      Availability pending
                     </span>
-                    {t.popular && (
-                      <span className="block text-center mt-1 text-[7px] font-bold uppercase tracking-wider text-emerald-400">
-                        ● Popular
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -377,17 +373,8 @@ export default function GeoAdminAuthGate({
                               {t.tagline}
                             </p>
                           </div>
-                          <div className="text-right">
-                            <span className="text-xl font-bold text-white">
-                              {t.monthlyPrice === 0
-                                ? "Free"
-                                : `$${t.monthlyPrice}`}
-                            </span>
-                            {t.monthlyPrice > 0 && (
-                              <span className="text-slate-500 text-xs">
-                                /mo
-                              </span>
-                            )}
+                          <div className="text-right text-xs text-slate-400">
+                            Details not finalized
                           </div>
                         </div>
                         <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
@@ -441,11 +428,11 @@ export default function GeoAdminAuthGate({
             </div>
             <div className="flex items-center gap-1.5">
               <Zap className="h-4 w-4 text-amber-500/50" />
-              <span>7-day free trial on all paid plans</span>
+              <span>Plan availability confirmed directly</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-indigo-500/50" />
-              <span>Cancel anytime</span>
+              <span>Terms provided before purchase</span>
             </div>
           </div>
         </div>

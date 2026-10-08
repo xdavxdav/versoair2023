@@ -24,7 +24,6 @@ export default function GeoAdminPage() {
     useSubscription();
   const [, setLocation] = useLocation();
   const { logout } = useAuthContext();
-  const [startingTrial, setStartingTrial] = useState(false);
 
   // Admin access is determined by the authenticated server-issued user role.
   const isGeoAdmin =
@@ -187,62 +186,6 @@ export default function GeoAdminPage() {
     localStorage.removeItem("geo_admin_redirect_intended");
   };
 
-  // Start a free trial via API
-  const handleStartTrial = async () => {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("authToken");
-    if (!token) {
-      toast({
-        title: "Session required",
-        description: "Please sign in through the Geo Admin gate first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setStartingTrial(true);
-    try {
-      const res = await fetch("/auth/start-trial", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tier: "essential" }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        toast({
-          title: "🎉 Trial activated!",
-          description:
-            "Your 7-day Essential trial is now active. Enjoy full analytics!",
-        });
-        // Refresh subscription state
-        await refetch();
-      } else {
-        toast({
-          title: "Trial unavailable",
-          description:
-            data.message || "Could not start trial. You may need to upgrade.",
-          variant: "destructive",
-        });
-        if (res.status === 409) {
-          // Already used trial → show pricing
-          setLocation("/pricing?tier=essential&source=geo-admin");
-        }
-      }
-    } catch {
-      toast({
-        title: "Connection error",
-        description: "Could not reach the server. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setStartingTrial(false);
-    }
-  };
-
   // Show loading spinner while checking auth
   if (loading) {
     return (
@@ -374,27 +317,23 @@ export default function GeoAdminPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 text-sm sm:text-base">
-                    Upgrade your plan to unlock full analytics
+                    GeoAdmin plan availability is being finalized
                   </h3>
                   <p className="text-amber-200/80 text-xs sm:text-sm mt-1">
-                    Essential plan gives you detailed performance metrics,
-                    search insights, and data exports.
+                    Paid plan features and terms are not currently available
+                    for online activation. Existing account access is unchanged.
                   </p>
                 </div>
               </div>
               <Button
-                onClick={handleStartTrial}
-                disabled={startingTrial}
+                onClick={() =>
+                  setLocation(
+                    "/contact?subject=GeoAdmin%20plan%20availability",
+                  )
+                }
                 className="whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 px-4 py-2 text-sm"
               >
-                {startingTrial ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Activating…
-                  </>
-                ) : (
-                  "Start Free Trial"
-                )}
+                Ask about availability
               </Button>
             </div>
           </div>

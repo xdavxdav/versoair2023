@@ -7,6 +7,10 @@ import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
+import {
+  freeTrialsEnabled,
+  rejectUnavailableTrial,
+} from "../utils/commercial-gates";
 import { requireAuth } from "../middleware/auth";
 import {
   loginLimiter,
@@ -1523,6 +1527,11 @@ const startTrialSchema = z.object({
 router.post(
   "/start-trial",
   asyncHandler(async (req: Request, res: Response) => {
+    if (!freeTrialsEnabled()) {
+      rejectUnavailableTrial(res);
+      return;
+    }
+
     const token = getTokenFromRequest(req);
     if (!token) {
       res
@@ -2867,16 +2876,6 @@ router.post(
 // 🎫 SUBSCRIBER AUTH — Premium/GeoAdmin subscribers with self-registration
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const subscriberRegisterSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  displayName: z.string().min(2, "Display name must be at least 2 characters"),
-  tier: z
-    .enum(["essential", "verified", "max", "enterprise"])
-    .default("essential"),
-  interests: z.array(z.string()).optional(),
-});
-
 const subscriberLoginSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
@@ -2889,81 +2888,14 @@ const subscriberLoginSchema = z.object({
 router.post(
   "/subscriber/register",
   registerLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    const parsed = subscriberRegisterSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res
-        .status(400)
-        .json({ success: false, message: parsed.error.errors[0].message });
-      return;
-    }
-
-    const { email, password, displayName, tier, interests } = parsed.data;
-
-    // Check duplicate email
-    const existing = await db
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .where(eq(schema.users.email, email.toLowerCase()))
-      .limit(1);
-
-    if (existing.length > 0) {
-      res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-      return;
-    }
-
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    const derivedUsername = `sub_${email.split("@")[0]}`;
-
-    // Create user with subscriber role and chosen tier
-    // Note: displayName stored in username prefix (sub_) since firstName doesn't exist in schema
-    const [newUser] = await db
-      .insert(schema.users)
-      .values({
-        email: email.toLowerCase(),
-        username: derivedUsername,
-        password: hashedPassword,
-        role: "user", // subscribers start as users with premium tiers
-        subscriptionTier: tier,
-        subscriptionStatus: "active",
-        isVerified: false,
-      })
-      .returning({
-        id: schema.users.id,
-        email: schema.users.email,
-        role: schema.users.role,
-        subscriptionTier: schema.users.subscriptionTier,
-      });
-
-    // Send verification email
-    try {
-      const verificationToken = jwt.sign(
-        { userId: newUser.id, purpose: "email_verification" },
-        getJwtSecret(),
-        { expiresIn: "24h" },
-      );
-      await sendVerificationEmail(email, verificationToken);
-    } catch (e) {
-      console.error("[AUTH] Failed to send verification email:", e);
-    }
-
-    res.status(201).json({
-      success: true,
-      requiresVerification: true,
+  (_req: Request, res: Response) => {
+    res.status(503).json({
+      success: false,
       message:
-        "Subscriber account created! Check your email to verify before logging in.",
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        displayName,
-        role: newUser.role,
-        subscriptionTier: newUser.subscriptionTier,
-      },
+        "New GeoAdmin subscriptions are unavailable until plan terms and a payment-confirmed enrollment flow are ready.",
+      code: "SUBSCRIPTION_ENROLLMENT_UNAVAILABLE",
     });
-  }),
+  },
 );
 
 /**

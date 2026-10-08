@@ -836,15 +836,16 @@ export default function Home() {
                 transition={{ delay: 0.15 }}
                 className="text-xl text-blue-200/80 max-w-2xl leading-relaxed"
               >
-                Advanced analytics platform powered by VersoAI delivering
-                real-time insights, predictive intelligence, and strategic
-                solutions for enterprises worldwide.
+                VersoAI is being prepared alongside the Toronto, Canada launch.
+                Analytics, predictive insights, and other capabilities are
+                subject to regional availability and are not currently offered
+                for online purchase.
               </motion.p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <a href="/signin">
+                <a href="/services">
                   <Button className="bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-6 text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                    Start Free Trial
+                    Explore the directory offer
                     <Rocket className="ml-2 h-5 w-5" />
                   </Button>
                 </a>
@@ -1600,10 +1601,11 @@ export default function Home() {
         <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-6">
-              Serving All Major Industries
+              Sectors considered for future coverage
             </h2>
             <p className="text-xl text-blue-200/80 max-w-3xl mx-auto">
-              Tailored solutions for every sector's unique challenges
+              Sector coverage will depend on verified local listings and
+              launch readiness in each market.
             </p>
           </div>
 
@@ -1627,26 +1629,26 @@ export default function Home() {
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <div className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/30 rounded-3xl p-12">
             <h2 className="text-4xl font-bold text-slate-900 mb-6">
-              Ready to Transform Your Business with VersoAI?
+              Interested in VersoAI?
             </h2>
             <p className="text-xl text-blue-200/80 mb-10 max-w-2xl mx-auto">
-              Be among the first businesses in Toronto and Canada to build
-              with Verso Air
+              VersoAI availability and terms are not currently finalized. Our
+              current inquiry pathway is for business-directory listing review.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/signin">
+              <a href="/services">
                 <Button className="bg-gradient-to-r from-blue-500 to-purple-500 px-10 py-6 text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all">
-                  Start Free Trial
+                  Explore directory listings
                   <Rocket className="ml-2 h-5 w-5" />
                 </Button>
               </a>
-              <a href="/contact">
+              <a href="/contact?subject=VersoAI%20availability">
                 <Button
                   variant="outline"
                   className="border-blue-500 text-blue-200 px-10 py-6 text-lg hover:bg-blue-500/10"
                 >
                   <Headphones className="mr-2 h-5 w-5" />
-                  Contact Sales
+                  Ask about availability
                 </Button>
               </a>
             </div>

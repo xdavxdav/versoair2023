@@ -17,6 +17,10 @@ import { parseUserIntent } from "../services/intent-parser";
 import { searchRelevantBusinesses } from "../services/knowledge-injector";
 import { optionalAuth, requireAuth } from "../middleware/auth";
 import { pool } from "../db";
+import {
+  getDirectoryCountryCode,
+  publicBusinessVisibilitySql,
+} from "../utils/business-visibility";
 
 const router = Router();
 
@@ -49,14 +53,14 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
       });
     }
 
-    const { query, limit, language, countryCode } = parsed.data;
+    const { query, limit, language } = parsed.data;
     const startTime = Date.now();
 
     // Step 1: Parse intent from natural language
     const intent = await parseUserIntent(query, language);
-    if (!intent.countryCode && countryCode) {
-      intent.countryCode = countryCode.toUpperCase();
-    }
+    // Public directory discovery is always scoped to the configured launch
+    // market; query text cannot broaden it to unverified countries.
+    intent.countryCode = getDirectoryCountryCode();
 
     // Step 2: Search database with grounded knowledge
     const results = await searchRelevantBusinesses(intent, limit);
@@ -137,7 +141,7 @@ router.post(
         `SELECT b.id, b.name, b.phone, b.email, u.id as owner_id, u.email as owner_email
          FROM businesses b
          LEFT JOIN users u ON b.user_id = u.id
-         WHERE b.id = ANY($1) AND b.is_active = true`,
+         WHERE b.id = ANY($1) AND ${publicBusinessVisibilitySql("b")}`,
         [businessIds],
       );
 

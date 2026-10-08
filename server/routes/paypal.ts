@@ -21,6 +21,10 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import {
+  onlinePaymentsEnabled,
+  rejectUnavailablePayment,
+} from "../utils/commercial-gates";
 
 const router = Router();
 
@@ -97,7 +101,7 @@ async function getOrCreateWallet(userId: number) {
 // GET /api/paypal/config — Return client ID for PayPal JS SDK
 // ═══════════════════════════════════════════════════════════════════
 router.get("/config", (_req: Request, res: Response) => {
-  if (!PAYPAL_CLIENT_ID) {
+  if (!onlinePaymentsEnabled() || !PAYPAL_CLIENT_ID) {
     return res.status(503).json({
       error: "PayPal not configured",
       configured: false,
@@ -123,6 +127,10 @@ router.post(
   "/create-order",
   requireAuth,
   async (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
+    }
     try {
       const userId = (req as any).user?.id;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });

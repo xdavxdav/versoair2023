@@ -1963,9 +1963,10 @@ export default function StreamPage() {
                     <h2 className="text-2xl font-bold">Abonnements Streamer</h2>
                   </div>
                   <p className="text-gray-400 text-sm mb-8 max-w-xl leading-relaxed">
-                    Soutenez vos artistes préférés et débloquez une expérience
-                    musicale complète. Chaque stream contribue directement aux
-                    revenus des artistes.
+                    Le streaming gratuit est disponible. Les abonnements
+                    payants, leurs tarifs et leurs avantages ne sont pas
+                    disponibles tant que les modalités et le parcours de
+                    paiement ne sont pas confirmés.
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -2119,18 +2120,10 @@ export default function StreamPage() {
                             )}
                           </ul>
                           <button
-                            onClick={() => {
-                              if (!isFree) {
-                                toast({
-                                  title: "💳 Paiements bientôt disponibles",
-                                  description:
-                                    "Stripe, Interac, Apple Pay et plus — disponible très bientôt!",
-                                });
-                              }
-                            }}
-                            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${colors.btn}`}
+                            disabled={!isFree}
+                            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${colors.btn}`}
                           >
-                            {isFree ? "Plan actuel" : "S'abonner"}
+                            {isFree ? "Plan actuel" : "Indisponible"}
                           </button>
                         </div>
                       );

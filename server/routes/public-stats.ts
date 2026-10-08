@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { sql } from "drizzle-orm";
 import { db } from "../db";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
@@ -14,32 +15,11 @@ router.get(
     };
 
     if (businessId) {
-      const businessData = await db.execute(
-        sql`SELECT id, name, category_id, description, rating, review_count FROM businesses WHERE id = ${businessId} AND is_active = true`,
-      );
-      const business = businessData.rows[0] as any;
-      if (!business) {
-        return res.status(404).json({ success: false, error: "Business not found" });
-      }
-
-      const categoryData = await db.execute(
-        sql`SELECT name FROM business_categories WHERE id = ${business.category_id}`,
-      );
-      const categoryName = (categoryData.rows[0] as any)?.name || "General";
-
-      return res.json({
-        success: true,
-        type: "business-specific",
-        businessId: business.id,
-        businessName: business.name,
-        category: categoryName,
-        relevantMetrics: getIndustryRelevantMetrics(categoryName),
-        mockStats: generateBusinessStats(
-          categoryName,
-          business.rating || 4,
-          business.review_count || 0,
-        ),
-        timestamp: new Date().toISOString(),
+      return res.status(503).json({
+        success: false,
+        error:
+          "Business analytics are not available until verified market data is configured.",
+        code: "BUSINESS_ANALYTICS_UNAVAILABLE",
       });
     }
 
@@ -51,7 +31,10 @@ router.get(
 
       if (categoryIds.length > 0) {
         const businessCount = await db.execute(
-          sql`SELECT COUNT(*) as count FROM businesses WHERE is_active = true AND category_id IN (${categoryIds.join(",")})`,
+          sql`SELECT COUNT(*) as count
+              FROM businesses
+              WHERE ${sql.raw(publicBusinessVisibilitySql("businesses"))}
+                AND category_id IN (${categoryIds.join(",")})`,
         );
         const totalBusinesses = parseInt(
           String((businessCount.rows[0] as any)?.count || 0),
@@ -71,25 +54,35 @@ router.get(
 
     const [businessCount, categoryCount, jobCount, countryData, countryMapData, topCategories, recentListings] =
       await Promise.all([
-        db.execute(sql`SELECT COUNT(*) as count FROM businesses WHERE is_active = true`),
+        db.execute(
+          sql`SELECT COUNT(*) as count
+              FROM businesses
+              WHERE ${sql.raw(publicBusinessVisibilitySql("businesses"))}`,
+        ),
         db.execute(sql`SELECT COUNT(*) as count FROM business_categories`),
         db.execute(sql`SELECT COUNT(*) as count FROM jobs WHERE status = 'active'`),
         db.execute(
           sql`SELECT COUNT(DISTINCT c.id) as count
               FROM countries c
-              INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true`,
+              INNER JOIN businesses b
+                ON b.country_id = c.id
+               AND ${sql.raw(publicBusinessVisibilitySql("b"))}`,
         ),
         db.execute(
           sql`SELECT c.name, COUNT(b.id)::int as count
               FROM countries c
-              INNER JOIN businesses b ON b.country_id = c.id AND b.is_active = true
+              INNER JOIN businesses b
+                ON b.country_id = c.id
+               AND ${sql.raw(publicBusinessVisibilitySql("b"))}
               GROUP BY c.id, c.name
               ORDER BY count DESC`,
         ),
         db.execute(sql`
           SELECT bc.name, COUNT(b.id) as count
           FROM business_categories bc
-          LEFT JOIN businesses b ON b.category_id = bc.id AND b.is_active = true
+          LEFT JOIN businesses b
+            ON b.category_id = bc.id
+           AND ${sql.raw(publicBusinessVisibilitySql("b"))}
           WHERE bc.parent_id IS NOT NULL
           GROUP BY bc.id, bc.name
           ORDER BY count DESC
@@ -98,7 +91,7 @@ router.get(
         db.execute(sql`
           SELECT id, name, location, created_at
           FROM businesses
-          WHERE is_active = true
+          WHERE ${sql.raw(publicBusinessVisibilitySql("businesses"))}
           ORDER BY created_at DESC
           LIMIT 5
         `),

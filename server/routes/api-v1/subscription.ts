@@ -11,6 +11,12 @@ import { Router, Request, Response } from "express";
 import { db, pool } from "../../db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
+import { requireAuth } from "../../middleware/auth";
+import {
+  freeTrialsEnabled,
+  rejectUnavailablePayment,
+  rejectUnavailableTrial,
+} from "../../utils/commercial-gates";
 
 const router = Router();
 
@@ -258,14 +264,35 @@ router.get("/status", async (req: Request, res: Response) => {
  * Upgrades a user to a new tier (or starts a trial).
  * Body: { userId, targetTier, startTrial?: boolean }
  */
-router.post("/upgrade", async (req: Request, res: Response) => {
-  try {
-    const { userId, targetTier, startTrial = false } = req.body;
+router.post("/upgrade", requireAuth(), async (req: Request, res: Response) => {
+  const authenticatedUserId = req.user?.userId;
+  if (!authenticatedUserId) {
+    return res.status(401).json({ success: false, error: "Authentication required" });
+  }
 
-    if (!userId || !targetTier) {
+  const { userId: requestedUserId, startTrial = false } = req.body;
+  if (requestedUserId && String(requestedUserId) !== String(authenticatedUserId)) {
+    return res.status(403).json({ success: false, error: "Cannot change another user's subscription" });
+  }
+
+  if (startTrial) {
+    if (!freeTrialsEnabled()) {
+      rejectUnavailableTrial(res);
+      return;
+    }
+  } else {
+    rejectUnavailablePayment(res);
+    return;
+  }
+
+  try {
+    const userId = authenticatedUserId;
+    const { targetTier } = req.body;
+
+    if (!targetTier) {
       return res
         .status(400)
-        .json({ success: false, error: "userId and targetTier are required" });
+        .json({ success: false, error: "targetTier is required" });
     }
 
     if (!isValidTier(targetTier)) {
@@ -330,24 +357,7 @@ router.post("/upgrade", async (req: Request, res: Response) => {
       });
     }
 
-    // Direct upgrade (would integrate with payment provider)
-    await pool.query(
-      `UPDATE users
-       SET subscription_tier = $1,
-           subscription_status = 'active',
-           premium_expires_at = NULL
-       WHERE id = $2`,
-      [targetTier, userId],
-    );
-
-    res.json({
-      success: true,
-      message: `Upgraded to ${targetTier} successfully!`,
-      data: {
-        newTier: targetTier,
-        features: TIER_FEATURES[targetTier as TierKey],
-      },
-    });
+    rejectUnavailablePayment(res);
   } catch (error: any) {
     console.error("❌ Subscription upgrade error:", error);
     res.status(500).json({ success: false, error: error.message });

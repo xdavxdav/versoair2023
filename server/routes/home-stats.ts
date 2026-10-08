@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
 const router = Router();
 
@@ -20,8 +21,8 @@ router.get("/stats", async (req, res) => {
     /* ── aggregate counts ── */
     const bizCountParams = cc ? [cc] : [];
     const bizCountFilter = cc
-      ? `WHERE country_code = $1 AND is_active = true AND is_verified = true`
-      : `WHERE is_active = true AND is_verified = true`;
+      ? `WHERE country_code = $1 AND ${publicBusinessVisibilitySql("businesses")}`
+      : `WHERE ${publicBusinessVisibilitySql("businesses")}`;
 
     const [bizRes, artisanRes, catRes] = await Promise.all([
       pool.query(
@@ -54,8 +55,8 @@ router.get("/stats", async (req, res) => {
           ),
       pool.query(
         cc
-          ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND is_active = true AND is_verified = true AND category_id IS NOT NULL`
-          : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE is_active = true AND is_verified = true AND category_id IS NOT NULL`,
+          ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND ${publicBusinessVisibilitySql("businesses")} AND category_id IS NOT NULL`
+          : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE ${publicBusinessVisibilitySql("businesses")} AND category_id IS NOT NULL`,
         bizCountParams,
       ),
     ]);

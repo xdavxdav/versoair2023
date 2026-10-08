@@ -605,7 +605,7 @@ export default function FinanceControlPanel() {
         <ApiEndpoint
           method="POST"
           path="/api/v1/subscription/upgrade"
-          desc="Upgrade tier or start 7-day trial"
+          desc="Paid upgrades and trials are disabled pending verified terms"
         />
         <ApiEndpoint
           method="POST"

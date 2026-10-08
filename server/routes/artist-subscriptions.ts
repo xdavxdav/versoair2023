@@ -11,6 +11,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, optionalAuth } from "../middleware/auth";
+import { onlinePaymentsEnabled } from "../utils/commercial-gates";
 
 const router = Router();
 
@@ -139,12 +140,15 @@ const ARTIST_TIERS: Record<
 // GET /tiers — List all artist subscription tiers
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get("/tiers", async (_req: Request, res: Response) => {
-  const tiers = Object.entries(ARTIST_TIERS).map(([key, tier]) => ({
-    id: key,
-    ...tier,
-    uploadLimit: tier.uploadLimit === -1 ? "Illimité" : tier.uploadLimit,
-  }));
-  res.json({ success: true, tiers });
+  const paidTiersAvailable = onlinePaymentsEnabled();
+  const tiers = Object.entries(ARTIST_TIERS)
+    .filter(([key]) => paidTiersAvailable || key === "spark")
+    .map(([key, tier]) => ({
+      id: key,
+      ...tier,
+      uploadLimit: tier.uploadLimit === -1 ? "Illimité" : tier.uploadLimit,
+    }));
+  res.json({ success: true, tiers, paidTiersAvailable });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -245,6 +249,13 @@ router.post(
           success: true,
           message: "Spark tier activated (free)",
           tier: tierInfo,
+        });
+      }
+
+      if (!onlinePaymentsEnabled()) {
+        return res.status(503).json({
+          success: false,
+          error: "Paid artist subscriptions are currently unavailable",
         });
       }
 

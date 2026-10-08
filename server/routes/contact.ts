@@ -4,8 +4,21 @@ import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { contactFormLimiter } from "../middleware/rate-limiter";
 import { notifyZapier } from "../services/zapier-notify";
+import { sendEmail } from "../services/email-service";
 
 const router = Router();
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+const escapeHtml = (value: string) =>
+  value.replace(
+    /[&<>"']/g,
+    (character) => HTML_ESCAPE_MAP[character],
+  );
 
 router.post(
   "/",
@@ -17,6 +30,17 @@ router.post(
       return res.status(400).json({
         success: false,
         message: "Name, email, subject, and message are required.",
+      });
+    }
+
+    const contactRecipient =
+      process.env.CONTACT_EMAIL ||
+      process.env.ADMIN_EMAIL ||
+      process.env.SMTP_USER;
+    if (!contactRecipient) {
+      return res.status(503).json({
+        success: false,
+        message: "Contact delivery is temporarily unavailable. Please try again later.",
       });
     }
 
@@ -36,36 +60,32 @@ router.post(
       // audit log table may not exist — non-blocking
     }
 
+    const html = `<h3>New Contact Form Submission</h3>
+      <p><strong>Name:</strong> ${escapeHtml(String(name))}</p>
+      <p><strong>Email:</strong> ${escapeHtml(String(email))}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(String(phone || "N/A"))}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(String(subject))}</p>
+      <p><strong>Message:</strong></p><p>${escapeHtml(String(message)).replace(/\n/g, "<br>")}</p>`;
+
+    let delivered = false;
     try {
-      const nodemailer = await import("nodemailer");
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
+      delivered = await sendEmail(
+        contactRecipient,
+        `[Contact Form] ${String(subject)}`,
+        html,
+        undefined,
+        String(email),
+      );
+    } catch (emailError) {
+      console.error("[CONTACT] Email delivery failed:", emailError);
+    }
 
-      if (smtpUser && smtpPass) {
-        const transporter = nodemailer.default.createTransport({
-          host: process.env.SMTP_HOST || "smtp.gmail.com",
-          port: parseInt(process.env.SMTP_PORT || "587", 10),
-          secure: false,
-          auth: { user: smtpUser, pass: smtpPass },
-        });
-
-        await transporter.sendMail({
-          from:
-            process.env.SMTP_FROM ||
-            '"Verso Air Contact" <noreply@versoair.com>',
-          to: smtpUser,
-          replyTo: email,
-          subject: `[Contact Form] ${subject}`,
-          html: `<h3>New Contact Form Submission</h3>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Phone:</strong> ${phone || "N/A"}</p>
-            <p><strong>Subject:</strong> ${subject}</p>
-            <p><strong>Message:</strong></p><p>${String(message).replace(/\n/g, "<br>")}</p>`,
-        });
-      }
-    } catch (emailErr) {
-      console.warn("[CONTACT] Email send failed (non-blocking):", emailErr);
+    if (!delivered) {
+      return res.status(503).json({
+        success: false,
+        message:
+          "We could not confirm delivery of your message. Please try again later.",
+      });
     }
 
     notifyZapier("contact", { name, email, phone, subject, message });

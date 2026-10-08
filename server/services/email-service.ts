@@ -490,6 +490,7 @@ export async function sendEmail(
   subject: string,
   html: string,
   attachments?: Array<{ filename: string; path: string; contentType?: string }>,
+  replyTo?: string,
 ): Promise<boolean> {
   if (!transporter) {
     console.warn("[EMAIL] Transporter not initialized; retrying initialization");
@@ -507,6 +508,7 @@ export async function sendEmail(
       subject,
       html,
       attachments,
+      replyTo,
     });
 
     console.log(`[EMAIL] Email sent to ${to}. Message ID: ${result.messageId}`);

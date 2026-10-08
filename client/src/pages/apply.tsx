@@ -67,7 +67,6 @@ interface Portal {
   registerEndpoint: string;
   loginEndpoint: string;
   redirectPath: string;
-  tier?: string;
   badgeLabel?: string;
   badgeClassName?: string;
   cardRing?: string;
@@ -100,23 +99,16 @@ const PORTALS: Portal[] = [
     id: "subscriber",
     name: "Premium Subscriber",
     description:
-      "Unlock premium features — priority support, advanced analytics, and exclusive GeoAdmin tools.",
+      "GeoAdmin access for existing subscribers. New enrollment is paused while plan terms are finalized.",
     icon: Crown,
     color: "amber",
     gradient: "from-amber-500 to-orange-500",
     cardRing: "ring-amber-400/40 border-amber-400/30",
     badgeClassName: "bg-amber-500/15 text-amber-100 border-amber-400/30",
-    features: [
-      "Priority customer support",
-      "Advanced business analytics",
-      "GeoAdmin dashboard access",
-      "Premium badge & visibility",
-      "Early access to features",
-    ],
+    features: ["GeoAdmin dashboard access for authorized subscribers"],
     registerEndpoint: "/auth/subscriber/register",
     loginEndpoint: "/auth/subscriber/login",
     redirectPath: "/geo-admin?welcome=new",
-    tier: "essential",
     badgeLabel: "Premium",
   },
   {
@@ -257,29 +249,6 @@ const MUSICAL_PORTALS: Portal[] = [
   },
 ];
 
-const SUBSCRIPTION_TIERS = [
-  {
-    value: "essential",
-    label: "Essential — $9.99/mo",
-    description: "Basic premium features",
-  },
-  {
-    value: "verified",
-    label: "Verified — $19.99/mo",
-    description: "Verified badge + analytics",
-  },
-  {
-    value: "max",
-    label: "Max — $49.99/mo",
-    description: "Full feature access",
-  },
-  {
-    value: "enterprise",
-    label: "Enterprise — Custom",
-    description: "White-glove support",
-  },
-];
-
 // ─────────────────────────────────────────────────────
 // 🔐 Map apply-page portal IDs → portal-access PortalIds
 // ─────────────────────────────────────────────────────
@@ -341,7 +310,6 @@ export default function ApplyPage() {
     stageName: "",
     genre: "",
     country: "",
-    tier: "essential",
     specialization: "",
     hourlyRate: "",
     phone: "",
@@ -385,6 +353,12 @@ export default function ApplyPage() {
 
   const handleRegister = async () => {
     if (!selectedPortal) return;
+    if (selectedPortal.id === "subscriber") {
+      setError(
+        "New GeoAdmin subscriptions are currently unavailable while plan terms are finalized.",
+      );
+      return;
+    }
 
     // Mark all fields as touched to show any remaining errors
     setTouched({
@@ -443,9 +417,6 @@ export default function ApplyPage() {
         body.legalName = formData.displayName;
         body.genre = formData.genre ? [formData.genre] : ["Pop"];
         body.country = formData.country || "United States";
-      } else if (selectedPortal.id === "subscriber") {
-        body.displayName = formData.displayName || formData.email.split("@")[0];
-        body.tier = formData.tier;
       } else if (
         selectedPortal.id === "community" ||
         selectedPortal.id === "artisan"
@@ -571,7 +542,10 @@ export default function ApplyPage() {
                 });
                 const ineligible = PORTALS.filter((p) => {
                   const accessId = PORTAL_ACCESS_MAP[p.id];
-                  return accessId ? !access[accessId] : true;
+                  return (
+                    p.id !== "subscriber" &&
+                    (accessId ? !access[accessId] : true)
+                  );
                 });
                 const eligibleMusic = MUSICAL_PORTALS.filter((p) => {
                   const accessId = PORTAL_ACCESS_MAP[p.id];
@@ -963,10 +937,20 @@ export default function ApplyPage() {
             </p>
           </motion.div>
 
+          <div className="mx-auto mb-8 max-w-3xl rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+            GeoAdmin subscription enrollment is paused while plan features and
+            fees are finalized.{" "}
+            <Link href="/auth/signin" className="text-emerald-300 underline">
+              Existing subscribers can sign in
+            </Link>
+            .
+          </div>
+
           {/* Portal Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[95vw] mx-auto">
-            {PORTALS.map((portal, index) => (
-              <motion.div
+              {PORTALS.filter((portal) => portal.id !== "subscriber").map(
+                (portal, index) => (
+                <motion.div
                 key={portal.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1083,7 +1067,8 @@ export default function ApplyPage() {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+              ),
+            )}
 
             {/* ── Musical Universe Revealing Card ── */}
             <motion.div
@@ -1425,33 +1410,6 @@ export default function ApplyPage() {
                   </div>
                 </div>
               </>
-            )}
-
-            {/* Subscriber tier selection */}
-            {selectedPortal.id === "subscriber" && (
-              <div className="space-y-2">
-                <Label className="text-white/80">Subscription Tier</Label>
-                <Select
-                  value={formData.tier}
-                  onValueChange={(v) => handleInputChange("tier", v)}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUBSCRIPTION_TIERS.map((tier) => (
-                      <SelectItem key={tier.value} value={tier.value}>
-                        <div>
-                          <div className="font-medium">{tier.label}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {tier.description}
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             )}
 
             {/* Contractor-specific fields */}

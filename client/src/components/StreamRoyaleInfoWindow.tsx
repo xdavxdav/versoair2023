@@ -13,12 +13,8 @@ import {
   Shield,
   Trophy,
   Zap,
-  Heart,
-  ChevronRight,
   Globe,
   Star,
-  Crown,
-  Flame,
   Sparkles,
   TrendingUp,
   Users,
@@ -78,7 +74,7 @@ const BADGE_TIERS = [
     threshold: "1,000,000",
     icon: "👑",
     color: "#B9F2FF",
-    boost: "+2%",
+    boost: "—",
   },
   {
     tier: 7,
@@ -86,7 +82,7 @@ const BADGE_TIERS = [
     threshold: "5,000,000",
     icon: "⚡",
     color: "#FF6B35",
-    boost: "+5%",
+    boost: "—",
   },
 ];
 
@@ -104,33 +100,6 @@ const POOL_SPLIT = [
     icon: TrendingUp,
   },
   { label: "Platform Operations", percent: 10, color: "#6B7280", icon: Globe },
-];
-
-const PLANS = [
-  {
-    name: "Supporter",
-    price: "$4.99/mo",
-    streams: "200/week",
-    contribution: "70%",
-    boosts: "—",
-    color: "#3B82F6",
-  },
-  {
-    name: "Champion",
-    price: "$9.99/mo",
-    streams: "1,000/week",
-    contribution: "75%",
-    boosts: "5/mo",
-    color: "#A855F7",
-  },
-  {
-    name: "Patron",
-    price: "$19.99/mo",
-    streams: "Unlimited",
-    contribution: "80%",
-    boosts: "20/mo",
-    color: "#F59E0B",
-  },
 ];
 
 export default function StreamRoyaleInfoWindow({
@@ -212,7 +181,7 @@ export default function StreamRoyaleInfoWindow({
                     StreamRoyale Transparency
                   </h2>
                   <p className="text-xs text-white/40">
-                    How your streams create artist earnings
+                    Program availability and participation
                   </p>
                 </div>
               </div>
@@ -222,6 +191,13 @@ export default function StreamRoyaleInfoWindow({
               >
                 <X className="w-5 h-5 text-white/50" />
               </button>
+            </div>
+
+            <div className="relative border-b border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs leading-relaxed text-amber-100/80 md:px-6">
+              Paid listener plans, boosts, tips, prize pools, and revenue-share
+              schedules are not currently offered here. The details below do
+              not create a purchase, payout, or earnings guarantee; existing
+              signed agreements continue to govern their own terms.
             </div>
 
             {/* Section Tabs */}
@@ -266,8 +242,8 @@ export default function StreamRoyaleInfoWindow({
                       {[
                         {
                           step: 1,
-                          title: "Listeners Subscribe",
-                          desc: "Choose a plan (Supporter, Champion, or Patron). Your subscription fees fill the weekly royalty pool.",
+                          title: "Paid Plans Unavailable",
+                          desc: "Paid listener subscriptions are not currently offered. Plan details and fees will be confirmed before any paid offer launches.",
                           icon: Users,
                           color: "from-blue-500 to-cyan-500",
                         },
@@ -280,8 +256,8 @@ export default function StreamRoyaleInfoWindow({
                         },
                         {
                           step: 3,
-                          title: "Weekly Distribution",
-                          desc: "Every Monday at 06:00 UTC, the pool is distributed: 20% guaranteed equally, 70% by performance, 10% platform.",
+                          title: "Artist Terms",
+                          desc: "Any artist participation, revenue share, and payout terms must be set out in a signed written agreement.",
                           icon: DollarSign,
                           color: "from-green-500 to-emerald-500",
                         },
@@ -321,14 +297,12 @@ export default function StreamRoyaleInfoWindow({
                         <Shield className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold">
-                            90% Goes to Artists
+                            Revenue Terms
                           </h4>
                           <p className="text-white/40 text-sm mt-1">
-                            StreamRoyale is built on transparency. 90% of all
-                            listener subscription revenue goes directly to
-                            artists — split between a guaranteed floor and
-                            performance-based rewards. Only 10% sustains the
-                            platform itself.
+                            No pool split, per-stream rate, or payout amount is
+                            currently promised through this page. Existing
+                            artist agreements govern any applicable terms.
                           </p>
                         </div>
                       </div>
@@ -581,64 +555,13 @@ export default function StreamRoyaleInfoWindow({
                   >
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                       <Users className="w-5 h-5 text-purple-400" />
-                      Listener Subscription Tiers
+                      Paid Listener Plans
                     </h3>
 
-                    <div className="grid md:grid-cols-3 gap-4">
-                      {PLANS.map((plan, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.15 }}
-                          className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 relative overflow-hidden"
-                        >
-                          {i === 2 && (
-                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-bold rounded-full">
-                              BEST VALUE
-                            </div>
-                          )}
-                          <h4
-                            className="text-lg font-bold"
-                            style={{ color: plan.color }}
-                          >
-                            {plan.name}
-                          </h4>
-                          <p className="text-2xl font-bold text-white mt-2">
-                            {plan.price}
-                          </p>
-                          <div className="mt-4 space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-white/40">Streams</span>
-                              <span className="text-white">{plan.streams}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-white/40">
-                                Pool Contribution
-                              </span>
-                              <span className="text-white">
-                                {plan.contribution}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-white/40">
-                                Boost Credits
-                              </span>
-                              <span className="text-white">{plan.boosts}</span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 text-white/40 text-sm">
-                      <strong className="text-white">
-                        What's a Boost Credit?
-                      </strong>{" "}
-                      — During any stream, use a boost to double (2×) the
-                      stream's weight in the performance pool PLUS add $0.50
-                      directly to the pool. Perfect for supporting your favorite
-                      artists.
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 text-white/60 text-sm">
+                      Paid listener plans are not available. Pricing, features,
+                      and any artist revenue-sharing terms will be published
+                      only after they are confirmed in writing.
                     </div>
                   </motion.div>
                 )}
@@ -658,10 +581,9 @@ export default function StreamRoyaleInfoWindow({
                     </h3>
 
                     <p className="text-white/40 text-sm">
-                      Every valid stream builds your lifetime total. Reach
-                      milestones to unlock warrior badges — and at Diamond &
-                      Legendary tiers, earn permanent revenue boosts on your
-                      performance earnings!
+                      Badge thresholds and rewards are not currently offered.
+                      No financial reward or earnings increase is promised by
+                      this progression.
                     </p>
 
                     <div className="space-y-3">
@@ -721,89 +643,15 @@ export default function StreamRoyaleInfoWindow({
                   >
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                       <Zap className="w-5 h-5 text-purple-400" />
-                      Boosts & Tips
+                      Boosts & Tips Availability
                     </h3>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mb-3">
-                          <Zap className="w-5 h-5 text-white" />
-                        </div>
-                        <h4 className="text-white font-semibold text-lg">
-                          Stream Boost
-                        </h4>
-                        <p className="text-white/40 text-sm mt-2">
-                          Use a boost credit during any active stream to:
-                        </p>
-                        <ul className="mt-3 space-y-2">
-                          <li className="flex items-center gap-2 text-sm text-white/60">
-                            <ChevronRight className="w-3 h-3 text-yellow-400" />
-                            <span>
-                              Double (2×) the stream's weight in the performance
-                              pool
-                            </span>
-                          </li>
-                          <li className="flex items-center gap-2 text-sm text-white/60">
-                            <ChevronRight className="w-3 h-3 text-yellow-400" />
-                            <span>Add $0.50 directly to the weekly pool</span>
-                          </li>
-                        </ul>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 }}
-                        className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center mb-3">
-                          <Heart className="w-5 h-5 text-white" />
-                        </div>
-                        <h4 className="text-white font-semibold text-lg">
-                          Direct Tips
-                        </h4>
-                        <p className="text-white/40 text-sm mt-2">
-                          Send a tip to any artist ($0.50 minimum):
-                        </p>
-                        <ul className="mt-3 space-y-2">
-                          <li className="flex items-center gap-2 text-sm text-white/60">
-                            <ChevronRight className="w-3 h-3 text-pink-400" />
-                            <span>
-                              50% goes directly to the artist's wallet
-                            </span>
-                          </li>
-                          <li className="flex items-center gap-2 text-sm text-white/60">
-                            <ChevronRight className="w-3 h-3 text-pink-400" />
-                            <span>50% is added to the community pool</span>
-                          </li>
-                        </ul>
-                      </motion.div>
+                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 text-sm leading-relaxed text-white/60">
+                      Paid boosts and tips are not currently available. No
+                      contribution amount, pool split, or artist payout is
+                      promised here; any future terms will be confirmed in
+                      writing before launch.
                     </div>
-
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-5"
-                    >
-                      <div className="flex items-start gap-3">
-                        <Flame className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <h4 className="text-white font-semibold">
-                            Super Streams (Coming Soon)
-                          </h4>
-                          <p className="text-white/40 text-sm mt-1">
-                            A premium feature where a single stream carries 5×
-                            weight. Super Streams will be available as special
-                            events and purchasable power-ups.
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -814,8 +662,8 @@ export default function StreamRoyaleInfoWindow({
               <div className="flex items-center gap-2 text-white/20 text-xs">
                 <Globe className="w-3.5 h-3.5" />
                 <span>
-                  5 Regional Leagues: Africa • Americas • Asia-Pacific • Europe
-                  • Middle East
+                  Participation is market-specific; availability is not
+                  worldwide.
                 </span>
               </div>
               <button

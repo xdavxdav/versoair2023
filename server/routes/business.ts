@@ -4,6 +4,7 @@ import { db } from "../db";
 import { businesses } from "@shared/schema";
 import { ilike, or, and, sql } from "drizzle-orm";
 import { z } from "zod";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
 const router = express.Router();
 
@@ -27,20 +28,17 @@ router.get("/search", async (req, res) => {
 
     // Start building the query
     let query: any = db.select().from(businesses);
-    const conditions = [];
+    const conditions = [sql.raw(publicBusinessVisibilitySql("businesses"))];
 
     // Text search across multiple fields
     if (params.query && params.query.trim()) {
       const searchTerm = `${params.query.trim().toLowerCase()}%`;
-      conditions.push(
-        or(
-          ilike(businesses.name, searchTerm),
-          ilike(businesses.description, searchTerm),
-          ilike(businesses.address, searchTerm),
-          // If you have a tags array field, you'd handle it differently
-          // ilike(businesses.tags, searchTerm)
-        ),
+      const searchCondition = or(
+        ilike(businesses.name, searchTerm),
+        ilike(businesses.description, searchTerm),
+        ilike(businesses.address, searchTerm),
       );
+      if (searchCondition) conditions.push(searchCondition);
     }
 
     // Category filter
@@ -51,12 +49,7 @@ router.get("/search", async (req, res) => {
 
     // Location filter
     if (params.location) {
-      conditions.push(ilike(businesses.location, `${params.location}%`));
-    }
-
-    // Apply all conditions
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      conditions.push(ilike(businesses.location, `%${params.location}%`));
     }
 
     // Distance calculation (if lat/lng provided)
@@ -89,6 +82,8 @@ router.get("/search", async (req, res) => {
       }
     }
 
+    query = query.where(and(...conditions));
+
     // Pagination
     const offset = (params.page - 1) * params.limit;
     query = query.limit(params.limit).offset(offset);
@@ -118,27 +113,20 @@ router.get("/search", async (req, res) => {
         typeof business.rating === "number"
           ? business.rating
           : parseFloat(business.rating) || 0,
-      reviews:
-        typeof business.reviews === "number"
-          ? business.reviews
-          : parseInt(business.reviews) || 0,
+      reviews: Number(business.reviewsCount || 0),
       tags: Array.isArray(business.tags)
         ? business.tags
         : typeof business.tags === "string"
           ? business.tags.split(",").map((t: string) => t.trim())
           : [],
       latitude:
-        typeof business.latitude === "number"
-          ? business.latitude
-          : parseFloat(business.latitude) || 0,
+        business.latitude == null ? undefined : Number(business.latitude),
       longitude:
-        typeof business.longitude === "number"
-          ? business.longitude
-          : parseFloat(business.longitude) || 0,
+        business.longitude == null ? undefined : Number(business.longitude),
       distance: business.distance
         ? parseFloat(business.distance.toFixed(2))
         : undefined,
-      created_at: business.created_at || new Date().toISOString(),
+      created_at: business.createdAt?.toISOString?.(),
     }));
 
     res.json({

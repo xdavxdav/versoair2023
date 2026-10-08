@@ -421,13 +421,13 @@ function TermsTab() {
 
       <SectionHeading number="9" title="Paiement & Remboursements" />
       <p className="text-slate-700 leading-relaxed">
-        Subscription fees are billed in advance on a monthly or annual basis.
-        Refunds are available within 14 days of initial purchase if no
-        significant platform usage has occurred. Artist royalty payouts require
-        a minimum balance of $10.00 USD and are processed within 7–14 business
-        days. Verso Air reserves the right to withhold payouts pending fraud
-        investigation. Marketplace purchases are subject to the seller's
-        individual refund policy, with Verso Air acting as an intermediary.
+        Online checkout and subscription billing are not currently available
+        through this Platform. No general billing schedule, refund window, or
+        marketplace refund policy is offered here. Any fees and transaction
+        terms will be provided in writing before an order is accepted. Existing
+        transactions remain subject to their agreed terms and applicable law.
+        Artist royalties, where applicable, are governed by the relevant
+        executed artist agreement.
       </p>
 
       <SectionHeading number="10" title="Limitation de Responsabilité" />
@@ -1053,270 +1053,30 @@ function CompetitionTab() {
     <div className="space-y-4">
       <InfoCard
         icon={Trophy}
-        title="StreamRoyale™ — Official Competition Rules"
-        variant="success"
+        title="StreamRoyale™ — Program Information"
+        variant="info"
       >
         <p>
-          StreamRoyale is Verso Air's competitive streaming platform where
-          artists earn royalties, compete in weekly pools, and climb badge tiers
-          based on genuine listener engagement.
+          StreamRoyale competitions, paid listener subscriptions, boosts,
+          prize pools, and revenue-share programs are not currently offered.
+          This page does not publish event rules or promise eligibility,
+          earnings, or payouts.
         </p>
       </InfoCard>
 
-      <SectionHeading number="1" title="Eligibility" />
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>
-          Open to artists aged 16+ in all countries where Verso Air operates
-        </li>
-        <li>
-          Must have a registered Artist Portal account with verified email
-        </li>
-        <li>Must have at least one uploaded track with valid audio file</li>
-        <li>Artists under 18 must have parental/guardian consent documented</li>
-        <li>
-          Employees and immediate family of Verso Air Inc. may participate but
-          are excluded from weekly prize pools
-        </li>
-        <li>
-          One account per artist/group — multi-account abuse results in
-          permanent disqualification
-        </li>
-      </ul>
-
-      <SectionHeading number="2" title="How It Works" />
-      <div className="space-y-3">
-        <SubHeading title="Weekly Pool Cycle" />
-        <p className="text-slate-700 leading-relaxed">
-          Each competition week runs Sunday 00:00 UTC to Saturday 23:59 UTC.
-          Listener contributions (tips, boosts, subscriptions) accumulate into a
-          weekly pool. At the end of each week, the pool is distributed
-          automatically based on the following split:
-        </p>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          {[
-            {
-              pct: "20%",
-              label: "Guaranteed Fund",
-              desc: "Base payout to all eligible artists",
-            },
-            {
-              pct: "70%",
-              label: "Performance Pool",
-              desc: "Distributed by stream count ranking",
-            },
-            {
-              pct: "10%",
-              label: "Platform Fee",
-              desc: "Sustains infrastructure & development",
-            },
-          ].map((split) => (
-            <div
-              key={split.label}
-              className="border border-slate-300 rounded-lg p-4"
-            >
-              <p className="text-2xl font-bold text-amber-600">{split.pct}</p>
-              <p className="text-slate-900 text-sm font-medium mt-1">
-                {split.label}
-              </p>
-              <p className="text-slate-500 text-xs mt-1">{split.desc}</p>
-            </div>
-          ))}
-        </div>
-        <p className="text-slate-700 leading-relaxed text-sm">
-          <strong className="text-slate-900">
-            90% of all listener contributions go directly to artists.
-          </strong>{" "}
-          Only 10% is retained by the platform.
-        </p>
-      </div>
-
-      <SectionHeading number="3" title="Per-Stream Revenue Rates" />
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-300">
-              <th className="text-left text-amber-600 py-2 px-3">
-                Contract Grade
-              </th>
-              <th className="text-left text-amber-600 py-2 px-3">Per Stream</th>
-              <th className="text-left text-amber-600 py-2 px-3">
-                Artist Share
-              </th>
-              <th className="text-left text-amber-600 py-2 px-3">
-                Platform Share
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              {
-                grade: "S (Superstar)",
-                rate: "$0.0085",
-                artist: "85%",
-                platform: "15%",
-              },
-              {
-                grade: "A (Advanced)",
-                rate: "$0.0075",
-                artist: "75%",
-                platform: "25%",
-              },
-              {
-                grade: "B (Building)",
-                rate: "$0.0065",
-                artist: "65%",
-                platform: "35%",
-              },
-              {
-                grade: "C (Core)",
-                rate: "$0.0055",
-                artist: "55%",
-                platform: "45%",
-              },
-              {
-                grade: "Ungraded (New)",
-                rate: "$0.004",
-                artist: "50%",
-                platform: "50%",
-              },
-            ].map((row) => (
-              <tr key={row.grade} className="border-b border-slate-300/50">
-                <td className="py-2 px-3 text-slate-900 font-medium">
-                  {row.grade}
-                </td>
-                <td className="py-2 px-3 text-emerald-400">{row.rate}</td>
-                <td className="py-2 px-3 text-slate-700">{row.artist}</td>
-                <td className="py-2 px-3 text-slate-500">{row.platform}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <SectionHeading number="4" title="Badge Tier System" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {[
-          {
-            tier: 1,
-            name: "Initiate",
-            streams: "0+",
-            boost: "0%",
-            color: "text-slate-500",
-          },
-          {
-            tier: 2,
-            name: "Bronze Warrior",
-            streams: "1,000+",
-            boost: "0%",
-            color: "text-amber-700",
-          },
-          {
-            tier: 3,
-            name: "Silver Gladiator",
-            streams: "10,000+",
-            boost: "0%",
-            color: "text-slate-700",
-          },
-          {
-            tier: 4,
-            name: "Gold Champion",
-            streams: "50,000+",
-            boost: "0%",
-            color: "text-yellow-400",
-          },
-          {
-            tier: 5,
-            name: "Platinum Conqueror",
-            streams: "250,000+",
-            boost: "0%",
-            color: "text-cyan-300",
-          },
-          {
-            tier: 6,
-            name: "Diamond Warlord",
-            streams: "1,000,000+",
-            boost: "+2%",
-            color: "text-blue-400",
-          },
-          {
-            tier: 7,
-            name: "Legendary Titan",
-            streams: "5,000,000+",
-            boost: "+5%",
-            color: "text-purple-400",
-          },
-        ].map((badge) => (
-          <div
-            key={badge.tier}
-            className="border border-slate-300 rounded-lg p-3 flex items-center gap-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-sm font-bold">
-              <span className={badge.color}>{badge.tier}</span>
-            </div>
-            <div>
-              <p className={`font-medium text-sm ${badge.color}`}>
-                {badge.name}
-              </p>
-              <p className="text-gray-500 text-xs">
-                {badge.streams} streams • Revenue boost: {badge.boost}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <SectionHeading number="5" title="Stream Validation" />
+      <SectionHeading number="1" title="Future Events" />
       <p className="text-slate-700 leading-relaxed">
-        Streams are tracked via a heartbeat system — a listener's device sends a
-        ping every 10 seconds during playback. Only validated streams (minimum
-        30 seconds of continuous play from a unique session) count toward
-        royalties and competition rankings. The following are automatically
-        detected and excluded:
+        Any future event will be announced with its applicable rules before
+        registration opens. Those rules must specify eligibility, dates,
+        selection criteria, prizes or fees, payout terms, and applicable
+        jurisdictions. Do not rely on prior draft schedules or rates.
       </p>
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>Duplicate sessions from the same IP within a 5-minute window</li>
-        <li>Irregular heartbeat patterns (bot signatures)</li>
-        <li>Bulk plays from a single account exceeding reasonable listening</li>
-        <li>VPN-masked IP clusters associated with stream farming</li>
-      </ul>
 
-      <SectionHeading number="6" title="Payouts" />
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>
-          Minimum payout threshold:{" "}
-          <strong className="text-slate-900">$10.00 USD</strong>
-        </li>
-        <li>Payout requests processed within 7–14 business days</li>
-        <li>
-          Supported methods: bank transfer, PayPal, mobile money
-          (region-dependent)
-        </li>
-        <li>Earnings below threshold roll over to the next period</li>
-        <li>Pending payouts may be held during fraud investigation</li>
-      </ul>
-
-      <SectionHeading number="7" title="Disqualification" />
+      <SectionHeading number="2" title="Artist Content" />
       <p className="text-slate-700 leading-relaxed">
-        The following result in immediate disqualification from competition
-        pools, potential account termination, and forfeiture of pending
-        earnings:
-      </p>
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>Stream manipulation (bots, click farms, automated scripts)</li>
-        <li>Copyright infringement (uploading content you don't own)</li>
-        <li>Multi-account abuse for self-streaming</li>
-        <li>Collusion with other artists to artificially inflate metrics</li>
-        <li>Misrepresentation of identity or credentials</li>
-      </ul>
-
-      <SectionHeading number="8" title="Governing Law" />
-      <p className="text-slate-700 leading-relaxed">
-        StreamRoyale competitions are governed by the laws of Ontario, Canada.
-        For artists in the European Union, mandatory local consumer protection
-        laws apply in addition. Competitions comply with promotional contest
-        laws in all participating jurisdictions.{" "}
-        <strong>No purchase necessary</strong> to participate — artists earn
-        royalties through genuine listener engagement, not entry fees.
+        Artists are responsible for having the rights needed to submit their
+        content and for following the platform's applicable terms. Event
+        participation, if offered, will be subject to the published event rules.
       </p>
     </div>
   );
@@ -1331,147 +1091,25 @@ function ContractsTab() {
         variant="info"
       >
         <p>
-          All artists on StreamRoyale operate under a standard contract
-          framework. Contract grades determine revenue share, feature access,
-          and audio quality tiers.
+          This page does not create an artist contract or promise a grade,
+          feature, royalty rate, or payout. Any terms for an artist are set out
+          in that artist's executed written agreement.
         </p>
       </InfoCard>
 
-      <SectionHeading number="1" title="Contract Application Process" />
-      <div className="space-y-2">
-        {[
-          {
-            step: "1",
-            title: "Apply",
-            desc: "Submit your profile, demo, social links, and motivation through the Artist Portal",
-          },
-          {
-            step: "2",
-            title: "Review",
-            desc: "Our team evaluates your submission — typically within 5–10 business days",
-          },
-          {
-            step: "3",
-            title: "Grade Assignment",
-            desc: "Receive your contract grade (S/A/B/C) based on portfolio quality and market readiness",
-          },
-          {
-            step: "4",
-            title: "Activation",
-            desc: "Accept terms, start uploading, and begin earning royalties immediately",
-          },
-        ].map((item) => (
-          <div key={item.step} className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-600 text-sm font-bold">
-                {item.step}
-              </span>
-            </div>
-            <div>
-              <p className="text-slate-900 font-medium">{item.title}</p>
-              <p className="text-slate-500 text-sm">{item.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <SectionHeading number="2" title="Contract Grades" />
-      <div className="space-y-3">
-        {[
-          {
-            grade: "S — Superstar",
-            share: "85% Artist / 15% Platform",
-            features:
-              "Unlimited uploads, FLAC quality, featured placement, priority support, can be featured in collaborations",
-            criteria:
-              "Established artists with proven catalog and significant streaming history",
-          },
-          {
-            grade: "A — Advanced",
-            share: "75% Artist / 25% Platform",
-            features:
-              "Up to 50 uploads, 320kbps quality, featured eligibility, standard support",
-            criteria:
-              "Experienced artists with quality portfolio and growing audience",
-          },
-          {
-            grade: "B — Building",
-            share: "65% Artist / 35% Platform",
-            features:
-              "Up to 20 uploads, 256kbps quality, catalog access, standard support",
-            criteria: "Promising artists building their catalog and audience",
-          },
-          {
-            grade: "C — Core",
-            share: "55% Artist / 45% Platform",
-            features:
-              "Up to 5 uploads, 128kbps quality, basic analytics, community support",
-            criteria: "New artists starting their journey on the platform",
-          },
-        ].map((contract) => (
-          <div
-            key={contract.grade}
-            className="border border-slate-300 rounded-xl p-5"
-          >
-            <h4 className="text-amber-600 font-semibold mb-3">
-              {contract.grade}
-            </h4>
-            <div className="space-y-2 text-sm">
-              <p>
-                <span className="text-gray-500">Revenue Split:</span>{" "}
-                <span className="text-emerald-400 font-medium">
-                  {contract.share}
-                </span>
-              </p>
-              <p>
-                <span className="text-gray-500">Features:</span>{" "}
-                <span className="text-slate-700">{contract.features}</span>
-              </p>
-              <p>
-                <span className="text-gray-500">Criteria:</span>{" "}
-                <span className="text-slate-700">{contract.criteria}</span>
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <SectionHeading number="3" title="Rights & Obligations" />
-      <SubHeading title="Artist Rights" />
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>Retain full ownership of all uploaded content</li>
-        <li>
-          Withdraw content at any time (subject to contractual notice period)
-        </li>
-        <li>Request contract grade review after 90 days</li>
-        <li>Access transparent earnings analytics and stream data</li>
-        <li>Dispute resolution through formal appeal process</li>
-      </ul>
-      <SubHeading title="Artist Obligations" />
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>Upload only original content or properly licensed material</li>
-        <li>Maintain accurate profile information</li>
-        <li>Comply with community guidelines and platform rules</li>
-        <li>Not engage in stream manipulation or fraudulent activity</li>
-        <li>Report copyright claims promptly</li>
-      </ul>
-      <SubHeading title="Platform Obligations" />
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>Process royalty payments within stated timeframes</li>
-        <li>Provide transparent analytics and earnings reports</li>
-        <li>Protect uploaded content with industry-standard security</li>
-        <li>Respond to disputes and appeals within 14 business days</li>
-        <li>Notify artists 30 days before any material term changes</li>
-      </ul>
-
-      <SectionHeading number="4" title="Termination" />
+      <SectionHeading number="1" title="Applications and Agreements" />
       <p className="text-slate-700 leading-relaxed">
-        Either party may terminate the contract with 30 days written notice.
-        Upon termination: pending royalties will be paid out within 30 days
-        (subject to minimum threshold), uploaded content will be removed from
-        the platform within 7 days, and the artist's catalog data will be
-        available for export for 90 days. Termination for cause (fraud,
-        copyright violation) is immediate with no notice period required.
+        An application or profile submission does not guarantee acceptance, a
+        response timeline, a contract grade, platform features, or earnings.
+        Any applicable rights, obligations, revenue terms, and termination
+        conditions are governed by the agreement accepted by the artist.
+      </p>
+
+      <SectionHeading number="2" title="Content Rights" />
+      <p className="text-slate-700 leading-relaxed">
+        Only submit material you own or are authorized to use. The applicable
+        platform terms and any executed artist agreement govern content
+        permissions, disputes, and removal requests.
       </p>
     </div>
   );
@@ -1570,9 +1208,10 @@ function JurisdictionTab() {
         variant="info"
       >
         <p>
-          Verso Air operates globally and complies with the laws of each country
-          where our users and artists reside. This section outlines which laws
-          govern your relationship with us based on your location.
+          Verso Air Inc. is incorporated in Ontario, Canada. Platform access,
+          listings, and product features may vary by market; we do not claim to
+          operate in every country. This section summarizes the primary
+          jurisdiction and does not replace advice about your local rights.
         </p>
       </InfoCard>
 
@@ -1624,42 +1263,19 @@ function JurisdictionTab() {
         ))}
       </div>
 
-      <SectionHeading number="3" title="Competition Law Compliance" />
+      <SectionHeading number="3" title="Event Legal Review" />
       <p className="text-slate-700 leading-relaxed">
-        StreamRoyale competitions comply with promotional contest regulations in
-        all participating countries. Key compliance points:
+        Event-specific rules and jurisdictional review have not been published
+        here. This page does not claim that any competition is approved or
+        compliant in every market. Participation terms will be provided before
+        an event is offered.
       </p>
-      <ul className="list-disc list-inside text-slate-700 space-y-1 ml-4">
-        <li>
-          <strong>No purchase necessary</strong> — artists earn through genuine
-          streams, not entry fees
-        </li>
-        <li>
-          <strong>Canada</strong> — Competition Act compliant; no Régie des
-          alcools, des courses et des jeux (RACJ) registration required (not a
-          game of chance)
-        </li>
-        <li>
-          <strong>EU</strong> — Compliant with Unfair Commercial Practices
-          Directive (not a lottery)
-        </li>
-        <li>
-          <strong>US</strong> — State-by-state contest registration not required
-          (skill-based, no consideration)
-        </li>
-        <li>
-          <strong>Africa</strong> — Compliant with national lotteries and gaming
-          acts (royalties, not prizes)
-        </li>
-      </ul>
 
       <SectionHeading number="4" title="Dispute Resolution" />
       <p className="text-slate-700 leading-relaxed">
-        Before initiating legal proceedings, both parties agree to attempt
-        resolution through: (1) direct communication with support@versoair.com,
-        (2) formal complaint to helpmeee@versoair.com with 30-day response window,
-        (3) mediation through a mutually agreed neutral mediator. If unresolved,
-        disputes proceed to the courts specified above.
+        No special dispute process or response-time commitment is offered
+        through this section. Existing written agreements and rights under
+        applicable law govern disputes.
       </p>
     </div>
   );
@@ -1689,11 +1305,11 @@ function FaqTab() {
       questions: [
         {
           q: "How are royalties calculated?",
-          a: "Each validated stream (30+ seconds, unique session) earns a per-stream rate based on your contract grade: $0.004 (ungraded) to $0.0085 (S-grade). Plus weekly pool distributions and badge-tier revenue boosts.",
+          a: "Any royalty rate or revenue share is governed by the artist's executed written agreement. This site does not guarantee earnings or a particular rate.",
         },
         {
           q: "When do I get paid?",
-          a: "Payout requests are processed within 7–14 business days. Minimum threshold: $10 USD. Earnings below threshold roll over. Weekly pool distributions happen automatically every Monday at 06:00 UTC.",
+          a: "Payout availability, thresholds, and timing depend on the applicable executed written agreement. No general payout schedule is promised here.",
         },
         {
           q: "What counts as a valid stream?",
@@ -1701,7 +1317,7 @@ function FaqTab() {
         },
         {
           q: "Can I participate from any country?",
-          a: "Yes. StreamRoyale is open to artists worldwide. Your country code is embedded in your artist ID. Local tax regulations apply to payouts — we may require W-8BEN or equivalent forms.",
+          a: "Availability is not worldwide. Artist features and any payout options are limited to markets explicitly supported by Verso Air and may depend on local law. Contact the team to confirm availability before relying on access or payout terms.",
         },
       ],
     },

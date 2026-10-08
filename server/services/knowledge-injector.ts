@@ -10,6 +10,7 @@
  */
 
 import { pool } from "../db";
+import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 import type { IntentContext } from "./intent-parser";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -153,7 +154,7 @@ export async function searchRelevantBusinesses(
   limit: number = 5,
 ): Promise<KnowledgeResult> {
   const params: any[] = [];
-  const whereClauses: string[] = ["b.is_active = true"];
+  const whereClauses: string[] = [publicBusinessVisibilitySql("b")];
   let orderClause: string;
   let searchMethod = "intent_filter";
 
@@ -322,6 +323,22 @@ export async function searchRelevantBusinesses(
 
     // Graceful fallback: try simpler query
     try {
+      const fallbackWhereClauses = [...whereClauses];
+      const fallbackParams = [...params];
+      if (
+        fallbackWhereClauses[
+          fallbackWhereClauses.length - 1
+        ]?.includes("to_tsvector")
+      ) {
+        fallbackWhereClauses.pop();
+        fallbackParams.pop();
+      }
+      const fallbackTerm =
+        intent.keywords[0] ?? intent.rawQuery.trim().slice(0, 100);
+      fallbackParams.push(`%${fallbackTerm}%`);
+      fallbackWhereClauses.push(
+        `(b.name ILIKE $${fallbackParams.length} OR b.description ILIKE $${fallbackParams.length})`,
+      );
       const fallbackRes = await pool.query(
         `SELECT b.id, b.name, COALESCE(bc.name, 'General') AS category,
                 COALESCE(bc.slug, '') AS category_slug,
@@ -337,11 +354,10 @@ export async function searchRelevantBusinesses(
          FROM businesses b
          LEFT JOIN business_categories bc ON b.category_id = bc.id
          LEFT JOIN countries c ON b.country_id = c.id
-         WHERE b.is_active = true
-           AND (b.name ILIKE $1 OR b.description ILIKE $1)
+         WHERE ${fallbackWhereClauses.join(" AND ")}
          ORDER BY b.rating DESC NULLS LAST
-         LIMIT $2`,
-        [`%${intent.keywords[0] ?? intent.rawQuery.slice(0, 30)}%`, limit],
+         LIMIT ${limit}`,
+        fallbackParams,
       );
 
       const businesses: BusinessMatch[] = fallbackRes.rows.map(
@@ -374,14 +390,9 @@ export async function searchRelevantBusinesses(
         isEmergency: intent.urgency >= 8,
         emergencyMessage: null,
       };
-    } catch {
-      return {
-        businesses: [],
-        totalMatches: 0,
-        searchMethod: "error",
-        isEmergency: false,
-        emergencyMessage: null,
-      };
+    } catch (fallbackError) {
+      console.error("[KnowledgeInjector] Fallback query failed:", fallbackError);
+      throw fallbackError;
     }
   }
 }

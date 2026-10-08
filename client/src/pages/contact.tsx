@@ -1,7 +1,7 @@
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import {
   fadeInUp,
@@ -14,16 +14,18 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Contact() {
+  const search = useSearch();
+  const initialSubject = new URLSearchParams(search).get("subject") ?? "";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     name: "",
     email: "",
     phone: "",
-    subject: "",
+    subject: initialSubject,
     message: "",
-  });
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,10 +52,26 @@ export default function Contact() {
           variant: "destructive",
         });
       }
-    } catch {
+    } catch (error) {
+      let description = "Please check your connection and try again.";
+      if (error instanceof Error) {
+        const responseError = error.message.match(/^\d+:\s*([\s\S]*)$/);
+        if (responseError) {
+          try {
+            const payload = JSON.parse(responseError[1]);
+            description =
+              payload.message ||
+              payload.error ||
+              "We could not deliver your message. Please try again later.";
+          } catch {
+            description =
+              "We could not deliver your message. Please try again later.";
+          }
+        }
+      }
       toast({
-        title: "Network error",
-        description: "Please check your connection and try again.",
+        title: "Message not sent",
+        description,
         variant: "destructive",
       });
     } finally {
