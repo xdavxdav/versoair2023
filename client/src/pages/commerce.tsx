@@ -7,6 +7,7 @@ import {
 /* webhint-disable hint-no-inline-styles */
 import { useEffect, useRef, useState, useCallback } from "react";
 import AnalyticsCard from "@/components/ui/analytics-card";
+import DemoMetricsNotice from "@/components/DemoMetricsNotice";
 import ProgressBar from "@/components/ui/progress-bar";
 import AnimatedHeading from "@/components/AnimatedHeading";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -1389,6 +1390,7 @@ export default function CommerceBusinessAds() {
 
         {activeTab === "analytics" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <AnimatedHeading
               text="Analytique Commerce"
               level={2}
@@ -1701,6 +1703,7 @@ export default function CommerceBusinessAds() {
 
         {activeTab === "finance" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
               Tableau de bord financier
@@ -1742,6 +1745,7 @@ export default function CommerceBusinessAds() {
 
         {activeTab === "ads" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Megaphone className="h-6 w-6" />
               Publicité & Marketing

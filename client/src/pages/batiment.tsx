@@ -3,6 +3,7 @@ import { searchBusinesses } from "@/lib/business-data";
 /* webhint-disable hint-no-inline-styles */
 import { useEffect, useRef, useState, useCallback } from "react";
 import AnalyticsCard from "@/components/ui/analytics-card";
+import DemoMetricsNotice from "@/components/DemoMetricsNotice";
 import ProgressBar from "@/components/ui/progress-bar";
 import AnimatedHeading from "@/components/AnimatedHeading";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -1618,6 +1619,7 @@ export default function BatimentDashboard() {
 
         {activeTab === "analytics" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
               Analytique bâtiment
@@ -1901,6 +1903,7 @@ export default function BatimentDashboard() {
 
         {activeTab === "patients" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Users className="h-6 w-6" />
               Analytique projets
@@ -1984,6 +1987,7 @@ export default function BatimentDashboard() {
 
         {activeTab === "resources" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Activity className="h-6 w-6" />
               Ressources & Équipements

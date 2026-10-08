@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useCountry } from "@/contexts/CountryContext";
 import AnalyticsCard from "@/components/ui/analytics-card";
+import DemoMetricsNotice from "@/components/DemoMetricsNotice";
 import ProgressBar from "@/components/ui/progress-bar";
 import AnimatedHeading from "@/components/AnimatedHeading";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -1380,6 +1381,7 @@ export default function Sante() {
 
         {activeTab === "analytics" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
               Analytique Santé
@@ -1477,6 +1479,7 @@ export default function Sante() {
 
         {activeTab === "finance" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
               Tableau de Bord Financier
@@ -1514,6 +1517,7 @@ export default function Sante() {
 
         {activeTab === "ads" && (
           <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+            <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Pill className="h-6 w-6" />
               Campagnes Santé

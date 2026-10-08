@@ -50,6 +50,7 @@ async function run() {
     source: "dist/public",
     include: routes,
     crawl: false,
+    waitFor: 'meta[property="og:title"]',
     skipThirdPartyRequests: true,
     removeBlobs: true,
     puppeteerArgs: ["--no-sandbox", "--disable-setuid-sandbox"],

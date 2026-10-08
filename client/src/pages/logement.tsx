@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useCallback } from "react";
 import AnalyticsCard from "@/components/ui/analytics-card";
+import DemoMetricsNotice from "@/components/DemoMetricsNotice";
 import {
   Search,
   Filter,
@@ -551,6 +552,7 @@ export default function Logement() {
 
         {activeTab === "analytics" && (
           <div>
+            <DemoMetricsNotice />
             <div className="grid lg:grid-cols-4 gap-6 mb-8">
               <AnalyticsCard
                 title="Total Revenue"

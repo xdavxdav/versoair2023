@@ -6,9 +6,65 @@
 
 ## Résumé exécutif
 
-Les vérifications locales et le contrôle du site en production montrent une base fonctionnelle — `/api/health` a répondu `200` avec la base de données connectée — mais cela ne suffit pas à démontrer que chaque déploiement, fonctionnalité ou parcours utilisateur est sûr et prêt. Les prochaines étapes les plus importantes sont de confirmer la branche déployée par Render, de sécuriser le processus de démarrage et les migrations, de vérifier la rotation des secrets, puis de tester les fonctions visibles par les utilisateurs avec des critères mesurables.
+Les éléments Render partagés par le propriétaire confirment le dépôt `xdavxdav/versoair2023`, la branche de déploiement `main`, le SHA complet `e675ff493676b8bcf40a6a0e7e528d91f5e16b6a` et le mode de déploiement Docker basé sur `./Dockerfile`; ce SHA correspond au HEAD local vérifié. Le service est indiqué en ligne sur `www.versoair.com`, et `/api/health` a répondu `200` avec la base connectée. Le dépôt contient aussi un `render.yaml` distinct configuré pour un service Node; sa présence ne signifie pas qu'il est la configuration active du service Docker. Il reste à confirmer si la synchronisation Blueprint peut remplacer les réglages Dashboard, à sécuriser les migrations et les tâches de fond, à vérifier la rotation des secrets, puis à tester les parcours et données utilisateur.
 
-Le dépôt de travail accessible ici ne contient pas de dossier `.git`. Par conséquent, la branche, l’historique, les fichiers suivis et les hashes de commit ne peuvent pas être vérifiés dans cet environnement. Les fichiers complémentaires indiqués sur le Bureau n’étaient pas accessibles par la sandbox; leur contenu n’est pas supposé dans ce document.
+Le checkout accessible contient Git et les outils Node/npm; son nom de branche local est `fix/ui-and-geoadmin-test-accounts`, mais son HEAD complet correspond au SHA déployé sur Render depuis `main`. Le worktree comporte des modifications et fichiers non suivis antérieurs à cet audit: les préserver. Les fichiers complémentaires du Bureau ne sont pas considérés comme consultés.
+
+## Workspace scope update — 2026-10-08
+
+This section records the repo-local scope map and current evidence. It does not certify production.
+
+| Workstream | Local finding / evidence | Status and next action |
+|---|---|---|
+| Deployment identity/configuration | Owner-confirmed Render dashboard identifies repository `xdavxdav/versoair2023`, branch `main`, full commit `e675ff493676b8bcf40a6a0e7e528d91f5e16b6a`, and Docker deployment using `./Dockerfile`; the live URL is `www.versoair.com`. `git rev-parse HEAD` returned the same full SHA. The repository also contains a separate Node-runtime `render.yaml`; owner reports that no Blueprint is configured. | **Deployment source, branch, full SHA, and local SHA match confirmed from owner-provided evidence and local Git. Blueprint absence remains owner-reported; instance count still needs Render-side confirmation.** |
+| Startup/readiness | Owner-provided startup logs show the server started on port 5002, checked tables, initialized routes and Socket.IO, and found static files. Local source review shows both server entry points await `ensureAllTables()` before `listen`; that initializer can return normally after an initial DB connection failure and catches a number of DDL errors. | **Partially verified in production logs; local false-success readiness risk and boot-time schema mutation remain unresolved.** |
+| Database | Startup log reports table verification completed: 2 tables created, 82 already present, and 0 failures. Prior live `/api/health` probe returned 200 with DB connected. | **Connection/schema check observed; provider/owner identity, backups, restore ability, data correctness, and authorization remain unverified.** |
+| Migration safety | A table-creation/schema step ran during startup, but the supplied evidence does not establish exactly which changes ran, whether execution is versioned or serialized, or how rollback/recovery works. | **Not verified; inspect migration definitions and startup path with the DB owner before declaring safe.** |
+| Background jobs | Startup logs show several scheduled jobs starting. The evidence does not establish idempotency, locking, restart behavior, or safety with multiple service instances. | **Partially observed; restart/multi-instance safety remains unverified.** |
+| Product flows and data | Startup logs do not exercise sign-in, permissions, admin actions, notifications, or dashboard metric accuracy. | **Not verified; require authorized end-to-end tests and evidence-backed data checks.** |
+| SEO | `PUBLIC_STATIC_ROUTES` is the shared source for the eight static prerender/sitemap routes. Live `seo:validate-sitemap -- https://www.versoair.com --sample=3` passed: robots points at the sitemap index, all eight page URLs were listed, and three sampled URLs returned 200. The first local prerender run missed Helmet tags on `/`, `/businesses-directory`, and `/batiment`; the snapshot script waited for network idle but not for React Helmet metadata. Added an explicit `og:title` readiness selector to React Snap. Latest `npm run build:prerender` then built, crawled, and validated all eight routes, including `/automobile` with one consistent set of checks. | **Local source fix validated 8/8. Commit/deploy and live metadata/Search Console verification remain outstanding.** |
+| Background jobs | Static review found no distributed/process-level scheduler guard around the jobs started by both server entry points. Newsletter and digest processors read pending work before claiming it, journal cron inserts editions and queues mail without idempotency keys, and royalty distribution reopens a locked pool after any partial failure. Marketplace approval and session deletion use repeat-safe database predicates. | **Static risk review complete. Confirm production instance count and whether both entry points run against the same database; design idempotency/claim/recovery before changing job behavior.** |
+| Feature honesty | Public sector pages expose analytics/finance/ad tabs with unsupported hard-coded values and fallbacks. Finance analytics also maps business ratings to revenue/occupancy/growth; construction analytics has fabricated fallback values. Examples include €485M, €45.8B, €245M, growth percentages, campaign counts, and sector KPIs. Added a shared demo notice to analytics/finance/ad tabs across the eight sector pages and to construction project/resource metrics, preserving the sample dashboard experience without presenting the values as verified reporting. | **Demo-label mitigation implemented locally per owner direction. Metric-source verification and production deployment remain open.** |
+| Remaining owner-controlled gates | Confirm service instance count; provide Neon migration and backup/restore/recovery process for review; safe release authorization; Google OAuth console/secret configuration; Cloudflare sender-domain/token and real mail delivery; Neon ownership/access evidence; Search Console and official business profile access; live listing/data verification. Never include secret values in this plan. | **Keep explicitly blocked until owner evidence/access is supplied. Deployment branch, exact SHA, and Dockerfile mode are confirmed; no Blueprint is owner-reported.** |
+
+### Priority work queue — current status and next actions
+
+| Priority | What we can finish now | Status |
+|---|---|---|
+| **P0 — Production safety** | Render dashboard evidence and owner confirmation identify `xdavxdav/versoair2023`, branch `main`, full live SHA `e675ff493676b8bcf40a6a0e7e528d91f5e16b6a`, and Docker deployment via `./Dockerfile`; local `git rev-parse HEAD` matches exactly. Owner reports there is no Blueprint; the repo still contains a separate Node-runtime `render.yaml`. | **Deployment identity and active Dockerfile mode confirmed.** Blueprint absence is owner-reported, not independently observable here. Still request Render-side confirmation of instance count. |
+| **P0 — Startup and migrations** | Reviewed startup behavior locally; production logs show server startup and a table/schema step. | **Can investigate locally; not ready to close.** Neon/database owner must provide migration versioning/serialization and backup/restore or forward-recovery process before production startup/schema changes. |
+| **P0 — Database and secrets** | Record the observed live database connection and identify what remains owner-verifiable. | **Partially verified.** Evidence indicates the live app connects to Neon. Neon ownership, backups, tested restore capability, data correctness, and secret rotation remain owner-side checks. |
+| **P1 — SEO/prerender** | Added React Snap readiness wait for route-specific Helmet metadata; full local build and prerender now pass. | **Local acceptance passed 8/8.** Reviewed and committed locally; still needs the normal merge to `main` and live route verification. Sitemap/Search Console submission is separate. |
+| **P1 — User flows, permissions, data accuracy** | Inspect local code and, with an authorized test account, exercise sign-in, permissions, admin actions, notifications, and representative dashboard values. | **Not complete.** User must perform authorized test-account actions and share non-sensitive results; do not share credentials. |
+| **P1 — Feature honesty/UI** | Keep the sample dashboards visible and mark illustrative figures clearly. | **Shared demo notice added to all analytics/finance/ad panels across eight sector pages and construction's project/resource panels.** Reviewed and committed locally; verify metric sources before representing any figure as live reporting, and deploy through the normal `main` release process. |
+| **P2 — Maintainability** | Inventory scripts/configuration and document confirmed risks; remove items only after reference checks and tests. | **Partially audited.** Continue with evidence-based inventory; do not perform unverified cleanup. |
+
+### Local review findings and safe boundaries
+
+**Background-job risks found by static review (not production behavior tests):**
+
+- `newsletter-cron.ts` and `digest-worker.ts` select due/pending work before claiming it; two server processes can both send the same campaign or queue item. Newsletter errors can also strand campaigns in `sending` after partial enqueue.
+- `journal-cron.ts` inserts editions and queues subscriber mail without a uniqueness/idempotency key. Multiple processes can generate duplicate editions and emails.
+- `royalty-engine.ts` uses an atomic `open` → `locked` update to select one distributor, but payout work is not enclosed in a transaction; its catch path reopens a locked pool after partial failure. A retry can therefore repeat already-applied side effects.
+- `marketplace-auto-approve.ts` conditionally updates only `pending` rows, and session cleanup deletes expired rows; these individual database operations are repeat-safe. This does not prove the whole runtime is safe with multiple replicas.
+- Both `index.ts` and `index-music.ts` initialize overlapping background jobs. Render's active instance count and which entry points are running in production must be confirmed by the owner.
+
+**Feature-honesty review:** Eight public sector pages (`commerce`, `hotellerie`, `batiment`, `automobile`, `finances`, `divertissement`, `sante`, `logement`) expose analytics/finance/ads or performance tabs. Confirmed examples include metrics derived from business ratings but labelled as revenue/occupancy/growth, hard-coded fallback totals and percentages, finance values such as `€45.8B`, and campaign/ROI metrics with no verified source. The owner chose to keep the tabs as sample previews; a shared, visible notice now identifies the figures as illustrative and not verified live reporting. Keep listing/search functions separate, and do not present these values as measured facts until their sources and definitions are verified.
+
+### Master sequence — P0 protect, P1 prove, P2 maintain
+
+P0 protects production. P1 proves user-facing behavior and data. P2 covers polish and maintainability. Local validation is not release verification: code remains local-only until reviewed, committed, merged through the normal release path, deployed, and checked against the resulting Render commit.
+
+| # | Priority | Action | Current evidence / exit condition |
+|---|---|---|---|
+| 1 | **P0 — Preserve, review, and ship the focused local changes** | Review the exact diff; retain the 8/8 prerender and type/build results; confirm demo notices are accurate and readable; commit only the related SEO/demo-label/roadmap files. Do not bundle database or runtime changes. Merge through the normal `main` release process, deploy, and verify Render is running that exact commit. | Diff reviewed; `npm run check`, production build, `npm run build:prerender` (8/8), `git diff --check`, and mobile-width notice review passed locally. Focused commit created on the current feature branch; merge/deploy/Render-SHA verification remain open. |
+| 2 | **P0 — Resolve Neon migration and recovery ownership** | Ask the Neon/account owner which project, database, and branch are production; what backup/PITR and restore options exist and when recovery was last tested; who approves schema changes; how migrations are applied and recovered if they fail. | Startup logs show a `[MIGRATE]` table-creation step. Do not alter production startup/schema behavior until the step’s effects and recovery plan are understood and documented. |
+| 3 | **P0 — Confirm scheduled-job deployment risk** | Ask who owns scheduled processes and confirm Render’s instance count and active entry point(s). Before scaling or relying on these jobs for production work, implement the needed atomic claims/idempotency and failure-recovery behavior with tests. | Static review found duplicate newsletter/digest/journal processing risks and royalty partial-failure risk. No production instance count or runtime overlap test is available. |
+| 4 | **P0 — Reconcile deployment configuration without changing runtime** | Treat the Render dashboard’s Dockerfile mode as active for this service. Owner reports there is no Blueprint. Keep the Node `render.yaml` discrepancy documented; decide separately whether to align the file. Do not create a Blueprint or change the live runtime merely to remove the discrepancy. | Repo, branch, full deployed SHA, Dockerfile mode, and local SHA match from owner evidence plus Git. No Blueprint is owner-reported. No production configuration change planned. |
+| 5 | **P1 — Prove user-facing flows and data** | Have the owner use authorized synthetic test accounts to test sign-in/out, regular-user versus admin access, notifications, and representative directory/dashboard data. Record each check as pass, fail, or needs investigation. Do not use customer accounts or share credentials. | Not yet tested end-to-end; browser page loads and startup logs are insufficient evidence. |
+| 6 | **P1 — Keep preview metrics unmistakably illustrative** | Confirm the notice appears in every relevant tab and at mobile widths. Keep sample figures clearly labeled; never describe them as verified live analytics. | Shared notice is present across the eight sector dashboards. Mobile review at 390px showed the label and explanatory text visible/readable. Metric sources remain unverified. |
+| 7 | **P2 — Verify SEO after deployment** | After release, inspect each live route’s title, description, canonical, and social metadata. Only then consider Search Console submission. | Local 8/8 prerender validation passed; production serving of these updated snapshots is not yet proved. |
+| 8 | **P2 — Track cleanup separately** | Continue repository cleanup only as a separate workstream; preserve unrelated changes, and do not let lower-priority cleanup delay Neon recovery, job safety, or access checks. | Inventory remains partial; remove files only after reference checks and tests. |
 
 ## 1. Priorities and release gates
 
@@ -16,21 +72,22 @@ Le dépôt de travail accessible ici ne contient pas de dossier `.git`. Par cons
 
 These are release gates. Resolve or document them before treating production as safely maintainable.
 
-#### P0.1 Confirm the source branch and deployment mapping — first action
+#### P0.1 Confirm and retain the source branch and deployment mapping
 
-- Verify directly in Render which repository, service, branch, build command, start command, and environment group back the public production site.
-- Verify the configured Git remote and current branch from an accessible clone; compare the deployed commit with the intended release branch.
+- Owner-provided Render evidence and confirmation show repository `xdavxdav/versoair2023`, production branch `main`, live commit `e675ff493676b8bcf40a6a0e7e528d91f5e16b6a`, and Docker deployment via `./Dockerfile`.
+- Local `git rev-parse HEAD` returns the same SHA. The local branch name is `fix/ui-and-geoadmin-test-accounts`; do not confuse it with the Render deployment branch.
+- The checked-in `Dockerfile` builds with `npm run build` and starts `node dist/index.js`. `render.yaml` separately defines a Node-runtime service with `npm ci && npm run build` and `npm start`; the owner reports no Blueprint, so do not treat `render.yaml` as the active service config. Keep the owner-reported setting distinct from direct Render-side verification.
 - Establish one authoritative deployment branch and make the release process report its commit SHA.
 - Do not assume that local edits or a successful deployment affect `main` or production. Do not mark a fix complete without verifying it on the Render-deployed branch and live service.
 
-**Acceptance:** Render service settings and the deployed commit SHA are recorded; source branch and deployment mapping agree; a harmless release can be traced from branch to deployed SHA.
+**Acceptance:** Repository, Render deployment branch, full SHA, and active Dockerfile mode are recorded and the deployed SHA matches the intended source. Owner reports no Blueprint; treat that as the current configuration-source statement, not independent Render verification. Deployment identity is matched; request future dashboard evidence only if the configuration changes.
 
 #### P0.2 Reduce time to readiness without lying about readiness
 
 - Keep noncritical periodic jobs after the HTTP server starts or move them to a managed worker process.
-- Current `server/index.ts` starts email initialization asynchronously and schedules recurring jobs after `listen`, but it awaits `ensureAllTables()` and `registerRoutes(app)` before binding the port. Those are material remaining pre-listen tasks.
-- Inspect `server/index-music.ts` separately; do not assume it has the same sequencing.
-- Do not simply defer required database initialization and then report a healthy service. Define readiness: `/api/health` should only report ready when dependencies required to serve requests are available. If migrations or schema checks are separated from boot, fail readiness clearly until complete.
+- Both `server/index.ts` and `server/index-music.ts` await `ensureAllTables()` before binding the port, and start periodic jobs after `listen`.
+- `ensureAllTables()` returns normally when its initial DB connection fails and catches multiple table/column DDL errors. Startup can therefore log that tables are verified without proving the required schema is ready. `/api/health` separately probes the database and returns 500 on query failure; `/api/status` reports API status only.
+- Do not simply defer required database initialization and then report a healthy service. Resolve the boot-time schema mutation and false-success signal through an approved versioned migration/readiness design; fail readiness clearly until required checks pass.
 - Add bounded timeouts, explicit logs, and failure behavior for required initialization. Avoid silent retries or “success-shaped” health responses.
 
 **Acceptance:** Cold starts and restarts are measured; health checks distinguish liveness from readiness; required routes start reliably; a dependency outage is visible and does not return a false healthy status.
@@ -51,7 +108,7 @@ These are release gates. Resolve or document them before treating production as 
 - The live health endpoint returned HTTP 200 and reported the database connected. This establishes reachability at the time checked, not the identity, ownership, backup policy, or intended source of the database.
 - Verify the actual Render environment/configuration without copying secret values into this document. Confirm whether Render PostgreSQL or another provider is authoritative and whether any Neon references are active.
 - `@neondatabase/serverless` was not found as a direct `package.json` dependency or in server source in the available check; the lockfile contains indirect references. Re-search all source, build, and deployment paths before removing anything.
-- `.env` and `SUPERADMIN_CREDENTIALS.md` were absent from the visible workspace. The `.gitignore` excludes `.env` patterns and re-includes `.env.example`. Since this checkout has no `.git`, prior exposure in repository history cannot be verified.
+- `.env` and `SUPERADMIN_CREDENTIALS.md` were absent from the visible workspace. The `.gitignore` excludes `.env` patterns and re-includes `.env.example`. Local Git history is available, but secret exposure across remote history, forks, and provider logs still needs an authorized review.
 - Treat previously exposed credentials as compromised until an authorized operator confirms rotation. Rotate affected database, JWT, session, and third-party credentials; invalidate sessions/tokens where appropriate. Check audit logs and production configuration without exposing values. History rewriting/removal does not replace rotation.
 
 **Acceptance:** The live database provider and account are verified; only necessary DB drivers remain; an authorized owner confirms credentials were rotated and the exposure response is recorded; Git history and forks/caches are checked from a real clone or provider tooling.
@@ -113,8 +170,8 @@ For every feature below, choose one of two outcomes: deliver and test a real end
 #### P1.6 Keep translated headings to one rendered text
 
 - A production-page inspection found homepage gold headings whose CSS pseudo-elements emitted a second copy from French `data-text` while Google Translate translated the visible content. The local workspace change removes pseudo-element copies and styles the single translated text node.
-- This is a local edit only: the workspace has no `.git`, no commit/PR can be supplied, and `npm run check` could not run because `npm` was unavailable. The edit is not proven present on Render or `main`.
-- After an accessible tracked checkout is available, review/reapply as appropriate, run the build/check, and inspect translated headings in the live browser at desktop and mobile widths.
+- This remains a local edit only; the current checkout has Git metadata, but no Render deployment/commit mapping has been verified. Do not infer production presence from local branch status.
+- Run local build/check and inspect translated headings in the live browser at desktop and mobile widths only after verifying that the intended release was deployed.
 
 **Acceptance:** One visible heading per panel in original and translated languages; no decorative layer repeats untranslated source text; build and live visual check pass.
 
@@ -154,36 +211,41 @@ Evidence is limited to files visible in the workspace and browser checks made du
 
 | Area | Current evidence | Status |
 |---|---|---|
-| Git branch / Render deploy branch | Workspace at `/Users/admin/Downloads/VersoAIR.tm` has no `.git`; Render dashboard settings were not available. | **Unverified — first gate** |
-| Render build command | Checked-in `render.yaml`: `npm ci && npm run build && npm run db:migrate`; starts with `npm start`. | **Confirmed in file; live service mapping unverified** |
+| Git branch / Render deploy branch | Local branch is `fix/ui-and-geoadmin-test-accounts`; local HEAD is `e675ff493676b8bcf40a6a0e7e528d91f5e16b6a` (2026-10-08). Owner confirms Render repository `xdavxdav/versoair2023`, branch `main`, and the same full deployed SHA. | **Repository, deployed branch, and exact commit match verified from owner-provided Render evidence and local Git.** |
+| Render build/start configuration | Render dashboard evidence shows Docker mode using `./Dockerfile`. That Dockerfile runs `npm run build` in its builder stage and starts production with `node dist/index.js`. Checked-in `render.yaml` separately defines Node runtime, build `npm ci && npm run build`, and start `npm start`. Owner reports no Blueprint is configured. | **Active Dockerfile mode identified; no Blueprint is owner-reported, not independently verified.** |
 | Forced DB push | `package.json` contains `drizzle-kit push --force`; it is not in the checked-in Render build command. | **Confirmed local risk if invoked; deploy pipeline not using it in this file** |
 | Production seed | `npm run seed` exists, but is not in the checked-in Render build command. | **Confirmed local script; no automatic seed in this file** |
-| Database mapping | `render.yaml` maps `DATABASE_URL` to Render DB `versoair-db`; live `/api/health` returned 200 and reported DB connected. | **Partial — actual live DB identity/overrides unverified** |
-| Startup | In `server/index.ts`, email init is asynchronous and recurring jobs start after `listen`; `ensureAllTables()` and `registerRoutes()` are awaited before listening. `index-music.ts` needs separate review. | **Partial** |
-| Secret files / history | `.env` and `SUPERADMIN_CREDENTIALS.md` are absent from the visible tree; `.gitignore` excludes `.env` patterns and keeps `.env.example`. No Git history is available. | **Tree status confirmed; rotation/history unverified** |
+| Database mapping | Owner identifies the live app database as Neon and supplied startup/health evidence shows it connected. `render.yaml` maps `DATABASE_URL` to Render DB `versoair-db`, but that alternate definition does not establish the live Docker service's environment source. | **Connection and reported Neon usage observed; ownership, live environment source, backup/restore, and data correctness unverified** |
+| Startup | Owner-provided logs show server startup on port 5002, table checks, routes and Socket.IO initialization, and static-file discovery. Local source review shows both entry points await `ensureAllTables()` before listening; initializer can return normally after DB connection or DDL errors. | **Partially verified from logs; false-success readiness risk and controlled fix remain open** |
+| Database | Startup log reports 2 tables created, 82 already present, and 0 failed; earlier live `/api/health` check reported connected. | **Connected/schema check observed; provider ownership, backup/restore, and data correctness unverified** |
+| Migration safety | Schema/table creation occurred during startup according to logs; versioning, serialization, exact effects, and recovery were not demonstrated. | **Not verified; review migration path and recovery with owner** |
+| Background jobs | Several scheduled jobs started according to logs. Source review finds newsletter/digest reads pending records without atomic claims, journal cron lacks a unique edition/recipient idempotency key, royalty distribution atomically locks a pool but reopens it after partial failures, while marketplace approval and session deletion use repeat-safe state predicates. Both server entry points initialize many of the same schedulers. | **Static code risks identified; Render instance count and entry-point topology are unknown. No restart or multi-instance behavior tested.** |
+| Product flows and data | Startup evidence does not test authentication, permissions, admin actions, notifications, or metric accuracy. | **Not verified; end-to-end and data-source checks remain required** |
+| Prerender SEO | Updated `server/scripts/run-react-snap.ts` to wait for `meta[property="og:title"]`, rather than relying only on `networkidle0` before snapshot capture. Latest `npm run build:prerender` completed successfully; all eight routes passed title, description, canonical, Open Graph, and Twitter validation, including a clean single result for `/automobile`. | **Local 8/8 validation passed. Commit/deploy and live verification remain outstanding.** |
+| Secret files / history | `.env` and `SUPERADMIN_CREDENTIALS.md` are absent from the visible tree; `.gitignore` excludes `.env` patterns and keeps `.env.example`. Local history is available; remote history/forks/provider audit and credential rotation are unverified. | **Tree/local history confirmed; exposure response unverified** |
 | Neon driver | No direct `@neondatabase/serverless` dependency or server-source usage found in the prior check; lockfile references are indirect. | **Partially checked; full source/build reference audit needed** |
 | Cleanup scripts | `check-transactions.cjs` and `fix-slug-duplicates.mjs` exist; `.js` slug counterpart was absent. | **Presence confirmed; safe deletion/duplication unverified** |
 | Ignore rules | Required build/system/data paths are ignored; `.vscode/` is not. Whether any are tracked could not be verified without Git. | **Partial** |
 | Dashboard and feature behavior | Source contains notification UI and a conditional video player; authenticated CRUD, live metrics, playback flow, email delivery, and other end-to-end paths were not established. | **Unverified / partial by feature** |
 | Translated homepage headings | Local CSS/markup edit now avoids duplicate pseudo-text and allows translation. No commit or live deployment proof is available. | **Local-only, unverified in production** |
-| Type/build verification | Editor diagnostics showed no errors for the touched homepage file. `npm run check` could not run because `npm` was unavailable. | **Partial; full check still required** |
+| Type/build verification | Node/npm are installed in this checkout but are not on the default terminal PATH; supplying `/Users/admin/.local/share/node-v24.21.0/bin` and the installed Chrome-for-Testing executable allowed the local prerender pipeline to complete. | **Full local build/prerender passes; not production evidence** |
 | Referenced audit documents | Five files under `/Users/admin/Desktop/files` were denied by sandbox policy. | **Not reviewed; upload to accessible workspace to merge** |
 
 ## 4. End-to-end roadmap for everything remaining
 
-This is the recommended work order, not a promise that all work can be completed from the current checkout. Begin with the access gates; then deliver small, reviewable changes with proof on the actual Render deployment branch. Do not bundle risky database, auth, payment, and UI changes into one release.
+This is the recommended work order, not a promise that all work can be completed from the current checkout. Deployment identity is confirmed; resolve the remaining configuration-source question and proceed with independent repo-local work. Deliver small, reviewable changes with proof on the actual Render deployment branch. Do not bundle risky database, auth, payment, and UI changes into one release.
 
 ### Stage 0 — Unlock reliable verification (blocking)
 
 **Work**
 
-1. Open an accessible Git checkout with remote, current branch, and history; establish whether it is the repository/branch configured in Render.
-2. In Render, record the web service, deployment branch, last successful deployed commit SHA, build/start commands, health path, linked database, and any environment overrides. Record no secret values.
+1. Deployment identity is now matched: local full SHA equals the owner-confirmed Render deployed SHA on `main`. Retain this evidence and record any subsequent release SHA.
+2. Render dashboard evidence identifies Docker mode via `./Dockerfile`; owner reports no Blueprint. Request Render instance count and configuration-source confirmation. Record environment sources without secret values.
 3. Make the five Desktop source documents available inside the workspace and reconcile any additional findings before implementation.
-4. Restore a usable local toolchain and dependency installation so build, type-check, and tests can be run. Current session lacked `npm`.
-5. Establish a safe test environment and authorized test accounts for admin, GeoAdmin, business, artist, and regular-user flows. Use synthetic/non-sensitive records.
+4. Keep the available local Node/npm toolchain usable; rerun focused checks in CI/release branch as well as locally.
+5. Establish a safe test environment and authorized test accounts for admin, GeoAdmin, business, artist, and regular-user flows. Use synthetic/non-sensitive records; the owner should execute sign-in and permission checks and share only non-sensitive results.
 
-**Exit gate:** A reviewer can connect the local branch and each PR to the Render deployed SHA; source audit documents are consolidated; required tests can run locally or in CI. If blocked, continue only with read-only changes that do not depend on unavailable secrets/production access.
+**Exit gate:** Current deployment maps to the exact local SHA and Render instance count/configuration are known; source audit documents are consolidated; required tests can run locally or in CI. If blocked, continue only with read-only changes that do not depend on unavailable secrets/production access.
 
 ### Stage 1 — Contain immediate production risk
 
