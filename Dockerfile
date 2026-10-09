@@ -16,6 +16,12 @@ COPY drizzle.config.ts ./
 # Install native dependencies for sharp (image processing)
 RUN apk add --no-cache vips-dev build-base
 
+# System Chromium for the SEO prerender step (skip the glibc-only bundled download)
+RUN apk add --no-cache chromium
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Install dependencies
 RUN npm ci
 
@@ -25,7 +31,9 @@ COPY server/ ./server/
 COPY shared/ ./shared/
 
 # Build application - make sure dist/index.js gets created
-RUN npm run build && \
+RUN npm run seo:routes && npm run build && \
+    (npm run prerender:snap && npm run seo:validate-prerender \
+      || echo "⚠️ Prerender step failed; shipping client-rendered pages") && \
     if [ ! -f dist/index.js ]; then \
       echo "❌ ERROR: dist/index.js not created after build"; \
       exit 1; \

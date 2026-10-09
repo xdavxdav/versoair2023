@@ -54,6 +54,9 @@ async function run() {
     skipThirdPartyRequests: true,
     removeBlobs: true,
     puppeteerArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
+    ...(process.env.PUPPETEER_EXECUTABLE_PATH
+      ? { puppeteerExecutablePath: process.env.PUPPETEER_EXECUTABLE_PATH }
+      : {}),
   });
 
   console.log("[react-snap] Done.");
