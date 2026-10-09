@@ -18,6 +18,10 @@ import { db, pool } from "../db";
 import { emailQueue, emailSubscriptions, users } from "@shared/schema";
 import { eq, and, sql, lte, inArray } from "drizzle-orm";
 import {
+  createPgAdvisoryLockSession,
+  withAdvisoryLock,
+} from "./advisory-lock";
+import {
   sendJobAlertEmail,
   sendContractAlertEmail,
   sendGeoAdminReportEmail,
@@ -34,6 +38,7 @@ const MAX_RETRIES = 3;
 const BATCH_SIZE = 50; // Process up to 50 queue items per run
 const DAILY_DIGEST_HOUR = 8; // 8 AM local server time
 const WEEKLY_DIGEST_DAY = 1; // Monday
+const DIGEST_WORKER_LOCK_KEY = 74182001;
 
 let digestInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -82,26 +87,33 @@ export function stopDigestWorker(): void {
  * Main processing loop — decides what to send based on current time.
  */
 async function processDigestQueue(): Promise<void> {
-  const now = new Date();
-  const hour = now.getHours();
-  const dayOfWeek = now.getDay(); // 0 = Sunday
+  const result = await withAdvisoryLock(
+    DIGEST_WORKER_LOCK_KEY,
+    async () => createPgAdvisoryLockSession(await pool.connect()),
+    async () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const dayOfWeek = now.getDay(); // 0 = Sunday
 
-  console.log(
-    `[DIGEST] Processing queue at ${now.toISOString()} (hour=${hour}, day=${dayOfWeek})`,
+      console.log(
+        `[DIGEST] Processing queue at ${now.toISOString()} (hour=${hour}, day=${dayOfWeek})`,
+      );
+
+      await retryFailedItems();
+
+      if (hour === DAILY_DIGEST_HOUR) {
+        await processDailyDigests();
+      }
+
+      if (dayOfWeek === WEEKLY_DIGEST_DAY && hour === DAILY_DIGEST_HOUR) {
+        await processWeeklyDigests();
+        await processGeoAdminReports();
+      }
+    },
   );
 
-  // 1. Always: retry failed items
-  await retryFailedItems();
-
-  // 2. Check if it's time for daily digests (8 AM)
-  if (hour === DAILY_DIGEST_HOUR) {
-    await processDailyDigests();
-  }
-
-  // 3. Check if it's time for weekly digests (Monday 8 AM)
-  if (dayOfWeek === WEEKLY_DIGEST_DAY && hour === DAILY_DIGEST_HOUR) {
-    await processWeeklyDigests();
-    await processGeoAdminReports();
+  if (!result.acquired) {
+    console.log("[DIGEST] Another server is already processing the queue");
   }
 }
 

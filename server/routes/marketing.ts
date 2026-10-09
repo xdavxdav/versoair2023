@@ -7,6 +7,7 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { newsletterLimiter } from "../middleware/rate-limiter";
+import { queueNewsletterCampaign } from "../services/newsletter-delivery";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1735,38 +1736,21 @@ router.post(
           .json({ success: false, error: "Campaign already sent" });
       }
 
-      const cam = campaign.rows[0];
-
-      // Mark as sending
-      await pool.query(
-        `UPDATE newsletter_campaigns SET status = 'sending' WHERE id = $1`,
-        [campaignId],
+      const result = await queueNewsletterCampaign(
+        campaignId,
+        "immediate",
+        () => pool.connect(),
       );
-
-      // Queue emails to all active subscribers
-      const subscribers = await pool.query(
-        `SELECT email, name FROM newsletter_subscribers WHERE is_active = true`,
-      );
-
-      let queued = 0;
-      for (const sub of subscribers.rows) {
-        await pool.query(
-          `INSERT INTO email_queue (recipient_email, subject, html_body, email_type, status)
-         VALUES ($1, $2, $3, 'newsletter', 'pending')`,
-          [sub.email, cam.subject || cam.title, cam.content],
-        );
-        queued++;
+      if (!result) {
+        return res.status(409).json({
+          success: false,
+          error: "Campaign was already sent or is being processed",
+        });
       }
-
-      // Mark as sent
-      await pool.query(
-        `UPDATE newsletter_campaigns SET status = 'sent', sent_at = NOW(), recipient_count = $1 WHERE id = $2`,
-        [queued, campaignId],
-      );
 
       res.json({
         success: true,
-        message: `Campaign sent to ${queued} subscribers`,
+        message: `Campaign sent to ${result.recipientCount} subscribers`,
       });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
