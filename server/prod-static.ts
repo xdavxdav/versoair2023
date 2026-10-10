@@ -86,7 +86,7 @@ export function serveStatic(app: Express) {
       const runtimeScript = siblingUrl
         ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>\n  `
         : "";
-      let injected = injectRouteSeoMeta(html, req.path).replace(
+      let injected = injectRouteSeoMeta(html, req.originalUrl.split("?")[0]).replace(
         "</head>",
         `${runtimeScript}</head>`,
       );
