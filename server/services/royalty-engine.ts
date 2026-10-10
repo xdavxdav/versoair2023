@@ -28,6 +28,7 @@ export async function distributeWeeklyPool(
 
   const client = await pool.connect();
   const pendingNotifications: any[] = [];
+  let clientReleaseError: Error | undefined;
 
   try {
     // One transaction so a mid-run failure leaves no partial payouts to replay.
@@ -42,13 +43,18 @@ export async function distributeWeeklyPool(
     );
 
     if (poolResult.rows.length === 0) {
-      await client.query("ROLLBACK");
+      const existingPool = await client.query(
+        `SELECT status FROM weekly_pools WHERE week_number = $1 AND year_number = $2`,
+        [weekNumber, yearNumber],
+      );
+      await client.query("COMMIT");
+      const currentStatus = existingPool.rows[0]?.status ?? "missing";
       console.log(
-        `⚠️ [ROYALTY] No open pool found for Week ${weekNumber}, ${yearNumber}`,
+        `⚠️ [ROYALTY] No open pool found for Week ${weekNumber}, ${yearNumber}; current status is ${currentStatus}`,
       );
       return {
         distributed: false,
-        reason: "No open pool found or already locked/distributed",
+        reason: `No open pool found or already ${currentStatus}`,
       };
     }
 
@@ -318,11 +324,21 @@ export async function distributeWeeklyPool(
       `❌ [ROYALTY] Distribution failed for Week ${weekNumber}:`,
       err,
     );
-    // Rollback restores the pool to 'open' so a replay starts clean.
-    await client.query("ROLLBACK").catch(() => {});
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error(
+        `[ROYALTY] Rollback failed for Week ${weekNumber}; discarding database connection:`,
+        rollbackError,
+      );
+      clientReleaseError =
+        rollbackError instanceof Error
+          ? rollbackError
+          : new Error(String(rollbackError));
+    }
     throw err;
   } finally {
-    client.release();
+    client.release(clientReleaseError);
   }
 }
 
@@ -353,13 +369,21 @@ export async function calculatePoolContributions() {
 
     // Add to current week's pool
     const { week, year } = getWeekNumber();
-    await pool.query(
+    const contributionResult = await pool.query(
       `INSERT INTO weekly_pools (week_number, year_number, total_pool, status)
        VALUES ($1, $2, $3, 'open')
-       ON CONFLICT (week_number, year_number) 
-       DO UPDATE SET total_pool = weekly_pools.total_pool + $3`,
+       ON CONFLICT (week_number, year_number)
+       DO UPDATE SET total_pool = weekly_pools.total_pool + $3
+       WHERE weekly_pools.status = 'open'`,
       [week, year, totalContribution.toFixed(2)],
     );
+
+    if (contributionResult.rowCount === 0) {
+      console.log(
+        `⚠️ [ROYALTY] Skipped adding $${totalContribution.toFixed(2)} to Week ${week} pool because it is already locked/distributed`,
+      );
+      return 0;
+    }
 
     console.log(
       `💰 [ROYALTY] Added $${totalContribution.toFixed(2)} to Week ${week} pool from ${subs.rows.length} subscriptions`,
