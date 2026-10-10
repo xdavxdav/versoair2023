@@ -30,17 +30,10 @@ COPY client/ ./client/
 COPY server/ ./server/
 COPY shared/ ./shared/
 
-# Build application - make sure dist/index.js gets created
-# Prerender launches Chromium and can exhaust build memory/time on small Render
-# builders (build killed with status 143), so it is opt-in: set PRERENDER=true.
-ARG PRERENDER=false
+# Build application and require the SEO snapshots to validate before shipping.
 RUN npm run seo:routes && npm run build && \
-    if [ "$PRERENDER" = "true" ]; then \
-      (timeout 600 npm run prerender:snap && npm run seo:validate-prerender \
-        || echo "⚠️ Prerender step failed; shipping client-rendered pages"); \
-    else \
-      echo "Skipping prerender (PRERENDER!=true)"; \
-    fi && \
+    timeout 600 npm run prerender:snap && \
+    npm run seo:validate-prerender && \
     if [ ! -f dist/index.js ]; then \
       echo "❌ ERROR: dist/index.js not created after build"; \
       exit 1; \
