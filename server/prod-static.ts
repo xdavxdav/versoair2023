@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { injectRouteSeoMeta } from "./utils/route-seo-meta";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -85,7 +86,10 @@ export function serveStatic(app: Express) {
       const runtimeScript = siblingUrl
         ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>\n  `
         : "";
-      let injected = html.replace("</head>", `${runtimeScript}</head>`);
+      let injected = injectRouteSeoMeta(html, req.path).replace(
+        "</head>",
+        `${runtimeScript}</head>`,
+      );
 
       // Crawlers (Facebook/WhatsApp/Slack/etc.) require absolute og:image/twitter:image URLs.
       const origin = (

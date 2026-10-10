@@ -16,11 +16,9 @@ COPY drizzle.config.ts ./
 # Install native dependencies for sharp (image processing)
 RUN apk add --no-cache vips-dev build-base
 
-# System Chromium for the SEO prerender step (skip the glibc-only bundled download)
-RUN apk add --no-cache chromium
+# Skip the Puppeteer Chromium download (no headless browser needed in the image)
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 # Install dependencies
 RUN npm ci
@@ -30,10 +28,8 @@ COPY client/ ./client/
 COPY server/ ./server/
 COPY shared/ ./shared/
 
-# Build application and require the SEO snapshots to validate before shipping.
-RUN npm run seo:routes && npm run build && \
-    timeout 600 npm run prerender:snap && \
-    npm run seo:validate-prerender && \
+# Build application. Route SEO metadata is injected by the server at request time.
+RUN npm run build && \
     if [ ! -f dist/index.js ]; then \
       echo "❌ ERROR: dist/index.js not created after build"; \
       exit 1; \
