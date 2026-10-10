@@ -26,9 +26,15 @@ export async function distributeWeeklyPool(
     `📊 [ROYALTY] Starting distribution for Week ${weekNumber}, ${yearNumber}...`,
   );
 
+  const client = await pool.connect();
+  const pendingNotifications: any[] = [];
+
   try {
+    // One transaction so a mid-run failure leaves no partial payouts to replay.
+    await client.query("BEGIN");
+
     // 1. Lock the pool
-    const poolResult = await pool.query(
+    const poolResult = await client.query(
       `UPDATE weekly_pools SET status = 'locked' 
        WHERE week_number = $1 AND year_number = $2 AND status = 'open'
        RETURNING *`,
@@ -36,6 +42,7 @@ export async function distributeWeeklyPool(
     );
 
     if (poolResult.rows.length === 0) {
+      await client.query("ROLLBACK");
       console.log(
         `⚠️ [ROYALTY] No open pool found for Week ${weekNumber}, ${yearNumber}`,
       );
@@ -49,11 +56,12 @@ export async function distributeWeeklyPool(
     const totalPool = parseFloat(weeklyPool.total_pool) || 0;
 
     if (totalPool <= 0) {
-      await pool.query(
+      await client.query(
         `UPDATE weekly_pools SET status = 'distributed', distributed_at = NOW() 
          WHERE id = $1`,
         [weeklyPool.id],
       );
+      await client.query("COMMIT");
       console.log(`⚠️ [ROYALTY] Pool is empty for Week ${weekNumber}`);
       return { distributed: true, totalPool: 0, reason: "Empty pool" };
     }
@@ -64,7 +72,7 @@ export async function distributeWeeklyPool(
     const platformCut = totalPool * 0.1;
 
     // 3. Get all artists with valid streams this week
-    const artistStreams = await pool.query(
+    const artistStreams = await client.query(
       `SELECT 
          se.artist_profile_id,
          ap.current_badge_tier,
@@ -87,13 +95,14 @@ export async function distributeWeeklyPool(
     const qualifyingArtists = artists.length;
 
     if (qualifyingArtists === 0) {
-      await pool.query(
+      await client.query(
         `UPDATE weekly_pools SET 
          guaranteed_fund = $1, performance_pool = $2, platform_cut = $3,
          qualifying_artists = 0, status = 'distributed', distributed_at = NOW()
          WHERE id = $4`,
         [guaranteedFund, performancePool, platformCut, weeklyPool.id],
       );
+      await client.query("COMMIT");
       return {
         distributed: true,
         totalPool,
@@ -163,7 +172,7 @@ export async function distributeWeeklyPool(
         totalPool > 0 ? (totalEarnings / totalPool) * 100 : 0;
 
       // Upsert royalty record
-      await pool.query(
+      await client.query(
         `INSERT INTO artist_royalties 
          (artist_profile_id, week_number, year_number, guaranteed_amount, performance_amount, 
           badge_bonus, total_earnings, stream_count, pool_share_percent, global_rank, regional_rank)
@@ -173,10 +182,7 @@ export async function distributeWeeklyPool(
            guaranteed_amount = $4,
            performance_amount = $5,
            badge_bonus = $6,
-           total_earnings = artist_royalties.total_earnings + $7 - COALESCE(
-             (SELECT total_earnings FROM artist_royalties 
-              WHERE artist_profile_id = $1 AND week_number = $2 AND year_number = $3), 0
-           ),
+           total_earnings = $7,
            stream_count = $8,
            pool_share_percent = $9,
            global_rank = $10,
@@ -197,7 +203,7 @@ export async function distributeWeeklyPool(
       );
 
       // Add to artist wallet
-      await pool.query(
+      await client.query(
         `UPDATE artist_profiles SET 
          wallet_balance = wallet_balance + $1,
          weekly_streams = 0,
@@ -219,46 +225,20 @@ export async function distributeWeeklyPool(
         regionalRank: regRank,
       });
 
-      // Notify each artist
-      const io = getIO();
-      if (io && artist.user_id) {
-        io.to(`user_${artist.user_id}`).emit("notification", {
-          id: `royalty-${weekNumber}-${yearNumber}-${Date.now()}`,
-          type: "royalty_payout",
-          title: `💰 Weekly Earnings: $${totalEarnings.toFixed(2)}`,
-          message: `Week ${weekNumber} distribution complete! Rank #${globalRank}. Check your Royalties tab.`,
-          timestamp: new Date().toISOString(),
-          read: false,
+      if (artist.user_id) {
+        pendingNotifications.push({
+          userId: artist.user_id,
+          totalEarnings,
+          guaranteedAmount,
+          performanceAmount,
+          badgeBonus,
+          globalRank,
         });
-
-        // Also insert notification
-        try {
-          await pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, data)
-             VALUES ($1, $2, $3, $4, $5::jsonb)`,
-            [
-              artist.user_id,
-              "royalty_payout",
-              `💰 Weekly Earnings: $${totalEarnings.toFixed(2)}`,
-              `Week ${weekNumber}: Guaranteed $${guaranteedAmount.toFixed(2)} + Performance $${performanceAmount.toFixed(2)}${badgeBonus > 0 ? ` + Badge Bonus $${badgeBonus.toFixed(2)}` : ""}. Rank #${globalRank}.`,
-              JSON.stringify({
-                actionUrl: "/artist-portal/dashboard?tab=royalties",
-              }),
-            ],
-          );
-        } catch (e) {
-          // Non-blocking, but log it — this insert previously targeted a
-          // non-existent `action_url` column and failed on every payout.
-          console.error(
-            "[royalty-engine] failed to persist payout notification:",
-            e,
-          );
-        }
       }
     }
 
     // 6. Update pool record
-    await pool.query(
+    await client.query(
       `UPDATE weekly_pools SET 
        guaranteed_fund = $1, performance_pool = $2, platform_cut = $3,
        qualifying_artists = $4, status = 'distributed', distributed_at = NOW()
@@ -272,8 +252,40 @@ export async function distributeWeeklyPool(
       ],
     );
 
-    // Broadcast pool update to all connected clients
+    await client.query("COMMIT");
+
+    // After commit, so a notification failure cannot trigger a payout replay.
     const io = getIO();
+    for (const n of pendingNotifications) {
+      if (io) {
+        io.to(`user_${n.userId}`).emit("notification", {
+          id: `royalty-${weekNumber}-${yearNumber}-${Date.now()}`,
+          type: "royalty_payout",
+          title: `💰 Weekly Earnings: $${n.totalEarnings.toFixed(2)}`,
+          message: `Week ${weekNumber} distribution complete! Rank #${n.globalRank}. Check your Royalties tab.`,
+          timestamp: new Date().toISOString(),
+          read: false,
+        });
+      }
+      try {
+        await pool.query(
+          `INSERT INTO notifications (user_id, type, title, message, data)
+           VALUES ($1, $2, $3, $4, $5::jsonb)`,
+          [
+            n.userId,
+            "royalty_payout",
+            `💰 Weekly Earnings: $${n.totalEarnings.toFixed(2)}`,
+            `Week ${weekNumber}: Guaranteed $${n.guaranteedAmount.toFixed(2)} + Performance $${n.performanceAmount.toFixed(2)}${n.badgeBonus > 0 ? ` + Badge Bonus $${n.badgeBonus.toFixed(2)}` : ""}. Rank #${n.globalRank}.`,
+            JSON.stringify({
+              actionUrl: "/artist-portal/dashboard?tab=royalties",
+            }),
+          ],
+        );
+      } catch (e) {
+        console.error("[royalty-engine] failed to persist payout notification:", e);
+      }
+    }
+
     if (io) {
       io.emit("pool_update", {
         weekNumber,
@@ -306,14 +318,11 @@ export async function distributeWeeklyPool(
       `❌ [ROYALTY] Distribution failed for Week ${weekNumber}:`,
       err,
     );
-    // Unlock pool on failure
-    await pool
-      .query(
-        `UPDATE weekly_pools SET status = 'open' WHERE week_number = $1 AND year_number = $2 AND status = 'locked'`,
-        [weekNumber, yearNumber],
-      )
-      .catch(() => {});
+    // Rollback restores the pool to 'open' so a replay starts clean.
+    await client.query("ROLLBACK").catch(() => {});
     throw err;
+  } finally {
+    client.release();
   }
 }
 
