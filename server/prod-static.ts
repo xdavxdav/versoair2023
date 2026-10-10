@@ -86,10 +86,7 @@ export function serveStatic(app: Express) {
       const runtimeScript = siblingUrl
         ? `<script>window.__APP_CONFIG__=${JSON.stringify({ siblingUrl })};</script>\n  `
         : "";
-      let injected = injectRouteSeoMeta(html, req.originalUrl.split("?")[0]).replace(
-        "</head>",
-        `${runtimeScript}</head>`,
-      );
+      let injected = html.replace("</head>", `${runtimeScript}</head>`);
 
       // Crawlers (Facebook/WhatsApp/Slack/etc.) require absolute og:image/twitter:image URLs.
       const origin = (
@@ -109,6 +106,9 @@ export function serveStatic(app: Express) {
         /(property="og:url"\s+content=")\/?([^"]*)"/,
         `$1${origin}${req.originalUrl}"`,
       );
+
+      // Last, so its canonical www URLs are not rewritten to the runtime origin above.
+      injected = injectRouteSeoMeta(injected, req.originalUrl.split("?")[0]);
 
       res.set("Content-Type", "text/html");
       res.send(injected);
