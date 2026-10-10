@@ -113,6 +113,10 @@ import seedRouter from "./routes/seed";
 import systemRouter from "./routes/system";
 import usersRouter from "./routes/users";
 export async function registerRoutes(app: Express) {
+  app.get("/auth/signup", (_req, res) => {
+    res.redirect(302, "/auth/signin?mode=register");
+  });
+
   // Register auth routes
   app.use("/auth", authRouter);
   app.use("/auth", oauthRouter);

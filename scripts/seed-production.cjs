@@ -16,13 +16,14 @@
 
 const pg = require("pg");
 const bcrypt = require("bcryptjs");
+const staffCredentials = require("./staff-credentials.cjs");
 const {
-  STAFF_ACCOUNTS,
-  loadEnv,
+  STAFF_ACCOUNTS = {},
+  loadEnv = () => require("dotenv").config(),
   generatePassword,
   resolveEmail,
   readEnvPassword,
-} = require("./staff-credentials.cjs");
+} = staffCredentials;
 
 loadEnv();
 
@@ -51,6 +52,11 @@ const TEST_USERS = Object.entries(STAFF_ACCOUNTS).map(([key, acct]) => {
   }
   return { ...acct, key, email, password, source };
 });
+if (TEST_USERS.length === 0) {
+  console.warn(
+    "No staff credential records are configured; seeding reference data only.",
+  );
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // 2. COUNTRIES

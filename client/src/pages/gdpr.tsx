@@ -307,7 +307,7 @@ export default function GDPRCompliance() {
             <div className="bg-slate-100 rounded-lg p-4 border border-gray-800 mt-3">
               <p className="text-slate-900 font-medium">Data Controller</p>
               <p className="text-slate-500 text-sm">VERSO AIR INC.</p>
-              <p className="text-slate-500 text-sm">Data Protection Officer: helpmeee@versoair.com</p>
+              <p className="text-slate-500 text-sm">Data Protection Officer: support@versoair.com</p>
             </div>
           </section>
 
@@ -452,7 +452,7 @@ export default function GDPRCompliance() {
             </p>
             <div className="bg-slate-100 rounded-xl p-4 mt-3 border border-gray-800">
               <p className="text-slate-900 font-medium">Data Protection Officer</p>
-              <p className="text-slate-500 text-sm">Email: helpmeee@versoair.com</p>
+              <p className="text-slate-500 text-sm">Email: support@versoair.com</p>
               <p className="text-slate-500 text-sm">Response time: Within 30 days (extendable by 60 days for complex requests)</p>
               <p className="text-slate-500 text-sm mt-2">
                 We may verify your identity before processing. All requests are logged and handled in compliance with applicable law.

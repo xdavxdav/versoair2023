@@ -124,26 +124,6 @@ const PLATFORM_SECTORS = [
   },
 ];
 
-// Real technology stack
-const TECH_STACK = [
-  { name: "React 18", color: "text-cyan-400" },
-  { name: "TypeScript", color: "text-blue-400" },
-  { name: "PostgreSQL", color: "text-indigo-400" },
-  { name: "Express.js", color: "text-green-400" },
-  { name: "Vite", color: "text-yellow-400" },
-  { name: "Drizzle ORM", color: "text-amber-400" },
-  { name: "Tailwind CSS", color: "text-teal-400" },
-  { name: "shadcn/ui", color: "text-slate-900" },
-  { name: "Socket.io", color: "text-slate-300" },
-  { name: "Framer Motion", color: "text-purple-400" },
-  { name: "TanStack Query", color: "text-red-400" },
-  { name: "Chart.js", color: "text-pink-400" },
-  { name: "Zod", color: "text-blue-300" },
-  { name: "Lucide Icons", color: "text-orange-400" },
-  { name: "Wouter", color: "text-emerald-400" },
-  { name: "Nodemailer", color: "text-rose-400" },
-];
-
 // Animated Component
 type FloatingProps = {
   children?: React.ReactNode;
@@ -840,47 +820,6 @@ export default function About() {
               color="text-yellow-400"
               delay={0.5}
             />
-          </div>
-        </div>
-      </section>
-
-      {/* Technology Stack — REAL */}
-      <section className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-950" />
-
-        <div className="relative max-w-[95vw] mx-auto px-4">
-          <FloatingElement>
-            <div className="text-center mb-16">
-              <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
-                <Zap className="h-3 w-3 mr-2" />
-                Pile Technologique
-              </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                  Construit Avec
-                </span>
-              </h2>
-            </div>
-          </FloatingElement>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-16">
-            {TECH_STACK.map((tech, i) => (
-              <motion.div
-                key={tech.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: i * 0.04 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="p-4 rounded-xl bg-gradient-to-br from-slate-900/50 to-slate-800/30 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 transition-all text-center group"
-              >
-                <div
-                  className={`text-base font-semibold mb-1 ${tech.color} group-hover:scale-110 transition-transform`}
-                >
-                  {tech.name}
-                </div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>

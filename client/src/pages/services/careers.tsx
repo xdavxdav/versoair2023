@@ -167,19 +167,6 @@ interface SavedJob {
   saved_date: string;
 }
 
-// Database connection status interface
-interface DatabaseHealth {
-  success: boolean;
-  message: string;
-  database?: {
-    connected: boolean;
-    name: string;
-    host: string;
-    port: string;
-    user: string;
-  };
-}
-
 // TRACE: Job categories for filtering
 const jobCategories = [
   "Engineering",
@@ -492,44 +479,7 @@ export default function Careers() {
     }
   };
 
-  const [databaseHealth, setDatabaseHealth] = useState<DatabaseHealth | null>(
-    null,
-  );
-  const [isCheckingConnection, setIsCheckingConnection] = useState(true);
-
-  // TRACE: Database query hooks - These connect to your PostgreSQL database
   const queryClient = useQueryClient();
-
-  // TRACE: Check database connection using the same /api/health endpoint as other pages
-  const { data: healthData, refetch: refetchHealth } = useQuery<DatabaseHealth>(
-    {
-      queryKey: ["database-health"],
-      queryFn: async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/health`);
-          if (!response.ok) {
-            throw new Error(`Health check failed: ${response.statusText}`);
-          }
-          return await response.json();
-        } catch (error) {
-          console.error("Health check error:", error);
-          return {
-            success: false,
-            message: "Database health check unavailable",
-          };
-        }
-      },
-      retry: 2,
-      refetchInterval: 30000, // Check every 30 seconds
-    },
-  );
-
-  useEffect(() => {
-    if (healthData) {
-      setDatabaseHealth(healthData);
-      setIsCheckingConnection(false);
-    }
-  }, [healthData]);
 
   // TRACE: Fetch jobs from PostgreSQL database
   const {
@@ -565,7 +515,6 @@ export default function Careers() {
         throw error;
       }
     },
-    enabled: !isCheckingConnection,
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -846,47 +795,6 @@ export default function Careers() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // TRACE: Database Status Component - Updated to show proper connection status
-  const DatabaseStatus = () => {
-    if (isCheckingConnection) {
-      return (
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-amber-50 text-amber-700 border border-amber-200">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          <span>Checking PostgreSQL...</span>
-        </div>
-      );
-    }
-
-    const isConnected = databaseHealth?.database?.connected;
-
-    return (
-      <div
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
-          isConnected
-            ? "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border border-emerald-200 shadow-sm"
-            : "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border border-amber-200 shadow-sm"
-        }`}
-      >
-        {isConnected ? (
-          <CheckCircle className="h-3.5 w-3.5" />
-        ) : (
-          <XCircle className="h-3.5 w-3.5" />
-        )}
-        <span>
-          {isConnected
-            ? `Live: ${databaseHealth?.database?.name || "PostgreSQL"}`
-            : "Database Offline"}
-        </span>
-        <button
-          onClick={() => refetchHealth()}
-          className="ml-2 text-xs underline hover:no-underline transition-all hover:text-emerald-800"
-        >
-          {isConnected ? "Recheck" : "Retry"}
-        </button>
-      </div>
-    );
-  };
-
   // TRACE: Stats card component - Updated with business theme
   const StatCard = ({ icon, value, label, trend, color = "blue" }: any) => (
     <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 hover:border-gray-300 overflow-hidden min-w-0">
@@ -1059,9 +967,6 @@ export default function Careers() {
                     <p className="text-xs text-gray-500 hidden sm:block">
                       Business Intelligence Careers
                     </p>
-                  </div>
-                  <div className="hidden md:block">
-                    <DatabaseStatus />
                   </div>
                 </div>
               </div>

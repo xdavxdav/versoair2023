@@ -66,7 +66,7 @@ export default function BlogPage() {
   // Blog state
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
-  const [currentPath] = useLocation();
+  const [currentPath, setLocation] = useLocation();
 
   // Real API data via useSocialFeed hook
   const {
@@ -345,6 +345,7 @@ export default function BlogPage() {
         <ViewOnlyGate
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
+          onBack={() => setLocation("/")}
         />
         <AuthModal
           isOpen={isAuthModalOpen}

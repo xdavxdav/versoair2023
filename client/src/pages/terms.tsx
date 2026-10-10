@@ -299,9 +299,9 @@ export default function TermsOfService() {
             </h2>
             <p className="text-slate-700 leading-relaxed">
               These Terms are governed by and construed in accordance with the
-              laws of the State of California, United States, without regard to
-              conflict-of-law provisions. Any disputes shall be resolved in the
-              courts of California.
+              laws of the Province of Ontario and the federal laws of Canada
+              applicable therein, without regard to conflict-of-law provisions.
+              Any disputes shall be resolved in the courts of Ontario.
             </p>
           </section>
 
@@ -324,7 +324,7 @@ export default function TermsOfService() {
             <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
               <p className="text-white font-medium">VERSO AIR INC. — Legal Team</p>
               <p className="text-slate-500 text-sm">
-                Email: helpmeee@versoair.com
+                Email: support@versoair.com
               </p>
               <p className="text-slate-500 text-sm">
                 Platform:{" "}

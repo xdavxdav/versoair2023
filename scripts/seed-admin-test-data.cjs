@@ -1,8 +1,17 @@
 #!/usr/bin/env node
 const { Pool } = require("pg");
-const { randomUUID } = require("crypto");
+const { randomUUID, randomBytes } = require("crypto");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
+
+if (
+  process.env.NODE_ENV === "production" &&
+  process.env.ALLOW_PRODUCTION_TEST_FIXTURES !== "true"
+) {
+  throw new Error(
+    "TEST fixtures on production require ALLOW_PRODUCTION_TEST_FIXTURES=true",
+  );
+}
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
@@ -23,13 +32,6 @@ async function run() {
   try {
     await client.query("BEGIN");
 
-    const admin = await one(
-      client,
-      `SELECT id, email FROM users
-       WHERE role IN ('superuser', 'admin')
-       ORDER BY CASE WHEN role = 'superuser' THEN 0 ELSE 1 END, id
-       LIMIT 1`,
-    );
     const category =
       (await one(
         client,
@@ -44,7 +46,7 @@ async function run() {
           "TEST Enterprise Category",
           "test-enterprise",
           "TEST category",
-          "TEST",
+          false,
         ],
       ));
     const city = await one(
@@ -55,8 +57,8 @@ async function run() {
        LEFT JOIN countries co ON co.id = r.country_id
        ORDER BY c.id LIMIT 1`,
     );
-    if (!admin || !category || !city) {
-      throw new Error("Required admin, category, or city seed data is missing");
+    if (!category || !city) {
+      throw new Error("Required category or city seed data is missing");
     }
 
     const testUser =
@@ -70,7 +72,7 @@ async function run() {
         [
           "test_geo_user",
           "test-geo-user@example.invalid",
-          await bcrypt.hash("TestOnly2026", 10),
+          await bcrypt.hash(randomBytes(32).toString("base64url"), 10),
         ],
       ));
 
@@ -104,7 +106,7 @@ async function run() {
        RETURNING id`,
         [
           "TEST Enterprise Verso Air",
-          admin.id,
+          testUser.id,
           category.id,
           city.id,
           "TEST record for enterprise creation workflow.",
@@ -155,8 +157,8 @@ async function run() {
       (await one(
         client,
         `INSERT INTO ad_campaigns
-             (business_id,name,objective,daily_budget,status,start_date,end_date,created_at)
-             VALUES ($1,$2,$3,100.00,'active',CURRENT_DATE,CURRENT_DATE+30,NOW())
+             (business_id,name,description,budget,status,start_date,end_date,created_at)
+             VALUES ($1,$2,$3,100.00,'active',NOW(),NOW()+INTERVAL '30 days',NOW())
        RETURNING id`,
         [
           business.id,
@@ -179,7 +181,7 @@ async function run() {
          VALUES ($1,$2,$3,$4,'TEST',$5,'CI',$6,$7,'pending',true,true,NOW(),NOW())
        RETURNING id`,
         [
-          admin.id,
+          testUser.id,
           "test-artist-contract@example.invalid",
           "TEST Artist",
           "TEST Legal Name",
@@ -202,7 +204,7 @@ async function run() {
        VALUES ($1,$2,$3,'services','free','active',$4,$5,$6,NOW(),NOW())
        RETURNING id`,
         [
-          admin.id,
+          testUser.id,
           "TEST Classified Listing",
           "TEST marketing and journal listing.",
           "test-listing@example.invalid",
@@ -225,7 +227,7 @@ async function run() {
        RETURNING id`,
         [
           business.id,
-          admin.id,
+          testUser.id,
           "TEST Contractor",
           "test-contractor@example.invalid",
         ],
@@ -245,7 +247,7 @@ async function run() {
        RETURNING id`,
         [
           contractor.id,
-          admin.id,
+          testUser.id,
           "TEST Assigned Contract",
           "TEST contractor assignment workflow.",
           "TEST terms",

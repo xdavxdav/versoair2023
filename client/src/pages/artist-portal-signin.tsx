@@ -668,41 +668,28 @@ export default function ArtistPortalSignIn() {
                   />
                 </motion.button>
 
-                {/* Divider */}
-                <div className="flex items-center gap-4 my-2">
-                  <div className="flex-1 h-px bg-white/[0.06]" />
-                  <span className="text-white/15 text-xs">
-                    ou continuer avec
-                  </span>
-                  <div className="flex-1 h-px bg-white/[0.06]" />
-                </div>
-
-                {/* OAuth buttons */}
+                {/* Additional sign-in providers are shown but remain unavailable. */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    {
-                      name: "Google",
-                      icon: "G",
-                      color: "hover:border-red-500/30",
-                    },
-                    { name: "Apple", icon: "", color: "hover:border-white/30" },
-                    {
-                      name: "Spotify",
-                      icon: "♪",
-                      color: "hover:border-green-500/30",
-                    },
+                    { name: "Google", icon: "G" },
+                    { name: "Apple", icon: "" },
+                    { name: "Spotify", icon: "♪" },
                   ].map((provider) => (
-                    <motion.button
+                    <button
                       key={provider.name}
                       type="button"
-                      className={`py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium ${provider.color} transition-all`}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      disabled
+                      title={`${provider.name} sign-in is not available here yet`}
+                      className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/25 text-sm font-medium opacity-50 cursor-not-allowed"
                     >
-                      <span className="text-lg">{provider.icon}</span>
-                    </motion.button>
+                      <span className="text-lg grayscale">
+                        {provider.icon || "●"}
+                      </span>
+                      <span className="ml-2">{provider.name}</span>
+                    </button>
                   ))}
                 </div>
+
               </motion.form>
             )}
 

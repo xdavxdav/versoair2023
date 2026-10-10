@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from "wouter";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 interface TeamMember {
   id: string;
   name: string;
-  role: string;
   department: string;
 }
 
@@ -12,18 +12,38 @@ const teamMembers: TeamMember[] = [
   {
     id: "boussou-elvis-jonathan",
     name: "Boussou Elvis Jonathan",
-    role: "Directeur",
     department: "VERSO AIR INC.",
   },
   {
     id: "joel-vanga",
     name: "Joel Vanga",
-    role: "Directeur",
     department: "VERSO AIR INC.",
   },
 ];
 
+const copy = {
+  en: {
+    badge: "Our leadership",
+    heading: "The people leading VERSO AIR INC.",
+    introduction:
+      "VERSO AIR INC. is built by a dedicated team of developers and field professionals, led by co-directors Boussou Elvis Jonathan and Joel Vanga.",
+    role: "Co-director",
+    contact: "Learn more about the company",
+  },
+  fr: {
+    badge: "Notre direction",
+    heading: "Les personnes à la tête de VERSO AIR INC.",
+    introduction:
+      "VERSO AIR INC. s’appuie sur une équipe dédiée de développeurs et de professionnels de terrain, sous la direction de ses co-directeurs Boussou Elvis Jonathan et Joel Vanga.",
+    role: "Co-directeur",
+    contact: "En savoir plus sur l’entreprise",
+  },
+} as const;
+
 export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
+  const { currentLang } = useLanguage();
+  const text = currentLang === "en" ? copy.en : copy.fr;
+
   return (
     <section className="py-16 px-4 bg-gradient-to-tr from-[#bf831c] to-[#fff9e5] relative overflow-hidden">
       {/* Background Pattern */}
@@ -36,14 +56,13 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
         {showHeader && (
           <div className="text-center mb-8 sm:mb-12 px-4 sm:px-0">
             <span className="inline-block px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-xs sm:text-sm font-medium text-white mb-3 sm:mb-4">
-              Les fondateurs
+              {text.badge}
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
-              Direction de VERSO AIR INC.
+              {text.heading}
             </h2>
             <p className="text-sm sm:text-lg text-white/90 max-w-3xl mx-auto leading-relaxed">
-              VERSO AIR INC. est dirigée par Boussou Elvis Jonathan et Joel
-              Vanga.
+              {text.introduction}
             </p>
           </div>
         )}
@@ -68,7 +87,7 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
                   </h3>
                   <div className="space-y-1">
                     <p className="text-white/90 font-medium text-xs sm:text-sm">
-                      {member.role}
+                      {text.role}
                     </p>
                     <p className="text-white/70 text-xs hidden sm:block">
                       {member.department}
@@ -87,7 +106,7 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
         <div className="text-center mt-12">
           <Link href="/contact">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors duration-300 cursor-pointer group">
-              <span className="font-medium">En savoir plus sur l’entreprise</span>
+              <span className="font-medium">{text.contact}</span>
               <svg
                 className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300"
                 fill="none"

@@ -304,7 +304,7 @@ export default function CookiePolicy() {
                 VERSO AIR INC. — Privacy Team
               </p>
               <p className="text-slate-500 text-sm">
-                Email: helpmeee@versoair.com
+                Email: support@versoair.com
               </p>
               <p className="text-slate-500 text-sm">
                 See also:{" "}

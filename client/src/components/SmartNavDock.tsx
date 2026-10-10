@@ -174,21 +174,7 @@ export function SmartNavDock({
   const [muHoldCountdown, setMuHoldCountdown] = useState(3);
 
   const handleMuTap = useCallback(() => {
-    if (muHoldCompletedRef.current) {
-      muHoldCompletedRef.current = false;
-      return;
-    }
-    muTapCountRef.current += 1;
-    if (muTapTimerRef.current) clearTimeout(muTapTimerRef.current);
-    muTapTimerRef.current = setTimeout(() => {
-      const count = muTapCountRef.current;
-      muTapCountRef.current = 0;
-      if (count >= 2) {
-        setLocation("/music/dashboard");
-      } else {
-        setLocation("/stream");
-      }
-    }, 300);
+    setLocation("/stream");
   }, [setLocation]);
 
   const handleMuPressStart = useCallback(() => {

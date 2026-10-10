@@ -40,15 +40,17 @@ export function useInboxSocket(onMessage?: (data: InboxMessageEvent) => void) {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
+    if (!onMessage) return;
+
     const socket = getSocket();
     socketRef.current = socket;
     refCount++;
 
     const handler = (data: InboxMessageEvent) => onMessage?.(data);
-    if (onMessage) socket.on("inbox_message", handler);
+    socket.on("inbox_message", handler);
 
     return () => {
-      if (onMessage) socket.off("inbox_message", handler);
+      socket.off("inbox_message", handler);
       refCount--;
       if (refCount <= 0) {
         sharedSocket?.disconnect();

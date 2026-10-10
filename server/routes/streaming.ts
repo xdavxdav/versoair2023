@@ -938,7 +938,11 @@ router.get("/artists", async (req: Request, res: Response) => {
     } = req.query;
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-    let where = "WHERE 1=1";
+    let where = `WHERE NOT EXISTS (
+      SELECT 1 FROM users u
+      WHERE u.id = COALESCE(ap.user_id, art.user_id)
+        AND LOWER(COALESCE(u.role, '')) IN ('admin', 'moderator', 'superadmin', 'superuser')
+    )`;
     const params: any[] = [];
     let paramIdx = 1;
 
@@ -1028,6 +1032,11 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
       WHERE art.id = $1
+        AND NOT EXISTS (
+          SELECT 1 FROM users u
+          WHERE u.id = COALESCE(ap.user_id, art.user_id)
+            AND LOWER(COALESCE(u.role, '')) IN ('admin', 'moderator', 'superadmin', 'superuser')
+        )
     `,
       [id],
     );
@@ -1081,7 +1090,13 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         COALESCE(ap.verified_for_payout, false) as verified
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
-      WHERE art.id != $1 AND (COALESCE(ap.genre #>> '{}', art.genre) = $2 OR art.country_code = $3)
+      WHERE art.id != $1
+        AND NOT EXISTS (
+          SELECT 1 FROM users u
+          WHERE u.id = COALESCE(ap.user_id, art.user_id)
+            AND LOWER(COALESCE(u.role, '')) IN ('admin', 'moderator', 'superadmin', 'superuser')
+        )
+        AND (COALESCE(ap.genre #>> '{}', art.genre) = $2 OR art.country_code = $3)
       ORDER BY COALESCE(ap.lifetime_streams, 0) DESC LIMIT 6
     `,
       [id, artist.rows[0].genre, artist.rows[0].country_code],

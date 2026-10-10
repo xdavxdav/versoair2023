@@ -6,14 +6,12 @@ import { Loader2, CheckCircle2, AlertCircle, Shield } from "lucide-react";
 /**
  * OAuth Completion Page
  *
- * This page handles the redirect back from OAuth providers.
- * It parses the token + credentials from query params, stores them via AuthContext,
- * shows a brief confirmation with the user's parsed credentials + role checkpoint,
- * then auto-redirects to the appropriate dashboard.
+ * Confirms the HttpOnly session created by the server-side OAuth callback,
+ * refreshes the authenticated user, and redirects to the selected checkpoint.
  */
 export default function OAuthComplete() {
   const [, navigate] = useLocation();
-  const { login } = useAuthContext();
+  const { restoreAuth } = useAuthContext();
   const [status, setStatus] = useState<"processing" | "success" | "error">(
     "processing",
   );
@@ -28,64 +26,67 @@ export default function OAuthComplete() {
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    const token = url.searchParams.get("token");
-    const userId = url.searchParams.get("userId");
-    const email = url.searchParams.get("email");
-    const role = url.searchParams.get("role");
-    const name = url.searchParams.get("name");
-    const redirect = url.searchParams.get("redirect");
-    const provider = url.searchParams.get("provider");
+    const requestedRedirect = url.searchParams.get("redirect");
+    const checkpoint =
+      requestedRedirect?.startsWith("/") &&
+      !requestedRedirect.startsWith("//") &&
+      !requestedRedirect.startsWith("/\\") &&
+      !/[\r\n]/.test(requestedRedirect)
+        ? requestedRedirect
+        : "/dashboard";
+    const provider = url.searchParams.get("provider") || "google";
     const error = url.searchParams.get("error");
+    window.history.replaceState({}, "", url.pathname);
 
     if (error) {
       setStatus("error");
       setErrorMessage(
-        decodeURIComponent(error).replace(/_/g, " ") ||
-          "Authentication failed. Please try again.",
+        error.replace(/_/g, " ") || "Authentication failed. Please try again.",
       );
       return;
     }
 
-    if (!token || !userId || !email) {
-      setStatus("error");
-      setErrorMessage("Missing authentication data. Please sign in again.");
-      return;
-    }
+    let cancelled = false;
+    let redirectTimer: ReturnType<typeof setTimeout> | undefined;
 
-    // Parse and display credentials
-    const checkpoint = redirect || "/dashboard";
-    setCredentials({
-      email: decodeURIComponent(email),
-      role: decodeURIComponent(role || "user"),
-      name: decodeURIComponent(name || email.split("@")[0]),
-      provider: provider || "oauth",
-      checkpoint,
-    });
+    const completeSignIn = async () => {
+      try {
+        const response = await fetch("/auth/session", {
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success || !data.user) {
+          throw new Error("Your Google session could not be verified.");
+        }
 
-    // Store credentials via AuthContext (persists to localStorage + in-memory)
-    login(token, {
-      id: userId,
-      email: decodeURIComponent(email),
-      name: decodeURIComponent(name || ""),
-      role: decodeURIComponent(role || "user"),
-    });
+        await restoreAuth();
+        if (cancelled) return;
 
-    // Also store in geo-admin session for backward compat
-    localStorage.setItem("geoadmin_session", "true");
-    localStorage.setItem(
-      "geoadmin_username",
-      decodeURIComponent(name || email.split("@")[0]),
-    );
-    localStorage.setItem("signin_timestamp", new Date().toISOString());
+        setCredentials({
+          email: data.user.email || "",
+          role: data.user.role || "user",
+          name: data.user.name || data.user.username || data.user.email || "User",
+          provider,
+          checkpoint,
+        });
+        setStatus("success");
+        redirectTimer = setTimeout(() => navigate(checkpoint), 2200);
+      } catch (error) {
+        if (cancelled) return;
+        setStatus("error");
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Authentication failed. Please sign in again.",
+        );
+      }
+    };
 
-    setStatus("success");
-
-    // Auto-redirect after brief display of parsed credentials
-    const timer = setTimeout(() => {
-      navigate(checkpoint);
-    }, 2200);
-
-    return () => clearTimeout(timer);
+    void completeSignIn();
+    return () => {
+      cancelled = true;
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
   }, []);
 
   return (
@@ -99,7 +100,7 @@ export default function OAuthComplete() {
                 Processing Sign In…
               </h2>
               <p className="text-gray-500 text-sm">
-                Parsing credentials and verifying access…
+                Verifying your secure session…
               </p>
             </div>
           )}

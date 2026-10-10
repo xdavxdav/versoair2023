@@ -25,6 +25,17 @@ export default function PullToRefresh() {
     if (!isTouchDevice()) return;
 
     const onTouchStart = (e: TouchEvent) => {
+      const target = e.target;
+      if (
+        target instanceof Element &&
+        target.closest(
+          "a, button, input, select, textarea, [role='button'], nav, [data-no-pull-to-refresh]",
+        )
+      ) {
+        isPulling.current = false;
+        return;
+      }
+
       if (window.scrollY <= 0 && !triggered) {
         touchStartY.current = e.touches[0].clientY;
         isPulling.current = true;

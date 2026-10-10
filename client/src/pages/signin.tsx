@@ -186,7 +186,7 @@ export default function SignIn() {
   const [resendMessage, setResendMessage] = useState("");
   const [loginError, setLoginError] = useState("");
   const [registerError, setRegisterError] = useState("");
-  const [ssoLoading, setSsoLoading] = useState<string | null>(null);
+  const [ssoLoading, setSsoLoading] = useState(false);
   const [accountChoices, setAccountChoices] = useState<any[]>([]);
   const [accountSelectionOpen, setAccountSelectionOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<{
@@ -253,28 +253,26 @@ export default function SignIn() {
   });
 
   // Handle SSO initiation — redirects to provider or shows error
-  const handleSsoLogin = async (provider: "google" | "microsoft" | "apple") => {
-    setSsoLoading(provider);
+  const handleSsoLogin = async () => {
+    setSsoLoading(true);
     setLoginError("");
     try {
       const redirect = getQueryParam("redirect") || "";
       const res = await fetch(
-        `/auth/oauth/${provider}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`,
+        `/auth/oauth/google${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`,
         { redirect: "manual" },
       );
 
       if (res.type === "opaqueredirect" || res.status === 0) {
         // Browser will follow the redirect to the OAuth provider
-        window.location.href = `/auth/oauth/${provider}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
+        window.location.href = `/auth/oauth/google${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
         return;
       }
 
       if (res.status === 501) {
         const data = await res.json();
-        setLoginError(
-          data.message || `${provider} sign-in is not yet configured.`,
-        );
-        setSsoLoading(null);
+        setLoginError(data.message || "Google sign-in is not yet configured.");
+        setSsoLoading(false);
         return;
       }
 
@@ -286,10 +284,10 @@ export default function SignIn() {
       }
 
       // Fallback: redirect directly
-      window.location.href = `/auth/oauth/${provider}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
+      window.location.href = `/auth/oauth/google${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
     } catch {
-      setLoginError(`Failed to connect to ${provider}. Please try again.`);
-      setSsoLoading(null);
+      setLoginError("Failed to connect to Google. Please try again.");
+      setSsoLoading(false);
     }
   };
 
@@ -1797,16 +1795,16 @@ export default function SignIn() {
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
-              {/* ─── General SSO Providers ─── */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* ─── Google SSO ─── */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                 {/* Google */}
                 <button
                   type="button"
-                  onClick={() => handleSsoLogin("google")}
-                  disabled={!!ssoLoading}
+                  onClick={handleSsoLogin}
+                  disabled={ssoLoading}
                   className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {ssoLoading === "google" ? (
+                  {ssoLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                   ) : (
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -1833,14 +1831,11 @@ export default function SignIn() {
                 {/* Microsoft */}
                 <button
                   type="button"
-                  onClick={() => handleSsoLogin("microsoft")}
-                  disabled={!!ssoLoading}
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled
+                  title="Microsoft sign-in is not available yet"
+                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
                 >
-                  {ssoLoading === "microsoft" ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                  ) : (
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 grayscale" viewBox="0 0 24 24">
                       <rect x="1" y="1" width="10" height="10" fill="#F25022" />
                       <rect
                         x="13"
@@ -1863,29 +1858,35 @@ export default function SignIn() {
                         height="10"
                         fill="#FFB900"
                       />
-                    </svg>
-                  )}
+                  </svg>
                   Microsoft
                 </button>
                 {/* Apple */}
                 <button
                   type="button"
-                  onClick={() => handleSsoLogin("apple")}
-                  disabled={!!ssoLoading}
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-900 hover:bg-gray-800 border border-gray-900 rounded-xl text-white transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled
+                  title="Apple sign-in is not available yet"
+                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
                 >
-                  {ssoLoading === "apple" ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <svg
-                      className="w-5 h-5"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
+                  <svg
+                    className="w-5 h-5 grayscale"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                    </svg>
-                  )}
+                  </svg>
                   Apple
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  title="LinkedIn sign-in is not available yet"
+                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
+                >
+                  <span className="w-5 h-5 rounded bg-gray-300 text-white flex items-center justify-center font-bold grayscale">
+                    in
+                  </span>
+                  LinkedIn
                 </button>
               </div>
 
@@ -2256,16 +2257,16 @@ export default function SignIn() {
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
 
-                {/* ─── General SSO Providers ─── */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                {/* ─── Google SSO ─── */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   {/* Google */}
                   <button
                     type="button"
-                    onClick={() => handleSsoLogin("google")}
-                    disabled={!!ssoLoading}
+                    onClick={handleSsoLogin}
+                    disabled={ssoLoading}
                     className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {ssoLoading === "google" ? (
+                    {ssoLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                     ) : (
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -2292,14 +2293,11 @@ export default function SignIn() {
                   {/* Microsoft */}
                   <button
                     type="button"
-                    onClick={() => handleSsoLogin("microsoft")}
-                    disabled={!!ssoLoading}
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                    title="Microsoft sign-in is not available yet"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
                   >
-                    {ssoLoading === "microsoft" ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                    ) : (
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 grayscale" viewBox="0 0 24 24">
                         <rect
                           x="1"
                           y="1"
@@ -2328,29 +2326,35 @@ export default function SignIn() {
                           height="10"
                           fill="#FFB900"
                         />
-                      </svg>
-                    )}
+                    </svg>
                     Microsoft
                   </button>
                   {/* Apple */}
                   <button
                     type="button"
-                    onClick={() => handleSsoLogin("apple")}
-                    disabled={!!ssoLoading}
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-900 hover:bg-gray-800 border border-gray-900 rounded-xl text-white transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                    title="Apple sign-in is not available yet"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
                   >
-                    {ssoLoading === "apple" ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <svg
-                        className="w-5 h-5"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
+                    <svg
+                      className="w-5 h-5 grayscale"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
                         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                      </svg>
-                    )}
+                    </svg>
                     Apple
+                  </button>
+                  <button
+                    type="button"
+                    disabled
+                    title="LinkedIn sign-in is not available yet"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
+                  >
+                    <span className="w-5 h-5 rounded bg-gray-300 text-white flex items-center justify-center font-bold grayscale">
+                      in
+                    </span>
+                    LinkedIn
                   </button>
                 </div>
 

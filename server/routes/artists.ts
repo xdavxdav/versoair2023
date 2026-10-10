@@ -2,6 +2,11 @@ import { Router } from "express";
 import { pool } from "../db";
 
 const router = Router();
+const publicArtistAccountFilter = `NOT EXISTS (
+  SELECT 1 FROM users u
+  WHERE u.id = a.user_id
+    AND LOWER(COALESCE(u.role, '')) IN ('admin', 'moderator', 'superadmin', 'superuser')
+)`;
 
 // ─── ARTIST DIRECTORY (PUBLIC) ───
 // Mounted at /api/artists
@@ -43,7 +48,7 @@ router.get("/search", async (req, res) => {
 
     const hasCC = await checkCountryCodeColumn();
 
-    const conditions: string[] = [];
+    const conditions: string[] = [publicArtistAccountFilter];
     const params: any[] = [];
     let paramIdx = 1;
 
@@ -65,8 +70,7 @@ router.get("/search", async (req, res) => {
       paramIdx++;
     }
 
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     let orderClause = "ORDER BY a.stage_name ASC";
     switch (sort_by) {
@@ -117,7 +121,9 @@ router.get("/search", async (req, res) => {
 router.get("/genres", async (_req, res) => {
   try {
     const result = await pool.query(
-      "SELECT DISTINCT genre FROM artists WHERE genre IS NOT NULL AND genre != '' ORDER BY genre ASC",
+      `SELECT DISTINCT a.genre FROM artists a
+       WHERE a.genre IS NOT NULL AND a.genre != '' AND ${publicArtistAccountFilter}
+       ORDER BY a.genre ASC`,
     );
     res.json({ success: true, data: result.rows.map((r: any) => r.genre) });
   } catch (error: any) {
@@ -134,7 +140,9 @@ router.get("/countries", async (_req, res) => {
       return res.json({ success: true, data: [] });
     }
     const result = await pool.query(
-      "SELECT DISTINCT country_code FROM artists WHERE country_code IS NOT NULL AND country_code != '' ORDER BY country_code ASC",
+      `SELECT DISTINCT a.country_code FROM artists a
+       WHERE a.country_code IS NOT NULL AND a.country_code != '' AND ${publicArtistAccountFilter}
+       ORDER BY a.country_code ASC`,
     );
     res.json({
       success: true,
@@ -153,8 +161,8 @@ router.get("/:id/details", async (req, res) => {
   try {
     const { id } = req.params;
     const artistResult = await pool.query(
-      `SELECT id, stage_name AS name, genre, label_status, spotify_url, business_id, user_id
-       FROM artists WHERE id = $1`,
+      `SELECT a.id, a.stage_name AS name, a.genre, a.label_status, a.spotify_url, a.business_id, a.user_id
+       FROM artists a WHERE a.id = $1 AND ${publicArtistAccountFilter}`,
       [parseInt(id)],
     );
 

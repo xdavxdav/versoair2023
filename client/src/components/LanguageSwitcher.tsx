@@ -276,7 +276,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [bannerMessage, setBannerMessage] = useState("");
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const firstCountryDone = useRef(false);
   const gtLoaded = useRef(false);
   const [reloadCountdown, setReloadCountdown] = useState<number | null>(null);
   const isInitialLoad = useRef(true);
@@ -374,19 +373,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const lang = getLanguageForCountry(selectedCountry);
     setAutoDetectedLang(lang);
 
-    // First detection: honour cached language (returning visitor)
-    if (!firstCountryDone.current) {
-      firstCountryDone.current = true;
-      const cached = localStorage.getItem(LANG_CACHE_KEY);
-      if (cached && cached !== "auto" && cached !== "fr") {
-        // Returning visitor — STEP 1 already set cookie + loaded GT.
-        // GT auto-translates from cookie. Nothing more to do.
-        return;
-      }
-    }
-
-    // If user manually chose a language (Language tab), respect it —
-    // don't override their choice when country changes or is re-detected.
+    // Respect a manually chosen language during automatic country detection.
+    // An explicit country selection clears this override in selectLanguage.
     if (isManualOverride) return;
 
     // Guard: skip if selectLanguage from CountryDropdown already handled this
@@ -455,6 +443,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     (lang: string, source: "country" | "manual" = "manual") => {
       const prev = currentLang;
 
+      if (source === "manual") {
+        setIsManualOverride(true);
+        localStorage.setItem(LANG_OVERRIDE_KEY, "true");
+      } else {
+        setIsManualOverride(false);
+        localStorage.removeItem(LANG_OVERRIDE_KEY);
+      }
+
       // ── Same language? No reload needed ──
       // e.g. Belgium (fr) → Congo (fr) — just update state, skip reload
       if (lang === prev) {
@@ -471,17 +467,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setPreviousLang(prev);
       setCurrentLang(lang);
       localStorage.setItem(LANG_CACHE_KEY, lang);
-
-      // Track manual override: if user explicitly picked a language,
-      // country changes should NOT reset it. Country-triggered changes
-      // clear the override so auto-detection works normally.
-      if (source === "manual") {
-        setIsManualOverride(true);
-        localStorage.setItem(LANG_OVERRIDE_KEY, "true");
-      } else {
-        setIsManualOverride(false);
-        localStorage.removeItem(LANG_OVERRIDE_KEY);
-      }
 
       // Set cookie + try combo for instant switch
       const switched = switchLanguage(lang);

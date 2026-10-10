@@ -3,24 +3,10 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
-import { pool } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
-
-// ─── Auto-migrate: ensure OAuth columns exist ────────────────────────────────
-(async () => {
-  try {
-    await pool.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider VARCHAR(20);
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider_id TEXT;
-    `);
-    console.log("✅ [OAuth] Ensured oauth columns exist on users table");
-  } catch (e: any) {
-    console.warn("⚠️ [OAuth] Column migration skipped:", e.message);
-  }
-})();
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -132,11 +118,32 @@ function getProviderConfig(provider: string): OAuthProviderConfig | null {
 }
 
 function getCallbackUrl(provider: string): string {
-  const base =
+  return `${getAppUrl()}/auth/oauth/${provider}/callback`;
+}
+
+function getAppUrl(): string {
+  return (
     process.env.VITE_API_URL ||
     process.env.VERSOAIR_URL ||
-    "http://localhost:5003";
-  return `${base}/auth/oauth/${provider}/callback`;
+    "http://localhost:5003"
+  ).replace(/\/+$/, "");
+}
+
+function getSafeRedirect(value: unknown): string | undefined {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.startsWith("/\\") ||
+    /[\r\n]/.test(value)
+  ) {
+    return undefined;
+  }
+  return value;
+}
+
+function isEnabledProvider(provider: string): boolean {
+  return provider === "google";
 }
 
 // ─── State management (CSRF protection for OAuth) ─────────────────────────────
@@ -169,6 +176,10 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { provider } = req.params;
     const { redirect } = req.query;
+    if (!isEnabledProvider(provider)) {
+      res.status(404).json({ success: false, message: "Provider not enabled" });
+      return;
+    }
     const config = getProviderConfig(provider);
 
     if (!config) {
@@ -192,7 +203,7 @@ router.get(
     const state = crypto.randomBytes(32).toString("hex");
     pendingOAuthStates.set(state, {
       provider,
-      redirect: typeof redirect === "string" ? redirect : undefined,
+      redirect: getSafeRedirect(redirect),
       createdAt: Date.now(),
     });
 
@@ -203,14 +214,7 @@ router.get(
       response_type: "code",
       scope: config.scopes.join(" "),
       state,
-      access_type: "offline",
-      prompt: "consent",
     });
-
-    // Apple-specific params
-    if (provider === "apple") {
-      params.set("response_mode", "form_post");
-    }
 
     res.redirect(`${config.authUrl}?${params.toString()}`);
   }),
@@ -226,7 +230,13 @@ async function handleOAuthCallback(req: Request, res: Response) {
   const code = (req.query.code || req.body?.code) as string;
   const state = (req.query.state || req.body?.state) as string;
   const error = (req.query.error || req.body?.error) as string;
-  const appUrl = process.env.VITE_API_URL || process.env.VERSOAIR_URL || "";
+  const appUrl = getAppUrl();
+  res.set("Cache-Control", "no-store");
+
+  if (!isEnabledProvider(provider)) {
+    res.redirect(`${appUrl}/auth/signin?mode=login&error=provider_not_enabled`);
+    return;
+  }
 
   // Handle provider errors
   if (error) {
@@ -273,8 +283,9 @@ async function handleOAuthCallback(req: Request, res: Response) {
     });
 
     if (!tokenRes.ok) {
-      const errBody = await tokenRes.text();
-      console.error(`[OAuth] ${provider} token exchange failed:`, errBody);
+      console.error(
+        `[OAuth] ${provider} token exchange failed with status ${tokenRes.status}`,
+      );
       res.redirect(
         `${appUrl}/auth/signin?mode=login&error=token_exchange_failed`,
       );
@@ -282,34 +293,21 @@ async function handleOAuthCallback(req: Request, res: Response) {
     }
 
     const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token;
-    const idToken = tokenData.id_token;
-
+    const accessToken =
+      typeof tokenData.access_token === "string" ? tokenData.access_token : "";
+    if (!accessToken) {
+      res.redirect(
+        `${appUrl}/auth/signin?mode=login&error=token_exchange_failed`,
+      );
+      return;
+    }
     // ─── Get user profile from provider ─────────────────────────────────
     let email = "";
     let name = "";
     let providerUserId = "";
 
-    if (provider === "apple" && idToken) {
-      // Apple: decode ID token to get user info
-      const payload = JSON.parse(
-        Buffer.from(idToken.split(".")[1], "base64").toString(),
-      );
-      email = payload.email || "";
-      providerUserId = payload.sub || "";
-      // Apple provides name only on first sign-in (from form_post body)
-      name = req.body?.user
-        ? (() => {
-            try {
-              const u = JSON.parse(req.body.user);
-              return `${u.name?.firstName || ""} ${u.name?.lastName || ""}`.trim();
-            } catch {
-              return "";
-            }
-          })()
-        : "";
-    } else if (config.userInfoUrl) {
-      // Google / Microsoft: use userinfo endpoint
+    if (config.userInfoUrl) {
+      // Google userinfo is fetched server-side with the exchanged access token.
       const userRes = await fetch(config.userInfoUrl, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -326,48 +324,70 @@ async function handleOAuthCallback(req: Request, res: Response) {
         email = userData.email || "";
         name = userData.name || "";
         providerUserId = userData.sub || "";
-      } else if (provider === "microsoft") {
-        email = userData.mail || userData.userPrincipalName || "";
-        name = userData.displayName || "";
-        providerUserId = userData.id || "";
+        if (userData.email_verified !== true) {
+          res.redirect(
+            `${appUrl}/auth/signin?mode=login&error=google_email_not_verified`,
+          );
+          return;
+        }
       }
     }
 
-    if (!email) {
+    if (!email || !providerUserId) {
       console.error(`[OAuth] ${provider}: No email returned`);
       res.redirect(
-        `${appUrl}/auth/signin?mode=login&error=no_email_from_provider`,
+        `${appUrl}/auth/signin?mode=login&error=invalid_google_profile`,
       );
       return;
     }
 
     email = email.toLowerCase();
 
-    console.log(
-      `[OAuth] ${provider} auth success: ${email} (${name || "no name"})`,
-    );
-
-    // ─── Upsert user in database ────────────────────────────────────────
-    const existingResult = await db.execute(
+    // Resolve an existing Google identity first, then consider linking a password
+    // account only when Google has confirmed the same email address.
+    const linkedResult = await db.execute(
       sql`SELECT id, username, email, role, is_verified, subscription_tier, subscription_status,
-                 trial_tier, trial_expires_at, oauth_provider
-          FROM users WHERE LOWER(email) = ${email} LIMIT 1`,
+                 trial_tier, trial_expires_at, oauth_provider, oauth_provider_id
+          FROM users
+          WHERE oauth_provider = ${provider} AND oauth_provider_id = ${providerUserId}
+          LIMIT 1`,
     );
+    let existing = linkedResult.rows?.[0] as any;
+    if (!existing) {
+      const emailResult = await db.execute(
+        sql`SELECT id, username, email, role, is_verified, subscription_tier, subscription_status,
+                   trial_tier, trial_expires_at, oauth_provider, oauth_provider_id
+            FROM users WHERE LOWER(email) = ${email} LIMIT 1`,
+      );
+      existing = emailResult.rows?.[0] as any;
+    }
 
     let userId: number;
     let userRole: string;
     let subscriptionTier: string;
     let subscriptionStatus: string;
+    let accountEmail = email;
 
-    if (existingResult.rows?.length > 0) {
-      // Existing user — update OAuth link, mark verified
-      const existing = existingResult.rows[0] as any;
+    if (existing) {
+      if (
+        existing.oauth_provider &&
+        (existing.oauth_provider !== provider ||
+          (existing.oauth_provider_id &&
+            existing.oauth_provider_id !== providerUserId))
+      ) {
+        res.redirect(
+          `${appUrl}/auth/signin?mode=login&error=account_link_conflict`,
+        );
+        return;
+      }
+
       userId = existing.id;
       userRole = existing.role || "user";
       subscriptionTier = existing.subscription_tier || "free";
       subscriptionStatus = existing.subscription_status || "active";
+      accountEmail = String(existing.email || email).toLowerCase();
 
-      // Update OAuth provider + auto-verify email (OAuth = verified)
+      // A verified Google email can safely link a password-based account.
       await db
         .update(schema.users)
         .set({
@@ -377,9 +397,6 @@ async function handleOAuthCallback(req: Request, res: Response) {
         })
         .where(eq(schema.users.id, userId));
 
-      console.log(
-        `[OAuth] Existing user ${userId} linked to ${provider}, role: ${userRole}`,
-      );
     } else {
       // New user — create account (OAuth users are auto-verified)
       const derivedUsername = name || email.split("@")[0];
@@ -408,18 +425,16 @@ async function handleOAuthCallback(req: Request, res: Response) {
       subscriptionTier = "free";
       subscriptionStatus = "active";
 
-      console.log(
-        `[OAuth] New user ${userId} created via ${provider}: ${email}`,
-      );
     }
 
     // ─── Issue JWT with full role + tier info ───────────────────────────
     const jwtPayload = {
       userId: String(userId),
-      email,
+      email: accountEmail,
       role: userRole,
       subscriptionTier,
       oauthProvider: provider,
+      name,
     };
 
     const token = jwt.sign(jwtPayload, getJwtSecret(), {
@@ -429,12 +444,14 @@ async function handleOAuthCallback(req: Request, res: Response) {
     setAuthCookie(res, token);
 
     // ─── Role-based checkpoint redirect ─────────────────────────────────
-    const redirectTo = pendingState.redirect || getRoleCheckpoint(userRole);
+    const redirectTo =
+      getSafeRedirect(pendingState.redirect) || getRoleCheckpoint(userRole);
 
-    // Redirect to a client-side page that stores the token and redirects
-    res.redirect(
-      `${appUrl}/auth/oauth-complete?token=${encodeURIComponent(token)}&userId=${userId}&email=${encodeURIComponent(email)}&role=${encodeURIComponent(userRole)}&name=${encodeURIComponent(name || email.split("@")[0])}&redirect=${encodeURIComponent(redirectTo)}&provider=${provider}`,
-    );
+    // The browser receives only the HttpOnly session cookie, never the JWT in a URL.
+    const completionUrl = new URL("/auth/oauth-complete", `${appUrl}/`);
+    completionUrl.searchParams.set("redirect", redirectTo);
+    completionUrl.searchParams.set("provider", provider);
+    res.redirect(completionUrl.toString());
   } catch (err) {
     console.error(`[OAuth] ${provider} callback error:`, err);
     res.redirect(`${appUrl}/auth/signin?mode=login&error=oauth_server_error`);

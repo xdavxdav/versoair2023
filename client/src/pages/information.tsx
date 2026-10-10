@@ -227,10 +227,10 @@ function OverviewTab() {
             Vous avez le droit d'accéder, de rectifier, de supprimer et de
             porter vos données à tout moment. Contactez{" "}
             <a
-              href="mailto:helpmeee@versoair.com"
+              href="mailto:support@versoair.com"
               className="text-amber-600 hover:underline"
             >
-              helpmeee@versoair.com
+              support@versoair.com
             </a>{" "}
             pour toute demande relative aux données.
           </p>
@@ -471,10 +471,10 @@ function TermsTab() {
       <p className="text-slate-700 leading-relaxed">
         For questions about these Terms, contact us at{" "}
         <a
-          href="mailto:helpmeee@versoair.com"
+          href="mailto:support@versoair.com"
           className="text-amber-600 hover:underline"
         >
-          helpmeee@versoair.com
+          support@versoair.com
         </a>{" "}
         or write to: Verso Air Inc., 80 Mornelle Crt, Toronto, Ontario, Canada
         M1E 4P8.
@@ -617,10 +617,10 @@ function PrivacyTab() {
       <p className="text-slate-700 leading-relaxed">
         Exercise any right by emailing{" "}
         <a
-          href="mailto:helpmeee@versoair.com"
+          href="mailto:support@versoair.com"
           className="text-amber-600 hover:underline"
         >
-          helpmeee@versoair.com
+          support@versoair.com
         </a>
         . We respond within 30 days (72 hours for breach notifications).
       </p>
@@ -638,7 +638,7 @@ function PrivacyTab() {
         The Platform is not intended for children under 16. We do not knowingly
         collect personal information from children. If we discover such data has
         been collected, it will be deleted immediately. Parents may contact us
-        at helpmeee@versoair.com.
+        at support@versoair.com.
       </p>
     </div>
   );
@@ -656,7 +656,7 @@ function GdprTab() {
       rights:
         "Access, rectification, erasure, restriction, portability, objection, automated decision-making",
       transfer: "Standard Contractual Clauses (SCCs) for transfers outside EEA",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "United Kingdom — UK GDPR",
@@ -667,7 +667,7 @@ function GdprTab() {
       rights:
         "Same as EU GDPR, with UK-specific supervisory authority complaint rights",
       transfer: "UK International Data Transfer Agreement (IDTA)",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "Canada — PIPEDA",
@@ -677,7 +677,7 @@ function GdprTab() {
       basis: "Meaningful consent (express or implied depending on sensitivity)",
       rights: "Access, correction, withdrawal of consent, complaint to OPC",
       transfer: "Contractual safeguards ensuring comparable protection",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "United States — CCPA/CPRA",
@@ -688,7 +688,7 @@ function GdprTab() {
       rights:
         "Know, delete, correct, opt-out, non-discrimination, limit sensitive data use",
       transfer: "No specific transfer restrictions (domestic)",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "Brazil — LGPD",
@@ -699,7 +699,7 @@ function GdprTab() {
       rights:
         "Confirmation, access, correction, anonymization, deletion, portability, revoke consent",
       transfer: "Adequate protection or SCCs",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "South Africa — POPIA",
@@ -710,7 +710,7 @@ function GdprTab() {
         "Consent, contractual necessity, legal obligation, legitimate interest",
       rights: "Access, correction, deletion, object to processing",
       transfer: "Adequate level of protection or consent",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "India — DPDPA",
@@ -721,7 +721,7 @@ function GdprTab() {
       rights:
         "Access, correction, erasure, grievance redressal, nominate representative",
       transfer: "Permitted except to restricted countries",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "Japan — APPI",
@@ -731,7 +731,7 @@ function GdprTab() {
       basis: "Consent for sensitive data, specified purposes",
       rights: "Disclosure, correction, suspension of use, deletion",
       transfer: "Consent or equivalent protection level",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
     {
       name: "Sub-Saharan Africa",
@@ -741,7 +741,7 @@ function GdprTab() {
       basis: "Consent-based with legitimate interest provisions",
       rights: "Access, rectification, erasure, object to processing",
       transfer: "Adequate safeguards or consent",
-      dpo: "helpmeee@versoair.com",
+      dpo: "support@versoair.com",
     },
   ];
 
@@ -1152,7 +1152,8 @@ function JurisdictionTab() {
       region: "United States",
       flag: "🇺🇸",
       law: "Federal law + state laws (CCPA/CPRA for California residents)",
-      court: "State and federal courts in California or New York",
+      court:
+        "Courts with jurisdiction under applicable law, subject to mandatory local consumer protections",
       notes:
         "No single federal privacy law — state laws apply. FTC Act Section 5 for unfair/deceptive practices. DMCA for copyright.",
       consumers:
@@ -1288,7 +1289,7 @@ function FaqTab() {
       questions: [
         {
           q: "How do I delete my account?",
-          a: "Go to Account Settings → scroll to Danger Zone → Request Deletion. Alternatively email helpmeee@versoair.com. Your data is removed within 30 days. Financial records are retained 7 years per tax law.",
+          a: "Go to Account Settings → scroll to Danger Zone → Request Deletion. Alternatively email support@versoair.com. Your data is removed within 30 days. Financial records are retained 7 years per tax law.",
         },
         {
           q: "I forgot my password — how do I reset it?",
@@ -1343,7 +1344,7 @@ function FaqTab() {
       questions: [
         {
           q: "Can I download all my data?",
-          a: "Yes. Under GDPR Article 20 and equivalent laws, you have the right to data portability. Email helpmeee@versoair.com with 'Data Export Request' as subject. We'll provide a machine-readable export within 30 days.",
+          a: "Yes. Under GDPR Article 20 and equivalent laws, you have the right to data portability. Email support@versoair.com with 'Data Export Request' as subject. We'll provide a machine-readable export within 30 days.",
         },
         {
           q: "Do you sell my data?",
@@ -1368,7 +1369,7 @@ function FaqTab() {
         },
         {
           q: "What happens if someone copies my music on the platform?",
-          a: "We comply with DMCA and equivalent international copyright frameworks. File a copyright claim through the Artist Portal or email helpmeee@versoair.com. We investigate within 48 hours and remove infringing content immediately upon verification.",
+          a: "We comply with DMCA and equivalent international copyright frameworks. File a copyright claim through the Artist Portal or email support@versoair.com. We investigate within 48 hours and remove infringing content immediately upon verification.",
         },
       ],
     },
@@ -1539,17 +1540,17 @@ export default function InformationHub() {
             80 Mornelle Crt, Toronto, Ontario, Canada M1E 4P8
             <br />
             <a
-              href="mailto:helpmeee@versoair.com"
+              href="mailto:support@versoair.com"
               className="text-amber-600/60 hover:text-amber-600 transition-colors"
             >
-              helpmeee@versoair.com
+              support@versoair.com
             </a>
             {" · "}
             <a
-              href="mailto:helpmeee@versoair.com"
+              href="mailto:support@versoair.com"
               className="text-amber-600/60 hover:text-amber-600 transition-colors"
             >
-              helpmeee@versoair.com
+              support@versoair.com
             </a>
           </p>
         </div>

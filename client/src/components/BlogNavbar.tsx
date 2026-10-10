@@ -651,24 +651,28 @@ export default function BlogNavbar({
                     />
                   </svg>
                 )}
-                <button
-                  type="button"
-                  className={BTN}
-                  onClick={handleMuTap}
-                  onPointerDown={handleMuPressStart}
-                  onPointerUp={handleMuPressEnd}
-                  onPointerLeave={handleMuPressEnd}
-                  onPointerCancel={handleMuPressEnd}
-                  onContextMenu={(e) => e.preventDefault()}
-                  onMouseEnter={() => open("play")}
-                  title="Tap=Stream Music · Double-tap=Artist Dashboard · Hold 3s=Musical Universe"
-                >
-                  <span className="hidden lg:inline">Play</span>
-                  <span className="lg:hidden">Play</span>
+                <div className="flex items-center">
+                  <Link href="/stream">
+                    <a
+                      className={BTN}
+                      onMouseEnter={() => open("play")}
+                      aria-label="Open Music Stream"
+                    >
+                      Play
+                    </a>
+                  </Link>
+                  <button
+                    type="button"
+                    className={BTN}
+                    onClick={() => toggleMenu("play")}
+                    aria-label="Open music links"
+                    aria-expanded={openMenu === "play"}
+                  >
                   <ChevronDown
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "play" ? "rotate-180" : ""}`}
                   />
-                </button>
+                  </button>
+                </div>
                 <div className="absolute bottom-full left-0 right-0 h-2" />
                 <div
                   className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-52 lg:w-56 ${openMenu === "play" ? PANEL_OPEN : ""}`}

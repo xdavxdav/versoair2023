@@ -39,12 +39,35 @@ function SsoProviderButtons() {
         <p className="text-red-400 text-xs text-center mb-3">{error}</p>
       )}
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        {/* LinkedIn */}
+        {/* Google sign-in */}
         <motion.button
+          type="button"
+          onClick={() => handleSso("google")}
+          disabled={!!loading}
+          className="flex items-center justify-center gap-2.5 px-5 py-3 bg-white border border-white/20 rounded-xl text-slate-800 transition-all text-sm font-medium shadow-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading === "google" ? (
+            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+          ) : (
+            <span className="font-bold text-lg text-blue-600">G</span>
+          )}
+          Google
+        </motion.button>
+        <motion.button
+          type="button"
+          disabled
+          title="LinkedIn sign-in is not available yet"
+          className="flex items-center justify-center gap-2.5 px-5 py-3 bg-slate-700/40 border border-white/10 rounded-xl text-slate-400 text-sm font-medium flex-1 opacity-60 cursor-not-allowed"
+        >
+          <span className="font-bold text-lg grayscale">in</span>
+          LinkedIn
+        </motion.button>
+        <motion.button
+          hidden
+          type="button"
+          disabled={!!loading}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => handleSso("linkedin")}
-          disabled={!!loading}
           className="flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#0077b5] to-[#006097] hover:from-[#006097] hover:to-[#004d7a] border border-white/10 rounded-xl text-white transition-all text-sm font-medium shadow-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading === "linkedin" ? (
@@ -59,10 +82,11 @@ function SsoProviderButtons() {
 
         {/* Indeed */}
         <motion.button
+          hidden
+          type="button"
+          disabled
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => handleSso("indeed")}
-          disabled={!!loading}
           className="flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#2164f3] to-[#1a4fc7] hover:from-[#1a4fc7] hover:to-[#153fa0] border border-white/10 rounded-xl text-white transition-all text-sm font-medium shadow-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading === "indeed" ? (
@@ -77,10 +101,11 @@ function SsoProviderButtons() {
 
         {/* Glassdoor */}
         <motion.button
+          hidden
+          type="button"
+          disabled
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => handleSso("glassdoor")}
-          disabled={!!loading}
           className="flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#0caa41] to-[#0a8f36] hover:from-[#0a8f36] hover:to-[#08752c] border border-white/10 rounded-xl text-white transition-all text-sm font-medium shadow-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading === "glassdoor" ? (
@@ -112,7 +137,7 @@ export default function ViewOnlyGate({
           className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-slate-900/70 px-3 py-2 text-sm font-medium text-cyan-300 transition-colors hover:bg-cyan-400/10 hover:text-cyan-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Home
+          Return Home
         </button>
       )}
       <div className="max-w-2xl w-full">

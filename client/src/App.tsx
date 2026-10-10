@@ -625,6 +625,9 @@ function Router() {
           🔐 AUTH — Sign in & registration
           ═══════════════════════════════════════════════ */}
       <Route path="/auth/signin" component={SignIn} />
+      <Route path="/auth/signup">
+        {() => <Redirect to="/auth/signin?mode=register" />}
+      </Route>
       <Route path="/auth/login" component={SignInSimple} />
       <Route path="/auth/oauth-complete" component={OAuthComplete} />
       {/* Development only: Credentials vault */}
@@ -633,6 +636,9 @@ function Router() {
       ) : null}
       {/* Legacy redirects */}
       <Route path="/signin">{() => <Redirect to="/auth/signin" />}</Route>
+      <Route path="/signup">
+        {() => <Redirect to="/auth/signin?mode=register" />}
+      </Route>
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>
 
       {/* ═══════════════════════════════════════════════
