@@ -5,6 +5,12 @@
 
 set -e  # Exit on error
 
+# BEFORE running against production: Neon free plan = 6h history + ONE snapshot.
+# Delete the old snapshot and create a fresh one (Neon console > production >
+# Backup & Restore). See scripts/migrations/README.md.
+# BETTER: upgrade the Neon plan once there are real users (longer history,
+# multiple + scheduled snapshots), then remove this manual step.
+
 DB_URL="${DATABASE_URL:-}"
 
 if [ -z "$DB_URL" ]; then

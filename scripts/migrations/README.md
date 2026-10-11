@@ -2,6 +2,25 @@
 
 This directory contains SQL migrations that manage database schema and data changes.
 
+## Before Any Production Migration: Refresh the Neon Snapshot
+
+Neon's free plan keeps only a **6-hour** restore history and allows **one** snapshot per project. Before running a migration or other risky change against production:
+
+1. Neon console → project `blue-grass-85533510` → branch `production` → **Backup & Restore**.
+2. Delete the existing manual snapshot (it is stale and the free plan cannot hold two).
+3. Click **Create snapshot** and confirm it appears with the current timestamp.
+4. Only then run the migration.
+
+Optional off-Neon copy: `pg_dump "$DATABASE_URL" -Fc -f backup.dump` (store privately, never in the repo).
+
+> **Better solution (do this once you have real users): upgrade the Neon plan.**
+> This manual routine is a stopgap that depends on someone remembering it. A paid plan replaces it with:
+> - a longer point-in-time restore window (days instead of 6 hours), so a mistake noticed tomorrow is still recoverable;
+> - more than one snapshot, so you never have to delete your only backup first;
+> - **scheduled automatic snapshots**, so backups no longer rely on memory.
+>
+> With real user data, losing even a day is costly, so upgrade before launch rather than after the first incident. Once upgraded, remove this section and the reminder comments in `run-migrations.sh` and `deploy-production.sh`.
+
 ## How It Works
 
 Migrations run **automatically** on Render deployment and can be run **manually** locally.

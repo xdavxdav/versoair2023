@@ -4,6 +4,12 @@
 
 set -e  # Exit on error
 
+# BEFORE deploying changes that touch the database: Neon free plan = 6h history
+# + ONE snapshot. Delete the old snapshot and create a fresh one (Neon console >
+# production > Backup & Restore). See scripts/migrations/README.md.
+# BETTER: upgrade the Neon plan once there are real users (longer history,
+# multiple + scheduled snapshots), then remove this manual step.
+
 # Color codes for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
