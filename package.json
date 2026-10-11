@@ -22,6 +22,7 @@
     "seo:routes": "node --import tsx server/scripts/prerender-routes.ts",
     "seo:validate-prerender": "node --import tsx server/scripts/validate-prerender-seo.ts",
     "seo:validate-sitemap": "node --import tsx server/scripts/validate-sitemap.ts",
+    "test:route-seo": "node --import tsx --test server/utils/route-seo-meta.test.ts",
     "prerender:snap": "node --import tsx server/scripts/run-react-snap.ts",
     "build:prerender": "npm run seo:routes && npm run build && npm run prerender:snap && npm run seo:validate-prerender",
     "seed": "node scripts/seed-production.cjs"
