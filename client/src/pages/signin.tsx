@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { getAuthToken } from "@/lib/auth";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
@@ -959,9 +960,7 @@ export default function SignIn() {
       setOnboardingSaving(true);
       setOnboardingError("");
       try {
-        const token =
-          localStorage.getItem("authToken") ||
-          localStorage.getItem("auth_token");
+        const token = getAuthToken();
         const res = await fetch("/auth/account/set-display-name", {
           method: "POST",
           headers: {
@@ -1000,7 +999,9 @@ export default function SignIn() {
             navigate(getLoginDashboardPath(pendingLoginData.user));
           }
         } else {
-          setOnboardingError(result.message || "Failed to save name");
+          setOnboardingError(
+            result.error?.message || result.message || "Failed to save name",
+          );
         }
       } catch {
         setOnboardingError("Something went wrong. Please try again.");
