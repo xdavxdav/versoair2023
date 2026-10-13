@@ -150,14 +150,18 @@ const TTL_SECONDS = 7 * 24 * 3600; // 7 days
 export async function enqueueInboxMessage(
   userId: string | number,
   payload: Record<string, unknown>,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const redis = getRedis();
+    if (!_usingReal) return false;
+
     const key = INBOX_KEY(userId);
     await redis.lpush(key, JSON.stringify(payload));
     await redis.expire(key, TTL_SECONDS);
+    return true;
   } catch (err: any) {
-    console.warn("[Redis] enqueueInboxMessage failed:", err.message);
+    console.warn("[Redis] enqueueInboxMessage failed");
+    return false;
   }
 }
 

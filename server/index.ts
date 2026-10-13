@@ -103,6 +103,7 @@ import { initializeEmailTransporter } from "./services/email-service";
 import { ensureAllTables } from "./services/ensure-tables";
 import { syncLegacyProfiles } from "./services/profile-migration";
 import { createLogger } from "./utils/logger";
+import { getPostgresErrorDetails } from "./utils/postgres-errors";
 
 const serverLog = createLogger("server");
 import { startDigestWorker } from "./services/digest-worker";
@@ -268,37 +269,65 @@ app.use((req, res, next) => {
 (async () => {
   serverLog.info("Starting server initialization...");
 
-  // Non-blocking: SMTP setup isn't required to start serving requests/health checks
-  initializeEmailTransporter()
-    .then(() => serverLog.info("Email service initialized"))
-    .catch((err) =>
-      serverLog.error("Email service init failed (non-fatal):", err.message),
-    );
+  if (process.env.NODE_ENV === "test") {
+    serverLog.info("Email service initialization skipped in test mode");
+  } else {
+    // Non-blocking: SMTP setup isn't required to start serving requests/health checks
+    initializeEmailTransporter()
+      .then(() => serverLog.info("Email service initialized"))
+      .catch((err) =>
+        serverLog.error("Email service init failed (non-fatal):", err.message),
+      );
+  }
 
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
-  await ensureAllTables();
-  serverLog.info("Database tables verified");
+  const tableCheck = await ensureAllTables();
+  if (tableCheck === "skipped") {
+    serverLog.warn("Database schema check was explicitly skipped");
+  } else {
+    serverLog.info("Database tables verified");
+  }
 
-  // Non-blocking: populate unified_profiles from legacy businesses + artist_profiles
-  syncLegacyProfiles()
-    .then((r) =>
-      serverLog.info(
-        `Profile sync: ${r.businessesSynced} biz, ${r.artistsSynced} artisans synced (${r.skipped} skipped, ${r.errors.length} errors)`,
-      ),
-    )
-    .catch((err) =>
-      serverLog.error("Profile sync failed (non-fatal):", err.message),
-    );
+  if (process.env.NODE_ENV === "test") {
+    serverLog.info("Legacy profile sync skipped in test mode");
+  } else {
+    // Non-blocking: populate unified_profiles from legacy businesses + artist_profiles
+    syncLegacyProfiles()
+      .then((r) =>
+        serverLog.info(
+          `Profile sync: ${r.businessesSynced} biz, ${r.artistsSynced} artisans synced (${r.skipped} skipped, ${r.errors.length} errors)`,
+        ),
+      )
+      .catch((err) =>
+        serverLog.error("Profile sync failed (non-fatal):", err.message),
+      );
+  }
 
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
   serverLog.info("Routes registered successfully");
 
   // Error middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    serverLog.error("Unhandled error:", err.message || err);
+    const postgresError = getPostgresErrorDetails(err);
+    const isDatabaseError =
+      postgresError !== null ||
+      (typeof err.message === "string" &&
+        err.message.startsWith("Failed query:"));
+    const message = isDatabaseError
+      ? "A database error occurred. Please try again."
+      : typeof err.message === "string"
+        ? err.message
+        : "Internal Server Error";
+    serverLog.error("Unhandled request error", {
+      method: req.method,
+      path: req.path,
+      status,
+      ...(postgresError
+        ? { postgres: postgresError }
+        : { errorType: isDatabaseError ? "database_query" : err.name }),
+    });
     res.status(status).json({ message });
   });
 
@@ -349,34 +378,38 @@ app.use((req, res, next) => {
       serverLog.info(`NODE_ENV: ${process.env.NODE_ENV}`);
       log(`serving on port ${port}`);
 
-      // ---------- BACKGROUND JOBS (non-blocking, started after listen) ----------
-      setupCategoryIntegrityCheck();
-      serverLog.info("Category integrity check scheduled");
+      if (process.env.NODE_ENV === "test") {
+        serverLog.info("Background jobs skipped in test mode");
+      } else {
+        // ---------- BACKGROUND JOBS (non-blocking, started after listen) ----------
+        setupCategoryIntegrityCheck();
+        serverLog.info("Category integrity check scheduled");
 
-      startDigestWorker();
-      serverLog.info("Digest worker started (hourly email queue processor)");
+        startDigestWorker();
+        serverLog.info("Digest worker started (hourly email queue processor)");
 
-      setupSubscriptionExpiryCron();
-      serverLog.info("Subscription expiry cron scheduled");
+        setupSubscriptionExpiryCron();
+        serverLog.info("Subscription expiry cron scheduled");
 
-      setupRoyaltyEngine();
-      serverLog.info("StreamRoyale royalty engine started");
+        setupRoyaltyEngine();
+        serverLog.info("StreamRoyale royalty engine started");
 
-      setupJournalCron();
-      serverLog.info("Journal cron scheduled (weekly + monthly)");
+        setupJournalCron();
+        serverLog.info("Journal cron scheduled (weekly + monthly)");
 
-      setupNewsletterCron();
-      serverLog.info("Newsletter cron scheduled (hourly)");
+        setupNewsletterCron();
+        serverLog.info("Newsletter cron scheduled (hourly)");
 
-      setupMarketplaceAutoApprove();
-      serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
+        setupMarketplaceAutoApprove();
+        serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
 
-      setupSessionCleanup();
-      serverLog.info("Session cleanup job scheduled (every 30 minutes)");
+        setupSessionCleanup();
+        serverLog.info("Session cleanup job scheduled (every 30 minutes)");
 
-      if (process.env.NODE_ENV === "production") {
-        startStatsReporter(5); // Report every 5 minutes
-        serverLog.info("Performance stats reporter started (every 5 minutes)");
+        if (process.env.NODE_ENV === "production") {
+          startStatsReporter(5); // Report every 5 minutes
+          serverLog.info("Performance stats reporter started (every 5 minutes)");
+        }
       }
     },
   );

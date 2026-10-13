@@ -189,22 +189,21 @@ export async function sendConnectionRequestEmail(
     return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(
-      `[EMAIL] Error sending connection request email to ${toEmail}:`,
-      errorMessage,
+    const safeErrorMessage = errorMessage.replace(
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+      "[redacted email]",
     );
+    console.error("[EMAIL] Error sending connection request email:", safeErrorMessage);
 
     // Log to audit trail as SYSTEM_ERROR
     try {
       await db.insert(auditLogs).values({
-        userId: 0, // System-generated
+        userId: null,
         action: "SYSTEM_ERROR",
         entityType: "notification",
         entityId: "email_connection_request",
         changes: {
-          error: errorMessage,
-          toEmail,
-          fromName,
+          error: safeErrorMessage,
           timestamp: new Date().toISOString(),
         },
         ipAddress: "system",
@@ -295,22 +294,21 @@ export async function sendConnectionAcceptedEmail(
     return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(
-      `[EMAIL] Error sending connection accepted email to ${toEmail}:`,
-      errorMessage,
+    const safeErrorMessage = errorMessage.replace(
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+      "[redacted email]",
     );
+    console.error("[EMAIL] Error sending connection accepted email:", safeErrorMessage);
 
     // Log to audit trail as SYSTEM_ERROR
     try {
       await db.insert(auditLogs).values({
-        userId: 0, // System-generated
+        userId: null,
         action: "SYSTEM_ERROR",
         entityType: "notification",
         entityId: "email_connection_accepted",
         changes: {
-          error: errorMessage,
-          toEmail,
-          fromName,
+          error: safeErrorMessage,
           timestamp: new Date().toISOString(),
         },
         ipAddress: "system",
@@ -511,22 +509,26 @@ export async function sendEmail(
       replyTo,
     });
 
-    console.log(`[EMAIL] Email sent to ${to}. Message ID: ${result.messageId}`);
+    console.log(`[EMAIL] Email sent. Message ID: ${result.messageId}`);
     return true;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`[EMAIL] Error sending email to ${to}:`, errorMessage);
+    const rawErrorMessage =
+      error instanceof Error ? error.message : String(error);
+    const errorMessage = rawErrorMessage.replace(
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+      "[redacted email]",
+    );
+    console.error(`[EMAIL] Error sending email (subject: ${subject}):`, errorMessage);
 
     // Log to audit trail
     try {
       await db.insert(auditLogs).values({
-        userId: 0,
+        userId: null,
         action: "SYSTEM_ERROR",
         entityType: "notification",
         entityId: "email_generic",
         changes: {
           error: errorMessage,
-          to,
           subject,
           timestamp: new Date().toISOString(),
         },

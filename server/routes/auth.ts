@@ -24,6 +24,7 @@ import {
 } from "../services/email-service";
 import { computeUserCapabilities } from "./capabilities";
 import { generateArtistCode } from "../utils/artist-code";
+import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -51,6 +52,30 @@ function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET environment variable is not set");
   return secret;
+}
+
+async function getAvailableRegistrationUsername(
+  baseUsername: string,
+  excluded: Set<string>,
+) {
+  const base = baseUsername.trim().toLowerCase().slice(0, 50) || "user";
+
+  for (let suffix = 1; suffix <= 1000; suffix += 1) {
+    const suffixText = suffix === 1 ? "" : `_${suffix}`;
+    const candidate =
+      base.slice(0, 50 - suffixText.length) + suffixText;
+    if (excluded.has(candidate)) continue;
+
+    const [existing] = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.username, candidate))
+      .limit(1);
+
+    if (!existing) return candidate;
+  }
+
+  throw new Error("Unable to allocate a unique registration username");
 }
 
 function getTokenFromRequest(req: Request): string | null {
@@ -432,11 +457,11 @@ router.post(
       phone,
     } = parsed.data;
 
-    // Check duplicate email
+    const normalizedEmail = email.toLowerCase();
     const existing = await db
       .select({ id: schema.users.id })
       .from(schema.users)
-      .where(eq(schema.users.email, email.toLowerCase()))
+      .where(sql`LOWER(${schema.users.email}) = ${normalizedEmail}`)
       .limit(1);
 
     if (existing.length > 0) {
@@ -449,43 +474,89 @@ router.post(
     }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    const derivedUsername = username || email.split("@")[0];
+    const requestedUsername = username || normalizedEmail.split("@")[0];
+    const attemptedUsernames = new Set<string>();
+    let newUser:
+      | { id: number; email: string; role: string | null }
+      | undefined;
+    let verificationToken = "";
 
-    const [newUser] = await db
-      .insert(schema.users)
-      .values({
-        email: email.toLowerCase(),
-        username: derivedUsername,
-        password: hashedPassword,
-        role: "user",
-        isVerified: false,
-      })
-      .returning({
-        id: schema.users.id,
-        email: schema.users.email,
-        role: schema.users.role,
-      });
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const derivedUsername = await getAvailableRegistrationUsername(
+        requestedUsername,
+        attemptedUsernames,
+      );
+      attemptedUsernames.add(derivedUsername);
+      verificationToken = crypto.randomBytes(32).toString("hex");
+      const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // All accounts must verify their email before logging in
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      try {
+        newUser = await db.transaction(async (tx) => {
+          const [createdUser] = await tx
+            .insert(schema.users)
+            .values({
+              email: normalizedEmail,
+              username: derivedUsername,
+              password: hashedPassword,
+              role: "user",
+              isVerified: false,
+            })
+            .returning({
+              id: schema.users.id,
+              email: schema.users.email,
+              role: schema.users.role,
+            });
 
-    await db.insert(schema.verificationTokens).values({
-      userId: newUser.id,
-      token: verificationToken,
-      type: "email_verification",
-      expiresAt: tokenExpiry,
-    });
+          await tx.insert(schema.verificationTokens).values({
+            userId: createdUser.id,
+            token: verificationToken,
+            type: "email_verification",
+            expiresAt: tokenExpiry,
+          });
+
+          return createdUser;
+        });
+        break;
+      } catch (error) {
+        if (
+          isUniqueConstraintViolation(error, [
+            "users_email_unique",
+            "users_email_key",
+          ])
+        ) {
+          res.status(409).json({
+            success: false,
+            message: "An account with this email already exists",
+          });
+          return;
+        }
+
+        if (
+          isUniqueConstraintViolation(error, [
+            "users_username_unique",
+            "users_username_key",
+          ])
+        ) {
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    if (!newUser) {
+      throw new Error("Unable to allocate a unique registration username");
+    }
 
     // Await delivery so the response accurately tells the client whether email was sent.
     const emailSent = await sendVerificationEmail(
-      email.toLowerCase(),
+      normalizedEmail,
       verificationToken,
     );
     if (emailSent) {
-      console.log(`[AUTH] Verification email sent to ${email}`);
+      console.log("[AUTH] Verification email sent");
     } else {
-      console.warn(`[AUTH] Verification email was not sent to ${email}`);
+      console.warn("[AUTH] Verification email was not sent");
     }
 
     // Do NOT auto-login — user must verify email first
@@ -1162,11 +1233,18 @@ router.post(
       })
       .where(eq(schema.users.id, user.id));
 
-    // Send reset email (silently fails if SMTP not configured — token is still valid)
+    // Keep responses enumeration-safe and invalidate reset tokens when delivery fails.
     const sent = await sendPasswordResetEmail(user.email, resetToken);
     if (!sent) {
+      await db
+        .update(schema.users)
+        .set({
+          passwordResetToken: null,
+          passwordResetExpires: null,
+        })
+        .where(eq(schema.users.id, user.id));
       console.warn(
-        `[AUTH] SMTP not configured — password reset requested for ${user.email} but email could not be sent.`,
+        "[AUTH] Password reset email delivery failed; undelivered reset token cleared.",
       );
     }
 

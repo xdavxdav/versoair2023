@@ -98,6 +98,7 @@ async function isSessionRevoked(token: string): Promise<boolean> {
 const PUBLIC_PATHS: string[] = [
   // Auth endpoints (must be accessible to log in)
   "/auth/signin",
+  "/auth/signup",
   "/auth/login",
   "/auth/register",
   "/auth/logout",

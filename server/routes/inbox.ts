@@ -24,12 +24,15 @@ import {
   socialUsers,
   socialFollowers,
 } from "@shared/social-schema";
-import { enqueueInboxMessage, drainInboxQueue } from "../services/redis-client";
+import { drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 import {
   notificationEmitter,
   notifyMessage,
 } from "../services/notification-service";
+import {
+  getPostgresErrorDetails,
+} from "../utils/postgres-errors";
 
 const router = Router();
 
@@ -620,13 +623,21 @@ router.post(
     const userId = req.user!.userId;
     const tier = getTierFromUser(req.user!);
     const convId = Number(req.params.id);
-    const { content, senderId, senderName, senderAvatar, attachmentUrl } =
-      req.body;
+    const { content, attachmentUrl } = req.body;
 
-    if (!content?.trim() && !attachmentUrl) {
+    if (
+      (typeof content !== "string" || !content.trim()) &&
+      (typeof attachmentUrl !== "string" || !attachmentUrl.trim())
+    ) {
       return res
         .status(400)
         .json({ success: false, error: "Message content is required" });
+    }
+
+    if (typeof content === "string" && content.length > 10000) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Message content is too long" });
     }
 
     if (isNaN(convId)) {
@@ -679,126 +690,144 @@ router.post(
         }
       }
 
-      const [message] = await db
-        .insert(schema.inboxMessages)
-        .values({
-          conversationId: convId,
-          senderId: String(senderId ?? userId),
-          senderName: String(senderName ?? "You"),
-          senderAvatar: senderAvatar || null,
-          content: content?.trim() || "",
-          attachmentUrl: attachmentUrl || null,
-          isRead: true,
-          isAi: false,
-        })
-        .returning();
-
-      // Update conversation summary (fire-and-forget)
-      db.update(schema.inboxConversations)
-        .set({
-          lastMessage: content?.trim()
-            ? content.trim().substring(0, 120)
-            : "📷 Photo",
-          lastMessageAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.inboxConversations.id, convId))
-        .catch(() => {
-          /* non-critical */
-        });
-
-      // Mirror the message to the recipient's own inbox, in real-time, so
-      // the other account actually sees it (this was previously missing —
-      // conversations are one-sided rows, so without this the recipient
-      // never got the message at all).
+      const sender = await resolveUserDisplay(Number(userId));
+      const trustedSenderName =
+        sender?.name || req.user!.email.split("@")[0] || "Member";
+      const trustedSenderAvatar = sender?.avatar || null;
+      const normalizedContent =
+        typeof content === "string" ? content.trim() : "";
+      const normalizedAttachmentUrl =
+        typeof attachmentUrl === "string" ? attachmentUrl.trim() : null;
       const recipientUserId = Number(conv.participantId);
-      if (
+      const shouldMirror =
         Number.isFinite(recipientUserId) &&
-        recipientUserId !== Number(userId)
-      ) {
-        (async () => {
-          try {
-            const sender = await resolveUserDisplay(Number(userId));
-            const mirrorConvId = await getOrCreateMirrorConversation(
-              recipientUserId,
-              Number(userId),
-              sender?.name || String(senderName ?? "Member"),
-              null,
-              conv.type,
-              conv.businessId,
-            );
-            if (!mirrorConvId) return;
+        recipientUserId !== Number(userId);
 
-            const [mirrorMessage] = await db
-              .insert(schema.inboxMessages)
-              .values({
-                conversationId: mirrorConvId,
-                senderId: String(userId),
-                senderName: sender?.name || String(senderName ?? "Member"),
-                senderAvatar: senderAvatar || null,
-                content: content.trim(),
-                isRead: false,
-                isAi: false,
-              })
-              .returning();
+      const { message, mirror } = await db.transaction(async (tx) => {
+        const [createdMessage] = await tx
+          .insert(schema.inboxMessages)
+          .values({
+            conversationId: convId,
+            senderId: String(userId),
+            senderName: trustedSenderName,
+            senderAvatar: trustedSenderAvatar,
+            content: normalizedContent,
+            attachmentUrl: normalizedAttachmentUrl,
+            isRead: true,
+            isAi: false,
+          })
+          .returning();
 
-            await db
-              .update(schema.inboxConversations)
-              .set({
-                lastMessage: content.trim().substring(0, 120),
-                lastMessageAt: new Date(),
-                updatedAt: new Date(),
-                unreadCount: sql`${schema.inboxConversations.unreadCount} + 1`,
-              })
-              .where(eq(schema.inboxConversations.id, mirrorConvId));
+        const preview = normalizedContent
+          ? normalizedContent.substring(0, 120)
+          : "📷 Photo";
+        await tx
+          .update(schema.inboxConversations)
+          .set({
+            lastMessage: preview,
+            lastMessageAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.inboxConversations.id, convId));
 
-            // Create notification for recipient
-            await notifyMessage({
-              senderId: Number(userId),
-              recipientId: recipientUserId,
-              senderName: sender?.name || String(senderName ?? "Member"),
-              messagePreview: content.trim(),
-              conversationId: mirrorConvId,
-            });
+        if (!shouldMirror) {
+          return { message: createdMessage, mirror: null };
+        }
 
-            notificationEmitter.emit("inbox_message", {
-              toUserId: recipientUserId,
-              conversationId: mirrorConvId,
-              message: mirrorMessage,
-            });
-          } catch (mirrorErr: any) {
-            console.error("[Inbox] Mirror message error:", mirrorErr?.message);
-          }
-        })();
+        let [mirrorConversation] = await tx
+          .select({ id: schema.inboxConversations.id })
+          .from(schema.inboxConversations)
+          .where(
+            and(
+              eq(schema.inboxConversations.userId, recipientUserId),
+              eq(schema.inboxConversations.participantId, String(userId)),
+              eq(schema.inboxConversations.type, conv.type),
+            ),
+          )
+          .limit(1);
+
+        if (!mirrorConversation) {
+          [mirrorConversation] = await tx
+            .insert(schema.inboxConversations)
+            .values({
+              userId: recipientUserId,
+              type: conv.type,
+              participantId: String(userId),
+              participantName: trustedSenderName,
+              participantAvatar: trustedSenderAvatar,
+              businessId: conv.businessId,
+              unreadCount: 0,
+            })
+            .returning({ id: schema.inboxConversations.id });
+        }
+
+        const [mirrorMessage] = await tx
+          .insert(schema.inboxMessages)
+          .values({
+            conversationId: mirrorConversation.id,
+            senderId: String(userId),
+            senderName: trustedSenderName,
+            senderAvatar: trustedSenderAvatar,
+            content: normalizedContent,
+            attachmentUrl: normalizedAttachmentUrl,
+            isRead: false,
+            isAi: false,
+          })
+          .returning();
+
+        await tx
+          .update(schema.inboxConversations)
+          .set({
+            lastMessage: preview,
+            lastMessageAt: new Date(),
+            updatedAt: new Date(),
+            unreadCount: sql`${schema.inboxConversations.unreadCount} + 1`,
+          })
+          .where(eq(schema.inboxConversations.id, mirrorConversation.id));
+
+        return {
+          message: createdMessage,
+          mirror: {
+            conversationId: mirrorConversation.id,
+            message: mirrorMessage,
+          },
+        };
+      });
+
+      if (mirror) {
+        try {
+          await notifyMessage({
+            senderId: Number(userId),
+            recipientId: recipientUserId,
+            senderName: trustedSenderName,
+            messagePreview: normalizedContent,
+            conversationId: mirror.conversationId,
+          });
+        } catch (notificationError) {
+          console.error(
+            "[Inbox] Message notification failed",
+            getPostgresErrorDetails(notificationError) ?? {
+              errorType: "notification",
+            },
+          );
+        }
+
+        notificationEmitter.emit("inbox_message", {
+          toUserId: recipientUserId,
+          conversationId: mirror.conversationId,
+          message: mirror.message,
+        });
       }
 
       return res.json({ success: true, message });
     } catch (err: any) {
-      // DB down → enqueue in Redis
-      console.error(
-        "[Inbox] POST /messages error — enqueuing to Redis:",
-        err?.message,
-      );
-      await enqueueInboxMessage(userId, {
-        conversationId: convId,
-        senderId: senderId ?? userId,
-        senderName: senderName ?? "You",
-        content: content.trim(),
-        isAi: false,
+      console.error("[Inbox] POST /messages failed", {
+        postgres: getPostgresErrorDetails(err),
+        errorType: getPostgresErrorDetails(err) ? undefined : "message_write",
       });
-      return res.json({
-        success: true,
-        queued: true,
-        message: {
-          id: `queued-${Date.now()}`,
-          conversationId: convId,
-          senderId: senderId ?? userId,
-          senderName: senderName ?? "You",
-          content: content.trim(),
-          isRead: true,
-          isAi: false,
-          createdAt: new Date().toISOString(),
-        },
+      return res.status(503).json({
+        success: false,
+        error: "Message could not be saved. Please try again.",
       });
     }
   },

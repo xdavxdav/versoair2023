@@ -12,30 +12,48 @@
  */
 
 import { pool } from "../db";
+import type { PoolClient } from "pg";
 
-export async function ensureAllTables(): Promise<void> {
+export async function ensureAllTables(
+  connect: () => Promise<PoolClient> = () => pool.connect(),
+): Promise<"verified" | "skipped"> {
   if (process.env.DISABLE_DB_CHECK === "true") {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "DISABLE_DB_CHECK cannot be used in production; refusing to start.",
+      );
+    }
     console.warn(
       "⚠️ [MIGRATE] DISABLE_DB_CHECK=true — skipping schema boot check.",
     );
-    return;
+    return "skipped";
   }
 
-  let client;
+  let client: PoolClient;
   try {
-    client = await pool.connect();
-  } catch (err: any) {
-    console.warn(
-      "⚠️ [MIGRATE] Database unavailable during boot check; skipping schema migration.",
-      err?.message || err,
+    client = await connect();
+  } catch (err) {
+    console.error(
+      "❌ [MIGRATE] Database unavailable during required boot check; refusing to start.",
+      err instanceof Error ? err.message : err,
     );
-    return;
+    throw new Error(
+      "Database unavailable during required boot check; refusing to start.",
+      { cause: err },
+    );
   }
 
   const startTime = Date.now();
   let created = 0;
   let existed = 0;
   let failed = 0;
+  const recordSchemaFailure = (operation: string, error: unknown) => {
+    failed++;
+    console.error(
+      `  ❌ Failed schema operation (${operation}):`,
+      error instanceof Error ? error.message : error,
+    );
+  };
 
   try {
     console.log("🏗️  [MIGRATE] Ensuring all schema tables exist...");
@@ -57,11 +75,7 @@ export async function ensureAllTables(): Promise<void> {
           console.log(`  ✅ Created table: ${stmt.table}`);
         }
       } catch (err: any) {
-        failed++;
-        console.error(
-          `  ❌ Failed to ensure table ${stmt.table}:`,
-          err.message,
-        );
+        recordSchemaFailure(`ensure table ${stmt.table}`, err);
       }
     }
 
@@ -166,11 +180,7 @@ export async function ensureAllTables(): Promise<void> {
           ],
         );
       } catch (err: any) {
-        failed++;
-        console.error(
-          `  ❌ Failed to seed system role ${role.name}:`,
-          err.message,
-        );
+        recordSchemaFailure(`seed system role ${role.name}`, err);
       }
     }
 
@@ -184,12 +194,18 @@ export async function ensureAllTables(): Promise<void> {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider_id TEXT`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS gate_username TEXT UNIQUE`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS portal_access JSONB DEFAULT '["general"]'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS previous_role VARCHAR(20)`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS age_verified_at TIMESTAMP`,
     ];
     for (const alt of USERS_COLUMN_ADDITIONS) {
       try {
         await client.query(alt);
-      } catch (_) {
-        // Column may already exist — that's fine
+      } catch (err) {
+        recordSchemaFailure(`add users column: ${alt}`, err);
       }
     }
 
@@ -238,7 +254,7 @@ export async function ensureAllTables(): Promise<void> {
       try {
         await client.query(alt);
       } catch (err: any) {
-        console.error("  ❌ Failed to ensure businesses column:", err.message);
+        recordSchemaFailure(`add businesses column: ${alt}`, err);
       }
     }
 
@@ -259,8 +275,8 @@ export async function ensureAllTables(): Promise<void> {
     for (const alt of STREAMING_PLANS_ADDITIONS) {
       try {
         await client.query(alt);
-      } catch (_) {
-        /* fine */
+      } catch (err) {
+        recordSchemaFailure(`add streaming_plans column: ${alt}`, err);
       }
     }
 
@@ -275,8 +291,8 @@ export async function ensureAllTables(): Promise<void> {
     for (const alt of ARENA_WEIGHT_ADDITIONS) {
       try {
         await client.query(alt);
-      } catch (_) {
-        /* Arena tables may not exist in older environments yet. */
+      } catch (err) {
+        recordSchemaFailure(`add Arena voting column: ${alt}`, err);
       }
     }
     // Backfill known plan quotas (only touches rows that currently have 0/NULL)
@@ -293,8 +309,8 @@ export async function ensureAllTables(): Promise<void> {
              WHERE name = $2 AND (downloads_per_month IS NULL OR downloads_per_month = 0)`,
           [quota, name],
         );
-      } catch (_) {
-        /* streaming_plans may not exist yet on first boot — will be created above */
+      } catch (err) {
+        recordSchemaFailure(`backfill streaming plan quota for ${name}`, err);
       }
     }
 
@@ -308,8 +324,8 @@ export async function ensureAllTables(): Promise<void> {
     for (const alt of INBOX_MESSAGES_ADDITIONS) {
       try {
         await client.query(alt);
-      } catch (_) {
-        /* inbox_messages may not exist yet on first boot, or column already exists */
+      } catch (err) {
+        recordSchemaFailure(`add inbox/media column: ${alt}`, err);
       }
     }
 
@@ -317,8 +333,8 @@ export async function ensureAllTables(): Promise<void> {
     for (const idx of INDEX_STATEMENTS) {
       try {
         await client.query(idx);
-      } catch (_) {
-        // Indexes may already exist — that's fine
+      } catch (err) {
+        recordSchemaFailure(`create index: ${idx}`, err);
       }
     }
 
@@ -348,18 +364,22 @@ export async function ensureAllTables(): Promise<void> {
       `);
       console.log("🔒 [MIGRATE] joel_007 deletion protection trigger active");
     } catch (err: any) {
-      console.error(
-        "  ❌ Failed to install joel_007 protection trigger:",
-        err.message,
-      );
+      recordSchemaFailure("install protected-account trigger", err);
     }
 
     const duration = Date.now() - startTime;
     console.log(
       `🏗️  [MIGRATE] Done in ${duration}ms — ${created} created, ${existed} already existed, ${failed} failed`,
     );
+    if (failed > 0) {
+      throw new Error(
+        `Schema boot check failed: ${failed} schema operation${failed === 1 ? "" : "s"}.`,
+      );
+    }
+    return "verified";
   } catch (err: any) {
     console.error("❌ [MIGRATE] Fatal migration error:", err.message);
+    throw err;
   } finally {
     client.release();
   }
@@ -520,6 +540,41 @@ const TABLE_STATEMENTS: TableDef[] = [
       avg_response_time_hours DECIMAL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "inbox_conversations",
+    sql: `CREATE TABLE IF NOT EXISTS inbox_conversations (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type VARCHAR(20) NOT NULL DEFAULT 'support',
+      participant_id TEXT NOT NULL,
+      participant_name TEXT NOT NULL,
+      participant_avatar TEXT,
+      last_message TEXT,
+      last_message_at TIMESTAMP,
+      unread_count INTEGER NOT NULL DEFAULT 0,
+      business_id INTEGER REFERENCES businesses(id) ON DELETE SET NULL,
+      priority VARCHAR(10) NOT NULL DEFAULT 'normal',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "inbox_messages",
+    sql: `CREATE TABLE IF NOT EXISTS inbox_messages (
+      id SERIAL PRIMARY KEY,
+      conversation_id INTEGER NOT NULL REFERENCES inbox_conversations(id) ON DELETE CASCADE,
+      sender_id TEXT NOT NULL,
+      sender_name TEXT NOT NULL,
+      sender_avatar TEXT,
+      content TEXT NOT NULL,
+      attachment_url TEXT,
+      is_read BOOLEAN NOT NULL DEFAULT FALSE,
+      is_ai BOOLEAN NOT NULL DEFAULT FALSE,
+      is_published BOOLEAN NOT NULL DEFAULT FALSE,
+      published_post_id INTEGER,
+      created_at TIMESTAMP DEFAULT NOW()
     )`,
   },
   {
@@ -1967,6 +2022,13 @@ const INDEX_STATEMENTS: string[] = [
   // business_messages
   `CREATE INDEX IF NOT EXISTS biz_msg_business_idx ON business_messages (business_id)`,
   `CREATE INDEX IF NOT EXISTS biz_msg_created_idx ON business_messages (created_at)`,
+  // inbox
+  `CREATE INDEX IF NOT EXISTS inbox_conv_user_idx ON inbox_conversations (user_id)`,
+  `CREATE INDEX IF NOT EXISTS inbox_conv_type_idx ON inbox_conversations (type)`,
+  `CREATE INDEX IF NOT EXISTS inbox_conv_updated_idx ON inbox_conversations (updated_at)`,
+  `CREATE INDEX IF NOT EXISTS inbox_msg_conv_idx ON inbox_messages (conversation_id)`,
+  `CREATE INDEX IF NOT EXISTS inbox_msg_created_idx ON inbox_messages (created_at)`,
+  `CREATE INDEX IF NOT EXISTS inbox_msg_read_idx ON inbox_messages (is_read)`,
   // verifications
   `CREATE INDEX IF NOT EXISTS verification_property_idx ON verifications (property_id)`,
   // tickets

@@ -181,11 +181,15 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
   const [resetError, setResetError] = useState("");
+  const [resetSending, setResetSending] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationNotice, setVerificationNotice] = useState("");
+  const [accountJustCreated, setAccountJustCreated] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [loginError, setLoginError] = useState("");
   const [registerError, setRegisterError] = useState("");
+  const [registering, setRegistering] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [accountChoices, setAccountChoices] = useState<any[]>([]);
   const [accountSelectionOpen, setAccountSelectionOpen] = useState(false);
@@ -352,6 +356,11 @@ export default function SignIn() {
 
       // Handle unverified email
       if (data.requiresVerification) {
+        setVerificationNotice(
+          data.message ||
+            "Please verify your email before signing in. Request a new link below if needed.",
+        );
+        setAccountJustCreated(false);
         setVerificationEmail(data.email || formData.email);
         setStep("verify-sent");
         return;
@@ -451,6 +460,7 @@ export default function SignIn() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (registering) return;
     setRegisterError("");
 
     const validation = validateRegistrationForm({
@@ -464,6 +474,7 @@ export default function SignIn() {
       return;
     }
 
+    setRegistering(true);
     try {
       const response = await fetch("/auth/register", {
         method: "POST",
@@ -480,10 +491,20 @@ export default function SignIn() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
+      if (!data) {
+        setRegisterError(
+          "We couldn't confirm your registration. Check your email or try signing in before submitting again.",
+        );
+        return;
+      }
 
       if (data.requiresVerification) {
-        // Show "check your email" screen
+        setVerificationNotice(
+          data.message ||
+            "Your account needs email verification. Request a new link below if needed.",
+        );
+        setAccountJustCreated(true);
         setVerificationEmail(formData.email);
         setStep("verify-sent");
       } else if (data.success && data.token && data.user) {
@@ -511,11 +532,17 @@ export default function SignIn() {
           }
         }
       } else {
-        setRegisterError(data.message || "Registration failed");
+        setRegisterError(
+          data.message || data.error?.message || "Registration failed",
+        );
       }
     } catch (error) {
       console.error("Register error:", error);
-      setRegisterError("Registration failed. Please try again.");
+      setRegisterError(
+        "We couldn't confirm your registration. Check your email or try signing in before submitting again.",
+      );
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -791,14 +818,15 @@ export default function SignIn() {
                 </div>
 
                 <div className="inline-block bg-[#bf831c]/10 border border-[#bf831c]/30 text-[#d4a037] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
-                  Account Created!
+                  {accountJustCreated ? "Account Created!" : "Email Verification Required"}
                 </div>
 
                 <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
-                  You're almost in 🎉
+                  {accountJustCreated ? "You're almost in 🎉" : "One more step to sign in"}
                 </h2>
                 <p className="text-[#9090b0] text-sm mb-2">
-                  We just fired a verification link to:
+                  {verificationNotice ||
+                    "Please check your inbox or request a new verification link:"}
                 </p>
                 <p className="text-[#f0b445] font-bold text-base mb-8 bg-[#bf831c]/10 rounded-lg px-4 py-2 inline-block border border-[#bf831c]/20">
                   {verificationEmail}
@@ -811,7 +839,9 @@ export default function SignIn() {
                       icon: "📬",
                       step: "1",
                       title: "Open your inbox",
-                      desc: "Check the email we sent you right now",
+                      desc: verificationNotice.toLowerCase().includes("could not be sent")
+                        ? "The automatic email could not be sent. Use the resend button below."
+                        : "Check your inbox for a verification link",
                     },
                     {
                       icon: "✅",
@@ -1781,8 +1811,9 @@ export default function SignIn() {
                 <Button
                   className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white py-3 rounded-lg font-medium"
                   type="submit"
+                  disabled={registering}
                 >
-                  Create Account
+                  {registering ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
 
@@ -1945,6 +1976,11 @@ export default function SignIn() {
                     const nextData = await submitLoginRequest(account.id);
 
                     if (nextData.requiresVerification) {
+                      setVerificationNotice(
+                        nextData.message ||
+                          "Please verify your email before signing in. Request a new link below if needed.",
+                      );
+                      setAccountJustCreated(false);
                       setVerificationEmail(nextData.email || formData.email);
                       setStep("verify-sent");
                       return;
@@ -2399,7 +2435,7 @@ export default function SignIn() {
                   Reset Password
                 </h2>
                 <p className="text-gray-600 mt-2">
-                  We'll send you a secure verification code
+                  We'll send you a secure password reset link
                 </p>
               </div>
 
@@ -2429,24 +2465,35 @@ export default function SignIn() {
                       setResetError("Please enter your email address.");
                       return;
                     }
+                    setResetSending(true);
                     try {
-                      await fetch("/auth/forgot-password", {
+                      const response = await fetch("/auth/forgot-password", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
                         body: JSON.stringify({ email: formData.email }),
                       });
+
+                      if (!response.ok) {
+                        setResetError(
+                          "We couldn't process the request right now. Please try again later or contact support@versoair.com.",
+                        );
+                        return;
+                      }
                       setStep("reset-sent");
                     } catch {
                       setResetError(
                         "Failed to send reset email. Please try again.",
                       );
+                    } finally {
+                      setResetSending(false);
                     }
                   }}
                   type="button"
+                  disabled={resetSending}
                   className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white py-3 rounded-lg font-medium"
                 >
-                  Send Verification Code
+                  {resetSending ? "Sending..." : "Send Reset Link"}
                 </Button>
                 {resetError && (
                   <p className="text-red-500 text-sm text-center">
@@ -2482,10 +2529,20 @@ export default function SignIn() {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 Check Your Email
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-3">
                 If <span className="font-medium">{formData.email}</span> is
-                registered, we've sent a password reset link. Check your inbox
-                and follow the link.
+                registered, a reset link was requested. Check your inbox,
+                Spam/Junk, and All Mail; delivery may take a few minutes.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                If it still doesn't arrive, contact{" "}
+                <a
+                  href="mailto:support@versoair.com"
+                  className="text-[#bf831c] underline"
+                >
+                  support@versoair.com
+                </a>
+                .
               </p>
               <button
                 onClick={() => setStep("login")}

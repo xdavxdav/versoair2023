@@ -1,6 +1,9 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
+import { and, eq } from "drizzle-orm";
+import { db } from "../db";
+import * as schema from "@shared/schema";
 import { notificationEmitter } from "../services/notification-service";
 import { sendPushToUser } from "../services/push-service";
 
@@ -148,7 +151,7 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     // Inbox typing indicator — relayed to the other participant's room only.
     socket.on(
       "inbox_typing",
-      (data: {
+      async (data: {
         toUserId: number;
         conversationId: number;
         isTyping: boolean;
@@ -156,12 +159,49 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
         if (socket.data.userId === null || socket.data.userId === undefined) {
           return;
         }
-        if (!data?.toUserId || !data?.conversationId) return;
-        io?.to(`user_${data.toUserId}`).emit("inbox_typing", {
-          conversationId: data.conversationId,
-          fromUserId: socket.data.userId,
-          isTyping: Boolean(data.isTyping),
-        });
+        const toUserId = Number(data?.toUserId);
+        const conversationId = Number(data?.conversationId);
+        if (
+          !Number.isInteger(toUserId) ||
+          toUserId <= 0 ||
+          !Number.isInteger(conversationId) ||
+          conversationId <= 0
+        ) {
+          return;
+        }
+
+        try {
+          const [conversation] = await db
+            .select({ participantId: schema.inboxConversations.participantId })
+            .from(schema.inboxConversations)
+            .where(
+              and(
+                eq(schema.inboxConversations.id, conversationId),
+                eq(
+                  schema.inboxConversations.userId,
+                  Number(socket.data.userId),
+                ),
+              ),
+            )
+            .limit(1);
+
+          if (
+            !conversation ||
+            conversation.participantId !== String(toUserId)
+          ) {
+            return;
+          }
+
+          io?.to(`user_${toUserId}`).emit("inbox_typing", {
+            conversationId,
+            fromUserId: socket.data.userId,
+            isTyping: Boolean(data.isTyping),
+          });
+        } catch (err) {
+          console.error("[SOCKET] Inbox typing authorization failed", {
+            errorType: "database_query",
+          });
+        }
       },
     );
 
