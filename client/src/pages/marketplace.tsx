@@ -181,7 +181,11 @@ export default function MarketplacePage() {
     const syncAuth = async () => {
       if (globalUser) {
         const name =
-          globalUser.name || globalUser.email?.split("@")[0] || "User";
+          globalUser.name ||
+          globalUser.displayName ||
+          globalUser.username ||
+          globalUser.email?.split("@")[0] ||
+          "User";
         if (cancelled) return;
         setIsAuthenticated(true);
         setUserName(name);
@@ -202,7 +206,12 @@ export default function MarketplacePage() {
         }
 
         if (cancelled) return;
-        const name = verifiedUser.email?.split("@")[0] || "User";
+        const name =
+          verifiedUser.name ||
+          verifiedUser.displayName ||
+          verifiedUser.username ||
+          verifiedUser.email?.split("@")[0] ||
+          "User";
         setIsAuthenticated(true);
         setUserName(name);
         localStorage.setItem("blog_community_auth", "true");

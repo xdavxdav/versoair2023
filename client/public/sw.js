@@ -3,7 +3,7 @@
  * Caches app shell for offline-capable PWA + keeps audio alive in background
  */
 
-const CACHE_NAME = "versoair-v3";
+const CACHE_NAME = "versoair-v4";
 const APP_SHELL = ["/", "/index.html"];
 
 // Install: pre-cache a fallback shell, but always prefer the deployed version.

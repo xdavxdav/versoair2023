@@ -23,6 +23,9 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  name?: string;
+  displayName?: string;
+  username?: string;
 }
 
 export interface AuthResponse {

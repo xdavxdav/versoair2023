@@ -492,8 +492,11 @@ export default function ContentNav() {
   const isAuth =
     !!user || localStorage.getItem("blog_community_auth") === "true";
   const userName =
-    user?.email?.split("@")[0] ??
+    user?.name ??
+    user?.displayName ??
+    user?.username ??
     localStorage.getItem("blog_community_user") ??
+    user?.email?.split("@")[0] ??
     "User";
 
   // Check if we're on an auth page (hide sign in button)
@@ -1076,7 +1079,13 @@ export default function ContentNav() {
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <SmartNavDock
-          userName={user?.email?.split("@")[0] || "User"}
+          userName={
+            user?.name ||
+            user?.displayName ||
+            user?.username ||
+            user?.email?.split("@")[0] ||
+            "User"
+          }
           userStatus="online"
           onSignOut={logout}
         />

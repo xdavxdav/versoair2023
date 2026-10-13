@@ -33,13 +33,16 @@ export default function BlogPage() {
     // If already authed via main auth / artist / geo-admin → skip gate
     if (globalUser) {
       setIsAuthenticated(true);
-      setUserName(globalUser.name || globalUser.email?.split("@")[0] || "User");
+      const displayName =
+        globalUser.name ||
+        globalUser.displayName ||
+        globalUser.username ||
+        globalUser.email?.split("@")[0] ||
+        "User";
+      setUserName(displayName);
       // Also persist so marketplace picks it up
       localStorage.setItem("blog_community_auth", "true");
-      localStorage.setItem(
-        "blog_community_user",
-        globalUser.name || globalUser.email?.split("@")[0] || "User",
-      );
+      localStorage.setItem("blog_community_user", displayName);
       return;
     }
     // Fallback: check community session via server
@@ -50,6 +53,9 @@ export default function BlogPage() {
         if (user) {
           setIsAuthenticated(true);
           const displayName =
+            user.name ||
+            user.displayName ||
+            user.username ||
             localStorage.getItem("blog_community_user") ||
             user.email?.split("@")[0] ||
             "User";

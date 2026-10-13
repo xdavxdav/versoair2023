@@ -14,6 +14,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  displayName?: string;
   username?: string;
   role?: string;
   isAdmin?: boolean;
@@ -52,6 +53,9 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
     id: String((u.userId || u.id) ?? ""),
     email: String(u.email ?? ""),
     name: (u.name || u.display_name || u.displayName || u.username) as
+      | string
+      | undefined,
+    displayName: (u.displayName || u.display_name || u.name) as
       | string
       | undefined,
     username: u.username as string | undefined,

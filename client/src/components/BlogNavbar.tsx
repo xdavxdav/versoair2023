@@ -194,6 +194,7 @@ export default function BlogNavbar({
   const userName =
     userNameProp ??
     user?.name ??
+    user?.displayName ??
     user?.username ??
     user?.email?.split("@")[0] ??
     (marketplaceAuth ? marketplaceUser : "User");
