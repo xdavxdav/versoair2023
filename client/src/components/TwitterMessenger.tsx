@@ -435,7 +435,30 @@ export function TwitterMessenger({
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data?.success) setMessages(data.messages || []);
+        if (data?.success) {
+          setMessages(data.messages || []);
+          if (data.conversation) {
+            setSelectedConv((current) => {
+              if (!current) return current;
+              const updatedName =
+                data.conversation.participantName || current.participantName;
+              const updatedAvatar =
+                data.conversation.participantAvatar ||
+                current.participantAvatar;
+              if (
+                updatedName === current.participantName &&
+                updatedAvatar === current.participantAvatar
+              ) {
+                return current;
+              }
+              return {
+                ...current,
+                participantName: updatedName,
+                participantAvatar: updatedAvatar,
+              };
+            });
+          }
+        }
       })
       .catch(() => {})
       .finally(() => setLoadingMsgs(false));

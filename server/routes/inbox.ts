@@ -13,7 +13,7 @@
  */
 
 import { Router, Request, Response } from "express";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, asc, desc, inArray, sql } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -160,9 +160,39 @@ async function resolveUserDisplay(
     .limit(1);
 
   return {
-    name: su?.displayName || u.displayName || u.username,
+    name: u.displayName || su?.displayName || u.username,
     avatar: su?.avatarUrl || null,
   };
+}
+
+async function resolveUserDisplays(
+  userIds: number[],
+): Promise<Map<number, { name: string; avatar: string | null }>> {
+  const uniqueIds = [...new Set(userIds.filter((id) => Number.isSafeInteger(id) && id > 0))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const rows = await db
+    .select({
+      id: schema.users.id,
+      username: schema.users.username,
+      displayName: schema.users.displayName,
+      socialDisplayName: socialUsers.displayName,
+      avatar: socialUsers.avatarUrl,
+    })
+    .from(schema.users)
+    .leftJoin(socialUsers, eq(socialUsers.userId, schema.users.id))
+    .where(inArray(schema.users.id, uniqueIds))
+    .orderBy(asc(schema.users.id), desc(socialUsers.updatedAt));
+
+  const displays = new Map<number, { name: string; avatar: string | null }>();
+  for (const row of rows) {
+    if (displays.has(row.id)) continue;
+    displays.set(row.id, {
+      name: row.displayName || row.socialDisplayName || row.username,
+      avatar: row.avatar || null,
+    });
+  }
+  return displays;
 }
 
 // ─── GET /api/inbox/conversations ────────────────────────────────────────────
@@ -197,10 +227,20 @@ router.get("/conversations", async (req: Request, res: Response) => {
       .where(eq(schema.inboxConversations.userId, Number(userId)))
       .orderBy(desc(schema.inboxConversations.updatedAt));
 
-    const conversations = rows.map((conversation) => ({
-      ...conversation,
-      portal: conversation.type === "music_artist" ? "music" : "community",
-    }));
+    const participantIds = rows
+      .map((conversation) => Number(conversation.participantId))
+      .filter((id) => Number.isSafeInteger(id) && id > 0);
+    const displays = await resolveUserDisplays(participantIds);
+    const conversations = rows.map((conversation) => {
+      const display = displays.get(Number(conversation.participantId));
+      return {
+        ...conversation,
+        participantName: display?.name || conversation.participantName,
+        participantAvatar:
+          display?.avatar || conversation.participantAvatar,
+        portal: conversation.type === "music_artist" ? "music" : "community",
+      };
+    });
 
     return res.json({ success: true, conversations });
   } catch (err: any) {
@@ -245,7 +285,7 @@ router.get("/contacts", async (req: Request, res: Response) => {
       )
       SELECT DISTINCT
         u.id,
-        COALESCE(su.display_name, u.display_name, u.username) AS name,
+        COALESCE(u.display_name, su.display_name, u.username) AS name,
         u.username,
         u.role,
         COALESCE(su.avatar_url, null) AS avatar,
@@ -384,6 +424,28 @@ router.get(
         .orderBy(desc(schema.inboxMessages.createdAt))
         .limit(limit)
         .offset(offset);
+      const senderIds = messages
+        .map((message) => Number(message.senderId))
+        .filter((id) => Number.isSafeInteger(id) && id > 0);
+      const senderDisplays = await resolveUserDisplays(senderIds);
+      const currentMessages = messages.map((message) => ({
+        ...message,
+        senderName:
+          senderDisplays.get(Number(message.senderId))?.name ||
+          message.senderName,
+      }));
+      const participantDisplay = await resolveUserDisplays([
+        Number(conv.participantId),
+      ]);
+      const currentConversation = {
+        ...conv,
+        participantName:
+          participantDisplay.get(Number(conv.participantId))?.name ||
+          conv.participantName,
+        participantAvatar:
+          participantDisplay.get(Number(conv.participantId))?.avatar ||
+          conv.participantAvatar,
+      };
 
       // Mark unread → read (async, fire-and-forget)
       db.update(schema.inboxMessages)
@@ -406,8 +468,8 @@ router.get(
 
       return res.json({
         success: true,
-        messages: messages.reverse(), // chronological order
-        conversation: conv,
+        messages: currentMessages.reverse(), // chronological order
+        conversation: currentConversation,
       });
     } catch (err: any) {
       console.error(

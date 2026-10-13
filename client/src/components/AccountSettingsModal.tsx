@@ -259,7 +259,7 @@ export function AccountSettingsModal({
       if (res.ok && data.success) {
         toast({
           title: "✅ Profile Updated",
-          description: "Your display name has been saved.",
+          description: "Your username has been saved.",
         });
         fetchProfile();
       } else {
@@ -504,7 +504,7 @@ export function AccountSettingsModal({
                       Profile Information
                     </CardTitle>
                     <CardDescription className="text-slate-400">
-                      Update your display name and view account details
+                      Update your username and view account details
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -563,7 +563,7 @@ export function AccountSettingsModal({
                         htmlFor="username"
                         className="text-sm text-slate-300"
                       >
-                        Display Name
+                        Username
                       </Label>
                       <div className="flex gap-2">
                         <Input
@@ -571,7 +571,7 @@ export function AccountSettingsModal({
                           value={editUsername}
                           onChange={(e) => setEditUsername(e.target.value)}
                           className="bg-slate-700/50 border-slate-600 text-white flex-1"
-                          placeholder="Your display name"
+                          placeholder="Your username"
                         />
                         <Button
                           onClick={handleSaveProfile}

@@ -36,6 +36,11 @@ export default function ProfilePage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [editUsername, setEditUsername] = useState("");
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
+  const [profileError, setProfileError] = useState("");
   const [avatarFailed, setAvatarFailed] = useState(false);
 
   // Track referrer for proper back navigation
@@ -54,7 +59,11 @@ export default function ProfilePage() {
 
   // Build display data from real auth user
   const displayName =
-    user?.name || user?.username || user?.email?.split("@")[0] || "User";
+    user?.displayName ||
+    user?.name ||
+    user?.username ||
+    user?.email?.split("@")[0] ||
+    "User";
   const displayEmail = user?.email || "";
   const displayRole = user?.role || "user";
   const displayTier =
@@ -105,6 +114,7 @@ export default function ProfilePage() {
 
   const handleSaveDisplayName = async () => {
     if (!editName.trim() || editName.trim().length < 2) return;
+    setProfileError("");
     setIsSavingName(true);
     try {
       const token =
@@ -119,7 +129,10 @@ export default function ProfilePage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ displayName: editName.trim() }),
+        body: JSON.stringify({
+          displayName: editName.trim(),
+          ...(currentPassword ? { currentPassword } : {}),
+        }),
       });
       if (res.ok) {
         // Refresh page to pick up new name
@@ -128,16 +141,37 @@ export default function ProfilePage() {
         // Changing an existing name requires the current password server-side;
         // surface that instead of failing silently.
         const data = await res.json().catch(() => null);
-        console.error(
-          "Failed to update display name:",
-          data?.message || res.status,
-        );
+        setProfileError(data?.message || "Could not update display name.");
       }
-    } catch (err) {
-      console.error("Failed to update display name:", err);
+    } catch {
+      setProfileError("Network error. Please try again.");
     } finally {
       setIsSavingName(false);
-      setIsEditingName(false);
+    }
+  };
+
+  const handleSaveUsername = async () => {
+    const username = editUsername.trim();
+    if (username.length < 2) return;
+    setProfileError("");
+    setIsSavingUsername(true);
+    try {
+      const res = await fetch("/auth/account/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username }),
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const data = await res.json().catch(() => null);
+        setProfileError(data?.message || "Could not update username.");
+      }
+    } catch {
+      setProfileError("Network error. Please try again.");
+    } finally {
+      setIsSavingUsername(false);
     }
   };
 
@@ -417,9 +451,21 @@ export default function ProfilePage() {
                         autoFocus
                         maxLength={50}
                       />
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-slate-900 text-sm w-36 focus:outline-none focus:border-cyan-500"
+                        placeholder="Current password"
+                        autoComplete="current-password"
+                      />
                       <button
                         onClick={handleSaveDisplayName}
-                        disabled={isSavingName || editName.trim().length < 2}
+                        disabled={
+                          isSavingName ||
+                          editName.trim().length < 2 ||
+                          (!!user?.displayName && !currentPassword)
+                        }
                         className="p-1 text-emerald-400 hover:text-emerald-300 disabled:opacity-40"
                       >
                         {isSavingName ? (
@@ -429,7 +475,11 @@ export default function ProfilePage() {
                         )}
                       </button>
                       <button
-                        onClick={() => setIsEditingName(false)}
+                        onClick={() => {
+                          setIsEditingName(false);
+                          setCurrentPassword("");
+                          setProfileError("");
+                        }}
                         className="p-1 text-slate-400 hover:text-slate-900"
                       >
                         <X className="w-4 h-4" />
@@ -451,12 +501,70 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-400">Username</span>
-                  <span className="text-slate-900">
-                    {user.username || displayName}
-                  </span>
+                  {isEditingUsername ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editUsername}
+                        onChange={(e) => setEditUsername(e.target.value)}
+                        className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-slate-900 text-sm w-36 focus:outline-none focus:border-cyan-500"
+                        placeholder="Username"
+                        autoFocus
+                        maxLength={50}
+                        autoComplete="username"
+                      />
+                      <button
+                        onClick={handleSaveUsername}
+                        disabled={
+                          isSavingUsername ||
+                          editUsername.trim().length < 2 ||
+                          editUsername.trim() === user.username
+                        }
+                        className="p-1 text-emerald-400 hover:text-emerald-300 disabled:opacity-40"
+                        title="Save username"
+                      >
+                        {isSavingUsername ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingUsername(false);
+                          setProfileError("");
+                        }}
+                        className="p-1 text-slate-400 hover:text-slate-900"
+                        title="Cancel"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-900">
+                        {user.username || displayName}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEditUsername(user.username || "");
+                          setIsEditingUsername(true);
+                        }}
+                        className="p-1 text-slate-500 hover:text-cyan-400 transition-colors"
+                        title="Edit username"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
+                {profileError && (
+                  <p role="alert" className="text-sm text-red-400">
+                    {profileError}
+                  </p>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Email</span>
                   <span className="text-slate-900">{displayEmail}</span>
