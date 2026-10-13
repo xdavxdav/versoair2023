@@ -157,13 +157,21 @@ function normalizeAccountRoleFromEmail(
   return normalizedRole || "user";
 }
 
-function setAuthCookie(res: Response, token: string): void {
+function setAuthCookie(
+  res: Response,
+  token: string,
+  rememberMe?: boolean,
+): void {
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     // Don't set domain — browser defaults to exact current host (works on any deployment)
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    ...(rememberMe === undefined
+      ? { maxAge: 7 * 24 * 60 * 60 * 1000 }
+      : rememberMe
+        ? { maxAge: 30 * 24 * 60 * 60 * 1000 }
+        : {}),
     path: "/",
   });
 }
@@ -304,6 +312,7 @@ async function isTokenRevoked(token: string): Promise<boolean> {
 const loginSchema = z.object({
   email: z.string().email("Invalid email address").max(254),
   password: z.string().min(1, "Password is required").max(128),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 const registerSchema = z.object({
@@ -382,6 +391,7 @@ async function finishLogin(
   effectiveLoginRole: string,
   req: Request,
   res: Response,
+  rememberMe?: boolean,
 ): Promise<void> {
   const token = jwt.sign(
     {
@@ -391,10 +401,10 @@ async function finishLogin(
       subscriptionTier: user.subscription_tier || "free",
     },
     getJwtSecret(),
-    { expiresIn: JWT_EXPIRES_IN },
+    { expiresIn: rememberMe ? "30d" : JWT_EXPIRES_IN },
   );
 
-  setAuthCookie(res, token);
+  setAuthCookie(res, token, rememberMe);
   await createSession(user.id, token, req, { revokeOthers: true });
 
   let capabilities: any = null;
@@ -592,7 +602,7 @@ router.post(
       return;
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, rememberMe } = parsed.data;
 
     const result = await db.execute(
       sql`SELECT id, username, email, password, role, is_verified, display_name,
@@ -746,7 +756,11 @@ router.post(
       ).catch((e) => console.warn("[AUTH] Failed to send OTP email:", e));
 
       const otpToken = jwt.sign(
-        { userId: String(user.id), purpose: "login_otp" },
+        {
+          userId: String(user.id),
+          purpose: "login_otp",
+          rememberMe,
+        },
         getJwtSecret(),
         { expiresIn: "10m" },
       );
@@ -760,7 +774,7 @@ router.post(
       return;
     }
 
-    await finishLogin(user, effectiveLoginRole, req, res);
+    await finishLogin(user, effectiveLoginRole, req, res, rememberMe);
   }),
 );
 
@@ -835,7 +849,13 @@ router.post(
       return;
     }
 
-    await finishLogin(user, user.role || "user", req, res);
+    await finishLogin(
+      user,
+      user.role || "user",
+      req,
+      res,
+      payload.rememberMe === true,
+    );
   }),
 );
 

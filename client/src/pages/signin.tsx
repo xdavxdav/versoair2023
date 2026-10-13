@@ -179,6 +179,7 @@ export default function SignIn() {
   }); // 'login', 'register', 'forgot-password', 'reset-sent', 'mfa', 'verify-sent'
   const [selectedBusinessType, setSelectedBusinessType] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
   const [resetError, setResetError] = useState("");
   const [resetSending, setResetSending] = useState(false);
@@ -335,6 +336,7 @@ export default function SignIn() {
         email: formData.email,
         password: formData.password,
         accountId: accountId ?? selectedAccountId ?? null,
+        rememberMe,
       }),
     });
 
@@ -2282,6 +2284,8 @@ export default function SignIn() {
                     <label className="flex items-center">
                       <input
                         type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
                         className="rounded border-gray-300 text-[#bf831c] focus:ring-[#bf831c]"
                       />
                       <span className="ml-2 text-sm text-gray-600">
