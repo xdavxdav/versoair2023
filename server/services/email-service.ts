@@ -28,6 +28,7 @@ function getAppUrl(): string {
  */
 
 let transporter: Transporter | null = null;
+let senderAddress: string | undefined;
 let smtpCache: any = null;
 let cacheExpires = 0;
 const EMAIL_SEND_TIMEOUT_MS = 15_000;
@@ -110,7 +111,10 @@ export async function initializeEmailTransporter() {
     port: parseInt(process.env.SMTP_PORT || "587", 10),
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-    from: process.env.SMTP_FROM || "noreply@versoair.com",
+    from:
+      process.env.SMTP_FROM ||
+      process.env.SMTP_USER ||
+      "noreply@versoair.com",
     secure: (process.env.SMTP_SECURE || "false").toLowerCase() === "true",
   };
 
@@ -121,6 +125,7 @@ export async function initializeEmailTransporter() {
     return null;
   }
 
+  senderAddress = config.from || config.user;
   transporter = nodemailer.createTransport({
     host: config.host,
     port: parseInt(String(config.port)) || 587,
@@ -134,8 +139,9 @@ export async function initializeEmailTransporter() {
     },
   });
 
-  const from = config.from || "noreply@versoair.com";
-  console.log(`[EMAIL] Transporter initialized. Sending from: ${from}`);
+  console.log(
+    `[EMAIL] Transporter initialized. Sending from: ${senderAddress}`,
+  );
   return transporter;
 }
 
@@ -203,6 +209,7 @@ export async function sendConnectionRequestEmail(
     `;
 
     const result = await sendMailWithTimeout(transporter, {
+      from: senderAddress,
       to: toEmail,
       subject,
       html: htmlContent,
@@ -308,6 +315,7 @@ export async function sendConnectionAcceptedEmail(
     `;
 
     const result = await sendMailWithTimeout(transporter, {
+      from: senderAddress,
       to: toEmail,
       subject,
       html: htmlContent,
@@ -527,6 +535,7 @@ export async function sendEmail(
 
   try {
     const result = await sendMailWithTimeout(transporter, {
+      from: senderAddress,
       to,
       subject,
       html,
