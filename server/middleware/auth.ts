@@ -101,6 +101,7 @@ const PUBLIC_PATHS: string[] = [
   "/auth/signup",
   "/auth/login",
   "/auth/register",
+  "/auth/resend-verification",
   "/auth/logout",
   "/auth/verify-token",
   "/auth/verify-email",

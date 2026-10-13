@@ -1000,6 +1000,7 @@ router.get(
  */
 router.post(
   "/resend-verification",
+  forgotPasswordLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
 
@@ -1020,6 +1021,7 @@ router.post(
         success: true,
         message:
           "If that email is registered, a verification link has been sent.",
+        emailSent: null,
       });
       return;
     }
@@ -1028,6 +1030,7 @@ router.post(
       res.json({
         success: true,
         message: "This email is already verified. You can log in.",
+        emailSent: false,
       });
       return;
     }
@@ -1052,17 +1055,17 @@ router.post(
     const sent = await sendVerificationEmail(user.email, verificationToken);
 
     if (sent) {
-      console.log(`[AUTH] Verification email resent to ${user.email}`);
+      console.log("[AUTH] Verification email resent");
     } else {
-      console.warn(
-        `[AUTH] Failed to resend verification email to ${user.email}`,
-      );
+      console.warn("[AUTH] Failed to resend verification email");
     }
 
     res.json({
       success: true,
-      message:
-        "If that email is registered, a verification link has been sent.",
+      emailSent: sent,
+      message: sent
+        ? "Verification email sent. Check your inbox and spam folder."
+        : "We couldn't send the verification email. Please try again later.",
     });
   }),
 );

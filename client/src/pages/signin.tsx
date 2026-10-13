@@ -557,9 +557,22 @@ export default function SignIn() {
         body: JSON.stringify({ email: verificationEmail }),
       });
       const data = await response.json();
-      setResendMessage(data.message || "Verification email sent!");
+      if (!response.ok || !data.success) {
+        setResendMessage(
+          data.message || "We couldn't request a verification email. Please try again.",
+        );
+      } else {
+        setResendMessage(
+          data.message ||
+            (data.emailSent === false
+              ? "We couldn't send the verification email. Please try again later."
+              : "If your account needs verification, a link will be sent shortly."),
+        );
+      }
     } catch {
-      setResendMessage("Failed to resend. Please try again.");
+      setResendMessage(
+        "We couldn't confirm the resend request. Please try again.",
+      );
     } finally {
       setResendLoading(false);
     }
@@ -825,8 +838,11 @@ export default function SignIn() {
                   {accountJustCreated ? "You're almost in 🎉" : "One more step to sign in"}
                 </h2>
                 <p className="text-[#9090b0] text-sm mb-2">
-                  {verificationNotice ||
-                    "Please check your inbox or request a new verification link:"}
+                  {verificationNotice.toLowerCase().includes("could not be sent") ||
+                  verificationNotice.toLowerCase().includes("couldn't send")
+                    ? "We could not send the verification email to:"
+                    : verificationNotice ||
+                      "Please check your inbox or request a new verification link:"}
                 </p>
                 <p className="text-[#f0b445] font-bold text-base mb-8 bg-[#bf831c]/10 rounded-lg px-4 py-2 inline-block border border-[#bf831c]/20">
                   {verificationEmail}
