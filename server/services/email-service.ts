@@ -30,6 +30,28 @@ function getAppUrl(): string {
 let transporter: Transporter | null = null;
 let smtpCache: any = null;
 let cacheExpires = 0;
+const EMAIL_SEND_TIMEOUT_MS = 15_000;
+
+async function sendMailWithTimeout(
+  mailer: Transporter,
+  options: Parameters<Transporter["sendMail"]>[0],
+) {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      mailer.sendMail(options),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error("SMTP delivery confirmation timed out")),
+          EMAIL_SEND_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 
 /**
  * Load SMTP config from database (with caching and timeout)
@@ -103,6 +125,9 @@ export async function initializeEmailTransporter() {
     host: config.host,
     port: parseInt(String(config.port)) || 587,
     secure: config.secure || parseInt(String(config.port)) === 465,
+    connectionTimeout: 8_000,
+    greetingTimeout: 8_000,
+    socketTimeout: EMAIL_SEND_TIMEOUT_MS,
     auth: {
       user: config.user,
       pass: config.pass,
@@ -177,7 +202,7 @@ export async function sendConnectionRequestEmail(
       </html>
     `;
 
-    const result = await transporter.sendMail({
+    const result = await sendMailWithTimeout(transporter, {
       to: toEmail,
       subject,
       html: htmlContent,
@@ -282,7 +307,7 @@ export async function sendConnectionAcceptedEmail(
       </html>
     `;
 
-    const result = await transporter.sendMail({
+    const result = await sendMailWithTimeout(transporter, {
       to: toEmail,
       subject,
       html: htmlContent,
@@ -501,7 +526,7 @@ export async function sendEmail(
   }
 
   try {
-    const result = await transporter.sendMail({
+    const result = await sendMailWithTimeout(transporter, {
       to,
       subject,
       html,

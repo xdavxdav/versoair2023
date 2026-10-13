@@ -839,8 +839,10 @@ export default function SignIn() {
                 </h2>
                 <p className="text-[#9090b0] text-sm mb-2">
                   {verificationNotice.toLowerCase().includes("could not be sent") ||
-                  verificationNotice.toLowerCase().includes("couldn't send")
-                    ? "We could not send the verification email to:"
+                  verificationNotice.toLowerCase().includes("couldn't send") ||
+                  verificationNotice.toLowerCase().includes("delivery could not be confirmed") ||
+                  verificationNotice.toLowerCase().includes("couldn't confirm email delivery")
+                    ? "We could not confirm delivery of the verification email to:"
                     : verificationNotice ||
                       "Please check your inbox or request a new verification link:"}
                 </p>
@@ -855,8 +857,11 @@ export default function SignIn() {
                       icon: "📬",
                       step: "1",
                       title: "Open your inbox",
-                      desc: verificationNotice.toLowerCase().includes("could not be sent")
-                        ? "The automatic email could not be sent. Use the resend button below."
+                      desc:
+                        verificationNotice.toLowerCase().includes("could not be sent") ||
+                        verificationNotice.toLowerCase().includes("delivery could not be confirmed") ||
+                        verificationNotice.toLowerCase().includes("couldn't confirm email delivery")
+                        ? "Delivery was not confirmed. Check your inbox and spam before using the resend button."
                         : "Check your inbox for a verification link",
                     },
                     {

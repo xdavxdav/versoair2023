@@ -566,7 +566,7 @@ router.post(
       emailSent,
       message: emailSent
         ? "Account created! Check your email for a verification link."
-        : "Account created, but the verification email could not be sent. Try resending it later.",
+        : "Account created, but email delivery could not be confirmed. Check your inbox and spam folder before requesting another link.",
       user: {
         id: String(newUser.id),
         email: newUser.email,
@@ -1065,7 +1065,7 @@ router.post(
       emailSent: sent,
       message: sent
         ? "Verification email sent. Check your inbox and spam folder."
-        : "We couldn't send the verification email. Please try again later.",
+        : "We couldn't confirm email delivery. Check your inbox and spam folder before retrying.",
     });
   }),
 );
