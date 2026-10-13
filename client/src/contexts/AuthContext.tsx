@@ -102,16 +102,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Verify session via httpOnly cookie (no token needed in header).
+    // Load the current account profile from the httpOnly-cookie session.
     // 8 s timeout — Render free-tier cold starts routinely take 2–5 s and a 1.5 s
     // budget caused false-negative "unauthenticated" states even when the cookie
     // was valid.
     const abortCtrl = new AbortController();
     const abortTimer = setTimeout(() => abortCtrl.abort(), 8000);
     try {
-      const response = await fetch("/auth/verify", {
+      const response = await fetch("/auth/session", {
         method: "GET",
         credentials: "include",
+        cache: "no-store",
         signal: abortCtrl.signal,
       });
       clearTimeout(abortTimer);

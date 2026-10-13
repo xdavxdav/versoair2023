@@ -193,6 +193,8 @@ export default function BlogNavbar({
   const isAuthenticated = isAuthProp ?? (!!user || marketplaceAuth);
   const userName =
     userNameProp ??
+    user?.name ??
+    user?.username ??
     user?.email?.split("@")[0] ??
     (marketplaceAuth ? marketplaceUser : "User");
   const dashboard = getDashboardDestination(user);
