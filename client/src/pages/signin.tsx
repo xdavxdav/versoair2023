@@ -991,7 +991,14 @@ export default function SignIn() {
             description: `Great to meet you, ${trimmed}!`,
           });
 
-          // Navigate to dashboard — full priority chain
+          const availablePortals = getPortalChoices(pendingLoginData.user);
+          if (availablePortals.length > 1) {
+            setPortalChoices(availablePortals);
+            setStep("login");
+            setPortalSelectionOpen(true);
+            return;
+          }
+
           const portals = pendingLoginData.user.portals || [];
           if (portals.includes("community") && !portals.includes("artist")) {
             navigate("/blog");

@@ -54,10 +54,7 @@ export function getAccountFamily(
     return "contractor";
   if (portals.includes("community")) return "general";
   if (
-    STREAMER_ALIASES.has(role) ||
-    portals.includes("streamer") ||
-    portals.includes("music") ||
-    portals.includes("musical")
+    STREAMER_ALIASES.has(role)
   )
     return "streamer";
 
