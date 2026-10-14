@@ -7,6 +7,7 @@ import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import {
   GEOADMIN_ANNUAL_PRICES_XOF,
+  GEOADMIN_PLAN_DETAILS,
   GEOADMIN_PLAN_ORDER,
 } from "@/lib/geoadmin-pricing";
 import { TIERS, type TierKey } from "@/lib/tiers";
@@ -128,6 +129,133 @@ export default function Pricing() {
             </p>
           </section>
         </div>
+
+        <section className="mt-14" aria-labelledby="plan-inclusions-heading">
+          <div className="mx-auto mb-7 max-w-3xl text-center">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
+              Clear plan comparison
+            </p>
+            <h2
+              id="plan-inclusions-heading"
+              className="text-3xl font-bold sm:text-4xl"
+            >
+              What each plan is designed to include
+            </h2>
+            <p className="mt-3 leading-relaxed text-slate-600">
+              Compare the intended listing, visibility, and support benefits
+              before you contact us. Select any plan to build an inquiry around
+              your priorities.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {GEOADMIN_PLAN_ORDER.map((tier) => {
+              const annualPrice = GEOADMIN_ANNUAL_PRICES_XOF[tier];
+              return (
+                <article
+                  key={tier}
+                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-xl font-bold">{TIERS[tier].name}</h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">
+                      {annualPrice === null
+                        ? "Tailored"
+                        : `${annualPrice.toLocaleString()} FCFA / year`}
+                    </span>
+                  </div>
+                  {annualPrice !== null && annualPrice > 0 && (
+                    <p className="mt-3 text-xs text-slate-500">
+                      About {(annualPrice / 12).toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      })}{" "}
+                      FCFA per month on an annual-equivalent basis; this is not
+                      a monthly billing option.
+                    </p>
+                  )}
+                  <ul className="mt-5 flex-1 space-y-3 text-sm leading-relaxed text-slate-700">
+                    {GEOADMIN_PLAN_DETAILS[tier].benefits.map((benefit) => (
+                      <li key={benefit} className="flex gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="font-bold text-emerald-700"
+                        >
+                          ✓
+                        </span>
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTier(tier);
+                      setDetailsOpen(true);
+                    }}
+                    className="mt-6 inline-flex items-center font-semibold text-emerald-800 hover:text-emerald-950"
+                  >
+                    Discuss {TIERS[tier].name}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section
+          className="mt-12 grid gap-5 lg:grid-cols-2"
+          aria-label="Pricing and service scope"
+        >
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+            <h2 className="text-2xl font-bold">How to interpret these prices</h2>
+            <p className="mt-3 leading-relaxed text-slate-600">
+              These are annual FCFA reference prices—not a checkout offer or a
+              final quote. We are testing whether the tiers fit businesses in
+              our initial focus markets, Canada and Côte d’Ivoire. Any
+              converted local-currency amount is an estimate; taxes, eligibility,
+              final inclusions, and contract terms are confirmed in writing
+              before purchase.
+            </p>
+            <p className="mt-3 leading-relaxed text-slate-600">
+              The Free plan competes with free business directories. Essential
+              is intended as a paid, enhanced listing; Pro Verified adds
+              verification and stronger business insights; Pro Max is the
+              highest visibility and campaign-planning tier. These are different
+              levels of directory visibility—not a promise that every
+              competitor or market offers the same service.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+            <h2 className="text-2xl font-bold">
+              Platform access vs. managed service
+            </h2>
+            <p className="mt-3 leading-relaxed text-slate-600">
+              A subscription describes access to the listing, visibility, and
+              tools shown above. Work performed for you—such as profile setup,
+              content production, campaign execution, or ongoing community
+              management—is not automatically included unless it is explicitly
+              listed in your written proposal.
+            </p>
+            <p className="mt-3 leading-relaxed text-slate-600">
+              If you want hands-on support, choose the relevant priorities in
+              “Learn more and customize.” We will confirm the deliverables,
+              schedule, any advertising spend, support level, and total price
+              separately so you know exactly what you are agreeing to.
+            </p>
+          </article>
+        </section>
+
+        <p className="mt-6 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
+          <strong>Before you commit:</strong> no payment is taken and no plan is
+          activated from this page. Request a written proposal and review its
+          market availability, deliverables, term, taxes, exclusions, renewal,
+          and cancellation conditions before accepting.
+        </p>
 
         <GeoAdminPlanDetailsDialog
           open={detailsOpen}
