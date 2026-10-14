@@ -47,9 +47,6 @@ export function PasswordStrengthMeter({
   }));
   const requiredPassed = required.filter((check) => check.passed).length;
   const meetsRequirements = requiredPassed === required.length;
-  const recommendationColor =
-    variant === "dark" ? "text-amber-300" : "text-amber-700";
-
   return (
     <div className="mt-2 space-y-2">
       <div
@@ -111,7 +108,15 @@ export function PasswordStrengthMeter({
         {recommended.map(({ label, passed }) => (
           <li
             key={label}
-            className={`flex items-center gap-1.5 text-xs ${recommendationColor}`}
+            className={`flex items-center gap-1.5 text-xs ${
+              passed
+                ? variant === "dark"
+                  ? "text-emerald-300"
+                  : "text-emerald-600"
+                : variant === "dark"
+                  ? "text-amber-300"
+                  : "text-amber-700"
+            }`}
           >
             {passed ? (
               <CheckCircle2
