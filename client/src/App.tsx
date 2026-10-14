@@ -125,6 +125,7 @@ const OngCulturelle = lazy(() => import("@/pages/ong-culturelle"));
 // 🔐 Authentication (lazy-loaded)
 // ─────────────────────────────────────────────────────
 const SignIn = lazy(() => import("@/pages/signin"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const PasswordPage = lazy(() => import("@/pages/password"));
@@ -624,6 +625,7 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🔐 AUTH — Sign in & registration
           ═══════════════════════════════════════════════ */}
+      <Route path="/auth/reset-password" component={ResetPassword} />
       <Route path="/auth/signin" component={SignIn} />
       <Route path="/auth/signup">
         {() => <Redirect to="/auth/signin?mode=register" />}
