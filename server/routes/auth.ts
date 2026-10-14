@@ -1594,6 +1594,36 @@ router.post(
       return;
     }
 
+    const passwordMatchesCurrent = await bcrypt.compare(password, user.password);
+    if (passwordMatchesCurrent) {
+      res.status(400).json({
+        success: false,
+        message: "Choose a password different from your current password.",
+      });
+      return;
+    }
+
+    const passwordIdentity = password.toLocaleLowerCase().replace(/[^a-z0-9]/g, "");
+    const identityTerms = [
+      user.email.split("@")[0],
+      user.username,
+      user.displayName ?? "",
+    ]
+      .flatMap((value) => value.toLocaleLowerCase().split(/[^a-z0-9]+/))
+      .filter((term) => term.length >= 3);
+
+    if (
+      identityTerms.some((term) =>
+        passwordIdentity.includes(term.replace(/[^a-z0-9]/g, "")),
+      )
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Don't include your email address or account name in your password.",
+      });
+      return;
+    }
+
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     await db
