@@ -115,11 +115,15 @@ export default function ResetPasswordPage() {
           </div>
 
           {isComplete ? (
-            <Link href="/auth/signin">
-              <Button className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white hover:from-[#a6701a] hover:to-[#c0841c]">
-                Continue to Sign In
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              onClick={() =>
+                window.location.replace("/auth/signin?passwordReset=success")
+              }
+              className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] text-white hover:from-[#a6701a] hover:to-[#c0841c]"
+            >
+              Continue to Sign In
+            </Button>
           ) : !token ? (
             <div className="space-y-5 text-center">
               <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-left text-sm text-red-700">

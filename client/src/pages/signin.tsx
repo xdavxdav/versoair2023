@@ -583,6 +583,7 @@ export default function SignIn() {
 
   // Check for verification status from URL (after clicking email link)
   const verificationStatus = getQueryParam("verification");
+  const passwordResetComplete = getQueryParam("passwordReset") === "success";
   const autoLogin = getQueryParam("autologin") === "1";
   const verifiedName = getQueryParam("name")
     ? decodeURIComponent(getQueryParam("name")!)
@@ -2230,6 +2231,20 @@ export default function SignIn() {
                         Your email is already verified. Sign in below.
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {passwordResetComplete && (
+                  <div
+                    role="status"
+                    className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4"
+                  >
+                    <p className="font-semibold text-emerald-800">
+                      Password reset successful
+                    </p>
+                    <p className="text-sm text-emerald-700">
+                      Sign in below using your new password.
+                    </p>
                   </div>
                 )}
 
