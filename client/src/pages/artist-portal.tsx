@@ -4202,6 +4202,17 @@ export default function ArtistPortal() {
 
             <div className="flex items-center space-x-4">
               {/* Navigation Buttons */}
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="Home"
+                title="Home"
+                onClick={() => navigate("/")}
+                className="shrink-0 text-white hover:bg-white/10"
+              >
+                <Home className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Home</span>
+              </Button>
               <div className="hidden md:flex items-center gap-2 mr-2">
                 <Button
                   variant="ghost"

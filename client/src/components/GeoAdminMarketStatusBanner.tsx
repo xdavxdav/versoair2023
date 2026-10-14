@@ -13,20 +13,18 @@ export default function GeoAdminMarketStatusBanner() {
   const availability = selectedCountry
     ? getMarketAvailability(selectedCountry)
     : null;
+  if (availability === true) return null;
+
   const classes =
-    availability === true
-      ? "border-emerald-300/20 bg-emerald-950 text-emerald-100"
-      : availability === false
-        ? "border-amber-300/20 bg-amber-950 text-amber-100"
-        : "border-sky-300/20 bg-slate-900 text-sky-100";
+    availability === false
+      ? "border-amber-300/20 bg-amber-950 text-amber-100"
+      : "border-sky-300/20 bg-slate-900 text-sky-100";
   const marketLabel =
-    availability === true
-      ? `AVAILABLE IN ${countryName.toLocaleUpperCase()}`
-      : availability === false
-        ? `COMING SOON IN ${countryName.toLocaleUpperCase()}`
-        : detecting
-          ? "CHECKING GEOADMIN AVAILABILITY"
-          : "SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY";
+    availability === false
+      ? `COMING SOON IN ${countryName.toLocaleUpperCase()}`
+      : detecting
+        ? "CHECKING GEOADMIN AVAILABILITY"
+        : "SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY";
 
   return (
     <aside
@@ -37,8 +35,8 @@ export default function GeoAdminMarketStatusBanner() {
       <span>{marketLabel}</span>
       {availability !== null && (
         <span className="font-normal tracking-normal opacity-80">
-          Available markets: Canada, France, and Côte d’Ivoire. Prices and
-          terms are confirmed before purchase.
+          Available markets: Canada, France, and Côte d’Ivoire. Final scope
+          and terms are confirmed before purchase.
         </span>
       )}
       {!selectedCountry && (
