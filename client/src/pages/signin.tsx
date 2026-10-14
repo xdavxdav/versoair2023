@@ -347,6 +347,7 @@ export default function SignIn() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
+    setPasswordResetComplete(false);
     try {
       const data = await submitLoginRequest();
 
@@ -583,7 +584,15 @@ export default function SignIn() {
 
   // Check for verification status from URL (after clicking email link)
   const verificationStatus = getQueryParam("verification");
-  const passwordResetComplete = getQueryParam("passwordReset") === "success";
+  const [passwordResetComplete, setPasswordResetComplete] = useState(() => {
+    if (getQueryParam("passwordReset") !== "success") return false;
+
+    const resetWasCompleted =
+      window.sessionStorage.getItem("versoair:password-reset-complete") ===
+      "true";
+    window.sessionStorage.removeItem("versoair:password-reset-complete");
+    return resetWasCompleted;
+  });
   const autoLogin = getQueryParam("autologin") === "1";
   const verifiedName = getQueryParam("name")
     ? decodeURIComponent(getQueryParam("name")!)

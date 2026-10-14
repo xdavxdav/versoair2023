@@ -83,6 +83,7 @@ export default function ResetPasswordPage() {
       }
 
       setIsComplete(true);
+      window.sessionStorage.setItem("versoair:password-reset-complete", "true");
       setPassword("");
       setConfirmPassword("");
     } catch {
