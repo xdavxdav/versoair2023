@@ -9,28 +9,23 @@ import {
   GEOADMIN_ANNUAL_PRICES_XOF,
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_PLAN_ORDER,
+  formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
 import { TIERS, type TierKey } from "@/lib/tiers";
 
 export default function Pricing() {
   const [selectedTier, setSelectedTier] = useState<TierKey>("verified");
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const { currency, rates } = useGeoAdminPricing();
+  const { currency, rates, selectedCountry, marketAvailability } =
+    useGeoAdminPricing();
 
   const formatAnnualPrice = (tier: TierKey) => {
-    const amountXof = GEOADMIN_ANNUAL_PRICES_XOF[tier];
-    if (amountXof === null) return "Custom quote";
-    if (currency === "XOF" || currency === "XAF") {
-      return `${amountXof.toLocaleString()} FCFA`;
-    }
-    const rate = rates?.[currency];
-    if (!rate) return `${amountXof.toLocaleString()} FCFA`;
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
+    return formatMarketXofPrice(
+      GEOADMIN_ANNUAL_PRICES_XOF[tier],
+      selectedCountry ?? "",
       currency,
-      currencyDisplay: "code",
-      maximumFractionDigits: 0,
-    }).format(amountXof * rate);
+      rates,
+    );
   };
 
   return (
@@ -45,9 +40,13 @@ export default function Pricing() {
         <div className="grid items-center gap-7 lg:grid-cols-[0.9fr_1.1fr]">
           <img
             src="/images/geoadmin-plans.svg"
-            alt="GeoAdmin annual plans and base FCFA prices"
+            alt="GeoAdmin annual plans and FCFA reference prices"
             className="h-auto w-full rounded-2xl border border-slate-200 shadow-lg"
           />
+          <p className="text-xs leading-relaxed text-slate-500 lg:col-start-1">
+            The graphic shows FCFA reference amounts. In available markets,
+            plan cards below use the local display currency.
+          </p>
           <section>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
               GeoAdmin plans
@@ -56,9 +55,9 @@ export default function Pricing() {
               Choose the visibility that fits your business
             </h1>
             <p className="mb-6 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Annual reference prices start in FCFA. When available, an
-              approximate visitor-currency conversion is shown; the FCFA amount
-              remains the source price.
+              Annual reference prices are shown in Canadian dollars in Canada,
+              euros in France, and FCFA in Côte d’Ivoire. Other countries are
+              marked as coming soon.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_PLAN_ORDER.map((tier) => (
@@ -78,7 +77,8 @@ export default function Pricing() {
                   <span className="block font-semibold">{TIERS[tier].name}</span>
                   <span className="mt-1 block text-lg font-bold text-emerald-800">
                     {formatAnnualPrice(tier)}
-                    {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null && (
+                    {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null &&
+                      marketAvailability !== false && (
                       <span className="text-sm font-normal text-slate-500">
                         {" "}
                         / year
@@ -90,15 +90,18 @@ export default function Pricing() {
                       ? "Start with a basic directory presence."
                       : tier === "enterprise"
                         ? "Discuss a package tailored to your needs."
-                        : `Annual reference: ${GEOADMIN_ANNUAL_PRICES_XOF[tier]?.toLocaleString()} FCFA.`}
+                        : marketAvailability === false
+                          ? `GeoAdmin is coming soon in your selected country.`
+                          : `Annual reference price for your market: ${formatAnnualPrice(tier)}.`}
                   </span>
                 </button>
               ))}
             </div>
 
             <p className="mt-4 text-xs leading-relaxed text-slate-500">
-              Local-currency conversions are indicative, not a payment quote.
-              Plan availability, deliverables, taxes, and terms are confirmed
+              Prices in CAD and EUR are indicative conversions from the FCFA
+              reference schedule; the written offer confirms the final amount.
+              Availability, deliverables, taxes, and terms are confirmed
               directly. This page does not offer checkout or activate a plan.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -163,18 +166,25 @@ export default function Pricing() {
                       </p>
                     </div>
                     <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">
-                      {annualPrice === null
-                        ? "Tailored"
-                        : `${annualPrice.toLocaleString()} FCFA / year`}
+                      {formatAnnualPrice(tier)}
+                      {annualPrice !== null && marketAvailability !== false
+                        ? " / year"
+                        : ""}
                     </span>
                   </div>
-                  {annualPrice !== null && annualPrice > 0 && (
+                  {annualPrice !== null &&
+                    annualPrice > 0 &&
+                    marketAvailability !== false && (
                     <p className="mt-3 text-xs text-slate-500">
-                      About {(annualPrice / 12).toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}{" "}
-                      FCFA per month on an annual-equivalent basis; this is not
-                      a monthly billing option.
+                      About{" "}
+                      {formatMarketXofPrice(
+                        annualPrice / 12,
+                        selectedCountry ?? "",
+                        currency,
+                        rates,
+                      )}{" "}
+                      per month on an annual-equivalent basis; this is not a
+                      monthly billing option.
                     </p>
                   )}
                   <ul className="mt-5 flex-1 space-y-3 text-sm leading-relaxed text-slate-700">
@@ -214,12 +224,12 @@ export default function Pricing() {
           <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
             <h2 className="text-2xl font-bold">How to interpret these prices</h2>
             <p className="mt-3 leading-relaxed text-slate-600">
-              These are annual FCFA reference prices—not a checkout offer or a
-              final quote. We are testing whether the tiers fit businesses in
-              our initial focus markets, Canada and Côte d’Ivoire. Any
-              converted local-currency amount is an estimate; taxes, eligibility,
-              final inclusions, and contract terms are confirmed in writing
-              before purchase.
+              These are annual reference prices—not a checkout offer or a final
+              quote. Canada prices are displayed in CAD, France prices in EUR,
+              and Côte d’Ivoire prices in FCFA. CAD and EUR amounts are
+              indicative conversions from the FCFA reference schedule; taxes,
+              eligibility, final inclusions, and contract terms are confirmed
+              in writing before purchase.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
               The Free plan competes with free business directories. Essential

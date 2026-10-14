@@ -36,7 +36,7 @@ import {
   GEOADMIN_PLAN_ORDER,
   GEOADMIN_ANNUAL_PRICES_XOF,
 } from "@/lib/geoadmin-pricing";
-import { formatXofPrice } from "@/lib/geoadmin-pricing";
+import { formatMarketXofPrice } from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -50,7 +50,8 @@ export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
   const { login: authContextLogin } = useAuthContext();
-  const { currency, rates, loadingRates } = useGeoAdminPricing();
+  const { currency, rates, selectedCountry, marketAvailability } =
+    useGeoAdminPricing();
   const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -279,8 +280,8 @@ export default function GeoAdminAuthGate({
                     Annual plan reference prices
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Shown in FCFA; local-currency figures are indicative only.
-                    No online checkout is offered here.
+                    Canada: CAD · France: EUR · Côte d’Ivoire: FCFA. Other
+                    countries are coming soon. No online checkout is offered.
                   </p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -311,21 +312,22 @@ export default function GeoAdminAuthGate({
                           )}
                         </span>
                         <span className="mt-1 block text-sm font-bold text-amber-200">
-                          {formatXofPrice(annualXof, currency, rates)}
-                          {annualXof !== null && (
+                          {formatMarketXofPrice(
+                            annualXof,
+                            selectedCountry ?? "",
+                            currency,
+                            rates,
+                          )}
+                          {annualXof !== null && marketAvailability !== false && (
                             <span className="font-normal text-slate-400">
                               {" "}
                               / year
                             </span>
                           )}
                         </span>
-                        {annualXof !== null &&
-                          currency !== "XOF" &&
-                          currency !== "XAF" && (
+                        {annualXof !== null && marketAvailability === true && (
                             <span className="mt-0.5 block text-[10px] text-slate-400">
-                              {loadingRates || !rates
-                                ? "FCFA reference"
-                                : "Indicative local estimate"}
+                              Annual reference price
                             </span>
                           )}
                         <span className="mt-2 block text-xs leading-relaxed text-slate-400">

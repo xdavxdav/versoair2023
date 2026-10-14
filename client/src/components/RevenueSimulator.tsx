@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { TIERS, TIER_ORDER, simulateRevenue, type TierKey } from "@/lib/tiers";
-import { convertUsdToCurrency, formatXofPrice } from "@/lib/geoadmin-pricing";
+import {
+  convertUsdToCurrency,
+  formatMarketXofPrice,
+} from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 
 interface RevenueSimulatorProps {
@@ -29,7 +32,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
       Math.min(TIER_ORDER.indexOf(currentTier) + 1, TIER_ORDER.length - 1)
     ],
   );
-  const { currency, rates } = useGeoAdminPricing();
+  const { currency, rates, selectedCountry } = useGeoAdminPricing();
 
   const result = useMemo(
     () =>
@@ -78,7 +81,12 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
   const monthlyPlanPrice =
     monthlyCostXof === null
       ? "Custom quote"
-      : formatXofPrice(monthlyCostXof, currency, rates);
+      : formatMarketXofPrice(
+          monthlyCostXof,
+          selectedCountry ?? "",
+          currency,
+          rates,
+        );
 
   if (locked) {
     return (

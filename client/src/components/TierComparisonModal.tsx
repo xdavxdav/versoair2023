@@ -6,7 +6,7 @@ import {
   GEOADMIN_ANNUAL_PRICES_XOF,
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_PLAN_ORDER,
-  formatXofPrice,
+  formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 
@@ -24,7 +24,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
   currentTier,
 }) => {
   useScrollLock(isOpen);
-  const { currency, rates } = useGeoAdminPricing();
+  const { currency, rates, selectedCountry } = useGeoAdminPricing();
 
   if (!isOpen) return null;
 
@@ -61,8 +61,8 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
           GeoAdmin plans and annual reference prices
         </h2>
         <p className="mb-5 text-sm leading-relaxed text-gray-600">
-          FCFA amounts are the source prices. A visitor-currency estimate is
-          shown when a reference exchange rate is available.
+          Prices are shown in CAD in Canada, EUR in France, and FCFA in Côte
+          d’Ivoire. Other countries are coming soon.
         </p>
         <p className="mb-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
           Your current access level is{" "}
@@ -83,7 +83,12 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
                 {TIERS[tier].name}
               </h3>
               <p className="mt-1 font-bold text-indigo-800">
-                {formatXofPrice(GEOADMIN_ANNUAL_PRICES_XOF[tier], currency, rates)}
+                {formatMarketXofPrice(
+                  GEOADMIN_ANNUAL_PRICES_XOF[tier],
+                  selectedCountry ?? "",
+                  currency,
+                  rates,
+                )}
                 {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null && (
                   <span className="font-normal text-gray-500"> / year</span>
                 )}
@@ -98,8 +103,9 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
         </div>
         <p className="mt-5 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
           Prices are annual references, not a monthly billing offer. Local
-          conversions are estimates; final availability, deliverables, and
-          terms are confirmed directly. No online checkout is available here.
+          CAD and EUR amounts are indicative conversions from the FCFA
+          reference schedule; final availability, deliverables, and terms are
+          confirmed directly. No online checkout is available here.
         </p>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button

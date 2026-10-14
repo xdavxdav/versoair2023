@@ -37,8 +37,8 @@ export default function GeoAdminMarketStatusBanner() {
       <span>{marketLabel}</span>
       {availability !== null && (
         <span className="font-normal tracking-normal opacity-80">
-          Current inquiry markets: Canada and Côte d’Ivoire. Final scope and
-          terms are confirmed directly.
+          Available markets: Canada, France, and Côte d’Ivoire. Prices and
+          terms are confirmed before purchase.
         </span>
       )}
       {!selectedCountry && (

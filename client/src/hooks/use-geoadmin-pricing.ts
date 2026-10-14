@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
-import type { ExchangeRates } from "@/lib/geoadmin-pricing";
+import {
+  getGeoAdminMarket,
+  getMarketAvailability,
+  type ExchangeRates,
+} from "@/lib/geoadmin-pricing";
 
 const RATE_CACHE_KEY = "versoair_xof_exchange_rates_v1";
 const RATE_CACHE_TTL = 12 * 60 * 60 * 1000;
@@ -35,9 +39,11 @@ export function useGeoAdminPricing() {
   const { selectedCountry } = useCountry();
   const [rates, setRates] = useState<ExchangeRates | null>(() => readRateCache());
   const [loadingRates, setLoadingRates] = useState(!rates);
-  const currency = selectedCountry
-    ? getCountryMeta(selectedCountry).currency
+  const currency: string = selectedCountry
+    ? (getGeoAdminMarket(selectedCountry)?.currency ??
+      getCountryMeta(selectedCountry).currency)
     : "XOF";
+  const market = selectedCountry ? getGeoAdminMarket(selectedCountry) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -99,5 +105,14 @@ export function useGeoAdminPricing() {
     };
   }, []);
 
-  return { currency, rates, loadingRates, selectedCountry };
+  return {
+    currency,
+    locale: market?.locale,
+    rates,
+    loadingRates,
+    selectedCountry,
+    marketAvailability: selectedCountry
+      ? getMarketAvailability(selectedCountry)
+      : null,
+  };
 }

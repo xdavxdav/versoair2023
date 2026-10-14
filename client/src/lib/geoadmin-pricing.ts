@@ -17,7 +17,15 @@ export const GEOADMIN_ANNUAL_PRICES_XOF: Record<TierKey, number | null> = {
   enterprise: TIERS.enterprise.annualPriceXof,
 };
 
-export const GEOADMIN_AVAILABLE_MARKETS = new Set(["CA", "CI"]);
+export const GEOADMIN_MARKETS = {
+  CA: { currency: "CAD", locale: "en-US" },
+  FR: { currency: "EUR", locale: "fr-FR" },
+  CI: { currency: "XOF", locale: "fr-CI" },
+} as const;
+
+export const GEOADMIN_AVAILABLE_MARKETS = new Set(
+  Object.keys(GEOADMIN_MARKETS),
+);
 
 export const GEOADMIN_PLAN_DETAILS: Record<
   TierKey,
@@ -70,6 +78,11 @@ export const GEOADMIN_PLAN_DETAILS: Record<
 
 export type ExchangeRates = Record<string, number>;
 
+export function getGeoAdminMarket(countryCode: string) {
+  const code = countryCode.trim().toUpperCase();
+  return GEOADMIN_MARKETS[code as keyof typeof GEOADMIN_MARKETS] ?? null;
+}
+
 export function getMarketAvailability(countryCode: string): boolean | null {
   const code = countryCode.trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(code)) return null;
@@ -85,20 +98,52 @@ export function formatXofPrice(
   if (amountXof === null) return "Custom quote";
 
   const code = currency.toUpperCase();
-  const rate =
-    code === "XOF" || code === "XAF" ? 1 : (rates?.[code] ?? null);
+  const marketLocale =
+    Object.values(GEOADMIN_MARKETS).find((market) => market.currency === code)
+      ?.locale ?? locale;
+  if (code === "XOF") {
+    return `${new Intl.NumberFormat(marketLocale, {
+      maximumFractionDigits: 0,
+    }).format(amountXof)} FCFA`;
+  }
+  const rate = rates?.[code] ?? null;
   if (rate === null || !Number.isFinite(rate) || rate <= 0) {
-    return `${new Intl.NumberFormat(locale, {
+    return `${new Intl.NumberFormat(marketLocale, {
       maximumFractionDigits: 0,
     }).format(amountXof)} FCFA`;
   }
 
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(marketLocale, {
     style: "currency",
     currency: code,
-    currencyDisplay: "code",
+    currencyDisplay: "symbol",
     maximumFractionDigits: 0,
   }).format(amountXof * rate);
+}
+
+export function formatMarketXofPrice(
+  amountXof: number | null,
+  countryCode: string,
+  currency: string,
+  rates: ExchangeRates | null,
+): string {
+  if (getMarketAvailability(countryCode) === false) return "Coming soon";
+  const market = getGeoAdminMarket(countryCode);
+  if (
+    market &&
+    market.currency !== "XOF" &&
+    (!rates?.[market.currency] ||
+      !Number.isFinite(rates[market.currency]) ||
+      rates[market.currency] <= 0)
+  ) {
+    return "Rate unavailable";
+  }
+  return formatXofPrice(
+    amountXof,
+    market?.currency ?? currency,
+    rates,
+    market?.locale,
+  );
 }
 
 export function convertUsdToCurrency(

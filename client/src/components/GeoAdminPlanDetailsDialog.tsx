@@ -10,7 +10,7 @@ import {
 import {
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_PLAN_ORDER,
-  formatXofPrice,
+  formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
 import { TIERS, type TierKey } from "@/lib/tiers";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
@@ -39,7 +39,7 @@ export default function GeoAdminPlanDetailsDialog({
 }: GeoAdminPlanDetailsDialogProps) {
   const [selectedTier, setSelectedTier] = useState<TierKey>(initialTier);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const { currency, rates, loadingRates, selectedCountry } =
+  const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
   const { selectedCountry: countryCode } = useCountry();
 
@@ -55,8 +55,6 @@ export default function GeoAdminPlanDetailsDialog({
     : "Not detected";
   const planName = TIERS[selectedTier].name;
   const annualPriceXof = TIERS[selectedTier].annualPriceXof;
-  const localRateAvailable =
-    currency === "XOF" || currency === "XAF" || Boolean(rates?.[currency]);
   const customRequestHref = (() => {
     const subject = encodeURIComponent(`GeoAdmin ${planName} plan inquiry`);
     const body = encodeURIComponent(
@@ -126,7 +124,14 @@ export default function GeoAdminPlanDetailsDialog({
                 <span className="mt-1 block text-xs text-amber-200">
                   {TIERS[tier].annualPriceXof === null
                     ? "Custom quote"
-                    : `${TIERS[tier].annualPriceXof.toLocaleString()} FCFA / year`}
+                    : `${formatMarketXofPrice(
+                        TIERS[tier].annualPriceXof,
+                        selectedCountry ?? "",
+                        currency,
+                        rates,
+                      )}${
+                        marketAvailability === false ? "" : " / year"
+                      }`}
                 </span>
               </button>
             ))}
@@ -147,18 +152,20 @@ export default function GeoAdminPlanDetailsDialog({
                 <p className="text-lg font-bold text-amber-200">
                   {TIERS[selectedTier].annualPriceXof === null
                     ? "Custom proposal"
-                    : `${TIERS[selectedTier].annualPriceXof.toLocaleString()} FCFA / year`}
+                    : `${formatMarketXofPrice(
+                        TIERS[selectedTier].annualPriceXof,
+                        selectedCountry ?? "",
+                        currency,
+                        rates,
+                      )}${
+                        marketAvailability === false ? "" : " / year"
+                      }`}
                 </p>
-                {selectedCountry && currency !== "XOF" && currency !== "XAF" && (
+                {selectedCountry && (
                   <p className="text-sm text-slate-300">
-                    Local estimate:{" "}
                     {annualPriceXof === null
-                      ? "custom quote"
-                      : loadingRates
-                        ? "loading reference rate…"
-                        : localRateAvailable
-                          ? formatXofPrice(annualPriceXof, currency, rates)
-                          : "rate unavailable; FCFA shown"}
+                      ? "Tailored written proposal"
+                      : "Annual reference price for your market"}
                   </p>
                 )}
               </div>
@@ -203,9 +210,10 @@ export default function GeoAdminPlanDetailsDialog({
           </section>
 
           <p className="mt-5 text-xs leading-relaxed text-slate-400">
-            Local-currency conversions are indicative reference estimates.
-            Annual FCFA prices are the source amounts; tax, market eligibility,
-            final deliverables, and terms are confirmed in a written proposal.
+            Prices are shown in the selected available market’s currency.
+            Canadian dollar and euro amounts are indicative conversions from
+            the FCFA reference schedule; tax, market eligibility, final
+            deliverables, and terms are confirmed in a written proposal.
           </p>
           <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
