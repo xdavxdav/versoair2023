@@ -3,7 +3,7 @@
  * Caches app shell for offline-capable PWA + keeps audio alive in background
  */
 
-const CACHE_NAME = "versoair-v5";
+const CACHE_NAME = "versoair-v6";
 const APP_SHELL = ["/", "/index.html"];
 
 function isCacheableAsset(response, destination) {
@@ -84,7 +84,7 @@ self.addEventListener("fetch", (event) => {
       : caches.match(request).then(
           (cached) =>
             cached ||
-            fetch(request).then((response) => {
+            fetch(new Request(request, { cache: "no-store" })).then((response) => {
               if (isCacheableAsset(response, request.destination)) {
                 const clone = response.clone();
                 caches
