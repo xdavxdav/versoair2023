@@ -30,7 +30,6 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
-import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
   isValidEmail,
   isPasswordStrong,
@@ -271,7 +270,16 @@ export default function SignIn() {
   };
 
   const handleBack = () => {
-    navigateBackSafely(navigate, "/stream");
+    const redirectTarget = getQueryParam("redirect");
+    if (
+      redirectTarget?.startsWith("/") &&
+      !redirectTarget.startsWith("//") &&
+      !redirectTarget.includes("\\")
+    ) {
+      navigate(redirectTarget);
+      return;
+    }
+    navigate("/");
   };
 
   // Onboarding: display name prompt after first login

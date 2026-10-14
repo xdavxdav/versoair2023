@@ -12,7 +12,6 @@ import {
   User,
   Plus,
   Music2,
-  Bell,
   Search,
   LayoutDashboard,
 } from "lucide-react";
@@ -191,14 +190,6 @@ export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
                 className="text-white/60 h-9 w-9"
               >
                 <Search className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-white/60 h-9 w-9"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full" />
               </Button>
             </div>
           </div>

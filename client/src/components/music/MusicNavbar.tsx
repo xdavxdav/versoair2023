@@ -15,7 +15,6 @@ import {
   BarChart3,
   Flame,
   Settings,
-  Bell,
   User,
   ChevronDown,
   Music2,
@@ -39,6 +38,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_NAV_ITEMS, getActiveNavItem } from "@/lib/music-routes";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import NotificationCenter from "@/components/NotificationCenter";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -314,11 +314,6 @@ export function MusicNavbar() {
                           </p>
                         </div>
                       </div>
-                      <DropdownMenuItem className="hover:bg-white/5 cursor-pointer">
-                        <Bell className="w-4 h-4 mr-2" />
-                        Notifications
-                        <span className="ml-auto w-2 h-2 bg-pink-500 rounded-full" />
-                      </DropdownMenuItem>
                       <DropdownMenuItem
                         className="hover:bg-white/5 cursor-pointer"
                         onClick={() =>
@@ -514,15 +509,7 @@ export function MusicNavbar() {
                     <MessageCircle className="w-5 h-5" />
                   </Button>
 
-                  {/* Notifications */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative text-white/60 hover:text-white hover:bg-white/5 w-10 h-10"
-                  >
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full" />
-                  </Button>
+                  <NotificationCenter />
 
                   {/* User menu */}
                   <DropdownMenu>

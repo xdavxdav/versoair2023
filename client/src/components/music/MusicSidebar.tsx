@@ -20,7 +20,6 @@ import {
   Users,
   Music,
   Plus,
-  Bell,
   Settings,
   LogOut,
   ChevronLeft,
@@ -40,6 +39,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_SIDEBAR_ITEMS } from "@/lib/music-routes";
 import { useMemo } from "react";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import NotificationCenter from "@/components/NotificationCenter";
 
 const sidebarIconMap: Record<
   string,
@@ -361,7 +361,8 @@ export function MusicSidebar() {
   }, [isArtist]);
 
   return (
-    <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[90] w-16 shadow-[0_0_30px_rgba(168,85,247,0.18)]">
+    <>
+      <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[90] w-16 shadow-[0_0_30px_rgba(168,85,247,0.18)]">
       <div className="absolute inset-0 bg-[#0a0512]/90 backdrop-blur-xl border-r border-white/[0.08]" />
       <div className="absolute top-14 bottom-0 right-0 w-px bg-gradient-to-b from-purple-500/50 via-fuchsia-500/20 to-transparent" />
       <div className="absolute top-14 left-0 right-0 h-px bg-gradient-to-r from-purple-500/30 via-purple-500/50 to-purple-500/60" />
@@ -485,17 +486,6 @@ export function MusicSidebar() {
             </Link>
           )}
 
-          {/* Notifications */}
-          <div
-            className="flex items-center justify-center p-2.5 rounded-lg cursor-pointer text-white/50 hover:text-white/80 hover:bg-white/[0.04] transition-colors"
-            title="Notifications"
-          >
-            <div className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full" />
-            </div>
-          </div>
-
           {/* Account - track referrer for proper back navigation */}
           <Link
             href="/profile"
@@ -528,7 +518,13 @@ export function MusicSidebar() {
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+      {user?.id && (
+        <div className="fixed right-14 top-1.5 z-[120] md:right-4 md:top-4">
+          <NotificationCenter />
+        </div>
+      )}
+    </>
   );
 }
 
