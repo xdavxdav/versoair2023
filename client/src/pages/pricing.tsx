@@ -62,7 +62,7 @@ export default function Pricing() {
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_PLAN_ORDER.map((tier) => (
                 <button
-                  key={tier}
+                  key={`${selectedCountry ?? "unknown"}-${tier}`}
                   type="button"
                   onClick={() => {
                     setSelectedTier(tier);
@@ -155,7 +155,7 @@ export default function Pricing() {
               const annualPrice = GEOADMIN_ANNUAL_PRICES_XOF[tier];
               return (
                 <article
-                  key={tier}
+                  key={`${selectedCountry ?? "unknown"}-${tier}`}
                   className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
