@@ -206,10 +206,11 @@ export default function Pricing() {
                       setSelectedTier(tier);
                       setDetailsOpen(true);
                     }}
-                    className="mt-6 inline-flex items-center font-semibold text-emerald-800 hover:text-emerald-950"
+                    className="mt-6 inline-flex items-center gap-2 font-semibold text-emerald-800 hover:text-emerald-950"
                   >
-                    Discuss {TIERS[tier].name}
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <span>Discuss</span>
+                    <span>{TIERS[tier].name}</span>
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </article>
               );
