@@ -24,7 +24,8 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
   currentTier,
 }) => {
   useScrollLock(isOpen);
-  const { currency, rates, selectedCountry } = useGeoAdminPricing();
+  const { currency, rates, selectedCountry, marketAvailability } =
+    useGeoAdminPricing();
 
   if (!isOpen) return null;
 
@@ -89,7 +90,8 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
                   currency,
                   rates,
                 )}
-                {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null && (
+                {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null &&
+                  marketAvailability !== false && (
                   <span className="font-normal text-gray-500"> / year</span>
                 )}
               </p>
