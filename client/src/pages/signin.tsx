@@ -58,7 +58,33 @@ const getLoginDashboardPath = (userData: any) =>
     isContractor: userData?.isContractor,
   }).path;
 
-const getPortalChoices = (userData: any) => {
+type PortalChoice = {
+  id: string;
+  name: string;
+  detail: string;
+  path: string;
+};
+
+const getPortalPreferenceStorageKey = (userData: {
+  id?: string | number | null;
+  userId?: string | number | null;
+  email?: string | null;
+}) => {
+  const accountId = userData.id ?? userData.userId;
+  const normalizedEmail = userData.email?.trim().toLowerCase();
+  const identity =
+    accountId !== undefined && accountId !== null
+      ? `id:${accountId}`
+      : normalizedEmail
+        ? `email:${normalizedEmail}`
+        : null;
+
+  return identity
+    ? `versoair:preferred-portal:${encodeURIComponent(identity)}`
+    : null;
+};
+
+const getPortalChoices = (userData: any): PortalChoice[] => {
   const portals = new Set(
     (userData?.portals || []).map((portal: string) => portal.toLowerCase()),
   );
@@ -114,12 +140,7 @@ const getPortalChoices = (userData: any) => {
         }
       : null,
   ];
-  return choices.filter(Boolean) as Array<{
-    id: string;
-    name: string;
-    detail: string;
-    path: string;
-  }>;
+  return choices.filter(Boolean) as PortalChoice[];
 };
 
 const businessTypes = [
@@ -205,11 +226,49 @@ export default function SignIn() {
     null,
   );
   const [portalChoices, setPortalChoices] = useState<
-    Array<{ id: string; name: string; detail: string; path: string }>
+    PortalChoice[]
   >([]);
+  const [portalPreferenceStorageKey, setPortalPreferenceStorageKey] =
+    useState<string | null>(null);
   const [portalSelectionOpen, setPortalSelectionOpen] = useState(false);
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
+
+  const openPortalSelection = (
+    userData: { id?: string | number; userId?: string | number; email?: string },
+    availablePortals: PortalChoice[],
+  ) => {
+    const redirectTarget = getQueryParam("redirect");
+    if (redirectTarget?.startsWith("/")) {
+      navigate(redirectTarget);
+      return;
+    }
+
+    const generalPortal = availablePortals.find(
+      (portal) => portal.id === "general",
+    );
+    if (generalPortal) {
+      navigate(generalPortal.path);
+      return;
+    }
+
+    const preferenceKey = getPortalPreferenceStorageKey(userData);
+    const preferredPortalId = preferenceKey
+      ? localStorage.getItem(preferenceKey)
+      : null;
+    const preferredPortal = availablePortals.find(
+      (portal) => portal.id === preferredPortalId,
+    );
+
+    if (preferredPortal) {
+      navigate(preferredPortal.path);
+      return;
+    }
+
+    setPortalPreferenceStorageKey(preferenceKey);
+    setPortalChoices(availablePortals);
+    setPortalSelectionOpen(true);
+  };
 
   const handleBack = () => {
     navigateBackSafely(navigate, "/stream");
@@ -437,8 +496,7 @@ export default function SignIn() {
 
         const availablePortals = getPortalChoices(data.user);
         if (availablePortals.length > 1) {
-          setPortalChoices(availablePortals);
-          setPortalSelectionOpen(true);
+          openPortalSelection(data.user, availablePortals);
           return;
         }
 
@@ -1004,9 +1062,8 @@ export default function SignIn() {
 
           const availablePortals = getPortalChoices(pendingLoginData.user);
           if (availablePortals.length > 1) {
-            setPortalChoices(availablePortals);
             setStep("login");
-            setPortalSelectionOpen(true);
+            openPortalSelection(pendingLoginData.user, availablePortals);
             return;
           }
 
@@ -2011,8 +2068,7 @@ export default function SignIn() {
                       );
                       const availablePortals = getPortalChoices(nextData.user);
                       if (availablePortals.length > 1) {
-                        setPortalChoices(availablePortals);
-                        setPortalSelectionOpen(true);
+                        openPortalSelection(nextData.user, availablePortals);
                         return;
                       }
                       toast({
@@ -2066,7 +2122,10 @@ export default function SignIn() {
           open={portalSelectionOpen}
           onOpenChange={setPortalSelectionOpen}
         >
-          <DialogContent className="max-w-md rounded-2xl border border-slate-200 bg-white">
+          <DialogContent
+            className="max-w-md rounded-2xl border border-slate-200 bg-white"
+            onInteractOutside={(event) => event.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-gray-900">
                 Choose where to go
@@ -2081,6 +2140,12 @@ export default function SignIn() {
                   key={portal.id}
                   type="button"
                   onClick={() => {
+                    if (portalPreferenceStorageKey) {
+                      localStorage.setItem(
+                        portalPreferenceStorageKey,
+                        portal.id,
+                      );
+                    }
                     setPortalSelectionOpen(false);
                     navigate(portal.path);
                   }}
