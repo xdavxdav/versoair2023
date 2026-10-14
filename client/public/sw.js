@@ -3,8 +3,25 @@
  * Caches app shell for offline-capable PWA + keeps audio alive in background
  */
 
-const CACHE_NAME = "versoair-v4";
+const CACHE_NAME = "versoair-v5";
 const APP_SHELL = ["/", "/index.html"];
+
+function isCacheableAsset(response, destination) {
+  if (!response.ok || response.type !== "basic") return false;
+
+  const contentType = response.headers
+    .get("content-type")
+    ?.split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (!contentType || contentType === "text/html") return false;
+
+  if (destination === "script") {
+    return /^(application|text)\/(javascript|ecmascript)$/.test(contentType);
+  }
+  if (destination === "style") return contentType === "text/css";
+  return true;
+}
 
 // Install: pre-cache a fallback shell, but always prefer the deployed version.
 self.addEventListener("install", (event) => {
@@ -68,7 +85,7 @@ self.addEventListener("fetch", (event) => {
           (cached) =>
             cached ||
             fetch(request).then((response) => {
-              if (response.ok && response.type === "basic") {
+              if (isCacheableAsset(response, request.destination)) {
                 const clone = response.clone();
                 caches
                   .open(CACHE_NAME)
