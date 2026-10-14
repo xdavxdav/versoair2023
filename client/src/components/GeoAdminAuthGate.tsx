@@ -311,7 +311,10 @@ export default function GeoAdminAuthGate({
                             </span>
                           )}
                         </span>
-                        <span className="mt-1 block text-sm font-bold text-amber-200">
+                        <span
+                          className="mt-1 block text-sm font-bold text-amber-200"
+                          translate="no"
+                        >
                           {formatMarketXofPrice(
                             annualXof,
                             selectedCountry ?? "",

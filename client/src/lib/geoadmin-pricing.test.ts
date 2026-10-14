@@ -47,8 +47,13 @@ test("formats FCFA when local exchange rates are unavailable", () => {
 test("converts annual FCFA prices using the supplied currency rate", () => {
   const rates = { XOF: 1, CAD: 0.002428, USD: 0.001706 };
   assert.equal(formatXofPrice(180_000, "CAD", rates), "CA$437");
+  assert.equal(formatMarketXofPrice(180_000, "CA", "XOF", rates), "CA$437");
   assert.equal(
     formatXofPrice(180_000, "EUR", { XOF: 1, EUR: 0.0015 }),
+    "270 €",
+  );
+  assert.equal(
+    formatMarketXofPrice(180_000, "FR", "XOF", { XOF: 1, EUR: 0.0015 }),
     "270 €",
   );
   assert.equal(

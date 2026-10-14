@@ -121,7 +121,10 @@ export default function GeoAdminPlanDetailsDialog({
                 <span className="block text-sm font-semibold">
                   {TIERS[tier].name}
                 </span>
-                <span className="mt-1 block text-xs text-amber-200">
+                <span
+                  className="mt-1 block text-xs text-amber-200"
+                  translate="no"
+                >
                   {TIERS[tier].annualPriceXof === null
                     ? "Custom quote"
                     : `${formatMarketXofPrice(
@@ -149,7 +152,7 @@ export default function GeoAdminPlanDetailsDialog({
                 </p>
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-lg font-bold text-amber-200">
+                <p className="text-lg font-bold text-amber-200" translate="no">
                   {TIERS[selectedTier].annualPriceXof === null
                     ? "Custom proposal"
                     : `${formatMarketXofPrice(

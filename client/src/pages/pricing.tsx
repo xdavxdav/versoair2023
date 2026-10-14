@@ -62,7 +62,7 @@ export default function Pricing() {
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_PLAN_ORDER.map((tier) => (
                 <button
-                  key={`${selectedCountry ?? "unknown"}-${tier}`}
+                  key={tier}
                   type="button"
                   onClick={() => {
                     setSelectedTier(tier);
@@ -75,7 +75,10 @@ export default function Pricing() {
                   }`}
                 >
                   <span className="block font-semibold">{TIERS[tier].name}</span>
-                  <span className="mt-1 block text-lg font-bold text-emerald-800">
+                  <span
+                    className="mt-1 block text-lg font-bold text-emerald-800"
+                    translate="no"
+                  >
                     {formatAnnualPrice(tier)}
                     {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null &&
                       marketAvailability !== false && (
@@ -92,7 +95,15 @@ export default function Pricing() {
                         ? "Discuss a package tailored to your needs."
                         : marketAvailability === false
                           ? `GeoAdmin is coming soon in your selected country.`
-                          : `Annual reference price for your market: ${formatAnnualPrice(tier)}.`}
+                          : (
+                              <>
+                                Annual reference price for your market:{" "}
+                                <span translate="no">
+                                  {formatAnnualPrice(tier)}
+                                </span>
+                                .
+                              </>
+                            )}
                   </span>
                 </button>
               ))}
@@ -155,7 +166,7 @@ export default function Pricing() {
               const annualPrice = GEOADMIN_ANNUAL_PRICES_XOF[tier];
               return (
                 <article
-                  key={`${selectedCountry ?? "unknown"}-${tier}`}
+                  key={tier}
                   className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -165,7 +176,10 @@ export default function Pricing() {
                         {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">
+                    <span
+                      className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900"
+                      translate="no"
+                    >
                       {formatAnnualPrice(tier)}
                       {annualPrice !== null && marketAvailability !== false
                         ? " / year"
@@ -177,12 +191,14 @@ export default function Pricing() {
                     marketAvailability !== false && (
                     <p className="mt-3 text-xs text-slate-500">
                       About{" "}
-                      {formatMarketXofPrice(
-                        annualPrice / 12,
-                        selectedCountry ?? "",
-                        currency,
-                        rates,
-                      )}{" "}
+                      <span translate="no">
+                        {formatMarketXofPrice(
+                          annualPrice / 12,
+                          selectedCountry ?? "",
+                          currency,
+                          rates,
+                        )}
+                      </span>{" "}
                       per month on an annual-equivalent basis; this is not a
                       monthly billing option.
                     </p>

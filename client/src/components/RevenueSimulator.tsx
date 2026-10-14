@@ -270,7 +270,8 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
           onClick={onUpgradeClick}
           className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl text-sm transition-all shadow-md"
         >
-          Ask about {tierDef.name} ({monthlyPlanPrice}/month equivalent) →
+          Ask about {tierDef.name} (
+          <span translate="no">{monthlyPlanPrice}</span>/month equivalent) →
         </button>
         <p className="mt-2 text-xs text-gray-500">
           Revenue is illustrative. The monthly equivalent is the annual

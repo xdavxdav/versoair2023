@@ -83,7 +83,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
               <h3 className="font-semibold text-gray-900">
                 {TIERS[tier].name}
               </h3>
-              <p className="mt-1 font-bold text-indigo-800">
+              <p className="mt-1 font-bold text-indigo-800" translate="no">
                 {formatMarketXofPrice(
                   GEOADMIN_ANNUAL_PRICES_XOF[tier],
                   selectedCountry ?? "",
