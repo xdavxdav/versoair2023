@@ -1180,8 +1180,10 @@ export default function SignIn() {
 
     const handleChangePassword = async () => {
       setPasswordChangeError("");
-      if (newPasswordValue.length < 8) {
-        setPasswordChangeError("New password must be at least 8 characters");
+      if (!isPasswordStrong(newPasswordValue)) {
+        setPasswordChangeError(
+          "Password must be at least 8 characters and include an uppercase letter and a number",
+        );
         return;
       }
       if (newPasswordValue !== newPasswordConfirm) {
@@ -1291,7 +1293,7 @@ export default function SignIn() {
                     onClick={handleChangePassword}
                     disabled={
                       passwordChangeSaving ||
-                      newPasswordValue.length < 8 ||
+                      !isPasswordStrong(newPasswordValue) ||
                       !newPasswordConfirm
                     }
                     className="w-full bg-[#bf831c] hover:bg-[#a8721a] text-white"
@@ -1804,7 +1806,11 @@ export default function SignIn() {
                 <Button
                   className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white py-3 rounded-lg font-medium"
                   type="submit"
-                  disabled={registering}
+                  disabled={
+                    registering ||
+                    !isPasswordStrong(formData.password) ||
+                    formData.password !== formData.confirmPassword
+                  }
                 >
                   {registering ? "Creating Account..." : "Create Account"}
                 </Button>
@@ -2262,6 +2268,7 @@ export default function SignIn() {
                         )}
                       </button>
                     </div>
+                    <PasswordStrengthMeter password={formData.password} />
                   </div>
 
                   <div className="flex items-center justify-between">

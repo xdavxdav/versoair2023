@@ -1941,10 +1941,16 @@ router.post(
       });
       return;
     }
-    if (newPassword.length < 8) {
+    if (
+      typeof newPassword !== "string" ||
+      newPassword.length < 8 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[0-9]/.test(newPassword)
+    ) {
       res.status(400).json({
         success: false,
-        message: "New password must be at least 8 characters",
+        message:
+          "New password must be at least 8 characters and include an uppercase letter and a number",
       });
       return;
     }
@@ -2447,10 +2453,16 @@ router.post(
       });
       return;
     }
-    if (newPassword.length < 8) {
+    if (
+      typeof newPassword !== "string" ||
+      newPassword.length < 8 ||
+      !/[A-Z]/.test(newPassword) ||
+      !/[0-9]/.test(newPassword)
+    ) {
       res.status(400).json({
         success: false,
-        message: "Password must be at least 8 characters",
+        message:
+          "Password must be at least 8 characters and include an uppercase letter and a number",
       });
       return;
     }

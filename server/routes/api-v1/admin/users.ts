@@ -414,6 +414,24 @@ router.put(
       });
     }
 
+    if (
+      password !== undefined &&
+      (typeof password !== "string" ||
+        password.length < 8 ||
+        !/[A-Z]/.test(password) ||
+        !/[0-9]/.test(password))
+    ) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: {
+          code: "VALIDATION_ERROR",
+          message:
+            "Password must be at least 8 characters and include an uppercase letter and a number",
+        },
+      });
+    }
+
     const updates: Record<string, any> = {};
     if (username !== undefined) updates.username = username;
     if (email !== undefined) updates.email = email;

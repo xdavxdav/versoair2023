@@ -1,17 +1,34 @@
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, XCircle } from "lucide-react";
+import {
+  checkPasswordLength,
+  checkPasswordNumber,
+  checkPasswordUpper,
+} from "@/lib/auth-validation";
 
 interface PasswordStrengthMeterProps {
   password: string;
   variant?: "light" | "dark";
 }
 
-const strengthChecks = [
-  { label: "At least 8 characters", test: (value: string) => value.length >= 8 },
-  { label: "One uppercase letter", test: (value: string) => /[A-Z]/.test(value) },
-  { label: "One number", test: (value: string) => /[0-9]/.test(value) },
-  { label: "12 or more characters (recommended)", test: (value: string) => value.length >= 12 },
-  { label: "One lowercase letter (recommended)", test: (value: string) => /[a-z]/.test(value) },
-  { label: "One symbol (recommended)", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+const requiredChecks = [
+  { label: "At least 8 characters", test: checkPasswordLength },
+  { label: "One uppercase letter (A–Z)", test: checkPasswordUpper },
+  { label: "One number (0–9)", test: checkPasswordNumber },
+];
+
+const recommendedChecks = [
+  {
+    label: "12 or more characters",
+    test: (value: string) => value.length >= 12,
+  },
+  {
+    label: "One lowercase letter",
+    test: (value: string) => /[a-z]/.test(value),
+  },
+  {
+    label: "One symbol",
+    test: (value: string) => /[^A-Za-z0-9]/.test(value),
+  },
 ];
 
 export function PasswordStrengthMeter({
@@ -20,68 +37,94 @@ export function PasswordStrengthMeter({
 }: PasswordStrengthMeterProps) {
   if (!password) return null;
 
-  const checks = strengthChecks.map(({ label, test }) => ({
-    label,
-    passed: test(password),
+  const required = requiredChecks.map((check) => ({
+    ...check,
+    passed: check.test(password),
   }));
-  const completed = checks.filter((check) => check.passed).length;
-  const strength =
-    completed <= 1
-      ? "Very weak"
-      : completed <= 3
-        ? "Fair"
-        : completed <= 5
-          ? "Good"
-          : "Strong";
-  const barColor =
-    completed <= 1
-      ? "bg-red-500"
-      : completed <= 3
-        ? "bg-amber-500"
-        : "bg-emerald-500";
-  const textColor = variant === "dark" ? "text-white/70" : "text-gray-600";
-  const pendingColor = variant === "dark" ? "text-white/40" : "text-gray-400";
-  const emptyBar = variant === "dark" ? "bg-white/10" : "bg-gray-200";
+  const recommended = recommendedChecks.map((check) => ({
+    ...check,
+    passed: check.test(password),
+  }));
+  const requiredPassed = required.filter((check) => check.passed).length;
+  const meetsRequirements = requiredPassed === required.length;
+  const recommendationColor =
+    variant === "dark" ? "text-amber-300" : "text-amber-700";
 
   return (
     <div className="mt-2 space-y-2">
       <div
         role="meter"
-        aria-label={`Password strength: ${strength}`}
+        aria-label={`Password requirements: ${meetsRequirements ? "met" : `${requiredPassed} of ${required.length} met`}`}
         aria-valuemin={0}
-        aria-valuemax={checks.length}
-        aria-valuenow={completed}
+        aria-valuemax={required.length}
+        aria-valuenow={requiredPassed}
         className="flex gap-1"
       >
-        {checks.map((check, index) => (
+        {required.map((check) => (
           <div
             key={check.label}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
-              index < completed ? barColor : emptyBar
+              check.passed ? "bg-emerald-500" : "bg-red-500"
             }`}
           />
         ))}
       </div>
-      <p className={`text-xs font-medium ${textColor}`}>
-        Password strength: {strength} ({completed}/{checks.length})
-      </p>
-      <p className={`text-xs ${pendingColor}`}>
-        Use a unique password and avoid personal or account details.
+      <p
+        className={`text-xs font-semibold ${
+          meetsRequirements
+            ? "text-emerald-600"
+            : variant === "dark"
+              ? "text-red-400"
+              : "text-red-600"
+        }`}
+      >
+        {meetsRequirements
+          ? "Password meets all required checks"
+          : `Required checks: ${requiredPassed}/${required.length}`}
       </p>
       <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-        {checks.map(({ label, passed }) => (
+        {required.map(({ label, passed }) => (
           <li
             key={label}
             className={`flex items-center gap-1.5 text-xs ${
-              passed ? "text-emerald-500" : pendingColor
+              passed
+                ? "text-emerald-600"
+                : variant === "dark"
+                  ? "text-red-400"
+                  : "text-red-600"
             }`}
           >
             {passed ? (
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <CheckCircle2
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
             ) : (
-              <Circle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <XCircle
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
             )}
             {label}
+          </li>
+        ))}
+        {recommended.map(({ label, passed }) => (
+          <li
+            key={label}
+            className={`flex items-center gap-1.5 text-xs ${recommendationColor}`}
+          >
+            {passed ? (
+              <CheckCircle2
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
+            ) : (
+              <Circle
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
+            )}
+            {label} (recommended)
           </li>
         ))}
       </ul>

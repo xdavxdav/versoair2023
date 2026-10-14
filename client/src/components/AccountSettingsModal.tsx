@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { isPasswordStrong } from "@/lib/auth-validation";
 import {
   Settings,
   User,
@@ -291,10 +292,11 @@ export function AccountSettingsModal({
       });
       return;
     }
-    if (newPassword.length < 8) {
+    if (!isPasswordStrong(newPassword)) {
       toast({
         title: "Error",
-        description: "New password must be at least 8 characters",
+        description:
+          "New password must be at least 8 characters and include an uppercase letter and a number",
         variant: "destructive",
       });
       return;
@@ -726,7 +728,7 @@ export function AccountSettingsModal({
                         disabled={
                           changingPassword ||
                           !currentPassword ||
-                          !newPassword ||
+                          !isPasswordStrong(newPassword) ||
                           newPassword !== confirmPassword
                         }
                         className="bg-amber-600 hover:bg-amber-500 gap-1 w-full"
