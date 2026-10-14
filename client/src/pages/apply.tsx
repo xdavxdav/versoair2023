@@ -52,6 +52,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
 import { navigateBackSafely } from "@/lib/safe-navigation";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -1575,59 +1576,7 @@ export default function ApplyPage() {
                   )}
                 </button>
               </div>
-              {/* Password strength bar */}
-              {formData.password.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex gap-1">
-                    {[1, 2, 3].map((level) => (
-                      <div
-                        key={level}
-                        className={`h-1 flex-1 rounded-full transition-colors ${
-                          passwordStrengthLevel >= level
-                            ? passwordStrengthLevel === 1
-                              ? "bg-red-400"
-                              : passwordStrengthLevel === 2
-                                ? "bg-amber-400"
-                                : "bg-green-400"
-                            : "bg-white/10"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-1 gap-1">
-                    <p
-                      className={`text-xs flex items-center gap-1 ${validations.passwordLength ? "text-green-400" : "text-white/40"}`}
-                    >
-                      {validations.passwordLength ? (
-                        <CheckCircle2 className="h-3 w-3" />
-                      ) : (
-                        <XCircle className="h-3 w-3" />
-                      )}
-                      At least 8 characters
-                    </p>
-                    <p
-                      className={`text-xs flex items-center gap-1 ${validations.passwordUpper ? "text-green-400" : "text-white/40"}`}
-                    >
-                      {validations.passwordUpper ? (
-                        <CheckCircle2 className="h-3 w-3" />
-                      ) : (
-                        <XCircle className="h-3 w-3" />
-                      )}
-                      One uppercase letter (A–Z)
-                    </p>
-                    <p
-                      className={`text-xs flex items-center gap-1 ${validations.passwordNumber ? "text-green-400" : "text-white/40"}`}
-                    >
-                      {validations.passwordNumber ? (
-                        <CheckCircle2 className="h-3 w-3" />
-                      ) : (
-                        <XCircle className="h-3 w-3" />
-                      )}
-                      One number (0–9)
-                    </p>
-                  </div>
-                </div>
-              )}
+              <PasswordStrengthMeter password={formData.password} variant="dark" />
             </div>
 
             {/* Confirm Password */}

@@ -38,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
   Settings,
   User,
@@ -693,11 +694,10 @@ export function AccountSettingsModal({
                             )}
                           </button>
                         </div>
-                        {newPassword.length > 0 && newPassword.length < 8 && (
-                          <p className="text-xs text-red-400">
-                            Password must be at least 8 characters
-                          </p>
-                        )}
+                        <PasswordStrengthMeter
+                          password={newPassword}
+                          variant="dark"
+                        />
                       </div>
                       {/* Confirm password */}
                       <div className="space-y-1">

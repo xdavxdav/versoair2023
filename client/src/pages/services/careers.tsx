@@ -110,6 +110,7 @@ import {
   JobApplicationModal,
   type ApplicationJob,
 } from "@/components/job-application-modal";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
 // Database API configuration - Use the same as other pages
 const API_BASE_URL = "";
@@ -2091,49 +2092,8 @@ export default function Careers() {
                       authMode === "login" ? "current-password" : "new-password"
                     }
                   />
-                  {authMode === "register" && authForm.password && (
-                    <div className="mt-1.5 space-y-1">
-                      <div className="flex gap-1">
-                        {[1, 2, 3].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-1 flex-1 rounded-full transition-colors ${passwordStrengthLevel(authForm.password) >= level ? (passwordStrengthLevel(authForm.password) === 1 ? "bg-red-400" : passwordStrengthLevel(authForm.password) === 2 ? "bg-amber-400" : "bg-green-500") : "bg-gray-200"}`}
-                          />
-                        ))}
-                      </div>
-                      <div className="grid grid-cols-1 gap-0">
-                        <p
-                          className={`text-[11px] flex items-center gap-1 ${checkPasswordLength(authForm.password) ? "text-green-600" : "text-gray-400"}`}
-                        >
-                          {checkPasswordLength(authForm.password) ? (
-                            <CheckCircle className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}{" "}
-                          8+ characters
-                        </p>
-                        <p
-                          className={`text-[11px] flex items-center gap-1 ${checkPasswordUpper(authForm.password) ? "text-green-600" : "text-gray-400"}`}
-                        >
-                          {checkPasswordUpper(authForm.password) ? (
-                            <CheckCircle className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}{" "}
-                          Uppercase letter
-                        </p>
-                        <p
-                          className={`text-[11px] flex items-center gap-1 ${checkPasswordNumber(authForm.password) ? "text-green-600" : "text-gray-400"}`}
-                        >
-                          {checkPasswordNumber(authForm.password) ? (
-                            <CheckCircle className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}{" "}
-                          Number
-                        </p>
-                      </div>
-                    </div>
+                  {authMode === "register" && (
+                    <PasswordStrengthMeter password={authForm.password} />
                   )}
                 </div>
                 {authMode === "register" && (

@@ -8,6 +8,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
   checkPasswordLength,
   checkPasswordNumber,
@@ -177,6 +178,7 @@ export default function ResetPasswordPage() {
                     )}
                   </button>
                 </div>
+                <PasswordStrengthMeter password={password} />
               </div>
               <div>
                 <label
@@ -217,13 +219,6 @@ export default function ResetPasswordPage() {
                   </button>
                 </div>
               </div>
-              <p className="text-xs text-gray-500">
-                Use at least 8 characters with an uppercase letter and a number.
-                Choose a new password you haven't used before; don't include your
-                email address, account name, or other personal details. For a
-                stronger password, aim for 12 or more characters with lowercase
-                letters and a symbol.
-              </p>
               {error && (
                 <p
                   role="alert"

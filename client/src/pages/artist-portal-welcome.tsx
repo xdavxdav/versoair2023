@@ -45,6 +45,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { validateRegistrationForm } from "@/lib/auth-validation";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
 // ─── Types ───────────────────────────────────────────
 interface Particle {
@@ -3332,6 +3333,10 @@ export default function ArtistPortalWelcome() {
                             required
                           />
                         </div>
+                        <PasswordStrengthMeter
+                          password={applyForm.password}
+                          variant="dark"
+                        />
                       </div>
                       <div>
                         <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">

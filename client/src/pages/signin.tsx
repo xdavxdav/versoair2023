@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { navigateBackSafely } from "@/lib/safe-navigation";
@@ -1261,6 +1262,10 @@ export default function SignIn() {
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-[#5a5a80] focus:outline-none focus:border-[#bf831c]"
                       placeholder="At least 8 characters"
                     />
+                    <PasswordStrengthMeter
+                      password={newPasswordValue}
+                      variant="dark"
+                    />
                   </div>
                   <div>
                     <label className="text-xs text-[#8a8ab0] mb-1 block">
@@ -1741,60 +1746,7 @@ export default function SignIn() {
                       )}
                     </button>
                   </div>
-                  {/* Password strength bar */}
-                  {formData.password && (
-                    <div className="mt-2 space-y-1.5">
-                      <div className="flex gap-1">
-                        {[1, 2, 3].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-1 flex-1 rounded-full transition-colors ${
-                              passwordStrengthLevel(formData.password) >= level
-                                ? passwordStrengthLevel(formData.password) === 1
-                                  ? "bg-red-400"
-                                  : passwordStrengthLevel(formData.password) ===
-                                      2
-                                    ? "bg-amber-400"
-                                    : "bg-green-500"
-                                : "bg-gray-200"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="grid grid-cols-1 gap-0.5">
-                        <p
-                          className={`text-xs flex items-center gap-1 ${checkPasswordLength(formData.password) ? "text-green-600" : "text-gray-400"}`}
-                        >
-                          {checkPasswordLength(formData.password) ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          At least 8 characters
-                        </p>
-                        <p
-                          className={`text-xs flex items-center gap-1 ${checkPasswordUpper(formData.password) ? "text-green-600" : "text-gray-400"}`}
-                        >
-                          {checkPasswordUpper(formData.password) ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          One uppercase letter (A–Z)
-                        </p>
-                        <p
-                          className={`text-xs flex items-center gap-1 ${checkPasswordNumber(formData.password) ? "text-green-600" : "text-gray-400"}`}
-                        >
-                          {checkPasswordNumber(formData.password) ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          One number (0–9)
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  <PasswordStrengthMeter password={formData.password} />
                 </div>
 
                 <div>

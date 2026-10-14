@@ -41,6 +41,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { SectionBlock, InfoRow, ApiEndpoint } from "./vault-shared";
 
 // ═══════════════════════════════════════════════════════════
@@ -293,6 +294,11 @@ export default function UsersControlPanel() {
   const [tierFilter, setTierFilter] = useState<string>("all");
   const [securityStats, setSecurityStats] = useState<any>(null);
   const [actionLog, setActionLog] = useState<string[]>([]);
+  const [passwordTarget, setPasswordTarget] = useState<ManagedUser | null>(null);
+  const [adminNewPassword, setAdminNewPassword] = useState("");
+  const [adminConfirmPassword, setAdminConfirmPassword] = useState("");
+  const [adminPasswordError, setAdminPasswordError] = useState("");
+  const [savingAdminPassword, setSavingAdminPassword] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -550,25 +556,13 @@ export default function UsersControlPanel() {
             : `✗ Failed to unlock ${user?.username}`,
         );
       } else if (action === "set-password") {
-        const newPassword = prompt(
-          `Set new password for ${user?.username} (${user?.email})\n\nMin 8 characters:`,
-        );
-        if (!newPassword) return;
-        if (newPassword.length < 8) {
-          logMsg("✗ Password must be at least 8 characters");
-          return;
+        if (user) {
+          setPasswordTarget(user);
+          setAdminNewPassword("");
+          setAdminConfirmPassword("");
+          setAdminPasswordError("");
         }
-        const res = await fetch("/auth/admin/change-password", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, newPassword }),
-        });
-        logMsg(
-          res.ok
-            ? `✓ Password changed for ${user?.username} → new pwd set`
-            : `✗ Failed to change password for ${user?.username}`,
-        );
+        return;
       } else if (action === "force-reset") {
         if (
           !confirm(
@@ -672,6 +666,59 @@ export default function UsersControlPanel() {
       }, 500);
     } catch (err) {
       logMsg(`✗ Error: ${err}`);
+    }
+  };
+
+  const handleAdminPasswordSubmit = async () => {
+    if (!passwordTarget) return;
+    setAdminPasswordError("");
+    if (
+      adminNewPassword.length < 8 ||
+      !/[A-Z]/.test(adminNewPassword) ||
+      !/[0-9]/.test(adminNewPassword)
+    ) {
+      setAdminPasswordError(
+        "Use at least 8 characters, including an uppercase letter and a number.",
+      );
+      return;
+    }
+    if (adminNewPassword !== adminConfirmPassword) {
+      setAdminPasswordError("The passwords do not match.");
+      return;
+    }
+
+    setSavingAdminPassword(true);
+    try {
+      const response = await fetch("/auth/admin/change-password", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: passwordTarget.id,
+          newPassword: adminNewPassword,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        setAdminPasswordError(
+          payload?.message || "Couldn't change the password. Try again.",
+        );
+        return;
+      }
+
+      setActionLog((prev) =>
+        [
+          `[${new Date().toLocaleTimeString()}] ✓ Password changed for ${passwordTarget.username}`,
+          ...prev,
+        ].slice(0, 50),
+      );
+      setPasswordTarget(null);
+      setAdminNewPassword("");
+      setAdminConfirmPassword("");
+    } catch {
+      setAdminPasswordError("Couldn't reach the server. Try again.");
+    } finally {
+      setSavingAdminPassword(false);
     }
   };
 
@@ -1025,7 +1072,8 @@ export default function UsersControlPanel() {
                 </span>
               </label>
               <input
-                type="text"
+                autoComplete="new-password"
+                type="password"
                 placeholder="SecurePass1"
                 value={createArtistForm.password}
                 onChange={(e) =>
@@ -1035,6 +1083,10 @@ export default function UsersControlPanel() {
                   }))
                 }
                 className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs font-mono text-amber-400 placeholder-gray-600 focus:outline-none focus:border-purple-700/50"
+              />
+              <PasswordStrengthMeter
+                password={createArtistForm.password}
+                variant="dark"
               />
             </div>
 
@@ -1156,6 +1208,89 @@ export default function UsersControlPanel() {
           >
             NEXT →
           </button>
+        </div>
+      )}
+
+      {passwordTarget && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-set-password-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+        >
+          <div className="w-full max-w-md space-y-4 rounded-xl border border-gray-700 bg-gray-950 p-5 shadow-2xl">
+            <div>
+              <h2
+                id="admin-set-password-title"
+                className="text-base font-semibold text-white"
+              >
+                Set password for {passwordTarget.username}
+              </h2>
+              <p className="mt-1 text-xs text-gray-400">
+                Use a new password; avoid personal or account details.
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="admin-new-password"
+                className="mb-1 block text-sm text-gray-300"
+              >
+                New password
+              </label>
+              <input
+                id="admin-new-password"
+                type="password"
+                autoComplete="new-password"
+                value={adminNewPassword}
+                onChange={(event) => setAdminNewPassword(event.target.value)}
+                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <PasswordStrengthMeter password={adminNewPassword} variant="dark" />
+            </div>
+            <div>
+              <label
+                htmlFor="admin-confirm-password"
+                className="mb-1 block text-sm text-gray-300"
+              >
+                Confirm new password
+              </label>
+              <input
+                id="admin-confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={adminConfirmPassword}
+                onChange={(event) => setAdminConfirmPassword(event.target.value)}
+                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+            {adminPasswordError && (
+              <p role="alert" className="text-sm text-red-400">
+                {adminPasswordError}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={savingAdminPassword}
+                onClick={() => setPasswordTarget(null)}
+                className="rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={
+                  savingAdminPassword ||
+                  !adminNewPassword ||
+                  !adminConfirmPassword
+                }
+                onClick={handleAdminPasswordSubmit}
+                className="rounded-lg bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+              >
+                {savingAdminPassword ? "Saving…" : "Set password"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
