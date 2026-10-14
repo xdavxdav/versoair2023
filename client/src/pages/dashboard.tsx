@@ -1548,6 +1548,7 @@ export function useInboxUnreadCount(isLoggedIn: boolean) {
 
 export default function UserDashboard() {
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuthContext();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [selectedBusinessIdx, setSelectedBusinessIdx] = useState(0);
@@ -1657,7 +1658,6 @@ export default function UserDashboard() {
   };
 
   // AuthContext is the single source of truth for the authenticated session.
-  const { user: authUser } = useAuthContext();
   const userSession = authUser
     ? {
         user: {

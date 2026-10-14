@@ -71,9 +71,17 @@ export function serveStatic(app: Express) {
     // APIs and non-HTML requests must keep their normal 404 behavior. A valid
     // SPA route may contain dots in a slug, so the URL itself is not enough to
     // identify a static asset.
-    if (!isNavigation || req.path.startsWith("/api/") || !acceptsHtml) {
+    if (
+      !isNavigation ||
+      req.path.startsWith("/api/") ||
+      req.path.startsWith("/assets/") ||
+      !acceptsHtml
+    ) {
       return next();
     }
+
+    res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.vary("Accept");
 
     // Inject runtime config (SIBLING_URL) into the HTML so the client
     // can discover the music app URL without hardcoding localhost.
