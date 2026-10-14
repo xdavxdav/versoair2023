@@ -317,23 +317,24 @@ export default function GeoAdminPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 text-sm sm:text-base">
-                    GeoAdmin plan availability is being finalized
+                    Explore GeoAdmin annual plans
                   </h3>
                   <p className="text-amber-200/80 text-xs sm:text-sm mt-1">
-                    Paid plan features and terms are not currently available
-                    for online activation. Existing account access is unchanged.
+                    Review the published FCFA reference prices and plan
+                    benefits. Availability and final terms are confirmed
+                    directly; existing account access is unchanged.
                   </p>
                 </div>
               </div>
               <Button
                 onClick={() =>
                   setLocation(
-                    "/contact?subject=GeoAdmin%20plan%20availability",
+                    "/pricing",
                   )
                 }
                 className="whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 px-4 py-2 text-sm"
               >
-                Ask about availability
+                View plan details
               </Button>
             </div>
           </div>

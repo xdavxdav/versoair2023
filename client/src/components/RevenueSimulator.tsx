@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { TIERS, TIER_ORDER, simulateRevenue, type TierKey } from "@/lib/tiers";
+import { convertUsdToCurrency, formatXofPrice } from "@/lib/geoadmin-pricing";
+import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 
 interface RevenueSimulatorProps {
   currentTier: TierKey;
@@ -27,6 +29,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
       Math.min(TIER_ORDER.indexOf(currentTier) + 1, TIER_ORDER.length - 1)
     ],
   );
+  const { currency, rates } = useGeoAdminPricing();
 
   const result = useMemo(
     () =>
@@ -47,9 +50,35 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
   );
 
   const tierDef = TIERS[targetTier];
-  const monthlyCost = tierDef.monthlyPrice;
+  const monthlyCostXof =
+    tierDef.annualPriceXof === null ? null : tierDef.annualPriceXof / 12;
+  const localCurrencyRate =
+    currency === "XOF" || currency === "XAF" ? 1 : rates?.[currency];
+  const monthlyCostInCurrency =
+    monthlyCostXof !== null && localCurrencyRate
+      ? monthlyCostXof * localCurrencyRate
+      : null;
+  const upliftInCurrency = convertUsdToCurrency(result.uplift, currency, rates);
   const roi =
-    monthlyCost > 0 ? Math.round((result.uplift / monthlyCost) * 100) : 0;
+    upliftInCurrency !== null &&
+    monthlyCostInCurrency !== null &&
+    monthlyCostInCurrency > 0
+      ? Math.round((upliftInCurrency / monthlyCostInCurrency) * 100)
+      : null;
+  const formatUsdEstimate = (amountUsd: number) => {
+    const converted = convertUsdToCurrency(amountUsd, currency, rates);
+    if (converted === null) return `$${amountUsd.toLocaleString()}`;
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      currencyDisplay: "code",
+      maximumFractionDigits: 0,
+    }).format(converted);
+  };
+  const monthlyPlanPrice =
+    monthlyCostXof === null
+      ? "Custom quote"
+      : formatXofPrice(monthlyCostXof, currency, rates);
 
   if (locked) {
     return (
@@ -150,7 +179,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1">
-            Avg Order Value ($)
+            Avg Order Value (USD)
           </label>
           <input
             type="range"
@@ -172,7 +201,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
         <div className="bg-gray-50 rounded-lg p-4 text-center">
           <div className="text-xs text-gray-500 mb-1">Current Estimate</div>
           <div className="text-2xl font-bold text-gray-900">
-            ${result.currentEstimate.toLocaleString()}
+            {formatUsdEstimate(result.currentEstimate)}
           </div>
           <div className="text-xs text-gray-400">/month</div>
         </div>
@@ -181,7 +210,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
             With {tierDef.name} ({tierDef.rankingPower}x)
           </div>
           <div className="text-2xl font-bold text-emerald-700">
-            ${result.projectedEstimate.toLocaleString()}
+            {formatUsdEstimate(result.projectedEstimate)}
           </div>
           <div className="text-xs text-emerald-500">/month</div>
         </div>
@@ -194,7 +223,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
             Potential Uplift
           </span>
           <span className="text-lg font-black text-indigo-700">
-            +${result.uplift.toLocaleString()}/mo
+            +{formatUsdEstimate(result.uplift)}/mo
           </span>
         </div>
         <div className="flex items-center justify-between mb-2">
@@ -205,7 +234,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
             +{result.upliftPercent}%
           </span>
         </div>
-        {monthlyCost > 0 && (
+        {roi !== null && (
           <div className="flex items-center justify-between pt-2 border-t border-indigo-200">
             <span className="text-sm font-semibold text-gray-700">
               ROI (uplift vs. plan cost)
@@ -233,8 +262,12 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
           onClick={onUpgradeClick}
           className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl text-sm transition-all shadow-md"
         >
-          Upgrade to {tierDef.name} for ${monthlyCost}/mo →
+          Ask about {tierDef.name} ({monthlyPlanPrice}/month equivalent) →
         </button>
+        <p className="mt-2 text-xs text-gray-500">
+          Revenue is illustrative. The monthly equivalent is the annual
+          reference price divided by 12; it is not a monthly billing offer.
+        </p>
       </div>
     </div>
   );

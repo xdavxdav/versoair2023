@@ -13,8 +13,6 @@ import {
   Globe,
   Lock,
   Eye,
-  BarChart3,
-  TrendingUp,
   Shield,
   ArrowRight,
   User,
@@ -22,12 +20,10 @@ import {
   KeyRound,
   EyeOff,
   Sparkles,
-  Crown,
   Zap,
   CheckCircle,
-  Database,
   Loader2,
-  ChevronDown,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,8 +31,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { TierKey } from "@/lib/tiers";
 import { TIERS } from "@/lib/tiers";
+import {
+  GEOADMIN_PLAN_DETAILS,
+  GEOADMIN_PLAN_ORDER,
+  GEOADMIN_ANNUAL_PRICES_XOF,
+} from "@/lib/geoadmin-pricing";
+import { formatXofPrice } from "@/lib/geoadmin-pricing";
+import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
 
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
@@ -46,6 +50,7 @@ export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
   const { login: authContextLogin } = useAuthContext();
+  const { currency, rates, loadingRates } = useGeoAdminPricing();
   const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -55,6 +60,7 @@ export default function GeoAdminAuthGate({
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [selectedTier, setSelectedTier] = useState<TierKey | "">("");
+  const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
 
   // NOTE: Self-service ".test" account creation was removed from this public,
   // unauthenticated gate — it allowed anyone to register a privileged admin
@@ -146,56 +152,6 @@ export default function GeoAdminAuthGate({
       setLoading(false);
     }
   };
-
-  // ─── TIER FEATURE HIGHLIGHTS (what you unlock) ────────────────────────────────
-
-  const tierHighlights: {
-    tier: TierKey;
-    icon: React.ReactNode;
-    features: string[];
-  }[] = [
-    {
-      tier: "free",
-      icon: <Database className="h-5 w-5" />,
-      features: [
-        "View your business listing",
-        "Basic profile analytics",
-        "Directory presence",
-      ],
-    },
-    {
-      tier: "essential",
-      icon: <Eye className="h-5 w-5" />,
-      features: [
-        "Detailed performance metrics",
-        "Search visibility insights",
-        "Data export (CSV)",
-      ],
-    },
-    {
-      tier: "verified",
-      icon: <BarChart3 className="h-5 w-5" />,
-      features: [
-        "Full analytics dashboard",
-        "Competitor comparison",
-        "Keyword tracking",
-      ],
-    },
-    {
-      tier: "max",
-      icon: <TrendingUp className="h-5 w-5" />,
-      features: ["Predictive analytics", "Promoted listing", "Video showcase"],
-    },
-    {
-      tier: "enterprise",
-      icon: <Crown className="h-5 w-5" />,
-      features: [
-        "Total market dominance",
-        "Dedicated support team",
-        "Full API access",
-      ],
-    },
-  ];
 
   // Show logout screen after sign-in
   if (isSuccess) {
@@ -307,95 +263,142 @@ export default function GeoAdminAuthGate({
             </p>
           </div>
 
-          {/* Tier Selector */}
-          <div className="max-w-lg mx-auto mb-8">
-            <p className="text-xs font-semibold text-emerald-400/60 mb-4 text-center uppercase tracking-[0.2em]">
-              Subscription Tiers
-            </p>
-
-            {/* Tier buttons row */}
-            <div className="flex gap-1.5 p-1.5 bg-white/[0.03] rounded-2xl border border-white/[0.06]">
-              {tierHighlights.map(({ tier }) => {
-                const t = TIERS[tier];
-                const isActive = selectedTier === tier;
-                return (
-                  <button
-                    key={tier}
-                    onClick={() => setSelectedTier(isActive ? "" : tier)}
-                    className={`
-                      relative flex-1 py-2.5 px-1 rounded-xl text-xs font-medium transition-all duration-300 cursor-pointer
-                      ${
-                        isActive
-                          ? "bg-white/10 text-white shadow-lg shadow-black/20 scale-[1.02] border border-white/15"
-                          : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] border border-transparent"
-                      }
-                    `}
-                  >
-                    <span className="block text-center leading-tight">
-                      {t.name}
-                    </span>
-                    <span
-                      className={`block text-center mt-0.5 text-[10px] transition-colors duration-300 ${
-                        isActive ? "text-emerald-400/80" : "text-slate-600"
-                      }`}
-                    >
-                      Availability pending
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Selected tier detail — animated expand */}
-            <div
-              className={`grid transition-all duration-500 ease-out ${
-                selectedTier
-                  ? "grid-rows-[1fr] opacity-100 mt-4"
-                  : "grid-rows-[0fr] opacity-0 mt-0"
-              }`}
-            >
-              <div className="overflow-hidden">
-                {selectedTier &&
-                  (() => {
-                    const th = tierHighlights.find(
-                      (h) => h.tier === selectedTier,
-                    );
-                    const t = TIERS[selectedTier];
-                    if (!th || !t) return null;
+          <section className="mx-auto mb-8 max-w-5xl">
+            <div className="grid items-center gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-2xl">
+                <img
+                  src="/images/geoadmin-plans.svg"
+                  alt="GeoAdmin annual plan overview: Free, Essential, Pro Verified, Pro Max, and Enterprise"
+                  className="h-auto w-full"
+                  loading="lazy"
+                />
+              </div>
+              <div>
+                <div className="mb-4 text-center lg:text-left">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
+                    Annual plan reference prices
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Shown in FCFA; local-currency figures are indicative only.
+                    No online checkout is offered here.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {GEOADMIN_PLAN_ORDER.map((tier) => {
+                    const plan = TIERS[tier];
+                    const isActive = selectedTier === tier;
+                    const annualXof = GEOADMIN_ANNUAL_PRICES_XOF[tier];
                     return (
-                      <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 backdrop-blur-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-white font-semibold text-base">
-                              {t.name}
-                            </h3>
-                            <p className="text-slate-500 text-xs mt-0.5">
-                              {t.tagline}
-                            </p>
-                          </div>
-                          <div className="text-right text-xs text-slate-400">
-                            Details not finalized
-                          </div>
-                        </div>
-                        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
-                        <ul className="space-y-2.5">
-                          {th.features.map((f, i) => (
-                            <li
-                              key={i}
-                              className="flex items-start gap-2.5 text-sm text-slate-300"
-                              style={{ animationDelay: `${i * 80}ms` }}
-                            >
-                              <CheckCircle className="h-3.5 w-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                              <span>{f}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      <button
+                        key={tier}
+                        type="button"
+                        aria-pressed={isActive}
+                        onClick={() => setSelectedTier(tier)}
+                        className={`rounded-xl border p-3 text-left transition ${
+                          isActive
+                            ? "border-amber-300 bg-amber-300/10"
+                            : "border-white/10 bg-white/[0.03] hover:border-white/25"
+                        }`}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-white">
+                            {plan.name}
+                          </span>
+                          {plan.popular && (
+                            <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-200">
+                              Popular
+                            </span>
+                          )}
+                        </span>
+                        <span className="mt-1 block text-sm font-bold text-amber-200">
+                          {formatXofPrice(annualXof, currency, rates)}
+                          {annualXof !== null && (
+                            <span className="font-normal text-slate-400">
+                              {" "}
+                              / year
+                            </span>
+                          )}
+                        </span>
+                        {annualXof !== null &&
+                          currency !== "XOF" &&
+                          currency !== "XAF" && (
+                            <span className="mt-0.5 block text-[10px] text-slate-400">
+                              {loadingRates || !rates
+                                ? "FCFA reference"
+                                : "Indicative local estimate"}
+                            </span>
+                          )}
+                        <span className="mt-2 block text-xs leading-relaxed text-slate-400">
+                          {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
+                        </span>
+                      </button>
                     );
-                  })()}
+                  })}
+                </div>
+                {selectedTier && (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="mb-2 text-sm font-semibold text-white">
+                      {TIERS[selectedTier].name} includes
+                    </p>
+                    <ul className="grid gap-1.5 sm:grid-cols-2">
+                      {GEOADMIN_PLAN_DETAILS[selectedTier].benefits
+                        .slice(0, 4)
+                        .map((benefit) => (
+                          <li
+                            key={benefit}
+                            className="flex items-start gap-2 text-xs text-slate-300"
+                          >
+                            <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                            {benefit}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsPlanDetailsOpen(true)}
+                  className="mt-4 inline-flex items-center rounded-lg border border-amber-300/40 px-4 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/10"
+                >
+                  Learn more and customize
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </button>
               </div>
             </div>
-          </div>
+
+            <div className="mt-5 flex flex-col justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center sm:flex-row sm:items-center">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Contact the team
+              </span>
+              <a
+                href="tel:+14374359726"
+                className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
+              >
+                <Phone className="h-4 w-4 text-amber-300" />
+                +1 (437) 435-9726 · Canada
+              </a>
+              <a
+                href="tel:+2252720212223"
+                className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
+              >
+                <Phone className="h-4 w-4 text-amber-300" />
+                +225 27 20 21 22 23 · Côte d’Ivoire
+              </a>
+              <a
+                href="mailto:support@versoair.com"
+                className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
+              >
+                <Mail className="h-4 w-4 text-amber-300" />
+                support@versoair.com
+              </a>
+            </div>
+          </section>
+
+          <GeoAdminPlanDetailsDialog
+            open={isPlanDetailsOpen}
+            onOpenChange={setIsPlanDetailsOpen}
+            initialTier={selectedTier || "verified"}
+          />
 
           {/* CTA */}
           <div className="text-center space-y-4">
@@ -412,7 +415,7 @@ export default function GeoAdminAuthGate({
             <div className="flex items-center justify-center gap-4 text-sm text-slate-500">
               <span>Don't have an account?</span>
               <Link
-                href="/auth/signin"
+                href="/auth/signin?redirect=%2Fgeo-admin"
                 className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
               >
                 Create one →

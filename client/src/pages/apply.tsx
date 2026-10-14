@@ -939,8 +939,12 @@ export default function ApplyPage() {
           </motion.div>
 
           <div className="mx-auto mb-8 max-w-3xl rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-            GeoAdmin subscription enrollment is paused while plan features and
-            fees are finalized.{" "}
+            GeoAdmin plans use annual reference pricing and are requested
+            directly; this portal does not activate a subscription.{" "}
+            <Link href="/pricing" className="text-emerald-300 underline">
+              View plan details
+            </Link>
+            {" · "}
             <Link href="/auth/signin" className="text-emerald-300 underline">
               Existing subscribers can sign in
             </Link>

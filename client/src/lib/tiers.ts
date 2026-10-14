@@ -23,8 +23,7 @@ export interface TierDefinition {
   meterZone: "red" | "yellow" | "green" | "purple";
   meterPercent: number; // 0-100 position on the visibility gauge
   icon: string;
-  monthlyPrice: number; // USD
-  annualPrice: number; // USD (discount)
+  annualPriceXof: number | null; // Annual reference price in FCFA; null means custom quote.
   popular?: boolean; // "Most Popular" badge
 }
 
@@ -41,8 +40,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "red",
     meterPercent: 15,
     icon: "📋",
-    monthlyPrice: 0,
-    annualPrice: 0,
+    annualPriceXof: 0,
   },
   essential: {
     key: "essential",
@@ -56,8 +54,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "yellow",
     meterPercent: 35,
     icon: "⚡",
-    monthlyPrice: 29,
-    annualPrice: 290,
+    annualPriceXof: 180_000,
   },
   verified: {
     key: "verified",
@@ -71,8 +68,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "green",
     meterPercent: 60,
     icon: "✅",
-    monthlyPrice: 79,
-    annualPrice: 790,
+    annualPriceXof: 400_000,
     popular: true,
   },
   max: {
@@ -87,8 +83,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "purple",
     meterPercent: 85,
     icon: "🚀",
-    monthlyPrice: 149,
-    annualPrice: 1490,
+    annualPriceXof: 780_000,
   },
   enterprise: {
     key: "enterprise",
@@ -102,8 +97,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "purple",
     meterPercent: 100,
     icon: "👑",
-    monthlyPrice: 499,
-    annualPrice: 4990,
+    annualPriceXof: null,
   },
 };
 

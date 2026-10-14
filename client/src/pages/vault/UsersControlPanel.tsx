@@ -43,6 +43,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { SectionBlock, InfoRow, ApiEndpoint } from "./vault-shared";
+import {
+  GEOADMIN_ANNUAL_PRICES_XOF,
+  GEOADMIN_PLAN_ORDER,
+} from "@/lib/geoadmin-pricing";
+import { TIERS } from "@/lib/tiers";
 
 // ═══════════════════════════════════════════════════════════
 // 👥 USERS CONTROL PANEL — Full user/subscriber management
@@ -1386,14 +1391,27 @@ export default function UsersControlPanel() {
           />
         </div>
         <div className="text-[10px] font-mono text-gray-500 mb-2 font-bold">
-          TIER PRICING
+          ANNUAL REFERENCE PRICING · FCFA
         </div>
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-0">
-          <InfoRow label="Essential" value="$29/mo · $290/yr" />
-          <InfoRow label="Verified" value="$79/mo · $790/yr" />
-          <InfoRow label="Max" value="$149/mo · $1,490/yr" />
-          <InfoRow label="Enterprise" value="$499/mo · $4,990/yr" />
+          {GEOADMIN_PLAN_ORDER.map((tier) => {
+            const price = GEOADMIN_ANNUAL_PRICES_XOF[tier];
+            return (
+              <InfoRow
+                key={tier}
+                label={TIERS[tier].name}
+                value={
+                  price === null
+                    ? "Custom quote"
+                    : `${price.toLocaleString()} FCFA / year`
+                }
+              />
+            );
+          })}
         </div>
+        <p className="mt-2 text-[10px] text-gray-500">
+          Reference amounts only; no subscription is activated from this panel.
+        </p>
         <div className="text-[10px] font-mono text-gray-500 mt-3 mb-2 font-bold">
           FEATURE GATES
         </div>

@@ -275,6 +275,7 @@ const VersoAIChat = lazy(() => import("@/components/VersoAIChat"));
 import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
+import GeoAdminMarketStatusBanner from "@/components/GeoAdminMarketStatusBanner";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
@@ -997,6 +998,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <GeoAdminMarketStatusBanner />
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages

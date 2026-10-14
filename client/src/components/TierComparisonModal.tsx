@@ -2,6 +2,13 @@ import React from "react";
 import { ArrowRight, Info, X } from "lucide-react";
 import { TIERS, type TierKey } from "@/lib/tiers";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import {
+  GEOADMIN_ANNUAL_PRICES_XOF,
+  GEOADMIN_PLAN_DETAILS,
+  GEOADMIN_PLAN_ORDER,
+  formatXofPrice,
+} from "@/lib/geoadmin-pricing";
+import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 
 interface TierComparisonModalProps {
   isOpen: boolean;
@@ -17,6 +24,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
   currentTier,
 }) => {
   useScrollLock(isOpen);
+  const { currency, rates } = useGeoAdminPricing();
 
   if (!isOpen) return null;
 
@@ -32,7 +40,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="plan-availability-title"
-        className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+        className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
       >
         <button
           type="button"
@@ -50,19 +58,48 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
           id="plan-availability-title"
           className="mb-3 pr-8 text-2xl font-bold text-gray-900"
         >
-          Plan availability is being finalized
+          GeoAdmin plans and annual reference prices
         </h2>
         <p className="mb-5 text-sm leading-relaxed text-gray-600">
-          GeoAdmin subscription tiers are not currently available for purchase.
-          Plan features, fees, ranking behavior, and terms must be confirmed
-          before any upgrade is offered.
+          FCFA amounts are the source prices. A visitor-currency estimate is
+          shown when a reference exchange rate is available.
         </p>
-        <p className="mb-6 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
-          Recorded access level:{" "}
-          <span className="font-semibold">
-            {TIERS[currentTier].name}
-          </span>
-          . This notice does not change your current account access.
+        <p className="mb-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
+          Your current access level is{" "}
+          <span className="font-semibold">{TIERS[currentTier].name}</span>.
+          Reviewing plans does not change your account or start a subscription.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {GEOADMIN_PLAN_ORDER.map((tier) => (
+            <article
+              key={tier}
+              className={`rounded-xl border p-4 ${
+                tier === currentTier
+                  ? "border-indigo-300 bg-indigo-50"
+                  : "border-gray-200"
+              }`}
+            >
+              <h3 className="font-semibold text-gray-900">
+                {TIERS[tier].name}
+              </h3>
+              <p className="mt-1 font-bold text-indigo-800">
+                {formatXofPrice(GEOADMIN_ANNUAL_PRICES_XOF[tier], currency, rates)}
+                {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null && (
+                  <span className="font-normal text-gray-500"> / year</span>
+                )}
+              </p>
+              <ul className="mt-3 space-y-1.5 text-sm text-gray-600">
+                {GEOADMIN_PLAN_DETAILS[tier].benefits.slice(0, 3).map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+        <p className="mt-5 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
+          Prices are annual references, not a monthly billing offer. Local
+          conversions are estimates; final availability, deliverables, and
+          terms are confirmed directly. No online checkout is available here.
         </p>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
@@ -73,7 +110,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
             Close
           </button>
           <a
-            href="/contact?subject=GeoAdmin%20plan%20availability"
+            href={`mailto:support@versoair.com?subject=${encodeURIComponent(`GeoAdmin ${TIERS[currentTier].name} plan inquiry`)}`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             Ask about availability
@@ -106,8 +143,8 @@ export const HiddenSearchesAlert: React.FC<HiddenSearchesAlertProps> = ({
     >
       <span className="font-semibold">Plan information</span>
       <span className="mt-1 block text-amber-900/80">
-        Plan availability is being finalized for your current access level (
-        {TIERS[currentTier].name}).
+        Review annual reference pricing and benefits for your current access
+        level ({TIERS[currentTier].name}). No subscription is started here.
       </span>
     </button>
   );
