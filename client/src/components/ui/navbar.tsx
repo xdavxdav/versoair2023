@@ -201,7 +201,7 @@ export default function Navbar({
 
   const isPanelOpen = isLocationPanelOpen || mobileMenuOpen;
 
-  const navbarClasses = `sticky top-[4.5rem] z-40 border-b border-slate-200/80 bg-[#f7f5f1]/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-300 ${
+  const navbarClasses = `sticky top-[4.5rem] z-[51] border-b border-slate-200/80 bg-[#f7f5f1]/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-300 ${
     isPanelOpen ? "opacity-60" : "opacity-100"
   } ${
     isMobile
