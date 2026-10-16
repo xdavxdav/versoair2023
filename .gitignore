@@ -75,3 +75,6 @@ node_modules
 client/public/prerender-routes.json
 client/public/prerender-routes.txt
 .neon
+
+# Private credentials file — never commit
+.private/
