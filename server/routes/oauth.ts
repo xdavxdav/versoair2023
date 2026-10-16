@@ -333,6 +333,20 @@ async function handleOAuthCallback(req: Request, res: Response) {
           );
           return;
         }
+      } else if (provider === "microsoft") {
+        email = userData.mail || userData.userPrincipalName || "";
+        name = userData.displayName || "";
+        providerUserId = userData.id || "";
+      } else if (provider === "linkedin") {
+        email = userData.email || "";
+        name = userData.name || "";
+        providerUserId = userData.sub || "";
+        if (userData.email_verified === false) {
+          res.redirect(
+            `${appUrl}/auth/signin?mode=login&error=email_not_verified`,
+          );
+          return;
+        }
       }
     }
 

@@ -62,15 +62,41 @@ export default function OAuthComplete() {
         await restoreAuth();
         if (cancelled) return;
 
+        // Default landing: send users who own a specialised portal straight to it.
+        let target = checkpoint;
+        if (checkpoint === "/dashboard") {
+          try {
+            const capRes = await fetch("/api/user/capabilities", {
+              credentials: "include",
+            });
+            const caps = capRes.ok ? await capRes.json() : null;
+            const owned: string[] =
+              caps?.capabilities?.portals || caps?.portals || [];
+            const hrefs: Record<string, string> = {
+              admin: "/geo-admin/dashboard",
+              artist: "/artist-portal",
+              artisan: "/artisans-portal",
+              contractor: "/services/contractors",
+              "geo-admin": "/geo-admin",
+            };
+            const first = ["admin", "artist", "artisan", "contractor", "geo-admin"].find(
+              (id) => owned.includes(id),
+            );
+            if (first) target = hrefs[first];
+          } catch {
+            /* fall back to the general dashboard */
+          }
+        }
+
         setCredentials({
           email: data.user.email || "",
           role: data.user.role || "user",
           name: data.user.name || data.user.username || data.user.email || "User",
           provider,
-          checkpoint,
+          checkpoint: target,
         });
         setStatus("success");
-        redirectTimer = setTimeout(() => navigate(checkpoint), 2200);
+        redirectTimer = setTimeout(() => navigate(target), 2200);
       } catch (error) {
         if (cancelled) return;
         setStatus("error");
