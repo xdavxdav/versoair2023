@@ -52,6 +52,7 @@ export default function ProtectedRoute({
       redirectingRef.current = true;
       setLocation(
         `/auth/signin?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+        { replace: true },
       );
       return;
     }

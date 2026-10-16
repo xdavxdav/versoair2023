@@ -271,14 +271,11 @@ export default function SignIn() {
     setPortalSelectionOpen(true);
   };
 
+  // Never navigate to the ?redirect= target: it is usually the protected page
+  // that sent us here, which would bounce straight back to this page.
   const handleBack = () => {
-    const redirectTarget = getQueryParam("redirect");
-    if (
-      redirectTarget?.startsWith("/") &&
-      !redirectTarget.startsWith("//") &&
-      !redirectTarget.includes("\\")
-    ) {
-      navigate(redirectTarget);
+    if (window.history.length > 1) {
+      window.history.back();
       return;
     }
     navigate("/");
