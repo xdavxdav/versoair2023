@@ -2570,8 +2570,15 @@ const artistLoginSchema = z.union([
   }),
 ]);
 
-// Hardcoded superuser artist code (exact case sensitive)
-const SUPERUSER_ARTIST_CODE = "VA-jdcz-SYS_MASTER";
+// Superuser artist-code shortcut is disabled unless explicitly configured.
+// Superusers should sign in with email + password.
+const SUPERUSER_ARTIST_CODE = process.env.SUPERUSER_ARTIST_CODE || "";
+const isSuperuserArtistCode = (candidate: string): boolean => {
+  if (!SUPERUSER_ARTIST_CODE || SUPERUSER_ARTIST_CODE.length < 16) return false;
+  const a = Buffer.from(candidate);
+  const b = Buffer.from(SUPERUSER_ARTIST_CODE);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
 
 /**
  * POST /auth/artist/register
@@ -2824,7 +2831,7 @@ router.post(
     let skipPasswordCheck = false;
 
     // ── Path 1: Superuser artist code (exact case match) ──
-    if ("artistCode" in data && data.artistCode === SUPERUSER_ARTIST_CODE) {
+    if ("artistCode" in data && isSuperuserArtistCode(data.artistCode)) {
       // Find superuser account
       const [superuser] = await db
         .select()
