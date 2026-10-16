@@ -179,7 +179,11 @@ export function MessagesPage() {
         <div className="flex h-full min-h-0 flex-1">
           <TwitterMessenger
             open={true}
-            onClose={() => setLocation("/")}
+            onClose={() =>
+              window.history.length > 1
+                ? window.history.back()
+                : setLocation("/dashboard")
+            }
             inline
           />
         </div>
@@ -631,7 +635,20 @@ export function TwitterMessenger({
         {/* Header */}
         <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 px-4 py-3 backdrop-blur-md">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">Messages</h2>
+            <div className="flex items-center gap-2">
+              {inline && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                  title="Return to the previous page"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Return</span>
+                </button>
+              )}
+              <h2 className="text-xl font-bold text-white">Messages</h2>
+            </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {
