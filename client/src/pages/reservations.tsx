@@ -1238,6 +1238,93 @@ export default function HousingReservations() {
             } shadow-lg`}
           >
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2 md:col-span-3">
+                <Label htmlFor="search-query">Property Name/Keyword</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="search-query"
+                    placeholder="Search properties..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 200)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearch();
+                    }}
+                    className="pl-10"
+                  />
+
+                  {/* Search suggestions dropdown */}
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto">
+                      <div className="flex items-center justify-between px-3 py-1.5 border-b">
+                        <span className="text-xs text-gray-500 font-medium">
+                          Recent Searches
+                        </span>
+                        <button
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={clearSearchHistory}
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      {searchSuggestions.map((suggestion, i) => (
+                        <button
+                          key={i}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setSearchQuery(suggestion);
+                            setShowSuggestions(false);
+                            handleSearch();
+                          }}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
+                        >
+                          <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-end space-x-2">
+                <Button
+                  onClick={handleSearch}
+                  className="w-full"
+                  disabled={isSearching}
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Search
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <div className="relative">
@@ -1338,7 +1425,6 @@ export default function HousingReservations() {
               </div>
             </div>
 
-            {/* Second row of search options */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="arrival-time">Arrival Time</Label>
@@ -1379,90 +1465,6 @@ export default function HousingReservations() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="search-query">Property Name/Keyword</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="search-query"
-                    placeholder="Search properties..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowSuggestions(true);
-                    }}
-                    onFocus={() => setShowSuggestions(true)}
-                    onBlur={() =>
-                      setTimeout(() => setShowSuggestions(false), 200)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSearch();
-                    }}
-                    className="pl-10"
-                  />
-
-                  {/* Search suggestions dropdown */}
-                  {showSuggestions && searchSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto">
-                      <div className="flex items-center justify-between px-3 py-1.5 border-b">
-                        <span className="text-xs text-gray-500 font-medium">
-                          Recent Searches
-                        </span>
-                        <button
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={clearSearchHistory}
-                          className="text-xs text-red-400 hover:text-red-600"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                      {searchSuggestions.map((suggestion, i) => (
-                        <button
-                          key={i}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            setSearchQuery(suggestion);
-                            setShowSuggestions(false);
-                            handleSearch();
-                          }}
-                          className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-2"
-                        >
-                          <Clock className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-end space-x-2">
-                <Button
-                  onClick={handleSearch}
-                  className="w-full"
-                  disabled={isSearching}
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Searching...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Search
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="gap-2"
-                >
-                  <Filter className="h-4 w-4" />
-                  Filters
-                </Button>
-              </div>
             </div>
 
             {/* Filters - Enhanced with more options */}
