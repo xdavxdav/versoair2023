@@ -2947,14 +2947,14 @@ router.post(
         });
         return;
       }
-      // Password-free code sign-in is a merit perk of the top divisions;
-      // everyone else (and privileged accounts) must add the password.
+      // Password-free code sign-in is a merit perk of the top divisions.
+      // Staff (admin/superuser) hold issued secret codes and bypass the password.
       const codeOnlyDivisions = ["elite", "signed", "legend"];
+      const isStaffAccount = user.role === "superuser" || user.role === "admin";
       const needsPassword =
-        user.role === "superuser" ||
-        user.role === "admin" ||
-        (profileDivision !== "" &&
-          !codeOnlyDivisions.includes(profileDivision.toLowerCase()));
+        !isStaffAccount &&
+        profileDivision !== "" &&
+        !codeOnlyDivisions.includes(profileDivision.toLowerCase());
       if (needsPassword) {
         const pwd = "password" in data ? data.password : undefined;
         const ok =
