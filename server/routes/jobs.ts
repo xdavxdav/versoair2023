@@ -455,7 +455,7 @@ router.post("/:id/unsave", (req, res) => {
 });
 
 // POST /api/jobs — create a new job listing
-router.post("/", async (req, res) => {
+router.post("/", requireAuth(["admin", "superuser"]), async (req, res) => {
   try {
     const {
       title,
