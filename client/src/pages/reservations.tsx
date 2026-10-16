@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Search,
@@ -244,6 +245,44 @@ export default function HousingReservations() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("recommended");
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [submittingBooking, setSubmittingBooking] = useState(false);
+  const { user: authUser } = useAuthContext();
+  const [, navigate] = useLocation();
+
+  const loadBookings = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/property-bookings/mine`, {
+        credentials: "include",
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      setBookings(Array.isArray(json.data) ? json.data : []);
+    } catch {
+      /* keep the current list */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authUser) loadBookings();
+    else setBookings([]);
+  }, [authUser, loadBookings]);
+
+  const cancelBooking = async (id: string) => {
+    const res = await fetch(
+      `${API_BASE_URL}/api/property-bookings/${id}/cancel`,
+      { method: "POST", credentials: "include" },
+    );
+    if (res.ok) {
+      toast({ title: "Booking cancelled" });
+      loadBookings();
+    } else {
+      toast({
+        title: "Could not cancel",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // ─── Search History & Suggestions ──────────────────────────────────────────
   const SEARCH_HISTORY_KEY = "reservations_search_history";
@@ -746,8 +785,10 @@ export default function HousingReservations() {
 
   // Handle tab trigger with name check
   const handleTabTrigger = (tabValue: string) => {
-    if ((tabValue === "bookings" || tabValue === "favorites") && !clientName) {
-      setRequestingTabType(tabValue as "bookings" | "favorites");
+    if (tabValue === "bookings" && !authUser) {
+      navigate("/auth/signin?redirect=/reservations");
+    } else if (tabValue === "favorites" && !clientName) {
+      setRequestingTabType("favorites");
       setShowClientNameDialog(true);
       setTempClientName("");
     } else {
@@ -790,9 +831,34 @@ export default function HousingReservations() {
   // Update properties from API when data loads
   useEffect(() => {
     if (apiProperties) {
-      const propertiesToUse = Array.isArray(apiProperties.data)
-        ? apiProperties.data
-        : [];
+      const propertiesToUse: Property[] = (
+        Array.isArray(apiProperties.data) ? apiProperties.data : []
+      ).map((r: any) => ({
+        ...r,
+        id: String(r.id),
+        price: Number(r.price) || 0,
+        rating: Number(r.rating) || 0,
+        reviews: r.reviews ?? 0,
+        bedrooms: r.bedrooms ?? 0,
+        bathrooms: r.bathrooms ?? 0,
+        area: r.area ?? 0,
+        guests: r.guests ?? 2,
+        discount: r.discount ?? 0,
+        image: r.image || (Array.isArray(r.images) ? r.images[0] : "") || "",
+        images: Array.isArray(r.images) ? r.images : [],
+        amenities: Array.isArray(r.amenities) ? r.amenities : [],
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        minimumStay: r.minimumStay ?? 1,
+        maximumStay: r.maximumStay ?? 365,
+        host: r.host ?? {
+          name: r.hostName || "Host",
+          avatar: "",
+          superhost: !!r.superhost,
+          verified: !!r.verified,
+          responseRate: r.responseRate ?? 100,
+          responseTime: r.responseTime || "< 1 hour",
+        },
+      }));
       setAllProperties(propertiesToUse);
       setDisplayedProperties(propertiesToUse.slice(0, 6));
     }
@@ -990,64 +1056,54 @@ export default function HousingReservations() {
       return;
     }
 
-    // Validation 5: Check for conflicting bookings
-    const dateConflict = bookings.some((booking) => {
-      const existingCheckIn = new Date(booking.checkIn);
-      const existingCheckOut = new Date(booking.checkOut);
-
-      // Only check non-cancelled bookings
-      if (booking.status === "cancelled") return false;
-
-      // Check if new booking overlaps with existing booking
-      return checkIn < existingCheckOut && checkOut > existingCheckIn;
-    });
-
-    if (dateConflict) {
-      toast({
-        title: "Dates not available",
-        description:
-          "These dates are not available. Please select different dates.",
-        variant: "destructive",
-      });
+    if (!authUser) {
+      navigate("/auth/signin?redirect=/reservations");
       return;
     }
 
-    // Calculate final price with discount
     const nights = lengthOfStay || 1;
-    const basePrice = bookingProperty.price * nights;
-    const discount =
-      bookingProperty.discount > 0
-        ? (basePrice * bookingProperty.discount) / 100
-        : 0;
-    const finalPrice = basePrice - discount;
-
-    const newBooking: Booking = {
-      id: Date.now().toString(),
-      propertyId: bookingProperty.id,
-      propertyName: bookingProperty.name,
-      propertyImage: bookingProperty.image,
-      checkIn: checkInDate,
-      checkOut: checkOutDate,
-      guests: bookingGuests,
-      totalPrice: finalPrice,
-      status: "pending",
-      bookingDate: new Date().toISOString().split("T")[0],
-    };
-
-    setBookings((prev) => [newBooking, ...prev]);
-    setShowBookingModal(false);
-
-    // Reset form
-    setCheckInDate("");
-    setCheckOutDate("");
-    setBookingGuests(2);
-    setBookingSpecialRequests("");
-    setBookingPaymentMethod("credit_card");
-
-    toast({
-      title: "Booking submitted!",
-      description: `Your ${nights}-night reservation for ${bookingProperty.name} has been submitted for $${finalPrice.toFixed(2)}. Status: Pending confirmation.`,
-    });
+    setSubmittingBooking(true);
+    fetch(`${API_BASE_URL}/api/property-bookings`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        propertyId: Number(bookingProperty.id),
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        guests: bookingGuests,
+        specialRequests: bookingSpecialRequests,
+      }),
+    })
+      .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.success) {
+          toast({
+            title: "Booking not submitted",
+            description: json.error || "Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        setShowBookingModal(false);
+        setCheckInDate("");
+        setCheckOutDate("");
+        setBookingGuests(2);
+        setBookingSpecialRequests("");
+        loadBookings();
+        toast({
+          title: "Reservation request sent",
+          description: `${nights} night${nights > 1 ? "s" : ""} at ${bookingProperty.name} for $${Number(json.data.totalPrice).toFixed(2)}. The host will confirm; no payment has been taken.`,
+        });
+      })
+      .catch(() =>
+        toast({
+          title: "Network error",
+          description: "Your request was not sent. Please try again.",
+          variant: "destructive",
+        }),
+      )
+      .finally(() => setSubmittingBooking(false));
   };
 
   // Toggle amenity selection
@@ -1902,8 +1958,14 @@ export default function HousingReservations() {
                               <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              {booking.status === "pending" && (
-                                <Button variant="ghost" size="sm">
+                              {(booking.status === "pending" ||
+                                booking.status === "confirmed") && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Cancel booking"
+                                  onClick={() => cancelBooking(booking.id)}
+                                >
                                   <X className="h-4 w-4" />
                                 </Button>
                               )}
@@ -2320,11 +2382,11 @@ export default function HousingReservations() {
               </div>
 
               <div className="space-y-2">
-                <Label>Payment Method</Label>
-                <ReservationPaymentMethods
-                  selected={bookingPaymentMethod}
-                  onSelect={setBookingPaymentMethod}
-                />
+                <Label>Payment</Label>
+                <p className="text-sm text-gray-500">
+                  No payment is taken now. The host reviews your request and
+                  confirms the stay.
+                </p>
               </div>
 
               <Separator />

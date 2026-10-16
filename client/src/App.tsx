@@ -81,6 +81,7 @@ const Finances = lazy(() => import("@/pages/finances"));
 const Divertissement = lazy(() => import("@/pages/divertissement"));
 const Sante = lazy(() => import("@/pages/sante"));
 const Logement = lazy(() => import("@/pages/logement"));
+const Reservations = lazy(() => import("@/pages/reservations"));
 const BusinessesDirectory = lazy(() => import("@/pages/businesses-directory"));
 const BusinessDetail = lazy(() => import("@/pages/business-detail"));
 const CategoryDetail = lazy(() => import("@/pages/category-detail"));
@@ -585,7 +586,7 @@ function Router() {
       <Route path="/divertissement" component={Divertissement} />
       <Route path="/sante" component={Sante} />
       <Route path="/logement" component={Logement} />
-      <Route path="/reservations">{() => <Redirect to="/contact" />}</Route>
+      <Route path="/reservations" component={Reservations} />
       <Route path="/businesses-directory" component={BusinessesDirectory} />
       <Route path="/business/:id" component={BusinessDetail} />
       <Route path="/category/:slug" component={CategoryDetail} />

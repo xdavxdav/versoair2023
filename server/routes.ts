@@ -4,6 +4,7 @@ import { sql, eq } from "drizzle-orm";
 import databaseManagementRouter from "./routes/database-management";
 import businessesRouter from "./routes/businesses";
 import propertiesRouter from "./routes/properties";
+import propertyBookingsRouter from "./routes/property-bookings";
 import apiV1Router from "./routes/api-v1";
 import authRouter from "./routes/auth";
 import oauthRouter from "./routes/oauth";
@@ -189,6 +190,7 @@ export async function registerRoutes(app: Express) {
 
   // Register properties routes
   app.use("/", propertiesRouter);
+  app.use("/", propertyBookingsRouter);
 
   // Register extracted domain routers
   app.use("/api/tickets", ticketsRouter);
