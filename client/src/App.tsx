@@ -1136,7 +1136,7 @@ function AppContent() {
               )}
           </div>
         )}
-      {showAccountBlogNavbar && (
+      {isAuthed && currentPath.startsWith("/artist-portal") && (
         <Suspense fallback={null}>
           <TopNav />
         </Suspense>
