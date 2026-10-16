@@ -740,6 +740,12 @@ function IndustryKPIsSection({
               {getStatVisibility(userTier).description} &mdash; Top metrics that
               drive your business
             </CardDescription>
+            <Badge
+              variant="outline"
+              className="mt-2 border-amber-400 bg-amber-50 text-[10px] text-amber-700"
+            >
+              Sample data &mdash; estimates, not live tracking yet
+            </Badge>
           </div>
           {userTier === "free" && (
             <Button
