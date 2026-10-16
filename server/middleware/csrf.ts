@@ -32,6 +32,8 @@ const CSRF_EXEMPT_PATHS = [
   // "/auth/register-geoadmin" requires an authenticated Admin/Superadmin session,
   // so it goes through normal CSRF validation like any other protected write.
   "/api/users/heartbeat", // public presence-tracking ping — no CSRF needed
+  "/api/v1/payments/webhook", // Stripe webhook — authenticated by signature, not cookies
+  "/api/v1/cards/webhook/issuing", // Stripe Issuing webhook — signature-verified
   "/api/v1/admin/gtm-events", // GTM analytics — fire-and-forget tracking, no CSRF needed
   "/auth/verify-email", // email verification link from inbox — GET, no CSRF needed
   "/auth/resend-verification", // resend verification email — must be exempt for unverified users

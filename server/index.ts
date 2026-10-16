@@ -213,6 +213,12 @@ app.use(
 app.use(cookieParser());
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
+// Stripe verifies signatures against the exact raw bytes, so these paths must
+// be read raw before the global JSON parser consumes the body.
+app.use(
+  ["/api/v1/payments/webhook", "/api/v1/cards/webhook/issuing"],
+  express.raw({ type: "application/json" }),
+);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
