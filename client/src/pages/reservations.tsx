@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { authenticatedFetch } from "@/lib/auth";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -268,9 +269,9 @@ export default function HousingReservations() {
   }, [authUser, loadBookings]);
 
   const cancelBooking = async (id: string) => {
-    const res = await fetch(
+    const res = await authenticatedFetch(
       `${API_BASE_URL}/api/property-bookings/${id}/cancel`,
-      { method: "POST", credentials: "include" },
+      { method: "POST" },
     );
     if (res.ok) {
       toast({ title: "Booking cancelled" });
@@ -1063,9 +1064,8 @@ export default function HousingReservations() {
 
     const nights = lengthOfStay || 1;
     setSubmittingBooking(true);
-    fetch(`${API_BASE_URL}/api/property-bookings`, {
+    authenticatedFetch(`${API_BASE_URL}/api/property-bookings`, {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         propertyId: Number(bookingProperty.id),

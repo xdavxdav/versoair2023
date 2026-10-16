@@ -755,7 +755,7 @@ export default function GeoAdminAuthGate({
 
               <div className="flex items-center justify-center gap-4 text-xs text-slate-600">
                 <Link
-                  href="/auth/signin"
+                  href="/auth/signin?mode=register&redirect=%2Fgeo-admin"
                   className="text-emerald-400/70 hover:text-emerald-400"
                 >
                   Create account

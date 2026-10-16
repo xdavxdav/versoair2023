@@ -1109,11 +1109,12 @@ router.get(
  * DELETE /api/v1/payments/cards/:cardId
  * Removes a saved payment method (soft-delete + detach from Stripe).
  */
-router.delete("/cards/:cardId", async (req: Request, res: Response) => {
+router.delete("/cards/:cardId", requireAuth(), async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
     const { cardId } = req.params;
+    const callerId = String(req.user?.userId || (req as any).user?.id || "");
 
     const cardResult = await pool.query(
       `SELECT * FROM saved_payment_methods WHERE id = $1`,
@@ -1125,6 +1126,11 @@ router.delete("/cards/:cardId", async (req: Request, res: Response) => {
     }
 
     const card = cardResult.rows[0];
+
+    // Only the owner or a superuser may remove a card; 404 avoids confirming ids
+    if (String(card.user_id) !== callerId && req.user?.role !== "superuser") {
+      return res.status(404).json({ success: false, error: "Card not found" });
+    }
 
     // Detach from Stripe
     try {
