@@ -78,12 +78,6 @@ export default function OAuthComplete() {
               artisan: "/artisans-portal",
               contractor: "/services/contractors",
               "geo-admin": "/geo-admin",
-<<<<<<< ours
-            };
-            const first = ["admin", "artist", "artisan", "contractor", "geo-admin"].find(
-              (id) => owned.includes(id),
-            );
-=======
               careers: "/services/careers",
             };
             const first = [
@@ -94,7 +88,6 @@ export default function OAuthComplete() {
               "geo-admin",
               "careers",
             ].find((id) => owned.includes(id));
->>>>>>> theirs
             if (first) target = hrefs[first];
           } catch {
             /* fall back to the general dashboard */
