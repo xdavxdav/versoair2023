@@ -215,6 +215,7 @@ export default function SignIn() {
   const [registerError, setRegisterError] = useState("");
   const [registering, setRegistering] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
+  const [ssoProvider, setSsoProvider] = useState("google");
   const [accountChoices, setAccountChoices] = useState<any[]>([]);
   const [accountSelectionOpen, setAccountSelectionOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<{
@@ -326,25 +327,26 @@ export default function SignIn() {
   });
 
   // Handle SSO initiation — redirects to provider or shows error
-  const handleSsoLogin = async () => {
+  const handleSsoLogin = async (provider: "google" | "microsoft" | "linkedin" = "google") => {
     setSsoLoading(true);
+    setSsoProvider(provider);
     setLoginError("");
     try {
       const redirect = getQueryParam("redirect") || "";
       const res = await fetch(
-        `/auth/oauth/google${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`,
+        `/auth/oauth/${provider}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`,
         { redirect: "manual" },
       );
 
       if (res.type === "opaqueredirect" || res.status === 0) {
         // Browser will follow the redirect to the OAuth provider
-        window.location.href = `/auth/oauth/google${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
+        window.location.href = `/auth/oauth/${provider}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
         return;
       }
 
       if (res.status === 501) {
         const data = await res.json();
-        setLoginError(data.message || "Google sign-in is not yet configured.");
+        setLoginError(data.message || `${provider} sign-in is not yet configured.`);
         setSsoLoading(false);
         return;
       }
@@ -357,9 +359,9 @@ export default function SignIn() {
       }
 
       // Fallback: redirect directly
-      window.location.href = `/auth/oauth/google${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
+      window.location.href = `/auth/oauth/${provider}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`;
     } catch {
-      setLoginError("Failed to connect to Google. Please try again.");
+      setLoginError(`Failed to connect to ${provider}. Please try again.`);
       setSsoLoading(false);
     }
   };
@@ -1894,11 +1896,11 @@ export default function SignIn() {
                 {/* Google */}
                 <button
                   type="button"
-                  onClick={handleSsoLogin}
+                  onClick={() => handleSsoLogin("google")}
                   disabled={ssoLoading}
                   className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {ssoLoading ? (
+                  {ssoLoading && ssoProvider === "google" ? (
                     <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                   ) : (
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -1924,12 +1926,12 @@ export default function SignIn() {
                 </button>
                 {/* Microsoft */}
                 <button
-                  type="button"
-                  disabled
-                  title="Microsoft sign-in is not available yet"
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
-                >
-                  <svg className="w-5 h-5 grayscale" viewBox="0 0 24 24">
+ type="button"
+ onClick={() => handleSsoLogin("microsoft")}
+ disabled={ssoLoading}
+ className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+ >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <rect x="1" y="1" width="10" height="10" fill="#F25022" />
                       <rect
                         x="13"
@@ -1972,12 +1974,12 @@ export default function SignIn() {
                   Apple
                 </button>
                 <button
-                  type="button"
-                  disabled
-                  title="LinkedIn sign-in is not available yet"
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
-                >
-                  <span className="w-5 h-5 rounded bg-gray-300 text-white flex items-center justify-center font-bold grayscale">
+ type="button"
+ onClick={() => handleSsoLogin("linkedin")}
+ disabled={ssoLoading}
+ className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+ >
+                  <span className="w-5 h-5 rounded bg-[#0a66c2] text-white flex items-center justify-center font-bold">
                     in
                   </span>
                   LinkedIn
@@ -2386,11 +2388,11 @@ export default function SignIn() {
                   {/* Google */}
                   <button
                     type="button"
-                    onClick={handleSsoLogin}
+                    onClick={() => handleSsoLogin("google")}
                     disabled={ssoLoading}
                     className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {ssoLoading ? (
+                    {ssoLoading && ssoProvider === "google" ? (
                       <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                     ) : (
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -2416,11 +2418,11 @@ export default function SignIn() {
                   </button>
                   {/* Microsoft */}
                   <button
-                    type="button"
-                    disabled
-                    title="Microsoft sign-in is not available yet"
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
-                  >
+ type="button"
+ onClick={() => handleSsoLogin("microsoft")}
+ disabled={ssoLoading}
+ className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+ >
                     <svg className="w-5 h-5 grayscale" viewBox="0 0 24 24">
                         <rect
                           x="1"
@@ -2470,12 +2472,12 @@ export default function SignIn() {
                     Apple
                   </button>
                   <button
-                    type="button"
-                    disabled
-                    title="LinkedIn sign-in is not available yet"
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
-                  >
-                    <span className="w-5 h-5 rounded bg-gray-300 text-white flex items-center justify-center font-bold grayscale">
+ type="button"
+ onClick={() => handleSsoLogin("linkedin")}
+ disabled={ssoLoading}
+ className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+ >
+                    <span className="w-5 h-5 rounded bg-[#0a66c2] text-white flex items-center justify-center font-bold">
                       in
                     </span>
                     LinkedIn
