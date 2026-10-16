@@ -142,8 +142,11 @@ function getSafeRedirect(value: unknown): string | undefined {
   return value;
 }
 
+// Apple is deferred (paid developer account); Indeed/Glassdoor have no public SSO.
+const ENABLED_OAUTH_PROVIDERS = new Set(["google", "microsoft", "linkedin"]);
+
 function isEnabledProvider(provider: string): boolean {
-  return provider === "google";
+  return ENABLED_OAUTH_PROVIDERS.has(provider);
 }
 
 // ─── State management (CSRF protection for OAuth) ─────────────────────────────
