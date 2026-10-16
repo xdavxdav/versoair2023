@@ -2177,6 +2177,7 @@ export default function ArtistPortalWelcome() {
   const isArtistCodeInput = /^VA[_-]/i.test(signInForm.email.trim());
   // Staff codes (VA_XXX_SYS_ROLE) always require the account password
   const isStaffCodeInput = isArtistCodeInput && /_SYS_/i.test(signInForm.email);
+  // Code-only sign-in is a merit perk; the password stays optional for those who earned it
 
   const [applyForm, setApplyForm] = useState({
     email: "",
@@ -2238,9 +2239,7 @@ export default function ArtistPortalWelcome() {
           isCodeLogin
             ? {
                 artistCode: signInForm.email.trim(),
-                ...(/_SYS_/i.test(signInForm.email)
-                  ? { password: signInForm.password }
-                  : {}),
+                ...(signInForm.password ? { password: signInForm.password } : {}),
               }
             : { email: signInForm.email, password: signInForm.password },
         ),
@@ -3114,14 +3113,12 @@ export default function ArtistPortalWelcome() {
                 {/* Password */}
                 <div
                   className={
-                    isArtistCodeInput && !isStaffCodeInput
-                      ? "opacity-40 pointer-events-none"
-                      : ""
+                    ""
                   }
                 >
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
                     {isArtistCodeInput && !isStaffCodeInput
-                      ? "Mot de passe (non requis avec code artiste)"
+                      ? "Mot de passe (facultatif pour Elite, Signed et Legend)"
                       : "Mot de passe"}
                   </label>
                   <div className="relative">

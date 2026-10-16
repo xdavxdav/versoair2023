@@ -2877,6 +2877,7 @@ router.post(
     else if ("artistCode" in data) {
       const code = data.artistCode.trim();
       const throttleKey = codeKey(req, code);
+      let profileDivision = "";
       if (codeBlocked(throttleKey)) {
         res.status(429).json({
           success: false,
@@ -2900,6 +2901,7 @@ router.post(
           if (foundUser) {
             user = foundUser;
             skipPasswordCheck = true;
+            profileDivision = String(profiles[0].division || "discovery");
           }
         }
       } catch (e) {
@@ -2945,8 +2947,15 @@ router.post(
         });
         return;
       }
-      // Privileged accounts must also present their password with the code
-      if (user.role === "superuser" || user.role === "admin") {
+      // Password-free code sign-in is a merit perk of the top divisions;
+      // everyone else (and privileged accounts) must add the password.
+      const codeOnlyDivisions = ["elite", "signed", "legend"];
+      const needsPassword =
+        user.role === "superuser" ||
+        user.role === "admin" ||
+        (profileDivision !== "" &&
+          !codeOnlyDivisions.includes(profileDivision.toLowerCase()));
+      if (needsPassword) {
         const pwd = "password" in data ? data.password : undefined;
         const ok =
           !!pwd && !!user.password && (await bcrypt.compare(pwd, user.password));
@@ -2954,7 +2963,8 @@ router.post(
           codeFailed(throttleKey);
           res.status(401).json({
             success: false,
-            message: "Staff codes require the account password.",
+            message:
+              "This code requires your account password. Code-only sign-in is reserved for Elite, Signed and Legend artists.",
           });
           return;
         }
