@@ -1136,7 +1136,7 @@ function AppContent() {
               )}
           </div>
         )}
-      {isAuthed && currentPath.startsWith("/artist-portal") && (
+      {currentPath.startsWith("/artist-portal") && (
         <Suspense fallback={null}>
           <TopNav />
         </Suspense>

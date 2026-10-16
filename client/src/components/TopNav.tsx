@@ -76,9 +76,8 @@ export default function TopNav() {
     return () => document.removeEventListener("pointerdown", close);
   }, []);
 
-  if (!user) return null;
   const toggle = (k: string) => setOpen((o) => (o === k ? null : k));
-  const home = getDashboardDestination(user).path;
+  const home = user ? getDashboardDestination(user).path : "/auth/signin";
   const item =
     "block rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white";
 
@@ -94,6 +93,7 @@ export default function TopNav() {
         >
           <Home className="h-4 w-4" /> Home
         </Link>
+        {user && (
         <Menu
           label="Portals"
           open={open === "portals"}
@@ -107,6 +107,7 @@ export default function TopNav() {
               </Link>
             ))}
         </Menu>
+        )}
         <Menu
           label="Explore"
           open={open === "explore"}
@@ -119,8 +120,9 @@ export default function TopNav() {
           ))}
         </Menu>
         <div className="flex-1" />
+        {user ? (
         <Menu
-          label={user.name || user.email || "Account"}
+          label={user?.name || user?.email || "Account"}
           open={open === "account"}
           onToggle={() => toggle("account")}
         >
@@ -144,6 +146,14 @@ export default function TopNav() {
             <LogOut className="h-3.5 w-3.5" /> Sign out
           </button>
         </Menu>
+        ) : (
+          <Link
+            href="/auth/signin?redirect=/artist-portal"
+            className="rounded-md bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );
