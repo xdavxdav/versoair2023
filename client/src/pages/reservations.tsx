@@ -1073,6 +1073,7 @@ export default function HousingReservations() {
         checkOut: checkOutDate,
         guests: bookingGuests,
         specialRequests: bookingSpecialRequests,
+        paymentMethod: bookingPaymentMethod,
       }),
     })
       .then(async (res) => {

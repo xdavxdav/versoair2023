@@ -22,6 +22,7 @@ function ensureTable() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
+      ALTER TABLE property_bookings ADD COLUMN IF NOT EXISTS payment_method VARCHAR(40);
       CREATE INDEX IF NOT EXISTS property_bookings_property_idx ON property_bookings (property_id, check_in, check_out);
       CREATE INDEX IF NOT EXISTS property_bookings_user_idx ON property_bookings (user_id);`,
     )
@@ -53,6 +54,7 @@ const mapRow = (r: any) => ({
   nights: r.nights,
   totalPrice: Number(r.total_price),
   specialRequests: r.special_requests ?? "",
+  paymentMethod: r.payment_method ?? null,
   status: r.status,
   bookingDate: String(r.created_at?.toISOString?.() ?? "").slice(0, 10),
 });
@@ -105,8 +107,12 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       await ensureTable();
-      const { propertyId, checkIn, checkOut, guests, specialRequests } =
+      const { propertyId, checkIn, checkOut, guests, specialRequests, paymentMethod } =
         req.body ?? {};
+      const method =
+        typeof paymentMethod === "string" && /^[a-z0-9_-]{1,40}$/i.test(paymentMethod)
+          ? paymentMethod
+          : null;
       const inMs = parseDay(checkIn);
       const outMs = parseDay(checkOut);
       const guestCount = Number(guests);
@@ -172,9 +178,9 @@ router.post(
           : "";
 
       const ins = await pool.query(
-        `INSERT INTO property_bookings (property_id, user_id, check_in, check_out, guests, nights, total_price, special_requests)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-        [pid, Number(req.user!.id), checkIn, checkOut, guestCount, nights, total.toFixed(2), notes],
+        `INSERT INTO property_bookings (property_id, user_id, check_in, check_out, guests, nights, total_price, special_requests, payment_method)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+        [pid, Number(req.user!.id), checkIn, checkOut, guestCount, nights, total.toFixed(2), notes, method],
       );
       const { rows } = await pool.query(`${SELECT} WHERE b.id = $1`, [ins.rows[0].id]);
       res.status(201).json({ success: true, data: mapRow(rows[0]) });
