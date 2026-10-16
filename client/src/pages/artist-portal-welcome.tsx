@@ -345,8 +345,56 @@ function MiniStudio({
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollY = useRef(0);
 
-  // ── Allow scrolling even when expanded - user needs to see full content ──
-  // No body scroll lock anymore
+  // While expanded, the page behind is frozen: wheel/touch scrolls only the card.
+  // Scrolling further down once the card is at its bottom fades it out and
+  // hands scrolling back to the page.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const touchY = useRef(0);
+  useEffect(() => {
+    if (collapsed || !heroVisible) return;
+    const card = cardRef.current;
+    const atBottom = () =>
+      !card || card.scrollTop + card.clientHeight >= card.scrollHeight - 2;
+    const release = () => {
+      setIsVanishing(true);
+      setTimeout(() => {
+        setCollapsed(true);
+        setIsVanishing(false);
+      }, 350);
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (isVanishing) return;
+      const inside = card?.contains(e.target as Node);
+      if (e.deltaY > 0 && atBottom()) {
+        e.preventDefault();
+        release();
+        return;
+      }
+      if (!inside) e.preventDefault();
+    };
+    const onTouchStart = (e: TouchEvent) => {
+      touchY.current = e.touches[0].clientY;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (isVanishing) return;
+      const dy = touchY.current - e.touches[0].clientY;
+      const inside = card?.contains(e.target as Node);
+      if (dy > 8 && atBottom()) {
+        e.preventDefault();
+        release();
+      } else if (!inside) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [collapsed, heroVisible, isVanishing]);
 
   // ── Auto-vanish on scroll when content comes into view ──
   useEffect(() => {
@@ -1120,10 +1168,11 @@ function MiniStudio({
         }}
       >
         <div
+          ref={cardRef}
           className={`bg-[#0a0514]/95 backdrop-blur-xl border border-white/[0.08] transition-all duration-300 ${
             collapsed
               ? "py-1 px-2 sm:px-3 rounded-xl inline-flex"
-              : "px-3 sm:px-4 py-3 sm:py-4 rounded-xl max-h-[80vh] overflow-y-auto"
+              : "px-3 sm:px-4 py-3 sm:py-4 rounded-xl max-h-[80vh] overflow-y-auto overscroll-contain"
           }`}
         >
           <div className="max-w-7xl mx-auto">
