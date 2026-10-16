@@ -23,10 +23,7 @@ import {
   sendEmail,
 } from "../services/email-service";
 import { computeUserCapabilities } from "./capabilities";
-import {
-  generateArtistCode,
-  getStaffUsernameForCode,
-} from "../utils/artist-code";
+import { generateArtistCode } from "../utils/artist-code";
 import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
@@ -2599,6 +2596,24 @@ const codeFailed = (key: string) => {
   if (codeFailures.size > 5000) codeFailures.clear();
 };
 
+// Staff codes are random secrets; only their SHA-256 hashes live in env vars.
+const STAFF_CODE_HASHES: Array<{ env: string; who: string }> = [
+  { env: "STAFF_CODE_HASH_OWNER", who: "owner" },
+  { env: "STAFF_CODE_HASH_ADMIN", who: "admin_025" },
+  { env: "STAFF_CODE_HASH_MOD", who: "mod_010" },
+];
+function matchStaffCode(code: string): string | null {
+  const digest = crypto.createHash("sha256").update(code.trim()).digest();
+  for (const { env, who } of STAFF_CODE_HASHES) {
+    const expected = (process.env[env] || "").trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(expected)) continue;
+    if (crypto.timingSafeEqual(digest, Buffer.from(expected, "hex"))) {
+      return who;
+    }
+  }
+  return null;
+}
+
 const isSuperuserArtistCode = (candidate: string): boolean => {
   if (!SUPERUSER_ARTIST_CODE || SUPERUSER_ARTIST_CODE.length < 16) return false;
   const a = Buffer.from(candidate);
@@ -2920,31 +2935,28 @@ router.post(
         }
       }
       if (!user) {
-        // Staff override codes (VA_XXX_SYS_ROLE) map to a staff username
-        const staffUsername = getStaffUsernameForCode(code);
-        if (staffUsername) {
-          const [staff] = await db
-            .select()
-            .from(schema.users)
-            .where(
-              or(
-                eq(schema.users.username, staffUsername),
-                eq(schema.users.gateUsername, staffUsername),
-              ),
-            )
-            .limit(1);
-          let resolved = staff;
-          // The owner account is identified by SUPERADMIN_EMAIL in production
-          if (!resolved && staffUsername === "joel_007" && SUPERADMIN_EMAIL) {
-            [resolved] = await db
+        // Staff secret codes map to a staff account (owner via SUPERADMIN_EMAIL)
+        const staffWho = matchStaffCode(code);
+        if (staffWho) {
+          const where =
+            staffWho === "owner"
+              ? SUPERADMIN_EMAIL
+                ? eq(schema.users.email, SUPERADMIN_EMAIL.toLowerCase())
+                : undefined
+              : or(
+                  eq(schema.users.username, staffWho),
+                  eq(schema.users.gateUsername, staffWho),
+                );
+          if (where) {
+            const [resolved] = await db
               .select()
               .from(schema.users)
-              .where(eq(schema.users.email, SUPERADMIN_EMAIL.toLowerCase()))
+              .where(where)
               .limit(1);
-          }
-          if (resolved) {
-            user = resolved;
-            skipPasswordCheck = true;
+            if (resolved) {
+              user = resolved;
+              skipPasswordCheck = true;
+            }
           }
         }
       }

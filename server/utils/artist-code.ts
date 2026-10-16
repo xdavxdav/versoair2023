@@ -272,19 +272,8 @@ function formatDateV1(date: Date): string {
 /**
  * Staff artist code overrides
  */
-const STAFF_CODES: Record<string, string> = {
-  joel_007: "VA_JOE_SYS_MASTER",
-  admin_025: "VA_ADM_SYS_OPS",
-  mod_010: "VA_MOD_SYS_WATCH",
-};
-
-/** Returns the staff username that owns a staff override code, if any. */
-export function getStaffUsernameForCode(code: string): string | null {
-  const entry = Object.entries(STAFF_CODES).find(
-    ([, v]) => v.toLowerCase() === code.trim().toLowerCase(),
-  );
-  return entry ? entry[0] : null;
-}
+// Staff codes are issued as hashed secrets (see auth.ts); none are hard-coded.
+const STAFF_CODES: Record<string, string> = {};
 
 // ═══════════════════════════════════════════════════════════════════
 // STATUS FLAGS — Interleaved with country code digits
