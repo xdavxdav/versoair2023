@@ -119,6 +119,13 @@ export async function computeUserCapabilities(userId: number) {
   );
   const isContractor = (contractorResult.rows?.length ?? 0) > 0;
 
+  // 3b. Employers (own a business with job postings) unlock Careers
+  const employerResult = await db.execute(
+    sql`SELECT 1 FROM jobs j JOIN businesses b ON b.id = j.business_id
+        WHERE b.owner_id = ${userId} LIMIT 1`,
+  );
+  const isEmployer = (employerResult.rows?.length ?? 0) > 0;
+
   // 4. Determine active subscription tier (account for trials)
   let effectiveTier = user.subscription_tier || "free";
   let isTrialing = false;
@@ -137,6 +144,7 @@ export async function computeUserCapabilities(userId: number) {
 
   if (hasArtistProfile || effectiveRole === "artist") portals.add("artist");
   if (isContractor) portals.add("contractor");
+  if (isEmployer || effectiveRole === "business_owner") portals.add("careers");
   if (
     effectiveRole === "creator" ||
     effectiveRole === "geo-admin" ||
@@ -176,6 +184,7 @@ export async function computeUserCapabilities(userId: number) {
     portals.add("artist");
     portals.add("geo-admin");
     portals.add("contractor");
+    portals.add("careers");
     portals.add("community");
   }
 

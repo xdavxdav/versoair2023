@@ -25,6 +25,7 @@ export type PortalId =
   | "geo-admin"
   | "community"
   | "contractor"
+  | "careers"
   | "admin";
 
 /** Map of every portal → boolean access */
@@ -46,6 +47,7 @@ export const UNLOCK_REASONS: Record<string, string> = {
   "geo-admin": "Upgrade to Premium to unlock",
   community: "Join the community to unlock",
   contractor: "Register as a contractor to unlock",
+  careers: "Post a job as a business owner to unlock",
   admin: "Staff only",
 };
 
@@ -73,6 +75,7 @@ export function getPortalAccess(
       "geo-admin": false,
       community: false,
       contractor: false,
+      careers: false,
       admin: false,
     };
   }
@@ -89,6 +92,7 @@ export function getPortalAccess(
       "geo-admin": true,
       community: true,
       contractor: true,
+      careers: true,
       admin: true,
     };
   }
@@ -105,6 +109,7 @@ export function getPortalAccess(
     "geo-admin": false,
     community: false,
     contractor: false,
+    careers: false,
     admin: false,
   };
 
