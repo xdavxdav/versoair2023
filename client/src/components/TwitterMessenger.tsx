@@ -33,6 +33,7 @@ import {
   UserCheck,
   UserPlus,
   SquarePen,
+  ArrowLeft,
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
