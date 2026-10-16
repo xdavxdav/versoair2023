@@ -581,6 +581,8 @@ export default function BlogNavbar({
                   className={BTN}
                   onClick={() => toggleMenu("ent")}
                   onMouseEnter={() => open("ent")}
+                  title="Entreprises"
+                  aria-label="Entreprises"
                 >
                   <Store className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
                   <span className="hidden lg:inline">Entreprises</span>
@@ -591,7 +593,7 @@ export default function BlogNavbar({
                 </button>
                 {/* invisible hover bridge */}
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <DropPanel isOpen={openMenu === "ent"} align="center" widthClass="w-48 sm:w-56 lg:w-64">
+                <DropPanel isOpen={openMenu === "ent"} align="center" widthClass="w-64 sm:w-72 lg:w-80">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <div className="grid grid-cols-2 gap-0.5 px-0.5">
                     <Link href="/sante">
@@ -662,6 +664,11 @@ export default function BlogNavbar({
                   <Link href="/partners">
                     <a className={ITEM}>Partners</a>
                   </Link>
+                  {(user?.isAdmin || user?.role === "superuser") && (
+                    <Link href="/geo-admin">
+                      <a className={ITEM_HEAD}>Geo Admin</a>
+                    </Link>
+                  )}
                 </DropPanel>
               </div>
 
