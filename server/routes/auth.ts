@@ -2577,6 +2577,28 @@ const artistLoginSchema = z.union([
 // Superuser artist-code shortcut is disabled unless explicitly configured.
 // Superusers should sign in with email + password.
 const SUPERUSER_ARTIST_CODE = process.env.SUPERUSER_ARTIST_CODE || "";
+// Per IP + code failure throttle so artist codes cannot be guessed by trial
+const CODE_FAIL_LIMIT = 5;
+const CODE_FAIL_WINDOW_MS = 15 * 60 * 1000;
+const codeFailures = new Map<string, { n: number; until: number }>();
+const codeKey = (req: Request, code: string) =>
+  `${req.ip}|${code.trim().toLowerCase()}`;
+const codeBlocked = (key: string): boolean => {
+  const f = codeFailures.get(key);
+  if (!f) return false;
+  if (f.until < Date.now()) {
+    codeFailures.delete(key);
+    return false;
+  }
+  return f.n >= CODE_FAIL_LIMIT;
+};
+const codeFailed = (key: string) => {
+  const f = codeFailures.get(key);
+  const n = f && f.until >= Date.now() ? f.n + 1 : 1;
+  codeFailures.set(key, { n, until: Date.now() + CODE_FAIL_WINDOW_MS });
+  if (codeFailures.size > 5000) codeFailures.clear();
+};
+
 const isSuperuserArtistCode = (candidate: string): boolean => {
   if (!SUPERUSER_ARTIST_CODE || SUPERUSER_ARTIST_CODE.length < 16) return false;
   const a = Buffer.from(candidate);
@@ -2854,6 +2876,14 @@ router.post(
     // ── Path 2: Regular artist code lookup ──
     else if ("artistCode" in data) {
       const code = data.artistCode.trim();
+      const throttleKey = codeKey(req, code);
+      if (codeBlocked(throttleKey)) {
+        res.status(429).json({
+          success: false,
+          message: "Too many attempts. Try again later.",
+        });
+        return;
+      }
       // Look up artist by code in artist_profiles
       try {
         const profiles = await db
@@ -2908,6 +2938,7 @@ router.post(
         }
       }
       if (!user) {
+        codeFailed(throttleKey);
         res.status(401).json({
           success: false,
           message: "Code artiste invalide. Vérifiez le format exact.",
@@ -2920,6 +2951,7 @@ router.post(
         const ok =
           !!pwd && !!user.password && (await bcrypt.compare(pwd, user.password));
         if (!ok) {
+          codeFailed(throttleKey);
           res.status(401).json({
             success: false,
             message: "Staff codes require the account password.",
@@ -3052,7 +3084,6 @@ router.post(
         walletBalance: artistProfile?.walletBalance || "0.00",
         lifetimeStreams: artistProfile?.lifetimeStreams || 0,
         leagueId: artistProfile?.leagueId || null,
-        artistCode: artistProfile?.artistCode || null,
         portals: capabilities?.portals || ["general", "artist"],
       },
     });
