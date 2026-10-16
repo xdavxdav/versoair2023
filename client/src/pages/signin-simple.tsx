@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Mail, Lock, Loader, Clock } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { AuthSplash } from "@/components/ui/auth-splash";
 import { AnimatePresence } from "framer-motion";
@@ -19,6 +20,7 @@ export default function SignIn() {
   const [lockoutTimeLeft, setLockoutTimeLeft] = useState<string>("");
   const [, navigate] = useLocation();
   const { login: authLogin } = useAuthContext();
+  useSkipAuthPageWhenSignedIn();
 
   // Countdown timer for account lockout
   useEffect(() => {

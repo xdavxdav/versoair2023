@@ -103,7 +103,7 @@ export default function OAuthComplete() {
           checkpoint: target,
         });
         setStatus("success");
-        redirectTimer = setTimeout(() => navigate(target), 2200);
+        redirectTimer = setTimeout(() => navigate(target, { replace: true }), 2200);
       } catch (error) {
         if (cancelled) return;
         setStatus("error");

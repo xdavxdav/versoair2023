@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
@@ -232,6 +233,7 @@ export default function SignIn() {
   const [portalSelectionOpen, setPortalSelectionOpen] = useState(false);
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
+  useSkipAuthPageWhenSignedIn();
 
   const openPortalSelection = (
     userData: { id?: string | number; userId?: string | number; email?: string },
