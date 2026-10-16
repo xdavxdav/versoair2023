@@ -1542,13 +1542,74 @@ export function useInboxUnreadCount(isLoggedIn: boolean) {
   );
 }
 
+// Per-account colors, mirroring the account-type cards on /apply
+const ACCOUNT_THEMES: Record<
+  string,
+  {
+    gradient: string;
+    frame: string;
+    badge: string;
+    ring: string;
+    accent: string;
+  }
+> = {
+  "General Account": {
+    gradient: "from-sky-500 to-cyan-500",
+    frame: "border-sky-200 from-sky-50 via-white to-cyan-50",
+    badge: "border-sky-200 text-sky-700",
+    ring: "border-sky-400/50",
+    accent: "bg-sky-500",
+  },
+  Business: {
+    gradient: "from-slate-600 to-slate-800",
+    frame: "border-slate-300 from-slate-100 via-white to-slate-50",
+    badge: "border-slate-300 text-slate-700",
+    ring: "border-slate-500/50",
+    accent: "bg-slate-600",
+  },
+  Contractor: {
+    gradient: "from-orange-500 to-red-500",
+    frame: "border-orange-200 from-orange-50 via-white to-red-50",
+    badge: "border-orange-200 text-orange-700",
+    ring: "border-orange-400/50",
+    accent: "bg-orange-500",
+  },
+  Artist: {
+    gradient: "from-pink-500 to-rose-600",
+    frame: "border-pink-200 from-pink-50 via-white to-rose-50",
+    badge: "border-pink-200 text-pink-700",
+    ring: "border-pink-400/50",
+    accent: "bg-pink-500",
+  },
+  Streamer: {
+    gradient: "from-violet-500 to-purple-600",
+    frame: "border-violet-200 from-violet-50 via-white to-purple-50",
+    badge: "border-violet-200 text-violet-700",
+    ring: "border-violet-400/50",
+    accent: "bg-violet-500",
+  },
+  "Geo Admin": {
+    gradient: "from-blue-500 to-indigo-600",
+    frame: "border-blue-200 from-blue-50 via-white to-indigo-50",
+    badge: "border-blue-200 text-blue-700",
+    ring: "border-blue-400/50",
+    accent: "bg-blue-500",
+  },
+  Staff: {
+    gradient: "from-slate-800 to-slate-900",
+    frame: "border-slate-400 from-slate-200 via-white to-slate-100",
+    badge: "border-slate-400 text-slate-800",
+    ring: "border-slate-700/50",
+    accent: "bg-slate-800",
+  },
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // UNIFIED DASHBOARD — General Account + Business Owner Growth Engine
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function UserDashboard() {
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuthContext();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [selectedBusinessIdx, setSelectedBusinessIdx] = useState(0);
@@ -1658,6 +1719,7 @@ export default function UserDashboard() {
   };
 
   // AuthContext is the single source of truth for the authenticated session.
+  const { user: authUser } = useAuthContext();
   const userSession = authUser
     ? {
         user: {
@@ -1794,7 +1856,7 @@ export default function UserDashboard() {
       string,
       { title: string; description: string; why: string }
     > = {
-      General: {
+      "General Account": {
         title: "Personal life and local discovery",
         description:
           "You browse trusted businesses, reserve places, and stay connected to your daily life.",
@@ -1824,6 +1886,12 @@ export default function UserDashboard() {
           "You manage client work, quotes, jobs, and completion milestones from one place.",
         why: "This view is organized around execution, availability, and contract flow.",
       },
+      Business: {
+        title: "Growth, customers, and visibility",
+        description:
+          "You run a listed business: manage your profile, bookings, jobs, and customer reach.",
+        why: "This dashboard keeps your business performance and verification front and centre.",
+      },
       Staff: {
         title: "Operations, safety, and platform governance",
         description:
@@ -1835,6 +1903,7 @@ export default function UserDashboard() {
     return {
       label,
       ...summaryMap[label]!,
+      byLabel: summaryMap,
     };
   }, [userRole]);
 
@@ -1901,6 +1970,16 @@ export default function UserDashboard() {
   }, [userBusinesses, currentTier, selectedBusinessIdx]);
 
   const hasRealBusiness = !!(userBusinesses && userBusinesses.length > 0);
+
+  // A general account that owns a business is shown as a Business account
+  const accountLabel =
+    accountFamilySummary.label === "General Account" && hasRealBusiness
+      ? "Business"
+      : accountFamilySummary.label;
+  const accountTheme =
+    ACCOUNT_THEMES[accountLabel] ?? ACCOUNT_THEMES["General Account"];
+  const accountText =
+    accountFamilySummary.byLabel[accountLabel] ?? accountFamilySummary;
 
   const analytics = useMemo(
     () => getEmptyAnalytics(currentTier),
@@ -2688,13 +2767,14 @@ export default function UserDashboard() {
 
             {/* WELCOME HEADER — distinct General Account look */}
             <div className="mb-8">
-              <div className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-sky-50 via-white to-amber-50 p-5 md:p-7 shadow-[0_20px_45px_rgba(59,130,246,0.08)]">
+              <div className={`relative overflow-hidden rounded-[28px] border bg-gradient-to-br ${accountTheme.frame} p-5 md:p-7 shadow-[0_20px_45px_rgba(15,23,42,0.08)]`}>
+                <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${accountTheme.gradient}`} />
                 <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
                   <div className="max-w-3xl">
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-700">
+                      <span className={`inline-flex items-center gap-2 rounded-full border bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${accountTheme.badge}`}>
                         <Globe className="h-3.5 w-3.5" />
-                        {accountFamilySummary.label}
+                        {accountLabel}
                       </span>
                     </div>
                     <h1 className="text-3xl md:text-5xl font-black tracking-[-0.04em] text-slate-900">
@@ -2710,7 +2790,7 @@ export default function UserDashboard() {
                     <div className="flex items-center gap-4 mt-4">
                       {/* Avatar preview with quick edit/download */}
                       <div className="relative group shrink-0">
-                        <Avatar className="h-16 w-16 rounded-2xl border-2 border-blue-400/40 shadow-md overflow-hidden">
+                        <Avatar className={`h-16 w-16 rounded-2xl border-2 ${accountTheme.ring} shadow-md overflow-hidden`}>
                           {customAvatarUrl ? (
                             <AvatarImage
                               src={customAvatarUrl}
@@ -2718,7 +2798,7 @@ export default function UserDashboard() {
                               className="object-cover h-full w-full"
                             />
                           ) : null}
-                          <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-xl rounded-2xl">
+                          <AvatarFallback className={`bg-gradient-to-br ${accountTheme.gradient} text-white font-bold text-xl rounded-2xl`}>
                             {(
                               userSession?.user?.displayName ||
                               userSession?.user?.name ||
@@ -2761,6 +2841,7 @@ export default function UserDashboard() {
                     </div>
 
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-3 shadow-sm backdrop-blur-sm">
+                      <div className={`mb-2 h-1 w-10 rounded-full ${accountTheme.accent}`} />
                       <button
                         type="button"
                         onClick={() => setAccountSummaryOpen((v) => !v)}
@@ -2771,7 +2852,7 @@ export default function UserDashboard() {
                             Selected account
                           </p>
                           <p className="mt-1 text-base font-semibold text-slate-800">
-                            {accountFamilySummary.title}
+                            {accountText.title}
                           </p>
                         </div>
                         <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
@@ -2781,9 +2862,9 @@ export default function UserDashboard() {
 
                       {accountSummaryOpen && (
                         <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-sm text-slate-600">
-                          <p>{accountFamilySummary.description}</p>
+                          <p>{accountText.description}</p>
                           <p className="text-slate-500">
-                            Why this dashboard: {accountFamilySummary.why}
+                            Why this dashboard: {accountText.why}
                           </p>
                         </div>
                       )}
@@ -2920,63 +3001,6 @@ export default function UserDashboard() {
                     accent,
                     soft,
                   }) => (
-                    <Link key={title} href={href}>
-                      <div className="group h-full rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-                        <div
-                          className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${color} shadow-lg shadow-slate-200`}
-                        >
-                          <Icon className="h-7 w-7 text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800">
-                          {title}
-                        </h3>
-                        <p className={`mt-1 text-sm ${accent}`}>
-                          {description}
-                        </p>
-                      </div>
-                    </Link>
-                  ),
-                )}
-              </div>
-            )}
-
-            {!hasRealBusiness && (
-              <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {[
-                  {
-                    title: "Browse businesses",
-                    description: "Explore the directory",
-                    href: "/businesses-directory",
-                    icon: Search,
-                    color: "from-blue-500 to-cyan-600",
-                    accent: "text-blue-700",
-                  },
-                  {
-                    title: "Reservations",
-                    description: "Book and manage",
-                    href: "/reservations",
-                    icon: CalendarDays,
-                    color: "from-amber-500 to-orange-600",
-                    accent: "text-amber-700",
-                  },
-                  {
-                    title: "Marketplace",
-                    description: "Buy and sell locally",
-                    href: "/marketplace",
-                    icon: ShoppingCart,
-                    color: "from-emerald-500 to-green-600",
-                    accent: "text-emerald-700",
-                  },
-                  {
-                    title: "Communities",
-                    description: "Connect and share",
-                    href: "/communities",
-                    icon: Users,
-                    color: "from-violet-500 to-purple-600",
-                    accent: "text-violet-700",
-                  },
-                ].map(
-                  ({ title, description, href, icon: Icon, color, accent }) => (
                     <Link key={title} href={href}>
                       <div className="group h-full rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
                         <div
@@ -3310,7 +3334,8 @@ export default function UserDashboard() {
               </div>
             )}
 
-            {/* QUICK ACTIONS GRID */}
+            {/* QUICK ACTIONS GRID (business owners; general accounts see the cards above) */}
+            {hasRealBusiness && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
               <Link href="/businesses-directory">
                 <Card className="h-full border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer group bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100">
@@ -3381,6 +3406,7 @@ export default function UserDashboard() {
                 </Card>
               </Link>
             </div>
+            )}
 
             {/* PLATFORM STATS ROW */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
