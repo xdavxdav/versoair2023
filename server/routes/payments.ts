@@ -318,6 +318,11 @@ router.post(
         bankDetails,
       } = req.body;
 
+      if (!onlinePaymentsEnabled()) {
+        rejectUnavailablePayment(res);
+        return;
+      }
+
       const withdrawAmount = parseFloat(amount);
       if (!withdrawAmount || withdrawAmount <= 0) {
         return res
@@ -785,7 +790,7 @@ router.post(
           error: "Direction must be 'deposit' or 'withdrawal'",
         });
       }
-      if (direction === "deposit" && !onlinePaymentsEnabled()) {
+      if (!onlinePaymentsEnabled()) {
         rejectUnavailablePayment(res);
         return;
       }
@@ -888,6 +893,15 @@ router.put(
       }
 
       const req_ = request.rows[0];
+
+      if (
+        action === "approve" &&
+        req_.direction === "withdrawal" &&
+        !onlinePaymentsEnabled()
+      ) {
+        rejectUnavailablePayment(res);
+        return;
+      }
 
       if (action === "approve") {
         // Credit/debit wallet
@@ -997,7 +1011,7 @@ router.post(
           error: "Direction must be 'deposit' or 'withdrawal'",
         });
       }
-      if (direction === "deposit" && !onlinePaymentsEnabled()) {
+      if (!onlinePaymentsEnabled()) {
         rejectUnavailablePayment(res);
         return;
       }
@@ -1270,7 +1284,7 @@ router.post(
           error: "Direction must be 'deposit' or 'withdrawal'",
         });
       }
-      if (direction === "deposit" && !onlinePaymentsEnabled()) {
+      if (!onlinePaymentsEnabled()) {
         rejectUnavailablePayment(res);
         return;
       }

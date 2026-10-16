@@ -4,6 +4,10 @@ import { sql } from "drizzle-orm";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { getIO } from "../websocket/socket-config";
 import { distributeWeeklyPool } from "../services/royalty-engine.ts";
+import {
+  onlinePaymentsEnabled,
+  rejectUnavailablePayment,
+} from "../utils/commercial-gates";
 
 const router = Router();
 
@@ -1088,10 +1092,16 @@ router.post(
   "/payout/request",
   optionalAuth,
   async (req: Request, res: Response) => {
-    await ensureStreamRoyaleTables();
     const userId = req.user ? parseInt(req.user.userId) : null;
     if (!userId)
       return res.status(401).json({ success: false, message: "Auth required" });
+
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
+    }
+
+    await ensureStreamRoyaleTables();
 
     const { amount, method, paypalEmail, bankDetails } = req.body;
     const payoutAmount = parseFloat(amount);
@@ -1460,6 +1470,11 @@ router.put(
       return res
         .status(400)
         .json({ success: false, message: "Invalid status" });
+    }
+
+    if (status !== "rejected" && !onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
     }
 
     try {
