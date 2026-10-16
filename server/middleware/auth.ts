@@ -134,6 +134,9 @@ const PUBLIC_PATHS: string[] = [
   // Basic health check (load balancers / uptime monitors)
   "/api/status",
   "/api/health",
+  // Stripe webhooks: no session; authenticated by signature in the handler
+  "/api/v1/payments/webhook",
+  "/api/v1/cards/webhook/issuing",
   // Geolocation — needed before login for country auto-detection
   "/api/location/country",
   "/api/location/ip-data",
