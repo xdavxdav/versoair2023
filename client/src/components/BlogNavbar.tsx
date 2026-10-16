@@ -508,8 +508,8 @@ export default function BlogNavbar({
               </button>
             </div>
 
-            {/* ── Desktop nav (scales with screen) — scrollable when content overflows ── */}
-            <div className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-start min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-1">
+            {/* ── Desktop nav (scales with screen) — overflow stays visible so upward dropdowns are not clipped ── */}
+            <div className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-start min-w-0 overflow-visible px-1">
               {/* Entreprises */}
               <div
                 className="relative flex-shrink-0"
