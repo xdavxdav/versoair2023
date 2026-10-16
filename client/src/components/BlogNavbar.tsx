@@ -1,4 +1,11 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LogOut,
@@ -136,6 +143,55 @@ const ITEM =
 const ITEM_HEAD =
   "block px-4 py-2 text-sm text-cyan-300 hover:text-cyan-100 hover:bg-cyan-400/10 rounded-lg mx-1 font-semibold transition-colors whitespace-nowrap";
 
+/* Rendered in a portal so the scrolling nav row cannot clip the upward menus */
+function DropPanel({
+  isOpen,
+  align,
+  widthClass,
+  children,
+}: {
+  isOpen: boolean;
+  align: "center" | "right";
+  widthClass: string;
+  children: React.ReactNode;
+}) {
+  const marker = useRef<HTMLSpanElement | null>(null);
+  const [pos, setPos] = useState<{ bottom: number; x: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const anchor = marker.current?.parentElement;
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    setPos({
+      bottom: window.innerHeight - r.top + 8,
+      x: align === "right" ? window.innerWidth - r.right : r.left + r.width / 2,
+    });
+  }, [isOpen, align]);
+
+  const style: React.CSSProperties = pos
+    ? align === "right"
+      ? { bottom: pos.bottom, right: pos.x }
+      : { bottom: pos.bottom, left: pos.x, transform: "translateX(-50%)" }
+    : {};
+
+  return (
+    <>
+      <span ref={marker} className="hidden" />
+      {createPortal(
+        <div
+          data-nav-panel
+          className={`${PANEL.replace("absolute", "fixed")} ${widthClass} ${isOpen && pos ? PANEL_OPEN : ""}`}
+          style={style}
+        >
+          {children}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 export default function BlogNavbar({
   isAuthenticated: isAuthProp,
   userName: userNameProp,
@@ -223,7 +279,12 @@ export default function BlogNavbar({
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+      const target = event.target as HTMLElement;
+      if (
+        navRef.current &&
+        !navRef.current.contains(target) &&
+        !target.closest?.("[data-nav-panel]")
+      ) {
         close();
       }
     };
@@ -508,20 +569,18 @@ export default function BlogNavbar({
               </button>
             </div>
 
-            {/* ── Desktop nav (scales with screen) — overflow stays visible so upward dropdowns are not clipped ── */}
-            <div className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-start min-w-0 overflow-visible px-1">
+            {/* ── Desktop nav (scales with screen) — scrollable when content overflows ── */}
+            <div className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-start min-w-0 overflow-x-auto overflow-y-hidden scrollbar-hide px-1">
               {/* Entreprises */}
               <div
                 className="relative flex-shrink-0"
                 onMouseEnter={() => open("ent")}
-                onMouseLeave={close}
               >
                 <button
                   type="button"
                   className={BTN}
                   onClick={() => toggleMenu("ent")}
                   onMouseEnter={() => open("ent")}
-                  onMouseLeave={close}
                 >
                   <Store className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
                   <span className="hidden lg:inline">Entreprises</span>
@@ -532,10 +591,7 @@ export default function BlogNavbar({
                 </button>
                 {/* invisible hover bridge */}
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-56 lg:w-64 ${openMenu === "ent" ? PANEL_OPEN : ""}`}
-                  style={{ marginBottom: "8px" }}
-                >
+                <DropPanel isOpen={openMenu === "ent"} align="center" widthClass="w-48 sm:w-56 lg:w-64">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <div className="grid grid-cols-2 gap-0.5 px-0.5">
                     <Link href="/sante">
@@ -568,21 +624,19 @@ export default function BlogNavbar({
                       <a className={ITEM_HEAD + " text-center"}>Annuaire</a>
                     </Link>
                   </div>
-                </div>
+                </DropPanel>
               </div>
 
               {/* Discover */}
               <div
                 className="relative flex-shrink-0"
                 onMouseEnter={() => open("discover")}
-                onMouseLeave={close}
               >
                 <button
                   type="button"
                   className={BTN}
                   onClick={() => toggleMenu("discover")}
                   onMouseEnter={() => open("discover")}
-                  onMouseLeave={close}
                 >
                   <span className="hidden lg:inline">Discover</span>
                   <span className="lg:hidden">Disc</span>
@@ -591,10 +645,7 @@ export default function BlogNavbar({
                   />
                 </button>
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-52 sm:w-56 lg:w-60 ${openMenu === "discover" ? PANEL_OPEN : ""}`}
-                  style={{ marginBottom: "8px" }}
-                >
+                <DropPanel isOpen={openMenu === "discover"} align="center" widthClass="w-52 sm:w-56 lg:w-60">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/hub">
                     <a className={ITEM_HEAD}>Community Hub</a>
@@ -611,14 +662,13 @@ export default function BlogNavbar({
                   <Link href="/partners">
                     <a className={ITEM}>Partners</a>
                   </Link>
-                </div>
+                </DropPanel>
               </div>
 
               {/* Play */}
               <div
                 className="relative flex-shrink-0"
                 onMouseEnter={() => open("play")}
-                onMouseLeave={close}
               >
                 {isMuHolding && (
                   <svg
@@ -677,10 +727,7 @@ export default function BlogNavbar({
                   </button>
                 </div>
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-52 lg:w-56 ${openMenu === "play" ? PANEL_OPEN : ""}`}
-                  style={{ marginBottom: "8px" }}
-                >
+                <DropPanel isOpen={openMenu === "play"} align="center" widthClass="w-48 sm:w-52 lg:w-56">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/stream">
                     <a className={ITEM_HEAD}>Music Stream</a>
@@ -694,21 +741,19 @@ export default function BlogNavbar({
                   <Link href="/arcade">
                     <a className={ITEM}>Arcade</a>
                   </Link>
-                </div>
+                </DropPanel>
               </div>
 
               {/* Services */}
               <div
                 className="relative flex-shrink-0"
                 onMouseEnter={() => open("svc")}
-                onMouseLeave={close}
               >
                 <button
                   type="button"
                   className={BTN}
                   onClick={() => toggleMenu("svc")}
                   onMouseEnter={() => open("svc")}
-                  onMouseLeave={close}
                 >
                   <span className="hidden lg:inline">Services</span>
                   <span className="lg:hidden">Svc</span>
@@ -717,10 +762,7 @@ export default function BlogNavbar({
                   />
                 </button>
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-44 sm:w-48 lg:w-52 ${openMenu === "svc" ? PANEL_OPEN : ""}`}
-                  style={{ marginBottom: "8px" }}
-                >
+                <DropPanel isOpen={openMenu === "svc"} align="center" widthClass="w-44 sm:w-48 lg:w-52">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/services">
                     <a className={ITEM_HEAD}>All Services</a>
@@ -734,21 +776,19 @@ export default function BlogNavbar({
                   <Link href="/services/contractors">
                     <a className={ITEM}>Contractors</a>
                   </Link>
-                </div>
+                </DropPanel>
               </div>
 
               {/* Marketing */}
               <div
                 className="relative flex-shrink-0"
                 onMouseEnter={() => open("mkt")}
-                onMouseLeave={close}
               >
                 <button
                   type="button"
                   className={BTN}
                   onClick={() => toggleMenu("mkt")}
                   onMouseEnter={() => open("mkt")}
-                  onMouseLeave={close}
                 >
                   <span className="hidden lg:inline">Marketing</span>
                   <span className="lg:hidden">Mkt</span>
@@ -757,10 +797,7 @@ export default function BlogNavbar({
                   />
                 </button>
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <div
-                  className={`${PANEL} left-1/2 -translate-x-1/2 w-48 sm:w-52 lg:w-56 ${openMenu === "mkt" ? PANEL_OPEN : ""}`}
-                  style={{ marginBottom: "8px" }}
-                >
+                <DropPanel isOpen={openMenu === "mkt"} align="center" widthClass="w-48 sm:w-52 lg:w-56">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/marketing">
                     <a className={ITEM_HEAD}>Marketing Hub</a>
@@ -778,7 +815,7 @@ export default function BlogNavbar({
                   <Link href="/marketing/newsletters">
                     <a className={ITEM}>Newsletter</a>
                   </Link>
-                </div>
+                </DropPanel>
               </div>
 
               {/* Marketplace (direct link) */}
@@ -796,14 +833,12 @@ export default function BlogNavbar({
               <div
                 className="relative flex-shrink-0"
                 onMouseEnter={() => open("help")}
-                onMouseLeave={close}
               >
                 <button
                   type="button"
                   className={BTN}
                   onClick={() => toggleMenu("help")}
                   onMouseEnter={() => open("help")}
-                  onMouseLeave={close}
                 >
                   <Headphones className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
                   <span className="hidden lg:inline">Support</span>
@@ -813,10 +848,7 @@ export default function BlogNavbar({
                   />
                 </button>
                 <div className="absolute bottom-full left-0 right-0 h-2" />
-                <div
-                  className={`${PANEL} right-0 w-44 sm:w-48 ${openMenu === "help" ? PANEL_OPEN : ""}`}
-                  style={{ marginBottom: "8px" }}
-                >
+                <DropPanel isOpen={openMenu === "help"} align="right" widthClass="w-44 sm:w-48">
                   <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent mb-1 mx-3" />
                   <Link href="/sav">
                     <a className={ITEM}>Support</a>
@@ -824,7 +856,7 @@ export default function BlogNavbar({
                   <Link href="/versoai">
                     <a className={ITEM}>VersoAI</a>
                   </Link>
-                </div>
+                </DropPanel>
               </div>
             </div>
 
