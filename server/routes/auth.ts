@@ -23,7 +23,10 @@ import {
   sendEmail,
 } from "../services/email-service";
 import { computeUserCapabilities } from "./capabilities";
-import { generateArtistCode } from "../utils/artist-code";
+import {
+  generateArtistCode,
+  getStaffUsernameForCode,
+} from "../utils/artist-code";
 import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
@@ -2567,6 +2570,7 @@ const artistLoginSchema = z.union([
   }),
   z.object({
     artistCode: z.string().min(3, "Artist code is required").max(100),
+    password: z.string().max(128).optional(),
   }),
 ]);
 
@@ -2884,11 +2888,39 @@ router.post(
         }
       }
       if (!user) {
+        // Staff override codes (VA_XXX_SYS_ROLE) map to a staff username
+        const staffUsername = getStaffUsernameForCode(code);
+        if (staffUsername) {
+          const [staff] = await db
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.username, staffUsername))
+            .limit(1);
+          if (staff) {
+            user = staff;
+            skipPasswordCheck = true;
+          }
+        }
+      }
+      if (!user) {
         res.status(401).json({
           success: false,
           message: "Code artiste invalide. Vérifiez le format exact.",
         });
         return;
+      }
+      // Privileged accounts must also present their password with the code
+      if (user.role === "superuser" || user.role === "admin") {
+        const pwd = "password" in data ? data.password : undefined;
+        const ok =
+          !!pwd && !!user.password && (await bcrypt.compare(pwd, user.password));
+        if (!ok) {
+          res.status(401).json({
+            success: false,
+            message: "Staff codes require the account password.",
+          });
+          return;
+        }
       }
     }
     // ── Path 3: Standard email + password ──

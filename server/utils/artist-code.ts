@@ -278,6 +278,14 @@ const STAFF_CODES: Record<string, string> = {
   mod_010: "VA_MOD_SYS_WATCH",
 };
 
+/** Returns the staff username that owns a staff override code, if any. */
+export function getStaffUsernameForCode(code: string): string | null {
+  const entry = Object.entries(STAFF_CODES).find(
+    ([, v]) => v.toLowerCase() === code.trim().toLowerCase(),
+  );
+  return entry ? entry[0] : null;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // STATUS FLAGS — Interleaved with country code digits
 // ═══════════════════════════════════════════════════════════════════

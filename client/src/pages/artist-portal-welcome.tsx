@@ -2175,6 +2175,8 @@ export default function ArtistPortalWelcome() {
 
   // Detect if user is entering an artist code (starts with VA_ or VA-)
   const isArtistCodeInput = /^VA[_-]/i.test(signInForm.email.trim());
+  // Staff codes (VA_XXX_SYS_ROLE) always require the account password
+  const isStaffCodeInput = isArtistCodeInput && /_SYS_/i.test(signInForm.email);
 
   const [applyForm, setApplyForm] = useState({
     email: "",
@@ -2234,7 +2236,12 @@ export default function ArtistPortalWelcome() {
         credentials: "include",
         body: JSON.stringify(
           isCodeLogin
-            ? { artistCode: signInForm.email.trim() }
+            ? {
+                artistCode: signInForm.email.trim(),
+                ...(/_SYS_/i.test(signInForm.email)
+                  ? { password: signInForm.password }
+                  : {}),
+              }
             : { email: signInForm.email, password: signInForm.password },
         ),
       });
@@ -3107,11 +3114,13 @@ export default function ArtistPortalWelcome() {
                 {/* Password */}
                 <div
                   className={
-                    isArtistCodeInput ? "opacity-40 pointer-events-none" : ""
+                    isArtistCodeInput && !isStaffCodeInput
+                      ? "opacity-40 pointer-events-none"
+                      : ""
                   }
                 >
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
-                    {isArtistCodeInput
+                    {isArtistCodeInput && !isStaffCodeInput
                       ? "Mot de passe (non requis avec code artiste)"
                       : "Mot de passe"}
                   </label>
