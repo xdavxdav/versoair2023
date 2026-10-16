@@ -2430,6 +2430,17 @@ export default function HousingReservations() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label>Payment method</Label>
+                <ReservationPaymentMethods
+                  selected={bookingPaymentMethod}
+                  onSelect={setBookingPaymentMethod}
+                />
+                <p className="text-xs text-gray-500">
+                  No payment is taken now. The host confirms your request first.
+                </p>
+              </div>
+
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <ShieldCheck className="h-4 w-4" />
                 <span>
