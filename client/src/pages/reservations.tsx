@@ -1233,12 +1233,12 @@ export default function HousingReservations() {
           </div>
           {/* Enhanced Search Bar */}
           <div
-            className={`rounded-2xl p-6 ${
+            className={`rounded-2xl p-4 sm:p-6 ${
               darkMode ? "bg-gray-800" : "bg-white"
-            } shadow-lg`}
+            } shadow-lg border ${darkMode ? "border-white/10" : "border-gray-100"} [&_label]:text-xs [&_label]:font-semibold [&_label]:uppercase [&_label]:tracking-wide [&_label]:text-gray-500 [&_input]:h-11 [&_input]:min-w-0 [&_input]:rounded-xl [&_button[role=combobox]]:h-11 [&_button[role=combobox]]:rounded-xl`}
           >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2 md:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="search-query">Property Name/Keyword</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -1295,10 +1295,10 @@ export default function HousingReservations() {
                 </div>
               </div>
 
-              <div className="flex items-end space-x-2">
+              <div className="flex items-end gap-2 md:col-span-2">
                 <Button
                   onClick={handleSearch}
-                  className="w-full"
+                  className="flex-1 h-11 rounded-xl"
                   disabled={isSearching}
                 >
                   {isSearching ? (
@@ -1316,7 +1316,7 @@ export default function HousingReservations() {
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="gap-2"
+                  className="gap-2 h-11 rounded-xl shrink-0"
                 >
                   <Filter className="h-4 w-4" />
                   Filters
@@ -1324,7 +1324,7 @@ export default function HousingReservations() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <div className="relative">
@@ -1339,9 +1339,9 @@ export default function HousingReservations() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="dates">Dates</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2">
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
@@ -1425,7 +1425,7 @@ export default function HousingReservations() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 md:max-w-xl">
               <div className="space-y-2">
                 <Label htmlFor="arrival-time">Arrival Time</Label>
                 <Select value={arrivalTime} onValueChange={setArrivalTime}>
