@@ -634,43 +634,54 @@ export function TwitterMessenger({
         className={`flex w-full flex-col border-r border-white/[0.06] sm:w-[320px] lg:w-[360px] ${selectedConv ? "hidden sm:flex" : "flex"}`}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 px-4 py-3 backdrop-blur-md">
-          {inline && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="mb-3 flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
-              title="Return to the previous page"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Return</span>
-            </button>
-          )}
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-white">Messages</h2>
-            <div className="flex items-center gap-1.5">
+        <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 px-5 pb-4 pt-4 backdrop-blur-md">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            {inline ? (
               <button
-                onClick={() => {
-                  setShowNewConvoModal(true);
-                  fetchContacts();
-                }}
-                className="flex items-center gap-1.5 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 px-3 py-1.5 text-xs font-semibold transition-all hover:scale-[1.02]"
-                title="Start conversation with contacts"
-              >
-                <SquarePen className="h-3.5 w-3.5" />
-                <span>New Message</span>
-              </button>
-              <button
+                type="button"
                 onClick={onClose}
-                className="rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
+                className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                title="Return to the previous page"
               >
-                <X className="h-5 w-5" />
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Return</span>
               </button>
+            ) : (
+              <span />
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold leading-tight text-white">
+                Messages
+              </h2>
+              <p className="mt-0.5 text-xs text-white/40">
+                Your conversations in one place
+              </p>
             </div>
+            <button
+              onClick={() => {
+                setShowNewConvoModal(true);
+                fetchContacts();
+              }}
+              className="flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-cyan-400"
+              title="Start conversation with contacts"
+            >
+              <SquarePen className="h-3.5 w-3.5" />
+              <span>New Message</span>
+            </button>
           </div>
 
           {/* Portal Filter Tabs */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 rounded-full bg-white/[0.04] p-1">
             {(["music", "community", "all"] as const).map((key) => {
               const active = portalFilter === key;
               const portal = key === "all" ? null : PORTALS[key];
@@ -715,7 +726,7 @@ export function TwitterMessenger({
         </div>
 
         {/* Search */}
-        <div className="px-4 py-2">
+        <div className="px-5 py-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
             <input
