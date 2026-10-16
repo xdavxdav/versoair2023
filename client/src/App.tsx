@@ -600,7 +600,7 @@ function Router() {
       <Route path="/services" component={Services} />
       <Route path="/services/news" component={News} />
       <Route path="/services/careers" component={Careers} />
-      <Route path="/careers/dashboard">
+      <Route path="/services/careers/dashboard">
         {() => <ProtectedRoute component={CareersPortal} />}
       </Route>
       <Route path="/services/contractors" component={Contractors} />
