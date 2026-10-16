@@ -1184,6 +1184,8 @@ export default function HousingReservations() {
       >
         <div className="container mx-auto px-4 py-4">
           {/* Quick Navigation */}
+          {/* Signed-out users already see the main navbar */}
+          {authUser && (
           <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
             <Link href="/">
               <Button
@@ -1231,6 +1233,7 @@ export default function HousingReservations() {
               </Button>
             </Link>
           </div>
+          )}
           {/* Enhanced Search Bar */}
           <div
             className={`rounded-2xl p-4 sm:p-6 ${
