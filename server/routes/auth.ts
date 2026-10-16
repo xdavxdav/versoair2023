@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
@@ -2894,7 +2894,12 @@ router.post(
           const [staff] = await db
             .select()
             .from(schema.users)
-            .where(eq(schema.users.username, staffUsername))
+            .where(
+              or(
+                eq(schema.users.username, staffUsername),
+                eq(schema.users.gateUsername, staffUsername),
+              ),
+            )
             .limit(1);
           if (staff) {
             user = staff;
