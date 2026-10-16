@@ -255,6 +255,7 @@ import Footer from "@/components/ui/footer";
 import VHeartzFooter from "@/components/ui/vheartz-footer";
 import Navbar from "@/components/ui/navbar";
 const BlogNavbar = lazy(() => import("@/components/BlogNavbar"));
+const TopNav = lazy(() => import("@/components/TopNav"));
 const LocationPanel = lazy(() => import("@/components/ui/location-panel"));
 const MusicPortal = lazy(() => import("@/components/ui/music-portal"));
 import { PageLoader, LoadingOverlay } from "@/components/ui/app-loader";
@@ -1135,6 +1136,11 @@ function AppContent() {
               )}
           </div>
         )}
+      {showAccountBlogNavbar && (
+        <Suspense fallback={null}>
+          <TopNav />
+        </Suspense>
+      )}
       {showAccountBlogNavbar && (
         <Suspense fallback={null}>
           <BlogNavbar />
