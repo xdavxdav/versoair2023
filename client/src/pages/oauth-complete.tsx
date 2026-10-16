@@ -78,7 +78,7 @@ export default function OAuthComplete() {
               artisan: "/artisans-portal",
               contractor: "/services/contractors",
               "geo-admin": "/geo-admin",
-              careers: "/services/careers",
+              careers: "/careers/dashboard",
             };
             const first = [
               "admin",

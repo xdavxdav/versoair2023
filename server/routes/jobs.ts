@@ -3,6 +3,7 @@ import { db, pool } from "../db";
 import { sql, eq, and, or, ilike, desc, count } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import jwt from "jsonwebtoken";
+import { requireAuth } from "../middleware/auth";
 import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
 const ADMIN_NOTIFICATION_EMAIL =
@@ -290,6 +291,72 @@ router.get("/search", async (req, res) => {
       details: error.message,
       data: [],
     });
+  }
+});
+
+// ─── Careers portal (authenticated) ────────────────────────────────────────
+
+// GET /api/jobs/mine — postings of businesses the user owns
+router.get("/mine", requireAuth(), async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT j.id, j.title, j.company, j.location, j.type, j.status,
+              j.posted_date, COALESCE(j.application_count, 0) AS application_count,
+              b.name AS business_name
+         FROM jobs j JOIN businesses b ON b.id = j.business_id
+        WHERE b.owner_id = $1
+        ORDER BY j.created_at DESC NULLS LAST LIMIT 200`,
+      [Number(req.user!.id)],
+    );
+    res.json({ success: true, jobs: rows });
+  } catch (error) {
+    console.error("[jobs] mine:", error);
+    res.status(500).json({ success: false, error: "Failed to load postings" });
+  }
+});
+
+// GET /api/jobs/my-applications — applications the user submitted
+router.get("/my-applications", requireAuth(), async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT a.id, a.job_id, a.status, a.applied_date, j.title, j.company, j.location
+         FROM job_applications a LEFT JOIN jobs j ON j.id::text = a.job_id::text
+        WHERE a.applicant_id = $1 OR lower(a.applicant_id) = lower($2)
+        ORDER BY a.applied_date DESC NULLS LAST LIMIT 200`,
+      [String(req.user!.id), String(req.user!.email || "")],
+    );
+    res.json({ success: true, applications: rows });
+  } catch (error) {
+    console.error("[jobs] my-applications:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to load applications" });
+  }
+});
+
+// GET /api/jobs/:id/applications — applicants for a posting the user owns
+router.get("/:id/applications", requireAuth(), async (req, res) => {
+  try {
+    const owned = await pool.query(
+      `SELECT 1 FROM jobs j JOIN businesses b ON b.id = j.business_id
+        WHERE j.id::text = $1 AND b.owner_id = $2`,
+      [req.params.id, Number(req.user!.id)],
+    );
+    if (!owned.rowCount) {
+      return res.status(404).json({ success: false, error: "Posting not found" });
+    }
+    const { rows } = await pool.query(
+      `SELECT id, applicant_id, status, cover_letter, resume_url, notes, applied_date
+         FROM job_applications WHERE job_id::text = $1
+        ORDER BY applied_date DESC NULLS LAST LIMIT 500`,
+      [req.params.id],
+    );
+    res.json({ success: true, applications: rows });
+  } catch (error) {
+    console.error("[jobs] applications:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to load applications" });
   }
 });
 

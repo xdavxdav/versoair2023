@@ -94,6 +94,7 @@ const DatabaseResults = lazy(() => import("@/pages/database-results"));
 const Services = lazy(() => import("@/pages/services"));
 const News = lazy(() => import("@/pages/services/news"));
 const Careers = lazy(() => import("@/pages/services/careers"));
+const CareersPortal = lazy(() => import("@/pages/careers-portal"));
 const Contractors = lazy(() => import("@/pages/services/contractors"));
 const Contracts = lazy(() => import("@/pages/contracts"));
 const Tickets = lazy(() => import("@/pages/tickets"));
@@ -599,6 +600,9 @@ function Router() {
       <Route path="/services" component={Services} />
       <Route path="/services/news" component={News} />
       <Route path="/services/careers" component={Careers} />
+      <Route path="/careers/dashboard">
+        {() => <ProtectedRoute component={CareersPortal} />}
+      </Route>
       <Route path="/services/contractors" component={Contractors} />
       <Route path="/contracts">
         {() => <ProtectedRoute component={Contracts} />}
