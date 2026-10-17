@@ -1821,7 +1821,7 @@ const BusinessManagement = ({
                     return (
                       <TableRow
                         key={business.id}
-                        className="bg-white text-slate-900 transition-colors hover:bg-slate-100"
+                        className="!bg-white !text-slate-900 transition-colors hover:!bg-slate-100"
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -1829,7 +1829,7 @@ const BusinessManagement = ({
                               <Icon className={`h-5 w-5 ${color}`} />
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900 flex items-center gap-2">
+                              <p className="font-semibold !text-slate-900 flex items-center gap-2">
                                 {business.name}
                                 {(business.isVerified ||
                                   business.is_verified) && (
@@ -1872,7 +1872,7 @@ const BusinessManagement = ({
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <div>
-                            <p className="text-sm font-medium text-slate-900">
+                            <p className="text-sm font-medium !text-slate-900">
                               {business.email}
                             </p>
                             <p className="text-sm text-gray-500">
