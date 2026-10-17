@@ -121,6 +121,8 @@ import {
 } from "./utils/performance-monitor";
 
 const app = express();
+// Render terminates TLS in front of us; trust one proxy hop so req.ip is the client
+app.set("trust proxy", 1);
 
 process.on("unhandledRejection", (reason) => {
   serverLog.error("Unhandled promise rejection:", reason);

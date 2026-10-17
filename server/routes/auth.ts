@@ -2574,26 +2574,37 @@ const artistLoginSchema = z.union([
 // Superuser artist-code shortcut is disabled unless explicitly configured.
 // Superusers should sign in with email + password.
 const SUPERUSER_ARTIST_CODE = process.env.SUPERUSER_ARTIST_CODE || "";
-// Per IP + code failure throttle so artist codes cannot be guessed by trial
-const CODE_FAIL_LIMIT = 5;
+// Failure throttle: per client IP (any code), plus a global cap on
+// staff-code-shaped guesses so short codes cannot be brute-forced.
+const CODE_FAIL_LIMIT = 8;
+const STAFF_GLOBAL_FAIL_LIMIT = 40;
 const CODE_FAIL_WINDOW_MS = 15 * 60 * 1000;
+const STAFF_CODE_SHAPE = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/;
+const STAFF_GLOBAL_KEY = "global|staff";
 const codeFailures = new Map<string, { n: number; until: number }>();
-const codeKey = (req: Request, code: string) =>
-  `${req.ip}|${code.trim().toLowerCase()}`;
-const codeBlocked = (key: string): boolean => {
+const normalizeCode = (code: string) => code.trim().toUpperCase();
+const isStaffShaped = (code: string) => STAFF_CODE_SHAPE.test(normalizeCode(code));
+const codeKey = (req: Request, _code: string) => `${req.ip}`;
+const failCount = (key: string): number => {
   const f = codeFailures.get(key);
-  if (!f) return false;
+  if (!f) return 0;
   if (f.until < Date.now()) {
     codeFailures.delete(key);
-    return false;
+    return 0;
   }
-  return f.n >= CODE_FAIL_LIMIT;
+  return f.n;
 };
-const codeFailed = (key: string) => {
-  const f = codeFailures.get(key);
-  const n = f && f.until >= Date.now() ? f.n + 1 : 1;
+const codeBlocked = (key: string, code = ""): boolean =>
+  failCount(key) >= CODE_FAIL_LIMIT ||
+  (isStaffShaped(code) && failCount(STAFF_GLOBAL_KEY) >= STAFF_GLOBAL_FAIL_LIMIT);
+const bump = (key: string) => {
+  const n = failCount(key) + 1;
   codeFailures.set(key, { n, until: Date.now() + CODE_FAIL_WINDOW_MS });
   if (codeFailures.size > 5000) codeFailures.clear();
+};
+const codeFailed = (key: string, code = "") => {
+  bump(key);
+  if (isStaffShaped(code)) bump(STAFF_GLOBAL_KEY);
 };
 
 // Staff codes are random secrets; only their SHA-256 hashes live in env vars.
@@ -2603,7 +2614,7 @@ const STAFF_CODE_HASHES: Array<{ env: string; who: string }> = [
   { env: "STAFF_CODE_HASH_MOD", who: "mod_010" },
 ];
 function matchStaffCode(code: string): string | null {
-  const digest = crypto.createHash("sha256").update(code.trim()).digest();
+  const digest = crypto.createHash("sha256").update(normalizeCode(code)).digest();
   for (const { env, who } of STAFF_CODE_HASHES) {
     const expected = (process.env[env] || "").trim().toLowerCase();
     if (!/^[0-9a-f]{64}$/.test(expected)) continue;
@@ -2893,7 +2904,7 @@ router.post(
       const code = data.artistCode.trim();
       const throttleKey = codeKey(req, code);
       let profileDivision = "";
-      if (codeBlocked(throttleKey)) {
+      if (codeBlocked(throttleKey, code)) {
         res.status(429).json({
           success: false,
           message: "Too many attempts. Try again later.",
@@ -2980,7 +2991,7 @@ router.post(
         }
       }
       if (!user) {
-        codeFailed(throttleKey);
+        codeFailed(throttleKey, code);
         res.status(401).json({
           success: false,
           message: "Code artiste invalide. Vérifiez le format exact.",
@@ -3000,7 +3011,7 @@ router.post(
         const ok =
           !!pwd && !!user.password && (await bcrypt.compare(pwd, user.password));
         if (!ok) {
-          codeFailed(throttleKey);
+          codeFailed(throttleKey, code);
           res.status(401).json({
             success: false,
             message:
