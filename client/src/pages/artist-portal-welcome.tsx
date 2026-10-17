@@ -3161,7 +3161,7 @@ export default function ArtistPortalWelcome() {
                           email: e.target.value,
                         })
                       }
-                      placeholder="you@email.com ou VA_XX-X_XXX-XXX-XXX-000.x"
+                      placeholder="you@email.com ou code (VA_… / AAA-000-AAA)"
                       className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all text-sm"
                     />
                   </div>

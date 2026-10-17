@@ -158,7 +158,7 @@ const conditionStyle = (c: string) => {
 // ═══════════════════════════════════════════════════
 export default function MarketplacePage() {
   // ═══ UNIFIED AUTH — AuthContext (main/artist/geo-admin) OR community session ═══
-  const { user: globalUser, login: setGlobalLogin } = useAuthContext();
+  const { user: globalUser, login: setGlobalLogin, logout: globalLogout } = useAuthContext();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("blog_community_auth") === "true";
   });
@@ -287,16 +287,11 @@ export default function MarketplacePage() {
   };
 
   const handleLogout = async () => {
-    try {
-      const { logout } = await import("@/lib/auth");
-      await logout();
-    } catch {
-      /* logout anyway */
-    }
     setIsAuthenticated(false);
     setUserName("User");
     localStorage.removeItem("blog_community_auth");
     localStorage.removeItem("blog_community_user");
+    await globalLogout();
   };
 
   // ═══ MARKETPLACE STATE ═══

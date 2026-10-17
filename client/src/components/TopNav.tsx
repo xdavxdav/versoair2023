@@ -141,7 +141,6 @@ export default function TopNav() {
             type="button"
             onClick={async () => {
               await logout();
-              navigate("/");
             }}
             className={`${item} flex w-full items-center gap-2 text-left`}
           >
