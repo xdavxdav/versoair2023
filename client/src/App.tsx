@@ -331,6 +331,7 @@ const BETA_ROUTE_PREFIXES = [
   "/track/",
   "/artist-catalogue/",
   "/library",
+  "/analytics",
   "/arena",
   "/arcade",
   "/listener-portal",
