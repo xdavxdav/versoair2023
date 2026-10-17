@@ -143,11 +143,12 @@ interface DbHealth {
   success: boolean;
   message: string;
   database?: {
-    connected: boolean;
-    name: string;
-    host: string;
-    port: string;
-    user: string;
+    connected?: boolean;
+    status?: string;
+    name?: string;
+    host?: string;
+    port?: string;
+    user?: string;
   };
 }
 
@@ -701,7 +702,10 @@ export default function Contractors() {
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Connecting...
         </div>
       );
-    const ok = dbHealth?.database?.connected;
+    const ok =
+      dbHealth?.success === true &&
+      (dbHealth.database?.connected === true ||
+        dbHealth.database?.status === "connected");
     return (
       <div
         className={
