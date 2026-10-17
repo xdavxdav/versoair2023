@@ -5,6 +5,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
+import { usePortalAccess } from "@/hooks/usePortalAccess";
+import { PORTALS } from "@/components/TopNav";
 import { CountryProvider } from "@/contexts/CountryContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AudioProvider, useAudio } from "@/lib/audio-context";
@@ -116,11 +118,40 @@ const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
 
 // Stable wrapper components — MUST be defined at module level (not inline)
 // so React keeps the same component identity across re-renders.
-const ArtistPortalWelcomePage = (props: any) => (
-  <Suspense fallback={<PageLoader />}>
-    <ArtistPortalWelcome {...props} />
-  </Suspense>
-);
+const ArtistPortalWelcomePage = (props: any) => {
+  const { user } = useAuthContext();
+  const { canAccessArtist, accessiblePortals, isLoading } = usePortalAccess();
+  // Signed in without artist access: no login form, just the portals they can open
+  if (user && !isLoading && !canAccessArtist) {
+    const links = accessiblePortals.filter((id) => PORTALS[id]);
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4 text-white">
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+          <h1 className="text-lg font-semibold">You're signed in</h1>
+          <p className="mt-1 text-sm text-white/60">
+            {user.name || user.email} · open a portal
+          </p>
+          <div className="mt-4 grid gap-2">
+            {links.map((id) => (
+              <Link
+                key={id}
+                href={PORTALS[id].path}
+                className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+              >
+                {PORTALS[id].label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <ArtistPortalWelcome {...props} />
+    </Suspense>
+  );
+};
 const OngCulturelle = lazy(() => import("@/pages/ong-culturelle"));
 
 // ─────────────────────────────────────────────────────

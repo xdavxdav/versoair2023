@@ -6,7 +6,7 @@ import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import type { PortalId } from "@/lib/portal-access";
 
-const PORTALS: Record<PortalId, { label: string; path: string }> = {
+export const PORTALS: Record<PortalId, { label: string; path: string }> = {
   general: { label: "Dashboard", path: "/dashboard" },
   streamer: { label: "Streamer", path: "/streamer-portal" },
   artist: { label: "Artist", path: "/artist-portal/welcome" },
