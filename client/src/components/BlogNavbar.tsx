@@ -23,6 +23,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { HeaderMessagesButton } from "@/components/TwitterMessenger";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 
 interface BlogNavbarProps {
   isAuthenticated?: boolean;
@@ -204,7 +205,7 @@ export default function BlogNavbar({
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef<HTMLDivElement | null>(null);
-  const [, setLocation] = useLocation();
+  const [currentPath, setLocation] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -255,6 +256,7 @@ export default function BlogNavbar({
     user?.email?.split("@")[0] ??
     (marketplaceAuth ? marketplaceUser : "User");
   const dashboard = getDashboardDestination(user);
+  useScrollLock(openMenu !== null);
   const handleLogout = () => {
     if (onLogoutProp) {
       onLogoutProp();
@@ -270,12 +272,15 @@ export default function BlogNavbar({
     // Stay on the marketplace portal
     setLocation("/marketplace");
   };
-  const [currentPath] = useLocation();
-
   const open = (key: string) => setOpenMenu(key);
   const close = () => setOpenMenu(null);
   const toggleMenu = (key: string) =>
     setOpenMenu((current) => (current === key ? null : key));
+
+  useEffect(() => {
+    setOpenMenu(null);
+    setMobileOpenGroup(null);
+  }, [currentPath]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -300,16 +305,6 @@ export default function BlogNavbar({
       if (muHoldIntervalRef.current) clearInterval(muHoldIntervalRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (openMenu !== "mobile") return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [openMenu]);
 
   // A normal tap returns to the public home page; a long press still logs out.
   const handleHomeTap = useCallback(() => {
@@ -664,11 +659,9 @@ export default function BlogNavbar({
                   <Link href="/partners">
                     <a className={ITEM}>Partners</a>
                   </Link>
-                  {(user?.isAdmin || user?.role === "superuser") && (
-                    <Link href="/geo-admin">
-                      <a className={ITEM_HEAD}>Geo Admin</a>
-                    </Link>
-                  )}
+                  <Link href="/geo-admin">
+                    <a className={ITEM_HEAD}>Geo Admin</a>
+                  </Link>
                 </DropPanel>
               </div>
 
@@ -934,6 +927,11 @@ export default function BlogNavbar({
               <Link href="/marketplace">
                 <a className="rounded-xl px-3 py-2.5 text-left text-xs font-medium text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-200">
                   Marketplace
+                </a>
+              </Link>
+              <Link href="/geo-admin">
+                <a className="rounded-xl px-3 py-2.5 text-left text-xs font-medium text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-100">
+                  Geo Admin
                 </a>
               </Link>
             </div>
