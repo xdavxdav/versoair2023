@@ -125,7 +125,12 @@ export default function GeoAdminAccessManager() {
                   {member.gateUsername} - {member.role} - {member.status}
                 </p>
               </div>
-              <Button variant="outline" disabled={working} onClick={() => void revoke(member)}>
+              <Button
+                variant="outline"
+                disabled={working}
+                className="border-amber-400 bg-violet-950 text-amber-300 hover:bg-violet-900 hover:text-amber-200"
+                onClick={() => void revoke(member)}
+              >
                 {member.status === "pending" ? "Cancel invitation" : "Revoke access"}
               </Button>
             </li>
