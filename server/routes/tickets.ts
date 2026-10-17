@@ -67,59 +67,62 @@ router.get("/", async (req, res) => {
       );
       return res.json(rows.rows || []);
     }
-    res.json(inMemoryTickets);
+    res.status(503).json({ success: false, error: "Tickets are temporarily unavailable" });
   } catch (error: any) {
     console.error("❌ Get tickets failed:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
+const PRIORITIES = new Set(["low", "medium", "high", "critical"]);
+const STATUSES = new Set(["open", "in-progress", "resolved", "closed"]);
+const clip = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
+
+// Ids are numeric (SERIAL); reject anything else before it reaches SQL
+router.param("id", (req, res, next, id) => {
+  if (!/^\d{1,9}$/.test(id)) {
+    return res.status(400).json({ success: false, error: "Invalid ticket id" });
+  }
+  next();
+});
+
 // POST /api/tickets
 router.post("/", async (req, res) => {
   try {
     const payload = req.body || {};
-    const priority = payload.priority || "medium";
-    const slaTargetHours = calculateSLATargetHours(priority);
-    const now = new Date().toISOString();
-    const ticket = {
-      id: payload.id || Math.floor(Math.random() * 1000000).toString(),
-      title: payload.title || "Untitled",
-      description: payload.description || "",
-      status: payload.status || "open",
-      priority,
-      category: payload.category || "general",
-      reporter: payload.reporter || null,
-      requester_email: payload.requesterEmail || null,
-      assignee_id: payload.assigneeId || null,
-      team: payload.team || null,
-      source: payload.source || "portal",
-      sla_target_hours: slaTargetHours,
-      sla_breached: false,
-      created_at: now,
-      updated_at: now,
-    };
-
-    const exists = await ensureTicketsTable();
-    if (exists) {
-      try {
-        const inserted = await db.execute(
-          sql`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
-              VALUES (${payload.title || "Untitled"}, ${payload.description || ""}, ${payload.status || "open"}, ${priority}, ${payload.category || "general"}, ${payload.reporter || null}, ${payload.requesterEmail || null}, ${payload.assigneeId || null}, ${payload.team || null}, ${payload.source || "portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
-              RETURNING *`,
-        );
-        notifyZapier("ticket", inserted.rows[0]);
-        return res.json(inserted.rows[0]);
-      } catch (dbError: any) {
-        console.error("❌ Database insert error:", dbError);
-      }
+    const user = (req as any).user;
+    const isStaff = STAFF_ROLES.has(String(user?.role || "").toLowerCase());
+    const title = clip(payload.title, 200);
+    if (!title) {
+      return res.status(400).json({ success: false, error: "Title is required" });
     }
+    const priority = PRIORITIES.has(String(payload.priority).toLowerCase())
+      ? String(payload.priority).toLowerCase()
+      : "medium";
+    const slaTargetHours = calculateSLATargetHours(priority);
+    // Reporter comes from the session; only staff can pick status, assignee or team
+    const reporter = user?.email || null;
+    const status =
+      isStaff && STATUSES.has(String(payload.status)) ? String(payload.status) : "open";
+    const assigneeId =
+      isStaff && /^\d+$/.test(String(payload.assigneeId ?? ""))
+        ? Number(payload.assigneeId)
+        : null;
+    const team = isStaff ? clip(payload.team, 80) || null : null;
 
-    inMemoryTickets.unshift(ticket);
-    notifyZapier("ticket", ticket);
-    res.json(ticket);
+    if (!(await ensureTicketsTable())) {
+      return res.status(503).json({ success: false, error: "Tickets are temporarily unavailable" });
+    }
+    const inserted = await db.execute(
+      sql`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
+          VALUES (${title}, ${clip(payload.description, 5000)}, ${status}, ${priority}, ${clip(payload.category, 60) || "general"}, ${reporter}, ${clip(payload.requesterEmail, 200) || reporter}, ${assigneeId}, ${team}, ${"portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
+          RETURNING *`,
+    );
+    notifyZapier("ticket", inserted.rows[0]);
+    res.json(inserted.rows[0]);
   } catch (error: any) {
     console.error("❌ Create ticket failed:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: "Could not create ticket" });
   }
 });
 
@@ -128,6 +131,12 @@ router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const payload = req.body || {};
+    if (payload.status != null && !STATUSES.has(String(payload.status))) {
+      return res.status(400).json({ success: false, error: "Invalid status" });
+    }
+    if (payload.priority != null && !PRIORITIES.has(String(payload.priority).toLowerCase())) {
+      return res.status(400).json({ success: false, error: "Invalid priority" });
+    }
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
@@ -273,19 +282,18 @@ router.get("/:id/comments", async (req, res) => {
 router.post("/:id/comments", async (req, res) => {
   try {
     const { id } = req.params;
-    const { body, authorName } = req.body || {};
+    const { body } = req.body || {};
     if (!body || !String(body).trim()) {
       return res.status(400).json({ error: "Comment body is required" });
     }
-    const authorId = (req as any).user?.id || null;
-    const resolvedAuthorName =
-      authorName || (req as any).user?.username || "Anonymous";
+    const authorId = Number((req as any).user?.userId) || null;
+    const resolvedAuthorName = (req as any).user?.email || "Staff";
     const exists = await ensureTicketsTable();
     if (exists) {
       try {
         const inserted = await db.execute(
           sql`INSERT INTO ticket_comments (ticket_id, author_id, author_name, body)
-              VALUES (${parseInt(id)}, ${authorId}, ${resolvedAuthorName}, ${body})
+              VALUES (${parseInt(id)}, ${authorId}, ${resolvedAuthorName}, ${clip(body, 5000)})
               RETURNING *`,
         );
         return res.json(inserted.rows[0]);
@@ -423,6 +431,13 @@ router.post("/batch/update", async (req, res) => {
       return res
         .status(400)
         .json({ success: false, error: "ids array required" });
+    }
+    if (
+      ids.length > 200 ||
+      !ids.every((i: unknown) => /^\d{1,9}$/.test(String(i))) ||
+      (updates?.status != null && !STATUSES.has(String(updates.status)))
+    ) {
+      return res.status(400).json({ success: false, error: "Invalid ids or status" });
     }
     const exists = await ensureTicketsTable();
     if (exists) {

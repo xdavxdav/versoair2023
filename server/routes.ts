@@ -11,6 +11,7 @@ import oauthRouter from "./routes/oauth";
 import socialApiRoutes from "./routes/social-api";
 import faqApiRoutes from "./routes/faq-api";
 import ticketsRouter from "./routes/tickets";
+import { requireAdminElevation } from "./middleware/admin-elevation";
 import jobsRouter from "./routes/jobs";
 import musicRouter from "./routes/music";
 import streamroyaleRouter from "./routes/streamroyale";
@@ -1060,7 +1061,7 @@ export async function registerRoutes(app: Express) {
   // Active users endpoints
   app.use("/api", usersRouter);
 
-  app.use("/api/admin", adminRouter);
+  app.use("/api/admin", requireAdminElevation, adminRouter);
   // /api/tables handled by systemRouter above
   app.use("/api/commerce", commerceAdsRouter);
   app.use("/api", businessSearchRouter);

@@ -6570,32 +6570,6 @@ export default function AdminDashboard() {
 
   const [isAdminGateAuthenticated, setIsAdminGateAuthenticated] = useState(
     () => {
-      // If coming from vault (?from=sv), superuser is already authenticated
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("from") === "sv" || params.get("from") === "vault") {
-        // Auto-grant access and persist session
-        localStorage.setItem(
-          "adminAccessTime",
-          new Date().getTime().toString(),
-        );
-        localStorage.setItem("adminUsername", "vault-superuser");
-        return true;
-      }
-      // Admin Dashboard used a SEPARATE 15-min gate from GeoAdmin/TAM
-      // (`adminAccessTime` vs `geoadmin_session`), so a user already signed
-      // in through the shared GeoAdminAuthGate was re-prompted here even
-      // though they were still connected. Honor that session too.
-      if (localStorage.getItem("geoadmin_session") === "true") {
-        localStorage.setItem(
-          "adminAccessTime",
-          new Date().getTime().toString(),
-        );
-        localStorage.setItem(
-          "adminUsername",
-          localStorage.getItem("geoadmin_username") || "geoadmin",
-        );
-        return true;
-      }
       const savedAccessTime = localStorage.getItem("adminAccessTime");
       const savedUsername = localStorage.getItem("adminUsername");
       if (!savedAccessTime || !savedUsername) return false;
@@ -6748,6 +6722,21 @@ export default function AdminDashboard() {
       );
     }
   }, [sessionUser?.role, isAdminGateAuthenticated]);
+
+  // The server is the source of truth: if its admin session is gone, drop the local flag and show the gate
+  useEffect(() => {
+    if (!isAdminGateAuthenticated || sessionUser?.role === "superuser") return;
+    fetch("/auth/admin-elevation", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { elevated: false }))
+      .then((d) => {
+        if (!d.elevated) {
+          localStorage.removeItem("adminAccessTime");
+          localStorage.removeItem("adminUsername");
+          setIsAdminGateAuthenticated(false);
+        }
+      })
+      .catch(() => {});
+  }, [isAdminGateAuthenticated, sessionUser?.role]);
 
   // On mount: restore JWT into _authToken if session is alive but token is missing (page refresh)
   useEffect(() => {

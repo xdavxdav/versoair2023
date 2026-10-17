@@ -12,6 +12,7 @@ import {
   rejectUnavailableTrial,
 } from "../utils/commercial-gates";
 import { requireAuth } from "../middleware/auth";
+import { issueAdminElevation, clearAdminElevation, hasAdminElevation } from "../middleware/admin-elevation";
 import {
   loginLimiter,
   registerLimiter,
@@ -1359,6 +1360,7 @@ router.post(
     );
 
     setAuthCookie(res, token);
+    issueAdminElevation(res, String(user.id));
     await createSession(user.id, token, req, { revokeOthers: true });
 
     // Compute capabilities for portal access
@@ -1382,6 +1384,11 @@ router.post(
     });
   }),
 );
+
+/** GET /auth/admin-elevation — does the server still consider this admin session unlocked? */
+router.get("/admin-elevation", requireAuth(), (req: Request, res: Response) => {
+  res.json({ elevated: hasAdminElevation(req) });
+});
 
 /**
  * POST /auth/geo-admin
