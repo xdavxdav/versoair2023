@@ -893,6 +893,16 @@ function AppContent() {
   // ~68px dead strip at the bottom of every non-music page.
   const { currentTrack } = useAudio();
   const [currentPath] = useLocation();
+  useEffect(() => {
+    // Shared pages (profile, marketplace...) must not overwrite the portal we came from
+    if (
+      ["/music", "/stream", "/artist-portal", "/blog"].some((p) =>
+        currentPath.startsWith(p),
+      )
+    ) {
+      sessionStorage.setItem("last_portal_path", currentPath);
+    }
+  }, [currentPath]);
   const isHomePage = currentPath === "/" || currentPath === "";
   const normalizedPath = currentPath.replace(/\/+$/, "") || "/";
   const isVHeartzPage = [

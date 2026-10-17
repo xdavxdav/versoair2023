@@ -73,6 +73,21 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
   };
 }
 
+const MUSIC_PORTAL_PREFIXES = ["/music", "/stream", "/artist-portal"];
+
+/** Where to land after sign-out: the portal the user was last working in. */
+function portalHomeForLogout(): string {
+  const path = window.location.pathname;
+  const last = sessionStorage.getItem("last_portal_path") || "";
+  const inMusic = (p: string) =>
+    MUSIC_PORTAL_PREFIXES.some((x) => p.startsWith(x));
+  if (inMusic(path) || (!path.startsWith("/blog") && inMusic(last))) {
+    return "/artist-portal";
+  }
+  if (path.startsWith("/blog") || last.startsWith("/blog")) return "/blog";
+  return "/";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -221,12 +236,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    const target = portalHomeForLogout();
     fullClearOnLogout();
     try {
       await fetch("/auth/logout", { method: "POST", credentials: "include" });
     } catch {
       // Ignore network errors on logout
     }
+    window.location.replace(target);
   };
 
   function clearSession() {
@@ -266,6 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("blog_community_user");
     localStorage.removeItem("signin_timestamp");
     sessionStorage.removeItem("music_referrer");
+    sessionStorage.removeItem("last_portal_path");
     setToken(null);
     setUser(null);
   }
