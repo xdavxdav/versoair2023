@@ -55,7 +55,7 @@ export const VerificationStatusBadge: React.FC<
     return {
       icon: "❓",
       label: "Unknown",
-      color: "bg-gray-100 text-gray-800 border-gray-300",
+      color: "bg-gray-100 text-black border-gray-300",
       description: "Unknown status",
     };
   };
