@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
@@ -2965,8 +2965,29 @@ router.post(
               [resolved] = await db
                 .select()
                 .from(schema.users)
-                .where(eq(schema.users.role, "superuser"))
+                .where(inArray(schema.users.role, ["superuser", "superadmin"]))
                 .limit(1);
+            }
+            // First sign-in on a fresh database: bootstrap the owner account
+            if (!resolved && SUPERADMIN_EMAIL) {
+              const ownerEmail = SUPERADMIN_EMAIL.trim().toLowerCase();
+              const base =
+                ownerEmail.split("@")[0].replace(/[^a-z0-9_]/g, "") || "owner";
+              const randomPassword = await bcrypt.hash(
+                crypto.randomBytes(32).toString("hex"),
+                SALT_ROUNDS,
+              );
+              [resolved] = await db
+                .insert(schema.users)
+                .values({
+                  username: `${base}_${crypto.randomBytes(2).toString("hex")}`,
+                  email: ownerEmail,
+                  password: randomPassword,
+                  role: "superuser",
+                  isVerified: true,
+                } as any)
+                .returning();
+              console.warn("[ARTIST AUTH] Owner account bootstrapped");
             }
           } else {
             [resolved] = await db
