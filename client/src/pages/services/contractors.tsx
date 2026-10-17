@@ -923,7 +923,7 @@ export default function Contractors() {
                   variant="outline"
                   size="sm"
                   onClick={refresh}
-                  className="gap-1 sm:gap-2 border-gray-300 hover:border-amber-500 hover:text-amber-600 px-2 sm:px-3"
+                  className="gap-1 sm:gap-2 border-gray-300 !bg-white !text-gray-900 hover:border-amber-500 hover:!bg-amber-50 hover:!text-amber-950 px-2 sm:px-3"
                 >
                   <RefreshCw className="h-4 w-4" />
                   <span className="hidden sm:inline">Refresh</span>
