@@ -1087,7 +1087,7 @@ export default function Contractors() {
                       Category
                     </Label>
                     <Select value={selCategory} onValueChange={setSelCategory}>
-                      <SelectTrigger className="border-gray-300">
+                      <SelectTrigger className="border-gray-300 !bg-white !text-gray-900 focus:!bg-white focus:!text-gray-900">
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1106,7 +1106,7 @@ export default function Contractors() {
                       Sector
                     </Label>
                     <Select value={selSector} onValueChange={setSelSector}>
-                      <SelectTrigger className="border-gray-300">
+                      <SelectTrigger className="border-gray-300 !bg-white !text-gray-900 focus:!bg-white focus:!text-gray-900">
                         <SelectValue placeholder="All Sectors" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1134,7 +1134,7 @@ export default function Contractors() {
                       Experience Level
                     </Label>
                     <Select value={selExp} onValueChange={setSelExp}>
-                      <SelectTrigger className="border-gray-300">
+                      <SelectTrigger className="border-gray-300 !bg-white !text-gray-900 focus:!bg-white focus:!text-gray-900">
                         <SelectValue placeholder="All Levels" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1468,7 +1468,7 @@ export default function Contractors() {
                       </p>
                     </div>
                     <Select defaultValue="newest">
-                      <SelectTrigger className="w-full sm:w-48 border-gray-300">
+                      <SelectTrigger className="w-full sm:w-48 border-gray-300 !bg-white !text-gray-900 focus:!bg-white focus:!text-gray-900">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
