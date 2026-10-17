@@ -2174,9 +2174,13 @@ export default function ArtistPortalWelcome() {
   });
 
   // Detect if user is entering an artist code (starts with VA_ or VA-)
-  const isArtistCodeInput = /^VA[_-]/i.test(signInForm.email.trim());
-  // Staff codes (VA_XXX_SYS_ROLE) always require the account password
-  const isStaffCodeInput = isArtistCodeInput && /_SYS_/i.test(signInForm.email);
+  const isStaffShapedCode = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i.test(
+    signInForm.email.trim(),
+  );
+  const isArtistCodeInput =
+    /^VA[_-]/i.test(signInForm.email.trim()) || isStaffShapedCode;
+  // Staff codes never take a password, so the field is greyed out for them
+  const isStaffCodeInput = isStaffShapedCode;
   // Code-only sign-in is a merit perk; the password stays optional for those who earned it
 
   const [applyForm, setApplyForm] = useState({
@@ -2230,7 +2234,9 @@ export default function ArtistPortalWelcome() {
     setIsAuthLoading(true);
     setAuthError("");
     try {
-      const isCodeLogin = /^VA[_-]/i.test(signInForm.email.trim());
+      const isCodeLogin =
+        /^VA[_-]/i.test(signInForm.email.trim()) ||
+        /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i.test(signInForm.email.trim());
       const res = await fetch("/auth/artist/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2239,7 +2245,9 @@ export default function ArtistPortalWelcome() {
           isCodeLogin
             ? {
                 artistCode: signInForm.email.trim(),
-                ...(signInForm.password ? { password: signInForm.password } : {}),
+                ...(signInForm.password && !isStaffCodeInput
+                  ? { password: signInForm.password }
+                  : {}),
               }
             : { email: signInForm.email, password: signInForm.password },
         ),
@@ -3113,7 +3121,7 @@ export default function ArtistPortalWelcome() {
                 {/* Password */}
                 <div
                   className={
-                    ""
+                    isStaffCodeInput ? "opacity-40 pointer-events-none" : ""
                   }
                 >
                   <label className="block text-white/40 text-xs tracking-wider uppercase mb-2">
@@ -3125,14 +3133,19 @@ export default function ArtistPortalWelcome() {
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                     <input
                       type={showPassword ? "text" : "password"}
-                      value={signInForm.password}
+                      value={isStaffCodeInput ? "" : signInForm.password}
+                      disabled={isStaffCodeInput}
                       onChange={(e) =>
                         setSignInForm({
                           ...signInForm,
                           password: e.target.value,
                         })
                       }
-                      placeholder="Entrez votre mot de passe"
+                      placeholder={
+                        isStaffCodeInput
+                          ? "Pas de mot de passe pour un code staff"
+                          : "Entrez votre mot de passe"
+                      }
                       className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all text-sm"
                     />
                     <button
