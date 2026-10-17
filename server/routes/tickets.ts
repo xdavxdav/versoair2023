@@ -5,6 +5,18 @@ import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
 
+const STAFF_ROLES = new Set(["admin", "superuser", "moderator", "tsr"]);
+
+// Anyone signed in may open a ticket; reading, editing and managing tickets is staff-only
+router.use((req, res, next) => {
+  if (req.method === "POST" && req.path === "/") return next();
+  const role = String((req as any).user?.role || "").toLowerCase();
+  if (!STAFF_ROLES.has(role)) {
+    return res.status(403).json({ success: false, error: "Staff access only" });
+  }
+  next();
+});
+
 // In-memory fallback for tickets
 let inMemoryTickets: any[] = [];
 
@@ -121,14 +133,14 @@ router.put("/:id", async (req, res) => {
       try {
         const updated = await db.execute(
           sql`UPDATE tickets 
-              SET title=${payload.title || ""}, 
-                  description=${payload.description || ""}, 
-                  status=${payload.status || "open"},
-                  priority=${payload.priority},
-                  category=${payload.category},
-                  assignee_id=${payload.assigneeId || null},
-                  team=${payload.team || null},
-                  resolved_at=${payload.status === "resolved" ? new Date().toISOString() : null},
+              SET title=COALESCE(${payload.title ?? null}, title),
+                  description=COALESCE(${payload.description ?? null}, description),
+                  status=COALESCE(${payload.status ?? null}, status),
+                  priority=COALESCE(${payload.priority ?? null}, priority),
+                  category=COALESCE(${payload.category ?? null}, category),
+                  assignee_id=COALESCE(${payload.assigneeId ?? null}, assignee_id),
+                  team=COALESCE(${payload.team ?? null}, team),
+                  resolved_at=CASE WHEN ${payload.status ?? null}::text = 'resolved' THEN NOW() WHEN ${payload.status ?? null}::text IS NOT NULL THEN NULL ELSE resolved_at END,
                   updated_at=NOW()
               WHERE id=${parseInt(id)} 
               RETURNING *`,
@@ -416,7 +428,7 @@ router.post("/batch/update", async (req, res) => {
     if (exists) {
       for (const id of ids) {
         await db.execute(
-          sql`UPDATE tickets SET status = ${updates?.status || "open"}, updated_at = NOW() WHERE id = ${parseInt(id)}`,
+          sql`UPDATE tickets SET status = COALESCE(${updates?.status ?? null}, status), updated_at = NOW() WHERE id = ${parseInt(id)}`,
         );
       }
     }
