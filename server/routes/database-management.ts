@@ -22,7 +22,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const ADMIN_NOTIFICATION_EMAIL =
-  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "luqjoey@gmail.com";
+  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
 const router = Router();
 
 // ═══════════════════════════════════════════════

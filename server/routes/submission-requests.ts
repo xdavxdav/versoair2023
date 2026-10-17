@@ -5,7 +5,7 @@ import { pool } from "../db";
 const router = Router();
 
 const ADMIN_EMAIL =
-  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "luqjoey@gmail.com";
+  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
 
 const APP_URL =
   process.env.VITE_API_URL ||

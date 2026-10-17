@@ -9,7 +9,7 @@ import { notifyNewJobPosted } from "../../../services/notification-service";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
 
 const ADMIN_NOTIFICATION_EMAIL =
-  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "luqjoey@gmail.com";
+  process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
 
 const router = Router();
 

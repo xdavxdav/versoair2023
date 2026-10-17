@@ -107,7 +107,7 @@ export async function initializeEmailTransporter() {
   const dbConfig = await loadSmtpConfigFromDb();
 
   const config = dbConfig || {
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    host: process.env.SMTP_HOST || "",
     port: parseInt(process.env.SMTP_PORT || "587", 10),
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -118,7 +118,7 @@ export async function initializeEmailTransporter() {
     secure: (process.env.SMTP_SECURE || "false").toLowerCase() === "true",
   };
 
-  if (!config.user || !config.pass) {
+  if (!config.host || !config.user || !config.pass) {
     console.warn(
       "[EMAIL] SMTP credentials not configured. Email notifications disabled.",
     );

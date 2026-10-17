@@ -313,7 +313,7 @@ router.post("/apply", async (req: Request, res: Response) => {
 
     // ── Emails (non-blocking) ──────────────────────────────────────────────────
     const adminEmail =
-      process.env.SMTP_FROM || process.env.SMTP_USER || "luqjoey@gmail.com";
+      process.env.SMTP_FROM || process.env.SMTP_USER || "";
     Promise.allSettled([
       sendArtistApplicationConfirmation({
         toEmail: email,
