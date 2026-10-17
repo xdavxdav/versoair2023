@@ -1,18 +1,53 @@
 import { Router } from "express";
 import { db } from "../db";
 import { sql } from "drizzle-orm";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
 
 const STAFF_ROLES = new Set(["admin", "superuser", "moderator", "tsr"]);
 
-// Anyone signed in may open a ticket; reading, editing and managing tickets is staff-only
-router.use((req, res, next) => {
-  if (req.method === "POST" && req.path === "/") return next();
-  const role = String((req as any).user?.role || "").toLowerCase();
-  if (!STAFF_ROLES.has(role)) {
+const TOP_TIER = "enterprise";
+
+async function isTopTier(userId: unknown): Promise<boolean> {
+  const id = Number(userId);
+  if (!id) return false;
+  const [u] = await db
+    .select({ tier: users.subscriptionTier })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+  return String(u?.tier || "").toLowerCase() === TOP_TIER;
+}
+
+// Everyone signed in: create tickets, and read/comment on their own.
+// Everything else (other people's tickets, edits, assignment, stats, batch) is staff-only.
+router.use(async (req, res, next) => {
+  const user = (req as any).user;
+  const role = String(user?.role || "").toLowerCase();
+  if (STAFF_ROLES.has(role)) return next();
+  const p = req.path;
+  const own =
+    (req.method === "POST" && p === "/") ||
+    (req.method === "GET" && p === "/") ||
+    (/^\/\d{1,9}\/comments\/?$/.test(p) && (req.method === "GET" || req.method === "POST"));
+  if (!own) {
     return res.status(403).json({ success: false, error: "Staff access only" });
+  }
+  const m = p.match(/^\/(\d+)\/comments/);
+  if (m) {
+    try {
+      const r = await db.execute(
+        sql`SELECT 1 FROM tickets WHERE id=${parseInt(m[1])} AND reporter_id=${Number(user?.userId) || -1}`,
+      );
+      if (!r.rows.length) {
+        return res.status(404).json({ success: false, error: "Ticket not found" });
+      }
+    } catch {
+      return res.status(503).json({ success: false, error: "Tickets are temporarily unavailable" });
+    }
   }
   next();
 });
@@ -62,9 +97,13 @@ router.get("/", async (req, res) => {
   try {
     const exists = await ensureTicketsTable();
     if (exists) {
-      const rows = await db.execute(
-        sql`SELECT * FROM tickets ORDER BY created_at DESC`,
-      );
+      const u = (req as any).user;
+      const staff = STAFF_ROLES.has(String(u?.role || "").toLowerCase());
+      const rows = staff
+        ? await db.execute(sql`SELECT * FROM tickets ORDER BY created_at DESC`)
+        : await db.execute(
+            sql`SELECT * FROM tickets WHERE reporter_id=${Number(u?.userId) || -1} ORDER BY created_at DESC`,
+          );
       return res.json(rows.rows || []);
     }
     res.status(503).json({ success: false, error: "Tickets are temporarily unavailable" });
@@ -96,9 +135,13 @@ router.post("/", async (req, res) => {
     if (!title) {
       return res.status(400).json({ success: false, error: "Title is required" });
     }
-    const priority = PRIORITIES.has(String(payload.priority).toLowerCase())
+    let priority = PRIORITIES.has(String(payload.priority).toLowerCase())
       ? String(payload.priority).toLowerCase()
       : "medium";
+    // Top-tier perk: never below "high", so a tighter SLA target
+    if (!isStaff && (await isTopTier(user?.userId)) && (priority === "low" || priority === "medium")) {
+      priority = "high";
+    }
     const slaTargetHours = calculateSLATargetHours(priority);
     // Reporter comes from the session; only staff can pick status, assignee or team
     const reporter = user?.email || null;
@@ -114,8 +157,8 @@ router.post("/", async (req, res) => {
       return res.status(503).json({ success: false, error: "Tickets are temporarily unavailable" });
     }
     const inserted = await db.execute(
-      sql`INSERT INTO tickets (title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
-          VALUES (${title}, ${clip(payload.description, 5000)}, ${status}, ${priority}, ${clip(payload.category, 60) || "general"}, ${reporter}, ${clip(payload.requesterEmail, 200) || reporter}, ${assigneeId}, ${team}, ${"portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
+      sql`INSERT INTO tickets (reporter_id, title, description, status, priority, category, reporter, requester_email, assignee_id, team, source, sla_target_hours, sla_breached, created_at, updated_at) 
+          VALUES (${Number(user?.userId) || null}, ${title}, ${clip(payload.description, 5000)}, ${status}, ${priority}, ${clip(payload.category, 60) || "general"}, ${reporter}, ${clip(payload.requesterEmail, 200) || reporter}, ${assigneeId}, ${team}, ${"portal"}, ${slaTargetHours}, false, NOW(), NOW()) 
           RETURNING *`,
     );
     notifyZapier("ticket", inserted.rows[0]);
