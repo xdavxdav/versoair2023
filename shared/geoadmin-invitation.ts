@@ -166,6 +166,16 @@ export const acceptGeoAdminInvitationSchema = z
   })
   .strict();
 
+export const acceptExistingGeoAdminInvitationSchema = z
+  .object({
+    token: z
+      .string({ required_error: "Invitation token is required" })
+      .trim()
+      .min(1, "Invitation token is required")
+      .max(256, "Invalid invitation token"),
+  })
+  .strict();
+
 // ─── Access-entry identifiers ────────────────────────────────────────────────
 // Pending invitations and active accounts live in different tables, so the
 // list/revoke contract uses prefixed ids to keep them unambiguous.
@@ -215,6 +225,22 @@ export interface GeoAdminRevocationTarget {
   previousRole?: string | null;
   gateUsername: string | null;
   portalAccess: string[] | null;
+}
+
+export function canLinkExistingUserToGeoAdmin(user: {
+  role: string | null;
+  previousRole?: string | null;
+  gateUsername: string | null;
+  portalAccess: string[] | null;
+  isVerified: boolean | null;
+}) {
+  return (
+    user.isVerified === true &&
+    ["user", "business_owner", "artist", "listener"].includes(user.role ?? "") &&
+    user.previousRole == null &&
+    user.gateUsername == null &&
+    !user.portalAccess?.includes("geo-admin")
+  );
 }
 
 export interface GeoAdminRevocationBlocker {
@@ -282,7 +308,7 @@ export function getGeoAdminRevocationBlocker(
   return null;
 }
 
-/** Accepted invitation that created a managed GeoAdmin account. */
+/** Accepted invitation linked to a managed GeoAdmin account. */
 export interface GeoAdminInvitationLink {
   status: string;
   acceptedUserId: number | null;
@@ -305,8 +331,8 @@ export function getGeoAdminManagedStaffRole(
 }
 
 /**
- * The invite-only manager may only see or revoke accounts that an accepted
- * invitation created, still bound to that invitation's email and role.
+ * The invite-only manager may only see or revoke accounts linked to an
+ * accepted invitation that still matches the invitation's email and role.
  */
 export function isInvitationLinkedGeoAdmin(
   target: GeoAdminRevocationTarget,
@@ -344,19 +370,30 @@ export function getGeoAdminManagedRevocationBlocker(
 }
 
 /**
- * Account changes applied when invitation-created GeoAdmin access is revoked.
- * Only invitation-linked accounts reach this, so portals reset to "general";
- * artist/contractor portals are recomputed from their records by capability sync.
+ * Account changes applied when invitation-linked GeoAdmin access is revoked.
+ * Existing accounts retain their original role and non-staff portal access.
  */
 export function buildGeoAdminRevocationUpdate(
   target: GeoAdminRevocationTarget,
 ) {
+  const wasInvitedFromExistingAccount =
+    isInvitableRole(target.role) &&
+    target.previousRole != null &&
+    !isInvitableRole(target.previousRole);
+  const preservedPortals = (target.portalAccess ?? ["general"]).filter(
+    (portal) => portal !== "geo-admin",
+  );
   return {
-    // An artist-mode staff member keeps "artist" but loses the stored staff
+    // Restore an existing account's role while stripping staff markers.
+    // An artist-mode staff member keeps "artist" but loses its stored staff
     // role so the restore-staff-role endpoint cannot bring it back.
-    role: isInvitableRole(target.role) ? "user" : (target.role ?? "user"),
+    role: wasInvitedFromExistingAccount
+      ? target.previousRole!
+      : isInvitableRole(target.role)
+        ? "user"
+        : (target.role ?? "user"),
     previousRole: null,
     gateUsername: null,
-    portalAccess: ["general"],
+    portalAccess: preservedPortals.length > 0 ? preservedPortals : ["general"],
   };
 }

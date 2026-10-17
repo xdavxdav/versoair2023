@@ -86,10 +86,12 @@ forward them to the mailbox used by `SMTP_USER`.
 Geo Admin staff access is invite-only. A signed-in superuser can open
 `/geo-admin/dashboard` and use **Manage Geo Admin access** to invite selected
 staff by real email address, assigned admin username, and the Admin or
-Moderator role. Invitations are one-use links that expire after 72 hours;
-recipients set their own password, and password recovery is linked from the
-Geo Admin sign-in page. Invitation messages use `noreply@versoair.com`; make
-sure this sender is permitted by the configured SMTP provider.
+Moderator role. Invitations are one-use links that expire after 72 hours.
+New recipients set a password; an existing verified account must sign in with
+the invited email and accept the link, preserving its password and other portal
+access. Password recovery is linked from the Geo Admin sign-in page. Invitation
+messages use `noreply@versoair.com`; make sure this sender is permitted by the
+configured SMTP provider.
 
 Apply the versioned Drizzle migration before deploying code that depends on
 `geo_admin_invitations`; startup table checks are not a substitute for the

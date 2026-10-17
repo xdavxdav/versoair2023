@@ -11,6 +11,7 @@ import {
   type GeoAdminInvitationStore,
   type GeoAdminInvitationTxStore,
 } from "./geoadmin-invitations";
+import { canLinkExistingUserToGeoAdmin } from "@shared/geoadmin-invitation";
 
 type Inv = {
   id: number;
@@ -27,6 +28,7 @@ type User = {
   username: string;
   email: string;
   role: string;
+  previousRole?: string | null;
   gateUsername: string | null;
   isVerified: boolean;
   portalAccess: string[];
@@ -69,6 +71,21 @@ function createFakeStore(state: { invitations: Inv[]; users: User[] }) {
       };
       state.users.push(user);
       return { id: user.id };
+    },
+    async attachExistingUser(data) {
+      const user = state.users.find((u) => u.id === data.userId);
+      if (
+        !user ||
+        user.email.toLowerCase() !== data.email ||
+        !canLinkExistingUserToGeoAdmin(user)
+      ) {
+        return false;
+      }
+      user.previousRole = user.role;
+      user.role = data.role;
+      user.gateUsername = data.gateUsername;
+      user.portalAccess = [...new Set([...user.portalAccess, "geo-admin"])];
+      return true;
     },
     async linkAcceptedUser(invitationId, userId) {
       state.invitations.find((i) => i.id === invitationId)!.acceptedUserId = userId;
@@ -210,6 +227,92 @@ test("existing accounts are never taken over and the invitation stays pending", 
   assert.equal(state.users[0].role, "user");
   assert.equal(state.users[0].password, "original");
   assert.equal(state.invitations[0].status, "pending");
+});
+
+test("an existing verified account can accept only while authenticated as the invitee", async () => {
+  const existing: User = {
+    id: 5,
+    username: "existing_user",
+    email: "ops@company.com",
+    role: "business_owner",
+    previousRole: null,
+    gateUsername: null,
+    isVerified: true,
+    portalAccess: ["general", "business"],
+    password: "original-hash",
+  };
+  const { token, state, deps } = setup({}, [existing]);
+  const result = await acceptGeoAdminInvitation(
+    { token, existingUserId: existing.id },
+    deps,
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(state.users.length, 1);
+  assert.equal(existing.role, "admin");
+  assert.equal(existing.previousRole, "business_owner");
+  assert.equal(existing.gateUsername, "ops_lead");
+  assert.deepEqual(existing.portalAccess, ["general", "business", "geo-admin"]);
+  assert.equal(existing.password, "original-hash");
+  assert.equal(state.invitations[0].status, "accepted");
+  assert.equal(state.invitations[0].acceptedUserId, existing.id);
+});
+
+test("existing-account acceptance rejects an unrelated signed-in account", async () => {
+  const existing: User = {
+    id: 5,
+    username: "someone_else",
+    email: "someone-else@company.com",
+    role: "user",
+    gateUsername: null,
+    isVerified: true,
+    portalAccess: ["general"],
+    password: "original",
+  };
+  const { token, state, deps } = setup({}, [existing]);
+  const result = await acceptGeoAdminInvitation(
+    { token, existingUserId: existing.id },
+    deps,
+  );
+  assert.deepEqual(result.ok ? null : [result.status, result.code], [409, "ACCOUNT_CONFLICT"]);
+  assert.equal(state.invitations[0].status, "pending");
+  assert.equal(existing.role, "user");
+  assert.equal(existing.password, "original");
+});
+
+test("existing-account acceptance rejects unverified and privileged accounts", async () => {
+  const cases: User[] = [
+    {
+      id: 5,
+      username: "unverified",
+      email: "ops@company.com",
+      role: "user",
+      gateUsername: null,
+      isVerified: false,
+      portalAccess: ["general"],
+      password: "original",
+    },
+    {
+      id: 6,
+      username: "already_staff",
+      email: "ops@company.com",
+      role: "admin",
+      gateUsername: null,
+      isVerified: true,
+      portalAccess: ["general"],
+      password: "original",
+    },
+  ];
+  for (const user of cases) {
+    const { token, state, deps } = setup({}, [user]);
+    const result = await acceptGeoAdminInvitation(
+      { token, existingUserId: user.id },
+      deps,
+    );
+    assert.equal(result.ok, false);
+    assert.equal(state.invitations[0].status, "pending");
+    assert.equal(user.password, "original");
+  }
 });
 
 test("username collisions get a suffix instead of failing", async () => {

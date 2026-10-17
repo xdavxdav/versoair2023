@@ -3,6 +3,7 @@ import { and, eq, gt, sql } from "drizzle-orm";
 import { geoAdminInvitations, users } from "@shared/schema";
 import {
   GEOADMIN_INVITATION_TTL_MS,
+  canLinkExistingUserToGeoAdmin,
   getInvitationClaimFailure,
   type GeoAdminInvitableRole,
   type InvitationClaimFailure,
@@ -75,6 +76,12 @@ export interface GeoAdminInvitationTxStore {
     gateUsername: string;
     verifiedAt: Date;
   }): Promise<{ id: number }>;
+  attachExistingUser(data: {
+    userId: number;
+    email: string;
+    role: GeoAdminInvitableRole;
+    gateUsername: string;
+  }): Promise<boolean>;
   linkAcceptedUser(invitationId: number, userId: number): Promise<void>;
 }
 
@@ -86,6 +93,7 @@ export type AcceptGeoAdminInvitationResult =
   | {
       ok: true;
       userId: number;
+      accountType: "created" | "existing";
       invitation: ClaimedGeoAdminInvitation;
     }
   | { ok: false; status: number; code: string; message: string };
@@ -141,10 +149,12 @@ async function allocateUsername(
  * back so the invitation stays pending and no account is created.
  */
 export async function acceptGeoAdminInvitation(
-  input: { token: string; password: string },
+  input:
+    | { token: string; password: string; existingUserId?: never }
+    | { token: string; existingUserId: number; password?: never },
   deps: {
     store: GeoAdminInvitationStore;
-    hashPassword: (password: string) => Promise<string>;
+    hashPassword?: (password: string) => Promise<string>;
     isUniqueViolation?: (error: unknown) => boolean;
     now?: () => Date;
   },
@@ -155,7 +165,10 @@ export async function acceptGeoAdminInvitation(
 
   const tokenHash = hashGeoAdminInvitationToken(input.token);
   const now = deps.now?.() ?? new Date();
-  const passwordHash = await deps.hashPassword(input.password);
+  const passwordHash =
+    "password" in input && input.password
+      ? await deps.hashPassword?.(input.password)
+      : undefined;
 
   try {
     return await deps.store.transaction(async (tx) => {
@@ -164,6 +177,32 @@ export async function acceptGeoAdminInvitation(
         const existing = await tx.findInvitationByTokenHash(tokenHash);
         const failure = getInvitationClaimFailure(existing, now) ?? "not_found";
         return { ok: false as const, ...CLAIM_FAILURES[failure] };
+      }
+
+      if (
+        "existingUserId" in input &&
+        typeof input.existingUserId === "number"
+      ) {
+        const attached = await tx.attachExistingUser({
+          userId: input.existingUserId,
+          email: invitation.email,
+          role: invitation.role,
+          gateUsername: invitation.gateUsername,
+        });
+        if (!attached) {
+          throw new AcceptConflict("email");
+        }
+        await tx.linkAcceptedUser(invitation.id, input.existingUserId);
+        return {
+          ok: true as const,
+          userId: input.existingUserId,
+          accountType: "existing" as const,
+          invitation,
+        };
+      }
+
+      if (!passwordHash) {
+        throw new Error("Password hashing is required for new invite accounts");
       }
 
       const conflict = await tx.findUserConflict(
@@ -183,7 +222,12 @@ export async function acceptGeoAdminInvitation(
       });
       await tx.linkAcceptedUser(invitation.id, user.id);
 
-      return { ok: true as const, userId: user.id, invitation };
+      return {
+        ok: true as const,
+        userId: user.id,
+        accountType: "created" as const,
+        invitation,
+      };
     });
   } catch (error) {
     if (error instanceof AcceptConflict || deps.isUniqueViolation?.(error)) {
@@ -285,6 +329,53 @@ function createTxStore(executor: DbOrTx): GeoAdminInvitationTxStore {
         })
         .returning({ id: users.id });
       return row;
+    },
+
+    async attachExistingUser(data) {
+      const [user] = await executor
+        .select({
+          email: users.email,
+          role: users.role,
+          previousRole: users.previousRole,
+          gateUsername: users.gateUsername,
+          portalAccess: users.portalAccess,
+          isVerified: users.isVerified,
+        })
+        .from(users)
+        .where(eq(users.id, data.userId))
+        .limit(1);
+      if (
+        !user ||
+        typeof user.role !== "string" ||
+        user.email.trim().toLowerCase() !== data.email ||
+        !canLinkExistingUserToGeoAdmin(user)
+      ) {
+        return false;
+      }
+
+      const portalAccess = Array.isArray(user.portalAccess)
+        ? user.portalAccess
+        : ["general"];
+      const [updated] = await executor
+        .update(users)
+        .set({
+          role: data.role,
+          previousRole: user.role,
+          gateUsername: data.gateUsername,
+          portalAccess: [...new Set([...portalAccess, "geo-admin"])],
+        })
+        .where(
+          and(
+            eq(users.id, data.userId),
+            eq(users.email, user.email),
+            eq(users.role, user.role),
+            sql`${users.previousRole} IS NULL`,
+            sql`${users.gateUsername} IS NULL`,
+            eq(users.isVerified, true),
+          ),
+        )
+        .returning({ id: users.id });
+      return !!updated;
     },
 
     async linkAcceptedUser(invitationId, userId) {

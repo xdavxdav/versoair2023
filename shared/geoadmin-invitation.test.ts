@@ -2,8 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   acceptGeoAdminInvitationSchema,
+  acceptExistingGeoAdminInvitationSchema,
   buildGeoAdminInvitationUrl,
   buildGeoAdminRevocationUpdate,
+  canLinkExistingUserToGeoAdmin,
   createGeoAdminInvitationSchema,
   formatGeoAdminAccessId,
   getGeoAdminManagedRevocationBlocker,
@@ -168,12 +170,12 @@ test("revocation is blocked for self, owner and superusers", () => {
   assert.equal(getGeoAdminRevocationBlocker({ ...staff, role: "moderator" }, { id: 1 }), null);
 });
 
-test("revocation downgrades role and resets invitation-created portals", () => {
+test("revocation strips staff access and preserves other portal access", () => {
   assert.deepEqual(buildGeoAdminRevocationUpdate(staff), {
     role: "user",
     previousRole: null,
     gateUsername: null,
-    portalAccess: ["general"],
+    portalAccess: ["general", "community"],
   });
   const artistMode = buildGeoAdminRevocationUpdate({
     ...staff,
@@ -183,7 +185,50 @@ test("revocation downgrades role and resets invitation-created portals", () => {
   });
   assert.equal(artistMode.role, "artist");
   assert.equal(artistMode.previousRole, null);
-  assert.deepEqual(artistMode.portalAccess, ["general"]);
+  assert.deepEqual(artistMode.portalAccess, ["artist"]);
+
+  const existingAccount = buildGeoAdminRevocationUpdate({
+    ...staff,
+    role: "admin",
+    previousRole: "business_owner",
+    portalAccess: ["general", "business", "geo-admin"],
+  });
+  assert.deepEqual(existingAccount, {
+    role: "business_owner",
+    previousRole: null,
+    gateUsername: null,
+    portalAccess: ["general", "business"],
+  });
+});
+
+test("existing-account invitations require verified, non-staff users", () => {
+  const eligible = {
+    role: "business_owner",
+    previousRole: null,
+    gateUsername: null,
+    portalAccess: ["general", "business"],
+    isVerified: true,
+  };
+  assert.equal(canLinkExistingUserToGeoAdmin(eligible), true);
+  assert.equal(canLinkExistingUserToGeoAdmin({ ...eligible, isVerified: false }), false);
+  assert.equal(canLinkExistingUserToGeoAdmin({ ...eligible, role: "superuser" }), false);
+  assert.equal(canLinkExistingUserToGeoAdmin({ ...eligible, role: "admin" }), false);
+  assert.equal(canLinkExistingUserToGeoAdmin({ ...eligible, gateUsername: "already_staff" }), false);
+  assert.equal(canLinkExistingUserToGeoAdmin({ ...eligible, portalAccess: ["general", "geo-admin"] }), false);
+});
+
+test("existing-account acceptance payload requires only a token", () => {
+  assert.equal(
+    acceptExistingGeoAdminInvitationSchema.safeParse({ token: "gai_token" }).success,
+    true,
+  );
+  assert.equal(
+    acceptExistingGeoAdminInvitationSchema.safeParse({
+      token: "gai_token",
+      password: "anything",
+    }).success,
+    false,
+  );
 });
 
 const acceptedInvite = {

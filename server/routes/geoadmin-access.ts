@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import bcrypt from "bcryptjs";
-import { and, desc, eq, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, lte, ne, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
   activeSessions,
@@ -9,8 +9,10 @@ import {
   users,
 } from "@shared/schema";
 import {
+  acceptExistingGeoAdminInvitationSchema,
   acceptGeoAdminInvitationSchema,
   buildGeoAdminRevocationUpdate,
+  canLinkExistingUserToGeoAdmin,
   createGeoAdminInvitationSchema,
   formatGeoAdminAccessId,
   GEOADMIN_INVITABLE_ROLES,
@@ -243,18 +245,27 @@ router.post(
     const { email, gateUsername, role } = parsed.data;
     const actorId = Number(req.user!.userId);
 
-    // No takeover: existing accounts are never converted into staff accounts.
     const [emailOwner] = await db
-      .select({ id: users.id })
+      .select({
+        id: users.id,
+        role: users.role,
+        previousRole: users.previousRole,
+        gateUsername: users.gateUsername,
+        portalAccess: users.portalAccess,
+        isVerified: users.isVerified,
+      })
       .from(users)
       .where(sql`lower(${users.email}) = ${email}`)
       .limit(1);
-    if (emailOwner) {
+    if (
+      emailOwner &&
+      !canLinkExistingUserToGeoAdmin(emailOwner)
+    ) {
       return sendError(
         res,
         409,
-        "EMAIL_CONFLICT",
-        "An account with this email already exists. Existing accounts cannot be invited.",
+        "ACCOUNT_NOT_ELIGIBLE",
+        "This existing account cannot be linked to Geo Admin. It must be verified and must not already have staff access.",
       );
     }
 
@@ -262,9 +273,12 @@ router.post(
       .select({ id: users.id })
       .from(users)
       .where(
-        or(
-          sql`lower(${users.gateUsername}) = ${gateUsername}`,
-          sql`lower(${users.username}) = ${gateUsername}`,
+        and(
+          or(
+            sql`lower(${users.gateUsername}) = ${gateUsername}`,
+            sql`lower(${users.username}) = ${gateUsername}`,
+          ),
+          emailOwner ? ne(users.id, emailOwner.id) : undefined,
         ),
       )
       .limit(1);
@@ -662,6 +676,59 @@ router.post(
       success: true,
       message:
         "Invitation accepted. You can now sign in to GeoAdmin with your gate username and new password.",
+    });
+  }),
+);
+
+router.post(
+  "/accept-geoadmin-invitation-existing",
+  requireAuth(),
+  invitationAcceptLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const parsed = acceptExistingGeoAdminInvitationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(
+        res,
+        400,
+        "VALIDATION_ERROR",
+        parsed.error.errors[0]?.message ?? "Invalid request",
+      );
+    }
+
+    const result = await acceptGeoAdminInvitation(
+      { token: parsed.data.token, existingUserId: Number(req.user!.userId) },
+      {
+        store: createDrizzleGeoAdminInvitationStore(db),
+        isUniqueViolation: (error) => isUniqueConstraintViolation(error),
+      },
+    );
+
+    if (!result.ok) {
+      return sendError(res, result.status, result.code, result.message);
+    }
+
+    await writeAudit(req, {
+      userId: result.userId,
+      action: "GEOADMIN_INVITATION_ACCEPTED",
+      entityType: "geo_admin_invitation",
+      entityId: String(result.invitation.id),
+      changes: {
+        email: result.invitation.email,
+        gateUsername: result.invitation.gateUsername,
+        role: result.invitation.role,
+        invitedBy: result.invitation.invitedBy,
+        userId: result.userId,
+        existingAccount: true,
+      },
+    });
+    console.log(
+      `[ADMIN] GeoAdmin invitation #${result.invitation.id} accepted by existing account ${result.invitation.email} (user #${result.userId}, ${result.invitation.role})`,
+    );
+
+    return res.json({
+      success: true,
+      message:
+        "Geo Admin access is linked to your existing account. Your password and other portal access were kept unchanged.",
     });
   }),
 );
