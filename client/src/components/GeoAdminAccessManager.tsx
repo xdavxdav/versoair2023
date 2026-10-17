@@ -78,13 +78,13 @@ export default function GeoAdminAccessManager() {
         <div>
           <Label htmlFor="geo-invite-email">Staff email</Label>
           <Input id="geo-invite-email" type="email" autoComplete="off"
-            className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-500"
+            className="border-amber-400 bg-violet-950 text-amber-300 placeholder:text-violet-300 focus-visible:ring-amber-400"
             required value={email} onChange={(event) => setEmail(event.target.value)} />
         </div>
         <div>
           <Label htmlFor="geo-invite-username">Admin username</Label>
           <Input id="geo-invite-username" required autoComplete="off"
-            className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-500"
+            className="border-amber-400 bg-violet-950 text-amber-300 placeholder:text-violet-300 focus-visible:ring-amber-400"
             minLength={3} maxLength={50} pattern="[a-z0-9_]+"
             value={gateUsername} onChange={(event) => setGateUsername(event.target.value)}
             aria-describedby="geo-invite-username-help" />
@@ -96,7 +96,7 @@ export default function GeoAdminAccessManager() {
           <Label htmlFor="geo-invite-role">Staff role</Label>
           <select id="geo-invite-role" value={role}
             onChange={(event) => setRole(event.target.value === "moderator" ? "moderator" : "admin")}
-            className="mt-1 block h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900">
+            className="mt-1 block h-10 w-full rounded-md border border-amber-400 bg-violet-950 px-3 text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
             <option value="admin">Admin</option>
             <option value="moderator">Moderator</option>
           </select>
