@@ -2209,6 +2209,10 @@ export default function ArtistPortalWelcome() {
   const [authSuccess, setAuthSuccess] = useState("");
   const [transitioning, setTransitioning] = useState(false);
   const [transitionArtist, setTransitionArtist] = useState("");
+  const [pendingName, setPendingName] = useState<{ token: string; user: any } | null>(null);
+  const [nameInput, setNameInput] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
 
   const genres = [
     "Afrobeats",
@@ -2278,6 +2282,10 @@ export default function ArtistPortalWelcome() {
         login(data.token, data.user);
       }
       setIsAuthLoading(false);
+      if (data.needsDisplayName) {
+        setPendingName({ token: data.token, user: data.user });
+        return;
+      }
       // Trigger cinematic transition instead of abrupt navigate
       setTransitionArtist(
         data.user?.stageName ||
@@ -2289,6 +2297,47 @@ export default function ArtistPortalWelcome() {
     } catch (err: any) {
       setAuthError(err.message || "Erreur réseau. Veuillez réessayer.");
       setIsAuthLoading(false);
+    }
+  };
+
+  const handleSaveName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingName) return;
+    const trimmed = nameInput.trim();
+    if (trimmed.length < 2 || trimmed.length > 50) {
+      setNameError("Le nom doit contenir entre 2 et 50 caractères.");
+      return;
+    }
+    setNameSaving(true);
+    setNameError("");
+    try {
+      const res = await fetch("/auth/account/set-display-name", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${pendingName.token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ displayName: trimmed }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        setNameError(result.message || "Impossible d'enregistrer le nom.");
+        setNameSaving(false);
+        return;
+      }
+      const user = { ...pendingName.user, name: trimmed };
+      localStorage.setItem("artist_profile", JSON.stringify(user));
+      localStorage.setItem("auth_user", JSON.stringify(user));
+      login(pendingName.token, user);
+      setPendingName(null);
+      setNameSaving(false);
+      setTransitionArtist(trimmed);
+      setTransitioning(true);
+      setTimeout(() => navigate("/music/dashboard"), 400);
+    } catch {
+      setNameError("Erreur réseau. Veuillez réessayer.");
+      setNameSaving(false);
     }
   };
 
@@ -3973,6 +4022,36 @@ export default function ArtistPortalWelcome() {
       {/* ═══════════════════════════════════════════════
           CINEMATIC TRANSITION OVERLAY — Auth → Dashboard
           ═══════════════════════════════════════════════ */}
+      {pendingName && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/80 p-4">
+          <form
+            onSubmit={handleSaveName}
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d0d1a] p-6 space-y-4"
+          >
+            <h2 className="text-xl font-bold text-white">Bienvenue ! Comment devons-nous vous appeler ?</h2>
+            <p className="text-sm text-white/60">
+              C'est votre première connexion. Choisissez le nom affiché sur votre tableau de bord.
+            </p>
+            <input
+              autoFocus
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              maxLength={50}
+              placeholder="Votre nom"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white"
+            />
+            {nameError && <p className="text-sm text-red-400">{nameError}</p>}
+            <button
+              type="submit"
+              disabled={nameSaving}
+              className="w-full rounded-lg bg-purple-600 py-2 font-semibold text-white disabled:opacity-50"
+            >
+              {nameSaving ? "Enregistrement…" : "Continuer"}
+            </button>
+          </form>
+        </div>
+      )}
+
       <AnimatePresence>
         {transitioning && (
           <motion.div
