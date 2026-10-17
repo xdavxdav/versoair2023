@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
 import {
   Globe,
@@ -50,6 +50,7 @@ export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
   const { login: authContextLogin } = useAuthContext();
+  const [, navigateTo] = useLocation();
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
   const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
@@ -160,6 +161,13 @@ export default function GeoAdminAuthGate({
         }
         await initializeCsrfToken();
         setIsSuccess(true);
+        // Owner and admin staff codes go straight to the admin panel
+        if (
+          isStaffCodeEntry &&
+          (data.user?.role === "superuser" || data.user?.role === "admin")
+        ) {
+          navigateTo("/geo-admin/dashboard");
+        }
         onSignInSuccess(
           isStaffCodeEntry
             ? data.user?.name || "staff"

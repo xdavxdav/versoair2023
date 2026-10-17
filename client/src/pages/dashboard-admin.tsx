@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ensureAuthenticated,
@@ -6565,6 +6566,7 @@ export default function AdminDashboard() {
     active: "0",
   });
   const [, setLocation] = useLocation();
+  const { user: sessionUser } = useAuthContext();
 
   const [isAdminGateAuthenticated, setIsAdminGateAuthenticated] = useState(
     () => {
@@ -6736,6 +6738,16 @@ export default function AdminDashboard() {
     localStorage.setItem("adminAccessTime", new Date().getTime().toString());
     localStorage.setItem("adminUsername", username);
   };
+
+  // The owner is already verified by the server (staff code or account), so skip the on-screen code gate.
+  // Admin staff still go through it. The 15-minute session timer keeps running for everyone.
+  useEffect(() => {
+    if (sessionUser?.role === "superuser" && !isAdminGateAuthenticated) {
+      handleAdminAccessGranted(
+        sessionUser.username || sessionUser.name || "owner",
+      );
+    }
+  }, [sessionUser?.role, isAdminGateAuthenticated]);
 
   // On mount: restore JWT into _authToken if session is alive but token is missing (page refresh)
   useEffect(() => {
