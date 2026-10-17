@@ -85,9 +85,6 @@ import {
 } from "@/components/job-application-modal";
 
 const API_BASE = "";
-const CAREER_VIEW_MODE_KEY = "careers_view_mode";
-const LEGACY_CAREER_VIEW_MODE_KEY = "careers_auth_role";
-type CareerViewMode = "job-seeker" | "contractor";
 
 const DB_CFG = {
   user: "versoair",
@@ -128,15 +125,6 @@ interface Contract {
   business_id?: number | null;
   company_rating?: number | null;
   company_review_count?: number;
-}
-
-function readCareerViewMode(): CareerViewMode {
-  const saved =
-    localStorage.getItem(CAREER_VIEW_MODE_KEY) ??
-    localStorage.getItem(LEGACY_CAREER_VIEW_MODE_KEY);
-  return saved === "job-seeker"
-    ? "job-seeker"
-    : "contractor";
 }
 
 interface DbHealth {
@@ -486,36 +474,7 @@ export default function Contractors() {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [applyingJob, setApplyingJob] = useState<ApplicationJob | null>(null);
 
-  /* Local display mode only; it does not change the account's role or permissions. */
-  const [viewMode, setViewMode] =
-    useState<CareerViewMode>(readCareerViewMode);
-  const roleLabel = viewMode === "contractor" ? "Contractor" : "Job Seeker";
-  const nextRoleLabel = viewMode === "contractor" ? "Job Seeker" : "Contractor";
   const accountRoleLabel = platformUser?.role || "member";
-
-  useEffect(() => {
-    const syncViewMode = (event: StorageEvent) => {
-      if (event.key === CAREER_VIEW_MODE_KEY) {
-        setViewMode(readCareerViewMode());
-      }
-    };
-    window.addEventListener("storage", syncViewMode);
-    return () => window.removeEventListener("storage", syncViewMode);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(CAREER_VIEW_MODE_KEY, viewMode);
-  }, [viewMode]);
-
-  const flipRole = () => {
-    const nr: CareerViewMode =
-      viewMode === "contractor" ? "job-seeker" : "contractor";
-    setViewMode(nr);
-    toast({
-      title: `View changed to ${nr === "contractor" ? "Contractor" : "Job Seeker"}`,
-      description: "Your account role and permissions have not changed.",
-    });
-  };
 
   const [dbHealth, setDbHealth] = useState<DbHealth | null>(null);
   const [checking, setChecking] = useState(true);
@@ -903,25 +862,16 @@ export default function Contractors() {
 
               <div className="flex items-center gap-1.5 sm:gap-3">
                 {platformUser && (
-                  <button
-                    onClick={flipRole}
-                    className={
-                      "hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all " +
-                      (viewMode === "contractor"
-                        ? "bg-amber-100 text-amber-800 border-amber-300"
-                        : "bg-blue-100 text-blue-800 border-blue-300")
-                    }
+                  <Link
+                    href="/services/careers"
+                    className="hidden sm:inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-800 transition-colors hover:bg-blue-200"
                   >
-                    {viewMode === "contractor" ? (
-                      <HardHat className="h-3.5 w-3.5" />
-                    ) : (
-                      <Briefcase className="h-3.5 w-3.5" />
-                    )}
+                    <Briefcase className="h-3.5 w-3.5" />
                     <span className="notranslate" translate="no">
-                      View: {roleLabel}
+                      Switch to Job Seeker View
                     </span>
                     <ChevronRight className="h-3 w-3" />
-                  </button>
+                  </Link>
                 )}
                 <Button
                   variant="outline"
@@ -1333,33 +1283,20 @@ export default function Contractors() {
                           <p className="text-xs text-amber-600 flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             <span className="notranslate" translate="no">
-                              Account: {accountRoleLabel} · View: {roleLabel}
+                              Account role: {accountRoleLabel} · Current view: Contractor
                             </span>
                           </p>
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={flipRole}
-                        className="!bg-white !text-amber-900 w-full gap-1 border-amber-300 text-xs hover:!bg-amber-50 hover:!text-amber-950"
-                      >
-                        {viewMode === "contractor" ? (
-                          <Briefcase className="h-3 w-3" />
-                        ) : (
-                          <HardHat className="h-3 w-3" />
-                        )}
-                        <span className="notranslate" translate="no">
-                          Switch view to {nextRoleLabel}
-                        </span>
-                      </Button>
                       <Link href="/services/careers">
                         <Button
                           variant="outline"
-                          className="!bg-white !text-blue-800 w-full gap-2 border-blue-200 text-sm hover:!bg-blue-50 hover:!text-blue-950"
+                          className="!bg-blue-50 !text-blue-900 w-full gap-2 border-blue-200 text-sm hover:!bg-blue-100 hover:!text-blue-950"
                         >
-                          <Briefcase className="h-4 w-4" /> Browse Full-Time
-                          Jobs
+                          <Briefcase className="h-4 w-4" />
+                          <span className="notranslate" translate="no">
+                            Switch to Job Seeker View
+                          </span>
                         </Button>
                       </Link>
                     </div>

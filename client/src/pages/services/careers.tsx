@@ -11,6 +11,7 @@ import {
 } from "@/lib/animations";
 import {
   ArrowLeft,
+  HardHat,
   MapPin,
   Clock,
   DollarSign,
@@ -973,6 +974,19 @@ export default function Careers() {
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-3">
+                <Link href="/services/contractors">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label="Switch to Contractor View"
+                    className="gap-1 sm:gap-2 border-amber-300 !bg-amber-50 !text-amber-900 hover:border-amber-400 hover:!bg-amber-100 hover:!text-amber-950 px-2 sm:px-3"
+                  >
+                    <HardHat className="h-4 w-4" />
+                    <span className="hidden sm:inline notranslate" translate="no">
+                      Switch to Contractor View
+                    </span>
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
