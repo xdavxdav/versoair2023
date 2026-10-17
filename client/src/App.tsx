@@ -152,6 +152,7 @@ const ArtistPortalWelcomePage = (props: any) => {
     </Suspense>
   );
 };
+const IdGuide = lazy(() => import("@/pages/id-guide"));
 const OngCulturelle = lazy(() => import("@/pages/ong-culturelle"));
 
 // ─────────────────────────────────────────────────────
@@ -345,6 +346,7 @@ const BETA_ROUTE_PREFIXES = [
   "/pricing",
   "/blog",
   "/faq",
+  "/id-guide",
   "/sav",
   "/versoai",
   "/ai",
@@ -643,6 +645,11 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🎨 CULTURAL — Artisan & community portal
           ═══════════════════════════════════════════════ */}
+      <Route path="/id-guide">
+        <Suspense fallback={<PageLoader />}>
+          <IdGuide />
+        </Suspense>
+      </Route>
       <Route path="/artisans" component={ArtisansDirectory} />
       <Route path="/artisans-portal" component={ArtisansPortal} />
       <Route path="/artistes" component={ArtistDirectory} />

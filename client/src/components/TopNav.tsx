@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronDown, Home, LogOut } from "lucide-react";
+import GlobalSearch from "@/components/GlobalSearch";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
@@ -120,6 +121,7 @@ export default function TopNav() {
           ))}
         </Menu>
         <div className="flex-1" />
+        <GlobalSearch />
         {user ? (
         <Menu
           label={user?.name || user?.email || "Account"}
