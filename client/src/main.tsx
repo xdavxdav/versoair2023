@@ -19,8 +19,12 @@ if (typeof Node !== "undefined" && Node.prototype) {
     refNode: Node | null,
   ): T {
     if (refNode && refNode.parentNode !== this) {
-      // Google Translate moved refNode into a <font> wrapper — skip gracefully
-      return newNode;
+      // Translator wrapped refNode in <font>: insert next to it in its real parent
+      const realParent = refNode.parentNode;
+      if (realParent) {
+        return origInsertBefore.call(realParent, newNode, refNode) as T;
+      }
+      return origInsertBefore.call(this, newNode, null) as T;
     }
     return origInsertBefore.call(this, newNode, refNode) as T;
   };
@@ -28,7 +32,10 @@ if (typeof Node !== "undefined" && Node.prototype) {
   const origRemoveChild = Node.prototype.removeChild;
   (Node.prototype as any).removeChild = function <T extends Node>(child: T): T {
     if (child.parentNode !== this) {
-      // Same issue — node was reparented by Google Translate
+      // Remove from the real parent so stale translated nodes don't pile up
+      if (child.parentNode) {
+        return origRemoveChild.call(child.parentNode, child) as T;
+      }
       return child;
     }
     return origRemoveChild.call(this, child) as T;

@@ -3199,8 +3199,8 @@ export default function ArtistPortalWelcome() {
                       />
                     ) : (
                       <>
-                        <Fingerprint className="w-4 h-4" /> Entrer dans
-                        l'Univers
+                        <Fingerprint className="w-4 h-4" />
+                        <span>Entrer dans l'Univers</span>
                       </>
                     )}
                   </span>

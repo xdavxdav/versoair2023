@@ -654,7 +654,7 @@ export default function ArtistPortalSignIn() {
                     ) : (
                       <>
                         <Fingerprint className="w-4 h-4" />
-                        Entrer dans l'Univers
+                        <span>Entrer dans l'Univers</span>
                       </>
                     )}
                   </span>
