@@ -103,8 +103,12 @@ async function loadSmtpConfigFromDb() {
  * First tries to load from database, then falls back to environment variables
  */
 export async function initializeEmailTransporter() {
-  // Try to load from database first
-  const dbConfig = await loadSmtpConfigFromDb();
+  // Render environment variables win when fully configured; otherwise use the admin-saved DB config
+  const envConfigured =
+    !!process.env.SMTP_HOST &&
+    !!process.env.SMTP_USER &&
+    !!process.env.SMTP_PASS;
+  const dbConfig = envConfigured ? null : await loadSmtpConfigFromDb();
 
   const config = dbConfig || {
     host: process.env.SMTP_HOST || "",
@@ -140,7 +144,7 @@ export async function initializeEmailTransporter() {
   });
 
   console.log(
-    `[EMAIL] Transporter initialized. Sending from: ${senderAddress}`,
+    `[EMAIL] Transporter initialized (${config.host}:${config.port}, secure=${config.secure || parseInt(String(config.port)) === 465}, source=${dbConfig ? "database" : "env"}). Sending from: ${senderAddress}`,
   );
   return transporter;
 }
