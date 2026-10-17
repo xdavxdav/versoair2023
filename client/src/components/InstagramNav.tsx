@@ -53,6 +53,7 @@ import QuickSignIn from "@/components/QuickSignIn";
 import { useSubscription } from "@/hooks/use-subscription";
 import SearchModal from "@/components/SearchModal";
 import { motion, AnimatePresence } from "framer-motion";
+import MarketLabel from "@/components/MarketLabel";
 
 // ─── Navigation data ────────────────────────────────────────
 
@@ -260,7 +261,13 @@ function NavDrawer({
                           }`}
                         >
                           <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-                          <span className="truncate">{item.label}</span>
+                          <span className="truncate">
+                            {item.href === "/marketplace" ? (
+                              <MarketLabel />
+                            ) : (
+                              item.label
+                            )}
+                          </span>
                           {active && (
                             <div className="ml-auto h-1.5 w-1.5 rounded-full bg-amber-400" />
                           )}
@@ -363,7 +370,7 @@ function IconButton({
 }: {
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
-  label: string;
+  label: React.ReactNode;
   active?: boolean;
   onClick?: () => void;
   onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
@@ -807,7 +814,7 @@ export default function InstagramNav({
           <IconButton
             href="/marketplace"
             icon={ShoppingBag}
-            label="Marketplace"
+            label={<MarketLabel />}
             active={isActive(currentPath, "/marketplace")}
           />
           <IconButton

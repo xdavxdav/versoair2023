@@ -33,6 +33,7 @@ import styles from "./versoair-logo.module.css";
 import SearchModal from "@/components/SearchModal";
 import NotificationCenter from "@/components/NotificationCenter";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
+import MarketLabel from "@/components/MarketLabel";
 
 // Portal metadata for the switcher dropdown
 const PORTAL_META: Record<
@@ -477,7 +478,7 @@ export default function Navbar({
               <ShoppingBag
                 className={`h-3.5 w-3.5 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
               />
-              <span className="relative notranslate">Marché</span>
+              <MarketLabel />
             </Link>
 
             {/* Assistance Dropdown */}
@@ -744,8 +745,7 @@ export default function Navbar({
                 <ShoppingBag
                   className={`h-4 w-4 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
                 />
-                <span className="hidden lg:inline notranslate">Marché</span>
-                <span className="lg:hidden notranslate">Marché</span>
+                <MarketLabel />
               </Link>
 
               {/* Support — teal */}

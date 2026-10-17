@@ -24,6 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { HeaderMessagesButton } from "@/components/TwitterMessenger";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import MarketLabel from "@/components/MarketLabel";
 
 interface BlogNavbarProps {
   isAuthenticated?: boolean;
@@ -580,8 +581,7 @@ export default function BlogNavbar({
                   aria-label="Entreprises"
                 >
                   <Store className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
-                  <span className="hidden lg:inline">Entreprises</span>
-                  <span className="lg:hidden">Ent</span>
+                  <span>Entreprises</span>
                   <ChevronDown
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "ent" ? "rotate-180" : ""}`}
                   />
@@ -635,8 +635,7 @@ export default function BlogNavbar({
                   onClick={() => toggleMenu("discover")}
                   onMouseEnter={() => open("discover")}
                 >
-                  <span className="hidden lg:inline">Discover</span>
-                  <span className="lg:hidden">Disc</span>
+                  <span>Discover</span>
                   <ChevronDown
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "discover" ? "rotate-180" : ""}`}
                   />
@@ -660,7 +659,11 @@ export default function BlogNavbar({
                     <a className={ITEM}>Partners</a>
                   </Link>
                   <Link href="/geo-admin">
-                    <a className={ITEM_HEAD}>Geo Admin</a>
+                    <a className={ITEM_HEAD}>
+                      <span className="notranslate" translate="no">
+                        Geo Admin
+                      </span>
+                    </a>
                   </Link>
                 </DropPanel>
               </div>
@@ -755,8 +758,7 @@ export default function BlogNavbar({
                   onClick={() => toggleMenu("svc")}
                   onMouseEnter={() => open("svc")}
                 >
-                  <span className="hidden lg:inline">Services</span>
-                  <span className="lg:hidden">Svc</span>
+                  <span>Services</span>
                   <ChevronDown
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "svc" ? "rotate-180" : ""}`}
                   />
@@ -790,8 +792,7 @@ export default function BlogNavbar({
                   onClick={() => toggleMenu("mkt")}
                   onMouseEnter={() => open("mkt")}
                 >
-                  <span className="hidden lg:inline">Marketing</span>
-                  <span className="lg:hidden">Mkt</span>
+                  <span>Marketing</span>
                   <ChevronDown
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "mkt" ? "rotate-180" : ""}`}
                   />
@@ -823,8 +824,7 @@ export default function BlogNavbar({
                 <Link href="/marketplace">
                   <a className={BTN}>
                     <ShoppingBag className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
-                    <span className="hidden lg:inline">Marketplace</span>
-                    <span className="lg:hidden">Shop</span>
+                    <MarketLabel />
                   </a>
                 </Link>
               )}
@@ -841,8 +841,7 @@ export default function BlogNavbar({
                   onMouseEnter={() => open("help")}
                 >
                   <Headphones className="w-3 sm:w-3.5 lg:w-4 h-3 sm:h-3.5 lg:h-4" />
-                  <span className="hidden lg:inline">Support</span>
-                  <span className="lg:hidden">Help</span>
+                  <span>Support</span>
                   <ChevronDown
                     className={`w-2.5 h-2.5 opacity-50 transition-transform duration-200 ${openMenu === "help" ? "rotate-180" : ""}`}
                   />
@@ -926,12 +925,14 @@ export default function BlogNavbar({
               ))}
               <Link href="/marketplace">
                 <a className="rounded-xl px-3 py-2.5 text-left text-xs font-medium text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-200">
-                  Marketplace
+                  <MarketLabel />
                 </a>
               </Link>
               <Link href="/geo-admin">
                 <a className="rounded-xl px-3 py-2.5 text-left text-xs font-medium text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-100">
-                  Geo Admin
+                  <span className="notranslate" translate="no">
+                    Geo Admin
+                  </span>
                 </a>
               </Link>
             </div>

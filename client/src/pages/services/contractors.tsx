@@ -74,6 +74,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useMemo } from "react";
+import type { CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -84,6 +85,9 @@ import {
 } from "@/components/job-application-modal";
 
 const API_BASE = "";
+const CAREER_VIEW_MODE_KEY = "careers_view_mode";
+const LEGACY_CAREER_VIEW_MODE_KEY = "careers_auth_role";
+type CareerViewMode = "job-seeker" | "contractor";
 
 const DB_CFG = {
   user: "versoair",
@@ -124,6 +128,15 @@ interface Contract {
   business_id?: number | null;
   company_rating?: number | null;
   company_review_count?: number;
+}
+
+function readCareerViewMode(): CareerViewMode {
+  const saved =
+    localStorage.getItem(CAREER_VIEW_MODE_KEY) ??
+    localStorage.getItem(LEGACY_CAREER_VIEW_MODE_KEY);
+  return saved === "job-seeker"
+    ? "job-seeker"
+    : "contractor";
 }
 
 interface DbHealth {
@@ -472,21 +485,34 @@ export default function Contractors() {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [applyingJob, setApplyingJob] = useState<ApplicationJob | null>(null);
 
-  /* local role preference (persisted separately) */
-  const [role, setRole] = useState<"job-seeker" | "contractor">(
-    () =>
-      (localStorage.getItem("careers_auth_role") || "contractor") as
-        | "job-seeker"
-        | "contractor",
-  );
+  /* Local display mode only; it does not change the account's role or permissions. */
+  const [viewMode, setViewMode] =
+    useState<CareerViewMode>(readCareerViewMode);
+  const roleLabel = viewMode === "contractor" ? "Contractor" : "Job Seeker";
+  const nextRoleLabel = viewMode === "contractor" ? "Job Seeker" : "Contractor";
+  const accountRoleLabel = platformUser?.role || "member";
+
+  useEffect(() => {
+    const syncViewMode = (event: StorageEvent) => {
+      if (event.key === CAREER_VIEW_MODE_KEY) {
+        setViewMode(readCareerViewMode());
+      }
+    };
+    window.addEventListener("storage", syncViewMode);
+    return () => window.removeEventListener("storage", syncViewMode);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CAREER_VIEW_MODE_KEY, viewMode);
+  }, [viewMode]);
+
   const flipRole = () => {
-    const nr =
-      role === "contractor" ? ("job-seeker" as const) : ("contractor" as const);
-    localStorage.setItem("careers_auth_role", nr);
-    setRole(nr);
+    const nr: CareerViewMode =
+      viewMode === "contractor" ? "job-seeker" : "contractor";
+    setViewMode(nr);
     toast({
-      title:
-        "Switched to " + (nr === "contractor" ? "Contractor" : "Job Seeker"),
+      title: `View changed to ${nr === "contractor" ? "Contractor" : "Job Seeker"}`,
+      description: "Your account role and permissions have not changed.",
     });
   };
 
@@ -809,7 +835,23 @@ export default function Contractors() {
 
   /* ═════ RENDER (authenticated) ═════ */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 relative overflow-hidden">
+    <div
+      className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 relative overflow-hidden"
+      style={
+        {
+          "--background": "hsl(0 0% 100%)",
+          "--foreground": "hsl(222 47% 11%)",
+          "--card": "hsl(0 0% 100%)",
+          "--card-foreground": "hsl(222 47% 11%)",
+          "--popover": "hsl(0 0% 100%)",
+          "--popover-foreground": "hsl(222 47% 11%)",
+          "--muted": "hsl(210 40% 96%)",
+          "--muted-foreground": "hsl(215 16% 40%)",
+          "--border": "hsl(214 32% 88%)",
+          "--input": "hsl(214 32% 88%)",
+        } as CSSProperties
+      }
+    >
       {/* bg pattern */}
       <div
         className="absolute inset-0 z-0 opacity-[0.03]"
@@ -861,17 +903,19 @@ export default function Contractors() {
                     onClick={flipRole}
                     className={
                       "hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all " +
-                      (role === "contractor"
+                      (viewMode === "contractor"
                         ? "bg-amber-100 text-amber-800 border-amber-300"
                         : "bg-blue-100 text-blue-800 border-blue-300")
                     }
                   >
-                    {role === "contractor" ? (
+                    {viewMode === "contractor" ? (
                       <HardHat className="h-3.5 w-3.5" />
                     ) : (
                       <Briefcase className="h-3.5 w-3.5" />
                     )}
-                    {role === "contractor" ? "Contractor" : "Job Seeker"}
+                    <span className="notranslate" translate="no">
+                      View: {roleLabel}
+                    </span>
                     <ChevronRight className="h-3 w-3" />
                   </button>
                 )}
@@ -1025,7 +1069,8 @@ export default function Contractors() {
                     <Badge
                       key={t}
                       variant="outline"
-                      className="cursor-pointer hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 px-3 py-1.5 text-sm"
+                      className="cursor-pointer border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-900"
+                      translate="no"
                     >
                       {t}
                     </Badge>
@@ -1069,7 +1114,7 @@ export default function Contractors() {
                 </Badge>
               </Button>
               <Card
-                className={`sticky top-24 border border-gray-200/80 shadow-lg ${showFilters ? "block" : "hidden lg:block"}`}
+                className={`sticky top-24 border border-gray-200/80 bg-white text-gray-900 shadow-lg ${showFilters ? "block" : "hidden lg:block"}`}
               >
                 <CardHeader className="pb-4 border-b border-gray-200/50">
                   <CardTitle className="flex items-center gap-3 text-gray-900">
@@ -1265,7 +1310,7 @@ export default function Contractors() {
               />
 
               {/* profile card */}
-              <Card className="mt-6 border border-gray-200/80 shadow-sm overflow-hidden">
+              <Card className="mt-6 overflow-hidden border border-gray-200/80 bg-white text-gray-900 shadow-sm">
                 <div className="h-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500" />
                 <CardContent className="pt-5 pb-5">
                   {platformUser ? (
@@ -1275,14 +1320,17 @@ export default function Contractors() {
                           {userInitial}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
+                          <p
+                            className="notranslate truncate text-sm font-semibold text-gray-900"
+                            translate="no"
+                          >
                             {userName}
                           </p>
                           <p className="text-xs text-amber-600 flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                            {role === "contractor"
-                              ? "Contractor"
-                              : "Job Seeker"}
+                            <span className="notranslate" translate="no">
+                              Account: {accountRoleLabel} · View: {roleLabel}
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -1290,20 +1338,21 @@ export default function Contractors() {
                         variant="outline"
                         size="sm"
                         onClick={flipRole}
-                        className="w-full gap-1 text-xs border-amber-200 text-amber-700 hover:bg-amber-50"
+                        className="!bg-white !text-amber-900 w-full gap-1 border-amber-300 text-xs hover:!bg-amber-50 hover:!text-amber-950"
                       >
-                        {role === "contractor" ? (
+                        {viewMode === "contractor" ? (
                           <Briefcase className="h-3 w-3" />
                         ) : (
                           <HardHat className="h-3 w-3" />
                         )}
-                        Switch to{" "}
-                        {role === "contractor" ? "Job Seeker" : "Contractor"}
+                        <span className="notranslate" translate="no">
+                          Switch view to {nextRoleLabel}
+                        </span>
                       </Button>
                       <Link href="/services/careers">
                         <Button
                           variant="outline"
-                          className="w-full gap-2 text-sm border-blue-200 text-blue-700 hover:bg-blue-50"
+                          className="!bg-white !text-blue-800 w-full gap-2 border-blue-200 text-sm hover:!bg-blue-50 hover:!text-blue-950"
                         >
                           <Briefcase className="h-4 w-4" /> Browse Full-Time
                           Jobs
@@ -1497,7 +1546,10 @@ export default function Contractors() {
                   {isLoading ? (
                     <div className="space-y-4">
                       {[0, 1, 2].map((i) => (
-                        <Card key={i} className="border-gray-200/80">
+                        <Card
+                          key={i}
+                          className="border-gray-200/80 bg-white text-gray-900"
+                        >
                           <CardContent className="p-6">
                             <Skeleton className="h-6 w-3/4 mb-2" />
                             <Skeleton className="h-4 w-1/2 mb-4" />
@@ -1507,7 +1559,7 @@ export default function Contractors() {
                       ))}
                     </div>
                   ) : filtered.length === 0 ? (
-                    <Card className="border-2 border-dashed border-gray-300/50">
+                    <Card className="border-2 border-dashed border-gray-300/50 bg-white text-gray-900">
                       <CardContent className="p-12 text-center">
                         <Search className="h-16 w-16 mx-auto text-gray-300 mb-6" />
                         <h4 className="text-2xl font-semibold text-gray-700 mb-3">
@@ -1534,7 +1586,7 @@ export default function Contractors() {
                           <Card
                             key={c.id}
                             className={
-                              "border border-gray-200/80 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 scroll-fade-in opacity-0 translate-y-4 relative " +
+                              "relative border border-gray-200/80 bg-white text-gray-900 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl scroll-fade-in opacity-0 translate-y-4 " +
                               (c.is_featured
                                 ? "border-amber-200/50 border-l-4 border-l-amber-500"
                                 : "")

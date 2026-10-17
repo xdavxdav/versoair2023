@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { Search, X, FileText, HelpCircle, Store, Mic2, Newspaper, Tag } from "lucide-react";
+import MarketLabel from "@/components/MarketLabel";
 
 type Hit = { key: string; title: string; hint: string; path: string; kind: "page" | "faq" | "business" | "artist" | "post" | "listing" };
 
@@ -150,7 +151,13 @@ export default function GlobalSearch() {
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10"
                       >
                         <I className="h-4 w-4 shrink-0 text-white/50" />
-                        <span className="flex-1 truncate">{h.title}</span>
+                        <span className="flex-1 truncate">
+                          {h.path === "/marketplace" ? (
+                            <MarketLabel />
+                          ) : (
+                            h.title
+                          )}
+                        </span>
                         <span className="text-xs text-white/40">{h.hint}</span>
                       </button>
                     </li>

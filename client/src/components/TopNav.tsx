@@ -6,6 +6,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import type { PortalId } from "@/lib/portal-access";
+import MarketLabel from "@/components/MarketLabel";
 
 export const PORTALS: Record<PortalId, { label: string; path: string }> = {
   general: { label: "Dashboard", path: "/dashboard" },
@@ -116,7 +117,7 @@ export default function TopNav() {
         >
           {EXPLORE.map((e) => (
             <Link key={e.path} href={e.path} className={item}>
-              {e.label}
+              {e.path === "/marketplace" ? <MarketLabel /> : e.label}
             </Link>
           ))}
         </Menu>
