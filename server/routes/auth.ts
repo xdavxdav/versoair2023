@@ -29,6 +29,15 @@ import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
 
+/** True when there is no real display name: empty, equal to the username, or an auto-generated "word_1a2b" handle. */
+function isPlaceholderName(name: unknown, username?: unknown): boolean {
+  const n = typeof name === "string" ? name.trim() : "";
+  if (!n) return true;
+  if (typeof username === "string" && n.toLowerCase() === username.trim().toLowerCase()) return true;
+  return /^[a-z]+_(?=[a-z0-9]*\d)[a-z0-9]{3,6}$/i.test(n);
+}
+
+
 const router = Router();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -419,7 +428,7 @@ async function finishLogin(
   res.json({
     success: true,
     token,
-    needsDisplayName: !displayName,
+    needsDisplayName: isPlaceholderName(displayName, user.username),
     needsPasswordChange: !!user.must_change_password,
     user: {
       id: String(user.id),
@@ -1000,7 +1009,7 @@ router.get(
 
       const displayName =
         verifiedUser.display_name || verifiedUser.username || "";
-      const needsName = !verifiedUser.display_name;
+      const needsName = isPlaceholderName(verifiedUser.display_name, verifiedUser.username);
       const userName = encodeURIComponent(
         displayName || verifiedUser.email.split("@")[0],
       );
@@ -1184,7 +1193,7 @@ router.get(
           isAdmin,
           role: effectiveRole,
           isFirstLogin: isNewAccount && !userDisplayName,
-          needsDisplayName: !userDisplayName,
+          needsDisplayName: isPlaceholderName(userDisplayName, dbUser?.username),
           subscriptionTier: dbUser?.subscription_tier || "free",
           subscriptionStatus: dbUser?.subscription_status || "active",
           trialTier: dbUser?.trial_tier || null,
@@ -1869,6 +1878,7 @@ router.post(
     const [user] = await db
       .select({
         displayName: schema.users.displayName,
+        username: schema.users.username,
         password: schema.users.password,
       })
       .from(schema.users)
@@ -1880,8 +1890,34 @@ router.post(
       return;
     }
 
-    // If display name already exists, require password verification
-    if (user.displayName) {
+    const wanted = displayName.trim();
+    if (isPlaceholderName(wanted)) {
+      res.status(400).json({
+        success: false,
+        message: "Please choose a real name, not an auto-generated handle",
+      });
+      return;
+    }
+    const taken = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(
+        and(
+          sql`id != ${userId}`,
+          sql`(lower(display_name) = ${wanted.toLowerCase()} OR lower(username) = ${wanted.toLowerCase()})`,
+        ),
+      )
+      .limit(1);
+    if (taken.length > 0) {
+      res.status(409).json({
+        success: false,
+        message: "That name is already taken. Please choose another.",
+      });
+      return;
+    }
+
+    // Replacing a real name requires the password; a missing or placeholder one does not
+    if (!isPlaceholderName(user.displayName, user.username)) {
       if (!currentPassword) {
         res.status(400).json({
           success: false,
@@ -3153,7 +3189,7 @@ router.post(
         ? "Artist code login successful"
         : "Artist login successful",
       token,
-      needsDisplayName: !displayName,
+      needsDisplayName: isPlaceholderName(displayName, user.username),
       user: {
         id: String(user.id),
         email: user.email,
@@ -3325,7 +3361,7 @@ router.post(
       success: true,
       message: "Subscriber login successful",
       token,
-      needsDisplayName: !displayNameSub,
+      needsDisplayName: isPlaceholderName(displayNameSub, user.username),
       user: {
         id: String(user.id),
         email: user.email,
@@ -3559,7 +3595,7 @@ router.post(
       success: true,
       message: "Community login successful",
       token,
-      needsDisplayName: !displayNameComm,
+      needsDisplayName: isPlaceholderName(displayNameComm, user.username),
       user: {
         id: String(user.id),
         email: user.email,
