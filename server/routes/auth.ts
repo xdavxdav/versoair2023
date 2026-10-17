@@ -2938,25 +2938,44 @@ router.post(
         // Staff secret codes map to a staff account (owner via SUPERADMIN_EMAIL)
         const staffWho = matchStaffCode(code);
         if (staffWho) {
-          const where =
-            staffWho === "owner"
-              ? SUPERADMIN_EMAIL
-                ? eq(schema.users.email, SUPERADMIN_EMAIL.toLowerCase())
-                : undefined
-              : or(
-                  eq(schema.users.username, staffWho),
-                  eq(schema.users.gateUsername, staffWho),
-                );
-          if (where) {
-            const [resolved] = await db
+          let resolved: any;
+          if (staffWho === "owner") {
+            if (SUPERADMIN_EMAIL) {
+              [resolved] = await db
+                .select()
+                .from(schema.users)
+                .where(
+                  sql`lower(${schema.users.email}) = ${SUPERADMIN_EMAIL.trim().toLowerCase()}`,
+                )
+                .limit(1);
+            }
+            // The code itself is the secret; fall back to the superuser account
+            if (!resolved) {
+              [resolved] = await db
+                .select()
+                .from(schema.users)
+                .where(eq(schema.users.role, "superuser"))
+                .limit(1);
+            }
+          } else {
+            [resolved] = await db
               .select()
               .from(schema.users)
-              .where(where)
+              .where(
+                or(
+                  eq(schema.users.username, staffWho),
+                  eq(schema.users.gateUsername, staffWho),
+                ),
+              )
               .limit(1);
-            if (resolved) {
-              user = resolved;
-              skipPasswordCheck = true;
-            }
+          }
+          if (resolved) {
+            user = resolved;
+            skipPasswordCheck = true;
+          } else {
+            console.warn(
+              `[ARTIST AUTH] Valid staff code (${staffWho}) but no matching account found`,
+            );
           }
         }
       }
