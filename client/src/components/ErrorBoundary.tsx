@@ -41,6 +41,20 @@ export default class ErrorBoundary extends Component<Props, State> {
       this.setState({ hasError: false, error: null });
       return;
     }
+    // A deploy replaced the hashed chunk this tab still references: reload once to pick up the new build.
+    if (
+      error.name === "ChunkLoadError" ||
+      msg.includes("Loading chunk") ||
+      msg.includes("dynamically imported module") ||
+      msg.includes("Failed to fetch dynamically")
+    ) {
+      const last = Number(sessionStorage.getItem("chunk_reload_at") || 0);
+      if (Date.now() - last > 60_000) {
+        sessionStorage.setItem("chunk_reload_at", String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
     console.error("[ErrorBoundary] Caught:", error, info.componentStack);
   }
 
