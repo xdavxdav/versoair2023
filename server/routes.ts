@@ -42,6 +42,7 @@ import listenerRouter from "./routes/listener";
 import beatmakerRouter from "./routes/beatmaker";
 import versavidsRouter from "./routes/versavids";
 import intentSearchRouter from "./routes/intent-search";
+import siteSearchRouter from "./routes/site-search";
 import migrateRouter from "./routes/migrate";
 import escrowRouter from "./routes/escrow";
 import geoSeoRouter, {
@@ -246,6 +247,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/streaming", streamingRouter);
   app.use("/api/contracts", artistContractsRouter);
   app.use("/api/artists", artistsRouter);
+  app.use("/api/site-search", siteSearchRouter);
   app.use("/api/data/dispatch", dataDispatchRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/home", homeStatsRouter);

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
-import { Search, X, FileText, HelpCircle, Store } from "lucide-react";
+import { Search, X, FileText, HelpCircle, Store, Mic2, Newspaper, Tag } from "lucide-react";
 
-type Hit = { key: string; title: string; hint: string; path: string; kind: "page" | "faq" | "business" };
+type Hit = { key: string; title: string; hint: string; path: string; kind: "page" | "faq" | "business" | "artist" | "post" | "listing" };
 
 const PAGES: { title: string; path: string; keywords: string }[] = [
   { title: "Home", path: "/", keywords: "accueil verso air" },
@@ -57,9 +57,10 @@ export default function GlobalSearch() {
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
       const enc = encodeURIComponent(term);
-      const [faq, biz] = await Promise.allSettled([
+      const [faq, biz, site] = await Promise.allSettled([
         fetch(`/api/faq/search?q=${enc}&limit=4`, { signal: ctrl.signal }).then((r) => r.json()),
         fetch(`/api/businesses?search=${enc}&limit=4`, { signal: ctrl.signal }).then((r) => r.json()),
+        fetch(`/api/site-search?q=${enc}`, { signal: ctrl.signal }).then((r) => r.json()),
       ]);
       const hits: Hit[] = [];
       if (faq.status === "fulfilled" && faq.value?.success)
@@ -68,6 +69,9 @@ export default function GlobalSearch() {
       if (biz.status === "fulfilled" && biz.value?.success)
         for (const b of biz.value.data || [])
           hits.push({ key: `b${b.id}`, title: b.name, hint: b.city_name || b.location || "Business", path: `/business/${b.id}`, kind: "business" });
+      if (site.status === "fulfilled" && site.value?.success)
+        for (const s of site.value.data || [])
+          hits.push({ key: `${s.kind}${s.id}`, title: s.title, hint: s.hint, path: s.path, kind: s.kind });
       setRemote(hits);
     }, 250);
     return () => {
@@ -87,7 +91,7 @@ export default function GlobalSearch() {
     setOpen(false);
     navigate(path);
   };
-  const Icon = { page: FileText, faq: HelpCircle, business: Store };
+  const Icon = { page: FileText, faq: HelpCircle, business: Store, artist: Mic2, post: Newspaper, listing: Tag };
 
   return (
     <>

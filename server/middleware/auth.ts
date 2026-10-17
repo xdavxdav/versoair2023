@@ -167,6 +167,7 @@ const PUBLIC_PATHS: string[] = [
   // FAQ read endpoints — public so anyone can browse (writes require auth)
   "/api/faq/categories",
   "/api/communities",
+  "/api/site-search",
 ];
 
 /**
