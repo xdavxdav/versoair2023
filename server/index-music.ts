@@ -68,6 +68,7 @@ if (!isDev) {
             "'self'",
             "'unsafe-inline'",
             "https://www.googletagmanager.com",
+            "https://static.klaviyo.com",
             "https://cdn.jsdelivr.net",
             // Google Translate engine scripts
             "https://translate.google.com",
