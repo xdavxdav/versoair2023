@@ -3,6 +3,7 @@ import { db } from "../db";
 import { auditLogs, systemSettings } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { decryptSetting } from "../utils/encrypted-settings";
+import { buildGeoAdminInvitationUrl } from "@shared/geoadmin-invitation";
 
 /**
  * Resolves the public-facing application URL, safe to embed in emails.
@@ -29,6 +30,7 @@ function getAppUrl(): string {
 
 let transporter: Transporter | null = null;
 let senderAddress: string | undefined;
+const geoAdminInvitationSender = "Verso Air GeoAdmin <noreply@versoair.com>";
 let smtpCache: any = null;
 let cacheExpires = 0;
 const EMAIL_SEND_TIMEOUT_MS = 15_000;
@@ -517,6 +519,44 @@ export async function sendPasswordResetEmail(
   return sendEmail(toEmail, "Reset your Verso Air password", htmlContent);
 }
 
+export async function sendGeoAdminInvitationEmail(
+  toEmail: string,
+  invitation: {
+    token: string;
+    role: "admin" | "moderator";
+    gateUsername: string;
+    expiresAt: Date;
+  },
+): Promise<boolean> {
+  const acceptUrl = buildGeoAdminInvitationUrl(getAppUrl(), invitation.token);
+  const roleLabel = invitation.role === "admin" ? "Admin" : "Moderator";
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  const html = `
+    <main style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#172033">
+      <h1>Verso Air Geo Admin invitation</h1>
+      <p>You have been invited as a <strong>${roleLabel}</strong>.</p>
+      <p>Your Geo Admin username is <strong>${escapeHtml(invitation.gateUsername)}</strong>.</p>
+      <p>Set your password using this one-use link before ${invitation.expiresAt.toUTCString()}:</p>
+      <p><a href="${acceptUrl}">Accept invitation and set password</a></p>
+      <p>If you were not expecting this invitation, you can ignore this message.</p>
+    </main>
+  `;
+  return sendEmail(
+    toEmail,
+    "You're invited to Verso Air GeoAdmin",
+    html,
+    undefined,
+    undefined,
+    geoAdminInvitationSender,
+  );
+}
+
 /**
  * Generic send email function
  */
@@ -526,6 +566,7 @@ export async function sendEmail(
   html: string,
   attachments?: Array<{ filename: string; path: string; contentType?: string }>,
   replyTo?: string,
+  fromOverride?: string,
 ): Promise<boolean> {
   if (!transporter) {
     console.warn("[EMAIL] Transporter not initialized; retrying initialization");
@@ -539,7 +580,7 @@ export async function sendEmail(
 
   try {
     const result = await sendMailWithTimeout(transporter, {
-      from: senderAddress,
+      from: fromOverride || senderAddress,
       to,
       subject,
       html,

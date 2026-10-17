@@ -123,6 +123,7 @@ import {
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { AdminAccessGate } from "@/components/AdminAccessGate";
+import GeoAdminAccessManager from "@/components/GeoAdminAccessManager";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7265,6 +7266,7 @@ export default function AdminDashboard() {
             {/* Main content sections based on activeSection - APPEARS FIRST FOR IMMEDIATE VISIBILITY */}
             {activeSection === "dashboard" && (
               <>
+                {sessionUser?.role === "superuser" && <GeoAdminAccessManager />}
                 <GeoAdminSummary />
                 <PendingApprovals />
                 <BusinessManagement />

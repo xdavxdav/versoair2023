@@ -20,6 +20,8 @@ fail-fast compatibility stub.
   and inbox tables so a reviewed deployment can recover without running the
   migration manually. Verify the live schema before release; do not assume a
   migration ran solely because the service restarted.
+- `0004_geo_admin_invitations.sql` creates the one-use, expiring invitations
+  used for superuser-managed Geo Admin staff access.
 
 The Render dashboard was verified to deploy the Dockerfile, whose build and
 start steps do not run `npm run db:migrate`. The repository's `render.yaml` is

@@ -159,7 +159,6 @@ const OngCulturelle = lazy(() => import("@/pages/ong-culturelle"));
 // 🔐 Authentication (lazy-loaded)
 // ─────────────────────────────────────────────────────
 const SignIn = lazy(() => import("@/pages/signin"));
-const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const PasswordPage = lazy(() => import("@/pages/password"));
@@ -169,6 +168,7 @@ const ApplyPage = lazy(() => import("@/pages/apply"));
 // 🌍 Geo Admin Portal (lazy-loaded)
 // ─────────────────────────────────────────────────────
 const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
+const AuthRecoveryPage = lazy(() => import("@/pages/auth-recovery"));
 const BusinessVerification = lazy(
   () => import("@/pages/business-verification"),
 );
@@ -671,7 +671,9 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🔐 AUTH — Sign in & registration
           ═══════════════════════════════════════════════ */}
-      <Route path="/auth/reset-password" component={ResetPassword} />
+      <Route path="/auth/forgot-password" component={AuthRecoveryPage} />
+      <Route path="/auth/reset-password" component={AuthRecoveryPage} />
+      <Route path="/geo-admin/accept-invitation" component={AuthRecoveryPage} />
       <Route path="/auth/signin" component={SignIn} />
       <Route path="/auth/signup">
         {() => <Redirect to="/auth/signin?mode=register" />}

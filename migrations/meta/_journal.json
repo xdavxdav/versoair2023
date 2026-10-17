@@ -29,6 +29,13 @@
       "when": 1791900800000,
       "tag": "0003_auth_and_inbox_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792202000000,
+      "tag": "0004_geo_admin_invitations",
+      "breakpoints": true
     }
   ]
 }

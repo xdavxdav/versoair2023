@@ -773,7 +773,7 @@ export default function GeoAdminAuthGate({
 
                 <p className="text-[11px] text-slate-600 text-center">
                   Admin &amp; CEO accounts only. Regular users sign in via the
-                  Subscriber tab.
+                  Subscriber tab. Geo Admin staff accounts are invitation-only.
                 </p>
               </form>
             )}
@@ -788,6 +788,13 @@ export default function GeoAdminAuthGate({
               </button>
 
               <div className="flex items-center justify-center gap-4 text-xs text-slate-600">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-emerald-400/70 hover:text-emerald-400"
+                >
+                  Forgot password?
+                </Link>
+                <span>·</span>
                 <Link
                   href="/auth/signin?mode=register&redirect=%2Fgeo-admin"
                   className="text-emerald-400/70 hover:text-emerald-400"

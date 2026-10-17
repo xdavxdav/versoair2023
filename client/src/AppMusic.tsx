@@ -40,6 +40,7 @@ const PasswordPage = lazy(() => import("@/pages/password"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
 const Profile = lazy(() => import("@/pages/profile"));
 const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
+const AuthRecoveryPage = lazy(() => import("@/pages/auth-recovery"));
 const AdminDashboard = lazy(() => import("@/pages/dashboard-admin"));
 
 // Streaming — StreamPage is eagerly loaded as the primary landing route
@@ -104,6 +105,9 @@ function Router() {
     <Switch>
       <Route path="/">{() => <Redirect to="/stream" />}</Route>
       <Route path="/auth/signin" component={SignIn} />
+      <Route path="/auth/forgot-password" component={AuthRecoveryPage} />
+      <Route path="/auth/reset-password" component={AuthRecoveryPage} />
+      <Route path="/geo-admin/accept-invitation" component={AuthRecoveryPage} />
       <Route path="/auth/login" component={SignInSimple} />
       <Route path="/auth/oauth-complete" component={OAuthComplete} />
       <Route path="/auth/password">

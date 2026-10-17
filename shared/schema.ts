@@ -115,6 +115,28 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const geoAdminInvitations = pgTable("geo_admin_invitations", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  gateUsername: text("gate_username").notNull(),
+  role: varchar("role", { length: 20 }).notNull(),
+  tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  invitedBy: integer("invited_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  acceptedUserId: integer("accepted_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  revokedBy: integer("revoked_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // --- EMAIL VERIFICATION TOKENS ---
 export const verificationTokens = pgTable("verification_tokens", {
   id: serial("id").primaryKey(),

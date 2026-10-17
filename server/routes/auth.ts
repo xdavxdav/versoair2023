@@ -26,6 +26,11 @@ import {
 import { computeUserCapabilities } from "./capabilities";
 import { generateArtistCode } from "../utils/artist-code";
 import { isUniqueConstraintViolation } from "../utils/postgres-errors";
+import geoAdminAccessRouter from "./geoadmin-access";
+import {
+  getAdminGateLockout,
+  getAdminGatePostPasswordDenial,
+} from "../services/admin-gate-policy";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -40,6 +45,8 @@ function isPlaceholderName(name: unknown, username?: unknown): boolean {
 
 
 const router = Router();
+
+router.use(geoAdminAccessRouter);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -885,6 +892,7 @@ router.post(
         console.warn("[SESSION] Failed to revoke session on logout:", e);
       }
     }
+    clearAdminElevation(res);
     res.clearCookie("auth_token", { path: "/" });
     res.json({ success: true });
   }),
@@ -1293,22 +1301,25 @@ router.post(
  */
 router.post(
   "/admin-gate",
+  loginLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const { username, password } = req.body;
+    const { username, password } = req.body ?? {};
 
-    if (!username) {
+    if (typeof username !== "string" || !username.trim()) {
       return res.status(403).json({
         success: false,
         message: "Username is required.",
       });
     }
 
-    if (!password) {
+    if (typeof password !== "string" || !password) {
       return res.status(403).json({
         success: false,
         message: "Password is required.",
       });
     }
+
+    const gateUsername = username.trim().toLowerCase();
 
     // Look up user by gate_username
     const [user] = await db
@@ -1318,9 +1329,13 @@ router.post(
         password: schema.users.password,
         role: schema.users.role,
         subscriptionTier: schema.users.subscriptionTier,
+        isVerified: schema.users.isVerified,
+        failedLoginAttempts: schema.users.failedLoginAttempts,
+        lockedUntil: schema.users.lockedUntil,
+        mustChangePassword: schema.users.mustChangePassword,
       })
       .from(schema.users)
-      .where(eq(schema.users.gateUsername, username.toLowerCase()))
+      .where(eq(schema.users.gateUsername, gateUsername))
       .limit(1);
 
     if (!user) {
@@ -1330,38 +1345,66 @@ router.post(
       });
     }
 
+    const lockout = getAdminGateLockout(user);
+    if (lockout) {
+      return res.status(lockout.status).json({
+        success: false,
+        message: lockout.message,
+        error: { code: lockout.code, message: lockout.message },
+      });
+    }
+
     // 🔒 Verify password — no more username-only access
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
+      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      await db
+        .update(schema.users)
+        .set({
+          failedLoginAttempts: failedAttempts,
+          lockedUntil:
+            failedAttempts >= MAX_FAILED_ATTEMPTS
+              ? new Date(Date.now() + LOCK_DURATION_MS)
+              : null,
+        })
+        .where(eq(schema.users.id, user.id));
       return res.status(403).json({
         success: false,
         message: "Invalid credentials.",
       });
     }
 
-    // Role gate — admin, superuser & moderator may enter.
-    const allowedRoles = ["admin", "superuser", "moderator"];
-    if (!user.role || !allowedRoles.includes(user.role)) {
-      return res.status(403).json({
+    const denial = getAdminGatePostPasswordDenial(user, {
+      isSuperadminEmail: isSuperadmin(user.email),
+    });
+    if (denial) {
+      return res.status(denial.status).json({
         success: false,
-        message: "Access denied. Admin, CEO, or Moderator clearance required.",
+        message: denial.message,
+        error: { code: denial.code, message: denial.message },
       });
     }
 
+    await db
+      .update(schema.users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null })
+      .where(eq(schema.users.id, user.id));
+
+    const role = user.role!;
     const token = jwt.sign(
       {
         userId: String(user.id),
         email: user.email,
-        role: user.role || "admin",
-        subscriptionTier: user.subscriptionTier || "enterprise",
+        role,
+        subscriptionTier: user.subscriptionTier || "free",
       },
       getJwtSecret(),
       { expiresIn: JWT_EXPIRES_IN },
     );
 
     setAuthCookie(res, token);
-    issueAdminElevation(res, String(user.id));
     await createSession(user.id, token, req, { revokeOthers: true });
+    issueAdminElevation(res, String(user.id));
 
     // Compute capabilities for portal access
     let capabilities: any = null;
@@ -1377,8 +1420,8 @@ router.post(
       user: {
         id: String(user.id),
         email: user.email,
-        username: username,
-        role: user.role || "admin",
+        username: gateUsername,
+        role,
         portals: capabilities?.portals || ["general"],
       },
     });
@@ -1407,143 +1450,19 @@ router.post(
   }),
 );
 
-/**
- * POST /auth/register-geoadmin
- * Create a new GeoAdmin account — .test email domain REQUIRED.
- * Sets role to 'admin', assigns gate_username, grants geo-admin portal access.
- */
-const registerGeoAdminSchema = z.object({
-  email: z
-    .string()
-    .email("Invalid email address")
-    .max(254)
-    .refine((e) => e.endsWith(".test"), {
-      message: "GeoAdmin accounts must use a .test email domain",
-    }),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128)
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
-  gateUsername: z
-    .string()
-    .min(2, "Username must be at least 2 characters")
-    .max(50)
-    .regex(
-      /^[a-z0-9_]+$/,
-      "Username must be lowercase alphanumeric with underscores only",
-    ),
-});
-
+/** Retired: GeoAdmin staff accounts can only be created through invitations. */
 router.post(
   "/register-geoadmin",
-  registerLimiter,
-  asyncHandler(async (req: Request, res: Response) => {
-    // 🔒 Only existing Admin/Superadmin accounts may create .test accounts.
-    // (This route requires authentication — see PUBLIC_PATHS in middleware/auth.ts)
-    const requesterRole = (req as any).user?.role;
-    if (requesterRole !== "admin" && requesterRole !== "superuser") {
-      return res.status(403).json({
-        success: false,
-        message: "Only Admin or Superadmin accounts can create .test accounts.",
-      });
-    }
-
-    const parsed = registerGeoAdminSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res
-        .status(400)
-        .json({ success: false, message: parsed.error.errors[0].message });
-    }
-
-    const { email, password, gateUsername } = parsed.data;
-
-    // Block non-.test domains (double-check)
-    if (!email.endsWith(".test")) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Only .test email domains are allowed for GeoAdmin registration.",
-      });
-    }
-
-    // Check duplicate email
-    const existingEmail = await db
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .where(eq(schema.users.email, email.toLowerCase()))
-      .limit(1);
-
-    if (existingEmail.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists.",
-      });
-    }
-
-    // Check duplicate gate_username
-    const existingGate = await db
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .where(eq(schema.users.gateUsername, gateUsername.toLowerCase()))
-      .limit(1);
-
-    if (existingGate.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: "This admin username is already taken.",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const [newUser] = await db
-      .insert(schema.users)
-      .values({
-        email: email.toLowerCase(),
-        username: gateUsername.toLowerCase(),
-        password: hashedPassword,
-        role: "admin",
-        isVerified: true, // .test accounts are auto-verified
-        gateUsername: gateUsername.toLowerCase(),
-        portalAccess: ["general", "geo-admin"],
-        subscriptionTier: "enterprise",
-      })
-      .returning({
-        id: schema.users.id,
-        email: schema.users.email,
-        role: schema.users.role,
-      });
-
-    // Issue a JWT for the newly created .test account. We intentionally do
-    // NOT call setAuthCookie() here — the admin/superadmin making this request
-    // stays logged in under their own session; the new account's token is
-    // only returned in the response body for reference.
-    const token = jwt.sign(
-      {
-        userId: String(newUser.id),
-        email: newUser.email,
-        role: newUser.role || "admin",
-        subscriptionTier: "enterprise",
-      },
-      getJwtSecret(),
-      { expiresIn: JWT_EXPIRES_IN },
-    );
-
-    await createSession(newUser.id, token, req);
-
-    res.status(201).json({
-      success: true,
-      token,
-      user: {
-        id: String(newUser.id),
-        email: newUser.email,
-        username: gateUsername.toLowerCase(),
-        role: newUser.role,
-      },
+  (_req: Request, res: Response) => {
+    const message =
+      "GeoAdmin self-registration has been retired. A superuser must send an invitation from Geo Admin access management.";
+    res.status(410).json({
+      success: false,
+      message,
+      error: { code: "ENDPOINT_RETIRED", message },
+      replacement: "/auth/geoadmin-access",
     });
-  }),
+  },
 );
 
 /**
@@ -1653,6 +1572,7 @@ router.post(
       })
       .where(eq(schema.users.id, user.id));
 
+    clearAdminElevation(res);
     res.clearCookie("auth_token", { path: "/" });
     res.json({
       success: true,
@@ -2171,6 +2091,7 @@ router.post(
       }
     }
 
+    clearAdminElevation(res);
     res.clearCookie("auth_token", { path: "/" });
     res.json({ success: true, message: "All sessions revoked" });
   }),

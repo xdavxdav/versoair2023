@@ -138,6 +138,19 @@ export const forgotPasswordLimiter = rateLimit({
   },
 });
 
+export const invitationAcceptLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many invitation attempts. Please try again in 15 minutes.",
+    });
+  },
+});
+
 // Generic API rate limiter: max 100 requests per 15 minutes
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

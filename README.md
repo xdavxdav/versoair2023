@@ -80,3 +80,17 @@ Use these env vars in Render:
 Cloudflare Email Routing handles inbound aliases (for example
 `admin@versoair.com`, `support@versoair.com`, `noreply@versoair.com`) and can
 forward them to the mailbox used by `SMTP_USER`.
+
+## Geo Admin staff invitations
+
+Geo Admin staff access is invite-only. A signed-in superuser can open
+`/geo-admin/dashboard` and use **Manage Geo Admin access** to invite selected
+staff by real email address, assigned admin username, and the Admin or
+Moderator role. Invitations are one-use links that expire after 72 hours;
+recipients set their own password, and password recovery is linked from the
+Geo Admin sign-in page. Invitation messages use `noreply@versoair.com`; make
+sure this sender is permitted by the configured SMTP provider.
+
+Apply the versioned Drizzle migration before deploying code that depends on
+`geo_admin_invitations`; startup table checks are not a substitute for the
+reviewed production migration process.
