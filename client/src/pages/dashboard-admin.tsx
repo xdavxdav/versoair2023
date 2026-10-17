@@ -1821,7 +1821,7 @@ const BusinessManagement = ({
                     return (
                       <TableRow
                         key={business.id}
-                        className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-colors"
+                        className="bg-white text-slate-900 transition-colors hover:bg-slate-100"
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -1872,7 +1872,7 @@ const BusinessManagement = ({
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <div>
-                            <p className="text-sm font-medium">
+                            <p className="text-sm font-medium text-slate-900">
                               {business.email}
                             </p>
                             <p className="text-sm text-gray-500">
