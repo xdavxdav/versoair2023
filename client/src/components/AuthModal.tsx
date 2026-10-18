@@ -132,7 +132,7 @@ export default function AuthModal({
   onAuthenticate,
   isLoading = false,
   error: externalError,
-  showProfessionalSSO = true,
+  showProfessionalSSO = false,
 }: AuthModalProps) {
   useScrollLock(isOpen);
   const [mode, setMode] = useState<"login" | "signup">("login");

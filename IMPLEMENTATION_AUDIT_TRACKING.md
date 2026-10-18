@@ -87,34 +87,34 @@ Délai : 3 à 5 jours
 
 Objectif :
 
-- créer suffisamment de profils réels pour donner une vraie vie au site
+- publier uniquement des profils réels fournis ou approuvés par leur propriétaire et vérifiés avant publication
 
 Priorité 1 : Artisans
 
-- 10 à 20 profils artisan de base
-- catégorie, spécialité, description, localisation, photo, statut publié
+- recueillir des profils artisan authentiques avec catégorie, spécialité, description, localisation et photo autorisée
+- confirmer l’exactitude et l’autorisation de publication avant activation
 
 Priorité 2 : Artistes
 
-- 5 à 10 profils artistiques avec mini présentation
+- recueillir des profils artistiques authentiques et une mini-présentation approuvée
 
 Priorité 3 : Business / entreprises
 
-- 5 à 10 profils de business / services
+- recueillir des profils de business/services authentiques et approuvés
 
 Priorité 4 : Community
 
-- 5 profils d’utilisateurs communautaires actifs
+- ne publier aucun profil communautaire de démonstration comme s’il s’agissait d’un utilisateur réel
 
 Livrables :
 
-- données de test réalistes
-- profils publiés visibles dans les pages publiques
-- premier niveau de présence du site
+- fixtures de test isolées des surfaces publiques
+- profils réels, vérifiés et autorisés avant toute publication
+- premier niveau de présence publique fondé sur des éléments vérifiables
 
 Critère de validation :
 
-- la page artisans affiche des cartes réelles et non plus une liste vide.
+- chaque carte publique correspond à un profil réel vérifié et autorisé; ne pas remplir la page avec des données fictives.
 
 ---
 
@@ -236,10 +236,10 @@ Critère de validation :
 | -------------------------------- | --------------------- | ---------: | ------------ | ---------- | -------------------------------------------- |
 | Audit global du site             | En cours              | Très haute | Projet       | J1         | Vérification du système actuel               |
 | Portails / rôles / auth          | Terminé partiellement | Très haute | Projet       | J2         | Structure utile, besoin de validation finale |
-| Artisans / directory public      | À démarrer            | Très haute | Produit      | J3         | Générer les premiers profils publiés         |
-| Artistes                         | À démarrer            |      Haute | Produit      | J4         | Créer premiers profils                       |
-| Business                         | À démarrer            |      Haute | Produit      | J4         | Créer profils et services                    |
-| Community                        | À démarrer            |    Moyenne | Produit      | J5         | Créer comptes de démonstration               |
+| Artisans / directory public      | Bloqué                | Très haute | Produit      | —          | Obtenir des profils réels vérifiés et autorisés; aucune fiche synthétique publique |
+| Artistes                         | Bloqué                |      Haute | Produit      | —          | Publier uniquement des profils authentiques et approuvés |
+| Business                         | Bloqué                |      Haute | Produit      | —          | Publier uniquement des profils/services authentiques et approuvés |
+| Community                        | Bloqué                |    Moyenne | Produit      | —          | Aucun compte de démonstration présenté comme utilisateur réel |
 | Dashboards par rôle              | En cours              | Très haute | Front / Back | J5         | Vérifier cohérence de navigation             |
 | QA fonctionnelle                 | À démarrer            | Très haute | QA           | J6         | Valider les parcours utilisateurs            |
 | Publication / validation         | À démarrer            |      Haute | Admin        | J7         | Mettre en place le workflow                  |
@@ -251,8 +251,8 @@ Critère de validation :
 
 La première vague est réussie si :
 
-- la page artisans contient des profils réels
-- les visiteurs peuvent naviguer sans voir de zones vides
+- chaque fiche publique correspond à un profil réel, vérifié et autorisé
+- aucune donnée de test n’est visible dans les surfaces publiques
 - les portails de comptes fonctionnent correctement
 - les dashboards conduisent vers le bon espace
 - les parcours d’inscription sont crédibles
@@ -266,11 +266,11 @@ La première vague est réussie si :
 
 - [ ] Finaliser la cartographie des rôles et portails
 - [ ] Confirmer les pages actives vs placeholders
-- [ ] Créer la première vague de profils artisan
-- [ ] Publier les profils artisan visibles public
+- [ ] Recueillir et vérifier les profils artisan autorisés
+- [ ] Publier uniquement les profils artisan vérifiés et approuvés
 - [ ] Vérifier le rendu de la directory
 - [ ] Tester le dashboard utilisateur lié au profil
-- [ ] Ajouter les profils artiste / business / community
+- [ ] Recueillir l’autorisation et vérifier les profils artiste / business / community
 - [ ] Valider la navigation entre pages publiques et dashboards
 - [ ] Définir le workflow admin de publication
 - [ ] Préparer la première QA fonctionnelle
@@ -308,9 +308,7 @@ Le vrai moteur de crédibilité est le contenu et les profils publiés, pas seul
 
 ## 10) Conclusion
 
-Le site est prêt pour le passage de la “version technique” à la “version utile”.
-
-La prochaine étape la plus importante n’est pas un nouveau correctif, mais l’alimentation réelle du produit avec des profils et contenus publiés, suivie d’une validation fonctionnelle complète.
+La copie locale ne permet pas de conclure que le site est prêt pour le passage de la “version technique” à la “version utile”. La priorité est de vérifier les affirmations et données réellement visibles, puis de valider les parcours et le déploiement avec des preuves. Aucun profil synthétique ne doit être publié pour donner une impression d’activité.
 
 ---
 
@@ -318,9 +316,32 @@ La prochaine étape la plus importante n’est pas un nouveau correctif, mais l�
 
 - Audit technique : en cours
 - Rôles / portails : structure vérifiée
-- Directory artisan : vide actuellement, nécessite données
+- Répertoire public : un relevé live antérieur a renvoyé 9 fiches de Toronto avec des signatures de données substitutives; provenance et exactitude non vérifiées
 - Public content : à alimenter
 - Publication / validation : à définir
 - QA globale : à planifier
 
 L’objectif de cette première implémentation globale est de rendre le produit crédible, visible et exploitable par de vrais utilisateurs.
+
+## 12) Mise à jour des portes de lancement — preuves locales et limites
+
+Cette mise à jour supplante les anciennes affirmations de ce document lorsqu’elles décrivent des profils ou des parcours comme vérifiés. Elle ne prouve pas que les correctifs locaux sont déployés. Le P2 ci-dessous désigne l’audit des affirmations publiques demandé pour le lancement; il ne correspond pas au P2 de maintenance du dépôt dans le Master Production Remediation Plan.
+
+| Porte | Statut | Vérification et travail restant |
+|---|---|---|
+| P2 — Affirmations publiques et crédibilité | **En cours** | Plusieurs affirmations locales de prix/essai, de démonstration, de classement et de statistiques simulées ont été retirées ou masquées. L’audit complet des pages, des deux langues et du mobile reste à faire; aucun correctif local n’est confirmé en production. |
+| P4 — Offre et paiements | **Partiel; production bloquée** | L’offre reste une demande de renseignements pour une inscription au répertoire, sans promesse de prix, d’essai ou de conditions payantes. Les parcours d’abonnement/paiement sont fermés par défaut localement; achats, remboursements et webhooks de production ne sont pas testés. |
+| P5 — Messages et compte | **Bloqué** | Le code local ne retourne plus un succès d’envoi si SMTP est absent ou si le destinataire refuse le message; les champs HTML sont échappés. Réception dans une boîte surveillée, réponse, signup/login, vérification, réinitialisation et erreurs doivent être testés avec des comptes autorisés. |
+| P6 — Connexions tierces et promotion | **Bloqué** | Les options OAuth sont localement filtrées par autorisation et configuration. Fournisseurs choisis, applications/callbacks/secrets de production, consentement, unlinking, liens de profils, contenus bilingues et profils externes gérés par le propriétaire restent à confirmer. |
+| P8 — Répertoire et recherche IA | **Bloqué** | Le relevé de recherche Toronto a retourné 9 fiches, toutes avec un site en domaine `example.com` et un téléphone au format `+1-555`, signatures cohérentes avec des fixtures synthétiques; la provenance n’est pas établie. Aucune ligne de production n’a été modifiée. Les lectures publiques locales filtrent désormais les fiches non vérifiées et ces signatures; il reste à déployer sous autorisation, à tester sur la vraie base et à vérifier indépendamment des fiches Toronto. Ne pas semer d’exemples de grandes marques. |
+| P7 — Go/no-go | **Bloqué** | Décision interdite avant preuves pour les affirmations, l’offre, le contact, les intégrations, les fiches et la release, puis approbation explicite du propriétaire. |
+
+### Vérification live complémentaire — Marketplace, 8 octobre 2026
+
+La page publique `/marketplace` affiche `0°, 0°`, `Active Users: 0`, `Coverage Areas: 0%`, aucun artiste inscrit, zéro stream et zéro artiste actif. Cette vérification de navigateur ne prouve pas si les zéros sont des données réelles ou des valeurs par défaut. Le panneau de localisation dans la copie locale utilise `"0"` en remplacement lorsque certaines métriques sont absentes; il faut donc vérifier la source avant de présenter les valeurs comme mesurées. La console du navigateur a aussi signalé une ressource en 401 et des blocages CSP pour le script Klaviyo et une requête de frame. Confirmer si ces intégrations sont attendues; sinon, retirer les requêtes ou revoir la politique après validation de sécurité. En attendant, afficher un état vide/non disponible explicite ou masquer les métriques non vérifiées.
+
+### Limites d’accès et opérations
+
+- Le projet local est sous le dépôt Git parent `/Users/joe` (branche locale `joel`), mais cette copie VersoAir n’est pas un checkout suivi dont le lien à Render est démontré. Le dépôt, la branche et le SHA déployés restent à vérifier dans Render.
+- `/api/health` a indiqué API/base de données accessibles lors du contrôle; `/api/ai/status` a indiqué `fallback` / `rule-based`. L’audit documente Ollama, Groq et les modes de secours; ce statut ne prouve pas qu’Ollama fonctionne en production.
+- Aucun déploiement, changement de configuration de production, envoi de contact, achat, création de compte ou mutation de données de production n’a été effectué. Les dépendances locales et la vérification TypeScript/build restent à vérifier.

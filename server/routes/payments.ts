@@ -29,8 +29,10 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, requireSuperuser } from "../middleware/auth";
 import {
+  commercialSubscriptionsEnabled,
   onlinePaymentsEnabled,
   rejectUnavailablePayment,
+  rejectUnavailableSubscription,
 } from "../utils/commercial-gates";
 
 const router = Router();
@@ -1448,6 +1450,15 @@ const TIER_DURATION_DAYS = 30; // 30-day billing cycle
  * Returns tier pricing information.
  */
 router.get("/tier/prices", (_req: Request, res: Response) => {
+  if (!commercialSubscriptionsEnabled()) {
+    return res.status(503).json({
+      success: false,
+      availability: "inquiry_only",
+      message:
+        "Published subscription prices are not available. Contact the team to inquire about a business listing.",
+    });
+  }
+
   res.json({
     success: true,
     tiers: [
@@ -1504,6 +1515,11 @@ router.post(
   "/tier/upgrade",
   requireAuth(),
   async (req: Request, res: Response) => {
+    if (!commercialSubscriptionsEnabled()) {
+      rejectUnavailableSubscription(res);
+      return;
+    }
+
     try {
       if (!onlinePaymentsEnabled()) {
         rejectUnavailablePayment(res);

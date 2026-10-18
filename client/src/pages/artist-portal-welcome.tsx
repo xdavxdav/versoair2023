@@ -3286,48 +3286,10 @@ export default function ArtistPortalWelcome() {
                   <div className="flex-1 h-px bg-white/[0.06]" />
                 </div>
 
-                {/* Music Platform OAuth */}
-                <div className="grid grid-cols-3 gap-3">
-                  <motion.button
-                    type="button"
-                    className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium hover:border-[#1DB954]/40 hover:bg-[#1DB954]/10 hover:text-[#1DB954] transition-all flex flex-col items-center gap-1.5"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      (window.location.href =
-                        "/auth/oauth/spotify?redirect=/music/dashboard")
-                    }
-                  >
-                    <span className="text-lg">♪</span>
-                    <span className="text-[10px] opacity-60">Spotify</span>
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium hover:border-[#FC3C44]/40 hover:bg-[#FC3C44]/10 hover:text-[#FC3C44] transition-all flex flex-col items-center gap-1.5"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      (window.location.href =
-                        "/auth/oauth/apple-music?redirect=/music/dashboard")
-                    }
-                  >
-                    <span className="text-lg"></span>
-                    <span className="text-[10px] opacity-60">Apple Music</span>
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    className="py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 text-sm font-medium hover:border-[#FFA200]/40 hover:bg-[#FFA200]/10 hover:text-[#FFA200] transition-all flex flex-col items-center gap-1.5"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() =>
-                      (window.location.href =
-                        "/auth/oauth/audiomack?redirect=/music/dashboard")
-                    }
-                  >
-                    <span className="text-lg">🎵</span>
-                    <span className="text-[10px] opacity-60">Audiomack</span>
-                  </motion.button>
-                </div>
+                <p className="text-center text-xs text-white/40">
+                  Les connexions Spotify, Apple Music et Audiomack ne sont pas
+                  encore configurées.
+                </p>
 
                 {/* Contracts & Apply links */}
                 <div className="mt-2 pt-4 border-t border-white/[0.06]">

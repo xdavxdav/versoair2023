@@ -14,9 +14,6 @@ export function publicBusinessVisibilitySql(
   return `${tableAlias}.is_active = true
     AND ${tableAlias}.is_verified = true
     AND UPPER(${tableAlias}.country_code) = '${getDirectoryCountryCode()}'
-    AND NOT (
-      COALESCE(${tableAlias}.email LIKE 'contact+%@versoair.local', false)
-      AND COALESCE(${tableAlias}.website LIKE '%.example.com', false)
-      AND COALESCE(${tableAlias}.phone LIKE '+1-555-%', false)
-    )`;
+    AND NOT COALESCE(${tableAlias}.email ILIKE '%@versoair.local', false)
+    AND NOT COALESCE(${tableAlias}.website ILIKE '%.example.com', false)`;
 }

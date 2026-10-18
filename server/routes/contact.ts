@@ -26,7 +26,17 @@ router.post(
   asyncHandler(async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
 
-    if (!name || !email || !subject || !message) {
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      typeof email !== "string" ||
+      !email.trim() ||
+      typeof subject !== "string" ||
+      !subject.trim() ||
+      typeof message !== "string" ||
+      !message.trim() ||
+      (phone != null && typeof phone !== "string")
+    ) {
       return res.status(400).json({
         success: false,
         message: "Name, email, subject, and message are required.",
@@ -48,16 +58,16 @@ router.post(
       await db.insert(schema.auditLogs).values({
         action: "contact_form_submission",
         changes: {
-          name,
-          email,
-          phone,
-          subject,
-          message,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone?.trim() || null,
+          subject: subject.trim(),
+          message: message.trim(),
           submittedAt: new Date().toISOString(),
         },
       });
-    } catch {
-      // audit log table may not exist — non-blocking
+    } catch (err) {
+      console.warn("[CONTACT] Submission audit log unavailable:", err);
     }
 
     const html = `<h3>New Contact Form Submission</h3>
@@ -88,11 +98,18 @@ router.post(
       });
     }
 
-    notifyZapier("contact", { name, email, phone, subject, message });
+    notifyZapier("contact", {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone?.trim() || null,
+      subject: subject.trim(),
+      message: message.trim(),
+    });
 
     res.json({
       success: true,
-      message: "Your message has been sent. We'll get back to you soon!",
+      message:
+        "Your message was accepted by our email service. We'll get back to you soon!",
     });
   }),
 );

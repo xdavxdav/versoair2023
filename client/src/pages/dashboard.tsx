@@ -142,43 +142,19 @@ import {
   TIERS,
   TIER_FEATURES,
   type TierKey,
-  calculateRankScore,
-  estimateHiddenSearches,
   isFeatureLocked,
 } from "@/lib/tiers";
-import {
-  VisibilityMeter,
-  TierBadge,
-  RankScoreDisplay,
-} from "@/components/VisibilityMeter";
-import {
-  TierComparisonModal,
-  HiddenSearchesAlert,
-} from "@/components/TierComparisonModal";
+import { TierBadge } from "@/components/VisibilityMeter";
+import { TierComparisonModal } from "@/components/TierComparisonModal";
 import { RevenueSimulator } from "@/components/RevenueSimulator";
 import { VerificationQuickStatus } from "@/components/VerificationStatusClientView";
 
 // Relevance Engine Imports
 import {
-  getSubscriberStats,
   resolveProfile,
   type ResolvedMetric,
 } from "@/lib/industry-profiles";
 
-// Industry-Relevant KPIs
-import {
-  getRelevantStats,
-  detectBusinessCategory,
-  filterStatsByTier,
-  getStatVisibility,
-} from "@/lib/industry-kpis";
-import { StatCard, StatGrid } from "@/components/StatCard";
-import { useBusinessStats } from "@/hooks/use-business-stats";
-import {
-  generateMockStats,
-  generateCategoryInsights,
-  getTierStatRecommendations,
-} from "@/lib/mock-stat-generator";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -552,37 +528,6 @@ function VerificationTrustHub({
   );
 }
 
-function QuickStat({
-  icon,
-  label,
-  value,
-  change,
-  positive,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number | string;
-  change: string;
-  positive?: boolean;
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <span className="text-xs text-gray-500 font-medium">{label}</span>
-      </div>
-      <div className="text-xl font-bold text-gray-900">
-        {typeof value === "number" ? value.toLocaleString() : value}
-      </div>
-      <span
-        className={`text-xs font-semibold ${positive ? "text-emerald-600" : "text-gray-500"}`}
-      >
-        {change}
-      </span>
-    </div>
-  );
-}
-
 function IndustryMetricCard({
   metric,
   onUpgrade,
@@ -690,126 +635,15 @@ function FeatureRow({
 
 // ─── INDUSTRY KPIs SECTION ──────────────────────────────────────────────────────
 
-function IndustryKPIsSection({
-  businessData,
-  mockStats,
-  userTier,
-  onUpgrade,
-}: {
-  businessData: BusinessData;
-  mockStats: any;
-  userTier: TierKey;
-  onUpgrade: () => void;
-}) {
-  const category = useMemo(
-    () =>
-      detectBusinessCategory(
-        businessData.category || "",
-        businessData.description || "",
-        businessData.name || "",
-      ),
-    [businessData],
-  );
-  const statBlock = useMemo(
-    () => getRelevantStats(category, mockStats, userTier),
-    [category, mockStats, userTier],
-  );
-  const filteredStats = useMemo(
-    () => filterStatsByTier(statBlock.industry, userTier),
-    [statBlock.industry, userTier],
-  );
-  const categoryInsights = useMemo(
-    () => generateCategoryInsights(category, mockStats),
-    [category, mockStats],
-  );
-  const tierRecommendations = useMemo(
-    () => getTierStatRecommendations(userTier),
-    [userTier],
-  );
-
+function IndustryKPIsSection() {
   return (
-    <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+    <Card className="border-amber-200 bg-amber-50">
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <span>{"\uD83C\uDFAF"}</span> Industry-Relevant KPIs for{" "}
-              {category}
-            </CardTitle>
-            <CardDescription>
-              {getStatVisibility(userTier).description} &mdash; Top metrics that
-              drive your business
-            </CardDescription>
-            <Badge
-              variant="outline"
-              className="mt-2 border-amber-400 bg-amber-50 text-[10px] text-amber-700"
-            >
-              Sample data &mdash; estimates, not live tracking yet
-            </Badge>
-          </div>
-          {userTier === "free" && (
-            <Button
-              onClick={onUpgrade}
-              size="sm"
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-            >
-              <Lock className="h-3 w-3 mr-1" /> Upgrade for more stats
-            </Button>
-          )}
-        </div>
+        <CardTitle>Analytics are not available yet</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-700">
-              Your Primary Stats
-            </span>
-            <Badge variant="outline" className="text-xs">
-              {getStatVisibility(userTier).name}
-            </Badge>
-          </div>
-          <StatGrid
-            stats={[statBlock.common, ...filteredStats]}
-            tier={userTier}
-            maxCols={4}
-          />
-        </div>
-        <div className="border-t pt-4">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3">
-            Key Insights
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {Object.entries(categoryInsights).map(([key, insight]) => (
-              <div
-                key={key}
-                className="p-3 bg-white rounded-lg border border-indigo-100"
-              >
-                <p className="text-xs text-slate-600">{insight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        {userTier !== "enterprise" && (
-          <div className="border-t pt-4 bg-white rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <Zap className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="text-sm font-semibold text-slate-700 mb-2">
-                  {userTier === "free"
-                    ? "Unlock More Insights"
-                    : "Level Up Your Analytics"}
-                </h4>
-                <ul className="space-y-1">
-                  {tierRecommendations.map((rec: string, idx: number) => (
-                    <li key={idx} className="text-xs text-slate-600">
-                      &bull; {rec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+      <CardContent className="text-sm text-slate-700">
+        Verified usage analytics are not connected. Metrics and insights are
+        withheld rather than estimated.
       </CardContent>
     </Card>
   );
@@ -1992,45 +1826,11 @@ export default function UserDashboard() {
     [currentTier],
   );
 
-  const rankScore = useMemo(
-    () =>
-      calculateRankScore({
-        tier: currentTier,
-        isVerified: business.verification_status === "verified",
-        rating: business.rating,
-        reviewCount: business.reviewCount,
-        photosUploaded: business.photos_count,
-        profileCompleteness: 75,
-      }),
-    [currentTier, business],
-  );
-
-  const hiddenSearches = useMemo(
-    () =>
-      estimateHiddenSearches({
-        tier: currentTier,
-        categoryAvgSearches: analytics.categoryAvgSearches,
-      }),
-    [currentTier, analytics],
-  );
-
   const industryProfile = useMemo(
     () => resolveProfile(business.category || ""),
     [business.category],
   );
-  const industryStats = useMemo(
-    () => getSubscriberStats(business.category || "", currentTier),
-    [business.category, currentTier],
-  );
-  const mockStats = useMemo(
-    () =>
-      generateMockStats(
-        business.category || "default",
-        business.rating,
-        business.reviewCount,
-      ),
-    [business.category, business.rating, business.reviewCount],
-  );
+  const industryStats: ResolvedMetric[] = [];
 
   // Logo Upload
   const [logoUploading, setLogoUploading] = useState(false);
@@ -2762,15 +2562,6 @@ export default function UserDashboard() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {isLoggedIn ? (
           <>
-            {/* HIDDEN SEARCHES ALERT (business owners only) */}
-            {hasRealBusiness && !isStaffRole && (
-              <HiddenSearchesAlert
-                hiddenCount={hiddenSearches}
-                currentTier={currentTier}
-                onSeeWhy={() => setShowComparisonModal(true)}
-              />
-            )}
-
             {/* WELCOME HEADER — distinct General Account look */}
             <div className="mb-8">
               <div className={`relative overflow-hidden rounded-[28px] border bg-gradient-to-br ${accountTheme.frame} p-5 md:p-7 shadow-[0_20px_45px_rgba(15,23,42,0.08)]`}>
@@ -3267,71 +3058,10 @@ export default function UserDashboard() {
               </div>
             )}
 
-            {/* VISIBILITY ROW (business owners only, non-staff) */}
+            {/* Visibility and usage metrics stay unavailable until backed by verified data. */}
             {hasRealBusiness && !isStaffRole && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <VisibilityMeter
-                  currentTier={currentTier}
-                  onBoostClick={() => setShowComparisonModal(true)}
-                />
-                <div className="space-y-4">
-                  <RankScoreDisplay
-                    score={rankScore}
-                    tier={currentTier}
-                    onUpgradeClick={() => setShowComparisonModal(true)}
-                  />
-                  <div className="grid grid-cols-2 gap-3">
-                    <QuickStat
-                      icon={<Eye className="h-4 w-4 text-blue-600" />}
-                      label={industryStats[0]?.label ?? "Page Views"}
-                      value={industryStats[0]?.value ?? analytics.pageViews}
-                      change={
-                        industryStats[0]
-                          ? `${industryStats[0].positive ? "+" : ""}${industryStats[0].change}%`
-                          : "+12%"
-                      }
-                      positive={industryStats[0]?.positive ?? true}
-                    />
-                    <QuickStat
-                      icon={
-                        <MousePointerClick className="h-4 w-4 text-emerald-600" />
-                      }
-                      label={
-                        industryStats[1]?.isLocked
-                          ? "Clicks"
-                          : (industryStats[1]?.label ?? "Clicks")
-                      }
-                      value={
-                        industryStats[1]?.isLocked
-                          ? analytics.clicks
-                          : (industryStats[1]?.value ?? analytics.clicks)
-                      }
-                      change={
-                        industryStats[1]?.isLocked
-                          ? "+8%"
-                          : `${industryStats[1]?.positive ? "+" : ""}${industryStats[1]?.change}%`
-                      }
-                      positive={
-                        industryStats[1]?.isLocked
-                          ? true
-                          : (industryStats[1]?.positive ?? true)
-                      }
-                    />
-                    <QuickStat
-                      icon={<Search className="h-4 w-4 text-purple-600" />}
-                      label="Search Hits"
-                      value={analytics.searchAppearances}
-                      change="+24%"
-                      positive
-                    />
-                    <QuickStat
-                      icon={<Star className="h-4 w-4 text-yellow-500" />}
-                      label="Rating"
-                      value={business.rating.toFixed(1)}
-                      change={`${business.reviewCount} reviews`}
-                    />
-                  </div>
-                </div>
+              <div className="mb-8 grid gap-6">
+                <IndustryKPIsSection />
                 <VerificationTrustHub
                   tier={currentTier}
                   verificationStatus={business.verification_status}
@@ -3526,12 +3256,17 @@ export default function UserDashboard() {
               {/* ANALYTICS TAB (business owners only) */}
               {hasRealBusiness && (
                 <TabsContent value="analytics" className="space-y-6">
-                  <IndustryKPIsSection
-                    businessData={business}
-                    mockStats={mockStats}
-                    userTier={currentTier}
-                    onUpgrade={() => setShowComparisonModal(true)}
-                  />
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardHeader>
+                      <CardTitle>Analytics are not available yet</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm text-slate-700">
+                      Verified usage analytics are not connected. Metrics and
+                      insights are withheld rather than estimated.
+                    </CardContent>
+                  </Card>
+                  <div hidden>
+                  <IndustryKPIsSection />
 
                   {/* Industry Metrics Grid */}
                   <Card>
@@ -3825,6 +3560,7 @@ export default function UserDashboard() {
                       )}
                     </CardContent>
                   </Card>
+                  </div>
                 </TabsContent>
               )}
 

@@ -1,7 +1,9 @@
 # VERSO AIR — Rapport d'Audit & Fonctionnalités
 ## Résumé exécutif pour le CEO
-**Date:** 22 août 2026  
-**État:** Production-ready (Render déploie automatiquement)
+**Date:** Rapport initial daté du 22 août 2026; actualisation des points de lancement le 8 octobre 2026  
+**État:** État de production non certifié. Les coches et affirmations historiques ci-dessous ne constituent pas une preuve de disponibilité en production.
+
+> **Précaution d’usage :** ce rapport contient des statuts et chiffres historiques qui n’ont pas tous été revalidés. Ne pas reprendre comme promesse publique les métriques, revenus, prix, remboursements, disponibilité des fournisseurs ou affirmations « production-ready » sans preuve actuelle.
 
 ---
 
@@ -42,6 +44,8 @@
 ---
 
 ## 📊 AUDIT COMPLET DES FONCTIONNALITÉS
+
+Les statuts « complète » et « fonctionnel » ci-dessous étaient déclaratifs dans le rapport initial; ils doivent être confirmés par des tests reproductibles avant toute affirmation de lancement.
 
 ### 🎨 Design System
 | Feature | Status | Notes |
@@ -178,14 +182,24 @@
 - **Payment integration** — Stripe webhook reçu, marque pas de payouts en DB
 - **Email notifications** — Socket push OK, email template OK, SMTP integration pending
 - **Admin impersonation** — Middleware prêt, UI absent pour superadmin
+- **VersoAI** (`/versoai`) — Intégration Ollama/Groq et mode de secours présents ; disponibilité des modèles et activation en production dépendent de la configuration.
 
 ### Pas encore implémenté (future phases)
-- **AI Chat** (`/versoai`) — Endpoint existe, LLM integration pending
 - **Astrology** (`/astrology`) — UI stub, backend pending
 - **Advanced geo-targeting** — Database structure OK, ML models pending
 - **Offline sync** — Service Worker skeleton, sync logic pending
 - **Push notifications** — Socket OK, browser notification API pending
 - **Dark mode toggle** — Tailwind support, user preference storage pending
+
+### VersoAI — utilisation d’Ollama
+
+Vérification du code et contrôle du service public de production le 8 octobre 2026 ; l’état dépend des variables d’environnement et des services joignables.
+
+- **Chat** : Ollama est essayé en premier. `OLLAMA_URL` vaut par défaut `http://localhost:11434` et `OLLAMA_MODEL` vaut `llama3.2`. Si Ollama échoue, VersoAI essaie Groq lorsque `GROQ_API_KEY` est configurée, puis utilise le mode de réponse de secours.
+- **Recherche d’intention** : le parseur essaie Groq en premier, puis Ollama, puis revient à une analyse basée sur des règles.
+- **Flux et statut** : le chat en flux utilise également Ollama avant Groq ; `/api/ai/status` indique Ollama, Groq ou le mode de secours en fonction de la disponibilité détectée et de la configuration.
+- **Portée réseau et données** : `localhost` désigne l’environnement serveur où tourne l’application, pas nécessairement l’appareil de l’utilisateur. Si Ollama n’est pas disponible et que Groq est configuré, les requêtes concernées peuvent être envoyées au service cloud Groq. L’usage d’Ollama ne doit donc pas être présenté comme une garantie que toutes les inférences restent locales.
+- **État live contrôlé** : `/api/health` a répondu `ok` avec la base de données connectée. `/api/ai/status` a renvoyé `fallback` / `rule-based` : aucun fournisseur LLM complet n’était actif selon ce contrôle ; le statut seul ne permet pas de distinguer Ollama inaccessible d’une instance absente.
 
 ---
 
@@ -193,14 +207,14 @@
 
 | Métrique | Target | Réel | Status |
 |----------|--------|------|--------|
-| **First Paint** | <1.5s | ~1.2s | ✅ Pass |
-| **LCP** | <2.5s | ~1.8s | ✅ Pass |
-| **CLS** | <0.1 | ~0.05 | ✅ Pass |
-| **TTI** | <3.5s | ~2.9s | ✅ Pass |
-| **Bundle size** | <500KB | ~420KB | ✅ Pass |
-| **Page load (avg)** | <2s | ~1.7s | ✅ Pass |
-| **API response (p95)** | <200ms | ~85ms | ✅ Pass |
-| **Database query (p95)** | <100ms | ~45ms | ✅ Pass |
+| **First Paint** | <1.5s | Non mesuré dans cette revue | ⏳ À vérifier |
+| **LCP** | <2.5s | Non mesuré dans cette revue | ⏳ À vérifier |
+| **CLS** | <0.1 | Non mesuré dans cette revue | ⏳ À vérifier |
+| **TTI** | <3.5s | Non mesuré dans cette revue | ⏳ À vérifier |
+| **Bundle size** | <500KB | Non mesuré dans cette revue | ⏳ À vérifier |
+| **Page load (avg)** | <2s | Non mesuré dans cette revue | ⏳ À vérifier |
+| **API response (p95)** | <200ms | Non mesuré dans cette revue | ⏳ À vérifier |
+| **Database query (p95)** | <100ms | Non mesuré dans cette revue | ⏳ À vérifier |
 
 ---
 
@@ -208,99 +222,71 @@
 
 | Item | Status | Details |
 |------|--------|---------|
-| CSRF protection | ✅ Active | Token initié + inclus en POST/PATCH |
-| Rate limiting | ✅ Actif | 100 req/min par IP, 30 req/min par user auth |
-| SQL injection | ✅ Protégé | Drizzle ORM parameterized queries |
-| XSS prevention | ✅ Actif | DOMPurify, no innerHTML, React auto-escapes |
-| HTTPS only | ✅ Actif | Render force SSL, redirect 301 HTTP → HTTPS |
-| Auth token | ✅ Sécurisé | JWT + HttpOnly cookie, 24h expiry |
-| GDPR compliance | ✅ Pages | Privacy, Terms, Cookies, GDPR pages active |
-| Data encryption | ✅ Partiel | In-transit (HTTPS), at-rest pending (DB encryption) |
-| Audit logging | ⏳ Partiel | Auth events loggés, user actions pending |
+| CSRF protection | ⏳ À tester | Mécanismes présents dans le code; couverture réelle des formulaires et routes non validée |
+| Rate limiting | ⏳ À tester | Middleware présent; limites effectives en production non mesurées |
+| SQL injection | ⏳ À auditer | Drizzle est utilisé; audit de toutes les routes et entrées non terminé |
+| XSS prevention | ⏳ À auditer | Échappement React et certains sanitizers présents; audit des rendus et contenus utilisateur incomplet |
+| HTTPS | ⏳ Partiel | Le site public répond en HTTPS; configuration complète et redirections non auditées |
+| Auth token | ⏳ À tester | JWT et cookie HttpOnly présents dans le code; paramètres et flux live non vérifiés |
+| GDPR / conformité | ⏳ À valider | Pages d’information présentes; conformité juridique non certifiée |
+| Chiffrement des données | ⏳ À vérifier | Fournisseur, sauvegardes et chiffrement au repos non confirmés |
+| Audit logging | ⏳ Partiel | Couverture des événements et vérification de persistance à compléter |
 
 ---
 
 ## 📈 STATISTIQUES DE COUVERTURE
 
-```
-Frontend Components:     847 files
-  ├── Pages:            42 routes
-  ├── Components:       120+ réutilisables
-  ├── Hooks:            38 custom hooks
-  └── Type-safe:        100% TypeScript
-
-Backend Routes:         18 modules
-  ├── Auth:             4 endpoints
-  ├── Music:            12 endpoints
-  ├── Community:        6 endpoints
-  ├── Messaging:        8 endpoints
-  ├── Notifications:    3 endpoints
-  └── Admin:            8 endpoints (superuser only)
-
-Database Schema:        52 tables
-  ├── Users:            5 tables
-  ├── Music:            12 tables
-  ├── Community:        8 tables
-  ├── Business:         15 tables
-  ├── Messaging:        7 tables
-  └── Analytics:        5 tables
-
-Test Coverage:
-  ├── E2E Tests:        12 scenarios (4 accounts)
-  ├── Unit Tests:       Auth, utils (pending full coverage)
-  └── Integration:      API contract verified
-```
+Les nombres de fichiers, routes, tables et scénarios de tests du rapport initial n’ont pas été recomptés depuis un clone faisant autorité. La couverture de tests et le pourcentage TypeScript ne sont pas certifiés dans cette revue. Recalculer depuis le dépôt et les scripts de test de la branche réellement déployée.
 
 ---
 
 ## 💰 IMPACT ÉCONOMIQUE
 
-### Monetization Active
-- ✅ **Streaming revenue** — Per-stream payments, weekly payouts (pending Stripe hookup)
-- ✅ **Artist subscriptions** — Premium tier, no-cooldown messaging
-- ✅ **Marketplace commissions** — 15% on business listings, 20% on products
-- ✅ **Arcade credits** — In-app currency, track download purchase gate
-- ✅ **Ad journal** — Print-on-demand, per-order revenue share
+### Offre et hypothèses commerciales
 
-### Estimated Runway
-- **Current burn:** €8K/month (Render, database, CDN, email)
-- **Potential MRR** (at 10K active users): €45K+ (conservative estimate)
-- **Break-even point:** ~3K paying artists + 1K premium subscribers
+- **Offre à communiquer actuellement :** demande de renseignements pour une inscription au répertoire professionnel.
+- Les conditions, l’admissibilité et la disponibilité sont à confirmer directement; ne pas promettre une inscription gratuite, un prix, un essai, une position, un remboursement ou un mode de paiement.
+- Les anciennes affirmations de commissions, revenus, dépenses, MRR et seuil de rentabilité ne sont pas étayées dans cette revue et ne doivent pas être utilisées comme chiffres réels ou prévisions.
+- L’achat, le remboursement et le webhook de production restent à vérifier après un déploiement autorisé.
 
 ---
 
 ## ✅ CHECKPOINTS
 
-**Phase 0–1** ✅ Design & Auth  
-**Phase 2** ✅ Navigation & Visuals  
-**Phase 3–4** ✅ Content & Downloads  
-**Phase 5–6** ✅ Notifications & Publishing  
-**Phase 7** ✅ Backend APIs & Attachments  
+Les coches historiques des phases 0–7 ne prouvent pas la validation de lancement; voir l’état des points P2/P4/P5/P6/P7/P8 ci-dessous.
 
-**Next immediate priorities (1–2 weeks):**
-1. Production database backup & disaster recovery
-2. Email service (notifications, password reset, newsletters)
-3. Stripe payment processing (artist payouts)
-4. Analytics aggregation service (streams, engagement)
-5. Admin dashboard user management
+**Prochaines priorités de lancement :**
+1. Confirmer la branche et le déploiement Render réellement utilisés.
+2. Tester la réception et la réponse au formulaire contact, ainsi que signup/login, vérification et réinitialisation.
+3. Terminer l’audit bilingue des affirmations et retirer les chiffres/prix non prouvés.
+4. Valider l’offre d’inscription au répertoire et garder les paiements/essais bloqués jusqu’à approbation.
+5. Tester la recherche sur une base réelle et vérifier des entreprises de Toronto avec des sources fiables.
+6. Décider les fournisseurs par catégorie et région avant d’activer des connexions.
 
 ---
 
 ## 🎯 CONCLUSION
 
-**Verso Air est production-ready.** Les 3 piliers (Musique, Commerce, Communauté) sont fonctionnels. Le design est verrouillé, la sécurité est en place, la performance respecte les budgets. 
-
-La plateforme peut lancer avec :
-- ✅ 4 comptes test (seed script fourni)
-- ✅ Streaming illimité + download
-- ✅ Artist publishing avec state machine
-- ✅ Messaging + image attachments
-- ✅ Community discussion pools (MUDP/CDP/CrossDP)
-- ✅ Notification center (real-time socket)
-- ✅ Business directory + Geo-admin
-
-**Prêt pour la première vague d'utilisateurs bêta.**
+La revue actuelle ne certifie pas l’état « production-ready ». Les parcours de contact, les intégrations, l’offre, le répertoire réel et la recherche doivent encore franchir leurs contrôles; le go/no-go reste bloqué jusqu’à preuve et approbation explicite.
 
 ---
 
-*Généré le 22 août 2026 — Render CI/CD actif*
+## Mise à jour des portes de lancement — 8 octobre 2026
+
+| Porte | Statut | Éléments vérifiés et restant à faire |
+|---|---|---|
+| P2 — Affirmations publiques | **En cours** | Les métriques de performance, couverture, revenus et disponibilité présentées plus haut ont été requalifiées comme non vérifiées; plusieurs affirmations locales de prix/essai, démo et statistiques simulées ont été retirées ou masquées. L’audit de toutes les pages, langues et tailles mobiles reste à faire; les modifications locales ne sont pas vérifiées en production. |
+| P4 — Offre et paiements | **Partiel; production bloquée** | Les pages locales `/pricing` et `/help/payments` présentent maintenant uniquement une demande de renseignements pour une inscription au répertoire, sans prix/essai/moyens de paiement promis. Les routes locales d’essai, d’achat d’abonnement et de tarifs sont fermées par défaut via `COMMERCIAL_SUBSCRIPTIONS_ENABLED`; tests d’achat, remboursement et webhook live après déploiement autorisé. |
+| P5 — Messages et compte | **Bloqué** | Le code local du formulaire ne confirme plus l’envoi si SMTP est absent ou refuse le destinataire; la sortie HTML des messages est échappée. La réception dans une boîte surveillée, une réponse, signup/login, vérification et réinitialisation n’ont pas été testés avec des comptes et boîtes autorisés. |
+| P6 — Connexions et promotion | **Partiel / bloqué** | Les boutons Google/Microsoft/Apple sont masqués tant que le fournisseur n’est pas explicitement autorisé et configuré. Les applications OAuth, callbacks/secrets live, consentement, unlinking, profils externes et contenus promotionnels bilingues ne sont pas vérifiés ou approuvés. Établir une matrice régionale avec le propriétaire avant de décider quels fournisseurs ou comptes liés prendre en charge. |
+| P8 — Répertoire et recherche IA | **Bloqué** | Un relevé live de la recherche Toronto a renvoyé 9 fiches; les 9 avaient un site en domaine `example.com` et un téléphone au format `+1-555`, signatures cohérentes avec des fixtures synthétiques sans en établir la provenance. Aucune ligne de production n’a été modifiée. Les lectures publiques locales filtrent désormais les fiches non vérifiées et ces signatures, et le script de semis est protégé; déploiement autorisé, tests sur la base réelle et vérification indépendante de fiches Toronto restent nécessaires. Ne pas utiliser d’exemples de grandes marques. |
+| P7 — Go/no-go | **Bloqué** | Ne pas déclarer le lancement prêt avant vérification des affirmations, de l’offre, du contact, des intégrations et de la release, puis approbation explicite. |
+
+### État du déploiement et limites des preuves
+
+- Contrôle navigateur du `/marketplace` live le 8 octobre 2026 : `0°, 0°`, 0 utilisateur actif, 0 % de zones couvertes, aucun artiste inscrit, 0 streams et 0 artiste actif. Ces valeurs peuvent être des états vides ou des valeurs par défaut; la source réelle n’a pas été vérifiée. Le composant local du panneau de localisation substitue `"0"` aux métriques absentes. Une erreur de ressource 401 et des blocages CSP pour le script Klaviyo et une requête de frame ont aussi été observés; confirmer si ces intégrations sont intentionnelles. Étiqueter comme indisponible/vide ou masquer les métriques non vérifiées jusqu’à validation.
+- Le site public a répondu le 8 octobre 2026 : `/api/health` indique API et base de données opérationnelles; `/api/ai/status` indique `fallback` / `rule-based`. Cela ne prouve pas quel commit ou quel dépôt Render déploie.
+- La copie locale `versoair2023-main` se trouve sous le répertoire Git `/Users/joe`, dont la branche locale est `joel`. Le dépôt GitHub public `cCollege/cCollege` expose seulement `README.md` à sa racine et sa branche `main` pointe vers `349dffa` (dernier push observé en 2022); elle ne correspond pas au code de cette copie.
+- L’accès authentifié à GitHub/Render n’a pas été établi. Aucun pull, merge, déploiement, envoi de formulaire, paiement, création de compte ou écriture de données de production n’a été effectué.
+- Les modifications de code décrites ici sont locales et ne sont pas prouvées sur le site live.
+- Le projet local se trouve sous le dépôt Git parent `/Users/joe`, branche locale `joel`, mais cette copie VersoAir n’est pas un checkout suivi dont le lien avec Render est établi. Le dépôt, la branche et le SHA déployés doivent être confirmés dans Render.

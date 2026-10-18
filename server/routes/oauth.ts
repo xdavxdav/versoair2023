@@ -55,6 +55,35 @@ interface OAuthProviderConfig {
   scopes: string[];
 }
 
+// Apple is deferred (paid developer account); Indeed/Glassdoor have no public SSO.
+// A supported provider is offered only when it is also listed in
+// OAUTH_ENABLED_PROVIDERS and has client credentials configured.
+const SIGN_IN_PROVIDERS = ["google", "microsoft", "linkedin"] as const;
+
+function getEnabledSignInProviders(): (typeof SIGN_IN_PROVIDERS)[number][] {
+  const enabled = new Set(
+    (process.env.OAUTH_ENABLED_PROVIDERS || "")
+      .split(",")
+      .map((provider) => provider.trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+  return SIGN_IN_PROVIDERS.filter((provider) => {
+    const config = getProviderConfig(provider);
+    return (
+      enabled.has(provider) &&
+      !!config?.clientId.trim() &&
+      !!config.clientSecret.trim()
+    );
+  });
+}
+
+function isSignInProviderEnabled(provider: string): boolean {
+  return getEnabledSignInProviders().some(
+    (enabledProvider) => enabledProvider === provider,
+  );
+}
+
 function getProviderConfig(provider: string): OAuthProviderConfig | null {
   switch (provider) {
     case "google":
@@ -142,12 +171,19 @@ function getSafeRedirect(value: unknown): string | undefined {
   return value;
 }
 
-// Apple is deferred (paid developer account); Indeed/Glassdoor have no public SSO.
-const ENABLED_OAUTH_PROVIDERS = new Set(["google", "microsoft", "linkedin"]);
+const ENABLED_OAUTH_PROVIDERS = new Set<string>(SIGN_IN_PROVIDERS);
 
 function isEnabledProvider(provider: string): boolean {
   return ENABLED_OAUTH_PROVIDERS.has(provider);
 }
+
+router.get(
+  "/oauth/providers",
+  asyncHandler(async (_req: Request, res: Response) => {
+    res.set("Cache-Control", "no-store");
+    res.json({ providers: getEnabledSignInProviders() });
+  }),
+);
 
 // ─── State management (CSRF protection for OAuth) ─────────────────────────────
 
@@ -192,11 +228,10 @@ router.get(
       return;
     }
 
-    // If no OAuth credentials configured, return user-friendly error
-    if (!config.clientId || !config.clientSecret) {
+    if (!isSignInProviderEnabled(provider)) {
       res.status(501).json({
         success: false,
-        message: `${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-in is not yet configured. Please use email/password login.`,
+        message: `${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-in is not configured and enabled. Please use email/password login.`,
         code: "SSO_NOT_CONFIGURED",
       });
       return;
@@ -264,7 +299,7 @@ async function handleOAuthCallback(req: Request, res: Response) {
   pendingOAuthStates.delete(state);
 
   const config = getProviderConfig(provider);
-  if (!config) {
+  if (!config || !isSignInProviderEnabled(provider)) {
     res.redirect(`${appUrl}/auth/signin?mode=login&error=unknown_provider`);
     return;
   }

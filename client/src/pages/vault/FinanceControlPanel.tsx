@@ -55,9 +55,6 @@ export default function FinanceControlPanel() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbStats, setDbStats] = useState<any>(null);
-  const [stripeStatus, setStripeStatus] = useState<
-    "checking" | "active" | "inactive"
-  >("checking");
 
   // ─── NGO POS STATE ──────────────────────────────────────────────
   const [posStats, setPosStats] = useState<any>(null);
@@ -99,18 +96,6 @@ export default function FinanceControlPanel() {
         }
         if (statsRes?.ok) setDbStats(await statsRes.json());
 
-        // Check Stripe
-        try {
-          const sRes = await fetch("/api/v1/payments/create-checkout", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tier: "test", period: "test" }),
-          });
-          setStripeStatus(sRes.status === 503 ? "inactive" : "active");
-        } catch {
-          setStripeStatus("inactive");
-        }
       } catch {
         /* ignore */
       }
@@ -289,24 +274,14 @@ export default function FinanceControlPanel() {
         </div>
         <div className="bg-gray-900/60 border border-gray-800/50 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard
-              className={`h-4 w-4 ${stripeStatus === "active" ? "text-purple-500" : "text-gray-600"}`}
-            />
+            <CreditCard className="h-4 w-4 text-gray-600" />
             <span className="text-[10px] text-gray-500 font-mono">STRIPE</span>
           </div>
-          <div
-            className={`text-2xl font-black font-mono ${stripeStatus === "active" ? "text-purple-400" : stripeStatus === "inactive" ? "text-gray-600" : "text-gray-700"}`}
-          >
-            {stripeStatus === "active"
-              ? "LIVE"
-              : stripeStatus === "inactive"
-                ? "OFF"
-                : "..."}
+          <div className="text-2xl font-black font-mono text-gray-700">
+            UNVERIFIED
           </div>
           <div className="text-[10px] text-gray-600 font-mono">
-            {stripeStatus === "active"
-              ? "Payments accepting"
-              : "Set STRIPE_SECRET_KEY"}
+            Production payment status not checked
           </div>
         </div>
       </div>
@@ -320,19 +295,9 @@ export default function FinanceControlPanel() {
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-0">
           <InfoRow label="SDK Version" value="Stripe 20.x" />
           <InfoRow label="API Version" value="2025-02-24.acacia" />
-          <InfoRow
-            label="Mode"
-            value={
-              stripeStatus === "active"
-                ? "LIVE — accepting payments"
-                : "DISABLED — no API key"
-            }
-          />
-          <InfoRow
-            label="Init Strategy"
-            value="Lazy (only if STRIPE_SECRET_KEY set)"
-          />
-          <InfoRow label="Checkout Mode" value="payment (one-time)" />
+          <InfoRow label="Mode" value="Not verified; review after authorization" />
+          <InfoRow label="Init Strategy" value="Not independently verified" />
+          <InfoRow label="Checkout Mode" value="Not independently verified" />
           <InfoRow
             label="Webhook Events"
             value="checkout.session.completed, payment_intent.payment_failed"
@@ -350,21 +315,14 @@ export default function FinanceControlPanel() {
           <div className="text-[10px] font-mono text-gray-500 mb-2 font-bold">
             ENVIRONMENT VARIABLES
           </div>
-          <InfoRow
-            label="STRIPE_SECRET_KEY"
-            value={
-              stripeStatus === "active"
-                ? "sk_live_****** (configured)"
-                : "NOT SET — payments disabled"
-            }
-          />
+          <InfoRow label="STRIPE_SECRET_KEY" value="Not inspected" />
           <InfoRow
             label="STRIPE_WEBHOOK_SECRET"
-            value="whsec_****** (optional, skips verify in dev)"
+            value="Not inspected"
           />
           <InfoRow
             label="VITE_STRIPE_PUBLISHABLE_KEY"
-            value="pk_****** (client-side)"
+            value="Not inspected"
           />
         </div>
       </SectionBlock>

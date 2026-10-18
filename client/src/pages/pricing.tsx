@@ -113,7 +113,9 @@ export default function Pricing() {
               Prices in CAD and EUR are indicative conversions from the FCFA
               reference schedule; the written offer confirms the final amount.
               Availability, deliverables, taxes, and terms are confirmed
-              directly. This page does not offer checkout or activate a plan.
+              directly. This page does not offer checkout or activate a plan,
+              and it does not promise a free listing, a trial, or a specific
+              placement.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button

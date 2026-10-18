@@ -30,6 +30,7 @@ import {
   requireSuperuser,
 } from "../../middleware/auth";
 import {
+  commercialSubscriptionsEnabled,
   onlinePaymentsEnabled,
   rejectUnavailablePayment,
 } from "../../utils/commercial-gates";
@@ -83,7 +84,7 @@ function requireStripe(res: Response): res is Response {
  * Body: { userId, targetTier, billingCycle: 'monthly' | 'annual' }
  */
 router.post("/create-checkout", async (req: Request, res: Response) => {
-  if (!onlinePaymentsEnabled()) {
+  if (!onlinePaymentsEnabled() || !commercialSubscriptionsEnabled()) {
     rejectUnavailablePayment(res);
     return;
   }

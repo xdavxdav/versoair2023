@@ -8,6 +8,7 @@ import { db } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
 import {
+  commercialSubscriptionsEnabled,
   freeTrialsEnabled,
   rejectUnavailableTrial,
 } from "../utils/commercial-gates";
@@ -1594,7 +1595,7 @@ const startTrialSchema = z.object({
 router.post(
   "/start-trial",
   asyncHandler(async (req: Request, res: Response) => {
-    if (!freeTrialsEnabled()) {
+    if (!freeTrialsEnabled() || !commercialSubscriptionsEnabled()) {
       rejectUnavailableTrial(res);
       return;
     }

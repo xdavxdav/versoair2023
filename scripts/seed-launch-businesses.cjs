@@ -6,8 +6,8 @@
  * Safe to run multiple times: duplicate (name + city_id) rows are skipped.
  *
  * Usage:
- *   DATABASE_URL=... node scripts/seed-launch-businesses.cjs
- *   DATABASE_URL=... node scripts/seed-launch-businesses.cjs --count=200
+ *   NODE_ENV=development ALLOW_SYNTHETIC_BUSINESS_SEED=true DATABASE_URL=... node scripts/seed-launch-businesses.cjs
+ *   Set ALLOW_REMOTE_SYNTHETIC_BUSINESS_SEED=true only for a confirmed non-production remote database.
  */
 
 const pg = require("pg");
@@ -30,6 +30,36 @@ if (process.env.NODE_ENV === "production") {
     "❌ Synthetic launch businesses must not be seeded in production",
   );
   process.exit(1);
+}
+if (!["development", "test"].includes(process.env.NODE_ENV || "")) {
+  console.error("❌ Set NODE_ENV to development or test before seeding");
+  process.exit(1);
+}
+if (process.env.ALLOW_SYNTHETIC_BUSINESS_SEED !== "true") {
+  console.error(
+    "❌ Set ALLOW_SYNTHETIC_BUSINESS_SEED=true to explicitly allow synthetic test listings",
+  );
+  process.exit(1);
+}
+
+try {
+  const databaseHost = new URL(DATABASE_URL).hostname.toLowerCase();
+  if (
+    !["localhost", "127.0.0.1", "::1"].includes(databaseHost) &&
+    process.env.ALLOW_REMOTE_SYNTHETIC_BUSINESS_SEED !== "true"
+  ) {
+    console.error(
+      "❌ Synthetic seeding of remote databases requires ALLOW_REMOTE_SYNTHETIC_BUSINESS_SEED=true after confirming the target is non-production",
+    );
+    process.exit(1);
+  }
+} catch {
+  if (process.env.ALLOW_REMOTE_SYNTHETIC_BUSINESS_SEED !== "true") {
+    console.error(
+      "❌ Could not verify the database host; remote synthetic seeding requires explicit confirmation",
+    );
+    process.exit(1);
+  }
 }
 
 const pool = new pg.Pool({
@@ -134,8 +164,6 @@ async function run() {
       const businessName = `${prefix} ${city.name} ${suffix}`;
       const websiteSlug = slugify(`${businessName}-${category.slug || category.name}`);
       const emailSlug = slugify(`${prefix}-${city.name}-${i}`);
-      const rating = (Math.random() * 1.6 + 3.2).toFixed(1); // 3.2..4.8
-      const reviewsCount = randomInt(4, 260);
       const description = `${businessName} provides ${category.name} services in ${city.name}.`;
 
       const result = await client.query(
@@ -191,10 +219,10 @@ async function run() {
           city.name,
           category.id,
           `https://${websiteSlug}.example.com`,
-          rating,
-          reviewsCount,
+          "0.0",
+          0,
           false,
-          true,
+          false,
           i % 8 === 0 ? "premium" : "free",
           i % 11 === 0,
           "pending",

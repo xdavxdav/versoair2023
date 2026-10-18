@@ -621,7 +621,7 @@ export default function GeoAdminAuthGate({
                 </Button>
 
                 {/* ─── SSO Divider ─── */}
-                <div className="flex items-center gap-3 mt-5">
+                <div className="flex items-center gap-3 mt-5" hidden>
                   <div className="flex-1 h-px bg-white/10" />
                   <span className="text-xs text-slate-500 font-medium">
                     or continue with
@@ -630,7 +630,7 @@ export default function GeoAdminAuthGate({
                 </div>
 
                 {/* ─── SSO Providers ─── */}
-                <div className="grid grid-cols-3 gap-2 mt-4">
+                <div className="grid grid-cols-3 gap-2 mt-4" hidden>
                   {/* Google */}
                   <button
                     type="button"

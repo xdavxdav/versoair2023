@@ -48,6 +48,8 @@ const getQueryParam = (param: string) => {
   return url.searchParams.get(param);
 };
 
+type SignInProvider = "google" | "microsoft" | "linkedin";
+
 const getLoginDashboardPath = (userData: any) =>
   getDashboardDestination({
     id: String(userData?.id || userData?.userId || ""),
@@ -216,6 +218,9 @@ export default function SignIn() {
   const [registering, setRegistering] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [ssoProvider, setSsoProvider] = useState("google");
+  const [enabledOAuthProviders, setEnabledOAuthProviders] = useState<
+    SignInProvider[]
+  >([]);
   const [accountChoices, setAccountChoices] = useState<any[]>([]);
   const [accountSelectionOpen, setAccountSelectionOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<{
@@ -327,7 +332,7 @@ export default function SignIn() {
   });
 
   // Handle SSO initiation — redirects to provider or shows error
-  const handleSsoLogin = async (provider: "google" | "microsoft" | "linkedin" = "google") => {
+  const handleSsoLogin = async (provider: SignInProvider = "google") => {
     setSsoLoading(true);
     setSsoProvider(provider);
     setLoginError("");
@@ -365,6 +370,40 @@ export default function SignIn() {
       setSsoLoading(false);
     }
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/auth/oauth/providers")
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`Provider status request failed: ${res.status}`);
+        }
+
+        const data: { providers?: unknown } = await res.json();
+        if (!Array.isArray(data.providers)) {
+          throw new Error("Provider status response was invalid");
+        }
+
+        const providers = data.providers.filter(
+          (provider: unknown): provider is SignInProvider =>
+            provider === "google" ||
+            provider === "microsoft" ||
+            provider === "linkedin",
+        );
+
+        if (!cancelled) setEnabledOAuthProviders(providers);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          console.error("[SignIn] Could not load enabled OAuth providers:", err);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Check for OAuth error from redirect
   useEffect(() => {
@@ -1883,7 +1922,10 @@ export default function SignIn() {
               </form>
 
               {/* ─── SSO Divider ─── */}
-              <div className="flex items-center gap-3 my-5">
+              <div
+                className="flex items-center gap-3 my-5"
+                hidden={enabledOAuthProviders.length === 0}
+              >
                 <div className="flex-1 h-px bg-gray-200" />
                 <span className="text-xs text-gray-400 font-medium">
                   or sign up with
@@ -1892,12 +1934,16 @@ export default function SignIn() {
               </div>
 
               {/* ─── Google SSO ─── */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <div
+                className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4"
+                hidden={enabledOAuthProviders.length === 0}
+              >
                 {/* Google */}
                 <button
                   type="button"
                   onClick={() => handleSsoLogin("google")}
                   disabled={ssoLoading}
+                  hidden={!enabledOAuthProviders.includes("google")}
                   className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {ssoLoading && ssoProvider === "google" ? (
@@ -1929,6 +1975,7 @@ export default function SignIn() {
  type="button"
  onClick={() => handleSsoLogin("microsoft")}
  disabled={ssoLoading}
+ hidden={!enabledOAuthProviders.includes("microsoft")}
  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
  >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -1957,26 +2004,11 @@ export default function SignIn() {
                   </svg>
                   Microsoft
                 </button>
-                {/* Apple */}
-                <button
-                  type="button"
-                  disabled
-                  title="Apple sign-in is not available yet"
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
-                >
-                  <svg
-                    className="w-5 h-5 grayscale"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                  </svg>
-                  Apple
-                </button>
                 <button
  type="button"
  onClick={() => handleSsoLogin("linkedin")}
  disabled={ssoLoading}
+ hidden={!enabledOAuthProviders.includes("linkedin")}
  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
  >
                   <span className="w-5 h-5 rounded bg-[#0a66c2] text-white flex items-center justify-center font-bold">
@@ -2375,7 +2407,10 @@ export default function SignIn() {
                 </form>
 
                 {/* ─── SSO Divider ─── */}
-                <div className="flex items-center gap-3 my-5">
+                <div
+                  className="flex items-center gap-3 my-5"
+                  hidden={enabledOAuthProviders.length === 0}
+                >
                   <div className="flex-1 h-px bg-gray-200" />
                   <span className="text-xs text-gray-400 font-medium">
                     or continue with
@@ -2384,12 +2419,16 @@ export default function SignIn() {
                 </div>
 
                 {/* ─── Google SSO ─── */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4"
+                  hidden={enabledOAuthProviders.length === 0}
+                >
                   {/* Google */}
                   <button
                     type="button"
                     onClick={() => handleSsoLogin("google")}
                     disabled={ssoLoading}
+                    hidden={!enabledOAuthProviders.includes("google")}
                     className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {ssoLoading && ssoProvider === "google" ? (
@@ -2421,6 +2460,7 @@ export default function SignIn() {
  type="button"
  onClick={() => handleSsoLogin("microsoft")}
  disabled={ssoLoading}
+ hidden={!enabledOAuthProviders.includes("microsoft")}
  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
  >
                     <svg className="w-5 h-5 grayscale" viewBox="0 0 24 24">
@@ -2455,26 +2495,11 @@ export default function SignIn() {
                     </svg>
                     Microsoft
                   </button>
-                  {/* Apple */}
-                  <button
-                    type="button"
-                    disabled
-                    title="Apple sign-in is not available yet"
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed"
-                  >
-                    <svg
-                      className="w-5 h-5 grayscale"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                    </svg>
-                    Apple
-                  </button>
                   <button
  type="button"
  onClick={() => handleSsoLogin("linkedin")}
  disabled={ssoLoading}
+ hidden={!enabledOAuthProviders.includes("linkedin")}
  className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-gray-700 transition-all text-xs font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
  >
                     <span className="w-5 h-5 rounded bg-[#0a66c2] text-white flex items-center justify-center font-bold">

@@ -669,8 +669,8 @@ export default function ArtistPortalSignIn() {
                   />
                 </motion.button>
 
-                {/* Additional sign-in providers are shown but remain unavailable. */}
-                <div className="grid grid-cols-3 gap-3">
+                {/* Additional sign-in providers stay hidden until they are configured. */}
+                <div className="grid grid-cols-3 gap-3" hidden>
                   {[
                     { name: "Google", icon: "G" },
                     { name: "Apple", icon: "" },

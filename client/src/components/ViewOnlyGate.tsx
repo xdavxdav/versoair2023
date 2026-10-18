@@ -125,7 +125,7 @@ function SsoProviderButtons() {
 export default function ViewOnlyGate({
   onSignIn,
   onSignUp,
-  showProfessionalSSO = true,
+  showProfessionalSSO = false,
   onBack,
 }: ViewOnlyGateProps) {
   return (
