@@ -510,15 +510,12 @@ function Router() {
   const [previousLocation, setPreviousLocation] = useState(location);
   const isInitialRender = useRef(true);
 
-  // Disable browser scroll restoration — we handle it ourselves
-  useEffect(() => {
+  // Scroll to top BEFORE paint (useLayoutEffect) so the user never sees the footer
+  useLayoutEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
-  }, []);
 
-  // Scroll to top BEFORE paint (useLayoutEffect) so the user never sees the footer
-  useLayoutEffect(() => {
     if (isInitialRender.current) {
       // First render: also force top (handles direct-nav / refresh)
       window.scrollTo(0, 0);

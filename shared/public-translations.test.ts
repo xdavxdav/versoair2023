@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
-import { getPublicCopyId, PUBLIC_COPY } from "./public-translations";
+import { getPublicCopyId, nativeDictionary, PUBLIC_COPY } from "./public-translations";
 
 test("legal page static copy has native FR/EN coverage, excluding brands and punctuation", () => {
   const fixed = new Set([
@@ -36,5 +36,26 @@ test("every catalogue phrase has nonempty native translations and stable lookup 
     assert.ok(fr.trim());
     assert.notEqual(getPublicCopyId(en), undefined);
     assert.notEqual(getPublicCopyId(fr), undefined);
+  }
+});
+
+test("the About page's primary French copy has native English translations", () => {
+  const english = nativeDictionary("en");
+  const aboutCopy = [
+    "Plateforme d'Intelligence Multi-Sectorielle",
+    "Écosystème d'Intelligence d'Affaires",
+    "VERSO AIR INC. prépare le lancement à Toronto d’une plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs.",
+    "Parcourir les Entreprises",
+    "Commerce & Détail",
+    "Annuaire complet d'entreprises & moteur de recherche multi-secteur",
+    "Secteurs de la Plateforme",
+    "Fonctionnalités prévues",
+    "Prêt à Explorer ?",
+  ];
+
+  for (const text of aboutCopy) {
+    const id = getPublicCopyId(text);
+    assert.notEqual(id, undefined, `missing catalogue entry for: ${text}`);
+    assert.notEqual(english[id!], text, `not translated to English: ${text}`);
   }
 });
