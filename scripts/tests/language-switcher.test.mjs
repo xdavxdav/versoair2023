@@ -336,7 +336,7 @@ test("About hero paragraphs and badge meet contrast on the light page", async ()
     await page.waitForSelector("#real-screen h1");
     const checks = await page.$eval("#real-screen", element => {
       const paragraphs = [...element.querySelectorAll("p")].filter(node =>
-        /prépare le lancement|Directory listings, categories/.test(node.textContent));
+        /prépare le lancement|Directory listings, categories|Les inscriptions à l'annuaire/.test(node.textContent));
       const badge = [...element.querySelectorAll("div")].find(node =>
         node.textContent.trim() === "Plateforme d'Intelligence Multi-Sectorielle");
       const luminance = rgb => rgb.map(value => value / 255)
