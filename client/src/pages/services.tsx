@@ -31,13 +31,13 @@ export default function Services() {
             Businesses may request an eligibility review for the VersoAir
             directory. Each request is reviewed before any listing is accepted.
           </p>
-          <p className="mx-auto mb-8 max-w-2xl text-sm text-slate-500">
+          <p className="mx-auto mb-8 max-w-2xl text-sm text-slate-700">
             A request does not guarantee inclusion, placement, audience reach,
             or business results. Availability, requirements, and any fees are
             confirmed with you before proceeding.
           </p>
           <Link href="/contact?subject=Business%20directory%20listing%20eligibility%20review">
-            <Button className="bg-amber-600 px-6 py-5 text-white hover:bg-amber-700">
+            <Button className="bg-amber-600 px-6 py-5 text-slate-900 hover:bg-amber-700">
               Request an eligibility review
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

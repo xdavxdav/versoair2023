@@ -4,7 +4,10 @@ import { properties } from "@shared/schema";
 import { eq, and, gte, lte, like, desc, asc, or } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 
 // ============================================================================
 // PROPERTIES ENDPOINTS

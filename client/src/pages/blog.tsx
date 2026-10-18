@@ -396,12 +396,12 @@ export default function BlogPage() {
 
             {/* Sort Controls */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
-              <Filter className="h-4 w-4 text-slate-500" />
+              <Filter className="h-4 w-4 text-slate-700" />
               <button
                 onClick={() => setSortBy("recent")}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   sortBy === "recent"
-                    ? "bg-cyan-500 text-white shadow-sm"
+                    ? "bg-cyan-700 text-white shadow-sm"
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
@@ -411,7 +411,7 @@ export default function BlogPage() {
                 onClick={() => setSortBy("trending")}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   sortBy === "trending"
-                    ? "bg-cyan-500 text-white shadow-sm"
+                    ? "bg-cyan-700 text-white shadow-sm"
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
@@ -493,7 +493,7 @@ export default function BlogPage() {
               {isLoadingMore && (
                 <div className="flex justify-center items-center gap-2">
                   <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-                  <span className="text-slate-400 text-sm font-handstyle">
+                  <span className="text-slate-700 text-sm font-handstyle">
                     Loading more posts...
                   </span>
                 </div>
@@ -529,7 +529,7 @@ export default function BlogPage() {
                       <span className="font-medium text-cyan-700">
                         {trend.tag}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-700">
                         {trend.posts}
                       </span>
                     </div>
@@ -543,11 +543,11 @@ export default function BlogPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl p-4 border border-white/10 hover:border-cyan-500/30 transition-colors"
+              className="bg-white rounded-xl p-4 border border-slate-200 hover:border-cyan-500/30 transition-colors"
             >
               <h3 className="text-lg font-semibold text-slate-900 mb-3 font-handstyle flex items-center gap-2">
                 <svg
-                  className="w-5 h-5 text-cyan-400"
+                  className="w-5 h-5 text-cyan-700"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -561,11 +561,11 @@ export default function BlogPage() {
                 </svg>
                 FAQ & Help
               </h3>
-              <p className="text-slate-400 text-sm mb-3 font-handstyle">
+              <p className="text-slate-700 text-sm mb-3 font-handstyle">
                 Got questions? Browse topics or ask the community.
               </p>
               <Link href="/faq">
-                <button className="w-full py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-400 rounded-lg text-sm font-medium transition-all font-handstyle flex items-center justify-center gap-2">
+                <button className="w-full py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-700 rounded-lg text-sm font-medium transition-all font-handstyle flex items-center justify-center gap-2">
                   Browse FAQ
                   <svg
                     className="w-4 h-4"

@@ -29,18 +29,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { TierKey } from "@/lib/tiers";
-import { TIERS } from "@/lib/tiers";
 import {
+  GEOADMIN_OFFER_NAMES,
+  type GeoAdminOfferKey,
   GEOADMIN_PLAN_DETAILS,
-  GEOADMIN_PLAN_ORDER,
-  GEOADMIN_ANNUAL_PRICES_XOF,
+  GEOADMIN_OFFER_ORDER,
+  GEOADMIN_OFFER_PRICES_XOF,
 } from "@/lib/geoadmin-pricing";
 import { formatMarketXofPrice } from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
+import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
+import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
@@ -49,6 +52,7 @@ interface GeoAdminAuthGateProps {
 export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
+  const localize = useLocalizedContent();
   const { login: authContextLogin } = useAuthContext();
   const [, navigateTo] = useLocation();
   const { currency, rates, selectedCountry, marketAvailability } =
@@ -61,7 +65,7 @@ export default function GeoAdminAuthGate({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<TierKey | "">("");
+  const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey | "">("");
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
 
   // NOTE: Self-service ".test" account creation was removed from this public,
@@ -203,7 +207,7 @@ export default function GeoAdminAuthGate({
       setEmail("");
     };
 
-    return (
+    return localize(
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center relative overflow-hidden">
         {/* Background orbs */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
@@ -296,12 +300,7 @@ export default function GeoAdminAuthGate({
           <section className="mx-auto mb-8 max-w-5xl">
             <div className="grid items-center gap-5 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-2xl">
-                <img
-                  src="/images/geoadmin-plans.svg"
-                  alt="GeoAdmin annual plan overview: Free, Essential, Pro Verified, Pro Max, and Enterprise"
-                  className="h-auto w-full"
-                  loading="lazy"
-                />
+                <GeoAdminPromoCard />
               </div>
               <div>
                 <div className="mb-4 text-center lg:text-left">
@@ -314,11 +313,11 @@ export default function GeoAdminAuthGate({
                   </p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {GEOADMIN_PLAN_ORDER.map((tier) => {
-                    const plan = TIERS[tier];
+                  {GEOADMIN_OFFER_ORDER.map((tier) => {
+                    const plan = { name: GEOADMIN_OFFER_NAMES[tier], popular: tier === 'verified' };
                     const isActive = selectedTier === tier;
-                    const annualXof = GEOADMIN_ANNUAL_PRICES_XOF[tier];
-                    return (
+                    const annualXof = GEOADMIN_OFFER_PRICES_XOF[tier];
+                    return localize(
                       <button
                         key={tier}
                         type="button"
@@ -342,7 +341,6 @@ export default function GeoAdminAuthGate({
                         </span>
                         <span
                           className="mt-1 block text-sm font-bold text-amber-200"
-                          translate="no"
                         >
                           {formatMarketXofPrice(
                             annualXof,
@@ -370,23 +368,11 @@ export default function GeoAdminAuthGate({
                   })}
                 </div>
                 {selectedTier && (
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-slate-200">
                     <p className="mb-2 text-sm font-semibold text-white">
-                      {TIERS[selectedTier].name} includes
+                      {GEOADMIN_OFFER_NAMES[selectedTier]}
                     </p>
-                    <ul className="grid gap-1.5 sm:grid-cols-2">
-                      {GEOADMIN_PLAN_DETAILS[selectedTier].benefits
-                        .slice(0, 4)
-                        .map((benefit) => (
-                          <li
-                            key={benefit}
-                            className="flex items-start gap-2 text-xs text-slate-300"
-                          >
-                            <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                            {benefit}
-                          </li>
-                        ))}
-                    </ul>
+                    <GeoAdminOfferDetails offer={selectedTier} />
                   </div>
                 )}
                 <button
@@ -479,7 +465,7 @@ export default function GeoAdminAuthGate({
 
   // ─── SIGN-IN FORM VIEW ────────────────────────────────────────────────────────
 
-  return (
+  return localize(
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center relative overflow-hidden">
       {/* Background orbs */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />

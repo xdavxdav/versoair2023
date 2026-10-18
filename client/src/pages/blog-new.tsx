@@ -140,13 +140,13 @@ export default function BlogPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Sort Controls */}
             <div className="flex items-center gap-2 pb-4 border-b border-white/10">
-              <Filter className="w-4 h-4 text-slate-400" />
+              <Filter className="w-4 h-4 text-slate-700" />
               <button
                 onClick={() => setSortBy("recent")}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                   sortBy === "recent"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
-                    : "text-slate-400 hover:text-slate-900"
+                    ? "bg-cyan-500/20 text-cyan-700 border border-cyan-500/50"
+                    : "text-slate-700 hover:text-slate-900"
                 }`}
               >
                 Recent
@@ -155,8 +155,8 @@ export default function BlogPage() {
                 onClick={() => setSortBy("trending")}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-all flex items-center gap-1 ${
                   sortBy === "trending"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50"
-                    : "text-slate-400 hover:text-slate-900"
+                    ? "bg-cyan-500/20 text-cyan-700 border border-cyan-500/50"
+                    : "text-slate-700 hover:text-slate-900"
                 }`}
               >
                 <Zap className="w-3 h-3" />

@@ -1,4 +1,6 @@
 import { CheckCircle2, Circle, XCircle } from "lucide-react";
+import { useLanguage } from "@/components/LanguageSwitcher";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import {
   checkPasswordLength,
   checkPasswordNumber,
@@ -35,6 +37,8 @@ export function PasswordStrengthMeter({
   password,
   variant = "light",
 }: PasswordStrengthMeterProps) {
+  const localize = useLocalizedContent(false);
+  const { translateText: t } = useLanguage();
   if (!password) return null;
 
   const required = requiredChecks.map((check) => ({
@@ -47,11 +51,11 @@ export function PasswordStrengthMeter({
   }));
   const requiredPassed = required.filter((check) => check.passed).length;
   const meetsRequirements = requiredPassed === required.length;
-  return (
+  return localize(
     <div className="mt-2 space-y-2">
       <div
         role="meter"
-        aria-label={`Password requirements: ${meetsRequirements ? "met" : `${requiredPassed} of ${required.length} met`}`}
+        aria-label={`${t("Password requirements:")} ${requiredPassed}/${required.length}`}
         aria-valuemin={0}
         aria-valuemax={required.length}
         aria-valuenow={requiredPassed}
@@ -77,7 +81,7 @@ export function PasswordStrengthMeter({
       >
         {meetsRequirements
           ? "Password meets all required checks"
-          : `Required checks: ${requiredPassed}/${required.length}`}
+          : <>{t("Required checks:")} {requiredPassed}/{required.length}</>}
       </p>
       <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
         {required.map(({ label, passed }) => (

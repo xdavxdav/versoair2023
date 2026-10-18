@@ -98,7 +98,7 @@ interface UserPreferences {
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
-  theme: "system",
+  theme: "light",
   language: "en",
   timezone: "auto",
   email_notifications: true,

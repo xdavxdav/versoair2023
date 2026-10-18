@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { ensureAuthenticated, authenticatedFetch } from "@/lib/auth";
+
 
 const API_BASE_URL = "";
 
@@ -16,18 +16,11 @@ export default function APITestPage() {
   useEffect(() => {
     const runTest = async () => {
       try {
-        setStatus("Step 1: Authenticating...");
-        const isAuth = await ensureAuthenticated();
-        if (!isAuth) {
-          setError("Authentication failed");
-          setStatus("Failed to authenticate");
-          return;
-        }
-        setStatus("✅ Step 1 Complete: Authenticated");
+        setStatus("Step 1: Checking public API connectivity...");
 
         setStatus("Step 2: Fetching businesses...");
-        const response = await authenticatedFetch(
-          `${API_BASE_URL}/api/v1/admin/businesses?limit=10`,
+        const response = await fetch(
+          `${API_BASE_URL}/api/businesses?limit=10`,
         );
 
         if (!response.ok) {

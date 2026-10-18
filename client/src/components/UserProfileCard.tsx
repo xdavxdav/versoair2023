@@ -192,7 +192,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all duration-200 font-medium text-xs font-handstyle disabled:opacity-60 disabled:cursor-wait ${
                 isFollowing
                   ? "bg-white/5 text-rose-300 border border-rose-400/30 hover:bg-rose-500/15"
-                  : "bg-cyan-500 text-white hover:bg-cyan-600"
+                  : "bg-cyan-700 text-white hover:bg-cyan-800"
               }`}
             >
               {isFollowing ? (

@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import { once } from "node:events";
+import test from "node:test";
+import express from "express";
+import translations from "../routes/translations";
+
+test("anonymous translation and OAuth discovery work through the global auth gate", async () => {
+  const previousUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = "postgresql://test:test@127.0.0.1:1/test";
+  const { globalAuthGate } = await import("./auth");
+  const { pool } = await import("../db");
+  const app = express();
+  app.use(globalAuthGate);
+  app.use("/api/translations", translations);
+  app.get("/auth/oauth/providers", (_req, res) => res.json({ providers: [] }));
+  app.use((_req, res) => res.sendStatus(404));
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const origin = `http://127.0.0.1:${address.port}`;
+  try {
+    const response = await fetch(`${origin}/api/translations/en`);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).language, "en");
+    assert.equal((await fetch(`${origin}/api/translations/not-a-language`)).status, 400);
+    assert.equal((await fetch(`${origin}/api/translations/en?text=private`)).status, 400);
+    assert.equal((await fetch(`${origin}/auth/oauth/providers`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
+    assert.equal((await fetch(`${origin}/auth/oauth/providers`, { method: "POST" })).status, 404);
+    assert.equal((await fetch(`${origin}/api/v1/admin/users`)).status, 401);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    await pool.end();
+    if (previousUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousUrl;
+  }
+});

@@ -99,9 +99,9 @@ function Accordion({
       >
         <span className="text-amber-700 font-medium">{title}</span>
         {open ? (
-          <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <ChevronUp className="w-4 h-4 text-slate-700 flex-shrink-0" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <ChevronDown className="w-4 h-4 text-slate-700 flex-shrink-0" />
         )}
       </button>
       <AnimatePresence>
@@ -129,7 +129,7 @@ function Accordion({
 
 function SectionHeading({ number, title }: { number: string; title: string }) {
   return (
-    <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2 mt-8 mb-4">
+    <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2 mt-8 mb-4">
       {number}. {title}
     </h2>
   );
@@ -228,7 +228,7 @@ function OverviewTab() {
             porter vos données à tout moment. Contactez{" "}
             <a
               href="mailto:support@versoair.com"
-              className="text-amber-600 hover:underline"
+              className="text-amber-800 hover:underline"
             >
               support@versoair.com
             </a>{" "}
@@ -238,7 +238,7 @@ function OverviewTab() {
       </div>
 
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-amber-600 mb-3">
+        <h3 className="text-lg font-semibold text-amber-800 mb-3">
           Navigation Rapide
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -247,7 +247,7 @@ function OverviewTab() {
               key={tab.id}
               className="text-sm text-slate-700 flex items-center gap-2"
             >
-              <tab.icon className="w-3.5 h-3.5 text-amber-600/60" />
+              <tab.icon className="w-3.5 h-3.5 text-amber-800" />
               {tab.label}
             </span>
           ))}
@@ -281,7 +281,7 @@ function OverviewTab() {
 function TermsTab() {
   return (
     <div className="space-y-4">
-      <p className="text-slate-500 text-sm italic">
+      <p className="text-slate-700 text-sm italic">
         Last updated: March 22, 2026 — Effective immediately upon access.
       </p>
 
@@ -373,8 +373,8 @@ function TermsTab() {
               key={tier.name}
               className="border border-slate-300 rounded-lg p-3"
             >
-              <p className="text-amber-600 font-medium text-sm">{tier.name}</p>
-              <p className="text-slate-500 text-xs">{tier.desc}</p>
+              <p className="text-amber-800 font-medium text-sm">{tier.name}</p>
+              <p className="text-slate-700 text-xs">{tier.desc}</p>
             </div>
           ))}
         </div>
@@ -472,7 +472,7 @@ function TermsTab() {
         For questions about these Terms, contact us at{" "}
         <a
           href="mailto:support@versoair.com"
-          className="text-amber-600 hover:underline"
+          className="text-amber-800 hover:underline"
         >
           support@versoair.com
         </a>{" "}
@@ -486,7 +486,7 @@ function TermsTab() {
 function PrivacyTab() {
   return (
     <div className="space-y-4">
-      <p className="text-slate-500 text-sm italic">
+      <p className="text-slate-700 text-sm italic">
         Last updated: March 22, 2026
       </p>
 
@@ -606,10 +606,10 @@ function PrivacyTab() {
             key={item.right}
             className="border border-slate-300 rounded-lg p-3 flex items-start gap-3"
           >
-            <item.icon className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <item.icon className="w-4 h-4 text-amber-800 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-amber-700 font-medium text-sm">{item.right}</p>
-              <p className="text-slate-500 text-xs">{item.desc}</p>
+              <p className="text-slate-700 text-xs">{item.desc}</p>
             </div>
           </div>
         ))}
@@ -618,7 +618,7 @@ function PrivacyTab() {
         Exercise any right by emailing{" "}
         <a
           href="mailto:support@versoair.com"
-          className="text-amber-600 hover:underline"
+          className="text-amber-800 hover:underline"
         >
           support@versoair.com
         </a>
@@ -776,7 +776,7 @@ function GdprTab() {
                   key={row.label}
                   className="flex flex-col sm:flex-row sm:gap-3"
                 >
-                  <span className="text-amber-600/70 text-sm font-medium sm:w-48 flex-shrink-0">
+                  <span className="text-amber-800 text-sm font-medium sm:w-48 flex-shrink-0">
                     {row.label}:
                   </span>
                   <span className="text-slate-700 text-sm">{row.value}</span>
@@ -856,10 +856,10 @@ function CookiesTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-300">
-              <th className="text-left text-amber-600 py-2 px-3">Cookie</th>
-              <th className="text-left text-amber-600 py-2 px-3">Purpose</th>
-              <th className="text-left text-amber-600 py-2 px-3">Duration</th>
-              <th className="text-left text-amber-600 py-2 px-3">Type</th>
+              <th className="text-left text-amber-800 py-2 px-3">Cookie</th>
+              <th className="text-left text-amber-800 py-2 px-3">Purpose</th>
+              <th className="text-left text-amber-800 py-2 px-3">Duration</th>
+              <th className="text-left text-amber-800 py-2 px-3">Type</th>
             </tr>
           </thead>
           <tbody>
@@ -869,15 +869,15 @@ function CookiesTab() {
                   {c.name}
                 </td>
                 <td className="py-2 px-3 text-slate-700">{c.purpose}</td>
-                <td className="py-2 px-3 text-slate-500">{c.duration}</td>
+                <td className="py-2 px-3 text-slate-700">{c.duration}</td>
                 <td className="py-2 px-3">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
                       c.type === "Essential"
-                        ? "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-emerald-500/20 text-emerald-700"
                         : c.type === "Functional"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : "bg-purple-500/20 text-purple-400"
+                          ? "bg-blue-500/20 text-blue-700"
+                          : "bg-purple-500/20 text-purple-700"
                     }`}
                   >
                     {c.type}
@@ -896,7 +896,7 @@ function CookiesTab() {
             <code className="text-amber-700 bg-gray-800/50 px-2 py-0.5 rounded text-xs">
               {item.name}
             </code>
-            <span className="text-slate-500">—</span>
+            <span className="text-slate-700">—</span>
             <span className="text-slate-700">{item.purpose}</span>
           </div>
         ))}
@@ -948,7 +948,7 @@ function TrademarkTab() {
             },
           ].map((item) => (
             <div key={item.label} className="p-4">
-              <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">
+              <p className="text-slate-700 text-xs uppercase tracking-wide mb-1">
                 {item.label}
               </p>
               <p className="text-slate-900 font-medium text-sm">{item.value}</p>
@@ -1008,8 +1008,8 @@ function TrademarkTab() {
           >
             <span className="text-lg leading-none">{item.status}</span>
             <div>
-              <span className="text-amber-600">{item.date}</span>
-              <span className="text-gray-500 mx-2">—</span>
+              <span className="text-amber-800">{item.date}</span>
+              <span className="text-slate-700 mx-2">—</span>
               <span className="text-slate-700">{item.event}</span>
             </div>
           </div>
@@ -1038,7 +1038,7 @@ function TrademarkTab() {
           href="https://ised-isde.canada.ca/cipo/trademark-search/2264074?lang=eng"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-600 hover:underline inline-flex items-center gap-1"
+          className="text-amber-800 hover:underline inline-flex items-center gap-1"
         >
           View on CIPO
           <ExternalLink className="w-3 h-3" />
@@ -1236,25 +1236,25 @@ function JurisdictionTab() {
           <Accordion key={j.region} title={`${j.flag} ${j.region}`}>
             <div className="space-y-3">
               <div>
-                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-800 text-xs uppercase tracking-wide mb-1">
                   Applicable Law
                 </p>
                 <p className="text-slate-700 text-sm">{j.law}</p>
               </div>
               <div>
-                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-800 text-xs uppercase tracking-wide mb-1">
                   Competent Court
                 </p>
                 <p className="text-slate-700 text-sm">{j.court}</p>
               </div>
               <div>
-                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-800 text-xs uppercase tracking-wide mb-1">
                   Key Notes
                 </p>
                 <p className="text-slate-700 text-sm">{j.notes}</p>
               </div>
               <div>
-                <p className="text-amber-600/70 text-xs uppercase tracking-wide mb-1">
+                <p className="text-amber-800 text-xs uppercase tracking-wide mb-1">
                   Consumer Protection
                 </p>
                 <p className="text-slate-700 text-sm">{j.consumers}</p>
@@ -1379,7 +1379,7 @@ function FaqTab() {
     <div className="space-y-6">
       {faqs.map((category) => (
         <div key={category.category}>
-          <h3 className="text-lg font-semibold text-amber-600 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
             <HelpCircle className="w-4 h-4" />
             {category.category}
           </h3>
@@ -1454,7 +1454,7 @@ export default function InformationHub() {
       <div className="max-w-5xl mx-auto px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm mb-8 transition-colors">
+          <a className="inline-flex items-center gap-2 text-amber-800 hover:text-amber-700 text-sm mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Retour à l'Accueil
           </a>
@@ -1467,7 +1467,7 @@ export default function InformationHub() {
           </div>
           <div>
             <h1 className="text-3xl font-bold">Centre d'Information</h1>
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-700 text-sm">
               Documents juridiques, politiques, règles de concours & FAQ — Verso
               Air™
             </p>
@@ -1498,8 +1498,8 @@ export default function InformationHub() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
                     isActive
-                      ? "bg-amber-500/20 text-amber-600 border border-amber-500/40"
-                      : "bg-gray-900/50 text-slate-500 border border-slate-300 hover:text-gray-200 hover:border-slate-300"
+                      ? "bg-amber-500/20 text-amber-800 border border-amber-500/40"
+                      : "bg-gray-900/50 text-slate-700 border border-slate-300 hover:text-slate-700 hover:border-slate-300"
                   }`}
                 >
                   <tab.icon className="w-3.5 h-3.5" />
@@ -1534,21 +1534,21 @@ export default function InformationHub() {
 
         {/* Footer note */}
         <div className="mt-16 pt-8 border-t border-slate-300">
-          <p className="text-gray-500 text-sm text-center">
+          <p className="text-slate-700 text-sm text-center">
             © {new Date().getFullYear()} Verso Air Inc. Tous droits réservés.
             <br />
             80 Mornelle Crt, Toronto, Ontario, Canada M1E 4P8
             <br />
             <a
               href="mailto:support@versoair.com"
-              className="text-amber-600/60 hover:text-amber-600 transition-colors"
+              className="text-amber-800 hover:text-amber-800 transition-colors"
             >
               support@versoair.com
             </a>
             {" · "}
             <a
               href="mailto:support@versoair.com"
-              className="text-amber-600/60 hover:text-amber-600 transition-colors"
+              className="text-amber-800 hover:text-amber-800 transition-colors"
             >
               support@versoair.com
             </a>

@@ -221,11 +221,11 @@ export default function HubPage() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
           >
-            <span className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
               Verso Air
             </span>
             <br />
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
               Platform Hub
             </span>
           </motion.h1>
@@ -235,7 +235,7 @@ export default function HubPage() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.2 }}
-            className="text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
+            className="text-xl text-slate-700 max-w-3xl mx-auto mb-10 leading-relaxed"
           >
             Your central gateway to business directories, analytics dashboards,
             reservations, and AI-powered intelligence across every sector.
@@ -296,11 +296,11 @@ export default function HubPage() {
             ].map((stat) => (
               <motion.div key={stat.label} variants={staggerItem}>
                 <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-colors group">
-                  <stat.icon className="h-5 w-5 text-slate-400 mb-2 group-hover:text-purple-400 transition-colors" />
+                  <stat.icon className="h-5 w-5 text-slate-700 mb-2 group-hover:text-purple-700 transition-colors" />
                   <div className="text-2xl font-bold text-slate-900">
                     {stat.value}
                   </div>
-                  <div className="text-xs text-slate-400">{stat.label}</div>
+                  <div className="text-xs text-slate-700">{stat.label}</div>
                 </div>
               </motion.div>
             ))}
@@ -324,11 +324,11 @@ export default function HubPage() {
               Industry Sectors
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold">
-              <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-slate-900 to-slate-900 bg-clip-text text-transparent">
                 Explore by Sector
               </span>
             </h2>
-            <p className="text-slate-400 mt-3 max-w-xl mx-auto">
+            <p className="text-slate-700 mt-3 max-w-xl mx-auto">
               Each sector links to a dedicated analytics dashboard with
               real-time data and search.
             </p>
@@ -361,7 +361,7 @@ export default function HubPage() {
                           <h3 className="text-lg font-semibold text-slate-900 mb-1">
                             {sector.title}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-sm text-slate-400 group-hover:text-slate-900/80 transition-colors">
+                          <div className="flex items-center justify-center gap-1 text-sm text-slate-700 group-hover:text-slate-900/80 transition-colors">
                             <span>Explore</span>
                             <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                           </div>
@@ -391,7 +391,7 @@ export default function HubPage() {
               Platform Services
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold">
-              <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-slate-900 to-slate-900 bg-clip-text text-transparent">
                 Services & Tools
               </span>
             </h2>
@@ -425,10 +425,10 @@ export default function HubPage() {
                             <h3 className="text-lg font-semibold text-slate-900 mb-1">
                               {svc.title}
                             </h3>
-                            <p className="text-sm text-slate-400 mb-2">
+                            <p className="text-sm text-slate-700 mb-2">
                               {svc.desc}
                             </p>
-                            <span className="inline-flex items-center text-xs text-purple-400 group-hover:text-purple-300 transition-colors">
+                            <span className="inline-flex items-center text-xs text-purple-700 group-hover:text-purple-700 transition-colors">
                               Open{" "}
                               <ArrowRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
                             </span>
@@ -460,7 +460,7 @@ export default function HubPage() {
               Capabilities
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold">
-              <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-slate-900 to-slate-900 bg-clip-text text-transparent">
                 Platform Highlights
               </span>
             </h2>
@@ -485,7 +485,7 @@ export default function HubPage() {
                       <h4 className="font-semibold text-slate-900 mb-1">
                         {feat.title}
                       </h4>
-                      <p className="text-sm text-slate-400 leading-relaxed">
+                      <p className="text-sm text-slate-700 leading-relaxed">
                         {feat.desc}
                       </p>
                     </div>
@@ -510,7 +510,7 @@ export default function HubPage() {
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
               Ready to Dive In?
             </h2>
-            <p className="text-slate-300 mb-8 max-w-xl mx-auto">
+            <p className="text-slate-700 mb-8 max-w-xl mx-auto">
               Navigate to any sector, browse the directory, or manage your
               business profile.
             </p>

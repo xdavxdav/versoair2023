@@ -17,6 +17,34 @@ export const GEOADMIN_ANNUAL_PRICES_XOF: Record<TierKey, number | null> = {
   enterprise: TIERS.enterprise.annualPriceXof,
 };
 
+// Commercial inquiries are not subscription entitlements. Premium intentionally
+// has no TierKey and must never be submitted to account/billing APIs.
+export type GeoAdminOfferKey = TierKey | "premium";
+
+export const GEOADMIN_OFFER_ORDER: GeoAdminOfferKey[] = [
+  "free", "essential", "premium", "verified", "max", "enterprise",
+];
+
+export const GEOADMIN_OFFER_NAMES: Record<GeoAdminOfferKey, string> = {
+  free: "Standard",
+  essential: "Essentiel",
+  premium: "Premium",
+  verified: "Pro Vérifié",
+  max: "Pro Max",
+  enterprise: "Enterprise",
+};
+
+export const GEOADMIN_OFFER_PRICES_XOF: Record<GeoAdminOfferKey, number | null> = {
+  ...GEOADMIN_ANNUAL_PRICES_XOF,
+  premium: 300_000,
+};
+
+export const GEOADMIN_REFERENCE_NOTICE =
+  "Non-final annual reference prices; market research is ongoing. Platform availability and all proposed services must be confirmed in a written offer before any commitment. No payment, subscription activation, advertising budget or managed social campaign is included here.";
+
+export const GEOADMIN_PREMIUM_NOTICE =
+  "Premium is available by inquiry only. It uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions.";
+
 export const GEOADMIN_MARKETS = {
   CA: { currency: "CAD", locale: "en-US" },
   FR: { currency: "EUR", locale: "fr-FR" },
@@ -27,53 +55,55 @@ export const GEOADMIN_AVAILABLE_MARKETS = new Set(
   Object.keys(GEOADMIN_MARKETS),
 );
 
-export const GEOADMIN_PLAN_DETAILS: Record<
-  TierKey,
-  { shortDescription: string; benefits: string[] }
-> = {
-  free: {
-    shortDescription: "Start with a basic directory presence.",
-    benefits: [
-      "Basic business directory listing",
-      "Core business profile",
-    ],
-  },
-  essential: {
-    shortDescription: "Build a stronger, more complete business profile.",
-    benefits: [
-      "Everything in Free",
-      "Enhanced directory listing",
-      "Priority search placement",
-      "Profile spotlight",
-    ],
-  },
-  verified: {
-    shortDescription: "Add stronger visibility and lead-generation tools.",
-    benefits: [
-      "Everything in Essential",
-      "Featured placement",
-      "Analytics dashboard",
-      "Lead-generation tools",
-    ],
-  },
-  max: {
-    shortDescription: "Get a broader visibility and campaign package.",
-    benefits: [
-      "Everything in Pro Verified",
-      "Top-tier visibility opportunities",
-      "Dedicated support",
-      "Custom campaign planning",
-      "Global exposure",
-    ],
-  },
-  enterprise: {
-    shortDescription: "A tailored package for larger or multi-market needs.",
-    benefits: [
-      "Everything in Pro Max",
-      "Discuss tailored deliverables and scale with the team",
-      "Pricing, availability, and scope confirmed in a written proposal",
-    ],
-  },
+interface OfferDetails {
+  shortDescription: string;
+  platform: string[];
+  services: string[];
+  benefits: string[];
+}
+
+function offer(shortDescription: string, platform: string[], services: string[]): OfferDetails {
+  return { shortDescription, platform, services, benefits: [...platform, ...services] };
+}
+
+export const GEOADMIN_PLAN_DETAILS: Record<GeoAdminOfferKey, OfferDetails> = {
+  free: offer("A basic, self-managed directory presence.", [
+    "Business name, category, short description and directory geolocation",
+  ], ["Self-managed listing; no content production service"]),
+  essential: offer("Set up a clear business presentation.", [
+    "Standard platform scope, plus a supplied logo and enriched short description",
+  ], ["One initial setup using information and a logo supplied by the client"]),
+  premium: offer("Content preparation, available by inquiry only.", [
+    "Same proposed platform scope as Essentiel; no additional account permissions",
+  ], [
+    "One scoping interview",
+    "Drafting a long presentation from information supplied by the client",
+    "Preparation of five product or service sheets",
+    "One round of corrections",
+    "Publication only in available platform fields; formats and scope confirmed in writing",
+  ]),
+  verified: offer("Documentary verification and a richer business presentation.", [
+    "Essentiel platform scope, plus a long description and product/service presentation",
+    "Partner logo, customer reviews and notifications, subject to feature availability",
+    "Verified status only after documentary checks; never granted automatically by payment",
+  ], [
+    "Documentary verification assistance",
+    "Introduction to the web marketing team; production work quoted separately",
+    "Premium content-preparation deliverables are not automatically included",
+  ]),
+  max: offer("Discuss enhanced visibility and a scoped promotion proposal.", [
+    "Pro Vérifié platform scope, plus a featured banner and advanced analytics if available",
+    "Promotional placements subject to availability and written scope; no guaranteed Top 3 ranking",
+  ], [
+    "Email, newsletter and promotional content: quantities and frequency to be quoted",
+    "Videos, interviews, advertising management and media spend require a separate quote",
+  ]),
+  enterprise: offer("A custom scope agreed in writing, case by case.", [
+    "Platform scope and multi-location or multi-market needs defined individually",
+  ], [
+    "Deliverables, responsibilities, support and commercial terms agreed in a written proposal",
+    "No automatic entitlement to every Pro Max service",
+  ]),
 };
 
 export type ExchangeRates = Record<string, number>;
@@ -128,6 +158,7 @@ export function formatMarketXofPrice(
   rates: ExchangeRates | null,
 ): string {
   if (getMarketAvailability(countryCode) === false) return "Coming soon";
+  if (amountXof === null) return "Custom quote";
   const market = getGeoAdminMarket(countryCode);
   if (
     market &&

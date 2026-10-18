@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -141,7 +142,7 @@ function PoolOverview() {
   const { data, isLoading } = useQuery({
     queryKey: ["revenue-pulse", "pool"],
     queryFn: async () => {
-      const res = await fetch(`${API}/pool-status`);
+      const res = await fetch(`${API}/pool`);
       return res.json();
     },
     refetchInterval: 60000,
@@ -256,8 +257,10 @@ function PoolOverview() {
 // Impact Score — Personal Artist Performance
 // ═══════════════════════════════════════════════════════════
 function MyImpactScore() {
+  const { user } = useAuthContext();
   const { data, isLoading } = useQuery({
-    queryKey: ["revenue-pulse", "impact"],
+    queryKey: ["revenue-pulse", "impact", user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const res = await fetch(`${API}/my-impact`, { credentials: "include" });
       if (!res.ok) return null;

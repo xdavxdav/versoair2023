@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { pool } from "../db";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 const publicArtistAccountFilter = `NOT EXISTS (
   SELECT 1 FROM users u
   WHERE u.id = a.user_id

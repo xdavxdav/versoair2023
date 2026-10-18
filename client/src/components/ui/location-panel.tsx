@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { Button } from "./button";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch, getAuthToken } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
@@ -19,25 +19,18 @@ interface LocationData {
   };
   wifiProvider?: string;
   networkType?: string;
-  signalStrength?: string;
   ipAddress?: string;
   internetProvider?: string;
   timezone?: string;
   localTime?: string;
   altitude?: string;
   district?: string;
-  nearbyLandmarks?: string[];
   activeUsers?: number;
-  coverageAreas?: number;
-  responseTime?: string;
-  regions?: Array<{ name: string; coverage: number }>;
 }
 
 export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
   useScrollLock(isOpen);
   const { selectedCountry } = useCountry();
-  const chartRef = useRef<HTMLCanvasElement>(null);
-  const chartInstanceRef = useRef<any>(null);
   const [liveLocation, setLiveLocation] = useState<LocationData | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [activeUsers, setActiveUsers] = useState<number>(0);
@@ -48,6 +41,7 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
   // Send heartbeat to track active users
   useEffect(() => {
     const sendHeartbeat = async () => {
+      if (!getAuthToken()) return;
       try {
         const response = await authenticatedFetch("/api/users/heartbeat", {
           method: "POST",
@@ -77,6 +71,7 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
     if (!isOpen) return;
 
     const fetchActiveUsers = async () => {
+      if (!getAuthToken()) return;
       try {
         const response = await authenticatedFetch("/api/users/active-count");
         const data = await response.json();
@@ -142,7 +137,7 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
         ? { latitude: coords.latitude, longitude: coords.longitude }
         : ipData.latitude && ipData.longitude
           ? { latitude: ipData.latitude, longitude: ipData.longitude }
-          : { latitude: 0, longitude: 0 },
+          : undefined,
       altitude:
         coords?.altitude != null
           ? `${Math.round(coords.altitude * 3.28084)} ft`
@@ -151,28 +146,11 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
       networkType:
         (navigator as any).connection?.effectiveType?.toUpperCase() ||
         "Unknown",
-      signalStrength: "Good",
       ipAddress: ipData.ip || "N/A",
       internetProvider: ipData.org || "Unknown ISP",
       timezone: timezoneString,
       localTime: timeString,
-      nearbyLandmarks: [
-        `${ipData.city || "Local"} City Center`,
-        `${ipData.region || "Regional"} Regional Office`,
-        "Nearby Shopping District",
-        "Public Transport Hub",
-        "Local Business District",
-      ],
       activeUsers: activeUsers,
-      coverageAreas: Math.floor(Math.random() * 20) + 80,
-      responseTime: `${Math.floor(Math.random() * 20) + 5}ms`,
-      regions: [
-        { name: "North", coverage: Math.floor(Math.random() * 20) + 75 },
-        { name: "East", coverage: Math.floor(Math.random() * 20) + 75 },
-        { name: "South", coverage: Math.floor(Math.random() * 20) + 75 },
-        { name: "West", coverage: Math.floor(Math.random() * 20) + 75 },
-        { name: "Center", coverage: Math.floor(Math.random() * 20) + 80 },
-      ],
     };
   };
 
@@ -304,43 +282,29 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
         ? `${city}${region ? ", " + region : ""}${countryName ? " (" + countryName + ")" : ""}`
         : cityFromTimezone || "Location detected";
 
-      const lat = coords?.latitude ?? ipData.latitude ?? 0;
-      const lng = coords?.longitude ?? ipData.longitude ?? 0;
+      const lat = coords?.latitude ?? ipData.latitude;
+      const lng = coords?.longitude ?? ipData.longitude;
 
       setLiveLocation({
         currentLocation: locationLabel,
         postalCode:
           ipData.postal && ipData.postal !== "Unknown" ? ipData.postal : "N/A",
         district: region || "N/A",
-        coordinates: { latitude: lat, longitude: lng },
+        coordinates:
+          typeof lat === "number" && typeof lng === "number"
+            ? { latitude: lat, longitude: lng }
+            : undefined,
         altitude:
           coords?.altitude != null
             ? `${Math.round(coords.altitude * 3.28084)} ft`
             : "N/A",
         wifiProvider: ipData.org || "Unknown Provider",
         networkType,
-        signalStrength: "Good",
         ipAddress: ipData.ip && ipData.ip !== "unknown" ? ipData.ip : "N/A",
         internetProvider: ipData.org || "Unknown ISP",
         timezone: timezoneString,
         localTime: timeString,
-        nearbyLandmarks: [
-          `${city || "Local"} City Center`,
-          `${region || "Regional"} Office`,
-          "Nearby Shopping District",
-          "Public Transport Hub",
-          "Local Business District",
-        ],
         activeUsers,
-        coverageAreas: Math.floor(Math.random() * 20) + 80,
-        responseTime: `${Math.floor(Math.random() * 20) + 5}ms`,
-        regions: [
-          { name: "North", coverage: Math.floor(Math.random() * 20) + 75 },
-          { name: "East", coverage: Math.floor(Math.random() * 20) + 75 },
-          { name: "South", coverage: Math.floor(Math.random() * 20) + 75 },
-          { name: "West", coverage: Math.floor(Math.random() * 20) + 75 },
-          { name: "Center", coverage: Math.floor(Math.random() * 20) + 80 },
-        ],
       });
       setLocationError(null);
     })();
@@ -377,108 +341,24 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
     return () => clearInterval(interval);
   }, [isOpen, liveLocation, activeUsers]);
 
-  // Mock data with realistic values (fallback)
+  // Placeholder while location is being detected
   const mockLocationData: LocationData = {
     currentLocation: "Detecting location...",
     postalCode: "---",
     district: "---",
-    coordinates: {
-      latitude: 0,
-      longitude: 0,
-    },
     altitude: "---",
     wifiProvider: "Detecting...",
     networkType: "Detecting...",
-    signalStrength: "---",
     ipAddress: "Detecting...",
     internetProvider: "Detecting...",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     localTime: new Date().toLocaleTimeString(),
-    nearbyLandmarks: [],
     activeUsers: activeUsers,
-    coverageAreas: 0,
-    responseTime: "---",
-    regions: [
-      { name: "North", coverage: 0 },
-      { name: "East", coverage: 0 },
-      { name: "South", coverage: 0 },
-      { name: "West", coverage: 0 },
-      { name: "Center", coverage: 0 },
-    ],
   };
 
   // Use live location data if available, otherwise use mock data
   const displayData = liveLocation || mockLocationData;
 
-  useEffect(() => {
-    if (isOpen && chartRef.current) {
-      const ctx = chartRef.current.getContext("2d");
-
-      // Destroy existing chart if any
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-      }
-
-      if (ctx && (window as any).Chart) {
-        const regions = displayData?.regions || [
-          { name: "North", coverage: 85 },
-          { name: "East", coverage: 92 },
-          { name: "South", coverage: 78 },
-          { name: "West", coverage: 88 },
-          { name: "Center", coverage: 95 },
-        ];
-
-        chartInstanceRef.current = new (window as any).Chart(ctx, {
-          type: "radar",
-          data: {
-            labels: regions.map((r) => r.name),
-            datasets: [
-              {
-                label: "Coverage %",
-                data: regions.map((r) => r.coverage),
-                borderColor: "hsl(36, 82%, 43%)",
-                backgroundColor: "hsla(36, 82%, 43%, 0.2)",
-                borderWidth: 2,
-                pointBackgroundColor: "hsl(36, 82%, 43%)",
-                pointBorderColor: "#fff",
-                pointHoverBackgroundColor: "#fff",
-                pointHoverBorderColor: "hsl(36, 82%, 43%)",
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              r: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                  stepSize: 20,
-                },
-                grid: {
-                  color: "rgba(0, 0, 0, 0.1)",
-                },
-              },
-            },
-            plugins: {
-              legend: {
-                display: false,
-              },
-            },
-          },
-        });
-      }
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-        chartInstanceRef.current = null;
-      }
-    };
-  }, [isOpen, displayData]);
 
   return (
     <>
@@ -534,8 +414,8 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
                 <span className="text-gray-600">Coordinates:</span>
                 <span className="font-medium">
                   {displayData?.coordinates
-                    ? `${displayData.coordinates.latitude}°, ${displayData.coordinates.longitude}°`
-                    : "Loading..."}
+                    ? `${displayData.coordinates.latitude.toFixed(4)}°, ${displayData.coordinates.longitude.toFixed(4)}°`
+                    : "—"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -563,12 +443,6 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
                 <span className="text-gray-600">Network Type:</span>
                 <span className="font-medium">
                   {displayData?.networkType || "Loading..."}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Signal Strength:</span>
-                <span className="font-medium text-green-600">
-                  {displayData?.signalStrength || "Loading..."}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -605,55 +479,16 @@ export default function LocationPanel({ isOpen, onClose }: LocationPanelProps) {
             </div>
           </div>
 
-          {/* Nearby Landmarks */}
-          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <h4 className="font-medium mb-3 text-orange-800">
-              🏛️ Nearby Landmarks
-            </h4>
-            <div className="space-y-1">
-              {displayData?.nearbyLandmarks?.map((landmark, index) => (
-                <div
-                  key={index}
-                  className="text-sm text-gray-600 flex items-center"
-                >
-                  <span className="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                  {landmark}
-                </div>
-              )) || (
-                <div className="text-sm text-gray-500">
-                  Loading landmarks...
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Coverage Analytics */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-3">📊 Coverage Analytics</h4>
-            <div className="mb-3 h-32">
-              <canvas ref={chartRef} className="w-full h-full"></canvas>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Active Users:</span>
-                <span className="font-medium text-blue-600">
-                  {displayData?.activeUsers?.toLocaleString() || "0"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Coverage Areas:</span>
-                <span className="font-medium text-green-600">
-                  {displayData?.coverageAreas || "0"}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Response Time:</span>
-                <span className="font-medium text-orange-600">
-                  {displayData?.responseTime || "0s"}
+          {(displayData.activeUsers ?? 0) > 0 && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700">Active users:</span>
+                <span className="font-medium text-blue-700">
+                  {displayData.activeUsers?.toLocaleString()}
                 </span>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>

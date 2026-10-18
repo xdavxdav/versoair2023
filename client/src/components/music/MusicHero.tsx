@@ -88,7 +88,6 @@ export function MusicHero({
               <StatItem
                 label="Total Streams"
                 value={formatNumber(stats.streams)}
-                trend="+12%"
               />
             )}
             {stats.tracks !== undefined && (
@@ -98,14 +97,12 @@ export function MusicHero({
               <StatItem
                 label="Followers"
                 value={formatNumber(stats.followers)}
-                trend="+8%"
               />
             )}
             {stats.earnings !== undefined && (
               <StatItem
                 label="Earnings"
                 value={`$${formatNumber(stats.earnings)}`}
-                trend="+15%"
               />
             )}
           </div>

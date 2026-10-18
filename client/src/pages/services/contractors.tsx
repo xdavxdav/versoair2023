@@ -383,7 +383,7 @@ function Stars({
 }) {
   if (!rating && count === 0) {
     return (
-      <span className="flex items-center gap-1 text-gray-400 text-xs">
+      <span className="flex items-center gap-1 text-gray-600 text-xs">
         <MessageCircle className="h-3 w-3" /> No reviews yet
       </span>
     );
@@ -695,7 +695,7 @@ export default function Contractors() {
   /* ═════ AUTH GATE ═════ */
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20">
+      <div className="min-h-screen service-light-portal text-slate-900 flex items-center justify-center bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-amber-600 mx-auto" />
           <p className="text-gray-500 font-medium">
@@ -708,7 +708,7 @@ export default function Contractors() {
 
   if (!platformUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 relative overflow-hidden">
+      <div className="min-h-screen service-light-portal text-slate-900 flex items-center justify-center bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 relative overflow-hidden">
         {/* bg pattern */}
         <div
           className="absolute inset-0 z-0 opacity-[0.03]"
@@ -751,7 +751,7 @@ export default function Contractors() {
             {/* divider */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-400 font-medium">
+              <span className="text-xs text-gray-600 font-medium">
                 first time here?
               </span>
               <div className="flex-1 h-px bg-gray-200" />
@@ -799,7 +799,7 @@ export default function Contractors() {
   /* ═════ RENDER (authenticated) ═════ */
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 relative overflow-hidden"
+      className="min-h-screen service-light-portal text-slate-900 bg-gradient-to-br from-amber-50/30 via-white to-orange-50/20 relative overflow-hidden"
       style={
         {
           "--background": "hsl(0 0% 100%)",
@@ -998,7 +998,7 @@ export default function Contractors() {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-50" />
                   <div className="relative bg-white/95 backdrop-blur-sm border border-gray-300/50 rounded-2xl shadow-xl overflow-hidden">
-                    <Search className="absolute left-5 top-5 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-5 top-5 h-5 w-5 text-gray-600" />
                     <Input
                       placeholder="Search contracts, companies, or skills..."
                       value={searchQuery}
@@ -1359,7 +1359,7 @@ export default function Contractors() {
                           " " +
                           (selSector !== "all"
                             ? "text-white/70"
-                            : "text-gray-400")
+                            : "text-gray-600")
                         }
                       />
                     </button>
@@ -1648,7 +1648,7 @@ export default function Contractors() {
                                       <Calendar className="h-4 w-4" /> {dt.date}{" "}
                                       · {dt.time}
                                     </span>
-                                    <span className="text-sm text-gray-400">
+                                    <span className="text-sm text-gray-600">
                                       (
                                       {daysSince(c.posted_date || c.created_at)}{" "}
                                       days ago)

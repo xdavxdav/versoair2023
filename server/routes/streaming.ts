@@ -6,17 +6,34 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { fanChatSlowMode } from "../middleware/rate-limiter";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 
 // ── Safe column list for music_tracks (excludes audio_data BYTEA blob) ──
-const MT_COLS = `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
+let trackStorageColumns: Promise<Set<string>> | undefined;
+function getTrackStorageColumns() {
+  return trackStorageColumns ??= pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'music_tracks' AND column_name IN ('pochette', 'audio_data')",
+  ).then(result => new Set<string>(result.rows.map(row => row.column_name))).catch(error => {
+    trackStorageColumns = undefined;
+    throw error;
+  });
+}
+async function trackStorageFlag(column: "pochette" | "audio_data") {
+  return (await getTrackStorageColumns()).has(column) ? `(mt.${column} IS NOT NULL)` : "false";
+}
+async function trackColumns() {
+  return `mt.id, mt.title, mt.artist_id, mt.album_id, mt.track_number,
   mt.duration, mt.streams, mt.play_count, mt.likes, mt.release_date, mt.genre,
   mt.file_path, mt.file_name, mt.file_size, mt.mime_type, mt.audio_url,
   mt.description, mt.price, mt.downloads, mt.revenue, mt.status,
   mt.bpm, mt.musical_key, mt.mood, mt.cover_art,
   mt.is_explicit, mt.created_at,
-  (mt.pochette IS NOT NULL) AS has_pochette,
-  (mt.audio_data IS NOT NULL) AS has_audio_data`;
+  ${await trackStorageFlag("pochette")} AS has_pochette,
+  ${await trackStorageFlag("audio_data")} AS has_audio_data`;
+}
 
 // ═══════════════════════════════════════════════════════════
 // TRACKS
@@ -72,7 +89,7 @@ router.get("/tracks", async (req: Request, res: Response) => {
     else if (sort === "duration") orderBy = "ORDER BY mt.duration ASC";
 
     const query = `
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+      SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name,
         COALESCE(ap.profile_image_url, ma.image_url) as artist_image,
         COALESCE(ap.verified_for_payout, ma.verified, false) as artist_verified,
         a.title as album_title, a.cover_art as album_cover,
@@ -133,7 +150,7 @@ router.get("/tracks", async (req: Request, res: Response) => {
 router.get("/tracks/featured", async (_req: Request, res: Response) => {
   try {
     const featured = await pool.query(`
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+      SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name,
         COALESCE(ap.profile_image_url, ma.image_url) as artist_image,
         COALESCE(ap.verified_for_payout, ma.verified, false) as artist_verified,
         a.title as album_title, a.cover_art as album_cover,
@@ -156,7 +173,7 @@ router.get("/tracks/featured", async (_req: Request, res: Response) => {
 
     // New releases (last 2 years by release date)
     const newReleases = await pool.query(`
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+      SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
         COALESCE(ma.verified, false) as artist_verified, a.title as album_title, a.cover_art as album_cover
       FROM music_tracks mt
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
@@ -245,7 +262,7 @@ router.get("/tracks/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const track = await pool.query(
       `
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+      SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name,
         COALESCE(ap.profile_image_url, ma.image_url) as artist_image,
         COALESCE(ap.verified_for_payout, ma.verified, false) as artist_verified,
         COALESCE(ma.genre, art.genre) as artist_genre,
@@ -1066,7 +1083,7 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
     // Top tracks
     const topTracks = await pool.query(
       `
-      SELECT ${MT_COLS}, a.title as album_title, a.cover_art as album_cover,
+      SELECT ${await trackColumns()}, a.title as album_title, a.cover_art as album_cover,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count
       FROM music_tracks mt
       LEFT JOIN albums a ON mt.album_id = a.id
@@ -1189,7 +1206,7 @@ router.get("/albums/:id", async (req: Request, res: Response) => {
 
     const tracks = await pool.query(
       `
-      SELECT ${MT_COLS}, 
+      SELECT ${await trackColumns()},
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count
       FROM music_tracks mt
       WHERE mt.album_id = $1
@@ -1422,7 +1439,7 @@ router.get("/playlists/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Playlist not found" });
 
     const tracks = await pool.query(`
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+      SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
         a.title as album_title, a.cover_art as album_cover, pt.position,
         COALESCE((SELECT COUNT(*) FROM track_likes tl WHERE tl.track_id = mt.id), 0) as like_count
       FROM playlist_tracks pt
@@ -1500,7 +1517,7 @@ router.get("/liked", async (req: Request, res: Response) => {
 
     const liked = await pool.query(
       `
-      SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
+      SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
         a.title as album_title, a.cover_art as album_cover, tl.created_at as liked_at
       FROM track_likes tl
       JOIN music_tracks mt ON tl.track_id = mt.id
@@ -1807,7 +1824,7 @@ router.get("/track/:id/thread", async (req: Request, res: Response) => {
 
     // Get track info
     const track = await pool.query(
-      `SELECT ${MT_COLS}, COALESCE(ma.name, art.stage_name) as artist_name,
+      `SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name,
          COALESCE(ma.image_url, ap.profile_image_url) as artist_image,
          ma.verified as artist_verified,
          a.title as album_title, a.cover_art as album_cover
@@ -1964,7 +1981,7 @@ router.get("/artist/:id/dashboard", async (req: Request, res: Response) => {
 
     // Get top tracks
     const topTracks = await pool.query(
-      `SELECT ${MT_COLS}, 
+      `SELECT ${await trackColumns()},
          a.title as album_title, a.cover_art as album_cover,
          COALESCE((SELECT COUNT(*) FROM track_likes WHERE track_id = mt.id), 0) as like_count,
          COALESCE((SELECT COUNT(*) FROM track_comments WHERE track_id = mt.id), 0) as comment_count
@@ -2473,9 +2490,9 @@ router.get("/search", async (req: Request, res: Response) => {
       pool.query(
         `
         SELECT mt.id, mt.title, mt.duration, mt.streams, mt.cover_art,
-          (mt.pochette IS NOT NULL) AS has_pochette,
+          ${await trackStorageFlag("pochette")} AS has_pochette,
           mt.genre, mt.file_path, mt.audio_url,
-          (mt.audio_data IS NOT NULL) AS has_audio_data,
+          ${await trackStorageFlag("audio_data")} AS has_audio_data,
           COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image
         FROM music_tracks mt
         LEFT JOIN music_artists ma ON mt.artist_id = ma.id

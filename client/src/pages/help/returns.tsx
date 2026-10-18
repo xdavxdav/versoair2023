@@ -4,7 +4,7 @@ import { ArrowLeft, Info } from "lucide-react";
 
 export default function ReturnsHelp() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <div className="border-b bg-white shadow-sm">
         <div className="mx-auto max-w-4xl px-4 py-4">
           <div className="flex items-center gap-4">

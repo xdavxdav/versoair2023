@@ -173,7 +173,7 @@ function ProfileCard({
   onEdit: () => void;
 }) {
   return (
-    <Card className="bg-slate-800/50 border-emerald-500/20 overflow-hidden">
+    <Card className="text-slate-900 bg-white border-emerald-500/20 overflow-hidden">
       {/* Cover image */}
       <div className="relative h-32 bg-gradient-to-r from-emerald-600 to-green-600">
         {profile.coverImage && (
@@ -197,7 +197,7 @@ function ProfileCard({
       <div className="relative px-6 -mt-12">
         <div className="relative inline-block">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 p-1">
-            <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center overflow-hidden">
+            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
@@ -205,7 +205,7 @@ function ProfileCard({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-10 h-10 text-emerald-400" />
+                <User className="w-10 h-10 text-emerald-700" />
               )}
             </div>
           </div>
@@ -223,7 +223,7 @@ function ProfileCard({
           <h2 className="text-xl font-bold text-slate-900">
             {profile.displayName}
           </h2>
-          <Badge className="bg-emerald-500/20 text-emerald-300">
+          <Badge className="bg-emerald-500/20 text-emerald-700">
             {profile.status === "PUBLISHED"
               ? "Publié"
               : profile.status === "PENDING"
@@ -233,7 +233,7 @@ function ProfileCard({
                   : "Brouillon"}
           </Badge>
           {profile.isVerified && (
-            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+            <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">
               Vérifié
             </Badge>
           )}
@@ -241,7 +241,7 @@ function ProfileCard({
 
         {/* Location */}
         {profile.location && (
-          <p className="text-emerald-300/60 text-sm flex items-center gap-1 mb-3">
+          <p className="text-emerald-700 text-sm flex items-center gap-1 mb-3">
             <MapPin className="w-3 h-3" />
             {profile.location}
           </p>
@@ -249,7 +249,7 @@ function ProfileCard({
 
         {/* Bio */}
         {profile.bio && (
-          <p className="text-slate-300 text-sm mb-4 line-clamp-3">
+          <p className="text-slate-700 text-sm mb-4 line-clamp-3">
             {profile.bio}
           </p>
         )}
@@ -260,7 +260,7 @@ function ProfileCard({
             <Badge
               key={spec}
               variant="secondary"
-              className="bg-emerald-900/50 text-emerald-300 text-xs"
+              className="bg-emerald-50 text-emerald-700 text-xs"
             >
               {spec}
             </Badge>
@@ -268,7 +268,7 @@ function ProfileCard({
           {profile.specializations.length > 4 && (
             <Badge
               variant="secondary"
-              className="bg-slate-700 text-slate-400 text-xs"
+              className="bg-white text-slate-700 text-xs"
             >
               +{profile.specializations.length - 4}
             </Badge>
@@ -281,8 +281,8 @@ function ProfileCard({
             <p className="text-2xl font-bold text-slate-900">
               {profile.rating}
             </p>
-            <p className="text-xs text-emerald-300/60 flex items-center justify-center gap-1">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <p className="text-xs text-emerald-700 flex items-center justify-center gap-1">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-800" />
               Note
             </p>
           </div>
@@ -290,13 +290,13 @@ function ProfileCard({
             <p className="text-2xl font-bold text-slate-900">
               {profile.portfolioCount}
             </p>
-            <p className="text-xs text-emerald-300/60">Créations</p>
+            <p className="text-xs text-emerald-700">Créations</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-slate-900">
               {profile.orderCount}
             </p>
-            <p className="text-xs text-emerald-300/60">Commandes</p>
+            <p className="text-xs text-emerald-700">Commandes</p>
           </div>
         </div>
 
@@ -312,7 +312,7 @@ function ProfileCard({
           <Button
             variant="outline"
             size="sm"
-            className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
+            className="border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10"
           >
             <Share2 className="w-4 h-4" />
           </Button>
@@ -332,7 +332,7 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
           whileHover={{ y: -4 }}
           className="group cursor-pointer"
         >
-          <Card className="bg-slate-800/50 border-emerald-500/20 overflow-hidden h-full">
+          <Card className="text-slate-900 bg-white border-emerald-500/20 overflow-hidden h-full">
             <div className="relative aspect-square">
               <img
                 src={item.imageUrl}
@@ -359,7 +359,7 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
               </h3>
               <Badge
                 variant="secondary"
-                className="bg-emerald-900/50 text-emerald-300 text-xs"
+                className="bg-emerald-50 text-emerald-700 text-xs"
               >
                 {item.category}
               </Badge>
@@ -370,12 +370,12 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
 
       {/* Add new item card */}
       <motion.div whileHover={{ y: -4 }} className="cursor-pointer">
-        <Card className="bg-slate-800/30 border-dashed border-emerald-500/30 hover:border-emerald-500/50 h-full flex items-center justify-center min-h-[200px] transition-colors">
+        <Card className="text-slate-900 bg-white border-dashed border-emerald-500/30 hover:border-emerald-500/50 h-full flex items-center justify-center min-h-[200px] transition-colors">
           <div className="text-center p-6">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
-              <Plus className="w-6 h-6 text-emerald-400" />
+              <Plus className="w-6 h-6 text-emerald-700" />
             </div>
-            <p className="text-emerald-300 font-medium text-sm">
+            <p className="text-emerald-700 font-medium text-sm">
               Ajouter une création
             </p>
           </div>
@@ -390,7 +390,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
   return (
     <div className="space-y-4">
       {reviews.map((review) => (
-        <Card key={review.id} className="bg-slate-800/50 border-emerald-500/20">
+        <Card key={review.id} className="text-slate-900 bg-white border-emerald-500/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -401,7 +401,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <User className="w-5 h-5 text-emerald-400" />
+                  <User className="w-5 h-5 text-emerald-700" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -409,7 +409,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
                   <h4 className="font-semibold text-slate-900 text-sm">
                     {review.authorName}
                   </h4>
-                  <span className="text-xs text-emerald-300/60">
+                  <span className="text-xs text-emerald-700">
                     {new Date(review.createdAt).toLocaleDateString("fr-FR")}
                   </span>
                 </div>
@@ -417,16 +417,16 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-3 h-3 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-slate-600"}`}
+                      className={`w-3 h-3 ${i < review.rating ? "fill-amber-400 text-amber-800" : "text-slate-600"}`}
                     />
                   ))}
                 </div>
                 {review.projectTitle && (
-                  <p className="text-xs text-emerald-400 mb-1">
+                  <p className="text-xs text-emerald-700 mb-1">
                     Projet: {review.projectTitle}
                   </p>
                 )}
-                <p className="text-slate-300 text-sm">{review.comment}</p>
+                <p className="text-slate-700 text-sm">{review.comment}</p>
               </div>
             </div>
           </CardContent>
@@ -461,25 +461,25 @@ function OrdersTable({ orders }: { orders: Order[] }) {
   return (
     <div className="space-y-3">
       {orders.map((order) => (
-        <Card key={order.id} className="bg-slate-800/50 border-emerald-500/20">
+        <Card key={order.id} className="text-slate-900 bg-white border-emerald-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex-1 min-w-0">
                 <h4 className="font-semibold text-slate-900 text-sm mb-1">
                   {order.title}
                 </h4>
-                <p className="text-emerald-300/60 text-xs">
+                <p className="text-emerald-700 text-xs">
                   Client: {order.clientName}
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-emerald-400">
+                <p className="font-bold text-emerald-700">
                   {order.amount.toLocaleString()} FCFA
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   {getStatusBadge(order.status)}
                   {order.deadline && (
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                    <span className="text-xs text-slate-700 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {new Date(order.deadline).toLocaleDateString("fr-FR")}
                     </span>
@@ -493,8 +493,8 @@ function OrdersTable({ orders }: { orders: Order[] }) {
 
       {orders.length === 0 && (
         <div className="text-center py-12">
-          <ShoppingBag className="w-12 h-12 text-emerald-500/30 mx-auto mb-3" />
-          <p className="text-slate-400">Aucune commande pour le moment</p>
+          <ShoppingBag className="w-12 h-12 text-emerald-700 mx-auto mb-3" />
+          <p className="text-slate-700">Aucune commande pour le moment</p>
         </div>
       )}
     </div>
@@ -580,7 +580,7 @@ function SettingsForm({
 
   return (
     <div className="space-y-6">
-      <Card className="bg-slate-800/50 border-emerald-500/20">
+      <Card className="text-slate-900 bg-white border-emerald-500/20">
         <CardHeader>
           <CardTitle className="text-slate-900 text-lg">
             Informations personnelles
@@ -589,76 +589,76 @@ function SettingsForm({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-emerald-100">Nom d'affichage</Label>
+              <Label className="text-emerald-700">Nom d'affichage</Label>
               <Input
                 value={formData.displayName}
                 onChange={(e) =>
                   setFormData({ ...formData, displayName: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
+                className="bg-white border-emerald-500/30 text-slate-900"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-emerald-100">Téléphone</Label>
+              <Label className="text-emerald-700">Téléphone</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
+                className="bg-white border-emerald-500/30 text-slate-900"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-emerald-100">Bio</Label>
+            <Label className="text-emerald-700">Bio</Label>
             <Textarea
               value={formData.bio}
               onChange={(e) =>
                 setFormData({ ...formData, bio: e.target.value })
               }
-              className="bg-slate-900/50 border-emerald-500/30 text-slate-900 min-h-[100px]"
+              className="bg-white border-emerald-500/30 text-slate-900 min-h-[100px]"
               placeholder="Parlez de vous et de votre artisanat..."
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-emerald-100">Localisation</Label>
+              <Label className="text-emerald-700">Localisation</Label>
               <Input
                 value={formData.location}
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
+                className="bg-white border-emerald-500/30 text-slate-900"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-emerald-100">Site web</Label>
+              <Label className="text-emerald-700">Site web</Label>
               <Input
                 value={formData.website}
                 onChange={(e) =>
                   setFormData({ ...formData, website: e.target.value })
                 }
-                className="bg-slate-900/50 border-emerald-500/30 text-slate-900"
+                className="bg-white border-emerald-500/30 text-slate-900"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-emerald-100">Tarif horaire (FCFA)</Label>
+            <Label className="text-emerald-700">Tarif horaire (FCFA)</Label>
             <Input
               type="number"
               value={formData.hourlyRate}
               onChange={(e) =>
                 setFormData({ ...formData, hourlyRate: e.target.value })
               }
-              className="bg-slate-900/50 border-emerald-500/30 text-slate-900 max-w-[200px]"
+              className="bg-white border-emerald-500/30 text-slate-900 max-w-[200px]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-emerald-100">Spécialisations</Label>
+            <Label className="text-emerald-700">Spécialisations</Label>
             <Select
               value=""
               onValueChange={(specialization) => {
@@ -673,7 +673,7 @@ function SettingsForm({
                 }
               }}
             >
-              <SelectTrigger className="bg-slate-900/50 border-emerald-500/30 text-slate-900">
+              <SelectTrigger className="bg-white border-emerald-500/30 text-slate-900">
                 <SelectValue placeholder="Ajouter une spécialisation" />
               </SelectTrigger>
               <SelectContent>
@@ -690,7 +690,7 @@ function SettingsForm({
               {formData.specializations.map((spec) => (
                 <Badge
                   key={spec}
-                  className="bg-emerald-500/20 text-emerald-300 cursor-pointer hover:bg-red-500/20 hover:text-red-300"
+                  className="bg-emerald-500/20 text-emerald-700 cursor-pointer hover:bg-red-500/20 hover:text-red-700"
                   onClick={() =>
                     setFormData({
                       ...formData,
@@ -717,7 +717,7 @@ function SettingsForm({
             </Button>
           </div>
           {message && (
-            <p className="text-sm text-emerald-300" role="status">
+            <p className="text-sm text-emerald-700" role="status">
               {message}
             </p>
           )}
@@ -867,10 +867,10 @@ export default function ArtisansPortal() {
             />
 
             {/* Quick stats */}
-            <Card className="bg-slate-800/50 border-emerald-500/20 mt-4">
+            <Card className="text-slate-900 bg-white border-emerald-500/20 mt-4">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400 flex items-center gap-2">
+                  <span className="text-slate-700 flex items-center gap-2">
                     <Briefcase className="w-4 h-4" />
                     Expérience
                   </span>
@@ -879,16 +879,16 @@ export default function ArtisansPortal() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400 flex items-center gap-2">
+                  <span className="text-slate-700 flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
                     Tarif horaire
                   </span>
-                  <span className="text-emerald-400 font-medium">
+                  <span className="text-emerald-700 font-medium">
                     {profile.hourlyRate?.toLocaleString()} FCFA
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400 flex items-center gap-2">
+                  <span className="text-slate-700 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     Membre depuis
                   </span>
@@ -906,7 +906,7 @@ export default function ArtisansPortal() {
           {/* Main content area */}
           <div>
             <Tabs value={activeTab} className="space-y-6">
-              <TabsList className="bg-slate-800/50 border border-emerald-500/20 p-1">
+              <TabsList className="bg-white border border-emerald-500/20 p-1">
                 <Link href="/artisans-portal">
                   <TabsTrigger
                     value="profile"
@@ -960,11 +960,11 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Mon Profil
                   </h2>
-                  <p className="text-emerald-300/60">
+                  <p className="text-emerald-700">
                     Gérez votre présence sur la plateforme
                   </p>
                 </div>
-                <Card className="bg-white/10 border-emerald-500/20">
+                <Card className="text-slate-900 bg-white/10 border-emerald-500/20">
                   <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-semibold text-slate-900">
@@ -974,7 +974,7 @@ export default function ArtisansPortal() {
                             ? "Votre profil est en cours de vérification"
                             : "Votre profil est encore en brouillon"}
                       </p>
-                      <p className="text-sm text-emerald-100/70">
+                      <p className="text-sm text-emerald-700">
                         {profile.status === "PUBLISHED"
                           ? "Les visiteurs peuvent maintenant vous trouver dans l'annuaire."
                           : "Complétez vos informations puis envoyez-les à l'équipe Verso Air."}
@@ -992,19 +992,19 @@ export default function ArtisansPortal() {
                   </CardContent>
                 </Card>
                 {profileMessage && (
-                  <p className="text-sm text-emerald-200" role="status">
+                  <p className="text-sm text-emerald-700" role="status">
                     {profileMessage}
                   </p>
                 )}
 
                 {/* Recent portfolio preview */}
-                <Card className="bg-slate-800/50 border-emerald-500/20">
+                <Card className="text-slate-900 bg-white border-emerald-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle className="text-slate-900">
                         Dernières créations
                       </CardTitle>
-                      <CardDescription className="text-emerald-300/60">
+                      <CardDescription className="text-emerald-700">
                         Vos œuvres les plus récentes
                       </CardDescription>
                     </div>
@@ -1012,7 +1012,7 @@ export default function ArtisansPortal() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-emerald-400 hover:text-emerald-300"
+                        className="text-emerald-700 hover:text-emerald-700"
                       >
                         Voir tout <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
@@ -1037,13 +1037,13 @@ export default function ArtisansPortal() {
                 </Card>
 
                 {/* Recent reviews preview */}
-                <Card className="bg-slate-800/50 border-emerald-500/20">
+                <Card className="text-slate-900 bg-white border-emerald-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle className="text-slate-900">
                         Derniers avis
                       </CardTitle>
-                      <CardDescription className="text-emerald-300/60">
+                      <CardDescription className="text-emerald-700">
                         Ce que disent vos clients
                       </CardDescription>
                     </div>
@@ -1051,7 +1051,7 @@ export default function ArtisansPortal() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-emerald-400 hover:text-emerald-300"
+                        className="text-emerald-700 hover:text-emerald-700"
                       >
                         Voir tout <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
@@ -1070,7 +1070,7 @@ export default function ArtisansPortal() {
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">
                       Mon Portfolio
                     </h2>
-                    <p className="text-emerald-300/60">
+                    <p className="text-emerald-700">
                       {portfolio.length} créations
                     </p>
                   </div>
@@ -1088,7 +1088,7 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Mes Commandes
                   </h2>
-                  <p className="text-emerald-300/60">
+                  <p className="text-emerald-700">
                     {orders.length} commande(s)
                   </p>
                 </div>
@@ -1101,7 +1101,7 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Avis Clients
                   </h2>
-                  <p className="text-emerald-300/60">
+                  <p className="text-emerald-700">
                     {reviews.length} avis · Note moyenne: {profile.rating}/5
                   </p>
                 </div>
@@ -1114,7 +1114,7 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Paramètres
                   </h2>
-                  <p className="text-emerald-300/60">
+                  <p className="text-emerald-700">
                     Gérez vos informations et préférences
                   </p>
                 </div>

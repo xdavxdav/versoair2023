@@ -538,16 +538,16 @@ const CategoryCard = ({
           <div
             className={`w-7 h-7 bg-gradient-to-br ${category.color} rounded-lg flex items-center justify-center`}
           >
-            <Icon className="w-4 h-4 text-white" />
+            <Icon className="w-4 h-4 text-slate-900" />
           </div>
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-sky-600 transition-colors">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-sky-700 transition-colors">
             {category.title}
           </h3>
 
-          <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+          <p className="text-sm text-slate-700 mb-4 line-clamp-2">
             {category.description}
           </p>
 
@@ -555,7 +555,7 @@ const CategoryCard = ({
             {category.links.map((link: any, i: number) => (
               <div
                 key={i}
-                className="flex items-center text-sm text-sky-600 hover:text-sky-700 transition-colors"
+                className="flex items-center text-sm text-sky-700 hover:text-sky-700 transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onSubcategoryClick(link, category);
@@ -842,7 +842,7 @@ export default function BusinessesDirectory() {
         canonicalPath="/businesses-directory"
       />
       {/* Header */}
-      <header className="bg-[#0A1628] text-white">
+      <header className="bg-[#f3efe9] text-slate-900">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -853,7 +853,7 @@ export default function BusinessesDirectory() {
                 <span className="text-xl font-bold tracking-tight">
                   Verso Air
                 </span>
-                <span className="hidden sm:inline text-sky-400 ml-2 text-sm font-medium">
+                <span className="hidden sm:inline text-sky-700 ml-2 text-sm font-medium">
                   Business Directory
                 </span>
               </div>
@@ -863,8 +863,8 @@ export default function BusinessesDirectory() {
               <div
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
                   databaseConnected
-                    ? "bg-green-900/30 text-green-300"
-                    : "bg-red-900/30 text-red-300"
+                    ? "bg-green-50 text-green-700"
+                    : "bg-red-50 text-red-700"
                 }`}
               >
                 <div
@@ -878,7 +878,7 @@ export default function BusinessesDirectory() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative bg-[#0A1628] pt-16 pb-16 sm:pb-32 overflow-hidden">
+      <section className="relative bg-[#f3efe9] pt-16 pb-16 sm:pb-32 overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl" />
@@ -895,24 +895,24 @@ export default function BusinessesDirectory() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <Globe className="w-4 h-4 text-sky-400" />
-              <span className="text-sm text-gray-300">
+              <Globe className="w-4 h-4 text-sky-700" />
+              <span className="text-sm text-slate-700">
                 Planned first market: {DIRECTORY_MARKET_LABEL} ({continentName})
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-4">
               {continentAdj} Business
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500 mt-2">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-800 to-blue-800 mt-2">
                 Directory
               </span>
             </h1>
 
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
+            <p className="text-lg text-slate-700 max-w-2xl mx-auto mb-10">
               Listings appear only after local businesses meet our verification
               checks and the planned market is ready.
             </p>
-            <p className="text-sm text-gray-400 max-w-2xl mx-auto -mt-6 mb-10">
+            <p className="text-sm text-slate-700 max-w-2xl mx-auto -mt-6 mb-10">
               The first planned market is {DIRECTORY_MARKET_LABEL}. Other
               markets will open only when local availability and listings are
               verified; expansion is region by region, not continent-wide or
@@ -930,7 +930,7 @@ export default function BusinessesDirectory() {
             <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 p-2">
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700" />
                   <Input
                     type="text"
                     placeholder={
@@ -941,24 +941,24 @@ export default function BusinessesDirectory() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="pl-12 h-14 border-0 bg-gray-50 rounded-xl text-gray-900 placeholder:text-gray-400"
+                    className="pl-12 h-14 border-0 bg-gray-50 rounded-xl text-gray-900 placeholder:text-slate-700"
                   />
                 </div>
                 <div className="flex-1 relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700" />
                   <Input
                     type="text"
                     placeholder="Country, city..."
                     value={locationQuery}
                     onChange={(e) => setLocationQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="pl-12 h-14 border-0 bg-gray-50 rounded-xl text-gray-900 placeholder:text-gray-400"
+                    className="pl-12 h-14 border-0 bg-gray-50 rounded-xl text-gray-900 placeholder:text-slate-700"
                   />
                 </div>
                 <Button
                   onClick={() => handleSearch()}
                   disabled={isSearching}
-                  className="h-14 px-5 bg-sky-600 hover:bg-sky-700 text-white"
+                  className="h-14 px-5 bg-sky-700 hover:bg-sky-800 text-white"
                 >
                   {isSearching ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -978,7 +978,7 @@ export default function BusinessesDirectory() {
                     aria-pressed={searchMode === "standard"}
                     className={
                       searchMode === "standard"
-                        ? "bg-slate-800 text-white"
+                        ? "bg-white text-slate-900"
                         : "text-slate-700"
                     }
                   >
@@ -994,14 +994,14 @@ export default function BusinessesDirectory() {
                     className={
                       searchMode === "ai"
                         ? "bg-indigo-700 text-white hover:bg-indigo-800"
-                        : "text-indigo-700"
+                        : "text-indigo-700 dark:text-indigo-300"
                     }
                   >
                     <Sparkles className="w-4 h-4 mr-1.5" />
                     AI-assisted search
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 text-left sm:text-right">
+                <p className="text-xs text-slate-700 text-left sm:text-right">
                   AI search interprets your request; results are verified
                   businesses in the planned market only.
                 </p>
@@ -1027,7 +1027,7 @@ export default function BusinessesDirectory() {
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     Browse by Category
                   </h2>
-                  <p className="text-gray-500 mt-1">
+                  <p className="text-slate-700 mt-1">
                     Click on a category to explore businesses in that sector
                   </p>
                 </div>
@@ -1037,7 +1037,7 @@ export default function BusinessesDirectory() {
                       "/contact?subject=Business%20directory%20listing%20eligibility%20review",
                     )
                   }
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap notranslate"
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap notranslate"
                 >
                   Request Listing Review
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -1090,7 +1090,7 @@ export default function BusinessesDirectory() {
                               : selectedCategory.title}
                           </h2>
                           {selectedSubcategory && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-slate-700">
                               {selectedCategory.title}
                             </p>
                           )}
@@ -1098,7 +1098,7 @@ export default function BusinessesDirectory() {
                       </>
                     )}
                   </div>
-                  <p className="text-gray-500 mt-1">
+                  <p className="text-slate-700 mt-1">
                     Showing {searchResults.length} of{" "}
                     {totalResults.toLocaleString()} businesses
                   </p>
@@ -1147,7 +1147,7 @@ export default function BusinessesDirectory() {
                 role="alert"
                 className="mx-auto max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-950"
               >
-                <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+                <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-800" />
                 <p>{searchError}</p>
                 {searchMode === "ai" && (
                   <Button
@@ -1173,12 +1173,12 @@ export default function BusinessesDirectory() {
                         className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all border border-gray-100 overflow-hidden cursor-pointer group"
                       >
                         <div
-                          className={`h-2 bg-gradient-to-r from-sky-500 to-blue-600`}
+                          className={`h-2 bg-gradient-to-r from-sky-700 to-blue-800`}
                         />
                         <div className="p-6">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
-                              <h3 className="text-lg font-bold text-gray-900 group-hover:text-sky-600 transition-colors mb-2 line-clamp-1">
+                              <h3 className="text-lg font-bold text-gray-900 group-hover:text-sky-700 transition-colors mb-2 line-clamp-1">
                                 {business.title}
                               </h3>
                               <div className="flex items-center gap-2 text-gray-600 mb-2">
@@ -1188,7 +1188,7 @@ export default function BusinessesDirectory() {
                                 </span>
                               </div>
                               {(business as any).is_verified && (
-                                <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
+                                <Badge className="bg-blue-50 text-blue-700 border-blue-500/30 text-xs">
                                   <CheckCircle className="w-3 h-3 mr-1" />
                                   Verified
                                 </Badge>
@@ -1196,7 +1196,7 @@ export default function BusinessesDirectory() {
                             </div>
                             {business.rating && (
                               <div className="flex items-center gap-1 bg-amber-50 px-3 py-2 rounded-lg">
-                                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                <Star className="w-4 h-4 fill-amber-400 text-amber-800" />
                                 <span className="font-bold text-amber-900">
                                   {business.rating}
                                 </span>
@@ -1244,7 +1244,7 @@ export default function BusinessesDirectory() {
                               e.stopPropagation();
                               setLocation(`/business/${business.id}`);
                             }}
-                            className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white"
+                            className="w-full bg-gradient-to-r from-sky-700 to-blue-800 hover:from-sky-800 hover:to-blue-900 text-white"
                           >
                             <Phone className="w-4 h-4 mr-2" />
                             Contact
@@ -1282,18 +1282,18 @@ export default function BusinessesDirectory() {
               </>
             ) : (
               <div className="text-center py-12">
-                <AlertCircle className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <AlertCircle className="w-16 h-16 mx-auto text-slate-700 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
                   No Businesses Found
                 </h3>
-                <p className="text-gray-500 mb-6">
+                <p className="text-slate-700 mb-6">
                   {searchMode === "ai"
                     ? "No verified businesses match that request in the planned market yet. Try another service or location, or browse categories."
                     : "Try a different search or browse other categories."}
                 </p>
                 <Button
                   onClick={clearSearch}
-                  className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700"
+                  className="bg-gradient-to-r from-sky-700 to-blue-800 hover:from-sky-800 hover:to-blue-900"
                 >
                   Clear filters and browse categories
                 </Button>
@@ -1336,7 +1336,7 @@ export default function BusinessesDirectory() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <MapPin className="w-5 h-5 text-sky-600" />
+                      <MapPin className="w-5 h-5 text-sky-700" />
                       <span className="text-gray-700 font-medium">
                         {selectedBusiness.location}
                       </span>
@@ -1355,7 +1355,7 @@ export default function BusinessesDirectory() {
                   {selectedBusiness.rating && (
                     <div className="flex flex-col items-center">
                       <div className="flex items-center gap-1 bg-amber-50 px-4 py-2 rounded-lg">
-                        <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                        <Star className="w-5 h-5 fill-amber-400 text-amber-800" />
                         <span className="text-2xl font-bold text-amber-900">
                           {selectedBusiness.rating}
                         </span>
@@ -1450,7 +1450,7 @@ export default function BusinessesDirectory() {
                 )}
 
                 <div className="flex gap-4 pt-6 border-t border-gray-200">
-                  <Button className="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white">
+                  <Button className="flex-1 bg-gradient-to-r from-sky-700 to-blue-800 hover:from-sky-800 hover:to-blue-900 text-white">
                     <Phone className="w-4 h-4 mr-2" />
                     Contact Business
                   </Button>
@@ -1469,7 +1469,7 @@ export default function BusinessesDirectory() {
       </AnimatePresence>
 
       {/* Footer */}
-      <footer className="bg-[#0A1628] text-white py-12 border-t border-gray-800">
+      <footer className="bg-[#f3efe9] text-slate-900 py-12 border-t border-slate-200">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
@@ -1479,19 +1479,19 @@ export default function BusinessesDirectory() {
               <span className="text-xl font-bold">Verso Air</span>
             </div>
 
-            <p className="text-gray-400 text-sm text-center">
+            <p className="text-slate-700 text-sm text-center">
               © {new Date().getFullYear()} VERSO AIR INC. Business Directory.
               Market availability depends on verified local listings.
             </p>
 
-            <div className="flex gap-4 text-sm text-gray-400">
-              <a href="/privacy" className="hover:text-white transition-colors">
+            <div className="flex gap-4 text-sm text-slate-700">
+              <a href="/privacy" className="hover:text-slate-900 transition-colors">
                 Privacy
               </a>
-              <a href="/terms" className="hover:text-white transition-colors">
+              <a href="/terms" className="hover:text-slate-900 transition-colors">
                 Terms
               </a>
-              <a href="/contact" className="hover:text-white transition-colors">
+              <a href="/contact" className="hover:text-slate-900 transition-colors">
                 Contact
               </a>
             </div>

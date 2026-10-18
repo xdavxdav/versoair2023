@@ -8,7 +8,10 @@ import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 
 // GET /api/jobs — list all jobs
 router.get("/", async (req, res) => {

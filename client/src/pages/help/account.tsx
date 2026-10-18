@@ -4,7 +4,7 @@ import { ArrowLeft, User, Settings, Shield, Bell } from "lucide-react";
 
 export default function AccountHelp() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">

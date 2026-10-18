@@ -13,23 +13,7 @@ import {
   faqCategories,
 } from "../../shared/social-schema";
 
-const router = Router();
-
-// ============================================
-// FAQ CATEGORIES
-// ============================================
-
-// GET /api/faq/categories - List all FAQ categories with post counts
-router.get("/categories", async (_req: Request, res: Response) => {
-  try {
-    const categories = await db
-      .select()
-      .from(faqCategories)
-      .orderBy(faqCategories.sortOrder);
-
-    // If no categories exist, return defaults
-    if (!categories.length) {
-      const defaults = [
+const DEFAULT_FAQ_CATEGORIES = [
         {
           name: "general",
           label: "General",
@@ -80,11 +64,36 @@ router.get("/categories", async (_req: Request, res: Response) => {
         },
       ];
 
-      return res.json({ success: true, data: defaults });
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
+const router = Router();
+router.param("id", numericRouteParam);
+
+// ============================================
+// FAQ CATEGORIES
+// ============================================
+
+// GET /api/faq/categories - List all FAQ categories with post counts
+router.get("/categories", async (_req: Request, res: Response) => {
+  try {
+    const categories = await db
+      .select()
+      .from(faqCategories)
+      .orderBy(faqCategories.sortOrder);
+
+    // If no categories exist, return defaults
+    if (!categories.length) {
+
+
+      return res.json({ success: true, data: DEFAULT_FAQ_CATEGORIES });
     }
 
     res.json({ success: true, data: categories });
-  } catch (error) {
+  } catch (error: any) {
+    if ((error.cause?.code || error.code) === "42P01") {
+      console.warn("[FAQ] Categories table unavailable; serving built-in categories");
+      return res.json({ success: true, data: DEFAULT_FAQ_CATEGORIES });
+    }
     console.error("Error fetching FAQ categories:", error);
     res
       .status(500)

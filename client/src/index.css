@@ -82,6 +82,11 @@
   color-scheme: light;
 }
 
+.service-light-portal :is(input, textarea, [role="combobox"], .bg-background) {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -741,7 +746,7 @@
   inset: 0;
   background: radial-gradient(
     ellipse at 50% 40%,
-    rgba(191, 131, 28, 0.95) 0%,
+    rgba(120, 70, 10, 0.98) 0%,
     rgba(120, 70, 10, 0.97) 60%,
     rgba(30, 20, 5, 0.98) 100%
   );

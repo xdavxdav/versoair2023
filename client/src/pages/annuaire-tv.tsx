@@ -267,18 +267,18 @@ export default function AnnuaireTV() {
       className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd]"
     >
       {/* ── Top Bar ───────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-50 bg-slate-900/80 md:backdrop-blur-2xl border-b border-white/5 shadow-2xl">
+      <div className="sticky top-0 z-50 bg-white md:backdrop-blur-2xl border-b border-slate-200 shadow-2xl">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           {/* Left: Title */}
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30">
-              <Tv className="h-5 w-5 text-amber-400" />
+              <Tv className="h-5 w-5 text-amber-800" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-100 tracking-tight">
+              <h1 className="text-lg font-bold text-slate-700 tracking-tight">
                 Annuaire TV
               </h1>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-700">
                 {businesses.length} business
                 {businesses.length !== 1 ? "es" : ""}
                 {categoryFilter && ` in ${categoryFilter}`}
@@ -295,13 +295,13 @@ export default function AnnuaireTV() {
                 setCategoryFilter(e.target.value);
                 api?.scrollTo(0);
               }}
-              className="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50"
+              className="h-9 px-3 rounded-lg bg-white/5 border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50"
             >
-              <option value="" className="bg-slate-900">
+              <option value="" className="bg-white">
                 All Categories
               </option>
               {categories.map((cat: string) => (
-                <option key={cat} value={cat} className="bg-slate-900">
+                <option key={cat} value={cat} className="bg-white">
                   {cat}
                 </option>
               ))}
@@ -319,8 +319,8 @@ export default function AnnuaireTV() {
               onClick={() => setIsPlaying(!isPlaying)}
               className={`gap-1.5 ${
                 isPlaying
-                  ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                  ? "text-emerald-700 hover:text-emerald-700 hover:bg-emerald-500/10"
+                  : "text-slate-700 hover:text-slate-700 hover:bg-white/5"
               }`}
             >
               {isPlaying ? (
@@ -338,7 +338,7 @@ export default function AnnuaireTV() {
               variant="ghost"
               size="sm"
               onClick={() => setSpeed((s) => (s + 1) % SPEED_OPTIONS.length)}
-              className="text-slate-400 hover:text-slate-200 hover:bg-white/5 gap-1.5"
+              className="text-slate-700 hover:text-slate-700 hover:bg-white/5 gap-1.5"
             >
               <Zap className="h-3.5 w-3.5" />
               <span className="text-xs">{SPEED_OPTIONS[speed].label}</span>
@@ -354,7 +354,7 @@ export default function AnnuaireTV() {
               variant="ghost"
               size="icon"
               onClick={toggleFullscreen}
-              className="text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              className="text-slate-700 hover:text-slate-700 hover:bg-white/5"
             >
               {isFullscreen ? (
                 <Minimize className="h-4 w-4" />
@@ -370,7 +370,7 @@ export default function AnnuaireTV() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-400 hover:text-slate-200 hover:bg-white/5 gap-1.5"
+                className="text-slate-700 hover:text-slate-700 hover:bg-white/5 gap-1.5"
               >
                 <Grid3X3 className="h-4 w-4" />
                 <span className="hidden sm:inline text-xs">Directory</span>
@@ -380,7 +380,7 @@ export default function AnnuaireTV() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-400 hover:text-slate-200 hover:bg-white/5 gap-1.5"
+                className="text-slate-700 hover:text-slate-700 hover:bg-white/5 gap-1.5"
               >
                 <Monitor className="h-4 w-4" />
                 <span className="hidden sm:inline text-xs">Geo Admin</span>
@@ -394,7 +394,7 @@ export default function AnnuaireTV() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-8">
         {isLoading ? (
           <div className="w-full max-w-4xl space-y-6">
-            <Skeleton className="h-[400px] w-full rounded-3xl bg-white/5 border border-white/10" />
+            <Skeleton className="h-[400px] w-full rounded-3xl bg-white/5 border border-slate-200" />
             <div className="flex justify-center gap-2">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton
@@ -407,10 +407,10 @@ export default function AnnuaireTV() {
         ) : businesses.length === 0 ? (
           <div className="text-center space-y-4">
             <Building className="h-16 w-16 text-slate-600 mx-auto" />
-            <h2 className="text-xl font-bold text-slate-300">
+            <h2 className="text-xl font-bold text-slate-700">
               No businesses found
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               {categoryFilter
                 ? "Try a different category"
                 : "Business data is unavailable"}
@@ -420,7 +420,7 @@ export default function AnnuaireTV() {
                 variant="outline"
                 size="sm"
                 onClick={() => setCategoryFilter("")}
-                className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 gap-2"
+                className="bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 gap-2"
               >
                 <RotateCcw className="h-4 w-4" />
                 Show all
@@ -448,7 +448,7 @@ export default function AnnuaireTV() {
                     <CarouselItem key={biz.id}>
                       <div className="p-2">
                         <Link href={`/business/${biz.id}`}>
-                          <Card className="bg-white/5 md:backdrop-blur-2xl border border-white/10 shadow-2xl hover:bg-white/[0.07] transition-all duration-700 cursor-pointer group rounded-3xl overflow-hidden">
+                          <Card className="text-slate-900 bg-white/5 md:backdrop-blur-2xl border border-slate-200 shadow-2xl hover:bg-white/[0.07] transition-all duration-700 cursor-pointer group rounded-3xl overflow-hidden">
                             <CardContent className="p-0">
                               {/* Gradient header bar */}
                               <div
@@ -459,28 +459,28 @@ export default function AnnuaireTV() {
                                 {/* Top row: icon + name */}
                                 <div className="flex items-start gap-5">
                                   <div
-                                    className={`flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br ${ui.gradient} flex items-center justify-center text-4xl shadow-xl border border-white/20 group-hover:scale-110 transition-transform duration-500`}
+                                    className={`flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br ${ui.gradient} flex items-center justify-center text-4xl shadow-xl border border-slate-200 group-hover:scale-110 transition-transform duration-500`}
                                   >
                                     {ui.icon}
                                   </div>
                                   <div className="flex-1 min-w-0 space-y-2">
-                                    <h2 className="text-3xl md:text-4xl font-bold text-slate-100 tracking-tight group-hover:text-slate-900 transition-colors leading-tight">
+                                    <h2 className="text-3xl md:text-4xl font-bold text-slate-700 tracking-tight group-hover:text-slate-900 transition-colors leading-tight">
                                       {biz.name}
                                     </h2>
                                     <div className="flex flex-wrap items-center gap-2">
                                       {cat && (
-                                        <Badge className="bg-white/10 border-white/20 text-slate-200">
+                                        <Badge className="bg-white/10 border-slate-200 text-slate-700">
                                           {ui.icon} {cat}
                                         </Badge>
                                       )}
                                       {biz.is_verified && (
-                                        <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                                        <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">
                                           <ShieldCheck className="h-3 w-3 mr-1" />{" "}
                                           Verified
                                         </Badge>
                                       )}
                                       {biz.is_advertiser && (
-                                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">
+                                        <Badge className="bg-amber-500/20 text-amber-800 border-amber-500/30">
                                           <Sparkles className="h-3 w-3 mr-1" />{" "}
                                           Promoted
                                         </Badge>
@@ -491,7 +491,7 @@ export default function AnnuaireTV() {
 
                                 {/* Description */}
                                 {biz.description && (
-                                  <p className="text-slate-400 text-base leading-relaxed line-clamp-3">
+                                  <p className="text-slate-700 text-base leading-relaxed line-clamp-3">
                                     {biz.description}
                                   </p>
                                 )}
@@ -505,13 +505,13 @@ export default function AnnuaireTV() {
                                           key={i}
                                           className={`h-5 w-5 ${
                                             i < Math.round(ratingVal)
-                                              ? "fill-amber-400 text-amber-400"
+                                              ? "fill-amber-400 text-amber-800"
                                               : "text-slate-700"
                                           }`}
                                         />
                                       ))}
                                     </div>
-                                    <span className="text-sm font-medium text-slate-300">
+                                    <span className="text-sm font-medium text-slate-700">
                                       {ratingVal.toFixed(1)}
                                     </span>
                                   </div>
@@ -520,25 +520,25 @@ export default function AnnuaireTV() {
                                 {/* Contact info grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                   {biz.address && (
-                                    <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/10">
-                                      <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                                      <span className="text-sm text-slate-300 truncate">
+                                    <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-slate-200">
+                                      <MapPin className="h-4 w-4 text-blue-700 flex-shrink-0" />
+                                      <span className="text-sm text-slate-700 truncate">
                                         {biz.address}
                                       </span>
                                     </div>
                                   )}
                                   {biz.phone && (
-                                    <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/10">
-                                      <Phone className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                                      <span className="text-sm text-slate-300 truncate">
+                                    <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-slate-200">
+                                      <Phone className="h-4 w-4 text-emerald-700 flex-shrink-0" />
+                                      <span className="text-sm text-slate-700 truncate">
                                         {biz.phone}
                                       </span>
                                     </div>
                                   )}
                                   {biz.email && (
-                                    <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/10">
-                                      <Mail className="h-4 w-4 text-rose-400 flex-shrink-0" />
-                                      <span className="text-sm text-slate-300 truncate">
+                                    <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-slate-200">
+                                      <Mail className="h-4 w-4 text-rose-700 flex-shrink-0" />
+                                      <span className="text-sm text-slate-700 truncate">
                                         {biz.email}
                                       </span>
                                     </div>
@@ -547,20 +547,20 @@ export default function AnnuaireTV() {
 
                                 {/* Footer: view prompt */}
                                 <div className="flex items-center justify-between pt-2">
-                                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                                  <div className="flex items-center gap-2 text-sm text-slate-700">
                                     {biz.is_active !== undefined && (
                                       <Badge
                                         className={
                                           biz.is_active
-                                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                                            : "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                                            ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/30"
+                                            : "bg-rose-500/20 text-rose-700 border-rose-500/30"
                                         }
                                       >
                                         {biz.is_active ? "Active" : "Inactive"}
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2 text-amber-400/80 group-hover:text-amber-300 transition-colors">
+                                  <div className="flex items-center gap-2 text-amber-800 group-hover:text-amber-800 transition-colors">
                                     <span className="text-sm font-medium">
                                       View Details
                                     </span>
@@ -578,8 +578,8 @@ export default function AnnuaireTV() {
               </CarouselContent>
 
               {/* Nav arrows */}
-              <CarouselPrevious className="bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-100 -left-4 sm:-left-14" />
-              <CarouselNext className="bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-100 -right-4 sm:-right-14" />
+              <CarouselPrevious className="bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 hover:text-slate-700 -left-4 sm:-left-14" />
+              <CarouselNext className="bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 hover:text-slate-700 -right-4 sm:-right-14" />
             </Carousel>
 
             {/* ── Progress & Slide Indicator ──────────────────────────── */}
@@ -613,9 +613,9 @@ export default function AnnuaireTV() {
               </div>
 
               {/* Counter & Status */}
-              <div className="flex items-center gap-3 text-sm text-slate-500">
+              <div className="flex items-center gap-3 text-sm text-slate-700">
                 <span className="font-mono tabular-nums">
-                  <span className="text-slate-200 font-bold">
+                  <span className="text-slate-700 font-bold">
                     {current + 1}
                   </span>
                   <span className="mx-1">/</span>
@@ -626,7 +626,7 @@ export default function AnnuaireTV() {
                   {isPlaying ? (
                     <>
                       <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-400">
+                      <span className="text-emerald-700">
                         Auto • {SPEED_OPTIONS[speed].label}
                       </span>
                     </>
@@ -641,18 +641,18 @@ export default function AnnuaireTV() {
 
               {/* Keyboard hint */}
               <p className="text-xs text-slate-600 mt-2">
-                <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-slate-500">
+                <kbd className="px-1.5 py-0.5 bg-white/5 border border-slate-200 rounded text-slate-700">
                   Space
                 </kbd>{" "}
                 play/pause{" · "}
-                <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-slate-500">
+                <kbd className="px-1.5 py-0.5 bg-white/5 border border-slate-200 rounded text-slate-700">
                   ←
                 </kbd>
-                <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-slate-500">
+                <kbd className="px-1.5 py-0.5 bg-white/5 border border-slate-200 rounded text-slate-700">
                   →
                 </kbd>{" "}
                 navigate{" · "}
-                <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-slate-500">
+                <kbd className="px-1.5 py-0.5 bg-white/5 border border-slate-200 rounded text-slate-700">
                   F
                 </kbd>{" "}
                 fullscreen

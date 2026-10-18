@@ -89,7 +89,7 @@ function CardCarousel({ images }: { images: string[] }) {
   }, [images.length]);
 
   return (
-    <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 group">
+    <div className="relative w-full h-64 md:h-72 overflow-hidden rounded-lg bg-gradient-to-br from-slate-50 to-slate-50 group">
       <AnimatePresence mode="wait">
         <motion.img
           key={currentIndex}
@@ -169,21 +169,21 @@ function DetailModal({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-slate-700 shadow-2xl">
+            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-slate-700 shadow-2xl">
               {/* Close button */}
-              <div className="sticky top-0 flex justify-end p-4 bg-slate-900/95 border-b border-slate-700 z-10">
+              <div className="sticky top-0 flex justify-end p-4 bg-white border-b border-slate-700 z-10">
                 <button
                   onClick={onClose}
-                  className="p-1 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="p-1 hover:bg-white rounded-lg transition-colors"
                 >
-                  <X className="h-6 w-6 text-slate-400" />
+                  <X className="h-6 w-6 text-slate-700" />
                 </button>
               </div>
 
               {/* Content */}
               <div className="p-8">
                 {/* Photo carousel */}
-                <div className="relative w-full h-80 rounded-xl overflow-hidden mb-8 bg-slate-800">
+                <div className="relative w-full h-80 rounded-xl overflow-hidden mb-8 bg-white">
                   <AnimatePresence mode="wait">
                     <motion.img
                       key={carouselIndex}
@@ -223,7 +223,7 @@ function DetailModal({
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">
                     {activity.title}
                   </h2>
-                  <p className="text-emerald-400 text-lg font-medium">
+                  <p className="text-emerald-700 text-lg font-medium">
                     {activity.subtitle}
                   </p>
                 </motion.div>
@@ -233,7 +233,7 @@ function DetailModal({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-slate-300 text-base leading-relaxed mb-6"
+                  className="text-slate-700 text-base leading-relaxed mb-6"
                 >
                   {activity.details}
                 </motion.p>
@@ -276,7 +276,7 @@ export default function GetInvolved() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f3efe9] to-[#f3efe9]">
       {/* Hero Section */}
       <section className="relative pt-20 pb-24 px-4 overflow-hidden">
         {/* Background decoration */}
@@ -294,7 +294,7 @@ export default function GetInvolved() {
           >
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-2 mb-6">
               <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-              <span className="text-emerald-300 text-sm font-medium">
+              <span className="text-emerald-700 text-sm font-medium">
                 Join the Movement
               </span>
             </div>
@@ -315,7 +315,7 @@ export default function GetInvolved() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.2 }}
-            className="text-xl text-slate-300 text-center max-w-2xl mx-auto leading-relaxed"
+            className="text-xl text-slate-700 text-center max-w-2xl mx-auto leading-relaxed"
           >
             Learn about future ways to participate in the VERSO AIR community.
           </motion.p>
@@ -323,7 +323,7 @@ export default function GetInvolved() {
       </section>
 
       {/* ONG Culturelle Banner */}
-      <section className="py-16 px-4 bg-gradient-to-r from-amber-900/20 to-orange-900/20 border-y border-amber-500/30">
+      <section className="py-16 px-4 bg-gradient-to-r from-amber-50 to-orange-50 border-y border-amber-500/30">
         <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={fadeInUp}
@@ -335,7 +335,7 @@ export default function GetInvolved() {
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
               Découvrez Notre ONG Culturelle
             </h2>
-            <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
+            <p className="text-slate-700 mb-6 max-w-2xl mx-auto">
               La future organisation <span className="notranslate">vHeartz</span>{" "}
               porte une vision culturelle et communautaire. Ses initiatives
               restent en préparation et seront annoncées une fois confirmées.
@@ -391,13 +391,13 @@ export default function GetInvolved() {
 
                   {/* Text Content - Minimalist */}
                   <div className="space-y-2 px-1">
-                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-400 transition-colors">
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                       {activity.title}
                     </h3>
-                    <p className="text-emerald-400 text-sm font-medium">
+                    <p className="text-emerald-700 text-sm font-medium">
                       {activity.subtitle}
                     </p>
-                    <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 pt-2">
+                    <p className="text-slate-700 text-sm leading-relaxed line-clamp-2 pt-2">
                       {activity.description}
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export default function GetInvolved() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
+      <section className="py-20 px-4 bg-white border-y border-slate-700">
         <div className="max-w-[95vw] mx-auto">
           <motion.h2
             variants={fadeInUp}
@@ -439,10 +439,10 @@ export default function GetInvolved() {
               <motion.div
                 key={idx}
                 variants={staggerItem}
-                className="flex items-start gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-700 hover:border-emerald-500/30 transition-colors"
+                className="flex items-start gap-4 p-4 rounded-lg bg-white border border-slate-700 hover:border-emerald-500/30 transition-colors"
               >
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mt-2 flex-shrink-0" />
-                <p className="text-slate-300 font-medium">{benefit}</p>
+                <p className="text-slate-700 font-medium">{benefit}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -468,7 +468,7 @@ export default function GetInvolved() {
               <h2 className="text-3xl font-bold text-slate-900 mb-4">
                 Ready to Make an Impact?
               </h2>
-              <p className="text-slate-300 mb-8 text-lg">
+              <p className="text-slate-700 mb-8 text-lg">
                 Find out more about the future vision of vHeartz.
               </p>
               <Link href="/contact">

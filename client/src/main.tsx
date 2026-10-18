@@ -4,44 +4,6 @@ import React from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
-/**
- * 🛡️ Google Translate + React DOM compatibility patch.
- * Google Translate wraps text nodes in <font> tags, which breaks React's
- * virtual DOM reconciliation (insertBefore / removeChild fail because the
- * target node is no longer a direct child). This patch silently handles
- * the mismatch instead of crashing.
- * @see https://github.com/facebook/react/issues/11538
- */
-if (typeof Node !== "undefined" && Node.prototype) {
-  const origInsertBefore = Node.prototype.insertBefore;
-  (Node.prototype as any).insertBefore = function <T extends Node>(
-    newNode: T,
-    refNode: Node | null,
-  ): T {
-    if (refNode && refNode.parentNode !== this) {
-      // Translator wrapped refNode in <font>: insert next to it in its real parent
-      const realParent = refNode.parentNode;
-      if (realParent) {
-        return origInsertBefore.call(realParent, newNode, refNode) as T;
-      }
-      return origInsertBefore.call(this, newNode, null) as T;
-    }
-    return origInsertBefore.call(this, newNode, refNode) as T;
-  };
-
-  const origRemoveChild = Node.prototype.removeChild;
-  (Node.prototype as any).removeChild = function <T extends Node>(child: T): T {
-    if (child.parentNode !== this) {
-      // Remove from the real parent so stale translated nodes don't pile up
-      if (child.parentNode) {
-        return origRemoveChild.call(child.parentNode, child) as T;
-      }
-      return child;
-    }
-    return origRemoveChild.call(this, child) as T;
-  };
-}
-
 const BOOT_TIMEOUT_MS = 15000;
 
 function showBootstrapState(title: string, message: string, retry = true) {

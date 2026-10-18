@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import { optionalAuth } from "../middleware/auth";
 
 const router = Router();
 const activeUsers = new Map<string, number>();
@@ -18,8 +19,12 @@ setInterval(() => {
   entriesToDelete.forEach((sessionId) => activeUsers.delete(sessionId));
 }, 60000);
 
-router.post("/users/heartbeat", (req, res) => {
-  const sessionId = req.body.sessionId || req.ip;
+router.post("/users/heartbeat", optionalAuth, (req, res) => {
+  // Public pages send presence pings before login; do not count anonymous visitors.
+  if (!req.user) {
+    return res.json({ success: true, activeUsers: activeUsers.size });
+  }
+  const sessionId = req.user.userId;
   activeUsers.set(sessionId, Date.now());
   res.json({
     success: true,

@@ -857,8 +857,8 @@ export default function ArtistCataloguePage() {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-2.5 bg-[#f3efe9]/50 border-t border-white/10">
-              <p className="text-white/40 text-[10px] text-center">
+            <div className="px-5 py-2.5 bg-[#f3efe9] border-t border-slate-200">
+              <p className="text-slate-700 text-[10px] text-center">
                 Direct messaging is free for all fans · Rate-limited to prevent
                 spam
               </p>

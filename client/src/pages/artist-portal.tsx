@@ -345,7 +345,6 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import DivisionProgress from "@/components/DivisionProgress";
-import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useRequirePortal } from "@/hooks/useRequirePortal";
 
@@ -494,14 +493,6 @@ export default function ArtistPortal() {
   const { data: albumsData } = useMusicAlbums();
   const { data: collabsData } = useCollaborations();
   const { data: searchedArtists } = useArtistSearch(collabSearch);
-
-  // Re-trigger GT when portal data finishes loading (content wasn't in DOM when GT first ran)
-  useGTRetranslate([
-    loadingArtists,
-    loadingTracks,
-    loadingAnalytics,
-    activeTab,
-  ]);
 
   // ── Stream royalty tracker ──
   const { startStream, completeStream, pauseStream, resumeStream } =

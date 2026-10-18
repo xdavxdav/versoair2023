@@ -60,6 +60,7 @@ import geoActionsRouter from "./routes/geo-actions";
 import contractorPipelineRouter from "./routes/contractor-pipeline";
 import purgatoireRouter from "./routes/purgatoire";
 import { requireAuth } from "./middleware/auth";
+import translationsRouter from "./routes/translations";
 
 // Map snake_case table names to camelCase schema exports
 const TABLE_NAME_MAP: Record<string, string> = {
@@ -116,6 +117,7 @@ import seedRouter from "./routes/seed";
 import systemRouter from "./routes/system";
 import usersRouter from "./routes/users";
 export async function registerRoutes(app: Express) {
+  app.use("/api/translations", translationsRouter);
   app.get("/auth/signup", (_req, res) => {
     res.redirect(302, "/auth/signin?mode=register");
   });

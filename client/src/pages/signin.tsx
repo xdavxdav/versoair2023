@@ -1,3 +1,4 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
@@ -197,6 +198,7 @@ const businessTypes = [
 ];
 
 export default function SignIn() {
+  const localize = useLocalizedContent();
   const [step, setStep] = useState(() => {
     const mode = getQueryParam("mode");
     if (mode === "register") return "register";
@@ -748,7 +750,7 @@ export default function SignIn() {
 
   // ─── CELEBRATION SCREEN: Email verified + auto-logged in ───
   if (verificationStatus === "success" && autoLogin) {
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-[#0d0d1a] overflow-hidden relative items-center justify-center">
         {/* Confetti particles */}
         <style>{`
@@ -871,12 +873,12 @@ export default function SignIn() {
           business, amplified
         </div>
       </div>
-    );
+    ));
   }
 
   // Show "Check Your Email" celebration screen
   if (step === "verify-sent") {
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-[#0d0d1a] py-12 overflow-hidden relative">
         {/* CSS confetti particles */}
         <style>{`
@@ -1059,7 +1061,7 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   // ── Set Display Name (post-login onboarding) ────────────────────────────
@@ -1133,7 +1135,7 @@ export default function SignIn() {
       }
     };
 
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-[#0d0d1a] py-12 overflow-hidden relative">
         {/* Subtle floating particles */}
         <style>{`
@@ -1269,7 +1271,7 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   // ── Forced Password Change (accounts on a temporary/shared password) ────
@@ -1340,7 +1342,7 @@ export default function SignIn() {
       }
     };
 
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-[#0d0d1a] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
@@ -1423,7 +1425,7 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   // ── Staff 2FA: email one-time code (admin / moderator) ──────────────────
@@ -1524,7 +1526,7 @@ export default function SignIn() {
       }
     };
 
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
@@ -1607,11 +1609,11 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   if (step === "select-type") {
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -1673,7 +1675,7 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   if (step === "register") {
@@ -1681,7 +1683,7 @@ export default function SignIn() {
       (type) => type.id === selectedBusinessType,
     );
 
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
@@ -2041,11 +2043,11 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   if (step === "login") {
-    return (
+    return localize((
       <>
         <Dialog
           open={accountSelectionOpen}
@@ -2533,11 +2535,11 @@ export default function SignIn() {
           </div>
         </div>
       </>
-    );
+    ));
   }
 
   if (step === "forgot-password") {
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
@@ -2629,11 +2631,11 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   if (step === "reset-sent") {
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
@@ -2669,11 +2671,11 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   if (step === "mfa") {
-    return (
+    return localize((
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
@@ -2745,7 +2747,7 @@ export default function SignIn() {
           </div>
         </div>
       </div>
-    );
+    ));
   }
 
   return null;

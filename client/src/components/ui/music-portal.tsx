@@ -234,19 +234,22 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
               <div className="flex justify-between">
                 <span>Total Streams:</span>
                 <span>
-                  {artists
-                    ?.reduce((s, a) => s + (a.totalStreams || 0), 0)
-                    .toLocaleString() || "0"}
+                  {(() => {
+                    const total =
+                      artists?.reduce((s, a) => s + (a.totalStreams || 0), 0) ||
+                      0;
+                    return total > 0 ? total.toLocaleString() : "—";
+                  })()}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Active Artists:</span>
-                <span>{artists?.length || 0}</span>
+                <span>{artists?.length ? artists.length : "—"}</span>
               </div>
             </div>
 
             <Button
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mt-4"
+              className="w-full bg-gradient-to-r from-purple-700 to-pink-700 hover:from-purple-800 hover:to-pink-800 text-white mt-4"
               onClick={() => {
                 onClose();
                 // Unified domain: same-origin navigation, never cross-domain

@@ -1,12 +1,12 @@
 /**
- * Country → Language mapping for Google Translate auto-selection.
- * Maps ISO 3166-1 alpha-2 country codes to Google Translate language codes.
+ * Country → language suggestions for native FR/EN and Cloud Translation.
+ * Maps ISO 3166-1 alpha-2 country codes to supported language codes.
  *
  * The site's base language is French (fr), so French-speaking countries
- * won't trigger translation. Everyone else gets auto-translated.
+ * use native copy. Other languages require configured Cloud translation.
  */
 
-// Google Translate language code for each country
+// Language code for each country
 const COUNTRY_TO_LANG: Record<string, string> = {
   // ── French-speaking (no translation needed) ──
   FR: "fr",
@@ -290,7 +290,7 @@ export const LANG_FLAGS: Record<string, string> = {
 };
 
 /**
- * Get the Google Translate language code for a country.
+ * Get the preferred language code for a country.
  * Returns "fr" (site base language) if country is French-speaking or unknown.
  */
 export function getLanguageForCountry(countryCode: string): string {

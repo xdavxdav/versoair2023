@@ -175,7 +175,7 @@ const SectorCard = ({
         whileHover={{ y: -10, scale: 1.02 }}
         className="group relative cursor-pointer"
       >
-        <Card className="h-full overflow-hidden border-0 bg-gradient-to-br from-slate-900/50 to-slate-800/30 backdrop-blur-sm hover:shadow-2xl transition-all duration-500">
+        <Card className="h-full overflow-hidden border-0 bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm hover:shadow-2xl transition-all duration-500">
           <div
             className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
             style={{
@@ -187,16 +187,16 @@ const SectorCard = ({
               <div className={`p-3 rounded-xl ${sector.gradient} shadow-lg`}>
                 <Icon className="h-7 w-7 text-slate-900" />
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
+              <ChevronRight className="h-5 w-5 text-slate-700 group-hover:text-slate-900 group-hover:translate-x-1 transition-all" />
             </div>
 
             <h3 className="text-xl font-bold text-slate-900 mb-3">
               {sector.title}
             </h3>
-            <p className="text-slate-300 text-sm mb-4">{sector.description}</p>
+            <p className="text-slate-700 text-sm mb-4">{sector.description}</p>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400 group-hover:text-slate-900/80 transition-colors">
+              <span className="text-sm text-slate-700 group-hover:text-slate-900/80 transition-colors">
                 Explorer le secteur →
               </span>
             </div>
@@ -222,13 +222,13 @@ const FeatureHighlight = ({
   color?: string;
 }) => (
   <FloatingElement delay={delay}>
-    <div className="flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-br from-slate-800/30 to-slate-900/20 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 transition-colors group">
+    <div className="flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 transition-colors group">
       <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 group-hover:scale-110 transition-transform">
         <Icon className={`h-6 w-6 ${color}`} />
       </div>
       <div className="flex-1">
         <h4 className="font-semibold text-slate-900 mb-2">{title}</h4>
-        <p className="text-slate-300 text-sm leading-relaxed">{description}</p>
+        <p className="text-slate-700 text-sm leading-relaxed">{description}</p>
       </div>
     </div>
   </FloatingElement>
@@ -328,7 +328,7 @@ function CompanySection() {
                 className="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 md:p-8 shadow-sm"
               >
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-md">
-                  <Icon className="h-6 w-6 text-white" />
+                  <Icon className="h-6 w-6 text-slate-900" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">
                   {item.q}
@@ -509,17 +509,17 @@ export default function About() {
               transition={{ duration: 0.8 }}
               className="mb-8"
             >
-              <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all">
+              <Badge className="mb-4 px-4 py-2 bg-white/80 text-slate-900 backdrop-blur-sm border-slate-200 hover:bg-white/20 transition-all">
                 <Sparkles className="h-3 w-3 mr-2" />
                 Plateforme d'Intelligence Multi-Sectorielle
               </Badge>
 
               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
                   Verso Air
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
                   Écosystème d'Intelligence d'Affaires
                 </span>
               </h1>
@@ -530,7 +530,7 @@ export default function About() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed"
+              className="text-xl text-slate-700 max-w-3xl mx-auto mb-12 leading-relaxed"
             >
               VERSO AIR INC. prépare le lancement à Toronto d’une plateforme
               numérique dédiée à la visibilité des entreprises et aux projets
@@ -544,7 +544,7 @@ export default function About() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="mx-auto mb-12 max-w-2xl text-center"
             >
-              <p className="text-slate-300">
+              <p className="text-slate-700">
                 Directory listings, categories, ratings, and review totals will
                 be published after the underlying records are verified.
               </p>
@@ -585,7 +585,7 @@ export default function About() {
       {/* Future-data container — figures remain unpublished pending verification. */}
       <section className="relative py-8 border-y border-slate-800/50 bg-slate-100/30 backdrop-blur-sm">
           <div className="max-w-[95vw] mx-auto px-4">
-            <p className="text-center text-sm text-slate-400">
+            <p className="text-center text-sm text-slate-700">
               Public directory and activity figures are being reviewed before
               publication.
             </p>
@@ -594,21 +594,21 @@ export default function About() {
 
       {/* Sector Showcase */}
       <section className="py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f8f5f1] to-[#efe7dd]" />
 
         <div className="relative max-w-[95vw] mx-auto px-4">
           <FloatingElement>
             <div className="text-center mb-16">
-              <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
+              <Badge className="mb-4 px-4 py-2 bg-white/80 text-slate-900 backdrop-blur-sm border-slate-200">
                 <Globe className="h-3 w-3 mr-2" />
                 Secteurs de la Plateforme
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-slate-900 to-slate-900 bg-clip-text text-transparent">
                   {PLATFORM_SECTORS.length} secteurs de la plateforme
                 </span>
               </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              <p className="text-xl text-slate-700 max-w-3xl mx-auto">
                 Les services, annonces et indicateurs seront présentés lorsque
                 leurs données auront été vérifiées et seront disponibles.
               </p>
@@ -666,7 +666,7 @@ export default function About() {
                         key={sector.id}
                         className="mt-8"
                       >
-                        <Card className="border-0 bg-gradient-to-br from-slate-900/50 to-slate-800/30 backdrop-blur-sm">
+                        <Card className="border-0 bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm">
                           <CardContent className="p-8">
                             <div className="flex items-start gap-6">
                               <div
@@ -680,7 +680,7 @@ export default function About() {
                                 </h3>
                                 <div className="grid md:grid-cols-2 gap-6">
                                   <div>
-                                    <p className="text-slate-300 mb-6">
+                                    <p className="text-slate-700 mb-6">
                                       {sector.description}
                                     </p>
                                     <div className="flex flex-wrap gap-2 mb-6">
@@ -711,19 +711,19 @@ export default function About() {
                                     </Link>
                                   </div>
                                   <div className="space-y-4">
-                                    <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
+                                    <div className="p-4 rounded-xl bg-gradient-to-br from-white to-slate-50">
                                       <div className="text-2xl font-bold text-slate-900 mb-1">
                                         Bientôt
                                       </div>
-                                      <div className="text-sm text-slate-400">
+                                      <div className="text-sm text-slate-700">
                                         Annonces après vérification
                                       </div>
                                     </div>
-                                    <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/30">
+                                    <div className="p-4 rounded-xl bg-gradient-to-br from-white to-slate-50">
                                       <div className="text-2xl font-bold text-slate-900 mb-1">
                                         Bientôt
                                       </div>
-                                      <div className="text-sm text-slate-400">
+                                      <div className="text-sm text-slate-700">
                                         Avis après vérification
                                       </div>
                                     </div>
@@ -762,16 +762,16 @@ export default function About() {
         <div className="relative max-w-[95vw] mx-auto px-4">
           <FloatingElement>
             <div className="text-center mb-16">
-              <Badge className="mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm border-white/20">
+              <Badge className="mb-4 px-4 py-2 bg-white/80 text-slate-900 backdrop-blur-sm border-slate-200">
                 <Zap className="h-3 w-3 mr-2" />
                 Fonctionnalités prévues
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-slate-900 to-slate-900 bg-clip-text text-transparent">
                   Ce Que VERSO AIR Prépare
                 </span>
               </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              <p className="text-xl text-slate-700 max-w-3xl mx-auto">
                 Les services et outils seront lancés progressivement, après
                 validation de leur disponibilité et de leurs données.
               </p>
@@ -831,7 +831,7 @@ export default function About() {
         <div className="relative max-w-4xl mx-auto px-4 text-center">
           <FloatingElement>
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/10 mb-8">
-              <Star className="h-4 w-4 text-purple-300" />
+              <Star className="h-4 w-4 text-purple-700" />
               <span className="text-slate-900/90">
                 La Plateforme d'Intelligence d'Affaires pour Toronto et le Canada
               </span>
@@ -845,7 +845,7 @@ export default function About() {
           </FloatingElement>
 
           <FloatingElement delay={0.4}>
-            <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-700 mb-8 max-w-2xl mx-auto leading-relaxed">
               VERSO AIR INC. prépare ses services numériques pour Toronto.
               Contactez-nous pour en savoir plus sur les prochaines étapes.
             </p>
@@ -878,9 +878,9 @@ export default function About() {
           {/* Company location remains public; unverified directory claims do not. */}
           <FloatingElement delay={0.8}>
             <div className="mt-12 pt-8 border-t border-slate-800">
-              <div className="flex flex-wrap justify-center items-center gap-8 text-slate-400 text-sm">
+              <div className="flex flex-wrap justify-center items-center gap-8 text-slate-700 text-sm">
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-cyan-400" />
+                  <MapPin className="h-4 w-4 text-cyan-700" />
                   <span>Toronto, Canada</span>
                 </div>
               </div>

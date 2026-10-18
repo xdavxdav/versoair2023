@@ -21,7 +21,12 @@ import {
   notifyComment,
 } from "../services/notification-service";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+for (const param of ["postId", "userId", "commentId"]) {
+  router.param(param, numericRouteParam);
+}
 
 const INTERNAL_PUBLIC_ACCOUNT_USERNAMES = ["joel_007", "admin_025"] as const;
 
@@ -161,11 +166,13 @@ async function syncFollowerCount(socialUserId: number): Promise<void> {
 router.get("/posts", async (req: Request, res: Response) => {
   try {
     const { page = 1, limit = 10, sort = "recent", postType } = req.query;
-    const pageNum = parseInt(page as string) || 1;
-    const limitNum = Math.min(parseInt(limit as string) || 10, 50);
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.max(1, Math.min(parseInt(limit as string) || 10, 50));
     const offset = (pageNum - 1) * limitNum;
 
-    const conditions = [isNull(socialPosts.deletedAt)];
+    const publicAuthors = db.select({ id: socialUsers.id }).from(socialUsers)
+      .where(eq(socialUsers.privacyLevel, "public"));
+    const conditions = [isNull(socialPosts.deletedAt), inArray(socialPosts.authorId, publicAuthors)];
     const internalProfileIds = await getInternalSocialProfileIds();
     if (internalProfileIds.length > 0) {
       conditions.push(notInArray(socialPosts.authorId, internalProfileIds));
@@ -201,11 +208,12 @@ router.get("/posts", async (req: Request, res: Response) => {
         .where(inArray(socialUsers.id, authorIds));
 
       for (const author of authors) {
-        authorMap[author.id] = author;
+        const { darkModeEnabled, notificationsEnabled, privacyLevel, lastActiveAt, ...publicAuthor } = author;
+        authorMap[author.id] = publicAuthor;
       }
     }
 
-    const enrichedPosts = posts.map((post: any) => ({
+    const enrichedPosts = posts.map(({ editHistory, metadata, mentionedUsers, ...post }) => ({
       ...post,
       author: authorMap[post.authorId] || null,
     }));
@@ -875,9 +883,15 @@ router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     const { page = 1, limit = 10 } = req.query;
+    const publicAuthors = db.select({ id: socialUsers.id }).from(socialUsers)
+      .where(eq(socialUsers.privacyLevel, "public"));
+    const [publicPost] = await db.select({ id: socialPosts.id }).from(socialPosts)
+      .where(and(eq(socialPosts.id, Number(postId)), isNull(socialPosts.deletedAt),
+        inArray(socialPosts.authorId, publicAuthors))).limit(1);
+    if (!publicPost) return res.status(404).json({ success: false, error: "Post not found" });
 
-    const pageNum = parseInt(page as string) || 1;
-    const limitNum = parseInt(limit as string) || 10;
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.max(1, Math.min(50, parseInt(limit as string) || 10));
     const offset = (pageNum - 1) * limitNum;
 
     const comments = await db
@@ -887,6 +901,7 @@ router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
         and(
           eq(socialComments.postId, parseInt(postId)),
           isNull(socialComments.deletedAt),
+          inArray(socialComments.authorId, publicAuthors),
         ),
       )
       .orderBy(desc(socialComments.createdAt))
@@ -895,7 +910,7 @@ router.get("/posts/:postId/comments", async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: comments,
+      data: comments.map(({ editHistory, mentionedUsers, ...comment }) => comment),
       pagination: {
         page: pageNum,
         limit: limitNum,

@@ -3,6 +3,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useAuthContext } from "@/contexts/AuthContext";
+
 const BASE = "/api/streaming";
 
 async function fetchJson(url: string) {
@@ -122,7 +124,9 @@ export function useAlbumDetail(id: number | string | undefined) {
 // ═══════════════════════════════════════════════════════════
 
 export function usePlaylists() {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["streaming-playlists"],
     queryFn: () => fetchJson(`${BASE}/playlists`),
     staleTime: 30_000,
@@ -130,10 +134,11 @@ export function usePlaylists() {
 }
 
 export function usePlaylistDetail(id: number | string | undefined) {
+  const { user } = useAuthContext();
   return useQuery({
     queryKey: ["streaming-playlist", id],
     queryFn: () => fetchJson(`${BASE}/playlists/${id}`),
-    enabled: !!id,
+    enabled: !!user && !!id,
     staleTime: 30_000,
   });
 }
@@ -205,7 +210,9 @@ export function useToggleLike() {
 }
 
 export function useLikedTracks() {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["streaming-liked"],
     queryFn: () => fetchJson(`${BASE}/liked`),
     staleTime: 30_000,
@@ -213,7 +220,9 @@ export function useLikedTracks() {
 }
 
 export function useUserLikedTrackIds() {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["user-liked-tracks"],
     queryFn: () => fetchJson(`${BASE}/user/liked-tracks`),
     staleTime: 30_000,
@@ -232,7 +241,9 @@ export function useToggleFollow() {
 }
 
 export function useUserFollowing() {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["user-following"],
     queryFn: () => fetchJson(`${BASE}/user/following`),
     staleTime: 30_000,
@@ -254,6 +265,7 @@ export function useAddComment() {
 }
 
 export function useTrackReactions(trackId: number | string | undefined) {
+  const { user } = useAuthContext();
   return useQuery({
     queryKey: ["track-reactions", trackId],
     queryFn: async () => {
@@ -263,7 +275,7 @@ export function useTrackReactions(trackId: number | string | undefined) {
       if (!res.ok) return { reactions: {}, userReactions: [] };
       return res.json();
     },
-    enabled: !!trackId,
+    enabled: !!user && !!trackId,
     staleTime: 30_000,
     refetchInterval: 5_000,
   });
@@ -300,7 +312,9 @@ export function useToggleTrackReaction() {
 // ═══════════════════════════════════════════════════════════
 
 export function useListeningHistory() {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["streaming-history"],
     queryFn: () => fetchJson(`${BASE}/history`),
     staleTime: 30_000,
@@ -314,7 +328,9 @@ export function useListeningHistory() {
 export function useStreamingAnalytics(
   period: "7d" | "30d" | "90d" | "all" = "30d",
 ) {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["streaming-analytics", period],
     queryFn: () => fetchJson(`${BASE}/analytics/overview?period=${period}`),
     staleTime: 120_000,
@@ -322,10 +338,11 @@ export function useStreamingAnalytics(
 }
 
 export function useArtistAnalytics(artistId: number | string | undefined) {
+  const { user } = useAuthContext();
   return useQuery({
     queryKey: ["streaming-artist-analytics", artistId],
     queryFn: () => fetchJson(`${BASE}/analytics/artist/${artistId}`),
-    enabled: !!artistId,
+    enabled: !!user && !!artistId,
     staleTime: 120_000,
   });
 }
@@ -343,7 +360,9 @@ export function useSubscriptionPlans() {
 }
 
 export function useSubscriptionStatus() {
+  const { user } = useAuthContext();
   return useQuery({
+    enabled: !!user,
     queryKey: ["streaming-subscription"],
     queryFn: () => fetchJson(`${BASE}/subscription/status`),
     staleTime: 60_000,

@@ -295,7 +295,7 @@ export default function MarketplacePage() {
   };
 
   // ═══ MARKETPLACE STATE ═══
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -627,18 +627,18 @@ export default function MarketplacePage() {
 
   // Theme classes
   const t = {
-    bg: darkMode ? "bg-[#18191a]" : "bg-gray-100",
+    bg: darkMode ? "bg-[#18191a]" : "bg-[#f3efe9]",
     bgCard: darkMode ? "bg-[#242526]" : "bg-white",
     bgHover: darkMode ? "hover:bg-[#3a3b3c]" : "hover:bg-gray-100",
     bgSidebar: darkMode ? "bg-[#242526]" : "bg-white",
     bgInput: darkMode ? "bg-[#3a3b3c]" : "bg-gray-100",
     text: darkMode ? "text-[#e4e6eb]" : "text-gray-900",
     textSecondary: darkMode ? "text-[#b0b3b8]" : "text-gray-600",
-    textMuted: darkMode ? "text-[#8a8d91]" : "text-gray-400",
+    textMuted: darkMode ? "text-[#8a8d91]" : "text-gray-600",
     border: darkMode ? "border-[#3a3b3c]" : "border-gray-200",
-    accent: "text-cyan-500",
-    accentBg: "bg-cyan-500",
-    accentHover: "hover:bg-cyan-600",
+    accent: "text-cyan-700",
+    accentBg: "bg-cyan-700",
+    accentHover: "hover:bg-cyan-800",
   };
 
   // Filter & sort

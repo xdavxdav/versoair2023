@@ -207,7 +207,7 @@ export default function ViewOnlyGate({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onSignIn}
-              className="px-6 sm:px-8 py-3 sm:py-4 bg-cyan-500 text-white rounded-lg font-bold text-base sm:text-lg hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/20"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-cyan-700 text-white rounded-lg font-bold text-base sm:text-lg hover:bg-cyan-800 transition-colors shadow-lg shadow-cyan-500/20"
             >
               Sign In
             </motion.button>

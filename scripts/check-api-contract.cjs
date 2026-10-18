@@ -168,6 +168,16 @@ function collectRoutes(file, prefix, visited = new Set()) {
     const subFile = resolveRouter(imp[1], path.dirname(file));
     if (subFile) collectRoutes(subFile, joinPrefix(prefix, subPrefix), visited);
   }
+
+  // A router mounted without a path inherits its parent's prefix.
+  for (const nested of src.matchAll(/router\.use\(\s*(\w+)\s*\)/g)) {
+    const imp = src.match(
+      new RegExp(`import\\s+${nested[1]}\\s+from\\s+["']([^"']+)["']`),
+    );
+    if (!imp) continue;
+    const subFile = resolveRouter(imp[1], path.dirname(file));
+    if (subFile) collectRoutes(subFile, prefix, visited);
+  }
 }
 
 // Map router variable -> file from the imports in server/routes.ts

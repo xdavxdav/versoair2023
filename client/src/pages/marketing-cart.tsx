@@ -50,12 +50,12 @@ export default function CartPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <ShoppingCart className="h-8 w-8 text-amber-400" />
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+            <ShoppingCart className="h-8 w-8 text-amber-800" />
             Shopping Cart
           </h1>
           <Link href="/marketing">
-            <Button variant="ghost" className="text-gray-400 hover:text-white">
+            <Button variant="ghost" className="text-slate-700 hover:text-slate-900">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Continue Shopping
             </Button>
@@ -63,13 +63,13 @@ export default function CartPage() {
         </div>
 
         {itemCount === 0 ? (
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="text-slate-900 bg-white border-gray-700">
             <CardContent className="p-12 text-center">
               <Package className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <h2 className="text-xl text-white font-semibold mb-2">
+              <h2 className="text-xl text-slate-900 font-semibold mb-2">
                 Your cart is empty
               </h2>
-              <p className="text-gray-400 mb-6">
+              <p className="text-slate-700 mb-6">
                 Browse our marketing packs and print services to get started.
               </p>
               <div className="flex justify-center gap-3">
@@ -81,7 +81,7 @@ export default function CartPage() {
                 <Link href="/marketing/print">
                   <Button
                     variant="outline"
-                    className="border-gray-600 text-white"
+                    className="border-gray-600 text-slate-900"
                   >
                     Print Services
                   </Button>
@@ -96,16 +96,16 @@ export default function CartPage() {
               {items.map((item, idx) => (
                 <Card
                   key={`${item.item_type}-${item.item_id}-${idx}`}
-                  className="bg-gray-800/50 border-gray-700"
+                  className="text-slate-900 bg-white border-gray-700"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h3 className="text-white font-medium">
+                        <h3 className="text-slate-900 font-medium">
                           {item.item_name ||
                             `${item.item_type} #${item.item_id}`}
                         </h3>
-                        <p className="text-gray-400 text-sm capitalize">
+                        <p className="text-slate-700 text-sm capitalize">
                           {item.item_type.replace(/_/g, " ")}
                         </p>
                       </div>
@@ -127,7 +127,7 @@ export default function CartPage() {
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="text-white w-8 text-center">
+                          <span className="text-slate-900 w-8 text-center">
                             {item.quantity}
                           </span>
                           <Button
@@ -147,7 +147,7 @@ export default function CartPage() {
                         </div>
 
                         {/* Price */}
-                        <span className="text-amber-400 font-semibold w-20 text-right">
+                        <span className="text-amber-800 font-semibold w-20 text-right">
                           $
                           {((item.price_cents * item.quantity) / 100).toFixed(
                             2,
@@ -158,7 +158,7 @@ export default function CartPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          className="text-red-700 hover:text-red-700 hover:bg-red-500/10"
                           onClick={() =>
                             removeItem(item.item_type, item.item_id)
                           }
@@ -175,7 +175,7 @@ export default function CartPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-gray-500 hover:text-red-400"
+                  className="text-slate-700 hover:text-red-700"
                   onClick={clearCart}
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
@@ -186,25 +186,25 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div>
-              <Card className="bg-gray-800/50 border-gray-700 sticky top-24">
+              <Card className="text-slate-900 bg-white border-gray-700 sticky top-24">
                 <CardHeader>
-                  <CardTitle className="text-white">Order Summary</CardTitle>
+                  <CardTitle className="text-slate-900">Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between text-gray-400">
+                  <div className="flex justify-between text-slate-700">
                     <span>Subtotal ({itemCount} items)</span>
-                    <span className="text-white">
+                    <span className="text-slate-900">
                       ${(totalCents / 100).toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
+                  <div className="flex justify-between text-slate-700">
                     <span>Shipping</span>
-                    <span className="text-green-400">Free</span>
+                    <span className="text-green-700">Free</span>
                   </div>
                   <hr className="border-gray-700" />
                   <div className="flex justify-between text-lg font-bold">
-                    <span className="text-white">Total</span>
-                    <span className="text-amber-400">
+                    <span className="text-slate-900">Total</span>
+                    <span className="text-amber-800">
                       ${(totalCents / 100).toFixed(2)}
                     </span>
                   </div>
@@ -218,7 +218,7 @@ export default function CartPage() {
                     Request Order
                   </Button>
 
-                  <p className="text-slate-400 text-xs text-center">
+                  <p className="text-slate-700 text-xs text-center">
                     Online payment is being finalized — submit a request and
                     our team will confirm your order.
                   </p>

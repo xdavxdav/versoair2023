@@ -1,14 +1,16 @@
 import React from "react";
 import { ArrowRight, Info, X } from "lucide-react";
-import { TIERS, type TierKey } from "@/lib/tiers";
+import { type TierKey } from "@/lib/tiers";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import {
-  GEOADMIN_ANNUAL_PRICES_XOF,
-  GEOADMIN_PLAN_DETAILS,
-  GEOADMIN_PLAN_ORDER,
+  GEOADMIN_OFFER_NAMES,
+  GEOADMIN_OFFER_PRICES_XOF,
+  GEOADMIN_OFFER_ORDER,
   formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
+import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 interface TierComparisonModalProps {
   isOpen: boolean;
@@ -23,13 +25,14 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
   onClose,
   currentTier,
 }) => {
+  const localize = useLocalizedContent();
   useScrollLock(isOpen);
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
 
   if (!isOpen) return null;
 
-  return (
+  return localize(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
@@ -41,7 +44,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="plan-availability-title"
-        className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+        className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 text-slate-900 shadow-2xl sm:p-8"
       >
         <button
           type="button"
@@ -67,11 +70,11 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
         </p>
         <p className="mb-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
           Your current access level is{" "}
-          <span className="font-semibold">{TIERS[currentTier].name}</span>.
+          <span className="font-semibold">{GEOADMIN_OFFER_NAMES[currentTier]}</span>.
           Reviewing plans does not change your account or start a subscription.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          {GEOADMIN_PLAN_ORDER.map((tier) => (
+          {GEOADMIN_OFFER_ORDER.map((tier) => (
             <article
               key={tier}
               className={`rounded-xl border p-4 ${
@@ -81,25 +84,21 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
               }`}
             >
               <h3 className="font-semibold text-gray-900">
-                {TIERS[tier].name}
+                {GEOADMIN_OFFER_NAMES[tier]}
               </h3>
-              <p className="mt-1 font-bold text-indigo-800" translate="no">
+              <p className="mt-1 font-bold text-indigo-800">
                 {formatMarketXofPrice(
-                  GEOADMIN_ANNUAL_PRICES_XOF[tier],
+                  GEOADMIN_OFFER_PRICES_XOF[tier],
                   selectedCountry ?? "",
                   currency,
                   rates,
                 )}
-                {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null &&
+                {GEOADMIN_OFFER_PRICES_XOF[tier] !== null &&
                   marketAvailability !== false && (
                   <span className="font-normal text-gray-500"> / year</span>
                 )}
               </p>
-              <ul className="mt-3 space-y-1.5 text-sm text-gray-600">
-                {GEOADMIN_PLAN_DETAILS[tier].benefits.slice(0, 3).map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
+              <GeoAdminOfferDetails offer={tier} />
             </article>
           ))}
         </div>
@@ -118,7 +117,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
             Close
           </button>
           <a
-            href={`mailto:support@versoair.com?subject=${encodeURIComponent(`GeoAdmin ${TIERS[currentTier].name} plan inquiry`)}`}
+            href={`mailto:support@versoair.com?subject=${encodeURIComponent(`GeoAdmin ${GEOADMIN_OFFER_NAMES[currentTier]} plan inquiry`)}`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             Ask about availability
@@ -152,7 +151,7 @@ export const HiddenSearchesAlert: React.FC<HiddenSearchesAlertProps> = ({
       <span className="font-semibold">Plan information</span>
       <span className="mt-1 block text-amber-900/80">
         Review annual reference pricing and benefits for your current access
-        level ({TIERS[currentTier].name}). No subscription is started here.
+        level ({GEOADMIN_OFFER_NAMES[currentTier]}). No subscription is started here.
       </span>
     </button>
   );

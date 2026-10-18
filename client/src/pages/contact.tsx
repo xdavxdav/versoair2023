@@ -92,12 +92,12 @@ export default function Contact() {
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
       <div className="relative px-4 pb-16 pt-20">
-        <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#0f172a_0%,#111827_25%,#1f2937_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">
+        <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#f8f5f1_0%,#f3efe9_25%,#efe7dd_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">
           <motion.h1
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
-            className="mb-6 text-center text-4xl font-bold text-white md:text-6xl"
+            className="mb-6 text-center text-4xl font-bold text-slate-900 md:text-6xl"
           >
             Get in Touch
           </motion.h1>
@@ -106,24 +106,24 @@ export default function Contact() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="mx-auto max-w-2xl text-center text-base text-slate-200 md:text-xl"
+            className="mx-auto max-w-2xl text-center text-base text-slate-700 md:text-xl"
           >
             Have questions? We'd love to hear from you. Send us a message and
             we'll respond as soon as possible.
           </motion.p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href="/sav">
-              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-slate-900 transition-colors hover:bg-white/10">
                 🛡️ Service Après-Vente
               </span>
             </Link>
             <Link href="/help">
-              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-slate-900 transition-colors hover:bg-white/10">
                 📚 Centre d'aide
               </span>
             </Link>
             <Link href="/">
-              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10">
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-slate-900 transition-colors hover:bg-white/10">
                 🏠 Accueil
               </span>
             </Link>
@@ -149,7 +149,7 @@ export default function Contact() {
 
               <div className="space-y-5">
                 <div className="flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
-                  <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                  <div className="rounded-xl bg-amber-100 p-3 text-amber-800">
                     <Phone className="h-6 w-6" />
                   </div>
                   <div>
@@ -164,7 +164,7 @@ export default function Contact() {
                 </div>
 
                 <div className="flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
-                  <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                  <div className="rounded-xl bg-amber-100 p-3 text-amber-800">
                     <Mail className="h-6 w-6" />
                   </div>
                   <div>
@@ -179,7 +179,7 @@ export default function Contact() {
                 </div>
 
                 <div className="flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
-                  <div className="rounded-xl bg-amber-100 p-3 text-amber-600">
+                  <div className="rounded-xl bg-amber-100 p-3 text-amber-800">
                     <MapPin className="h-6 w-6" />
                   </div>
                   <div>
@@ -187,7 +187,7 @@ export default function Contact() {
                       Location
                     </h3>
                     <p className="text-slate-600">Toronto, Canada</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-700">
                       Toronto launch focus
                     </p>
                   </div>
@@ -243,7 +243,7 @@ export default function Contact() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   placeholder="Your name"
                 />
               </div>
@@ -258,7 +258,7 @@ export default function Contact() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   placeholder="your@email.com"
                 />
               </div>
@@ -272,7 +272,7 @@ export default function Contact() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   placeholder="+1 (555) 000-0000"
                 />
               </div>
@@ -287,7 +287,7 @@ export default function Contact() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   placeholder="How can we help?"
                 />
               </div>
@@ -302,7 +302,7 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   rows={5}
-                  className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   placeholder="Tell us more..."
                 />
               </div>
@@ -310,7 +310,7 @@ export default function Contact() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-white transition-all hover:bg-amber-500"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-slate-900 transition-all hover:bg-amber-500"
               >
                 {isSubmitting ? (
                   <>

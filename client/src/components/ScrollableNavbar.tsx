@@ -114,7 +114,7 @@ export default function ScrollableNavbar({
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
+                    className="px-4 py-2 bg-cyan-700 text-white rounded-lg hover:bg-cyan-800 transition-colors font-medium"
                   >
                     Sign Up
                   </motion.button>
@@ -150,7 +150,7 @@ export default function ScrollableNavbar({
                     key={label}
                     href={href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition-colors text-sm"
+                    className="flex items-center gap-3 px-3 py-2 text-slate-700 hover:text-cyan-800 hover:bg-slate-100 rounded-lg transition-colors text-sm"
                   >
                     <Icon className="w-4 h-4" />
                     {label}
@@ -179,7 +179,7 @@ export default function ScrollableNavbar({
                     >
                       Sign In
                     </motion.button>
-                    <motion.button className="w-full px-3 py-2 bg-cyan-500 text-white hover:bg-cyan-600 transition-colors text-sm font-medium">
+                    <motion.button className="w-full px-3 py-2 bg-cyan-700 text-white hover:bg-cyan-800 transition-colors text-sm font-medium">
                       Sign Up
                     </motion.button>
                   </>
@@ -201,10 +201,10 @@ export default function ScrollableNavbar({
         transition={{ duration: 0.2 }}
         className="fixed bottom-6 right-6 z-50"
       >
-        <div className="bg-slate-900/98 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-4 w-56">
+        <div className="bg-[#f8f5f1] text-slate-900 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-4 w-56">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+            <h3 className="text-slate-900 font-semibold text-sm flex items-center gap-2">
               <LinkIcon className="w-4 h-4 text-cyan-400" />
               Quick Links
             </h3>
@@ -212,7 +212,7 @@ export default function ScrollableNavbar({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsQuickLinksOpen(false)}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-slate-600 hover:text-slate-900 transition-colors"
             >
               <X className="w-4 h-4" />
             </motion.button>
@@ -225,7 +225,7 @@ export default function ScrollableNavbar({
                 key={label}
                 href={href}
                 whileHover={{ x: 4 }}
-                className="flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition-colors text-sm"
+                className="flex items-center gap-3 px-3 py-2 text-slate-700 hover:text-cyan-800 hover:bg-slate-100 rounded-lg transition-colors text-sm"
               >
                 <Icon className="w-4 h-4" />
                 {label}

@@ -317,6 +317,16 @@ router.get(
       });
     }
 
+    const poolExists = await pool.query("SELECT to_regclass($1) AS name", [selectedPool.tableName]);
+    if (!poolExists.rows[0]?.name) {
+      const visibility = publicBusinessVisibilitySql("businesses");
+      const [items, count] = await Promise.all([
+        pool.query(`SELECT id, name, created_at FROM businesses WHERE category_id = $1 AND (${visibility}) ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [selectedPool.categoryId, limitNum, offset]),
+        pool.query(`SELECT COUNT(*) AS count FROM businesses WHERE category_id = $1 AND (${visibility})`, [selectedPool.categoryId]),
+      ]);
+      return res.json({ success: true, data: items.rows.map(row => ({ id: row.id, name: row.name, pool: selectedPool.categoryName, categoryId: selectedPool.categoryId, createdAt: row.created_at })), pool: selectedPool.categoryName, total: items.rows.length, totalInPool: Number(count.rows[0].count), page: pageNum, limit: limitNum });
+    }
+
     const result = await db.execute(
       sql`
         SELECT

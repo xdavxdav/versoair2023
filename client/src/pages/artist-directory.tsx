@@ -354,7 +354,7 @@ export default function ArtistDirectory() {
               {/* Genre Dropdown */}
               <div className="flex-1">
                 <Label className="text-sm font-medium mb-2 block text-purple-300">
-                  Genre ({genres.length} disponibles)
+                  Genre{genres.length > 0 ? ` (${genres.length} disponibles)` : ""}
                 </Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

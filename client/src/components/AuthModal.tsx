@@ -1,3 +1,5 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
+import TranslationAttribution from "@/components/TranslationAttribution";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -134,6 +136,7 @@ export default function AuthModal({
   error: externalError,
   showProfessionalSSO = false,
 }: AuthModalProps) {
+  const localize = useLocalizedContent();
   useScrollLock(isOpen);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -184,7 +187,7 @@ export default function AuthModal({
     onClose();
   };
 
-  return (
+  return localize((
     <AnimatePresence>
       {isOpen && (
         <>
@@ -238,7 +241,7 @@ export default function AuthModal({
                         }}
                         className={`flex-1 py-2 rounded font-medium transition-all ${
                           mode === tab
-                            ? "bg-cyan-500 text-white"
+                            ? "bg-cyan-700 text-white"
                             : "text-slate-400 hover:text-white"
                         }`}
                       >
@@ -366,7 +369,7 @@ export default function AuthModal({
                     className={`w-full py-3 rounded-lg font-bold transition-all font-handstyle flex items-center justify-center gap-2 ${
                       isLoading
                         ? "bg-cyan-500/50 text-white"
-                        : "bg-cyan-500 text-white hover:bg-cyan-600"
+                        : "bg-cyan-700 text-white hover:bg-cyan-800"
                     }`}
                   >
                     {isLoading ? (
@@ -419,11 +422,12 @@ export default function AuthModal({
                     )}
                   </p>
                 </form>
+                <TranslationAttribution />
               </div>
             </motion.div>
           </div>
         </>
       )}
     </AnimatePresence>
-  );
+  ));
 }

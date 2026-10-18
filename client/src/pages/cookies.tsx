@@ -1,15 +1,17 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { Link } from "wouter";
 import { Cookie, ArrowLeft } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
 
 export default function CookiePolicy() {
-  return (
+  const localize = useLocalizedContent();
+  return localize((
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="mx-auto max-w-4xl px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="mb-8 inline-flex items-center gap-2 text-amber-600 transition-colors hover:text-amber-700">
+          <a className="mb-8 inline-flex items-center gap-2 text-amber-800 transition-colors hover:text-amber-700">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </a>
@@ -18,11 +20,11 @@ export default function CookiePolicy() {
         {/* Header */}
         <div className="mb-10 flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
-            <Cookie className="h-6 w-6 text-white" />
+            <Cookie className="h-6 w-6 text-slate-900" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Cookie Policy</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               Last updated: March 13, 2026
             </p>
           </div>
@@ -31,7 +33,7 @@ export default function CookiePolicy() {
         {/* Content */}
         <div className="prose max-w-none space-y-8 text-slate-700">
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               1. What Are Cookies?
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -44,7 +46,7 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               2. Cookies We Use
             </h2>
 
@@ -53,27 +55,27 @@ export default function CookiePolicy() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-800 font-semibold">
                       Cookie
                     </th>
-                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-800 font-semibold">
                       Type
                     </th>
-                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-800 font-semibold">
                       Purpose
                     </th>
-                    <th className="text-left py-3 px-2 text-amber-600 font-semibold">
+                    <th className="text-left py-3 px-2 text-amber-800 font-semibold">
                       Duration
                     </th>
                   </tr>
                 </thead>
                 <tbody className="text-slate-700">
                   <tr className="border-b border-slate-300/50">
-                    <td className="py-3 px-2 font-mono text-xs text-white">
+                    <td className="py-3 px-2 font-mono text-xs text-slate-900">
                       connect.sid
                     </td>
                     <td className="py-3 px-2">
-                      <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full text-xs">
+                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">
                         Essential
                       </span>
                     </td>
@@ -84,11 +86,11 @@ export default function CookiePolicy() {
                     <td className="py-3 px-2">Session</td>
                   </tr>
                   <tr className="border-b border-slate-300/50">
-                    <td className="py-3 px-2 font-mono text-xs text-white">
+                    <td className="py-3 px-2 font-mono text-xs text-slate-900">
                       token
                     </td>
                     <td className="py-3 px-2">
-                      <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full text-xs">
+                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">
                         Essential
                       </span>
                     </td>
@@ -99,11 +101,11 @@ export default function CookiePolicy() {
                     <td className="py-3 px-2">7 days</td>
                   </tr>
                   <tr className="border-b border-slate-300/50">
-                    <td className="py-3 px-2 font-mono text-xs text-white">
+                    <td className="py-3 px-2 font-mono text-xs text-slate-900">
                       verso_portal
                     </td>
                     <td className="py-3 px-2">
-                      <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full text-xs">
+                      <span className="bg-blue-500/20 text-blue-700 px-2 py-0.5 rounded-full text-xs">
                         Functional
                       </span>
                     </td>
@@ -114,11 +116,11 @@ export default function CookiePolicy() {
                     <td className="py-3 px-2">30 days</td>
                   </tr>
                   <tr className="border-b border-slate-300/50">
-                    <td className="py-3 px-2 font-mono text-xs text-white">
+                    <td className="py-3 px-2 font-mono text-xs text-slate-900">
                       verso_theme
                     </td>
                     <td className="py-3 px-2">
-                      <span className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full text-xs">
+                      <span className="bg-blue-500/20 text-blue-700 px-2 py-0.5 rounded-full text-xs">
                         Functional
                       </span>
                     </td>
@@ -128,11 +130,11 @@ export default function CookiePolicy() {
                     <td className="py-3 px-2">1 year</td>
                   </tr>
                   <tr className="border-b border-slate-300/50">
-                    <td className="py-3 px-2 font-mono text-xs text-white">
+                    <td className="py-3 px-2 font-mono text-xs text-slate-900">
                       _ga / _gid
                     </td>
                     <td className="py-3 px-2">
-                      <span className="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full text-xs">
+                      <span className="bg-yellow-500/20 text-yellow-800 px-2 py-0.5 rounded-full text-xs">
                         Analytics
                       </span>
                     </td>
@@ -142,11 +144,11 @@ export default function CookiePolicy() {
                     <td className="py-3 px-2">2 years / 24h</td>
                   </tr>
                   <tr className="border-b border-slate-300/50">
-                    <td className="py-3 px-2 font-mono text-xs text-white">
+                    <td className="py-3 px-2 font-mono text-xs text-slate-900">
                       _gat
                     </td>
                     <td className="py-3 px-2">
-                      <span className="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full text-xs">
+                      <span className="bg-yellow-500/20 text-yellow-800 px-2 py-0.5 rounded-full text-xs">
                         Analytics
                       </span>
                     </td>
@@ -161,13 +163,13 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               3. Cookie Categories Explained
             </h2>
 
             <div className="space-y-4 mt-4">
               <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
-                <h3 className="text-red-400 font-semibold flex items-center gap-2">
+                <h3 className="text-red-700 font-semibold flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-red-500" />
                   Essential Cookies
                 </h3>
@@ -176,12 +178,12 @@ export default function CookiePolicy() {
                   authentication, session management, and security (CSRF
                   protection). Disabling these would prevent login and core
                   features.{" "}
-                  <strong className="text-white">Cannot be opted out.</strong>
+                  <strong className="text-slate-900">Cannot be opted out.</strong>
                 </p>
               </div>
 
               <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-4">
-                <h3 className="text-blue-400 font-semibold flex items-center gap-2">
+                <h3 className="text-blue-700 font-semibold flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
                   Functional Cookies
                 </h3>
@@ -193,7 +195,7 @@ export default function CookiePolicy() {
               </div>
 
               <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-4">
-                <h3 className="text-yellow-400 font-semibold flex items-center gap-2">
+                <h3 className="text-yellow-800 font-semibold flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-yellow-500" />
                   Analytics Cookies
                 </h3>
@@ -208,7 +210,7 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               4. Local Storage & Session Storage
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -216,25 +218,25 @@ export default function CookiePolicy() {
             </p>
             <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
-                <strong className="text-white font-mono text-xs">
+                <strong className="text-slate-900 font-mono text-xs">
                   verso_favorites
                 </strong>{" "}
                 — Your saved/bookmarked businesses
               </li>
               <li>
-                <strong className="text-white font-mono text-xs">
+                <strong className="text-slate-900 font-mono text-xs">
                   verso_search_history
                 </strong>{" "}
                 — Recent search queries (stored locally only)
               </li>
               <li>
-                <strong className="text-white font-mono text-xs">
+                <strong className="text-slate-900 font-mono text-xs">
                   verso_notification_prefs
                 </strong>{" "}
                 — Notification preferences
               </li>
               <li>
-                <strong className="text-white font-mono text-xs">
+                <strong className="text-slate-900 font-mono text-xs">
                   tanstack_query_cache
                 </strong>{" "}
                 — React Query data cache for faster page loads
@@ -247,7 +249,7 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               5. Managing Cookies
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -255,19 +257,19 @@ export default function CookiePolicy() {
             </p>
             <ul className="list-disc list-inside text-slate-700 space-y-1">
               <li>
-                <strong className="text-white">Chrome:</strong> Settings →
+                <strong className="text-slate-900">Chrome:</strong> Settings →
                 Privacy and Security → Cookies and Other Site Data
               </li>
               <li>
-                <strong className="text-white">Firefox:</strong> Settings →
+                <strong className="text-slate-900">Firefox:</strong> Settings →
                 Privacy & Security → Cookies and Site Data
               </li>
               <li>
-                <strong className="text-white">Safari:</strong> Preferences →
+                <strong className="text-slate-900">Safari:</strong> Preferences →
                 Privacy → Manage Website Data
               </li>
               <li>
-                <strong className="text-white">Edge:</strong> Settings →
+                <strong className="text-slate-900">Edge:</strong> Settings →
                 Privacy, Search and Services → Cookies
               </li>
             </ul>
@@ -277,7 +279,7 @@ export default function CookiePolicy() {
                 href="https://tools.google.com/dlpage/gaoptout"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber-600 underline"
+                className="text-amber-800 underline"
               >
                 Google Analytics Opt-out Browser Add-on
               </a>
@@ -286,7 +288,7 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               6. Changes to This Policy
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -296,23 +298,23 @@ export default function CookiePolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               7. Contact
             </h2>
             <div className="bg-white/5 rounded-xl p-4 border border-slate-300">
-              <p className="text-white font-medium">
+              <p className="text-slate-900 font-medium">
                 VERSO AIR INC. — Privacy Team
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-700 text-sm">
                 Email: support@versoair.com
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-700 text-sm">
                 See also:{" "}
-                <Link href="/privacy" className="text-amber-600 underline">
+                <Link href="/privacy" className="text-amber-800 underline">
                   Privacy Policy
                 </Link>{" "}
                 ·{" "}
-                <Link href="/gdpr" className="text-amber-600 underline">
+                <Link href="/gdpr" className="text-amber-800 underline">
                   GDPR
                 </Link>
               </p>
@@ -321,5 +323,5 @@ export default function CookiePolicy() {
         </div>
       </div>
     </div>
-  );
+  ));
 }

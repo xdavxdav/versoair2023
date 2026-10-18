@@ -416,7 +416,7 @@ export default function FaqPage() {
             </button>
             <div className="flex items-center gap-2">
               {selectedTopic.isResolved && (
-                <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
+                <span className="flex items-center gap-1 text-xs text-green-700 bg-green-500/10 px-2 py-1 rounded-full">
                   <CheckCircle2 className="w-3 h-3" />
                   Resolved
                 </span>
@@ -453,10 +453,10 @@ export default function FaqPage() {
                     {selectedTopic.author.displayName}
                   </span>
                   {selectedTopic.author.verifiedBadge && (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-cyan-700" />
                   )}
                 </div>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-700">
                   {selectedTopic.author.profession} ·{" "}
                   {timeAgo(selectedTopic.createdAt)}
                 </span>
@@ -470,10 +470,10 @@ export default function FaqPage() {
 
             {/* Stats */}
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/5">
-              <span className="flex items-center gap-1 text-xs text-slate-400">
+              <span className="flex items-center gap-1 text-xs text-slate-700">
                 <Eye className="w-3.5 h-3.5" /> {selectedTopic.viewCount} views
               </span>
-              <span className="flex items-center gap-1 text-xs text-slate-400">
+              <span className="flex items-center gap-1 text-xs text-slate-700">
                 <MessageSquare className="w-3.5 h-3.5" />{" "}
                 {selectedTopic.totalReplies} replies
               </span>
@@ -482,8 +482,8 @@ export default function FaqPage() {
 
           {/* Replies */}
           <div className="space-y-1 mb-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-cyan-400" />
+            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-cyan-700" />
               Replies ({selectedTopic.totalReplies})
             </h2>
 
@@ -497,26 +497,26 @@ export default function FaqPage() {
                 {/* Top-level Reply */}
                 <div className="bg-slate-900/60 rounded-lg border border-white/5 p-4 mb-2">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-slate-900 font-bold text-xs flex-shrink-0">
                       {reply.author.displayName.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-white text-sm font-medium">
+                        <span className="text-slate-900 text-sm font-medium">
                           {reply.author.displayName}
                         </span>
                         {reply.author.verifiedBadge && (
-                          <CheckCircle2 className="w-3 h-3 text-cyan-400" />
+                          <CheckCircle2 className="w-3 h-3 text-cyan-700" />
                         )}
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-700">
                           {timeAgo(reply.createdAt)}
                         </span>
                       </div>
-                      <p className="text-slate-300 text-sm leading-relaxed break-words whitespace-pre-wrap">
+                      <p className="text-slate-700 text-sm leading-relaxed break-words whitespace-pre-wrap">
                         {reply.content}
                       </p>
                       <div className="flex items-center gap-3 mt-2">
-                        <button className="flex items-center gap-1 text-xs text-slate-400 hover:text-cyan-400 transition-colors">
+                        <button className="flex items-center gap-1 text-xs text-slate-700 hover:text-cyan-700 transition-colors">
                           <ThumbsUp className="w-3 h-3" /> {reply.likeCount}
                         </button>
                         <button
@@ -527,8 +527,8 @@ export default function FaqPage() {
                           }
                           className={`flex items-center gap-1 text-xs transition-colors ${
                             replyingTo === reply.id
-                              ? "text-cyan-400"
-                              : "text-slate-400 hover:text-cyan-400"
+                              ? "text-cyan-700"
+                              : "text-slate-700 hover:text-cyan-700"
                           }`}
                         >
                           <MessageSquare className="w-3 h-3" /> Reply
@@ -543,22 +543,22 @@ export default function FaqPage() {
                       {reply.replies.map((nested) => (
                         <div key={nested.id} className="py-2">
                           <div className="flex items-start gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-slate-900 font-bold text-[10px] flex-shrink-0">
                               {nested.author.displayName.charAt(0)}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-0.5">
-                                <span className="text-white text-xs font-medium">
+                                <span className="text-slate-900 text-xs font-medium">
                                   {nested.author.displayName}
                                 </span>
-                                <span className="text-[10px] text-slate-500">
+                                <span className="text-[10px] text-slate-700">
                                   {timeAgo(nested.createdAt)}
                                 </span>
                               </div>
-                              <p className="text-slate-300 text-xs leading-relaxed break-words whitespace-pre-wrap">
+                              <p className="text-slate-700 text-xs leading-relaxed break-words whitespace-pre-wrap">
                                 {nested.content}
                               </p>
-                              <button className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-cyan-400 transition-colors mt-1">
+                              <button className="flex items-center gap-1 text-[10px] text-slate-700 hover:text-cyan-700 transition-colors mt-1">
                                 <ThumbsUp className="w-2.5 h-2.5" />{" "}
                                 {nested.likeCount}
                               </button>
@@ -592,7 +592,7 @@ export default function FaqPage() {
                           <button
                             onClick={handleSubmitReply}
                             disabled={!replyContent.trim()}
-                            className="w-full sm:w-auto px-3 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
+                            className="w-full sm:w-auto px-3 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 disabled:text-slate-500 text-slate-900 rounded-lg transition-colors"
                           >
                             <Send className="w-4 h-4" />
                           </button>
@@ -607,7 +607,7 @@ export default function FaqPage() {
             {selectedTopic.replies.length === 0 && (
               <div className="text-center py-8">
                 <MessageSquare className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-700 text-sm">
                   No replies yet. Be the first!
                 </p>
               </div>
@@ -642,7 +642,7 @@ export default function FaqPage() {
           <div className="mt-8 text-center">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-cyan-700 hover:text-cyan-700 transition-colors"
             >
               <ArrowUpRight className="w-4 h-4" />
               Join the community discussion on the Blog
@@ -690,13 +690,13 @@ export default function FaqPage() {
             onSubmit={handleSearch}
             className="relative mx-auto mt-6 max-w-xl"
           >
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-700" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search topics..."
-              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
             />
             {searchQuery && (
               <button
@@ -705,7 +705,7 @@ export default function FaqPage() {
                   setSearchQuery("");
                   setPage(1);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -789,7 +789,7 @@ export default function FaqPage() {
           >
             <div className="sticky top-20 rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_35px_rgba(15,23,42,0.04)]">
               <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Filter className="h-4 w-4 text-amber-600" />
+                <Filter className="h-4 w-4 text-amber-800" />
                 Categories
               </h3>
 
@@ -882,7 +882,7 @@ export default function FaqPage() {
               </p>
               <button
                 onClick={() => setIsCreateOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-amber-500"
+                className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-medium text-slate-900 transition-all hover:bg-amber-500"
               >
                 <Plus className="h-4 w-4" />
                 New Topic
@@ -904,11 +904,11 @@ export default function FaqPage() {
               </div>
             ) : posts.length === 0 ? (
               <div className="py-16 text-center">
-                <MessageCircleQuestion className="mx-auto mb-4 h-12 w-12 text-slate-400" />
+                <MessageCircleQuestion className="mx-auto mb-4 h-12 w-12 text-slate-700" />
                 <h3 className="mb-2 text-lg font-medium text-slate-700">
                   No topics found
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-700">
                   {searchQuery
                     ? `No results for "${searchQuery}". Try a different search.`
                     : "Be the first to start a discussion!"}
@@ -956,7 +956,7 @@ export default function FaqPage() {
                           <p className="line-clamp-1 text-xs text-slate-600 sm:text-sm">
                             {post.content}
                           </p>
-                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-700">
                             <span>{post.author.displayName}</span>
                             <span className={`${catColors.text}`}>
                               {categories.find(
@@ -1029,12 +1029,12 @@ export default function FaqPage() {
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
-                  <Plus className="h-5 w-5 text-amber-600" />
+                  <Plus className="h-5 w-5 text-amber-800" />
                   New FAQ Topic
                 </h2>
                 <button
                   onClick={() => setIsCreateOpen(false)}
-                  className="text-slate-500 transition-colors hover:text-slate-900"
+                  className="text-slate-700 transition-colors hover:text-slate-900"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1050,7 +1050,7 @@ export default function FaqPage() {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="What's your question?"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
@@ -1090,14 +1090,14 @@ export default function FaqPage() {
                     onChange={(e) => setNewContent(e.target.value)}
                     placeholder="Describe your question or topic in detail..."
                     rows={4}
-                    className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                    className="w-full resize-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-700 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
                 <button
                   onClick={handleCreateTopic}
                   disabled={!newTitle.trim() || !newContent.trim()}
-                  className="w-full rounded-xl bg-amber-600 px-4 py-3 font-medium text-white transition-all hover:bg-amber-500 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="w-full rounded-xl bg-amber-600 px-4 py-3 font-medium text-slate-900 transition-all hover:bg-amber-500 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   Post Topic
                 </button>

@@ -333,8 +333,8 @@ function TrackReactionStrip({
             title={`${reaction.label}${count ? ` · ${count}` : ""}`}
             className={`inline-flex h-7 min-w-7 items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-medium transition-all ${
               active
-                ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
-                : "border-white/10 bg-white/[0.02] text-gray-400 hover:border-amber-500/30 hover:text-amber-300"
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-800"
+                : "border-slate-200 bg-white/[0.02] text-slate-700 hover:border-amber-500/30 hover:text-amber-800"
             }`}
           >
             <ReactionIcon reactionKey={reaction.key} />
@@ -344,7 +344,7 @@ function TrackReactionStrip({
       })}
 
       {totalReactions > 0 && (
-        <span className="ml-0.5 text-[10px] text-gray-500">
+        <span className="ml-0.5 text-[10px] text-slate-700">
           {totalReactions} réactions
         </span>
       )}
@@ -421,19 +421,19 @@ function NowPlayingComments({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-slate-900 text-amber-400">
+              <div className="flex h-full w-full items-center justify-center bg-white text-amber-800">
                 <Music className="h-5 w-5" />
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-amber-600" />
+              <MessageCircle className="h-4 w-4 text-amber-800" />
               <h2 className="text-base font-bold text-slate-900 sm:text-lg">
                 {track?.artist_name || "Discussion du titre"}
               </h2>
               {track && !isPlaying && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
                   Dernière écoute
                 </span>
               )}
@@ -454,7 +454,7 @@ function NowPlayingComments({
         </div>
 
         {!track ? (
-          <p className="py-8 text-center text-sm text-slate-500">
+          <p className="py-8 text-center text-sm text-slate-700">
             Les commentaires du titre en cours apparaîtront ici.
           </p>
         ) : (
@@ -475,13 +475,13 @@ function NowPlayingComments({
                     : "Connectez-vous pour commenter"
                 }
                 maxLength={1000}
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-amber-400 focus:bg-white"
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-700 focus:border-amber-400 focus:bg-white"
               />
               <button
                 type="button"
                 onClick={handleComment}
                 disabled={!draft.trim() || commentMutation.isPending}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Publier</span>
@@ -489,7 +489,7 @@ function NowPlayingComments({
             </div>
 
             {isLoading ? (
-              <p className="py-6 text-center text-sm text-slate-500">
+              <p className="py-6 text-center text-sm text-slate-700">
                 Chargement des commentaires...
               </p>
             ) : visibleComments.length > 0 ? (
@@ -504,7 +504,7 @@ function NowPlayingComments({
                         <span className="text-sm font-semibold text-slate-800">
                           {comment.username || "Utilisateur"}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-700">
                           {timeAgo(comment.created_at)}
                         </span>
                       </div>
@@ -516,7 +516,7 @@ function NowPlayingComments({
                 ))}
               </div>
             ) : (
-              <p className="py-7 text-center text-sm text-slate-500">
+              <p className="py-7 text-center text-sm text-slate-700">
                 Soyez le premier à commenter ce titre.
               </p>
             )}
@@ -668,17 +668,17 @@ export default function StreamPage() {
                     exit={{ opacity: 0, y: 20, scale: 0.95 }}
                     className="mb-3"
                   >
-                    <Card className="bg-gray-900/95 backdrop-blur-xl border-purple-500/30 shadow-2xl shadow-purple-500/10 w-72">
+                    <Card className="text-slate-900 bg-white backdrop-blur-xl border-purple-500/30 shadow-2xl shadow-purple-500/10 w-72">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3 mb-4">
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
                             <Headphones className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <p className="text-white font-semibold">
+                            <p className="text-slate-900 font-semibold">
                               {user.username || user.email?.split("@")[0]}
                             </p>
-                            <Badge className="bg-purple-500/20 text-purple-300 text-xs">
+                            <Badge className="bg-purple-500/20 text-purple-700 text-xs">
                               <Crown className="w-3 h-3 mr-1" />
                               {levelName} · Lv.{currentLevel}
                             </Badge>
@@ -687,12 +687,12 @@ export default function StreamPage() {
 
                         <div className="mb-4">
                           <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-400">XP Progress</span>
-                            <span className="text-purple-400">
+                            <span className="text-slate-700">XP Progress</span>
+                            <span className="text-purple-700">
                               {currentPoints} / {nextLevelPoints}
                             </span>
                           </div>
-                          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                          <div className="h-2 bg-white rounded-full overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{
@@ -704,28 +704,28 @@ export default function StreamPage() {
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 mb-4">
-                          <div className="text-center p-2 bg-gray-800/50 rounded-lg">
-                            <div className="text-amber-400 font-bold flex items-center justify-center gap-1">
+                          <div className="text-center p-2 bg-white rounded-lg">
+                            <div className="text-amber-800 font-bold flex items-center justify-center gap-1">
                               <Flame className="w-3.5 h-3.5" />
                               {stats?.currentStreak || 0}
                             </div>
-                            <div className="text-[10px] text-gray-500">
+                            <div className="text-[10px] text-slate-700">
                               Streak
                             </div>
                           </div>
-                          <div className="text-center p-2 bg-gray-800/50 rounded-lg">
-                            <div className="text-green-400 font-bold">
+                          <div className="text-center p-2 bg-white rounded-lg">
+                            <div className="text-green-700 font-bold">
                               #{stats?.rank || "—"}
                             </div>
-                            <div className="text-[10px] text-gray-500">
+                            <div className="text-[10px] text-slate-700">
                               Rank
                             </div>
                           </div>
-                          <div className="text-center p-2 bg-gray-800/50 rounded-lg">
+                          <div className="text-center p-2 bg-white rounded-lg">
                             <div className="text-fuchsia-400 font-bold">
                               {stats?.correctPredictions || 0}
                             </div>
-                            <div className="text-[10px] text-gray-500">
+                            <div className="text-[10px] text-slate-700">
                               Wins
                             </div>
                           </div>
@@ -741,7 +741,7 @@ export default function StreamPage() {
                           </button>
                           <button
                             onClick={() => navigate("/arena?from=stream")}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-medium hover:bg-amber-500/30 transition-all"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-amber-500/20 text-amber-800 rounded-lg text-xs font-medium hover:bg-amber-500/30 transition-all"
                           >
                             <Trophy className="w-3.5 h-3.5" />
                             Arena
@@ -751,7 +751,7 @@ export default function StreamPage() {
                           {canAccessArcade ? (
                             <button
                               onClick={() => navigate("/arcade?from=stream")}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
                             >
                               <Gamepad2 className="w-3.5 h-3.5" />
                               Arcade
@@ -759,11 +759,11 @@ export default function StreamPage() {
                           ) : (
                             <button
                               onClick={() => navigate("/arcade?from=stream")}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gray-700/30 text-gray-500 rounded-lg text-xs font-medium hover:bg-gray-700/50 transition-all"
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-white text-slate-700 rounded-lg text-xs font-medium hover:bg-white transition-all"
                               title="Supporter+ requis"
                             >
                               <Gamepad2 className="w-3.5 h-3.5" />
-                              <Crown className="w-3 h-3 text-purple-400" />
+                              <Crown className="w-3 h-3 text-purple-700" />
                             </button>
                           )}
                         </div>
@@ -771,8 +771,8 @@ export default function StreamPage() {
                           onClick={() => navigate("/artist-portal?from=stream")}
                           className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
                             fromPage === "artist-portal"
-                              ? "bg-emerald-400/40 text-emerald-200 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-                              : "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                              ? "bg-emerald-400/40 text-emerald-700 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
+                              : "bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30"
                           }`}
                         >
                           <Mic2 className="w-3.5 h-3.5" />
@@ -819,11 +819,11 @@ export default function StreamPage() {
               {/* Back Button - positioned below top bar, above header */}
               <button
                 onClick={handleBack}
-                className="mb-4 p-2 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200 text-white flex items-center gap-2"
+                className="mb-4 p-2 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md border border-slate-200 hover:border-white/20 transition-all duration-200 text-slate-900 flex items-center gap-2"
                 title="Go back"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span className="text-sm text-gray-300">Retour</span>
+                <span className="text-sm text-slate-700">Retour</span>
               </button>
 
               {/* Header */}
@@ -851,13 +851,13 @@ export default function StreamPage() {
                   </div>
                   <div>
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-                      <span className="bg-gradient-to-r from-amber-200 via-orange-300 to-amber-400 bg-clip-text text-transparent">
+                      <span className="bg-gradient-to-r from-slate-900 via-orange-300 to-slate-900 bg-clip-text text-transparent">
                         Verso Air
                       </span>{" "}
-                      <span className="text-white/90">Stream</span>
+                      <span className="text-slate-900">Stream</span>
                     </h1>
-                    <p className="text-gray-500 text-xs sm:text-sm mt-0.5 flex items-center gap-1.5">
-                      <Waves className="w-3.5 h-3.5 text-amber-500/60" />
+                    <p className="text-slate-700 text-xs sm:text-sm mt-0.5 flex items-center gap-1.5">
+                      <Waves className="w-3.5 h-3.5 text-amber-800" />
                       La musique africaine, sans limites
                     </p>
                   </div>
@@ -871,14 +871,14 @@ export default function StreamPage() {
                     </button>
                   </Link>
                   <Link href="/arena?from=stream">
-                    <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30 rounded-xl hover:from-amber-500/30 hover:to-orange-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)]">
+                    <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-800 border border-amber-500/30 rounded-xl hover:from-amber-500/30 hover:to-orange-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)]">
                       <Trophy className="w-4 h-4" />
                       <span className="hidden md:inline">Arena</span>
                     </button>
                   </Link>
                   {canAccessArcade ? (
                     <Link href="/arcade?from=stream">
-                      <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30 rounded-xl hover:from-purple-500/30 hover:to-pink-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(168,85,247,0.15)]">
+                      <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-700 border border-purple-500/30 rounded-xl hover:from-purple-500/30 hover:to-pink-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(168,85,247,0.15)]">
                         <Gamepad2 className="w-4 h-4" />
                         <span className="hidden md:inline">Arcade</span>
                       </button>
@@ -886,22 +886,22 @@ export default function StreamPage() {
                   ) : (
                     <button
                       onClick={() => navigate("/arcade?from=stream")}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gray-800/50 text-gray-500 border border-gray-700/50 rounded-xl cursor-pointer hover:bg-gray-800/70 transition-all relative"
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white text-slate-700 border border-gray-700/50 rounded-xl cursor-pointer hover:bg-white transition-all relative"
                       title="Abonnement Supporter+ requis"
                     >
                       <Gamepad2 className="w-4 h-4" />
                       <span className="hidden md:inline">Arcade</span>
-                      <Crown className="w-3 h-3 text-purple-400 md:ml-1 absolute -top-1 -right-1 md:static" />
+                      <Crown className="w-3 h-3 text-purple-700 md:ml-1 absolute -top-1 -right-1 md:static" />
                     </button>
                   )}
                   <Link href="/library">
-                    <button className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm text-gray-400 hover:text-white bg-white/[0.03] backdrop-blur border border-white/10 rounded-xl hover:border-amber-500/30 hover:bg-amber-500/5 transition-all">
+                    <button className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm text-slate-700 hover:text-slate-900 bg-white/[0.03] backdrop-blur border border-slate-200 rounded-xl hover:border-amber-500/30 hover:bg-amber-500/5 transition-all">
                       <Music2 className="w-3.5 h-3.5" />
                       Bibliothèque
                     </button>
                   </Link>
                   <Link href="/analytics">
-                    <button className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 backdrop-blur transition-all">
+                    <button className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm bg-amber-500/10 text-amber-800 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 backdrop-blur transition-all">
                       <BarChart3 className="w-3.5 h-3.5" />
                       Analytics
                     </button>
@@ -910,8 +910,8 @@ export default function StreamPage() {
                     <button
                       className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl backdrop-blur transition-all ${
                         fromPage === "artist-portal"
-                          ? "bg-gradient-to-r from-emerald-400/40 to-teal-400/40 text-emerald-200 border-2 border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-                          : "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/30 hover:from-emerald-500/30 hover:to-teal-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                          ? "bg-gradient-to-r from-emerald-400/40 to-teal-400/40 text-emerald-700 border-2 border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
+                          : "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-700 border border-emerald-500/30 hover:from-emerald-500/30 hover:to-teal-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
                       }`}
                     >
                       <Mic2 className="w-4 h-4" />
@@ -1000,7 +1000,7 @@ export default function StreamPage() {
                             <p className={`text-sm font-bold ${tc.text}`}>
                               {isGodTier ? "God Tier ∞" : currentPlan.name}
                             </p>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+                            <p className="text-[10px] text-slate-700 uppercase tracking-widest">
                               Mon abonnement
                             </p>
                           </div>
@@ -1012,7 +1012,7 @@ export default function StreamPage() {
                                 document.getElementById("subscription-plans");
                               el?.scrollIntoView({ behavior: "smooth" });
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 text-xs font-semibold border border-amber-500/30 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-800 text-xs font-semibold border border-amber-500/30 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
                           >
                             <Zap className="w-3 h-3" />
                             Upgrade
@@ -1024,21 +1024,21 @@ export default function StreamPage() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                         {/* Weekly streams */}
                         <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
                             Streams / sem.
                           </p>
-                          <p className="text-lg font-bold text-white">
+                          <p className="text-lg font-bold text-slate-900">
                             {isGodTier ? "∞" : streamsLabel}
                           </p>
                         </div>
 
                         {/* Audio quality */}
                         <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
                             Qualité audio
                           </p>
                           <p
-                            className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-emerald-400" : "text-white"}`}
+                            className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-emerald-700" : "text-slate-900"}`}
                           >
                             {isGodTier ? "FLAC" : currentPlan.audioQuality}
                           </p>
@@ -1046,10 +1046,10 @@ export default function StreamPage() {
 
                         {/* Downloads */}
                         <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
                             Downloads / mois
                           </p>
-                          <p className="text-sm font-bold text-white">
+                          <p className="text-sm font-bold text-slate-900">
                             {isGodTier
                               ? "∞"
                               : currentPlan.downloadsPerMonth === 0
@@ -1062,11 +1062,11 @@ export default function StreamPage() {
 
                         {/* Ads */}
                         <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
                             Publicités
                           </p>
                           <p
-                            className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-emerald-400" : "text-orange-400"}`}
+                            className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-emerald-700" : "text-orange-700"}`}
                           >
                             {!currentPlan.ads || isGodTier ? "Aucune ✓" : "Oui"}
                           </p>
@@ -1074,11 +1074,11 @@ export default function StreamPage() {
 
                         {/* Arcade */}
                         <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
                             Arcade PvP
                           </p>
                           <p
-                            className={`text-sm font-bold flex items-center gap-1 ${canAccessArcade ? "text-purple-400" : "text-gray-600"}`}
+                            className={`text-sm font-bold flex items-center gap-1 ${canAccessArcade ? "text-purple-700" : "text-gray-600"}`}
                           >
                             <Gamepad2 className="w-3.5 h-3.5" />
                             {canAccessArcade ? "Accès ✓" : "Verrouillé"}
@@ -1087,11 +1087,11 @@ export default function StreamPage() {
 
                         {/* Vote weight */}
                         <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
                             Vote Arena
                           </p>
                           <p
-                            className={`text-sm font-bold flex items-center gap-1 ${voteWeight !== "×1" ? "text-amber-400" : "text-white"}`}
+                            className={`text-sm font-bold flex items-center gap-1 ${voteWeight !== "×1" ? "text-amber-800" : "text-slate-900"}`}
                           >
                             <Trophy className="w-3.5 h-3.5" />
                             {isGodTier ? "100%" : voteWeight}
@@ -1103,8 +1103,8 @@ export default function StreamPage() {
                       {stats && (
                         <div className="mt-3 flex items-center gap-3">
                           <div className="flex items-center gap-1.5">
-                            <Sparkles className="w-3 h-3 text-purple-400" />
-                            <span className="text-[10px] font-semibold text-gray-400">
+                            <Sparkles className="w-3 h-3 text-purple-700" />
+                            <span className="text-[10px] font-semibold text-slate-700">
                               {levelName} · Niv.{currentLevel}
                             </span>
                           </div>
@@ -1118,7 +1118,7 @@ export default function StreamPage() {
                               className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full"
                             />
                           </div>
-                          <span className="text-[10px] text-gray-500">
+                          <span className="text-[10px] text-slate-700">
                             {currentPoints}/{nextLevelPoints} XP
                           </span>
                         </div>
@@ -1160,18 +1160,18 @@ export default function StreamPage() {
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-purple-500/10 to-amber-500/20 rounded-2xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-500" />
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-amber-400 transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700 group-focus-within:text-amber-400 transition-colors" />
                     <input
                       type="text"
                       placeholder="Rechercher artistes, titres, albums..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-12 py-4 bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/40 focus:bg-white/[0.06] transition-all text-sm"
+                      className="w-full pl-12 pr-12 py-4 bg-white/[0.04] backdrop-blur-xl border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-700 focus:outline-none focus:border-amber-500/40 focus:bg-white/[0.06] transition-all text-sm"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1186,11 +1186,11 @@ export default function StreamPage() {
                       initial={{ opacity: 0, y: -10, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-[100] max-h-[70vh] overflow-y-auto"
+                      className="absolute top-full left-0 right-0 mt-2 bg-white backdrop-blur-2xl border border-slate-200 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-[100] max-h-[70vh] overflow-y-auto"
                     >
                       {searchResults.artists?.length > 0 && (
                         <div className="p-4">
-                          <p className="text-[10px] text-amber-400/60 uppercase tracking-[0.2em] font-semibold mb-3">
+                          <p className="text-[10px] text-amber-800 uppercase tracking-[0.2em] font-semibold mb-3">
                             Artistes
                           </p>
                           {searchResults.artists.map((a: any) => (
@@ -1208,17 +1208,17 @@ export default function StreamPage() {
                                   )}
                                 </div>
                                 <div>
-                                  <p className="text-white text-sm font-medium">
+                                  <p className="text-slate-900 text-sm font-medium">
                                     {a.name}
                                   </p>
-                                  <p className="text-gray-500 text-xs">
+                                  <p className="text-slate-700 text-xs">
                                     {a.genre} •{" "}
                                     {formatStreams(a.monthly_listeners || 0)}{" "}
                                     auditeurs/mois
                                   </p>
                                 </div>
                                 {a.verified && (
-                                  <Star className="w-3.5 h-3.5 text-amber-400 ml-auto fill-amber-400" />
+                                  <Star className="w-3.5 h-3.5 text-amber-800 ml-auto fill-amber-400" />
                                 )}
                               </div>
                             </Link>
@@ -1226,8 +1226,8 @@ export default function StreamPage() {
                         </div>
                       )}
                       {searchResults.tracks?.length > 0 && (
-                        <div className="p-4 border-t border-white/5">
-                          <p className="text-[10px] text-amber-400/60 uppercase tracking-[0.2em] font-semibold mb-3">
+                        <div className="p-4 border-t border-slate-200">
+                          <p className="text-[10px] text-amber-800 uppercase tracking-[0.2em] font-semibold mb-3">
                             Titres
                           </p>
                           {searchResults.tracks.map((t: any) => (
@@ -1239,7 +1239,7 @@ export default function StreamPage() {
                               }}
                               className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors"
                             >
-                              <div className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0 ring-1 ring-white/5">
+                              <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 ring-1 ring-white/5">
                                 {getCover(t) ? (
                                   <img
                                     src={getCover(t)!}
@@ -1247,14 +1247,14 @@ export default function StreamPage() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <Music className="w-3 h-3 text-gray-500" />
+                                  <Music className="w-3 h-3 text-slate-700" />
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-white text-sm truncate">
+                                <p className="text-slate-900 text-sm truncate">
                                   {t.title}
                                 </p>
-                                <p className="text-gray-500 text-xs truncate">
+                                <p className="text-slate-700 text-xs truncate">
                                   {t.artist_name}
                                 </p>
                               </div>
@@ -1266,21 +1266,21 @@ export default function StreamPage() {
                         </div>
                       )}
                       {searchResults.albums?.length > 0 && (
-                        <div className="p-4 border-t border-white/5">
-                          <p className="text-[10px] text-amber-400/60 uppercase tracking-[0.2em] font-semibold mb-3">
+                        <div className="p-4 border-t border-slate-200">
+                          <p className="text-[10px] text-amber-800 uppercase tracking-[0.2em] font-semibold mb-3">
                             Albums
                           </p>
                           {searchResults.albums.map((a: any) => (
                             <Link key={a.id} href={`/track/${a.id}`}>
                               <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
-                                <div className="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center ring-1 ring-white/5">
-                                  <Disc3 className="w-4 h-4 text-gray-500" />
+                                <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center ring-1 ring-white/5">
+                                  <Disc3 className="w-4 h-4 text-slate-700" />
                                 </div>
                                 <div>
-                                  <p className="text-white text-sm">
+                                  <p className="text-slate-900 text-sm">
                                     {a.title}
                                   </p>
-                                  <p className="text-gray-500 text-xs">
+                                  <p className="text-slate-700 text-xs">
                                     {a.artist_name} • {a.album_type}
                                   </p>
                                 </div>
@@ -1293,7 +1293,7 @@ export default function StreamPage() {
                         searchResults.artists?.length === 0 && (
                           <div className="p-8 text-center">
                             <Search className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                            <p className="text-gray-500 text-sm">
+                            <p className="text-slate-700 text-sm">
                               Aucun résultat pour «{searchQuery}»
                             </p>
                           </div>
@@ -1310,13 +1310,13 @@ export default function StreamPage() {
                 <div className="mb-6">
                   <div className="flex items-center gap-2.5 mb-5">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center">
-                      <Flame className="w-4 h-4 text-amber-400" />
+                      <Flame className="w-4 h-4 text-amber-800" />
                     </div>
                     <h2 className="text-xl font-bold tracking-tight">
                       Tendances
                     </h2>
                     <div className="flex-1" />
-                    <button className="text-amber-400/80 text-sm hover:text-amber-300 flex items-center gap-1 transition-colors">
+                    <button className="text-amber-800 text-sm hover:text-amber-800 flex items-center gap-1 transition-colors">
                       Voir tout <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -1373,10 +1373,10 @@ export default function StreamPage() {
                             </div>
                           </div>
                         </div>
-                        <p className="text-white text-sm font-semibold truncate px-0.5">
+                        <p className="text-slate-900 text-sm font-semibold truncate px-0.5">
                           {track.title}
                         </p>
-                        <p className="text-gray-500 text-xs truncate px-0.5">
+                        <p className="text-slate-700 text-xs truncate px-0.5">
                           {track.artist_name}
                         </p>
                         <div className="px-0.5">
@@ -1385,7 +1385,7 @@ export default function StreamPage() {
                         <Link
                           href={`/track/${track.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-gray-400 transition-colors hover:border-amber-500/30 hover:text-amber-300"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-amber-500/30 hover:text-amber-800"
                         >
                           <MessageCircle className="w-3 h-3" />
                           Discuss
@@ -1416,14 +1416,14 @@ export default function StreamPage() {
             <section className="max-w-[95vw] mx-auto px-4 mb-10 py-6 relative z-10">
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/10 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <Sparkles className="w-4 h-4 text-purple-700" />
                 </div>
                 <h2 className="text-xl font-bold tracking-tight">
                   Artistes Verso Air
                 </h2>
                 <div className="flex-1" />
                 <Link href="/artistes">
-                  <button className="text-amber-400/80 text-sm hover:text-amber-300 flex items-center gap-1 transition-colors">
+                  <button className="text-amber-800 text-sm hover:text-amber-800 flex items-center gap-1 transition-colors">
                     Catalogue <ChevronRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -1440,7 +1440,7 @@ export default function StreamPage() {
                       <div className="relative w-28 h-28 mx-auto mb-3">
                         {/* Aurora glow behind artist circle */}
                         <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-amber-500/20 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500" />
-                        <div className="relative w-28 h-28 rounded-full overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 ring-2 ring-white/5 group-hover:ring-amber-500/40 transition-all duration-300 shadow-lg shadow-black/30">
+                        <div className="relative w-28 h-28 rounded-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-50 ring-2 ring-white/5 group-hover:ring-amber-500/40 transition-all duration-300 shadow-lg shadow-black/30">
                           {artist.image_url ? (
                             <img
                               src={artist.image_url}
@@ -1451,7 +1451,7 @@ export default function StreamPage() {
                             <div
                               className={`w-full h-full bg-gradient-to-br ${getGenreGradient(artist.genre)} flex items-center justify-center`}
                             >
-                              <span className="text-2xl font-bold text-white/50">
+                              <span className="text-2xl font-bold text-slate-900">
                                 {artist.name?.[0]}
                               </span>
                             </div>
@@ -1463,10 +1463,10 @@ export default function StreamPage() {
                           </div>
                         )}
                       </div>
-                      <p className="text-white text-xs font-semibold truncate">
+                      <p className="text-slate-900 text-xs font-semibold truncate">
                         {artist.name}
                       </p>
-                      <p className="text-gray-500 text-[10px] mt-0.5">
+                      <p className="text-slate-700 text-[10px] mt-0.5">
                         {artist.genre}
                       </p>
                       <p className="text-gray-600 text-[10px]">
@@ -1489,7 +1489,7 @@ export default function StreamPage() {
             <section className="max-w-[95vw] mx-auto px-4 mb-10 py-6 relative z-10">
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-cyan-400" />
+                  <Zap className="w-4 h-4 text-cyan-700" />
                 </div>
                 <h2 className="text-xl font-bold tracking-tight">Nouveautés</h2>
               </div>
@@ -1503,7 +1503,7 @@ export default function StreamPage() {
                     onClick={() => audio.playTrack(track)}
                     className="group cursor-pointer bg-white/[0.02] backdrop-blur-sm rounded-xl p-3 hover:bg-white/[0.06] border border-white/[0.03] hover:border-amber-500/20 transition-all duration-300"
                   >
-                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-800 mb-3 ring-1 ring-white/5 shadow-lg shadow-black/30">
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-white mb-3 ring-1 ring-white/5 shadow-lg shadow-black/30">
                       {getCover(track) ? (
                         <img
                           src={getCover(track)!}
@@ -1523,17 +1523,17 @@ export default function StreamPage() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-white text-sm font-semibold truncate">
+                    <p className="text-slate-900 text-sm font-semibold truncate">
                       {track.title}
                     </p>
-                    <p className="text-gray-500 text-xs truncate mt-0.5">
+                    <p className="text-slate-700 text-xs truncate mt-0.5">
                       {track.artist_name}
                     </p>
                     <TrackReactionStrip track={track} compact />
                     <Link
                       href={`/track/${track.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-gray-400 transition-colors hover:border-amber-500/30 hover:text-amber-300"
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-amber-500/30 hover:text-amber-800"
                     >
                       <MessageCircle className="w-3 h-3" />
                       Discuss
@@ -1572,8 +1572,8 @@ export default function StreamPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm border backdrop-blur transition-all ${
                   showFilters
-                    ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
-                    : "border-white/10 text-gray-400 hover:border-white/20 bg-white/[0.02]"
+                    ? "bg-amber-500/15 border-amber-500/30 text-amber-800"
+                    : "border-slate-200 text-slate-700 hover:border-white/20 bg-white/[0.02]"
                 }`}
               >
                 <Filter className="w-3.5 h-3.5" />
@@ -1621,9 +1621,9 @@ export default function StreamPage() {
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden mb-4"
                 >
-                  <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl p-5 flex flex-wrap gap-5 border border-white/5">
+                  <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl p-5 flex flex-wrap gap-5 border border-slate-200">
                     <div>
-                      <label className="text-[10px] text-amber-400/60 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[10px] text-amber-800 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
                         Ambiance
                       </label>
                       <select
@@ -1632,7 +1632,7 @@ export default function StreamPage() {
                           setActiveMood(e.target.value);
                           setPage(1);
                         }}
-                        className="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-amber-500/40 focus:outline-none backdrop-blur"
+                        className="bg-white/[0.04] border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:border-amber-500/40 focus:outline-none backdrop-blur"
                       >
                         <option value="">Toutes</option>
                         {moods.map((m: string) => (
@@ -1643,7 +1643,7 @@ export default function StreamPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-amber-400/60 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[10px] text-amber-800 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
                         Trier par
                       </label>
                       <select
@@ -1652,7 +1652,7 @@ export default function StreamPage() {
                           setSortBy(e.target.value);
                           setPage(1);
                         }}
-                        className="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-amber-500/40 focus:outline-none backdrop-blur"
+                        className="bg-white/[0.04] border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:border-amber-500/40 focus:outline-none backdrop-blur"
                       >
                         <option value="discover">Découvrir</option>
                         <option value="popular">Populaire</option>
@@ -1668,7 +1668,7 @@ export default function StreamPage() {
                           setActiveMood("");
                           setPage(1);
                         }}
-                        className="self-end px-3.5 py-2 text-sm text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+                        className="self-end px-3.5 py-2 text-sm text-red-700 hover:text-red-700 flex items-center gap-1 transition-colors"
                       >
                         <X className="w-3.5 h-3.5" /> Réinitialiser
                       </button>
@@ -1685,7 +1685,7 @@ export default function StreamPage() {
           <section className="max-w-[95vw] mx-auto px-4 mb-14 relative z-10">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
-                <Music className="w-4 h-4 text-amber-400" />
+                <Music className="w-4 h-4 text-amber-800" />
               </div>
               <h2 className="text-[2rem] sm:text-[2.25rem] font-black tracking-[-0.05em] text-slate-900">
                 {activeGenre ? activeGenre : "Tous les titres"}
@@ -1698,7 +1698,7 @@ export default function StreamPage() {
                 onClick={() => {
                   if (tracks.length > 0) audio.playTracks(tracks);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-sm hover:bg-amber-500/20 backdrop-blur transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500/10 text-amber-800 border border-amber-500/20 rounded-xl text-sm hover:bg-amber-500/20 backdrop-blur transition-all"
               >
                 <Shuffle className="w-3.5 h-3.5" />
                 Aléatoire
@@ -1713,22 +1713,22 @@ export default function StreamPage() {
                     key={i}
                     className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.02]"
                   >
-                    <div className="w-11 h-11 rounded-lg bg-gray-800 animate-pulse" />
+                    <div className="w-11 h-11 rounded-lg bg-white animate-pulse" />
                     <div className="flex-1">
-                      <div className="h-3 bg-gray-800 rounded-lg w-3/4 mb-2 animate-pulse" />
-                      <div className="h-2 bg-gray-800/60 rounded-lg w-1/2 animate-pulse" />
+                      <div className="h-3 bg-white rounded-lg w-3/4 mb-2 animate-pulse" />
+                      <div className="h-2 bg-white rounded-lg w-1/2 animate-pulse" />
                     </div>
-                    <div className="w-10 h-3 bg-gray-800/40 rounded animate-pulse" />
+                    <div className="w-10 h-3 bg-white rounded animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : tracks.length === 0 ? (
               /* Empty state */
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center mb-4">
+                <div className="w-20 h-20 rounded-full bg-white/[0.02] border border-slate-200 flex items-center justify-center mb-4">
                   <Music className="w-8 h-8 text-gray-700" />
                 </div>
-                <p className="text-gray-500 text-lg font-medium mb-1">
+                <p className="text-slate-700 text-lg font-medium mb-1">
                   Aucun titre disponible
                 </p>
                 <p className="text-gray-600 text-sm max-w-sm">
@@ -1742,7 +1742,7 @@ export default function StreamPage() {
                       setActiveGenre("");
                       setPage(1);
                     }}
-                    className="mt-4 px-4 py-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-sm hover:bg-amber-500/20 transition-all"
+                    className="mt-4 px-4 py-2 bg-amber-500/10 text-amber-800 border border-amber-500/20 rounded-xl text-sm hover:bg-amber-500/20 transition-all"
                   >
                     Voir tous les titres
                   </button>
@@ -1790,13 +1790,13 @@ export default function StreamPage() {
                               <span className="text-gray-600 text-xs font-mono group-hover:hidden">
                                 {(page - 1) * 24 + i + 1}
                               </span>
-                              <Play className="w-3.5 h-3.5 text-white hidden group-hover:block mx-auto" />
+                              <Play className="w-3.5 h-3.5 text-slate-900 hidden group-hover:block mx-auto" />
                             </>
                           )}
                         </div>
 
                         {/* Cover */}
-                        <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 ring-1 ring-white/5 shadow-md shadow-black/20">
+                        <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-white ring-1 ring-white/5 shadow-md shadow-black/20">
                           {getCover(track) ? (
                             <img
                               src={getCover(track)!}
@@ -1807,7 +1807,7 @@ export default function StreamPage() {
                             <div
                               className={`w-full h-full bg-gradient-to-br ${getGenreGradient(track.genre)} flex items-center justify-center`}
                             >
-                              <Music className="w-4 h-4 text-white/30" />
+                              <Music className="w-4 h-4 text-slate-900" />
                             </div>
                           )}
                         </div>
@@ -1815,11 +1815,11 @@ export default function StreamPage() {
                         {/* Info */}
                         <div className="min-w-0 flex-1">
                           <p
-                            className={`text-sm font-medium truncate ${isCurrentTrack ? "text-amber-400" : "text-white"}`}
+                            className={`text-sm font-medium truncate ${isCurrentTrack ? "text-amber-800" : "text-slate-900"}`}
                           >
                             {track.title}
                           </p>
-                          <p className="text-gray-500 text-xs truncate">
+                          <p className="text-slate-700 text-xs truncate">
                             {track.artist_name}
                             {track.album_title && (
                               <span className="text-gray-600">
@@ -1833,7 +1833,7 @@ export default function StreamPage() {
 
                         {/* Genre badge */}
                         {track.genre && (
-                          <span className="hidden lg:inline-block px-2.5 py-1 bg-white/[0.04] text-gray-500 text-[10px] rounded-lg border border-white/5 font-medium">
+                          <span className="hidden lg:inline-block px-2.5 py-1 bg-white/[0.04] text-slate-700 text-[10px] rounded-lg border border-slate-200 font-medium">
                             {track.genre}
                           </span>
                         )}
@@ -1853,7 +1853,7 @@ export default function StreamPage() {
                           <Link
                             href={`/track/${track.id}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[11px] text-gray-400 opacity-100 transition-colors hover:border-amber-500/30 hover:text-amber-300 sm:opacity-0 sm:group-hover:opacity-100"
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-700 opacity-100 transition-colors hover:border-amber-500/30 hover:text-amber-800 sm:opacity-0 sm:group-hover:opacity-100"
                             title="Voir les commentaires"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
@@ -1867,7 +1867,7 @@ export default function StreamPage() {
                               e.stopPropagation();
                               audio.addToQueue(track);
                             }}
-                            className="text-gray-500 hover:text-amber-400 transition-colors p-1"
+                            className="text-slate-700 hover:text-amber-800 transition-colors p-1"
                             title="Ajouter à la file"
                           >
                             <Plus className="w-4 h-4" />
@@ -1884,7 +1884,7 @@ export default function StreamPage() {
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-5 py-2.5 bg-white/[0.04] backdrop-blur text-gray-400 rounded-xl border border-white/5 disabled:opacity-30 hover:bg-white/[0.08] transition-all text-sm"
+                      className="px-5 py-2.5 bg-white/[0.04] backdrop-blur text-slate-700 rounded-xl border border-slate-200 disabled:opacity-30 hover:bg-white/[0.08] transition-all text-sm"
                     >
                       Précédent
                     </button>
@@ -1910,7 +1910,7 @@ export default function StreamPage() {
                               className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
                                 page === pageNum
                                   ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
-                                  : "bg-white/[0.04] text-gray-500 hover:bg-white/[0.08] border border-white/5"
+                                  : "bg-white/[0.04] text-slate-700 hover:bg-white/[0.08] border border-slate-200"
                               }`}
                             >
                               {pageNum}
@@ -1922,7 +1922,7 @@ export default function StreamPage() {
                     <button
                       onClick={() => setPage((p) => p + 1)}
                       disabled={page * 24 >= totalTracks}
-                      className="px-5 py-2.5 bg-white/[0.04] backdrop-blur text-gray-400 rounded-xl border border-white/5 disabled:opacity-30 hover:bg-white/[0.08] transition-all text-sm"
+                      className="px-5 py-2.5 bg-white/[0.04] backdrop-blur text-slate-700 rounded-xl border border-slate-200 disabled:opacity-30 hover:bg-white/[0.08] transition-all text-sm"
                     >
                       Suivant
                     </button>
@@ -1962,7 +1962,7 @@ export default function StreamPage() {
                     </div>
                     <h2 className="text-2xl font-bold">Abonnements Streamer</h2>
                   </div>
-                  <p className="text-gray-400 text-sm mb-8 max-w-xl leading-relaxed">
+                  <p className="text-slate-700 text-sm mb-8 max-w-xl leading-relaxed">
                     Le streaming gratuit est disponible. Les abonnements
                     payants, leurs tarifs et leurs avantages ne sont pas
                     disponibles tant que les modalités et le parcours de
@@ -2042,11 +2042,11 @@ export default function StreamPage() {
                             </h3>
                           </div>
                           <div className="mb-4">
-                            <span className="text-3xl font-extrabold text-white">
+                            <span className="text-3xl font-extrabold text-slate-900">
                               ${plan.price}
                             </span>
                             {plan.price > 0 && (
-                              <span className="text-gray-500 text-sm ml-1">
+                              <span className="text-slate-700 text-sm ml-1">
                                 /mois
                               </span>
                             )}
@@ -2059,9 +2059,9 @@ export default function StreamPage() {
                               ? "∞ Streams illimités"
                               : `${plan.weeklyStreams} streams/semaine`}
                           </div>
-                          <div className="mb-4 rounded-xl border border-white/10 bg-black/10 px-3 py-2.5">
+                          <div className="mb-4 rounded-xl border border-slate-200 bg-black/10 px-3 py-2.5">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-700">
                                 Arena vote power
                               </span>
                               <Trophy
@@ -2073,7 +2073,7 @@ export default function StreamPage() {
                             >
                               {plan.contestVoteLabel || "10% of 1 vote point"}
                             </p>
-                            <p className="mt-1 text-[10px] leading-4 text-gray-500">
+                            <p className="mt-1 text-[10px] leading-4 text-slate-700">
                               One eligible listener vote is weighted by this
                               share. Streaming stays free; voting remains tied
                               to the contest rules.
@@ -2086,7 +2086,7 @@ export default function StreamPage() {
                             ).map((f: string, idx: number) => (
                               <li
                                 key={idx}
-                                className="text-gray-400 text-[11px] flex items-start gap-2"
+                                className="text-slate-700 text-[11px] flex items-start gap-2"
                               >
                                 <span
                                   className={`${colors.accent} mt-0.5 text-[10px]`}

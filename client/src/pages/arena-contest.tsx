@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Swords,
@@ -367,6 +368,7 @@ function ArenaList() {
 // Arena Detail — Bracket + Voting
 // ═══════════════════════════════════════════════════════════
 function ArenaDetail({ contestId }: { contestId: number }) {
+  const { user } = useAuthContext();
   const [location, navigate] = useLocation();
   const fromPage =
     new URLSearchParams(window.location.search).get("from") || "";
@@ -383,7 +385,8 @@ function ArenaDetail({ contestId }: { contestId: number }) {
   });
 
   const { data: myVotesData, refetch: refetchVotes } = useQuery({
-    queryKey: ["arena", contestId, "my-votes"],
+    queryKey: ["arena", contestId, "my-votes", user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const res = await fetch(`${API}/${contestId}/my-votes`, {
         credentials: "include",

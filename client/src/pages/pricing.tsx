@@ -1,34 +1,39 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { useState } from "react";
 import { ArrowRight, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ScrollToTop from "@/components/ScrollToTop";
 import { SeoHead } from "@/components/seo/SeoHead";
 import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
+import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
+import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import {
-  GEOADMIN_ANNUAL_PRICES_XOF,
+  GEOADMIN_OFFER_NAMES,
+  type GeoAdminOfferKey,
+  GEOADMIN_OFFER_PRICES_XOF,
   GEOADMIN_PLAN_DETAILS,
-  GEOADMIN_PLAN_ORDER,
+  GEOADMIN_OFFER_ORDER,
   formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
-import { TIERS, type TierKey } from "@/lib/tiers";
 
 export default function Pricing() {
-  const [selectedTier, setSelectedTier] = useState<TierKey>("verified");
+  const localize = useLocalizedContent();
+  const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey>("verified");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
 
-  const formatAnnualPrice = (tier: TierKey) => {
+  const formatAnnualPrice = (tier: GeoAdminOfferKey) => {
     return formatMarketXofPrice(
-      GEOADMIN_ANNUAL_PRICES_XOF[tier],
+      GEOADMIN_OFFER_PRICES_XOF[tier],
       selectedCountry ?? "",
       currency,
       rates,
     );
   };
 
-  return (
+  return localize((
     <div className="flex min-h-screen flex-col bg-[#f3efe9] pb-24 text-slate-900">
       <SeoHead
         title="GeoAdmin Plans and Annual Reference Pricing | VersoAir"
@@ -38,13 +43,9 @@ export default function Pricing() {
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-12 sm:py-16">
         <div className="grid items-center gap-7 lg:grid-cols-[0.9fr_1.1fr]">
-          <img
-            src="/images/geoadmin-plans.svg"
-            alt="GeoAdmin annual plans and FCFA reference prices"
-            className="h-auto w-full rounded-2xl border border-slate-200 shadow-lg"
-          />
-          <p className="text-xs leading-relaxed text-slate-500 lg:col-start-1">
-            The graphic shows FCFA reference amounts. In available markets,
+          <GeoAdminPromoCard />
+          <p className="text-xs leading-relaxed text-slate-700 lg:col-start-1">
+            The promotional card shows FCFA reference amounts. In available markets,
             plan cards below use the local display currency.
           </p>
           <section>
@@ -60,7 +61,7 @@ export default function Pricing() {
               marked as coming soon.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {GEOADMIN_PLAN_ORDER.map((tier) => (
+              {GEOADMIN_OFFER_ORDER.map((tier) => (
                 <button
                   key={tier}
                   type="button"
@@ -74,15 +75,14 @@ export default function Pricing() {
                       : "border-slate-200"
                   }`}
                 >
-                  <span className="block font-semibold">{TIERS[tier].name}</span>
+                  <span className="block font-semibold">{GEOADMIN_OFFER_NAMES[tier]}</span>
                   <span
                     className="mt-1 block text-lg font-bold text-emerald-800"
-                    translate="no"
                   >
                     {formatAnnualPrice(tier)}
-                    {GEOADMIN_ANNUAL_PRICES_XOF[tier] !== null &&
+                    {GEOADMIN_OFFER_PRICES_XOF[tier] !== null &&
                       marketAvailability !== false && (
-                      <span className="text-sm font-normal text-slate-500">
+                      <span className="text-sm font-normal text-slate-700">
                         {" "}
                         / year
                       </span>
@@ -109,7 +109,7 @@ export default function Pricing() {
               ))}
             </div>
 
-            <p className="mt-4 text-xs leading-relaxed text-slate-500">
+            <p className="mt-4 text-xs leading-relaxed text-slate-700">
               Prices in CAD and EUR are indicative conversions from the FCFA
               reference schedule; the written offer confirms the final amount.
               Availability, deliverables, taxes, and terms are confirmed
@@ -164,23 +164,22 @@ export default function Pricing() {
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {GEOADMIN_PLAN_ORDER.map((tier) => {
-              const annualPrice = GEOADMIN_ANNUAL_PRICES_XOF[tier];
+            {GEOADMIN_OFFER_ORDER.map((tier) => {
+              const annualPrice = GEOADMIN_OFFER_PRICES_XOF[tier];
               return (
                 <article
                   key={tier}
                   className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-xl font-bold">{TIERS[tier].name}</h3>
+                      <h3 className="text-xl font-bold">{GEOADMIN_OFFER_NAMES[tier]}</h3>
                       <p className="mt-1 text-sm text-slate-600">
                         {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
                       </p>
                     </div>
                     <span
                       className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900"
-                      translate="no"
                     >
                       {formatAnnualPrice(tier)}
                       {annualPrice !== null && marketAvailability !== false
@@ -191,7 +190,7 @@ export default function Pricing() {
                   {annualPrice !== null &&
                     annualPrice > 0 &&
                     marketAvailability !== false && (
-                    <p className="mt-3 text-xs text-slate-500">
+                    <p className="mt-3 text-xs text-slate-700">
                       About{" "}
                       <span translate="no">
                         {formatMarketXofPrice(
@@ -205,19 +204,7 @@ export default function Pricing() {
                       monthly billing option.
                     </p>
                   )}
-                  <ul className="mt-5 flex-1 space-y-3 text-sm leading-relaxed text-slate-700">
-                    {GEOADMIN_PLAN_DETAILS[tier].benefits.map((benefit) => (
-                      <li key={benefit} className="flex gap-2">
-                        <span
-                          aria-hidden="true"
-                          className="font-bold text-emerald-700"
-                        >
-                          ✓
-                        </span>
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <GeoAdminOfferDetails offer={tier} />
                   <button
                     type="button"
                     onClick={() => {
@@ -227,7 +214,7 @@ export default function Pricing() {
                     className="mt-6 inline-flex items-center gap-2 font-semibold text-emerald-800 hover:text-emerald-950"
                   >
                     <span>Discuss</span>
-                    <span>{TIERS[tier].name}</span>
+                    <span>{GEOADMIN_OFFER_NAMES[tier]}</span>
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </article>
@@ -251,12 +238,10 @@ export default function Pricing() {
               in writing before purchase.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
-              The Free plan competes with free business directories. Essential
-              is intended as a paid, enhanced listing; Pro Verified adds
-              verification and stronger business insights; Pro Max is the
-              highest visibility and campaign-planning tier. These are different
-              levels of directory visibility—not a promise that every
-              competitor or market offers the same service.
+              Standard is the basic directory offer. Essentiel proposes initial
+              setup. Premium adds proposed content preparation on request,
+              not additional account permissions. Pro Vérifié and Pro Max have
+              separate proposed scopes; no ranking or commercial result is guaranteed.
             </p>
           </article>
           <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
@@ -264,11 +249,11 @@ export default function Pricing() {
               Platform access vs. managed service
             </h2>
             <p className="mt-3 leading-relaxed text-slate-600">
-              A subscription describes access to the listing, visibility, and
-              tools shown above. Work performed for you—such as profile setup,
-              content production, campaign execution, or ongoing community
-              management—is not automatically included unless it is explicitly
-              listed in your written proposal.
+              Platform scope and services are presented separately. All
+              availability, deliverables and service volumes require written
+              confirmation. Premium is a commercial inquiry, not a new
+              subscription entitlement. No managed social campaign or
+              advertising spend is included automatically.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
               If you want hands-on support, choose the relevant priorities in
@@ -294,5 +279,5 @@ export default function Pricing() {
       </main>
       <ScrollToTop />
     </div>
-  );
+  ));
 }

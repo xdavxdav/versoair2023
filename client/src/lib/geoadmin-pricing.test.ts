@@ -2,12 +2,56 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   GEOADMIN_ANNUAL_PRICES_XOF,
+  GEOADMIN_OFFER_ORDER,
+  GEOADMIN_OFFER_NAMES,
+  GEOADMIN_OFFER_PRICES_XOF,
+  GEOADMIN_PLAN_ORDER,
+  GEOADMIN_PLAN_DETAILS,
+  GEOADMIN_REFERENCE_NOTICE,
   convertUsdToCurrency,
   formatMarketXofPrice,
   formatXofPrice,
   getGeoAdminMarket,
   getMarketAvailability,
 } from "./geoadmin-pricing.ts";
+import { TIERS, TIER_ORDER, TIER_FEATURES } from "./tiers.ts";
+import { getPublicCopyId } from "../../../shared/public-translations.ts";
+
+test("six commercial offers do not create a Premium entitlement or account tier", () => {
+  assert.deepEqual(GEOADMIN_OFFER_ORDER, ["free", "essential", "premium", "verified", "max", "enterprise"]);
+  assert.deepEqual(GEOADMIN_OFFER_ORDER.map(key => GEOADMIN_OFFER_NAMES[key]),
+    ["Standard", "Essentiel", "Premium", "Pro Vérifié", "Pro Max", "Enterprise"]);
+  assert.deepEqual(GEOADMIN_OFFER_PRICES_XOF,
+    { free: 0, essential: 180_000, premium: 300_000, verified: 400_000, max: 780_000, enterprise: null });
+  assert.deepEqual(GEOADMIN_PLAN_ORDER, TIER_ORDER);
+  assert.equal("premium" in TIERS, false);
+  assert.equal("premium" in TIER_FEATURES, false);
+  assert.equal("premium" in GEOADMIN_ANNUAL_PRICES_XOF, false);
+});
+
+test("Premium has concrete proposed services unlike Essentiel, and Enterprise is individually scoped", () => {
+  assert.notDeepEqual(GEOADMIN_PLAN_DETAILS.premium.services, GEOADMIN_PLAN_DETAILS.essential.services);
+  assert.equal(GEOADMIN_PLAN_DETAILS.premium.services.length, 5);
+  assert.ok(GEOADMIN_PLAN_DETAILS.premium.services.includes("Preparation of five product or service sheets"));
+  assert.ok(GEOADMIN_PLAN_DETAILS.premium.services.includes("One round of corrections"));
+  assert.ok(GEOADMIN_PLAN_DETAILS.enterprise.services.includes("No automatic entitlement to every Pro Max service"));
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /Non-final annual reference/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /written offer/);
+});
+
+test("every proposed commercial benefit has a native translation", () => {
+  for (const detail of Object.values(GEOADMIN_PLAN_DETAILS)) {
+    for (const text of [detail.shortDescription, ...detail.platform, ...detail.services]) {
+      assert.notEqual(getPublicCopyId(text), undefined, text);
+    }
+  }
+});
+
+test("Enterprise custom quote does not depend on exchange-rate availability", () => {
+  assert.equal(formatMarketXofPrice(null, "CA", "CAD", null), "Custom quote");
+  assert.equal(formatMarketXofPrice(null, "FR", "EUR", null), "Custom quote");
+  assert.equal(formatMarketXofPrice(null, "SN", "XOF", null), "Coming soon");
+});
 
 test("uses the approved annual FCFA price schedule", () => {
   assert.deepEqual(GEOADMIN_ANNUAL_PRICES_XOF, {

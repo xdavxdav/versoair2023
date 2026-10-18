@@ -65,6 +65,11 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (!match || !userId) return;
+    if (!me) {
+      setLoading(false);
+      setProfile(null);
+      return;
+    }
 
     let cancelled = false;
     setLoading(true);
@@ -85,7 +90,7 @@ export default function UserProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [match, userId]);
+  }, [match, userId, me?.id]);
 
   // Fetch tab data when activeTab changes
   useEffect(() => {
@@ -233,7 +238,7 @@ export default function UserProfilePage() {
         <div className="text-center space-y-4">
           <User className="w-16 h-16 text-slate-600 mx-auto" />
           <h2 className="text-slate-900 text-xl font-bold">User not found</h2>
-          <p className="text-slate-400">
+          <p className="text-slate-700">
             This profile doesn&apos;t exist or was removed.
           </p>
           <Link href="/">
@@ -296,24 +301,24 @@ export default function UserProfilePage() {
               <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
                 {profile.name}
               </h1>
-              <p className="text-slate-400 text-sm mb-3">@{profile.username}</p>
+              <p className="text-slate-700 text-sm mb-3">@{profile.username}</p>
 
               {profile.bio && (
-                <p className="text-slate-300 text-sm mb-4 max-w-xl">
+                <p className="text-slate-700 text-sm mb-4 max-w-xl">
                   {profile.bio}
                 </p>
               )}
 
               <div className="flex flex-wrap gap-2 mb-4">
                 {profile.isArtist && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-violet-500/20 border border-violet-500/30 text-violet-300">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-violet-500/20 border border-violet-500/30 text-violet-700">
                     <Music className="w-3 h-3" /> Artist
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-slate-300">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-slate-700">
                   {profile.role}
                 </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-slate-300">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-slate-700">
                   <Calendar className="w-3 h-3" />
                   Joined{" "}
                   {profile.joinedAt
@@ -322,7 +327,7 @@ export default function UserProfilePage() {
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-5">
+              <div className="flex flex-wrap gap-4 text-sm text-slate-700 mb-5">
                 {profile.location && (
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" /> {profile.location}
@@ -333,7 +338,7 @@ export default function UserProfilePage() {
                     href={profile.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors"
+                    className="flex items-center gap-1 text-amber-800 hover:text-amber-800 transition-colors"
                   >
                     <LinkIcon className="w-3.5 h-3.5" /> Website
                   </a>
@@ -387,11 +392,11 @@ export default function UserProfilePage() {
                 key={stat.label}
                 className="bg-white/[0.03] backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center hover:border-amber-500/30 transition-colors"
               >
-                <Icon className="w-4 h-4 text-amber-500 mx-auto mb-2" />
+                <Icon className="w-4 h-4 text-amber-800 mx-auto mb-2" />
                 <p className="text-lg font-bold text-slate-900">
                   {formatCompact(stat.value)}
                 </p>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider">
+                <p className="text-[10px] text-slate-700 uppercase tracking-wider">
                   {stat.label}
                 </p>
               </div>
@@ -413,8 +418,8 @@ export default function UserProfilePage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-                    : "text-slate-400 hover:text-slate-900 hover:bg-white/5"
+                    ? "bg-amber-500/15 text-amber-800 border border-amber-500/20"
+                    : "text-slate-700 hover:text-slate-900 hover:bg-white/5"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -432,12 +437,12 @@ export default function UserProfilePage() {
         >
           {tabLoading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+              <Loader2 className="w-6 h-6 text-amber-800 animate-spin" />
             </div>
           ) : activeTab === "overview" ? (
             <div className="space-y-4">
               <h3 className="text-slate-900 font-semibold">About</h3>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-700 text-sm">
                 {profile.bio || "No bio yet."}
               </p>
               {tracks.length > 0 && profile.isArtist && (
@@ -464,18 +469,18 @@ export default function UserProfilePage() {
                           }}
                         />
                       ) : (
-                        <Music className="w-5 h-5 text-amber-500/50" />
+                        <Music className="w-5 h-5 text-amber-800" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-slate-900 text-sm font-medium truncate">
                         {tracks[0].title}
                       </p>
-                      <p className="text-slate-500 text-xs">
+                      <p className="text-slate-700 text-xs">
                         {tracks[0].genre || "Music"}
                       </p>
                     </div>
-                    <Play className="w-4 h-4 text-amber-500" />
+                    <Play className="w-4 h-4 text-amber-800" />
                   </motion.div>
                 </>
               )}
@@ -484,7 +489,7 @@ export default function UserProfilePage() {
             tracks.length === 0 ? (
               <div className="text-center py-12">
                 <Music className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-700 text-sm">
                   No tracks published yet.
                 </p>
               </div>
@@ -514,25 +519,25 @@ export default function UserProfilePage() {
                           }}
                         />
                       ) : (
-                        <Music className="w-6 h-6 text-amber-500/50" />
+                        <Music className="w-6 h-6 text-amber-800" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-slate-900 font-medium text-sm truncate group-hover:text-amber-400 transition-colors">
+                      <h4 className="text-slate-900 font-medium text-sm truncate group-hover:text-amber-800 transition-colors">
                         {track.title}
                       </h4>
-                      <p className="text-slate-500 text-xs">
+                      <p className="text-slate-700 text-xs">
                         {track.genre || "Music"} · {track.playCount || 0} plays
                       </p>
                     </div>
-                    <div className="text-slate-500 text-xs shrink-0">
+                    <div className="text-slate-700 text-xs shrink-0">
                       {track.duration
                         ? `${Math.floor(track.duration / 60)}:${String(
                             track.duration % 60,
                           ).padStart(2, "0")}`
                         : "--:--"}
                     </div>
-                    <Play className="w-4 h-4 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Play className="w-4 h-4 text-amber-800 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </motion.div>
                 ))}
               </div>
@@ -541,7 +546,7 @@ export default function UserProfilePage() {
             posts.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm">No posts yet.</p>
+                <p className="text-slate-700 text-sm">No posts yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -574,7 +579,7 @@ export default function UserProfilePage() {
                         <p className="text-slate-900 text-sm font-medium truncate">
                           {profile?.name}
                         </p>
-                        <p className="text-slate-500 text-[11px]">
+                        <p className="text-slate-700 text-[11px]">
                           {new Date(post.createdAt).toLocaleDateString(
                             "en-US",
                             {
@@ -586,7 +591,7 @@ export default function UserProfilePage() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">
+                    <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
                       {post.content}
                     </p>
                     {post.mediaUrl && (
@@ -604,22 +609,22 @@ export default function UserProfilePage() {
                     )}
                     {post.track && (
                       <div className="mt-3 p-3 rounded-lg bg-white/[0.05] border border-amber-500/20 flex items-center gap-3">
-                        <Music className="w-5 h-5 text-amber-500 shrink-0" />
+                        <Music className="w-5 h-5 text-amber-800 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-slate-900 text-sm font-medium truncate">
                             {post.track.title}
                           </p>
-                          <p className="text-slate-500 text-xs">
+                          <p className="text-slate-700 text-xs">
                             Attached Track
                           </p>
                         </div>
                       </div>
                     )}
                     <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5">
-                      <span className="text-slate-500 text-xs flex items-center gap-1.5">
+                      <span className="text-slate-700 text-xs flex items-center gap-1.5">
                         <Heart className="w-3.5 h-3.5" /> {post.likeCount || 0}
                       </span>
-                      <span className="text-slate-500 text-xs flex items-center gap-1.5">
+                      <span className="text-slate-700 text-xs flex items-center gap-1.5">
                         <MessageCircle className="w-3.5 h-3.5" />
                         {post.commentCount || 0}
                       </span>

@@ -177,7 +177,7 @@ export default function Partners() {
   return (
     <div className="flex flex-col min-h-screen bg-white overflow-x-hidden">
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900">
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-950 to-slate-50">
         {/* animated grid background */}
         <div
           className="absolute inset-0 opacity-10"
@@ -196,7 +196,7 @@ export default function Partners() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-semibold mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-700 text-sm font-semibold mb-6"
           >
             <Handshake className="w-4 h-4" />
             Partnership Program
@@ -209,7 +209,7 @@ export default function Partners() {
             className="text-5xl sm:text-6xl md:text-7xl font-black text-slate-900 mb-6 leading-tight"
           >
             Explore Future Collaboration{" "}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-slate-50 to-teal-300 bg-clip-text text-transparent">
               with vHeartz
             </span>
           </motion.h1>
@@ -218,7 +218,7 @@ export default function Partners() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.25 }}
-            className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed"
+            className="text-lg md:text-xl text-slate-700 max-w-3xl mx-auto mb-10 leading-relaxed"
           >
             <span className="notranslate">vHeartz</span> is a future cultural
             and community-focused organization in development. Partnership
@@ -266,12 +266,12 @@ export default function Partners() {
             {STATS.map((s, i) => (
               <motion.div key={i} variants={fadeInUp} className="text-center">
                 <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <s.icon className="w-6 h-6 text-emerald-600" />
+                  <s.icon className="w-6 h-6 text-emerald-700" />
                 </div>
                 <div className="text-3xl font-black text-slate-900">
                   {s.value}
                 </div>
-                <div className="text-sm text-slate-500 mt-1">{s.label}</div>
+                <div className="text-sm text-slate-700 mt-1">{s.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -288,13 +288,13 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-16"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Our Ecosystem
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
               Partnership announcements
             </h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+            <p className="text-slate-700 text-lg max-w-2xl mx-auto">
               No partner organizations or testimonials are published until
               their participation is confirmed.
             </p>
@@ -339,11 +339,11 @@ export default function Partners() {
                       <h3 className="text-base font-black text-slate-900 mb-1">
                         {p.name}
                       </h3>
-                      <div className="flex items-center gap-1 text-slate-400 text-xs mb-3">
+                      <div className="flex items-center gap-1 text-slate-700 text-xs mb-3">
                         <MapPin className="w-3 h-3" />
                         {p.country}
                       </div>
-                      <p className="text-slate-500 text-sm leading-relaxed">
+                      <p className="text-slate-700 text-sm leading-relaxed">
                         {p.desc}
                       </p>
                     </motion.div>
@@ -356,7 +356,7 @@ export default function Partners() {
       </section>
 
       {/* ── TESTIMONIALS ──────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-slate-50 via-emerald-950 to-slate-50 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-5"
           style={{
@@ -373,7 +373,7 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-400 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Partner Voices
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -393,17 +393,17 @@ export default function Partners() {
                 key={i}
                 variants={fadeInUp}
                 whileHover={{ y: -6 }}
-                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-emerald-500/30 transition-all"
+                className="bg-white/5 backdrop-blur-md border border-slate-200 rounded-2xl p-6 hover:border-emerald-500/30 transition-all"
               >
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, j) => (
                     <Star
                       key={j}
-                      className="w-4 h-4 fill-amber-400 text-amber-600"
+                      className="w-4 h-4 fill-amber-400 text-amber-800"
                     />
                   ))}
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed mb-6 italic">
+                <p className="text-slate-700 text-sm leading-relaxed mb-6 italic">
                   "{t.quote}"
                 </p>
                 <div className="flex items-center gap-3">
@@ -416,7 +416,7 @@ export default function Partners() {
                     <div className="font-bold text-slate-900 text-sm">
                       {t.author}
                     </div>
-                    <div className="text-emerald-400 text-xs">
+                    <div className="text-emerald-700 text-xs">
                       {t.role} · {t.org}
                     </div>
                   </div>
@@ -437,13 +437,13 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Why Partner With Us
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
               Partnership Benefits
             </h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+            <p className="text-slate-700 text-lg max-w-2xl mx-auto">
               Every partnership is built for mutual impact — tangible results
               for your brand and real change for communities.
             </p>
@@ -471,7 +471,7 @@ export default function Partners() {
                 <h3 className="text-base font-black text-slate-900 mb-2">
                   {b.title}
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
+                <p className="text-slate-700 text-sm leading-relaxed">
                   {b.desc}
                 </p>
               </motion.div>
@@ -493,13 +493,13 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Tiers & Pricing
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
               Choose Your Partnership Level
             </h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+            <p className="text-slate-700 text-lg max-w-2xl mx-auto">
               Flexible tiers designed for organisations of all sizes, from local
               businesses to global institutions.
             </p>
@@ -539,7 +539,7 @@ export default function Partners() {
                         key={j}
                         className="flex items-start gap-2 text-sm text-slate-600"
                       >
-                        <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
                         {perk}
                       </li>
                     ))}

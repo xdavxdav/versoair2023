@@ -236,6 +236,7 @@ export default function Logement() {
   const { data: analytics, isError: analyticsUnavailable } = useQuery({
     queryKey: ["logement-analytics"],
     queryFn: fetchLogementAnalytics,
+    enabled: false, // Sector financial analytics are not available from a public API.
     refetchInterval: autoRefresh ? 300000 : false,
     staleTime: 60000,
   });
@@ -343,36 +344,36 @@ export default function Logement() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-cyan-900 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#f3efe9] via-[#f3efe9] to-[#f3efe9] text-slate-900">
 
       <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20 mb-12">
-        <Card className="bg-gradient-to-br from-slate-800/90 to-cyan-900/90 backdrop-blur-md border-cyan-700 shadow-2xl">
+        <Card className="bg-gradient-to-br from-slate-50 to-cyan-50 backdrop-blur-md border-cyan-700 shadow-2xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-700" />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search properties, apartments, villas..."
-                  className="pl-12 bg-slate-800/50 border-cyan-600 text-white placeholder-cyan-300/60"
+                  className="pl-12 bg-white border-cyan-600 text-slate-900 placeholder-slate-600"
                 />
               </div>
 
               <div className="relative flex-1 w-full">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-400" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-700" />
                 <Input
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="City, region..."
-                  className="pl-12 bg-slate-800/50 border-cyan-600 text-white placeholder-cyan-300/60"
+                  className="pl-12 bg-white border-cyan-600 text-slate-900 placeholder-slate-600"
                 />
               </div>
 
               {isSearching && (
-                <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-cyan-700" />
               )}
             </div>
 
@@ -386,7 +387,7 @@ export default function Logement() {
                 {showFilters ? "Hide Filters" : "Advanced Filters"}
               </Button>
 
-              <div className="text-sm text-cyan-300">
+              <div className="text-sm text-cyan-700">
                 {totalResults.toLocaleString()} results
               </div>
             </div>
@@ -398,16 +399,16 @@ export default function Logement() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-800/50 rounded-lg border border-cyan-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-white rounded-lg border border-cyan-700">
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                    <Label className="text-sm font-medium mb-2 block text-cyan-700">
                       Property Type
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="border-cyan-600 bg-slate-700 hover:bg-slate-600 w-full justify-between"
+                          className="border-cyan-600 bg-white hover:bg-slate-600 w-full justify-between"
                         >
                           <span className="text-sm">
                             {propertyTypeOptions.find(
@@ -417,7 +418,7 @@ export default function Logement() {
                           <ChevronDown className="h-4 w-4 opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-slate-800 border-cyan-600">
+                      <DropdownMenuContent className="text-slate-900 bg-white border-cyan-600">
                         <DropdownMenuItem
                           onClick={() =>
                             setActiveFilters({
@@ -426,7 +427,7 @@ export default function Logement() {
                             })
                           }
                         >
-                          <span className="text-cyan-200">All Types</span>
+                          <span className="text-cyan-700">All Types</span>
                         </DropdownMenuItem>
                         {propertyTypeOptions.map((type) => (
                           <DropdownMenuItem
@@ -441,7 +442,7 @@ export default function Logement() {
                             {activeFilters.propertyType === type.value && (
                               <Check className="h-4 w-4 mr-2" />
                             )}
-                            <span className="text-cyan-200">{type.label}</span>
+                            <span className="text-cyan-700">{type.label}</span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -449,7 +450,7 @@ export default function Logement() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                    <Label className="text-sm font-medium mb-2 block text-cyan-700">
                       Min Price
                     </Label>
                     <Input
@@ -462,12 +463,12 @@ export default function Logement() {
                         })
                       }
                       placeholder="Min price"
-                      className="bg-slate-700 border-cyan-600"
+                      className="bg-white border-cyan-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                    <Label className="text-sm font-medium mb-2 block text-cyan-700">
                       Max Price
                     </Label>
                     <Input
@@ -480,12 +481,12 @@ export default function Logement() {
                         })
                       }
                       placeholder="Max price"
-                      className="bg-slate-700 border-cyan-600"
+                      className="bg-white border-cyan-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-cyan-300">
+                    <Label className="text-sm font-medium mb-2 block text-cyan-700">
                       Min Rating
                     </Label>
                     <Input
@@ -501,7 +502,7 @@ export default function Logement() {
                         })
                       }
                       placeholder="0-5"
-                      className="bg-slate-700 border-cyan-600"
+                      className="bg-white border-cyan-600"
                     />
                   </div>
 
@@ -604,14 +605,14 @@ export default function Logement() {
           <div>
             {isInitialLoading ? (
               <div className="text-center py-12">
-                <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto" />
-                <p className="text-cyan-200 mt-4">Loading properties...</p>
+                <Loader2 className="w-12 h-12 text-cyan-700 animate-spin mx-auto" />
+                <p className="text-cyan-700 mt-4">Loading properties...</p>
               </div>
             ) : searchResults.length > 0 ? (
               <div>
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                  <Home className="h-6 w-6 text-cyan-400" />
-                  <span className="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">
+                  <Home className="h-6 w-6 text-cyan-700" />
+                  <span className="bg-gradient-to-r from-slate-50 to-teal-400 bg-clip-text text-transparent">
                     Properties ({searchResults.length})
                   </span>
                 </h2>
@@ -624,7 +625,7 @@ export default function Logement() {
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-cyan-500/30 cursor-pointer group"
+                        className="bg-gradient-to-br from-slate-50 to-slate-50 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-cyan-500/30 cursor-pointer group"
                         onClick={() => {
                           setSelectedBusiness(property);
                           setShowBusinessDetails(true);
@@ -633,21 +634,21 @@ export default function Logement() {
                         <div className="h-2 bg-gradient-to-r from-cyan-600 to-teal-600" />
                         <div className="p-6">
                           <div className="flex items-center justify-between mb-2">
-                            <Badge className="bg-cyan-900/60 text-cyan-300 border-cyan-600 text-xs capitalize">
+                            <Badge className="bg-cyan-50 text-cyan-700 border-cyan-600 text-xs capitalize">
                               {property.type || "property"}
                             </Badge>
                             {property.verified && (
-                              <Badge className="bg-green-900/60 text-green-300 border-green-600 text-xs">
+                              <Badge className="bg-green-50 text-green-700 border-green-600 text-xs">
                                 <CheckCircle className="h-3 w-3 mr-1" />{" "}
                                 Verified
                               </Badge>
                             )}
                           </div>
-                          <h4 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors mb-2 line-clamp-1">
+                          <h4 className="text-lg font-bold text-slate-900 group-hover:text-cyan-700 transition-colors mb-2 line-clamp-1">
                             {property.name}
                           </h4>
-                          <div className="flex items-center gap-2 text-gray-400 mb-2">
-                            <MapPin className="h-4 w-4 text-cyan-500" />
+                          <div className="flex items-center gap-2 text-slate-700 mb-2">
+                            <MapPin className="h-4 w-4 text-cyan-700" />
                             <span className="text-sm font-medium">
                               {property.city}
                               {property.location
@@ -655,44 +656,44 @@ export default function Logement() {
                                 : ""}
                             </span>
                           </div>
-                          <p className="text-gray-300 text-sm mb-3 line-clamp-2">
+                          <p className="text-slate-700 text-sm mb-3 line-clamp-2">
                             {property.description}
                           </p>
                           <div className="flex flex-wrap gap-2 mb-3">
                             {property.bedrooms > 0 && (
-                              <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-600 text-xs">
+                              <Badge className="bg-cyan-500/20 text-cyan-700 border-cyan-600 text-xs">
                                 <Home className="h-3 w-3 mr-1" />{" "}
                                 {property.bedrooms} bed
                                 {property.bedrooms > 1 ? "s" : ""}
                               </Badge>
                             )}
                             {property.bathrooms > 0 && (
-                              <Badge className="bg-teal-500/20 text-teal-300 border-teal-600 text-xs">
+                              <Badge className="bg-teal-500/20 text-teal-700 border-teal-600 text-xs">
                                 🚿 {property.bathrooms} bath
                                 {property.bathrooms > 1 ? "s" : ""}
                               </Badge>
                             )}
                             {property.area > 0 && (
-                              <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-600 text-xs">
+                              <Badge className="bg-indigo-500/20 text-indigo-700 border-indigo-600 text-xs">
                                 📐 {property.area} m²
                               </Badge>
                             )}
                             {property.rating && Number(property.rating) > 0 && (
-                              <Badge className="bg-amber-500/20 text-amber-300 border-amber-600 text-xs">
+                              <Badge className="bg-amber-500/20 text-amber-800 border-amber-600 text-xs">
                                 <Star className="h-3 w-3 mr-1" />{" "}
                                 {Number(property.rating).toFixed(1)}
                               </Badge>
                             )}
                           </div>
                           <div className="flex items-center justify-between">
-                            <div className="text-cyan-300 font-bold text-lg">
+                            <div className="text-cyan-700 font-bold text-lg">
                               {Number(property.price).toLocaleString()}{" "}
-                              <span className="text-xs text-gray-400 font-normal">
+                              <span className="text-xs text-slate-700 font-normal">
                                 XOF
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1 bg-cyan-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                              <div className="flex items-center gap-1 bg-cyan-50 text-yellow-800 px-2 py-1 rounded text-sm">
                                 <Star className="h-3 w-3 fill-current" />
                                 <span className="font-bold">
                                   {Number(property.rating).toFixed(1)}
@@ -720,11 +721,11 @@ export default function Logement() {
               </div>
             ) : hasSearched ? (
               <div className="text-center py-12">
-                <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                <Search className="h-16 w-16 mx-auto text-slate-700 mb-4" />
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">
                   No properties found
                 </h3>
-                <p className="text-gray-400 mb-6">Try a different search</p>
+                <p className="text-slate-700 mb-6">Try a different search</p>
                 <Button
                   onClick={clearAllFilters}
                   className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700"
@@ -734,11 +735,11 @@ export default function Logement() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Home className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                <Home className="h-16 w-16 mx-auto text-slate-700 mb-4" />
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">
                   Explore properties
                 </h3>
-                <p className="text-gray-400">
+                <p className="text-slate-700">
                   Search for real estate listings in your area
                 </p>
               </div>
@@ -747,16 +748,16 @@ export default function Logement() {
         )}
 
         {activeTab === "finance" && (
-          <div className="text-center py-12 text-gray-300">
-            <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+          <div className="text-center py-12 text-slate-700">
+            <BarChart3 className="h-16 w-16 mx-auto mb-4 text-slate-700" />
             <p>Financial overview coming soon</p>
           </div>
         )}
 
         {activeTab === "database" && (
           <div className="text-center py-12">
-            <Database className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-300">
+            <Database className="h-16 w-16 mx-auto mb-4 text-slate-700" />
+            <p className="text-slate-700">
               Database Status:{" "}
               {databaseConnected ? "✅ Connected" : "❌ Offline"}
             </p>
@@ -766,31 +767,31 @@ export default function Logement() {
 
       {/* ─── Premium CTA: Immobilier Portal ──────────────────────────── */}
       <div className="max-w-[95vw] mx-auto px-4 pb-12">
-        <Card className="bg-gradient-to-r from-emerald-900/40 via-teal-900/30 to-amber-900/30 border-emerald-500/20 overflow-hidden relative">
+        <Card className="bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50 border-emerald-500/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="p-8 relative">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="flex-shrink-0 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20">
-                <Home className="h-10 w-10 text-emerald-400" />
+                <Home className="h-10 w-10 text-emerald-700" />
               </div>
               <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                  <h3 className="text-xl font-bold text-white">
+                  <h3 className="text-xl font-bold text-slate-900">
                     Vous avez un bien à vendre ou louer ?
                   </h3>
-                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
+                  <Badge className="bg-amber-500/20 text-amber-800 border-amber-500/30 text-xs">
                     <Crown className="h-3 w-3 mr-1" />
                     Premium
                   </Badge>
                 </div>
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-700 text-sm">
                   Accédez au Portail Immobilier et publiez vos offres pour
                   trouver des locataires et acheteurs qualifiés en Côte
                   d'Ivoire.
                 </p>
               </div>
               <a href="/geo-admin/immobilier">
-                <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-3 gap-2 whitespace-nowrap">
+                <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-slate-900 px-8 py-3 gap-2 whitespace-nowrap">
                   <Sparkles className="h-4 w-4" />
                   Portail Immobilier →
                 </Button>

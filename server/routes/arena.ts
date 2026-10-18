@@ -33,7 +33,10 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 
 const ROUND_NAMES = [
   "Round of 16",
@@ -122,7 +125,7 @@ router.get("/active", async (_req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /:id — Contest detail + all bracket entries
 // ═══════════════════════════════════════════════════════════════════════════════
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id(\\d+)", async (req: Request, res: Response) => {
   try {
     const contestId = parseInt(req.params.id);
 

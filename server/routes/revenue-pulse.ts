@@ -219,26 +219,22 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get("/pool", async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query(
-      `SELECT wp.*,
-        (SELECT COUNT(DISTINCT artist_profile_id) FROM artist_royalties WHERE pool_id = wp.id) as artists_paid,
-        (SELECT COALESCE(SUM(amount), 0) FROM artist_royalties WHERE pool_id = wp.id) as total_distributed
-       FROM weekly_pools wp
-       ORDER BY wp.week_start DESC
-       LIMIT 5`,
-    );
-
-    res.json({
-      success: true,
-      pools: result.rows.map((p: any) => ({
-        ...p,
-        splitBreakdown: {
-          guaranteed: (parseFloat(p.total_amount || "0") * 0.2).toFixed(2),
-          performance: (parseFloat(p.total_amount || "0") * 0.7).toFixed(2),
-          platform: (parseFloat(p.total_amount || "0") * 0.1).toFixed(2),
-        },
-      })),
+    const result = await pool.query("SELECT * FROM weekly_pools ORDER BY created_at DESC LIMIT 5");
+    const pools = result.rows.map((row: any) => {
+      const total = Number(row.total_pool ?? row.total_amount ?? 0);
+      return {
+        weekNumber: row.week_number,
+        yearNumber: row.year_number,
+        totalPool: String(total),
+        guaranteedPool: String(row.guaranteed_fund ?? total * 0.2),
+        performancePool: String(row.performance_pool ?? total * 0.7),
+        platformPool: String(row.platform_cut ?? total * 0.1),
+        totalStreams: Number(row.total_streams ?? 0),
+        totalArtists: Number(row.qualifying_artists ?? 0),
+        status: row.status,
+      };
     });
+    res.json({ success: true, pools, pool: pools.find(row => row.status === "active") || pools[0] || null });
   } catch (err: any) {
     console.error("[REVENUE PULSE] Pool error:", err);
     res.status(500).json({ success: false, error: "Failed to fetch pool" });
@@ -330,44 +326,25 @@ router.get("/my-impact", requireAuth(), async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get("/leaderboard", async (req: Request, res: Response) => {
   try {
-    const { limit = "25" } = req.query as Record<string, string>;
-    const limitNum = Math.min(100, parseInt(limit) || 25);
-
+    const limit = Math.max(1, Math.min(100, parseInt(String(req.query.limit), 10) || 25));
     const result = await pool.query(
-      `SELECT ap.id, ap.stage_name, ap.badge_level, ap.profile_image_url,
-        ap.total_streams as lifetime_streams,
-        ap.total_earnings,
-        COUNT(se.id) as weekly_streams,
-        RANK() OVER (ORDER BY COUNT(se.id) DESC) as rank
+      `SELECT ap.id AS "artistProfileId", ap.stage_name AS "stageName",
+              ap.profile_image_url AS "profileImageUrl", ap.division,
+              COALESCE((to_jsonb(ap)->>'current_badge_tier')::int, 0) AS "badgeTier",
+              COUNT(se.id)::int AS streams,
+              COUNT(se.id)::int AS "impactScore",
+              RANK() OVER (ORDER BY COUNT(se.id) DESC)::int AS rank
        FROM artist_profiles ap
-       LEFT JOIN stream_events se ON se.artist_profile_id = ap.id AND se.completed = true
+       LEFT JOIN stream_events se ON se.artist_profile_id = ap.id
+         AND COALESCE((to_jsonb(se)->>'completed')::boolean, (to_jsonb(se)->>'is_valid')::boolean, false)
          AND se.created_at >= NOW() - INTERVAL '7 days'
-       GROUP BY ap.id
-       HAVING COUNT(se.id) > 0
-       ORDER BY weekly_streams DESC
-       LIMIT $1`,
-      [limitNum],
+       GROUP BY ap.id HAVING COUNT(se.id) > 0
+       ORDER BY streams DESC LIMIT $1`, [limit],
     );
-
-    res.json({
-      success: true,
-      leaderboard: result.rows.map((a: any) => {
-        const badge =
-          BADGE_THRESHOLDS.find((b) => b.badge === a.badge_level) ||
-          BADGE_THRESHOLDS[0];
-        return {
-          ...a,
-          badgeIcon: badge.icon,
-          badgeColor: badge.color,
-          bonusPercentage: badge.bonusPct,
-        };
-      }),
-    });
+    res.json({ success: true, leaderboard: result.rows });
   } catch (err: any) {
     console.error("[REVENUE PULSE] Leaderboard error:", err);
-    res
-      .status(500)
-      .json({ success: false, error: "Failed to fetch leaderboard" });
+    res.status(500).json({ success: false, error: "Failed to fetch leaderboard" });
   }
 });
 

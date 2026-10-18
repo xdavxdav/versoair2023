@@ -200,7 +200,8 @@ export function Tickets() {
 
   // Fetch all tickets
   const { data: ticketsData, isLoading: ticketsLoading } = useQuery<Ticket[]>({
-    queryKey: ["tickets"],
+    queryKey: ["tickets", user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const res = await authenticatedFetch("/api/tickets");
       if (!res.ok) throw new Error("Failed to fetch tickets");
@@ -210,7 +211,8 @@ export function Tickets() {
 
   // Fetch ticket stats
   const { data: statsData } = useQuery<TicketStats>({
-    queryKey: ["ticket-stats"],
+    queryKey: ["ticket-stats", user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const res = await authenticatedFetch("/api/tickets/stats/summary");
       if (!res.ok) throw new Error("Failed to fetch stats");

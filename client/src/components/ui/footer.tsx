@@ -62,7 +62,7 @@ export default function Footer() {
           </nav>
         </div>
       </div>
-      <p className="pb-6 text-center text-xs text-slate-500">
+      <p className="pb-6 text-center text-xs text-slate-600">
         © {new Date().getFullYear()} VERSO AIR INC. Tous droits réservés.
       </p>
     </footer>

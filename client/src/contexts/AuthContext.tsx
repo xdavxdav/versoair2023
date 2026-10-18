@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(data.token ?? null);
           if (data.token) setAuthToken(data.token);
           localStorage.setItem(USER_CACHE_KEY, JSON.stringify(normalized));
-        } else if (response.status === 401) {
+        } else if (data.authenticated === false) {
           // Definitive unauthenticated response — safe to clear
           clearSession();
         }

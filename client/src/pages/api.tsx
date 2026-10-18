@@ -42,15 +42,15 @@ export default function APIDocumentation() {
     },
     {
       method: "GET",
-      endpoint: "/api/v1/businesses",
+      endpoint: "/api/businesses",
       description: "List all businesses with pagination",
-      fullUrl: `${API_BASE_URL}/api/v1/businesses?page=1&limit=10`,
+      fullUrl: `${API_BASE_URL}/api/businesses?page=1&limit=10`,
     },
     {
       method: "GET",
-      endpoint: "/api/v1/categories",
+      endpoint: "/api/categories",
       description: "Get all business categories",
-      fullUrl: `${API_BASE_URL}/api/v1/categories`,
+      fullUrl: `${API_BASE_URL}/api/categories`,
     },
   ];
 

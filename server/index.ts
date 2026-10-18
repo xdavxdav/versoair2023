@@ -149,19 +149,15 @@ if (!isDev) {
             "'unsafe-inline'",
             "https://www.googletagmanager.com",
             "https://static.klaviyo.com",
+            "https://static-tracking.klaviyo.com",
+            "https://www.google-analytics.com",
             "https://cdn.jsdelivr.net",
-            // Google Translate engine scripts
-            "https://translate.google.com",
-            "https://translate.googleapis.com",
-            "https://translate-pa.googleapis.com",
             "https://www.gstatic.com",
           ],
           styleSrc: [
             "'self'",
             "'unsafe-inline'",
             "https://fonts.googleapis.com",
-            // Google Translate injects inline styles + sheets
-            "https://translate.googleapis.com",
             "https://www.gstatic.com",
           ],
           imgSrc: ["'self'", "data:", "https:", "blob:"],
@@ -170,13 +166,13 @@ if (!isDev) {
             "ws:",
             "wss:",
             "https:",
-            // Google Translate API calls
-            "https://translate.googleapis.com",
-            "https://translate-pa.googleapis.com",
           ],
           fontSrc: ["'self'", "https://fonts.gstatic.com", "https:", "data:"],
-          // Google Translate needs iframes for inter-frame communication
-          frameSrc: ["https://translate.google.com", "https://www.gstatic.com"],
+          frameSrc: [
+            "'self'",
+            "https://www.gstatic.com",
+          ],
+          mediaSrc: ["'self'", "data:", "blob:", "https://videos.pexels.com"],
         },
       },
       hsts: {

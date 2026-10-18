@@ -297,10 +297,10 @@ export default function ImmobilierPortal() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-emerald-950 to-[#efe7dd] items-center justify-center">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd] items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Vérification de l'accès…</p>
+          <Loader2 className="h-8 w-8 text-emerald-700 animate-spin mx-auto mb-3" />
+          <p className="text-slate-700 text-sm">Vérification de l'accès…</p>
         </div>
       </div>
     );
@@ -329,7 +329,7 @@ export default function ImmobilierPortal() {
   const verifiedCount = myListings.filter((p) => p.verified).length;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-emerald-950 to-[#efe7dd] text-slate-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd] text-slate-900">
       {/* ─── Premium Header ────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 via-teal-600/10 to-amber-600/20" />
@@ -341,7 +341,7 @@ export default function ImmobilierPortal() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-400 hover:text-slate-900 mb-4"
+              className="text-slate-700 hover:text-slate-900 mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour au Geo Admin
@@ -356,15 +356,15 @@ export default function ImmobilierPortal() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold flex items-center gap-2">
-                    <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-400 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-slate-900 via-teal-300 to-slate-900 bg-clip-text text-transparent">
                       Portail Immobilier
                     </span>
-                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
+                    <Badge className="bg-amber-500/20 text-amber-800 border-amber-500/30 text-xs">
                       <Crown className="h-3 w-3 mr-1" />
                       Premium
                     </Badge>
                   </h1>
-                  <p className="text-slate-400 text-sm mt-1">
+                  <p className="text-slate-700 text-sm mt-1">
                     Gérez vos biens, trouvez des locataires, vendez vos
                     propriétés
                   </p>
@@ -374,12 +374,12 @@ export default function ImmobilierPortal() {
 
             <div className="flex items-center gap-3">
               {user && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
-                  <BadgeCheck className="h-4 w-4 text-emerald-400" />
-                  <span className="text-sm text-slate-300">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-slate-200">
+                  <BadgeCheck className="h-4 w-4 text-emerald-700" />
+                  <span className="text-sm text-slate-700">
                     {user.name || user.email}
                   </span>
-                  <Badge className="text-xs bg-emerald-900/50 text-emerald-300 border-emerald-500/30">
+                  <Badge className="text-xs bg-emerald-50 text-emerald-700 border-emerald-500/30">
                     {tierName}
                   </Badge>
                 </div>
@@ -394,12 +394,12 @@ export default function ImmobilierPortal() {
             className="mt-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border border-amber-500/20"
           >
             <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <Sparkles className="h-5 w-5 text-amber-800 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-amber-300 text-sm">
+                <h3 className="font-semibold text-amber-800 text-sm">
                   Avantage Exclusif Abonnés
                 </h3>
-                <p className="text-slate-400 text-xs mt-1">
+                <p className="text-slate-700 text-xs mt-1">
                   En tant qu'abonné Verso Air, vous bénéficiez d'un accès
                   privilégié à notre plateforme immobilière. Publiez vos offres
                   de vente et location, et trouvez des locataires qualifiés pour
@@ -413,7 +413,7 @@ export default function ImmobilierPortal() {
 
       {/* ─── Tab Navigation ────────────────────────────────────────────────── */}
       <div className="max-w-[95vw] mx-auto px-4 mt-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 border-b border-white/10 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-hide">
           {[
             {
               key: "dashboard" as PortalTab,
@@ -440,7 +440,7 @@ export default function ImmobilierPortal() {
               className={`gap-1.5 whitespace-nowrap shrink-0 text-xs sm:text-sm ${
                 activeTab === tab.key
                   ? "bg-emerald-600 hover:bg-emerald-700 text-slate-900"
-                  : "text-slate-400 hover:text-slate-900 hover:bg-white/5"
+                  : "text-slate-700 hover:text-slate-900 hover:bg-white/5"
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -462,11 +462,11 @@ export default function ImmobilierPortal() {
               exit={{ opacity: 0, y: -20 }}
             >
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <Card className="bg-white/5 border-white/10">
+                <Card className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-slate-400 mb-1">
+                        <p className="text-xs text-slate-700 mb-1">
                           Mes Offres
                         </p>
                         <p className="text-2xl font-bold text-slate-900">
@@ -474,62 +474,62 @@ export default function ImmobilierPortal() {
                         </p>
                       </div>
                       <div className="p-2 rounded-lg bg-emerald-500/20">
-                        <Building2 className="h-5 w-5 text-emerald-400" />
+                        <Building2 className="h-5 w-5 text-emerald-700" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white/5 border-white/10">
+                <Card className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-slate-400 mb-1">
+                        <p className="text-xs text-slate-700 mb-1">
                           Note Moyenne
                         </p>
                         <p className="text-2xl font-bold text-slate-900 flex items-center gap-1">
-                          <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                          <Star className="h-5 w-5 text-yellow-800 fill-yellow-400" />
                           {avgRating}
                         </p>
                       </div>
                       <div className="p-2 rounded-lg bg-yellow-500/20">
-                        <Star className="h-5 w-5 text-yellow-400" />
+                        <Star className="h-5 w-5 text-yellow-800" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white/5 border-white/10">
+                <Card className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-slate-400 mb-1">
+                        <p className="text-xs text-slate-700 mb-1">
                           Valeur Totale
                         </p>
                         <p className="text-2xl font-bold text-slate-900">
                           {(totalRevenue / 1000000).toFixed(1)}M
                         </p>
-                        <p className="text-xs text-slate-500">XOF</p>
+                        <p className="text-xs text-slate-700">XOF</p>
                       </div>
                       <div className="p-2 rounded-lg bg-teal-500/20">
-                        <DollarSign className="h-5 w-5 text-teal-400" />
+                        <DollarSign className="h-5 w-5 text-teal-700" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white/5 border-white/10">
+                <Card className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-slate-400 mb-1">Vérifiés</p>
+                        <p className="text-xs text-slate-700 mb-1">Vérifiés</p>
                         <p className="text-2xl font-bold text-slate-900">
                           {verifiedCount}
                         </p>
-                        <p className="text-xs text-emerald-400">propriétés</p>
+                        <p className="text-xs text-emerald-700">propriétés</p>
                       </div>
                       <div className="p-2 rounded-lg bg-emerald-500/20">
-                        <Shield className="h-5 w-5 text-emerald-400" />
+                        <Shield className="h-5 w-5 text-emerald-700" />
                       </div>
                     </div>
                   </CardContent>
@@ -537,10 +537,10 @@ export default function ImmobilierPortal() {
               </div>
 
               {/* Quick Actions */}
-              <Card className="bg-white/5 border-white/10 mb-8">
+              <Card className="text-slate-900 bg-white/5 border-slate-200 mb-8">
                 <CardHeader>
-                  <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-amber-400" />
+                  <CardTitle className="text-slate-700 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-amber-800" />
                     Actions Rapides
                   </CardTitle>
                 </CardHeader>
@@ -553,7 +553,7 @@ export default function ImmobilierPortal() {
                       <Plus className="h-5 w-5" />
                       <div className="text-left">
                         <div className="font-medium">Publier une offre</div>
-                        <div className="text-xs text-emerald-200">
+                        <div className="text-xs text-emerald-700">
                           Vente ou location
                         </div>
                       </div>
@@ -561,12 +561,12 @@ export default function ImmobilierPortal() {
                     <Button
                       onClick={() => setActiveTab("listings")}
                       variant="outline"
-                      className="h-auto py-4 bg-white/5 border-white/10 hover:bg-white/10 text-slate-300 gap-3"
+                      className="h-auto py-4 bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700 gap-3"
                     >
                       <Eye className="h-5 w-5" />
                       <div className="text-left">
                         <div className="font-medium">Voir mes offres</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-slate-700">
                           Gérer vos annonces
                         </div>
                       </div>
@@ -574,12 +574,12 @@ export default function ImmobilierPortal() {
                     <Link href="/logement">
                       <Button
                         variant="outline"
-                        className="h-auto py-4 w-full bg-white/5 border-white/10 hover:bg-white/10 text-slate-300 gap-3"
+                        className="h-auto py-4 w-full bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700 gap-3"
                       >
                         <Search className="h-5 w-5" />
                         <div className="text-left">
                           <div className="font-medium">Explorer le marché</div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-700">
                             Marketplace publique
                           </div>
                         </div>
@@ -590,13 +590,13 @@ export default function ImmobilierPortal() {
               </Card>
 
               {/* Property Types Guide */}
-              <Card className="bg-white/5 border-white/10">
+              <Card className="text-slate-900 bg-white/5 border-slate-200">
                 <CardHeader>
-                  <CardTitle className="text-slate-100 flex items-center gap-2">
-                    <Home className="h-5 w-5 text-emerald-400" />
+                  <CardTitle className="text-slate-700 flex items-center gap-2">
+                    <Home className="h-5 w-5 text-emerald-700" />
                     Types de Biens Supportés
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-slate-700">
                     Centré sur les réalités immobilières de la Côte d'Ivoire
                   </CardDescription>
                 </CardHeader>
@@ -605,12 +605,12 @@ export default function ImmobilierPortal() {
                     {propertyTypes.map((pt) => (
                       <div
                         key={pt.value}
-                        className="p-3 rounded-lg bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-colors"
+                        className="p-3 rounded-lg bg-white/5 border border-slate-200 hover:border-emerald-500/30 transition-colors"
                       >
                         <div className="font-medium text-sm text-slate-900">
                           {pt.label}
                         </div>
-                        <div className="text-xs text-slate-400 mt-1">
+                        <div className="text-xs text-slate-700 mt-1">
                           {pt.description}
                         </div>
                       </div>
@@ -631,7 +631,7 @@ export default function ImmobilierPortal() {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-emerald-400" />
+                  <Building2 className="h-5 w-5 text-emerald-700" />
                   Mes Offres ({myListings.length})
                 </h2>
                 <Button
@@ -645,16 +645,16 @@ export default function ImmobilierPortal() {
 
               {isLoadingListings ? (
                 <div className="text-center py-16">
-                  <Loader2 className="h-10 w-10 text-emerald-400 animate-spin mx-auto mb-3" />
-                  <p className="text-slate-400">Chargement de vos offres…</p>
+                  <Loader2 className="h-10 w-10 text-emerald-700 animate-spin mx-auto mb-3" />
+                  <p className="text-slate-700">Chargement de vos offres…</p>
                 </div>
               ) : myListings.length === 0 ? (
                 <div className="text-center py-16">
                   <Home className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-300 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">
                     Aucune offre pour l'instant
                   </h3>
-                  <p className="text-slate-500 mb-6">
+                  <p className="text-slate-700 mb-6">
                     Commencez par publier votre première annonce immobilière
                   </p>
                   <Button
@@ -674,29 +674,29 @@ export default function ImmobilierPortal() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.04 }}
                     >
-                      <Card className="bg-white/5 border-white/10 hover:border-emerald-500/30 transition-all group overflow-hidden">
+                      <Card className="text-slate-900 bg-white/5 border-slate-200 hover:border-emerald-500/30 transition-all group overflow-hidden">
                         <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
                         <CardContent className="p-5">
                           <div className="flex items-center justify-between mb-3">
-                            <Badge className="bg-emerald-900/50 text-emerald-300 border-emerald-500/30 text-xs capitalize">
+                            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-500/30 text-xs capitalize">
                               {property.type || "property"}
                             </Badge>
                             <div className="flex items-center gap-1">
                               {property.verified && (
-                                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                                <CheckCircle className="h-4 w-4 text-emerald-700" />
                               )}
                               {property.featured && (
-                                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                                <Star className="h-4 w-4 text-amber-800 fill-amber-400" />
                               )}
                             </div>
                           </div>
 
-                          <h3 className="font-bold text-slate-900 group-hover:text-emerald-300 transition-colors line-clamp-1 mb-2">
+                          <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 mb-2">
                             {property.name}
                           </h3>
 
-                          <div className="flex items-center gap-2 text-slate-400 text-sm mb-2">
-                            <MapPin className="h-3.5 w-3.5 text-emerald-500" />
+                          <div className="flex items-center gap-2 text-slate-700 text-sm mb-2">
+                            <MapPin className="h-3.5 w-3.5 text-emerald-700" />
                             <span>
                               {property.city}
                               {property.location
@@ -705,11 +705,11 @@ export default function ImmobilierPortal() {
                             </span>
                           </div>
 
-                          <p className="text-slate-400 text-xs line-clamp-2 mb-3">
+                          <p className="text-slate-700 text-xs line-clamp-2 mb-3">
                             {property.description}
                           </p>
 
-                          <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
+                          <div className="flex items-center gap-3 text-xs text-slate-700 mb-3">
                             {property.bedrooms > 0 && (
                               <span>{property.bedrooms} ch.</span>
                             )}
@@ -721,14 +721,14 @@ export default function ImmobilierPortal() {
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                            <div className="text-emerald-300 font-bold">
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                            <div className="text-emerald-700 font-bold">
                               {Number(property.price).toLocaleString()}{" "}
-                              <span className="text-xs text-slate-500 font-normal">
+                              <span className="text-xs text-slate-700 font-normal">
                                 XOF
                               </span>
                             </div>
-                            <div className="flex items-center gap-1 text-yellow-400 text-sm">
+                            <div className="flex items-center gap-1 text-yellow-800 text-sm">
                               <Star className="h-3 w-3 fill-current" />
                               {Number(property.rating).toFixed(1)}
                             </div>
@@ -757,23 +757,23 @@ export default function ImmobilierPortal() {
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", damping: 10 }}
                   >
-                    <CheckCircle className="h-20 w-20 text-emerald-400 mx-auto mb-4" />
+                    <CheckCircle className="h-20 w-20 text-emerald-700 mx-auto mb-4" />
                   </motion.div>
-                  <h3 className="text-2xl font-bold text-emerald-300 mb-2">
+                  <h3 className="text-2xl font-bold text-emerald-700 mb-2">
                     Offre publiée !
                   </h3>
-                  <p className="text-slate-400">
+                  <p className="text-slate-700">
                     Votre annonce est maintenant visible sur la marketplace
                   </p>
                 </div>
               ) : (
-                <Card className="bg-white/5 border-white/10 max-w-3xl mx-auto">
+                <Card className="text-slate-900 bg-white/5 border-slate-200 max-w-3xl mx-auto">
                   <CardHeader>
-                    <CardTitle className="text-slate-100 flex items-center gap-2">
-                      <Plus className="h-5 w-5 text-emerald-400" />
+                    <CardTitle className="text-slate-700 flex items-center gap-2">
+                      <Plus className="h-5 w-5 text-emerald-700" />
                       Publier une Nouvelle Offre
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-slate-700">
                       Remplissez les détails de votre bien immobilier
                     </CardDescription>
                   </CardHeader>
@@ -781,14 +781,14 @@ export default function ImmobilierPortal() {
                     {/* Type + Category Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Type de bien *
                         </Label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"
+                              className="w-full justify-between bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700"
                             >
                               {propertyTypes.find(
                                 (t) => t.value === newListing.type,
@@ -796,7 +796,7 @@ export default function ImmobilierPortal() {
                               <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                          <DropdownMenuContent className="text-slate-900 bg-white border-slate-600">
                             {propertyTypes.map((t) => (
                               <DropdownMenuItem
                                 key={t.value}
@@ -806,7 +806,7 @@ export default function ImmobilierPortal() {
                                     type: t.value,
                                   })
                                 }
-                                className="text-slate-200 hover:bg-slate-700"
+                                className="text-slate-700 hover:bg-white"
                               >
                                 {t.label}
                               </DropdownMenuItem>
@@ -816,14 +816,14 @@ export default function ImmobilierPortal() {
                       </div>
 
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Catégorie *
                         </Label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"
+                              className="w-full justify-between bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700"
                             >
                               {categoryOptions.find(
                                 (c) => c.value === newListing.category,
@@ -831,7 +831,7 @@ export default function ImmobilierPortal() {
                               <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-slate-800 border-slate-600">
+                          <DropdownMenuContent className="text-slate-900 bg-white border-slate-600">
                             {categoryOptions.map((c) => (
                               <DropdownMenuItem
                                 key={c.value}
@@ -841,7 +841,7 @@ export default function ImmobilierPortal() {
                                     category: c.value,
                                   })
                                 }
-                                className="text-slate-200 hover:bg-slate-700"
+                                className="text-slate-700 hover:bg-white"
                               >
                                 {c.label}
                               </DropdownMenuItem>
@@ -853,7 +853,7 @@ export default function ImmobilierPortal() {
 
                     {/* Name */}
                     <div>
-                      <Label className="text-sm text-slate-300 mb-2 block">
+                      <Label className="text-sm text-slate-700 mb-2 block">
                         Titre de l'annonce *
                       </Label>
                       <Input
@@ -862,13 +862,13 @@ export default function ImmobilierPortal() {
                           setNewListing({ ...newListing, name: e.target.value })
                         }
                         placeholder="Ex: Villa 4 chambres à Cocody Riviera"
-                        className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                        className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                       />
                     </div>
 
                     {/* Description */}
                     <div>
-                      <Label className="text-sm text-slate-300 mb-2 block">
+                      <Label className="text-sm text-slate-700 mb-2 block">
                         Description
                       </Label>
                       <textarea
@@ -881,34 +881,34 @@ export default function ImmobilierPortal() {
                         }
                         placeholder="Décrivez votre bien, ses atouts, le quartier..."
                         rows={4}
-                        className="w-full rounded-md bg-white/5 border border-white/10 text-slate-900 placeholder-slate-500 p-3 text-sm resize-none focus:outline-none focus:border-emerald-500/50"
+                        className="w-full rounded-md bg-white/5 border border-slate-200 text-slate-900 placeholder-slate-700 p-3 text-sm resize-none focus:outline-none focus:border-emerald-500/50"
                       />
                     </div>
 
                     {/* City + Location */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Ville *
                         </Label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"
+                              className="w-full justify-between bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700"
                             >
                               {newListing.city || "Choisir une ville..."}
                               <ChevronDown className="h-4 w-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="bg-slate-800 border-slate-600 max-h-60 overflow-y-auto">
+                          <DropdownMenuContent className="text-slate-900 bg-white border-slate-600 max-h-60 overflow-y-auto">
                             {ivoryCoastCities.map((city) => (
                               <DropdownMenuItem
                                 key={city}
                                 onClick={() =>
                                   setNewListing({ ...newListing, city })
                                 }
-                                className="text-slate-200 hover:bg-slate-700"
+                                className="text-slate-700 hover:bg-white"
                               >
                                 {city}
                               </DropdownMenuItem>
@@ -918,7 +918,7 @@ export default function ImmobilierPortal() {
                       </div>
 
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Quartier / Zone
                         </Label>
                         <Input
@@ -930,14 +930,14 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="Ex: Riviera Faya, Zone 4..."
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                     </div>
 
                     {/* Address */}
                     <div>
-                      <Label className="text-sm text-slate-300 mb-2 block">
+                      <Label className="text-sm text-slate-700 mb-2 block">
                         Adresse complète
                       </Label>
                       <Input
@@ -949,14 +949,14 @@ export default function ImmobilierPortal() {
                           })
                         }
                         placeholder="Adresse détaillée du bien"
-                        className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                        className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                       />
                     </div>
 
                     {/* Price + Area */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Prix (XOF) *
                         </Label>
                         <Input
@@ -969,11 +969,11 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="15000000"
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Surface (m²)
                         </Label>
                         <Input
@@ -986,11 +986,11 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="120"
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Chambres
                         </Label>
                         <Input
@@ -1003,11 +1003,11 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="3"
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Salles de bain
                         </Label>
                         <Input
@@ -1020,7 +1020,7 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="2"
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                     </div>
@@ -1028,7 +1028,7 @@ export default function ImmobilierPortal() {
                     {/* Amenities + Phone */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Équipements (séparés par virgule)
                         </Label>
                         <Input
@@ -1040,11 +1040,11 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="Piscine, Garage, Gardien, Climatisation..."
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                       <div>
-                        <Label className="text-sm text-slate-300 mb-2 block">
+                        <Label className="text-sm text-slate-700 mb-2 block">
                           Téléphone de contact
                         </Label>
                         <Input
@@ -1056,17 +1056,17 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="International phone number"
-                          className="bg-white/5 border-white/10 text-slate-900 placeholder-slate-500"
+                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
                         />
                       </div>
                     </div>
 
                     {/* Submit */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
                       <Button
                         variant="outline"
                         onClick={() => setNewListing(emptyListing)}
-                        className="border-white/10 text-slate-400 hover:bg-white/5"
+                        className="border-slate-200 text-slate-700 hover:bg-white/5"
                       >
                         Réinitialiser
                       </Button>
@@ -1110,10 +1110,10 @@ export default function ImmobilierPortal() {
             >
               <div className="text-center py-16">
                 <MessageCircle className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-300 mb-2">
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">
                   Centre de Demandes
                 </h3>
-                <p className="text-slate-500 mb-2">
+                <p className="text-slate-700 mb-2">
                   Les demandes de locataires et acheteurs potentiels
                   apparaîtront ici.
                 </p>

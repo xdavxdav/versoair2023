@@ -79,7 +79,7 @@ export default function CompanyHome() {
         canonicalPath="/"
       />
       <section className="relative overflow-hidden bg-slate-950 px-4 py-20 text-white sm:px-6 sm:py-28">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.18),transparent_40%),linear-gradient(135deg,#0f172a,#111827)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.18),transparent_40%),linear-gradient(135deg,#f8f5f1,#f3efe9)]" />
         <div className="relative mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm text-amber-100">
@@ -138,7 +138,7 @@ export default function CompanyHome() {
           </div>
           <div className="grid gap-5 md:grid-cols-3">
             <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <Building2 className="mb-4 h-7 w-7 text-amber-600" />
+              <Building2 className="mb-4 h-7 w-7 text-amber-800" />
               <h3 className="text-lg font-bold">{text.legalEntity}</h3>
               <p className="mt-2 text-xl font-semibold">VERSO AIR INC.</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -146,7 +146,7 @@ export default function CompanyHome() {
               </p>
             </article>
             <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <ArrowRight className="mb-4 h-7 w-7 text-amber-600" />
+              <ArrowRight className="mb-4 h-7 w-7 text-amber-800" />
               <h3 className="text-lg font-bold">{text.umbrella}</h3>
               <p className="mt-2 text-xl font-semibold">VERSO AIR™</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -154,7 +154,7 @@ export default function CompanyHome() {
               </p>
             </article>
             <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <Building2 className="mb-4 h-7 w-7 text-amber-600" />
+              <Building2 className="mb-4 h-7 w-7 text-amber-800" />
               <h3 className="text-lg font-bold">{text.futureProjects}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 {text.futureDetail}

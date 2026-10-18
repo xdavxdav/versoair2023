@@ -37,7 +37,7 @@ router.get("/posts", async (req: Request, res: Response) => {
     const result = await pool.query(
       `
       SELECT cp.id, cp.content, cp.author_name, cp.author_avatar, cp.created_at, cp.user_id,
-             u.username, u.display_name, u.avatar_url
+             u.username, u.display_name, cp.author_avatar AS avatar_url
       FROM community_posts cp
       LEFT JOIN users u ON u.id = cp.user_id
       WHERE ${where}

@@ -447,7 +447,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       <button
                         type="button"
                         onClick={() => void saveEditedComment(item.id)}
-                        className="rounded-lg bg-cyan-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
+                        className="rounded-lg bg-cyan-700 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
                       >
                         Save
                       </button>
@@ -496,7 +496,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <button
               onClick={() => void submitComment()}
               disabled={!comment.trim() || isSubmittingComment}
-              className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-cyan-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Comment
             </button>

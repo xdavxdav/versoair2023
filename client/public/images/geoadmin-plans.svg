@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
-  <title id="title">Verso Air business visibility plans</title>
-  <desc id="desc">A dark navy and gold overview of annual business visibility plans, from Free through Enterprise custom plans.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">VERSO AIR INC — Plateforme de Référencement &amp; Visibilité des Entreprises</title>
+  <desc id="desc">Tarifs annuels de référence non définitifs : Standard 0 FCFA, Essentiel 180.000 FCFA, Premium sur demande 300.000 FCFA, Pro Vérifié 400.000 FCFA, Pro Max 780.000 FCFA, Enterprise sur devis. Disponibilité et services proposés à confirmer par écrit. Premium ne modifie pas les droits du compte. Aucun paiement ni abonnement activé. Contact WhatsApp : +1 (437) 435-9726.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07162d"/>
@@ -16,69 +16,70 @@
       <path d="M54 0H0V54" fill="none" stroke="#d9b95d" stroke-opacity=".07"/>
     </pattern>
   </defs>
-  <rect width="1440" height="760" rx="36" fill="url(#bg)"/>
-  <rect width="1440" height="760" rx="36" fill="url(#grid)"/>
+  <rect width="1440" height="960" rx="36" fill="url(#bg)"/>
+  <rect width="1440" height="960" rx="36" fill="url(#grid)"/>
   <circle cx="1275" cy="145" r="170" fill="#d7ad46" opacity=".07"/>
   <circle cx="1275" cy="145" r="116" fill="none" stroke="#e8c668" stroke-opacity=".25" stroke-width="2"/>
   <path d="M1190 145h170M1275 60v170M1215 85l120 120m0-120L1215 205" stroke="#e8c668" stroke-opacity=".22" stroke-width="2"/>
-  <text x="82" y="104" fill="#f5d579" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="5">VERSO AIR • GEOADMIN</text>
-  <text x="82" y="181" fill="#fff" font-family="Arial,sans-serif" font-size="54" font-weight="700">Visibility built around your business.</text>
-  <text x="84" y="222" fill="#b8c6d9" font-family="Arial,sans-serif" font-size="23">For businesses, artisans, artists and growth-minded teams.</text>
+  <text x="82" y="104" fill="#f5d579" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="5">VERSO AIR INC</text>
+  <text x="82" y="175" fill="#fff" font-family="Arial,sans-serif" font-size="43" font-weight="700">Plateforme de Référencement &amp; Visibilité</text>
+  <text x="82" y="222" fill="#fff" font-family="Arial,sans-serif" font-size="43" font-weight="700">des Entreprises</text>
   <g font-family="Arial,sans-serif">
-    <g transform="translate(82 286)">
-      <rect width="236" height="270" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
-      <text x="22" y="47" fill="#f1d47a" font-size="19" font-weight="700">FREE</text>
-      <text x="22" y="100" fill="#fff" font-size="30" font-weight="700">0 FCFA</text>
-      <text x="22" y="128" fill="#bac7d8" font-size="16">per year</text>
-      <path d="M22 151h192" stroke="#d7b652" stroke-opacity=".35"/>
-      <text x="22" y="187" fill="#e8edf4" font-size="17">• Basic directory presence</text>
-      <text x="22" y="218" fill="#e8edf4" font-size="17">• Core business profile</text>
+    <g transform="translate(82 270)">
+      <rect width="408" height="190" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
+      <text x="24" y="38" fill="#f1d47a" font-size="23" font-weight="700">STANDARD</text>
+      <text x="24" y="80" fill="#fff" font-size="32" font-weight="700">0 FCFA/an</text>
+      <text x="24" y="117" fill="#e8edf4" font-size="19">Fiche de base et géolocalisation</text>
+      <text x="24" y="147" fill="#e8edf4" font-size="19">Gestion en autonomie</text>
+      <text x="24" y="174" fill="#bac7d8" font-size="16">Disponibilité à confirmer par écrit</text>
     </g>
-    <g transform="translate(344 286)">
-      <rect width="236" height="270" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
-      <text x="22" y="47" fill="#f1d47a" font-size="19" font-weight="700">ESSENTIAL</text>
-      <text x="22" y="100" fill="#fff" font-size="27" font-weight="700">180,000</text>
-      <text x="22" y="128" fill="#bac7d8" font-size="16">FCFA / year</text>
-      <path d="M22 151h192" stroke="#d7b652" stroke-opacity=".35"/>
-      <text x="22" y="187" fill="#e8edf4" font-size="17">• Enhanced listing</text>
-      <text x="22" y="218" fill="#e8edf4" font-size="17">• Priority search</text>
-      <text x="22" y="249" fill="#e8edf4" font-size="17">• Profile spotlight</text>
+    <g transform="translate(516 270)">
+      <rect width="408" height="190" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
+      <text x="24" y="38" fill="#f1d47a" font-size="23" font-weight="700">ESSENTIEL</text>
+      <text x="24" y="80" fill="#fff" font-size="32" font-weight="700">180.000 FCFA/an</text>
+      <text x="24" y="117" fill="#e8edf4" font-size="19">Logo fourni et description enrichie</text>
+      <text x="24" y="147" fill="#e8edf4" font-size="19">Configuration initiale proposée</text>
+      <text x="24" y="174" fill="#bac7d8" font-size="16">Tarif de référence non définitif</text>
     </g>
-    <g transform="translate(606 286)">
-      <rect width="236" height="270" rx="22" fill="#e0b94f" fill-opacity=".11" stroke="url(#gold)" stroke-width="3"/>
-      <rect x="52" y="-15" width="132" height="32" rx="16" fill="url(#gold)"/>
-      <text x="118" y="7" text-anchor="middle" fill="#17233a" font-size="13" font-weight="700">MOST POPULAR</text>
-      <text x="22" y="54" fill="#f1d47a" font-size="18" font-weight="700">PRO VERIFIED</text>
-      <text x="22" y="105" fill="#fff" font-size="27" font-weight="700">400,000</text>
-      <text x="22" y="133" fill="#bac7d8" font-size="16">FCFA / year</text>
-      <path d="M22 156h192" stroke="#d7b652" stroke-opacity=".45"/>
-      <text x="22" y="192" fill="#e8edf4" font-size="17">• Everything in Essential</text>
-      <text x="22" y="223" fill="#e8edf4" font-size="17">• Featured placement</text>
-      <text x="22" y="254" fill="#e8edf4" font-size="17">• Lead-generation tools</text>
+    <g transform="translate(950 270)">
+      <rect width="408" height="190" rx="22" fill="#e0b94f" fill-opacity=".11" stroke="url(#gold)" stroke-width="3"/>
+      <text x="24" y="38" fill="#f1d47a" font-size="23" font-weight="700">PREMIUM — SUR DEMANDE</text>
+      <text x="24" y="80" fill="#fff" font-size="32" font-weight="700">300.000 FCFA/an</text>
+      <text x="24" y="117" fill="#e8edf4" font-size="19">Entretien, présentation, 5 fiches</text>
+      <text x="24" y="147" fill="#e8edf4" font-size="19">1 série de corrections proposée</text>
+      <text x="24" y="174" fill="#bac7d8" font-size="16">Droits identiques à Essentiel</text>
     </g>
-    <g transform="translate(868 286)">
-      <rect width="236" height="270" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
-      <text x="22" y="47" fill="#f1d47a" font-size="19" font-weight="700">PRO MAX</text>
-      <text x="22" y="100" fill="#fff" font-size="27" font-weight="700">780,000</text>
-      <text x="22" y="128" fill="#bac7d8" font-size="16">FCFA / year</text>
-      <path d="M22 151h192" stroke="#d7b652" stroke-opacity=".35"/>
-      <text x="22" y="187" fill="#e8edf4" font-size="17">• Everything in Verified</text>
-      <text x="22" y="218" fill="#e8edf4" font-size="17">• Campaign planning</text>
-      <text x="22" y="249" fill="#e8edf4" font-size="17">• Priority support</text>
+    <g transform="translate(82 480)">
+      <rect width="408" height="190" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
+      <text x="24" y="38" fill="#f1d47a" font-size="23" font-weight="700">PRO VÉRIFIÉ</text>
+      <text x="24" y="80" fill="#fff" font-size="32" font-weight="700">400.000 FCFA/an</text>
+      <text x="24" y="117" fill="#e8edf4" font-size="19">Vérification documentaire requise</text>
+      <text x="24" y="147" fill="#e8edf4" font-size="19">Présentation produits et services</text>
+      <text x="24" y="174" fill="#bac7d8" font-size="16">Livrables Premium non inclus d'office</text>
     </g>
-    <g transform="translate(1130 286)">
-      <rect width="236" height="270" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
-      <text x="22" y="47" fill="#f1d47a" font-size="19" font-weight="700">ENTERPRISE</text>
-      <text x="22" y="101" fill="#fff" font-size="27" font-weight="700">Custom</text>
-      <text x="22" y="129" fill="#bac7d8" font-size="16">tailored proposal</text>
-      <path d="M22 151h192" stroke="#d7b652" stroke-opacity=".35"/>
-      <text x="22" y="187" fill="#e8edf4" font-size="17">• Tailored scope</text>
-      <text x="22" y="218" fill="#e8edf4" font-size="17">• Multi-market planning</text>
-      <text x="22" y="249" fill="#e8edf4" font-size="17">• Dedicated coordination</text>
+    <g transform="translate(516 480)">
+      <rect width="408" height="190" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
+      <text x="24" y="38" fill="#f1d47a" font-size="23" font-weight="700">PRO MAX</text>
+      <text x="24" y="80" fill="#fff" font-size="32" font-weight="700">780.000 FCFA/an</text>
+      <text x="24" y="117" fill="#e8edf4" font-size="19">Bannière et analytics si disponibles</text>
+      <text x="24" y="147" fill="#e8edf4" font-size="19">Volumes promotionnels sur devis</text>
+      <text x="24" y="174" fill="#bac7d8" font-size="16">Aucun classement garanti</text>
+    </g>
+    <g transform="translate(950 480)">
+      <rect width="408" height="190" rx="22" fill="#ffffff" fill-opacity=".045" stroke="#d7b652" stroke-opacity=".5" stroke-width="2"/>
+      <text x="24" y="38" fill="#f1d47a" font-size="23" font-weight="700">ENTERPRISE</text>
+      <text x="24" y="80" fill="#fff" font-size="32" font-weight="700">Sur devis</text>
+      <text x="24" y="117" fill="#e8edf4" font-size="19">Périmètre et livrables sur mesure</text>
+      <text x="24" y="147" fill="#e8edf4" font-size="19">Proposition écrite au cas par cas</text>
+      <text x="24" y="174" fill="#bac7d8" font-size="16">Aucune inclusion automatique</text>
     </g>
   </g>
-  <rect x="82" y="595" width="1276" height="98" rx="18" fill="#050e1d" fill-opacity=".54" stroke="#d7b652" stroke-opacity=".45"/>
-  <text x="112" y="638" fill="#f4d779" font-family="Arial,sans-serif" font-size="21" font-weight="700">ANNUAL REFERENCE PRICES • BASE CURRENCY: FCFA</text>
-  <text x="112" y="672" fill="#c5d0df" font-family="Arial,sans-serif" font-size="16">Local currency estimates shown on this page. Confirm market availability, scope and final terms before purchase.</text>
-  <text x="1326" y="656" text-anchor="end" fill="#e6c15b" font-family="Arial,sans-serif" font-size="17" font-weight="700">VERSO AIR</text>
+  <text x="720" y="716" text-anchor="middle" fill="#c5d0df" font-family="Arial,sans-serif" font-size="21">Étude de marché en cours — disponibilité et services proposés à confirmer par écrit.</text>
+  <text x="720" y="750" text-anchor="middle" fill="#c5d0df" font-family="Arial,sans-serif" font-size="21">Publication selon les espaces disponibles. Aucun paiement ni abonnement activé.</text>
+  <text x="720" y="784" text-anchor="middle" fill="#c5d0df" font-family="Arial,sans-serif" font-size="21">Campagnes sociales gérées et budget publicitaire non inclus.</text>
+  <rect x="82" y="814" width="1276" height="68" rx="18" fill="#050e1d" fill-opacity=".54" stroke="#d7b652" stroke-opacity=".45"/>
+  <text x="112" y="842" fill="#f4d779" font-family="Arial,sans-serif" font-size="23" font-weight="700">Contactez-nous sur WhatsApp →</text>
+  <text x="112" y="867" fill="#c5d0df" font-family="Arial,sans-serif" font-size="19">+1 (437) 435-9726</text>
+  <text x="1326" y="854" text-anchor="end" fill="#e6c15b" font-family="Arial,sans-serif" font-size="23" font-weight="700">https://www.versoair.com</text>
+  <text x="720" y="927" text-anchor="middle" fill="#b8c6d9" font-family="Arial,sans-serif" font-size="23">Le réseau professionnel qui connecte entreprises, artisans et artistes.</text>
 </svg>

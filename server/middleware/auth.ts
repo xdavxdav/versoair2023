@@ -107,6 +107,8 @@ const PUBLIC_PATHS: string[] = [
   "/auth/verify-email",
   "/auth/verify",
   "/auth/session",
+  "/auth/oauth-complete",
+  ...(process.env.NODE_ENV === "development" ? ["/auth/password"] : []),
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/refresh-token",
@@ -169,6 +171,7 @@ const PUBLIC_PATHS: string[] = [
   "/api/faq/categories",
   "/api/communities",
   "/api/site-search",
+  "/api/users/heartbeat",
 ];
 
 /**
@@ -216,7 +219,26 @@ function isPublicPath(path: string, method: string): boolean {
     return true;
   // Prefix match for public data endpoints — GET only (read-only)
   if (method === "GET") {
-    if (path === "/api/properties") return true;
+    if ([
+      "/api/properties",
+      "/api/users/active-count",
+      "/api/marketing/journal/listings",
+      "/api/marketing/journal/editions",
+      "/api/marketing/packs",
+      "/api/marketing/print/products",
+      "/api/community/posts",
+      "/api/v1/email-subscriptions/available",
+      "/api/social/posts",
+      "/api/arena/active",
+      "/api/arena/history",
+      "/api/revenue-pulse/pool",
+      "/api/revenue-pulse/leaderboard",
+    ].includes(path)) return true;
+    if (/^\/api\/translations\/[^/]+\/?$/.test(path)) return true;
+    if (new RegExp("^/api/social/posts/[^/]+/comments$").test(path) ||
+        new RegExp("^/api/arena/[0-9]+(?:/bracket)?$").test(path) ||
+        new RegExp("^/api/marketing/packs/[^/]+$").test(path) ||
+        new RegExp("^/api/marketing/journal/pdf/[^/]+$").test(path)) return true;
     for (const prefix of PUBLIC_PATH_PREFIXES) {
       if (path.startsWith(prefix)) return true;
     }

@@ -236,9 +236,9 @@ export default function Sante() {
   const { data: analytics, isLoading } = useQuery({
     queryKey: ["healthcare-analytics"],
     queryFn: fetchHealthcareAnalytics,
+    enabled: false, // Sector financial analytics are not available from a public API.
     refetchInterval: autoRefresh ? 300000 : false,
     staleTime: 60000,
-    enabled: databaseConnected === true,
   });
 
   // Fetch initial healthcare businesses
@@ -567,7 +567,7 @@ export default function Sante() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-red-900 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-[#f3efe9] via-[#f3efe9] to-[#f3efe9] text-slate-900">
 
         <div className="relative z-10">
           <motion.div
@@ -576,7 +576,7 @@ export default function Sante() {
             transition={{ duration: 0.8 }}
             className="mb-4"
           >
-            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
+            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-slate-200">
               🏥 Intelligence Santé
             </span>
           </motion.div>
@@ -594,7 +594,7 @@ export default function Sante() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
+            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-slate-900"
           >
             Données en temps réel avec{" "}
             {totalResults > 0 ? `${totalResults.toLocaleString()}+ ` : ""}établissements de santé
@@ -607,28 +607,28 @@ export default function Sante() {
             transition={{ duration: 1, delay: 0.6 }}
             className="flex flex-wrap justify-center gap-[0.75vw] mb-[1.5vw]"
           >
-            <Card className="bg-white/10 md:backdrop-blur-md border-red-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-red-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-400" />
-                  <span className="text-sm text-red-200">
+                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-700" />
+                  <span className="text-sm text-red-700">
                     Base de Données en Direct
                   </span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {totalResults > 0 ? `${totalResults.toLocaleString()}+ ` : ""}Enregistrements
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 md:backdrop-blur-md border-orange-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-orange-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
-                  <span className="text-sm text-orange-200">
+                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-700" />
+                  <span className="text-sm text-orange-700">
                     Établissements de Santé
                   </span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {searchResults.length} Chargés
                 </div>
               </CardContent>
@@ -644,7 +644,7 @@ export default function Sante() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-red-900/30 to-orange-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20"
+                className="bg-gradient-to-r from-red-50 to-orange-50 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -656,17 +656,17 @@ export default function Sante() {
                       ].map((_, i) => (
                         <Star
                           key={i}
-                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400"
+                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800"
                         />
                       ))}
                     </div>
-                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
+                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-700">
                       {enterprises[currentIndex]?.name}
                     </h3>
-                    <p className="text-gray-200 mt-2">
+                    <p className="text-slate-700 mt-2">
                       {enterprises[currentIndex]?.desc}
                     </p>
-                    <div className="flex items-center gap-[0.5vw] mt-3 text-red-200">
+                    <div className="flex items-center gap-[0.5vw] mt-3 text-red-700">
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
@@ -674,7 +674,7 @@ export default function Sante() {
                       </span>
                     </div>
                   </div>
-                  <ExternalLink className="h-5 w-5 text-red-400" />
+                  <ExternalLink className="h-5 w-5 text-red-700" />
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -683,31 +683,31 @@ export default function Sante() {
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
-        <Card className="bg-gradient-to-br from-slate-800/90 to-red-900/90 md:backdrop-blur-md border-red-700 shadow-2xl">
+        <Card className="bg-gradient-to-br from-slate-50 to-red-50 md:backdrop-blur-md border-red-700 shadow-2xl">
           <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
             <div className="flex flex-col md:flex-row items-center gap-[0.75vw] mb-[1vw]">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-700" />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search hospitals, clinics, pharmacies..."
-                  className="pl-12 bg-slate-800/50 border-red-600 text-white placeholder-red-300/60"
+                  className="pl-12 bg-white border-red-600 text-slate-900 placeholder-slate-600"
                 />
               </div>
               <div className="relative flex-1 w-full">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-400" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-700" />
                 <Input
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="City, region, or area..."
-                  className="pl-12 bg-slate-800/50 border-red-600 text-white placeholder-red-300/60"
+                  className="pl-12 bg-white border-red-600 text-slate-900 placeholder-slate-600"
                 />
               </div>
               {isSearching && (
-                <Loader2 className="h-5 w-5 animate-spin text-red-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-red-700" />
               )}
             </div>
 
@@ -739,7 +739,7 @@ export default function Sante() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-red-600 bg-slate-800 hover:bg-slate-700 w-full sm:w-[180px] justify-between"
+                      className="border-red-600 bg-white hover:bg-white w-full sm:w-[180px] justify-between"
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
@@ -754,7 +754,7 @@ export default function Sante() {
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
+                  <DropdownMenuContent className="text-slate-900 bg-white border-red-600 w-[200px]">
                     <DropdownMenuItem
                       onClick={() =>
                         setActiveFilters({
@@ -769,8 +769,8 @@ export default function Sante() {
                       <span
                         className={
                           activeFilters.sort_by === "rating_desc"
-                            ? "font-semibold text-red-300"
-                            : "text-red-200"
+                            ? "font-semibold text-red-700"
+                            : "text-red-700"
                         }
                       >
                         Meilleure Note
@@ -790,8 +790,8 @@ export default function Sante() {
                       <span
                         className={
                           activeFilters.sort_by === "star_desc"
-                            ? "font-semibold text-red-300"
-                            : "text-red-200"
+                            ? "font-semibold text-red-700"
+                            : "text-red-700"
                         }
                       >
                         Plus d'Étoiles
@@ -811,8 +811,8 @@ export default function Sante() {
                       <span
                         className={
                           activeFilters.sort_by === "revenue_desc"
-                            ? "font-semibold text-red-300"
-                            : "text-red-200"
+                            ? "font-semibold text-red-700"
+                            : "text-red-700"
                         }
                       >
                         Meilleur Revenu
@@ -832,8 +832,8 @@ export default function Sante() {
                       <span
                         className={
                           activeFilters.sort_by === "name_asc"
-                            ? "font-semibold text-red-300"
-                            : "text-red-200"
+                            ? "font-semibold text-red-700"
+                            : "text-red-700"
                         }
                       >
                         Name A-Z
@@ -842,7 +842,7 @@ export default function Sante() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <div className="text-sm text-red-300">
+                <div className="text-sm text-red-700">
                   {totalResults.toLocaleString()} résultats
                 </div>
               </div>
@@ -856,16 +856,16 @@ export default function Sante() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-red-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-white rounded-lg border border-red-700">
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-red-300">
+                    <Label className="text-sm font-medium mb-2 block text-red-700">
                       Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-red-600 justify-between"
+                          className="w-full bg-white border-red-600 justify-between"
                         >
                           <span className="text-sm">
                             {categoryOptions.find(
@@ -875,7 +875,7 @@ export default function Sante() {
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
+                      <DropdownMenuContent className="text-slate-900 bg-white border-red-600 w-[200px]">
                         <DropdownMenuItem
                           onClick={() =>
                             setActiveFilters({ ...activeFilters, category: "" })
@@ -884,8 +884,8 @@ export default function Sante() {
                           <span
                             className={
                               !activeFilters.category
-                                ? "font-semibold text-red-300"
-                                : "text-red-200"
+                                ? "font-semibold text-red-700"
+                                : "text-red-700"
                             }
                           >
                             All Categories
@@ -907,8 +907,8 @@ export default function Sante() {
                             <span
                               className={
                                 activeFilters.category === cat.value
-                                  ? "font-semibold text-red-300"
-                                  : "text-red-200"
+                                  ? "font-semibold text-red-700"
+                                  : "text-red-700"
                               }
                             >
                               {cat.label}
@@ -920,7 +920,7 @@ export default function Sante() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-red-300">
+                    <Label className="text-sm font-medium mb-2 block text-red-700">
                       Note Min.
                     </Label>
                     <Input
@@ -936,12 +936,12 @@ export default function Sante() {
                         })
                       }
                       placeholder="Any"
-                      className="bg-slate-700 border-red-600"
+                      className="bg-white border-red-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-red-300">
+                    <Label className="text-sm font-medium mb-2 block text-red-700">
                       Revenu Min.
                     </Label>
                     <Input
@@ -954,19 +954,19 @@ export default function Sante() {
                         })
                       }
                       placeholder="Any"
-                      className="bg-slate-700 border-red-600"
+                      className="bg-white border-red-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-red-300">
+                    <Label className="text-sm font-medium mb-2 block text-red-700">
                       Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-red-600 justify-between"
+                          className="w-full bg-white border-red-600 justify-between"
                         >
                           <span className="text-sm">
                             {statusOptions.find(
@@ -976,7 +976,7 @@ export default function Sante() {
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-slate-800 border-red-600 w-[200px]">
+                      <DropdownMenuContent className="text-slate-900 bg-white border-red-600 w-[200px]">
                         <DropdownMenuItem
                           onClick={() =>
                             setActiveFilters({ ...activeFilters, status: "" })
@@ -985,8 +985,8 @@ export default function Sante() {
                           <span
                             className={
                               !activeFilters.status
-                                ? "font-semibold text-red-300"
-                                : "text-red-200"
+                                ? "font-semibold text-red-700"
+                                : "text-red-700"
                             }
                           >
                             Any Status
@@ -1008,8 +1008,8 @@ export default function Sante() {
                             <span
                               className={
                                 activeFilters.status === status.value
-                                  ? "font-semibold text-red-300"
-                                  : "text-red-200"
+                                  ? "font-semibold text-red-700"
+                                  : "text-red-700"
                               }
                             >
                               {status.label}
@@ -1045,7 +1045,7 @@ export default function Sante() {
       {/* Main Content with Tabs */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-[2vh] sm:py-[3vh] md:py-[4vh]">
         {/* Tabs Navigation */}
-        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-slate-800/50 rounded-xl p-[0.4vw] border border-red-500/20 backdrop-blur-sm">
+        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-white rounded-xl p-[0.4vw] border border-red-500/20 backdrop-blur-sm">
           <div className="flex w-fit mx-auto">
             {(
               [
@@ -1068,8 +1068,8 @@ export default function Sante() {
                 onClick={() => setActiveTab(tab)}
                 className={`relative capitalize whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 ${
                   activeTab === tab
-                    ? "text-white"
-                    : "text-red-300 hover:text-white hover:bg-white/5"
+                    ? "text-slate-900"
+                    : "text-red-700 hover:text-slate-900 hover:bg-white/5"
                 }`}
               >
                 {activeTab === tab && (
@@ -1092,7 +1092,7 @@ export default function Sante() {
               <div>
                 <div className="flex items-center justify-between mb-[1vw]">
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
-                    <Database className="h-6 w-6 text-red-400" />
+                    <Database className="h-6 w-6 text-red-700" />
                     <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
                       Database Results ({searchResults.length} of{" "}
                       {totalResults.toLocaleString()})
@@ -1103,47 +1103,47 @@ export default function Sante() {
                 {/* Loading State */}
                 {isInitialLoading ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1vw]">
-                    <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 md:backdrop-blur-md border border-red-500/20">
+                    <Card className="bg-gradient-to-r from-red-50 to-orange-50 md:backdrop-blur-md border border-red-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
                             </div>
-                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-700">
                               Chargement des établissements de santé...
                             </h3>
-                            <p className="text-gray-200 mt-2">
+                            <p className="text-slate-700 mt-2">
                               Connexion à la base de données
                             </p>
                           </div>
-                          <ExternalLink className="h-5 w-5 text-red-400" />
+                          <ExternalLink className="h-5 w-5 text-red-700" />
                         </div>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gradient-to-r from-red-900/30 to-orange-900/30 md:backdrop-blur-md border border-red-500/20">
+                    <Card className="bg-gradient-to-r from-red-50 to-orange-50 md:backdrop-blur-md border border-red-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
                             </div>
-                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-red-700">
                               Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">
+                            <p className="text-slate-700 mt-2">
                               Veuillez patienter
                             </p>
                           </div>
-                          <Loader2 className="h-5 w-5 text-red-400 animate-spin" />
+                          <Loader2 className="h-5 w-5 text-red-700 animate-spin" />
                         </div>
                       </CardContent>
                     </Card>
@@ -1160,10 +1160,10 @@ export default function Sante() {
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-red-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-red-700 mb-2">
                               Recherche en cours...
                             </h3>
-                            <p className="text-gray-300">
+                            <p className="text-slate-700">
                               Récupération des prestataires de santé...
                             </p>
                           </div>
@@ -1178,22 +1178,22 @@ export default function Sante() {
                               onClick={() =>
                                 setLocation(`/business/${business.id}`)
                               }
-                              className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-red-500/30 cursor-pointer group"
+                              className="bg-gradient-to-br from-slate-50 to-slate-50 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 border border-gray-700 hover:border-red-500/30 cursor-pointer group"
                             >
                               <div className="h-2 bg-gradient-to-r from-red-600 to-orange-600" />
                               <div className="p-[clamp(0.75rem,2vw,2.5rem)]">
                                 <div className="flex items-start justify-between mb-4">
                                   <div className="flex-1">
-                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-red-300 transition-colors mb-2 line-clamp-1">
+                                    <h4 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 group-hover:text-red-700 transition-colors mb-2 line-clamp-1">
                                       {business.title}
                                     </h4>
-                                    <div className="flex items-center gap-[0.5vw] text-gray-400">
-                                      <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-500" />
+                                    <div className="flex items-center gap-[0.5vw] text-slate-700">
+                                      <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-700" />
                                       <span className="text-sm capitalize font-medium">
                                         {business.address || business.location}
                                       </span>
                                       {business.is_verified && (
-                                        <Badge className="bg-blue-900/30 text-blue-300 border-blue-500/30 text-xs">
+                                        <Badge className="bg-blue-50 text-blue-700 border-blue-500/30 text-xs">
                                           <CheckCircle className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                                           Verified
                                         </Badge>
@@ -1202,13 +1202,13 @@ export default function Sante() {
                                   </div>
                                   <div className="flex flex-col items-end gap-1">
                                     <div className="flex items-center gap-[0.5vw] bg-gradient-to-br from-red-400 to-orange-500 px-3 py-2 rounded-xl shadow-xl">
-                                      <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-white" />
-                                      <span className="text-sm font-bold text-white">
+                                      <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-slate-900" />
+                                      <span className="text-sm font-bold text-slate-900">
                                         {business.rating}
                                       </span>
                                     </div>
                                     {business.status === "premium" && (
-                                      <Badge className="bg-green-900/30 text-green-300 border-green-500/30 text-xs">
+                                      <Badge className="bg-green-50 text-green-700 border-green-500/30 text-xs">
                                         <Stethoscope className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] mr-1" />
                                         Premium
                                       </Badge>
@@ -1216,37 +1216,37 @@ export default function Sante() {
                                   </div>
                                 </div>
 
-                                <p className="text-gray-300 text-sm mb-4 leading-relaxed line-clamp-2">
+                                <p className="text-slate-700 text-sm mb-4 leading-relaxed line-clamp-2">
                                   {business.description}
                                 </p>
 
                                 <div className="space-y-[0.75vw] mb-4">
                                   <div className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-[0.5vw]">
-                                      <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-400" />
-                                      <span className="text-gray-300">
+                                      <Users className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-red-700" />
+                                      <span className="text-slate-700">
                                         {business.reviews?.toLocaleString() ||
                                           0}{" "}
                                         avis
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-[0.5vw]">
-                                      <Stethoscope className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
-                                      <span className="text-gray-300">
+                                      <Stethoscope className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-700" />
+                                      <span className="text-slate-700">
                                         {business.rating || 5}★ Établissement
                                       </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-[0.5vw]">
-                                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                                      <span className="text-gray-300 capitalize">
+                                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-700" />
+                                      <span className="text-slate-700 capitalize">
                                         {business.location}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-[0.5vw]">
-                                      <Tag className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-400" />
-                                      <span className="text-gray-300 capitalize">
+                                      <Tag className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-orange-700" />
+                                      <span className="text-slate-700 capitalize">
                                         {business.category}
                                       </span>
                                     </div>
@@ -1259,7 +1259,7 @@ export default function Sante() {
                                           .map((amenity: string, i: number) => (
                                             <Badge
                                               key={i}
-                                              className="bg-red-900/20 text-red-300 border-red-500/30 text-xs"
+                                              className="bg-red-50 text-red-700 border-red-500/30 text-xs"
                                             >
                                               {amenity}
                                             </Badge>
@@ -1272,19 +1272,19 @@ export default function Sante() {
                                   <div>
                                     {business.revenue && (
                                       <>
-                                        <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-300">
+                                        <span className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-700">
                                           €
                                           {(business.revenue / 1000).toFixed(0)}
                                           K
                                         </span>
-                                        <span className="text-gray-400 text-sm">
+                                        <span className="text-slate-700 text-sm">
                                           {" "}
                                           / mois
                                         </span>
                                       </>
                                     )}
                                     {business.employees && (
-                                      <div className="text-sm text-gray-300">
+                                      <div className="text-sm text-slate-700">
                                         {business.employees} employés
                                       </div>
                                     )}
@@ -1298,7 +1298,7 @@ export default function Sante() {
                                         e.stopPropagation();
                                       }}
                                     >
-                                      <Heart className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
+                                      <Heart className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-slate-700" />
                                     </Button>
                                     <Button
                                       size="sm"
@@ -1318,11 +1318,11 @@ export default function Sante() {
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
-                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
+                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-slate-700 mb-4" />
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-slate-700 mb-2">
                               Aucun Établissement Trouvé
                             </h3>
-                            <p className="text-gray-400">
+                            <p className="text-slate-700">
                               Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
@@ -1353,7 +1353,7 @@ export default function Sante() {
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
                           Précédent
                         </Button>
-                        <span className="text-red-400 text-[clamp(0.7rem,1vw,0.875rem)]">
+                        <span className="text-red-700 text-[clamp(0.7rem,1vw,0.875rem)]">
                           Page {currentPage} of {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
@@ -1380,7 +1380,7 @@ export default function Sante() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
@@ -1449,13 +1449,13 @@ export default function Sante() {
             </motion.div>
 
             <div className="grid lg:grid-cols-2 gap-[1vw] mb-[1.5vw]">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
+                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-slate-900">
                       Tendances Revenus & Patients
                     </h3>
-                    <Calendar className="h-5 w-5 text-red-400" />
+                    <Calendar className="h-5 w-5 text-red-700" />
                   </div>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={chartRef}></canvas>
@@ -1463,9 +1463,9 @@ export default function Sante() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-red-500/20">
                 <CardContent>
-                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
+                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-slate-900">
                     Revenus par Catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
@@ -1478,7 +1478,7 @@ export default function Sante() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
@@ -1497,15 +1497,15 @@ export default function Sante() {
                 { title: "Profit Margin", value: "32%", change: "+4%" },
                 { title: "ROI", value: "25%", change: "+6%" },
               ].map((metric, index) => (
-                <Card key={index} className="bg-white/5 border-white/10">
+                <Card key={index} className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
-                    <div className="text-base sm:text-lg md:text-2xl font-bold text-red-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-red-700 mb-1">
                       {metric.value}
                     </div>
-                    <div className="text-green-400 text-sm">
+                    <div className="text-green-700 text-sm">
                       {metric.change} from last month
                     </div>
                   </CardContent>
@@ -1516,7 +1516,7 @@ export default function Sante() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Pill className="h-6 w-6" />
@@ -1539,21 +1539,21 @@ export default function Sante() {
                 },
                 { title: "ROAS", value: "3.8x", status: "Excellent" },
               ].map((ad, index) => (
-                <Card key={index} className="bg-white/5 border-white/10">
+                <Card key={index} className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {ad.title}
                     </h3>
-                    <div className="text-base sm:text-lg md:text-2xl font-bold text-red-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-red-700 mb-1">
                       {ad.value}
                     </div>
                     <div
                       className={`text-sm ${
                         ad.status === "Excellent"
-                          ? "text-green-400"
+                          ? "text-green-700"
                           : ad.status === "High"
-                            ? "text-blue-400"
-                            : "text-red-400"
+                            ? "text-blue-700"
+                            : "text-red-700"
                       }`}
                     >
                       {ad.status}
@@ -1566,36 +1566,36 @@ export default function Sante() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
-            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-red-300 flex items-center gap-[0.5vw]">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-red-700 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
               Connexion Base de Données PostgreSQL
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-700">
                   Statistiques de la Base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
-                    <span className="text-red-300">Total Dossiers Santé</span>
-                    <span className="font-semibold text-white">
+                    <span className="text-red-700">Total Dossiers Santé</span>
+                    <span className="font-semibold text-slate-900">
                       {totalResults > 0 ? `${totalResults.toLocaleString()}+` : "Bientôt"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-red-300">
+                    <span className="text-red-700">
                       Établissements Actifs Chargés
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-red-300">Statut de la Base</span>
+                    <span className="text-red-700">Statut de la Base</span>
                     <span
                       className={`font-semibold ${
-                        databaseConnected ? "text-green-400" : "text-red-400"
+                        databaseConnected ? "text-green-700" : "text-red-700"
                       }`}
                     >
                       {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
@@ -1604,7 +1604,7 @@ export default function Sante() {
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-red-700">
                   Actions Rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
@@ -1621,7 +1621,7 @@ export default function Sante() {
                       handleSearch(1);
                     }}
                     variant="outline"
-                    className="w-full border-red-500 text-red-400 hover:bg-red-500/10"
+                    className="w-full border-red-500 text-red-700 hover:bg-red-500/10"
                   >
                     Actualiser les Données
                   </Button>
@@ -1646,17 +1646,17 @@ export default function Sante() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-red-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-red-500/20 hover:border-red-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-50 to-red-50 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-red-500/20 hover:border-red-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-red-600/20 to-orange-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-white">
+              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-slate-900">
                 {feature.title}
               </h3>
-              <p className="text-gray-300">{feature.description}</p>
+              <p className="text-slate-700">{feature.description}</p>
             </motion.div>
           ))}
         </div>
@@ -1676,18 +1676,18 @@ export default function Sante() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-red-500/30"
+              className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-red-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
-                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
+              <div className="sticky top-0 bg-white md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-slate-900">
                   {selectedBusiness.title}
                 </h2>
                 <button
                   onClick={() => setShowBusinessDetails(false)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white rounded-lg transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-400" />
+                  <X className="h-5 w-5 text-slate-700" />
                 </button>
               </div>
 
@@ -1695,24 +1695,24 @@ export default function Sante() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-[0.5vw] mb-2">
-                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
-                      <span className="text-gray-300">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-slate-700" />
+                      <span className="text-slate-700">
                         {selectedBusiness.location}
                       </span>
                     </div>
                     <div className="flex items-center gap-[0.5vw]">
                       <Badge
                         variant="outline"
-                        className="bg-red-900/30 text-red-300 border-red-500/30"
+                        className="bg-red-50 text-red-700 border-red-500/30"
                       >
                         {selectedBusiness.category}
                       </Badge>
-                      <div className="flex items-center gap-1 bg-red-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                      <div className="flex items-center gap-1 bg-red-50 text-yellow-800 px-2 py-1 rounded text-sm">
                         <Star className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] fill-current" />
                         <span className="font-bold">
                           {selectedBusiness.rating}
                         </span>
-                        <span className="text-gray-400 text-xs ml-1">
+                        <span className="text-slate-700 text-xs ml-1">
                           ({selectedBusiness.reviews} reviews)
                         </span>
                       </div>
@@ -1721,47 +1721,47 @@ export default function Sante() {
                 </div>
 
                 <div>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                     Description
                   </h3>
-                  <p className="text-gray-300">
+                  <p className="text-slate-700">
                     {selectedBusiness.description}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[0.75vw] sm:gap-[1vw]">
                   {selectedBusiness.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Revenue</div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-sm text-slate-700">Revenue</div>
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedBusiness.employees && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Staff</div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-sm text-slate-700">Staff</div>
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           {selectedBusiness.employees}+
                         </div>
                       </CardContent>
                     </Card>
                   )}
-                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                  <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Téléphone</div>
-                      <div className="text-sm font-semibold text-white">
+                      <div className="text-sm text-slate-700">Téléphone</div>
+                      <div className="text-sm font-semibold text-slate-900">
                         {selectedBusiness.phone || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                  <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Email</div>
-                      <div className="text-sm font-semibold text-white truncate">
+                      <div className="text-sm text-slate-700">Email</div>
+                      <div className="text-sm font-semibold text-slate-900 truncate">
                         {selectedBusiness.email || "Non précisé"}
                       </div>
                     </CardContent>

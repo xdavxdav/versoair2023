@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type Category = {
   id: number;
@@ -73,8 +74,8 @@ export default function CategoryTree({
     queryFn: async () => {
       const urls =
         source === "admin"
-          ? ["/api/admin/categories", "/api/business/categories"]
-          : ["/api/business/categories", "/api/admin/categories"];
+          ? ["/api/v1/admin/categories", "/api/business/categories"]
+          : ["/api/business/categories", "/api/v1/admin/categories"];
       for (const url of urls) {
         try {
           const res = await fetch(url);
@@ -83,6 +84,7 @@ export default function CategoryTree({
           const rows =
             json.categories ||
             json.categoryData ||
+            (Array.isArray(json.data) ? json.data : null) ||
             (Array.isArray(json) ? json : null);
           if (!rows) continue;
           return rows.map((r: any, idx: number) =>
@@ -109,15 +111,7 @@ export default function CategoryTree({
 
   const createMutation = useMutation<any, Error, any>({
     mutationFn: async (payload: any) => {
-      const res = await fetch(`/api/admin/categories`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Create failed");
-      }
+      const res = await apiRequest("POST", "/api/v1/admin/categories", payload);
       return res.json();
     },
     onSuccess: () => {

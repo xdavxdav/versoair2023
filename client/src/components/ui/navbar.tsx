@@ -469,7 +469,7 @@ export default function Navbar({
               href="/marketplace"
               className={`relative px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 transition-all duration-300 ${
                 marketplaceSos
-                  ? "text-amber-600 font-bold scale-110"
+                  ? "text-amber-800 font-bold scale-110"
                   : "text-gray-600 hover:text-primary"
               }`}
             >
@@ -483,7 +483,7 @@ export default function Navbar({
                 </>
               )}
               <ShoppingBag
-                className={`h-3.5 w-3.5 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
+                className={`h-3.5 w-3.5 ${marketplaceSos ? "animate-bounce text-amber-800" : ""}`}
               />
               <MarketLabel />
             </Link>
@@ -549,7 +549,7 @@ export default function Navbar({
               ) : (
                 <Link
                   href="/geo-admin"
-                  className={`text-sky-300 hover:bg-sky-50 gap-1.5 relative group ${tabletNavIconItemClass}`}
+                  className={`text-sky-700 hover:bg-sky-50 gap-1.5 relative group ${tabletNavIconItemClass}`}
                 >
                   <Lock className="h-4 w-4" />
                   Geo
@@ -566,7 +566,7 @@ export default function Navbar({
               {/* Entreprises — amber */}
               <div className="relative group shrink-0">
                 <button
-                  className={`text-amber-600 hover:text-amber-800 hover:bg-amber-50 gap-1 ${tabletNavIconItemClass}`}
+                  className={`text-amber-800 hover:text-amber-800 hover:bg-amber-50 gap-1 ${tabletNavIconItemClass}`}
                 >
                   Entreprises <ChevronDown className="h-4 w-4" />
                 </button>
@@ -641,7 +641,7 @@ export default function Navbar({
               {/* Services — emerald */}
               <div className="relative group shrink-0">
                 <button
-                  className={`text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 gap-1 ${tabletNavIconItemClass}`}
+                  className={`text-emerald-800 hover:text-emerald-800 hover:bg-emerald-50 gap-1 ${tabletNavIconItemClass}`}
                 >
                   Services <ChevronDown className="h-4 w-4" />
                 </button>
@@ -683,7 +683,7 @@ export default function Navbar({
               {/* Marketing — pink */}
               <div className="relative group shrink-0">
                 <button
-                  className={`text-pink-600 hover:text-pink-800 hover:bg-pink-50 gap-1 ${tabletNavIconItemClass}`}
+                  className={`text-pink-800 hover:text-pink-800 hover:bg-pink-50 gap-1 ${tabletNavIconItemClass}`}
                 >
                   Marketing <ChevronDown className="h-4 w-4" />
                 </button>
@@ -737,7 +737,7 @@ export default function Navbar({
                 href="/marketplace"
                 className={`relative gap-1 ${tabletNavIconItemClass} transition-all duration-300 ${
                   marketplaceSos
-                    ? "text-amber-600 font-bold bg-amber-50 scale-105"
+                    ? "text-amber-800 font-bold bg-amber-50 scale-105"
                     : "text-violet-600 hover:text-violet-800 hover:bg-violet-50"
                 }`}
               >
@@ -750,7 +750,7 @@ export default function Navbar({
                   </>
                 )}
                 <ShoppingBag
-                  className={`h-4 w-4 ${marketplaceSos ? "animate-bounce text-amber-600" : ""}`}
+                  className={`h-4 w-4 ${marketplaceSos ? "animate-bounce text-amber-800" : ""}`}
                 />
                 <MarketLabel />
               </Link>
@@ -758,7 +758,7 @@ export default function Navbar({
               {/* Support — teal */}
               <div className="relative group shrink-0">
                 <button
-                  className={`text-teal-600 hover:text-teal-800 hover:bg-teal-50 gap-1 ${tabletNavIconItemClass}`}
+                  className={`text-teal-800 hover:text-teal-800 hover:bg-teal-50 gap-1 ${tabletNavIconItemClass}`}
                 >
                   Aide <ChevronDown className="h-4 w-4" />
                 </button>
@@ -788,7 +788,7 @@ export default function Navbar({
                 window.location.href =
                   window.location.origin + "/artist-portal";
               }}
-              className="portal-toggle bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 lg:px-3 py-2 rounded-md text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-colors whitespace-nowrap flex-shrink-0"
+              className="portal-toggle bg-gradient-to-r from-purple-700 to-pink-700 text-white px-2 lg:px-3 py-2 rounded-md text-xs font-medium hover:from-purple-800 hover:to-pink-800 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <Music className="h-3 w-3 lg:mr-1" />
               <span className="hidden lg:inline notranslate">Verso Air</span>

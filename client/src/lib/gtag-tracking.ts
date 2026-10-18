@@ -3,7 +3,7 @@
  * Sends events to GTM and backend for tracking
  */
 
-import { authenticatedFetch } from "./auth";
+import { authenticatedFetch, getAuthToken } from "./auth";
 
 declare global {
   interface Window {
@@ -268,6 +268,7 @@ export function trackAddToFavorites(businessId: number, businessName: string) {
  * Log event to backend
  */
 function logEventToBackend(eventData: any) {
+  if (!getAuthToken()) return;
   const apiUrl = "";
 
   authenticatedFetch(`${apiUrl}/api/v1/admin/gtm-events`, {

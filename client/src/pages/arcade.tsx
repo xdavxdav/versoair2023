@@ -396,6 +396,7 @@ export default function ArcadePage() {
 
   const { data: leaderboard = [] } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/games/leaderboard"],
+    enabled: !!user,
     queryFn: async () => {
       const res = await authFetch("/api/games/leaderboard");
       if (!res.ok) return [];

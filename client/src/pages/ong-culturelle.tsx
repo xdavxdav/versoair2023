@@ -21,7 +21,7 @@ import {
 
 export default function OngCulturelle() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f3efe9] to-[#f3efe9]">
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 overflow-hidden">
         {/* Background decoration */}
@@ -39,7 +39,7 @@ export default function OngCulturelle() {
           >
             <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
               <div className="w-2 h-2 bg-amber-400 rounded-full" />
-              <span className="text-amber-300 text-sm font-medium">
+              <span className="text-amber-800 text-sm font-medium">
                 Vision à venir • vHeartz
               </span>
             </div>
@@ -50,7 +50,7 @@ export default function OngCulturelle() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold text-white mb-6 text-center leading-tight"
+            className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 text-center leading-tight"
           >
             Vision culturelle de vHeartz
           </motion.h1>
@@ -60,7 +60,7 @@ export default function OngCulturelle() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.2 }}
-            className="text-xl text-slate-300 text-center max-w-3xl mx-auto leading-relaxed font-medium"
+            className="text-xl text-slate-700 text-center max-w-3xl mx-auto leading-relaxed font-medium"
           >
             Une vision en préparation pour célébrer les cultures, partager les
             talents et créer des échanges autour de la musique et de l'art.
@@ -69,7 +69,7 @@ export default function OngCulturelle() {
       </section>
 
       {/* The Vision Section */}
-      <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
+      <section className="py-20 px-4 bg-white border-y border-slate-700">
         <div className="max-w-[95vw] mx-auto">
           <motion.div
             variants={fadeInUp}
@@ -78,15 +78,15 @@ export default function OngCulturelle() {
             viewport={defaultViewport}
             className="mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-8 text-center">
               Notre Rêve
             </h2>
-            <p className="text-lg text-slate-300 leading-relaxed max-w-4xl mx-auto text-center">
+            <p className="text-lg text-slate-700 leading-relaxed max-w-4xl mx-auto text-center">
               vHeartz est en préparation. Sa vision est celle d'un monde où les
               talents et les cultures se rencontrent, où les histoires se
               partagent et où les formes artistiques dialoguent au-delà des
               frontières.{" "}
-              <span className="text-amber-400 font-semibold">
+              <span className="text-amber-800 font-semibold">
                 Les initiatives et le calendrier seront annoncés lorsqu'ils
                 seront confirmés.
               </span>
@@ -102,12 +102,12 @@ export default function OngCulturelle() {
           >
             <motion.div
               variants={staggerItem}
-              className="bg-gradient-to-br from-amber-900/40 to-orange-900/30 border border-amber-500/30 p-8 rounded-xl"
+              className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-500/30 p-8 rounded-xl"
             >
-              <h3 className="text-2xl font-bold text-amber-400 mb-4">
+              <h3 className="text-2xl font-bold text-amber-800 mb-4">
                 De l'Afrique vers le Monde
               </h3>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 Une ambition future : mettre en lumière des musiciens, des
                 artistes, des artisans et des conteurs, et créer des occasions
                 de partager leurs œuvres avec de nouveaux publics.
@@ -116,12 +116,12 @@ export default function OngCulturelle() {
 
             <motion.div
               variants={staggerItem}
-              className="bg-gradient-to-br from-blue-900/40 to-cyan-900/30 border border-blue-500/30 p-8 rounded-xl"
+              className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-500/30 p-8 rounded-xl"
             >
-              <h3 className="text-2xl font-bold text-blue-400 mb-4">
+              <h3 className="text-2xl font-bold text-blue-700 mb-4">
                 L'Occident partage aussi
               </h3>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 La vision prévoit aussi des échanges entre traditions et
                 pratiques artistiques de différentes régions. Les formats et
                 collaborations restent à définir.
@@ -139,7 +139,7 @@ export default function OngCulturelle() {
             initial="hidden"
             whileInView="visible"
             viewport={defaultViewport}
-            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
+            className="text-4xl md:text-5xl font-bold text-slate-900 mb-16 text-center"
           >
             Pistes Culturelles Envisagées
           </motion.h2>
@@ -204,7 +204,7 @@ export default function OngCulturelle() {
               <motion.div
                 key={idx}
                 variants={staggerItem}
-                className="group relative overflow-hidden rounded-xl p-6 bg-slate-800/50 border border-slate-700 hover:border-white/30 transition-all duration-300"
+                className="group relative overflow-hidden rounded-xl p-6 bg-white border border-slate-700 hover:border-white/30 transition-all duration-300"
               >
                 {/* Gradient background */}
                 <div
@@ -213,12 +213,12 @@ export default function OngCulturelle() {
 
                 <div className="relative z-10">
                   <pillar.icon
-                    className={`h-8 w-8 mb-4 text-white group-hover:scale-110 transition-transform`}
+                    className={`h-8 w-8 mb-4 text-slate-900 group-hover:scale-110 transition-transform`}
                   />
-                  <h3 className="text-lg font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-amber-800 transition-colors">
                     {pillar.title}
                   </h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">
+                  <p className="text-sm text-slate-700 leading-relaxed">
                     {pillar.desc}
                   </p>
                 </div>
@@ -229,14 +229,14 @@ export default function OngCulturelle() {
       </section>
 
       {/* The Story Section */}
-      <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
+      <section className="py-20 px-4 bg-white border-y border-slate-700">
         <div className="max-w-4xl mx-auto">
           <motion.h2
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
             viewport={defaultViewport}
-            className="text-4xl md:text-5xl font-bold text-white mb-12 text-center"
+            className="text-4xl md:text-5xl font-bold text-slate-900 mb-12 text-center"
           >
             Notre Vision
           </motion.h2>
@@ -250,10 +250,10 @@ export default function OngCulturelle() {
           >
             <motion.div
               variants={staggerItem}
-              className="text-lg text-slate-300 leading-relaxed space-y-4"
+              className="text-lg text-slate-700 leading-relaxed space-y-4"
             >
               <p>
-                <span className="text-amber-400 font-semibold">
+                <span className="text-amber-800 font-semibold">
                   "La culture, c'est notre force."
                 </span>{" "}
                 Cette conviction guide la réflexion de vHeartz : les cultures,
@@ -268,7 +268,7 @@ export default function OngCulturelle() {
               </p>
 
               <p>
-                <span className="text-amber-400 font-semibold">
+                <span className="text-amber-800 font-semibold">
                   vHeartz est une organisation en préparation.
                 </span>{" "}
                 Sa vision est de favoriser, à terme, des échanges entre
@@ -279,12 +279,12 @@ export default function OngCulturelle() {
                 Cette vision repose sur un échange réciproque entre différentes
                 traditions et pratiques artistiques. Les modalités restent à
                 définir, avec le respect mutuel comme principe central.{" "}
-                <span className="text-amber-400 font-semibold">
+                <span className="text-amber-800 font-semibold">
                   L'objectif reste de célébrer notre humanité commune.
                 </span>
               </p>
 
-              <p className="text-amber-300 font-semibold text-xl pt-4">
+              <p className="text-amber-800 font-semibold text-xl pt-4">
                 "Là où il y a de la musique, il y a de l'espoir. Là où il y a du
                 partage, il y a de la paix."
               </p>
@@ -301,7 +301,7 @@ export default function OngCulturelle() {
             initial="hidden"
             whileInView="visible"
             viewport={defaultViewport}
-            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
+            className="text-4xl md:text-5xl font-bold text-slate-900 mb-16 text-center"
           >
             Suivi d'Impact (à venir)
           </motion.h2>
@@ -335,15 +335,15 @@ export default function OngCulturelle() {
               <motion.div
                 key={idx}
                 variants={staggerItem}
-                className="text-center p-8 rounded-xl bg-gradient-to-br from-amber-900/30 to-orange-900/20 border border-amber-500/30 hover:border-amber-500/60 transition-colors"
+                className="text-center p-8 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-500/30 hover:border-amber-500/60 transition-colors"
               >
-                <div className="text-4xl md:text-5xl font-bold text-amber-400 mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-amber-800 mb-2">
                   {stat.number}
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
                   {stat.label}
                 </h3>
-                <p className="text-slate-400 text-sm">{stat.desc}</p>
+                <p className="text-slate-700 text-sm">{stat.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -351,14 +351,14 @@ export default function OngCulturelle() {
       </section>
 
       {/* Values Section */}
-      <section className="py-20 px-4 bg-slate-800/30 border-y border-slate-700">
+      <section className="py-20 px-4 bg-white border-y border-slate-700">
         <div className="max-w-[95vw] mx-auto">
           <motion.h2
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
             viewport={defaultViewport}
-            className="text-4xl md:text-5xl font-bold text-white mb-16 text-center"
+            className="text-4xl md:text-5xl font-bold text-slate-900 mb-16 text-center"
           >
             Nos Valeurs
           </motion.h2>
@@ -399,12 +399,12 @@ export default function OngCulturelle() {
               <motion.div
                 key={idx}
                 variants={staggerItem}
-                className="p-6 rounded-xl bg-slate-900/50 border border-slate-700 hover:border-amber-500/50 transition-colors"
+                className="p-6 rounded-xl bg-white border border-slate-700 hover:border-amber-500/50 transition-colors"
               >
-                <h3 className="text-xl font-bold text-amber-400 mb-3">
+                <h3 className="text-xl font-bold text-amber-800 mb-3">
                   {value.title}
                 </h3>
-                <p className="text-slate-400 leading-relaxed">{value.text}</p>
+                <p className="text-slate-700 leading-relaxed">{value.text}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -427,24 +427,24 @@ export default function OngCulturelle() {
             </div>
 
             <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                 Rejoins le Mouvement
               </h2>
-              <p className="text-slate-300 mb-8 text-lg">
+              <p className="text-slate-700 mb-8 text-lg">
                 Que tu sois artiste, mécène, ou simplement quelqu'un qui aime la
                 culture—il y a une place pour toi ici. Ensemble, nous montrons
                 au monde ce qu'Africa peut offrir.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/get-involved">
-                  <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-amber-500/50 transition-all">
+                  <Button className="bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-amber-500/50 transition-all">
                     S'Impliquer Maintenant
                   </Button>
                 </Link>
                 <Link href="/contact">
                   <Button
                     variant="outline"
-                    className="border-amber-500/50 text-amber-300 hover:bg-amber-500/10 font-semibold py-3 px-8 rounded-lg"
+                    className="border-amber-500/50 text-amber-800 hover:bg-amber-500/10 font-semibold py-3 px-8 rounded-lg"
                   >
                     Nous Contacter
                   </Button>

@@ -43,7 +43,7 @@ export function useAboutStats(): AboutStats {
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
   const [musicStats, setMusicStats] = useState<MusicStats | null>(null);
-  const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
+  const [dbStats] = useState<DatabaseStats | null>(null);
   const [topLocations, setTopLocations] = useState<
     { location: string; count: number }[]
   >([]);
@@ -57,19 +57,21 @@ export function useAboutStats(): AboutStats {
         setError(null);
 
         // Fetch all endpoints in parallel
-        const [categoryRes, statsRes, musicRes, dbRes, businessesRes] =
+        const [categoryRes, statsRes, musicRes, businessesRes] =
           await Promise.allSettled([
-            fetch("/api/manage/database/business-types"),
+            fetch("/api/business-categories"),
             fetch("/api/businesses/stats/summary"),
             fetch("/api/music/analytics"),
-            fetch("/api/admin/database-stats"),
             fetch("/api/businesses?limit=100"),
           ]);
 
         // Parse category stats
         if (categoryRes.status === "fulfilled" && categoryRes.value.ok) {
           const data = await categoryRes.value.json();
-          setCategoryStats(Array.isArray(data) ? data : []);
+          setCategoryStats(Array.isArray(data) ? data.map(category => ({
+            name: category.name, count: Number(category.business_count) || 0,
+            growth: "—", status: "healthy" as const, last_updated: "",
+          })) : []);
         }
 
         // Parse overall stats (API returns strings, convert to numbers)
@@ -97,17 +99,6 @@ export function useAboutStats(): AboutStats {
               totalArtists: Number(d.totalArtists) || 0,
               totalTracks: Number(d.totalTracks) || 0,
               totalStreams: Number(d.totalStreams) || 0,
-            });
-          }
-        }
-
-        // Parse DB stats
-        if (dbRes.status === "fulfilled" && dbRes.value.ok) {
-          const json = await dbRes.value.json();
-          if (json) {
-            setDbStats({
-              totalRecords: Number(json.totalRecords) || 0,
-              activeTables: Number(json.activeTables) || 0,
             });
           }
         }

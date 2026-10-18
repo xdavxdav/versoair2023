@@ -5,7 +5,7 @@
  */
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, optionalAuth } from "../middleware/auth";
 import { newsletterLimiter } from "../middleware/rate-limiter";
 import { queueNewsletterCampaign } from "../services/newsletter-delivery";
 import multer from "multer";
@@ -22,7 +22,10 @@ import {
   rejectUnavailablePayment,
 } from "../utils/commercial-gates";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 
 // Operational accounts are allowed to administer the marketplace, but their
 // test/internal content must not be presented as a public seller offering.
@@ -213,12 +216,14 @@ const listingUpload = multer({
  * GET /api/marketing/journal/listings
  * Public: Browse active journal listings (with optional filters)
  */
-router.get("/journal/listings", async (req: Request, res: Response) => {
+router.get("/journal/listings", optionalAuth, async (req: Request, res: Response) => {
   try {
     const { category, status, page = "1", limit = "20" } = req.query;
-    const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 20));
+    const offset = (pageNum - 1) * limitNum;
 
-    let query = `SELECT jl.*, u.name as owner_name, u.email as owner_email
+    let query = `SELECT jl.*, COALESCE(u.display_name, u.username) as owner_name
                  FROM ad_journal_listings jl
                  LEFT JOIN users u ON jl.user_id = u.id
                  WHERE 1=1`;
@@ -231,14 +236,15 @@ router.get("/journal/listings", async (req: Request, res: Response) => {
     }
 
     // Default to active listings for public view
-    const filterStatus = status || "active";
+    const isStaff = ["admin", "moderator", "superuser"].includes(req.user?.role || "");
+    const filterStatus = isStaff && typeof status === "string" ? status : "active";
     query += ` AND jl.status = $${idx++}`;
     params.push(filterStatus);
     query += INTERNAL_MARKETPLACE_ACCOUNT_EXCLUSION;
 
-    query += ` ORDER BY jl.is_premium DESC, jl.created_at DESC`;
+    query += ` ORDER BY (jl.type = 'premium') DESC, jl.created_at DESC`;
     query += ` LIMIT $${idx++} OFFSET $${idx++}`;
-    params.push(parseInt(limit as string), offset);
+    params.push(limitNum, offset);
 
     const result = await pool.query(query, params);
 
@@ -256,11 +262,11 @@ router.get("/journal/listings", async (req: Request, res: Response) => {
       success: true,
       data: result.rows,
       pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
+        page: pageNum,
+        limit: limitNum,
         total: parseInt(countResult.rows[0].count),
         totalPages: Math.ceil(
-          parseInt(countResult.rows[0].count) / parseInt(limit as string),
+          parseInt(countResult.rows[0].count) / limitNum,
         ),
       },
     });
@@ -537,8 +543,8 @@ router.get("/journal/pdf/:type", async (req: Request, res: Response) => {
       [type],
     );
 
-    if (latest.rows.length > 0 && latest.rows[0].pdf_url) {
-      const filePath = latest.rows[0].pdf_url;
+    if (latest.rows.length > 0 && (latest.rows[0].pdf_url || latest.rows[0].file_path)) {
+      const filePath = latest.rows[0].pdf_url || latest.rows[0].file_path;
       if (fs.existsSync(filePath)) {
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
@@ -549,15 +555,7 @@ router.get("/journal/pdf/:type", async (req: Request, res: Response) => {
       }
     }
 
-    // Generate on-demand if none exists
-    const { filePath: pdfPath } = await generateJournalPDF(type);
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="verso-journal-${type}.pdf"`,
-    );
-    fs.createReadStream(pdfPath).pipe(res);
+    res.status(404).json({ success: false, error: "No published journal edition available" });
   } catch (error: any) {
     console.error("[MARKETING] Journal PDF error:", error);
     res.status(500).json({ success: false, error: error.message });
@@ -593,7 +591,9 @@ router.post(
 router.get("/journal/editions", async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT id, type, listing_count, generated_at, pdf_url FROM journal_editions ORDER BY generated_at DESC LIMIT 20`,
+      `SELECT id, type, listing_count, generated_at,
+              '/api/marketing/journal/pdf/' || type AS pdf_url
+       FROM journal_editions ORDER BY generated_at DESC LIMIT 20`,
     );
     res.json({ success: true, data: result.rows });
   } catch (error: any) {
@@ -645,11 +645,12 @@ router.get("/packs", async (_req: Request, res: Response) => {
     const packs = await pool.query(
       `SELECT mp.*, 
               json_agg(json_build_object(
-                'id', pi.id, 'name', pi.name, 'description', pi.description, 'included', pi.included
-              ) ORDER BY pi.sort_order) AS items
+                'id', pi.id, 'name', COALESCE(to_jsonb(pi)->>'name', to_jsonb(pi)->>'item_type'),
+                'description', pi.description, 'included', COALESCE((to_jsonb(pi)->>'included')::boolean, true)
+              ) ORDER BY pi.id) AS items
        FROM marketing_packs mp
        LEFT JOIN pack_items pi ON pi.pack_id = mp.id
-       WHERE mp.is_active = true
+       WHERE COALESCE((to_jsonb(mp)->>'is_active')::boolean, (to_jsonb(mp)->>'active')::boolean, false) = true
        GROUP BY mp.id
        ORDER BY mp.price_cents ASC`,
     );
@@ -669,11 +670,13 @@ router.get("/packs/:id", async (req: Request, res: Response) => {
     const pack = await pool.query(
       `SELECT mp.*,
               json_agg(json_build_object(
-                'id', pi.id, 'name', pi.name, 'description', pi.description, 'included', pi.included
-              ) ORDER BY pi.sort_order) AS items
+                'id', pi.id, 'name', COALESCE(to_jsonb(pi)->>'name', to_jsonb(pi)->>'item_type'),
+                'description', pi.description, 'included', COALESCE((to_jsonb(pi)->>'included')::boolean, true)
+              ) ORDER BY pi.id) AS items
        FROM marketing_packs mp
        LEFT JOIN pack_items pi ON pi.pack_id = mp.id
        WHERE mp.id = $1
+         AND COALESCE((to_jsonb(mp)->>'is_active')::boolean, (to_jsonb(mp)->>'active')::boolean, false) = true
        GROUP BY mp.id`,
       [parseInt(req.params.id)],
     );
@@ -699,7 +702,9 @@ router.get("/packs/:id", async (req: Request, res: Response) => {
 router.get("/print/products", async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM print_products WHERE is_active = true ORDER BY price_cents ASC`,
+      `SELECT * FROM print_products pp
+       WHERE COALESCE((to_jsonb(pp)->>'is_active')::boolean, (to_jsonb(pp)->>'active')::boolean, false) = true
+       ORDER BY price_cents ASC`,
     );
     res.json({ success: true, data: result.rows });
   } catch (error: any) {

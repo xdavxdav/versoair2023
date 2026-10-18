@@ -8,9 +8,13 @@
  * Dropdown has two sections:
  *   1. Country list (changes data filter + auto-translates to that country's language)
  *   2. Language override (for bi/trilinguals who want a different language than their country's default)
+ *
+ * Overlays mount on document.body so header transforms cannot clip or displace
+ * them. Dismissing a notice does not cancel a requested language change.
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   ChevronDown,
@@ -175,6 +179,7 @@ export function CountryDropdown() {
     romanized,
     toggleRomanization,
     isNonLatinLang,
+    machineTranslated,
   } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -314,52 +319,60 @@ export function CountryDropdown() {
   return (
     <>
       {/* ── Language change confirmation banner ── */}
-      {showBanner && (
+      {showBanner && createPortal(
         <div
-          className="notranslate fixed top-16 left-1/2 -translate-x-1/2 z-[9999] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-4 py-2.5 flex items-center gap-2.5 shadow-xl"
-          style={{ maxWidth: "92vw" }}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          translate="no"
+          className="notranslate fixed top-16 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-md rounded-2xl border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-xl flex flex-wrap items-center gap-2"
         >
-          <Globe className="h-4 w-4 text-purple-400 flex-shrink-0" />
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] text-gray-300 font-mono flex items-center gap-1.5">
+          <Globe aria-hidden="true" className="h-5 w-5 text-purple-700 shrink-0" />
+          <div className="min-w-0 flex-1 basis-36 flex flex-col gap-0.5">
+            <span className="text-sm flex items-center gap-1.5">
               {LANG_FLAGS[currentLang] || "🌐"}
-              <span className="text-white font-bold">
+              <span className="font-bold">
                 {LANG_NAMES[currentLang] || currentLang}
               </span>
             </span>
-            <span className="text-[9px] text-gray-500 font-mono">
+            <span className="text-xs text-slate-700 break-words">
               {reloadCountdown !== null
                 ? `Reloading in ${reloadCountdown}…`
                 : bannerMessage}
             </span>
           </div>
-          {reloadCountdown === null && (
+          {previousLang !== currentLang && (
             <button
+              type="button"
               onClick={() => {
-                selectLanguage(previousLang || "fr");
                 dismissBanner();
+                selectLanguage(previousLang);
               }}
-              className="text-[10px] text-purple-400 hover:text-white ml-1 font-mono underline whitespace-nowrap"
+              className="min-h-11 min-w-11 px-2 text-sm text-purple-800 hover:text-purple-950 underline whitespace-nowrap rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
             >
               Undo
             </button>
           )}
           <button
+            type="button"
             onClick={dismissBanner}
-            className="text-gray-600 hover:text-white ml-0.5"
+            aria-label="Dismiss translation notification"
+            className="h-11 w-11 shrink-0 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
           >
-            <X className="h-3 w-3" />
+            <X aria-hidden="true" className="h-4 w-4" />
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* ── Full-page backdrop ── */}
-      {open && (
+      {open && createPortal(
         <div
           className="fixed inset-0 bg-black/30 z-[999998] transition-opacity"
           style={{ touchAction: "manipulation" }}
           onClick={() => setOpen(false)}
-        />
+        />,
+        document.body,
       )}
 
       <div
@@ -385,6 +398,18 @@ export function CountryDropdown() {
           />
         </button>
 
+        {machineTranslated && (
+          <a
+            href="https://translate.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-white underline underline-offset-2"
+            aria-label="Automatic translation by Google Translate; supported public content only"
+          >
+            Auto · Google Translate
+          </a>
+        )}
+
         {/* Reload detection */}
         <button
           onClick={(e) => {
@@ -399,8 +424,8 @@ export function CountryDropdown() {
         </button>
 
         {/* ── Dropdown ── */}
-        {open && (
-          <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+        {open && createPortal(
+          <div translate="no" className="notranslate fixed top-8 inset-x-0 mx-auto bg-white text-slate-900 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
             {/* Header with tabs */}
             <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 flex items-center justify-between">
               <div className="flex items-center gap-1">
@@ -479,6 +504,7 @@ export function CountryDropdown() {
                   return (
                     <button
                       key={c.code}
+                      aria-label={`Select country: ${c.name}`}
                       onClick={() => selectCountry(c.code)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all duration-150 border-l-[3px] ${
                         isActive
@@ -643,9 +669,11 @@ export function CountryDropdown() {
 
             {/* Footer */}
             <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-              <span className="text-[9px] text-gray-400">
+              <span className="text-[10px] text-slate-600">
                 {tab === "language"
-                  ? "Powered by Google Translate"
+                  ? machineTranslated
+                    ? "Automatic translation by Google Translate"
+                    : "Native FR/EN · automatic translation for other languages"
                   : `${allOptions.length} countries`}
               </span>
               {tab === "country" && (
@@ -658,7 +686,8 @@ export function CountryDropdown() {
                 </button>
               )}
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
     </>

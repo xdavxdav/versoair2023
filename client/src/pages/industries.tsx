@@ -67,14 +67,14 @@ export default function Industries() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f3efe9] to-[#f3efe9]">
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 px-4">
         <div className="max-w-[95vw] mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 text-center">
             Industries We Serve
           </h1>
-          <p className="text-xl text-slate-300 text-center max-w-2xl mx-auto">
+          <p className="text-xl text-slate-700 text-center max-w-2xl mx-auto">
             Verso Air powers intelligent decision-making across every sector
           </p>
         </div>
@@ -86,16 +86,16 @@ export default function Industries() {
           {industries.map((industry, idx) => (
             <div
               key={idx}
-              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group hover:bg-slate-800/70"
+              className="bg-gradient-to-br from-slate-50 to-slate-50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group hover:bg-white"
             >
-              <div className="text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
+              <div className="text-emerald-700 mb-4 group-hover:scale-110 transition-transform">
                 {industry.icon}
               </div>
 
-              <h3 className="text-xl font-bold text-white mb-2">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
                 {industry.name}
               </h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <p className="text-slate-700 text-sm mb-4">
                 {industry.description}
               </p>
 
@@ -103,14 +103,14 @@ export default function Industries() {
                 {industry.features.map((feature, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full"></span>
-                    <span className="text-slate-300 text-sm">{feature}</span>
+                    <span className="text-slate-700 text-sm">{feature}</span>
                   </div>
                 ))}
               </div>
 
               <Button
                 variant="outline"
-                className="w-full border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                className="w-full border-emerald-500/50 text-emerald-700 hover:bg-emerald-500/10"
               >
                 Learn More
               </Button>
@@ -122,23 +122,23 @@ export default function Industries() {
       {/* CTA Section */}
       <div className="max-w-4xl mx-auto px-4 py-16">
         <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">
             Your Industry, Optimized
           </h2>
-          <p className="text-slate-300 mb-8">
+          <p className="text-slate-700 mb-8">
             Don't see your industry? Verso Air is designed to adapt to any
             sector. Get in touch to discuss your specific needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/contact">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold">
                 Contact Sales
               </Button>
             </Link>
             <Link href="/demo">
               <Button
                 variant="outline"
-                className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
+                className="border-emerald-500 text-emerald-700 hover:bg-emerald-500/10"
               >
                 Schedule Demo
               </Button>

@@ -67,7 +67,7 @@ export async function setupVite(
 
     // Don't serve SPA HTML for API routes — let Express handle them
     // (/auth/* routes are frontend pages, not API endpoints)
-    if (url.startsWith("/api")) {
+    if (url.split("?")[0].startsWith("/api/")) {
       return next();
     }
 

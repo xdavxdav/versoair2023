@@ -491,9 +491,9 @@ export default function BatimentDashboard() {
   const { data: analytics } = useQuery({
     queryKey: ["batiment-analytics"],
     queryFn: fetchBatimentAnalytics,
+    enabled: false, // Sector financial analytics are not available from a public API.
     refetchInterval: autoRefresh ? 300000 : false,
     staleTime: 60000,
-    enabled: databaseConnected === true,
   });
 
   // Fetch initial construction contractors
@@ -867,7 +867,7 @@ export default function BatimentDashboard() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-[#f3efe9] via-[#f3efe9] to-[#f3efe9] text-slate-900">
       <SeoHead
         title="Construction Directory | VersoAir"
         description="Discover construction contractors, building services, and infrastructure businesses on VersoAir."
@@ -881,7 +881,7 @@ export default function BatimentDashboard() {
             transition={{ duration: 0.8 }}
             className="mb-4"
           >
-            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
+            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-slate-200">
               �️ Intelligence Bâtiment & Construction
             </span>
           </motion.div>
@@ -899,7 +899,7 @@ export default function BatimentDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
+            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-slate-900"
           >
             Données en temps réel avec{" "}
             {totalResults.toLocaleString()}+ chantiers, entrepreneurs & projets
@@ -913,37 +913,37 @@ export default function BatimentDashboard() {
             transition={{ duration: 1, delay: 0.6 }}
             className="flex flex-wrap justify-center gap-[0.75vw] mb-[1.5vw]"
           >
-            <Card className="bg-white/10 md:backdrop-blur-md border-blue-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-blue-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                  <span className="text-sm text-blue-200">Base en direct</span>
+                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-700" />
+                  <span className="text-sm text-blue-700">Base en direct</span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {totalResults.toLocaleString()}+ Entrées
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 md:backdrop-blur-md border-teal-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-teal-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-teal-400" />
-                  <span className="text-sm text-teal-200">
+                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-teal-700" />
+                  <span className="text-sm text-teal-700">
                     Entreprises bâtiment
                   </span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {searchResults.length} Chargées
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 md:backdrop-blur-md border-blue-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-blue-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Wrench className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-400" />
-                  <span className="text-sm text-blue-200">Ouvriers actifs</span>
+                  <Wrench className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-blue-700" />
+                  <span className="text-sm text-blue-700">Ouvriers actifs</span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {searchResults
                     .reduce((acc, f) => acc + (f.workers_count || 0), 0)
                     .toLocaleString()}
@@ -962,7 +962,7 @@ export default function BatimentDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20"
+                className="bg-gradient-to-r from-blue-50 to-teal-50 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -974,17 +974,17 @@ export default function BatimentDashboard() {
                       ].map((_, i) => (
                         <Star
                           key={i}
-                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400"
+                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800"
                         />
                       ))}
                     </div>
-                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
+                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-700">
                       {enterprises[currentIndex]?.name}
                     </h3>
-                    <p className="text-gray-200 mt-2">
+                    <p className="text-slate-700 mt-2">
                       {enterprises[currentIndex]?.desc}
                     </p>
-                    <div className="flex items-center gap-[0.5vw] mt-3 text-blue-200">
+                    <div className="flex items-center gap-[0.5vw] mt-3 text-blue-700">
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
@@ -992,7 +992,7 @@ export default function BatimentDashboard() {
                       </span>
                     </div>
                   </div>
-                  <ExternalLink className="h-5 w-5 text-blue-400" />
+                  <ExternalLink className="h-5 w-5 text-blue-700" />
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -1001,31 +1001,31 @@ export default function BatimentDashboard() {
 
       {/* Enhanced Search and Filter Section - SAME LAYOUT */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
-        <Card className="bg-gradient-to-br from-slate-800/90 to-blue-900/90 md:backdrop-blur-md border-blue-700 shadow-2xl">
+        <Card className="bg-gradient-to-br from-slate-50 to-blue-50 md:backdrop-blur-md border-blue-700 shadow-2xl">
           <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
             <div className="flex flex-col md:flex-row items-center gap-[0.75vw] mb-[1vw]">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-700" />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher entreprises de construction, architectes..."
-                  className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
+                  className="pl-12 bg-white border-blue-600 text-slate-900 placeholder-slate-600"
                 />
               </div>
               <div className="relative flex-1 w-full">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-700" />
                 <Input
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="Ville, région ou zone de construction..."
-                  className="pl-12 bg-slate-800/50 border-blue-600 text-white placeholder-blue-300/60"
+                  className="pl-12 bg-white border-blue-600 text-slate-900 placeholder-slate-600"
                 />
               </div>
               {isSearching && (
-                <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-blue-700" />
               )}
             </div>
 
@@ -1057,7 +1057,7 @@ export default function BatimentDashboard() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full sm:w-[180px] bg-slate-700 border-blue-600 justify-between"
+                      className="w-full sm:w-[180px] bg-white border-blue-600 justify-between"
                     >
                       <span className="text-sm">
                         {sortOptions.find(
@@ -1067,7 +1067,7 @@ export default function BatimentDashboard() {
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-blue-600 w-[200px]">
+                  <DropdownMenuContent className="text-slate-900 bg-white border-blue-600 w-[200px]">
                     {sortOptions.map((option) => (
                       <DropdownMenuItem
                         key={option.value}
@@ -1085,8 +1085,8 @@ export default function BatimentDashboard() {
                         <span
                           className={
                             activeFilters.sort_by === option.value
-                              ? "font-semibold text-blue-300"
-                              : "text-blue-200"
+                              ? "font-semibold text-blue-700"
+                              : "text-blue-700"
                           }
                         >
                           {option.label}
@@ -1096,7 +1096,7 @@ export default function BatimentDashboard() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <div className="text-sm text-blue-300">
+                <div className="text-sm text-blue-700">
                   {totalResults.toLocaleString()} résultats
                 </div>
               </div>
@@ -1110,16 +1110,16 @@ export default function BatimentDashboard() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-visible"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-blue-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-white rounded-lg border border-blue-700">
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Type de bâtiment
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-blue-600 justify-between"
+                          className="w-full bg-white border-blue-600 justify-between"
                         >
                           <span className="text-sm">
                             {categoryOptions.find(
@@ -1130,7 +1130,7 @@ export default function BatimentDashboard() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className="bg-slate-800 border-blue-600 w-[200px]"
+                        className="text-slate-900 bg-white border-blue-600 w-[200px]"
                         side="bottom"
                         align="start"
                         sideOffset={8}
@@ -1152,8 +1152,8 @@ export default function BatimentDashboard() {
                             <span
                               className={
                                 activeFilters.category === cat.value
-                                  ? "font-semibold text-blue-300"
-                                  : "text-blue-200"
+                                  ? "font-semibold text-blue-700"
+                                  : "text-blue-700"
                               }
                             >
                               {cat.label}
@@ -1165,14 +1165,14 @@ export default function BatimentDashboard() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Spécialisation
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-blue-600 justify-between"
+                          className="w-full bg-white border-blue-600 justify-between"
                         >
                           <span className="text-sm">
                             {specializationOptions.find(
@@ -1183,7 +1183,7 @@ export default function BatimentDashboard() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className="bg-slate-800 border-blue-600 w-[200px]"
+                        className="text-slate-900 bg-white border-blue-600 w-[200px]"
                         side="bottom"
                         align="start"
                         sideOffset={8}
@@ -1205,8 +1205,8 @@ export default function BatimentDashboard() {
                             <span
                               className={
                                 activeFilters.specialization === spec.value
-                                  ? "font-semibold text-blue-300"
-                                  : "text-blue-200"
+                                  ? "font-semibold text-blue-700"
+                                  : "text-blue-700"
                               }
                             >
                               {spec.label}
@@ -1218,7 +1218,7 @@ export default function BatimentDashboard() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Note minimum
                     </Label>
                     <Input
@@ -1234,12 +1234,12 @@ export default function BatimentDashboard() {
                         })
                       }
                       placeholder="Any"
-                      className="bg-slate-700 border-blue-600"
+                      className="bg-white border-blue-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Min. employés
                     </Label>
                     <Input
@@ -1252,12 +1252,12 @@ export default function BatimentDashboard() {
                         })
                       }
                       placeholder="Any"
-                      className="bg-slate-700 border-blue-600"
+                      className="bg-white border-blue-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Min. projets
                     </Label>
                     <Input
@@ -1270,12 +1270,12 @@ export default function BatimentDashboard() {
                         })
                       }
                       placeholder="Any"
-                      className="bg-slate-700 border-blue-600"
+                      className="bg-white border-blue-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       CA minimum
                     </Label>
                     <Input
@@ -1288,19 +1288,19 @@ export default function BatimentDashboard() {
                         })
                       }
                       placeholder="Any"
-                      className="bg-slate-700 border-blue-600"
+                      className="bg-white border-blue-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-blue-600 justify-between"
+                          className="w-full bg-white border-blue-600 justify-between"
                         >
                           <span className="text-sm">
                             {statusOptions.find(
@@ -1311,7 +1311,7 @@ export default function BatimentDashboard() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className="bg-slate-800 border-blue-600 w-[200px]"
+                        className="text-slate-900 bg-white border-blue-600 w-[200px]"
                         side="bottom"
                         align="start"
                         sideOffset={8}
@@ -1333,8 +1333,8 @@ export default function BatimentDashboard() {
                             <span
                               className={
                                 activeFilters.status === status.value
-                                  ? "font-semibold text-blue-300"
-                                  : "text-blue-200"
+                                  ? "font-semibold text-blue-700"
+                                  : "text-blue-700"
                               }
                             >
                               {status.label}
@@ -1346,7 +1346,7 @@ export default function BatimentDashboard() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-blue-300">
+                    <Label className="text-sm font-medium mb-2 block text-blue-700">
                       Équipements
                     </Label>
                     <Input
@@ -1359,7 +1359,7 @@ export default function BatimentDashboard() {
                         })
                       }
                       placeholder="Gestion de site, Équipement lourd..."
-                      className="bg-slate-700 border-blue-600"
+                      className="bg-white border-blue-600"
                     />
                   </div>
 
@@ -1388,7 +1388,7 @@ export default function BatimentDashboard() {
       {/* Main Content with Tabs - SAME STRUCTURE */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-[2vh] sm:py-[3vh] md:py-[4vh]">
         {/* Tabs Navigation */}
-        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-slate-800/50 rounded-xl p-[0.4vw] border border-blue-500/20 backdrop-blur-sm">
+        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-white rounded-xl p-[0.4vw] border border-blue-500/20 backdrop-blur-sm">
           <div className="flex w-fit mx-auto">
             {(
               [
@@ -1412,8 +1412,8 @@ export default function BatimentDashboard() {
                 onClick={() => setActiveTab(tab)}
                 className={`relative whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 flex items-center ${
                   activeTab === tab
-                    ? "text-white"
-                    : "text-blue-300 hover:text-white hover:bg-white/5"
+                    ? "text-slate-900"
+                    : "text-blue-700 hover:text-slate-900 hover:bg-white/5"
                 }`}
               >
                 {activeTab === tab && (
@@ -1462,13 +1462,13 @@ export default function BatimentDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-[1vw]">
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
-                    <Database className="h-6 w-6 text-blue-400" />
-                    <span className="bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
+                    <Database className="h-6 w-6 text-blue-700" />
+                    <span className="bg-gradient-to-r from-slate-50 to-teal-400 bg-clip-text text-transparent">
                       Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
-                  <div className="text-sm text-blue-300">
+                  <div className="text-sm text-blue-700">
                     Résultats du répertoire
                   </div>
                 </div>
@@ -1476,47 +1476,47 @@ export default function BatimentDashboard() {
                 {/* Loading State - SAME COMPONENT */}
                 {isInitialLoading ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1vw]">
-                    <Card className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 md:backdrop-blur-md border border-blue-500/20">
+                    <Card className="bg-gradient-to-r from-blue-50 to-teal-50 md:backdrop-blur-md border border-blue-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
                             </div>
-                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-700">
                               Chargement des entreprises de construction...
                             </h3>
-                            <p className="text-gray-200 mt-2">
+                            <p className="text-slate-700 mt-2">
                               Connexion à la base de données
                             </p>
                           </div>
-                          <ExternalLink className="h-5 w-5 text-blue-400" />
+                          <ExternalLink className="h-5 w-5 text-blue-700" />
                         </div>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 md:backdrop-blur-md border border-blue-500/20">
+                    <Card className="bg-gradient-to-r from-blue-50 to-teal-50 md:backdrop-blur-md border border-blue-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
                             </div>
-                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-blue-700">
                               Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">
+                            <p className="text-slate-700 mt-2">
                               Veuillez patienter
                             </p>
                           </div>
-                          <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
+                          <Loader2 className="h-5 w-5 text-blue-700 animate-spin" />
                         </div>
                       </CardContent>
                     </Card>
@@ -1533,10 +1533,10 @@ export default function BatimentDashboard() {
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-blue-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-blue-700 mb-2">
                               Recherche en cours...
                             </h3>
-                            <p className="text-gray-300">
+                            <p className="text-slate-700">
                               Récupération des entreprises de construction...
                             </p>
                           </div>
@@ -1556,11 +1556,11 @@ export default function BatimentDashboard() {
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
-                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
+                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-slate-700 mb-4" />
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-slate-700 mb-2">
                               Aucune entreprise trouvée
                             </h3>
-                            <p className="text-gray-400">
+                            <p className="text-slate-700">
                               Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
@@ -1591,7 +1591,7 @@ export default function BatimentDashboard() {
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
                           Précédent
                         </Button>
-                        <span className="text-blue-400 text-[clamp(0.7rem,1vw,0.875rem)]">
+                        <span className="text-blue-700 text-[clamp(0.7rem,1vw,0.875rem)]">
                           Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
@@ -1618,7 +1618,7 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
@@ -1701,13 +1701,13 @@ export default function BatimentDashboard() {
 
             {/* Charts and Details - SAME LAYOUT */}
             <div className="grid lg:grid-cols-2 gap-[1vw] mb-[1.5vw]">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
+                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-slate-900">
                       Tendances revenus & projets
                     </h3>
-                    <Calendar className="h-5 w-5 text-blue-400" />
+                    <Calendar className="h-5 w-5 text-blue-700" />
                   </div>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={chartRef}></canvas>
@@ -1715,9 +1715,9 @@ export default function BatimentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
+                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-slate-900">
                     Revenus par catégorie
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
@@ -1729,9 +1729,9 @@ export default function BatimentDashboard() {
 
             {/* Additional Metrics - SAME STRUCTURE */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1.5vw]">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-slate-900">
                     Meilleures catégories
                   </h3>
                   <div className="space-y-4">
@@ -1741,15 +1741,15 @@ export default function BatimentDashboard() {
                         className="flex justify-between items-center"
                       >
                         <div>
-                          <span className="block font-medium text-white capitalize">
+                          <span className="block font-medium text-slate-900 capitalize">
                             {category.category.replace(/_/g, " ")}
                           </span>
-                          <span className="text-sm text-green-400">
+                          <span className="text-sm text-green-700">
                             {category.project_count?.toLocaleString() || "0"}{" "}
                             projets
                           </span>
                         </div>
-                        <span className="font-semibold text-blue-300">
+                        <span className="font-semibold text-blue-700">
                           €{(category.revenue || 0).toLocaleString()}
                         </span>
                       </div>
@@ -1787,14 +1787,14 @@ export default function BatimentDashboard() {
                             className="flex justify-between items-center"
                           >
                             <div>
-                              <span className="block font-medium text-white">
+                              <span className="block font-medium text-slate-900">
                                 {item.category}
                               </span>
-                              <span className="text-sm text-green-400">
+                              <span className="text-sm text-green-700">
                                 {item.patient_count.toLocaleString()} projets
                               </span>
                             </div>
-                            <span className="font-semibold text-blue-300">
+                            <span className="font-semibold text-blue-700">
                               €{item.revenue.toLocaleString()}
                             </span>
                           </div>
@@ -1805,19 +1805,19 @@ export default function BatimentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-slate-900">
                     Ventes par région
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
                       <div key={index}>
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-white">
+                          <span className="font-medium text-slate-900">
                             {region.region}
                           </span>
-                          <span className="font-semibold text-blue-300">
+                          <span className="font-semibold text-blue-700">
                             €{(region.revenue || 0).toLocaleString()}
                           </span>
                         </div>
@@ -1825,7 +1825,7 @@ export default function BatimentDashboard() {
                           percent={region.percentage || 0}
                           className="h-2"
                         />
-                        <div className="text-right text-sm text-blue-400 mt-1">
+                        <div className="text-right text-sm text-blue-700 mt-1">
                           {region.percentage || 0}% •{" "}
                           {region.contractor_count || 0} entrepreneurs
                         </div>
@@ -1835,9 +1835,9 @@ export default function BatimentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-blue-500/20">
                 <CardContent>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-slate-900">
                     Indicateurs de performance
                   </h3>
                   <div className="space-y-4">
@@ -1875,18 +1875,18 @@ export default function BatimentDashboard() {
                         key={index}
                         className="flex justify-between items-center"
                       >
-                        <span className="text-gray-300">{item.metric}</span>
+                        <span className="text-slate-700">{item.metric}</span>
                         <div className="text-right">
-                          <div className="font-semibold text-white">
+                          <div className="font-semibold text-slate-900">
                             {item.value}
                           </div>
                           <div
                             className={`text-sm ${
                               item.change.startsWith("+")
-                                ? "text-green-400"
+                                ? "text-green-700"
                                 : item.change.startsWith("-")
-                                  ? "text-red-400"
-                                  : "text-blue-400"
+                                  ? "text-red-700"
+                                  : "text-blue-700"
                             }`}
                           >
                             {item.change}
@@ -1902,13 +1902,13 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "patients" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Users className="h-6 w-6" />
               Analytique projets
             </h2>
-            <p className="text-gray-300 mb-6">
+            <p className="text-slate-700 mb-6">
               Statistiques de projets et indicateurs de performance du secteur
               bâtiment.
             </p>
@@ -1953,20 +1953,20 @@ export default function BatimentDashboard() {
               ].map((metric, index) => (
                 <Card
                   key={index}
-                  className="bg-white/5 border-white/10 hover:border-blue-500/30 transition-colors"
+                  className="text-slate-900 bg-white/5 border-slate-200 hover:border-blue-500/30 transition-colors"
                 >
                   <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`p-2 bg-blue-600/20 rounded-lg`}>
-                        <div className={`text-blue-400`}>{metric.icon}</div>
+                        <div className={`text-blue-700`}>{metric.icon}</div>
                       </div>
                       <div
                         className={`text-sm ${
                           metric.change.startsWith("+")
-                            ? "text-green-400"
+                            ? "text-green-700"
                             : metric.change.startsWith("-")
-                              ? "text-red-400"
-                              : "text-blue-400"
+                              ? "text-red-700"
+                              : "text-blue-700"
                         }`}
                       >
                         {metric.change}
@@ -1975,7 +1975,7 @@ export default function BatimentDashboard() {
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
-                    <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-300">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-700">
                       {metric.value}
                     </div>
                   </CardContent>
@@ -1986,13 +1986,13 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "resources" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Activity className="h-6 w-6" />
               Ressources & Équipements
             </h2>
-            <p className="text-gray-300 mb-6">
+            <p className="text-slate-700 mb-6">
               Gestion des équipements, du personnel et des ressources.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1vw]">
@@ -2036,20 +2036,20 @@ export default function BatimentDashboard() {
               ].map((resource, index) => (
                 <Card
                   key={index}
-                  className="bg-white/5 border-white/10 hover:border-blue-500/30 transition-colors"
+                  className="text-slate-900 bg-white/5 border-slate-200 hover:border-blue-500/30 transition-colors"
                 >
                   <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`p-2 bg-blue-600/20 rounded-lg`}>
-                        <div className={`text-blue-400`}>{resource.icon}</div>
+                        <div className={`text-blue-700`}>{resource.icon}</div>
                       </div>
                       <div
                         className={`text-sm ${
                           resource.status === "Excellent"
-                            ? "text-green-400"
+                            ? "text-green-700"
                             : resource.status === "Bon"
-                              ? "text-blue-400"
-                              : "text-yellow-400"
+                              ? "text-blue-700"
+                              : "text-yellow-800"
                         }`}
                       >
                         {resource.status}
@@ -2058,7 +2058,7 @@ export default function BatimentDashboard() {
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {resource.title}
                     </h3>
-                    <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-300">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-blue-700">
                       {resource.value}
                     </div>
                   </CardContent>
@@ -2069,63 +2069,63 @@ export default function BatimentDashboard() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
-            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-blue-300 flex items-center gap-[0.5vw]">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-blue-700 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
               Connexion aux données en direct
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-700">
                   Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">
+                    <span className="text-blue-700">
                       Total enregistrements bâtiment
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {totalResults.toLocaleString()}+
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">
+                    <span className="text-blue-700">
                       Entreprises bâtiment actives
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">
+                    <span className="text-blue-700">
                       Total projets réalisés
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {searchResults
                         .reduce((acc, f) => acc + (f.project_count || 0), 0)
                         .toLocaleString()}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">Statut de la base</span>
+                    <span className="text-blue-700">Statut de la base</span>
                     <span
                       className={`font-semibold ${
-                        databaseConnected ? "text-green-400" : "text-red-400"
+                        databaseConnected ? "text-green-700" : "text-red-700"
                       }`}
                     >
                       {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-blue-300">Point d'accès API</span>
-                    <span className="font-mono text-sm text-blue-400">
+                    <span className="text-blue-700">Point d'accès API</span>
+                    <span className="font-mono text-sm text-blue-700">
                       {API_BASE_URL}
                     </span>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-blue-700">
                   Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
@@ -2140,14 +2140,14 @@ export default function BatimentDashboard() {
                   <Button
                     onClick={() => handleSearch(1)}
                     variant="outline"
-                    className="w-full border-blue-500 text-blue-400 hover:bg-blue-500/10"
+                    className="w-full border-blue-500 text-blue-700 hover:bg-blue-500/10"
                   >
                     Actualiser les données
                   </Button>
                   <Button
                     onClick={() => fetchFacilities()}
                     variant="outline"
-                    className="w-full border-teal-500 text-teal-400 hover:bg-teal-500/10"
+                    className="w-full border-teal-500 text-teal-700 hover:bg-teal-500/10"
                   >
                     Charger plus de résultats
                   </Button>
@@ -2159,16 +2159,16 @@ export default function BatimentDashboard() {
 
         {/* ── Browsing History Tab ───────────────────────────────────────── */}
         {activeTab === "history" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold text-blue-300 flex items-center gap-2">
+              <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold text-blue-700 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Historique de navigation
               </h2>
               {user && history.length > 0 && (
                 <button
                   onClick={() => deleteHistoryEntry("all")}
-                  className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors px-3 py-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10"
+                  className="flex items-center gap-1 text-xs text-red-700 hover:text-red-700 transition-colors px-3 py-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/10"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Tout effacer
@@ -2179,15 +2179,15 @@ export default function BatimentDashboard() {
             {/* Not logged in */}
             {!user && (
               <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-                <LogIn className="h-12 w-12 text-blue-400/60" />
-                <p className="text-blue-200 text-sm max-w-xs">
+                <LogIn className="h-12 w-12 text-blue-700" />
+                <p className="text-blue-700 text-sm max-w-xs">
                   Connectez-vous pour suivre les entrepreneurs et projets
                   consultés. Votre historique se synchronise sur tous vos
                   appareils.
                 </p>
                 <a
                   href="/auth/signin"
-                  className="mt-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white text-sm font-medium rounded-lg transition-all"
+                  className="mt-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-slate-900 text-sm font-medium rounded-lg transition-all"
                 >
                   Se connecter
                 </a>
@@ -2196,7 +2196,7 @@ export default function BatimentDashboard() {
 
             {/* Loading */}
             {user && historyLoading && (
-              <div className="flex items-center justify-center py-16 gap-3 text-blue-300">
+              <div className="flex items-center justify-center py-16 gap-3 text-blue-700">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <span className="text-sm">Chargement de l'historique…</span>
               </div>
@@ -2205,8 +2205,8 @@ export default function BatimentDashboard() {
             {/* Empty */}
             {user && !historyLoading && history.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-                <Clock className="h-10 w-10 text-blue-400/40" />
-                <p className="text-blue-200/60 text-sm">
+                <Clock className="h-10 w-10 text-blue-700" />
+                <p className="text-blue-700 text-sm">
                   Aucun historique. Cliquez sur une fiche entrepreneur pour
                   commencer.
                 </p>
@@ -2219,17 +2219,17 @@ export default function BatimentDashboard() {
                 {history.map((entry: any) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-3 transition-colors group"
+                    className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/10 border border-slate-200 rounded-lg px-4 py-3 transition-colors group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8 h-8 rounded-full bg-blue-600/30 flex items-center justify-center flex-shrink-0">
-                        <HardHat className="h-4 w-4 text-blue-300" />
+                        <HardHat className="h-4 w-4 text-blue-700" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
+                        <p className="text-slate-900 text-sm font-medium truncate">
                           {entry.businessName ?? "Entreprise inconnue"}
                         </p>
-                        <p className="text-blue-300/70 text-xs flex items-center gap-1.5">
+                        <p className="text-blue-700 text-xs flex items-center gap-1.5">
                           <span className="capitalize px-1.5 py-0.5 bg-blue-500/20 rounded text-[10px] font-medium">
                             {entry.sector}
                           </span>
@@ -2253,7 +2253,7 @@ export default function BatimentDashboard() {
                     </div>
                     <button
                       onClick={() => deleteHistoryEntry(entry.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400/70 hover:text-red-400 p-1.5 rounded"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-700 hover:text-red-700 p-1.5 rounded"
                       title="Supprimer l'entrée"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -2269,7 +2269,7 @@ export default function BatimentDashboard() {
       {/* Construction Features Section - SAME LAYOUT */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
-          <span className="bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-slate-50 via-teal-500 to-slate-50 bg-clip-text text-transparent">
             Plateforme d'intelligence Bâtiment
           </span>
         </h2>
@@ -2280,17 +2280,17 @@ export default function BatimentDashboard() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-blue-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg"
+              className="bg-gradient-to-br from-slate-50 to-blue-50 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-blue-500/20 hover:border-blue-500/40 transition-all hover:shadow-lg"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-blue-600/20 to-teal-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-white">
+              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-slate-900">
                 {feature.title}
               </h3>
-              <p className="text-gray-300">{feature.description}</p>
+              <p className="text-slate-700">{feature.description}</p>
             </motion.div>
           ))}
         </div>
@@ -2310,18 +2310,18 @@ export default function BatimentDashboard() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-blue-500/30"
+              className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-blue-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
-                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
+              <div className="sticky top-0 bg-white md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-slate-900">
                   {selectedFacility.title}
                 </h2>
                 <button
                   onClick={() => setShowFacilityDetails(false)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white rounded-lg transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-400" />
+                  <X className="h-5 w-5 text-slate-700" />
                 </button>
               </div>
 
@@ -2329,27 +2329,27 @@ export default function BatimentDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-[0.5vw] mb-2">
-                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
-                      <span className="text-gray-300">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-slate-700" />
+                      <span className="text-slate-700">
                         {selectedFacility.location}
                       </span>
                     </div>
                     <div className="flex items-center gap-[0.5vw]">
                       <Badge
                         variant="outline"
-                        className="bg-blue-900/30 text-blue-300 border-blue-500/30 capitalize"
+                        className="bg-blue-50 text-blue-700 border-blue-500/30 capitalize"
                       >
                         {(selectedFacility.category ?? "unknown").replace(
                           /_/g,
                           " ",
                         )}
                       </Badge>
-                      <div className="flex items-center gap-1 bg-blue-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                      <div className="flex items-center gap-1 bg-blue-50 text-yellow-800 px-2 py-1 rounded text-sm">
                         <Star className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] fill-current" />
                         <span className="font-bold">
                           {selectedFacility.rating?.toFixed(1) || "4.5"}
                         </span>
-                        <span className="text-gray-400 text-xs ml-1">
+                        <span className="text-slate-700 text-xs ml-1">
                           ({selectedFacility.reviews || 0} avis)
                         </span>
                       </div>
@@ -2358,73 +2358,73 @@ export default function BatimentDashboard() {
                 </div>
 
                 <div>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                     Description
                   </h3>
-                  <p className="text-gray-300">
+                  <p className="text-slate-700">
                     {selectedFacility.description}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[0.75vw] sm:gap-[1vw]">
                   {selectedFacility.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-slate-700">
                           Chiffre d'affaires annuel
                         </div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           €{selectedFacility.revenue.toLocaleString()}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedFacility.project_count && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-slate-700">
                           Projets réalisés
                         </div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           {selectedFacility.project_count}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedFacility.workers_count && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employés</div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-sm text-slate-700">Employés</div>
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           {selectedFacility.workers_count}+
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedFacility.equipment && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-slate-700">
                           Équipement disponible
                         </div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-400">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-green-700">
                           Oui
                         </div>
                       </CardContent>
                     </Card>
                   )}
-                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                  <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Contact</div>
-                      <div className="text-sm font-semibold text-white">
+                      <div className="text-sm text-slate-700">Contact</div>
+                      <div className="text-sm font-semibold text-slate-900">
                         {selectedFacility.phone || "Non précisé"}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                  <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">E-mail</div>
-                      <div className="text-sm font-semibold text-white truncate">
+                      <div className="text-sm text-slate-700">E-mail</div>
+                      <div className="text-sm font-semibold text-slate-900 truncate">
                         {selectedFacility.email || "Non précisé"}
                       </div>
                     </CardContent>
@@ -2434,7 +2434,7 @@ export default function BatimentDashboard() {
                 {selectedFacility.specialization &&
                   selectedFacility.specialization.length > 0 && (
                     <div>
-                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                         Spécialisations
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
@@ -2442,7 +2442,7 @@ export default function BatimentDashboard() {
                           <Badge
                             key={index}
                             variant="outline"
-                            className="bg-blue-900/30 text-blue-300 border-blue-500/30"
+                            className="bg-blue-50 text-blue-700 border-blue-500/30"
                           >
                             {spec}
                           </Badge>
@@ -2454,7 +2454,7 @@ export default function BatimentDashboard() {
                 {selectedFacility.amenities &&
                   selectedFacility.amenities.length > 0 && (
                     <div>
-                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                         Services & Équipements
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
@@ -2462,7 +2462,7 @@ export default function BatimentDashboard() {
                           <Badge
                             key={index}
                             variant="outline"
-                            className="bg-slate-800/50 text-gray-300 border-slate-600"
+                            className="bg-white text-slate-700 border-slate-600"
                           >
                             {amenity}
                           </Badge>
@@ -2477,7 +2477,7 @@ export default function BatimentDashboard() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-1 border-slate-600 hover:bg-slate-800"
+                    className="flex-1 border-slate-600 hover:bg-white"
                     onClick={() => setShowFacilityDetails(false)}
                   >
                     Fermer

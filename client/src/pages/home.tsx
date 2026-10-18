@@ -3423,17 +3423,17 @@ export default function Home() {
                           {
                             icon: Building2,
                             label: "Entreprises",
-                            value: homeStats.businessCount,
+                            value: homeStats.businessCount > 0 ? homeStats.businessCount : "—",
                           },
                           {
                             icon: Users,
                             label: "Artisans",
-                            value: homeStats.artisanCount,
+                            value: homeStats.artisanCount > 0 ? homeStats.artisanCount : "—",
                           },
                           {
                             icon: Target,
                             label: "Catégories",
-                            value: homeStats.categoryCount,
+                            value: homeStats.categoryCount > 0 ? homeStats.categoryCount : "—",
                           },
                           {
                             icon: MapPin,
@@ -3805,7 +3805,9 @@ export default function Home() {
                 Répertoire Complet des Artistes
               </motion.h2>
               <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
-                Explorez plus de {artistAnnuaireGenres.length} catégories
+                {artistAnnuaireGenres.length > 0
+                  ? `Explorez plus de ${artistAnnuaireGenres.length} catégories`
+                  : "Explorez les catégories musicales"}
                 d'artistes à travers {countryMeta.nameFr}
               </p>
             </div>
@@ -3835,7 +3837,7 @@ export default function Home() {
                   {/* Genre Dropdown */}
                   <div className="flex-1">
                     <Label className="text-sm font-medium mb-2 block text-purple-300">
-                      Genre ({artistAnnuaireGenres.length} disponibles)
+                      Genre{artistAnnuaireGenres.length > 0 ? ` (${artistAnnuaireGenres.length} disponibles)` : ""}
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

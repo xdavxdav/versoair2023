@@ -562,7 +562,7 @@ export default function Finance() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-gray-900 via-emerald-900/20 to-gray-900 text-white">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-[#f3efe9] via-[#f3efe9] to-[#f3efe9] text-slate-900">
       <SeoHead
         title="Finance Directory | VersoAir"
         description="Explore banks, fintech, insurance, and financial services businesses on VersoAir."
@@ -576,7 +576,7 @@ export default function Finance() {
             transition={{ duration: 0.8 }}
             className="mb-4"
           >
-            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-white/20">
+            <span className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium border border-slate-200">
               💰 Intelligence Financière
             </span>
           </motion.div>
@@ -594,7 +594,7 @@ export default function Finance() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-white/90"
+            className="text-[clamp(1rem,1.4vw,1.25rem)] mb-4 text-slate-900"
           >
             Données en temps réel avec{" "}
             {totalResults.toLocaleString()}+ banques, courtiers forex et
@@ -608,28 +608,28 @@ export default function Finance() {
             transition={{ duration: 1, delay: 0.6 }}
             className="flex flex-wrap justify-center gap-[0.75vw] mb-[1.5vw]"
           >
-            <Card className="bg-white/10 md:backdrop-blur-md border-purple-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-purple-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-400" />
-                  <span className="text-sm text-purple-200">
+                  <Database className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-purple-700" />
+                  <span className="text-sm text-purple-700">
                     Base de Données en Direct
                   </span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {totalResults.toLocaleString()}+ Enregistrements
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-white/10 md:backdrop-blur-md border-pink-500/30">
+            <Card className="text-slate-900 bg-white/10 md:backdrop-blur-md border-pink-500/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-[0.5vw]">
-                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-400" />
-                  <span className="text-sm text-pink-200">
+                  <Building className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-pink-700" />
+                  <span className="text-sm text-pink-700">
                     Institutions Financières
                   </span>
                 </div>
-                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                   {searchResults.length} Chargées
                 </div>
               </CardContent>
@@ -645,7 +645,7 @@ export default function Finance() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20"
+                className="bg-gradient-to-r from-purple-50 to-pink-50 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -657,17 +657,17 @@ export default function Finance() {
                       ].map((_, i) => (
                         <Star
                           key={i}
-                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400"
+                          className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800"
                         />
                       ))}
                     </div>
-                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
+                    <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-700">
                       {enterprises[currentIndex]?.name}
                     </h3>
-                    <p className="text-gray-200 mt-2">
+                    <p className="text-slate-700 mt-2">
                       {enterprises[currentIndex]?.desc}
                     </p>
-                    <div className="flex items-center gap-[0.5vw] mt-3 text-purple-200">
+                    <div className="flex items-center gap-[0.5vw] mt-3 text-purple-700">
                       <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)]" />
                       <span>
                         {enterprises[currentIndex]?.location ||
@@ -675,7 +675,7 @@ export default function Finance() {
                       </span>
                     </div>
                   </div>
-                  <ExternalLink className="h-5 w-5 text-purple-400" />
+                  <ExternalLink className="h-5 w-5 text-purple-700" />
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -684,28 +684,28 @@ export default function Finance() {
 
       {/* Enhanced Search and Filter Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] -mt-8 relative z-20">
-        <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 md:backdrop-blur-md border-purple-700 shadow-2xl">
+        <Card className="bg-gradient-to-br from-slate-50 to-purple-50 md:backdrop-blur-md border-purple-700 shadow-2xl">
           <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
             <div className="flex flex-col md:flex-row items-center gap-[0.75vw] mb-[1vw]">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-700" />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher banques, courtiers forex, services financiers..."
-                  className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
+                  className="pl-12 bg-white border-purple-600 text-slate-900 placeholder-slate-600"
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
               <div className="relative flex-1 w-full">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-700" />
                 <Input
                   type="text"
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="Ville, quartier financier ou région..."
-                  className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60"
+                  className="pl-12 bg-white border-purple-600 text-slate-900 placeholder-slate-600"
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
@@ -756,7 +756,7 @@ export default function Finance() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full sm:w-[180px] justify-between"
+                      className="border-purple-600 bg-white hover:bg-white w-full sm:w-[180px] justify-between"
                     >
                       <span className="text-sm">
                         {activeFilters.sort_by === "rating_desc" &&
@@ -771,7 +771,7 @@ export default function Finance() {
                       <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[200px]">
+                  <DropdownMenuContent className="text-slate-900 bg-white border-purple-600 w-[200px]">
                     <DropdownMenuItem
                       onClick={() =>
                         setActiveFilters({
@@ -786,8 +786,8 @@ export default function Finance() {
                       <span
                         className={
                           activeFilters.sort_by === "rating_desc"
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
+                            ? "font-semibold text-purple-700"
+                            : "text-purple-700"
                         }
                       >
                         Meilleure note
@@ -807,8 +807,8 @@ export default function Finance() {
                       <span
                         className={
                           activeFilters.sort_by === "revenue_desc"
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
+                            ? "font-semibold text-purple-700"
+                            : "text-purple-700"
                         }
                       >
                         Chiffre d'affaires
@@ -828,8 +828,8 @@ export default function Finance() {
                       <span
                         className={
                           activeFilters.sort_by === "assets_desc"
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
+                            ? "font-semibold text-purple-700"
+                            : "text-purple-700"
                         }
                       >
                         Plus grands actifs
@@ -849,8 +849,8 @@ export default function Finance() {
                       <span
                         className={
                           activeFilters.sort_by === "name_asc"
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
+                            ? "font-semibold text-purple-700"
+                            : "text-purple-700"
                         }
                       >
                         Nom A-Z
@@ -859,7 +859,7 @@ export default function Finance() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <div className="text-sm text-purple-300">
+                <div className="text-sm text-purple-700">
                   {totalResults.toLocaleString()} résultats
                 </div>
               </div>
@@ -873,16 +873,16 @@ export default function Finance() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-slate-800/50 rounded-lg border border-purple-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[0.75vw] sm:gap-[1vw] p-3 sm:p-4 bg-white rounded-lg border border-purple-700">
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-purple-300">
+                    <Label className="text-sm font-medium mb-2 block text-purple-700">
                       Catégorie
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-purple-600 justify-between"
+                          className="w-full bg-white border-purple-600 justify-between"
                         >
                           <span className="text-sm">
                             {categoryOptions.find(
@@ -892,7 +892,7 @@ export default function Finance() {
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[200px]">
+                      <DropdownMenuContent className="text-slate-900 bg-white border-purple-600 w-[200px]">
                         <DropdownMenuItem
                           onClick={() =>
                             setActiveFilters({ ...activeFilters, category: "" })
@@ -901,8 +901,8 @@ export default function Finance() {
                           <span
                             className={
                               !activeFilters.category
-                                ? "font-semibold text-purple-300"
-                                : "text-purple-200"
+                                ? "font-semibold text-purple-700"
+                                : "text-purple-700"
                             }
                           >
                             Toutes les catégories
@@ -924,8 +924,8 @@ export default function Finance() {
                             <span
                               className={
                                 activeFilters.category === cat.value
-                                  ? "font-semibold text-purple-300"
-                                  : "text-purple-200"
+                                  ? "font-semibold text-purple-700"
+                                  : "text-purple-700"
                               }
                             >
                               {cat.label}
@@ -937,7 +937,7 @@ export default function Finance() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-purple-300">
+                    <Label className="text-sm font-medium mb-2 block text-purple-700">
                       Note minimum
                     </Label>
                     <Input
@@ -953,12 +953,12 @@ export default function Finance() {
                         })
                       }
                       placeholder="Tous"
-                      className="bg-slate-700 border-purple-600"
+                      className="bg-white border-purple-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-purple-300">
+                    <Label className="text-sm font-medium mb-2 block text-purple-700">
                       CA minimum
                     </Label>
                     <Input
@@ -971,19 +971,19 @@ export default function Finance() {
                         })
                       }
                       placeholder="Tous"
-                      className="bg-slate-700 border-purple-600"
+                      className="bg-white border-purple-600"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium mb-2 block text-purple-300">
+                    <Label className="text-sm font-medium mb-2 block text-purple-700">
                       Statut
                     </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full bg-slate-700 border-purple-600 justify-between"
+                          className="w-full bg-white border-purple-600 justify-between"
                         >
                           <span className="text-sm">
                             {statusOptions.find(
@@ -993,7 +993,7 @@ export default function Finance() {
                           <ChevronDown className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[200px]">
+                      <DropdownMenuContent className="text-slate-900 bg-white border-purple-600 w-[200px]">
                         <DropdownMenuItem
                           onClick={() =>
                             setActiveFilters({ ...activeFilters, status: "" })
@@ -1002,8 +1002,8 @@ export default function Finance() {
                           <span
                             className={
                               !activeFilters.status
-                                ? "font-semibold text-purple-300"
-                                : "text-purple-200"
+                                ? "font-semibold text-purple-700"
+                                : "text-purple-700"
                             }
                           >
                             Tout statut
@@ -1025,8 +1025,8 @@ export default function Finance() {
                             <span
                               className={
                                 activeFilters.status === status.value
-                                  ? "font-semibold text-purple-300"
-                                  : "text-purple-200"
+                                  ? "font-semibold text-purple-700"
+                                  : "text-purple-700"
                               }
                             >
                               {status.label}
@@ -1062,7 +1062,7 @@ export default function Finance() {
       {/* Main Content with Tabs */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-[2vh] sm:py-[3vh] md:py-[4vh]">
         {/* Tabs Navigation */}
-        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-slate-800/50 rounded-xl p-[0.4vw] border border-purple-500/20 backdrop-blur-sm">
+        <div className="relative mb-[1.5vw] overflow-x-auto scrollbar-hide bg-white rounded-xl p-[0.4vw] border border-purple-500/20 backdrop-blur-sm">
           <div className="flex w-fit mx-auto">
             {(
               [
@@ -1085,8 +1085,8 @@ export default function Finance() {
                 onClick={() => setActiveTab(tab)}
                 className={`relative capitalize whitespace-nowrap px-[1vw] py-[0.5vw] rounded-lg text-[clamp(0.65rem,1vw,0.875rem)] font-medium transition-colors duration-200 shrink-0 ${
                   activeTab === tab
-                    ? "text-white"
-                    : "text-purple-300 hover:text-white hover:bg-white/5"
+                    ? "text-slate-900"
+                    : "text-purple-700 hover:text-slate-900 hover:bg-white/5"
                 }`}
               >
                 {activeTab === tab && (
@@ -1109,13 +1109,13 @@ export default function Finance() {
               <div>
                 <div className="flex items-center justify-between mb-[1vw]">
                   <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold flex items-center gap-[0.5vw]">
-                    <Database className="h-6 w-6 text-purple-400" />
-                    <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    <Database className="h-6 w-6 text-purple-700" />
+                    <span className="bg-gradient-to-r from-slate-50 to-slate-50 bg-clip-text text-transparent">
                       Résultats base de données ({searchResults.length} sur{" "}
                       {totalResults.toLocaleString()})
                     </span>
                   </h2>
-                  <div className="text-sm text-purple-300">
+                  <div className="text-sm text-purple-700">
                     {searchResults.length} résultat(s) dans le répertoire
                   </div>
                 </div>
@@ -1123,47 +1123,47 @@ export default function Finance() {
                 {/* Loading State */}
                 {isInitialLoading ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-[1vw]">
-                    <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 md:backdrop-blur-md border border-purple-500/20">
+                    <Card className="bg-gradient-to-r from-purple-50 to-pink-50 md:backdrop-blur-md border border-purple-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
                             </div>
-                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-700">
                               Chargement des institutions financières...
                             </h3>
-                            <p className="text-gray-200 mt-2">
+                            <p className="text-slate-700 mt-2">
                               Connecting to database
                             </p>
                           </div>
-                          <ExternalLink className="h-5 w-5 text-purple-400" />
+                          <ExternalLink className="h-5 w-5 text-purple-700" />
                         </div>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 md:backdrop-blur-md border border-purple-500/20">
+                    <Card className="bg-gradient-to-r from-purple-50 to-pink-50 md:backdrop-blur-md border border-purple-500/20">
                       <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="flex items-center gap-1 mb-2">
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
-                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-400" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
+                              <Star className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] fill-yellow-400 text-yellow-800" />
                             </div>
-                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-300">
+                            <h3 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-semibold text-purple-700">
                               Récupération des données...
                             </h3>
-                            <p className="text-gray-200 mt-2">
+                            <p className="text-slate-700 mt-2">
                               Veuillez patienter
                             </p>
                           </div>
-                          <Loader2 className="h-5 w-5 text-purple-400 animate-spin" />
+                          <Loader2 className="h-5 w-5 text-purple-700 animate-spin" />
                         </div>
                       </CardContent>
                     </Card>
@@ -1180,10 +1180,10 @@ export default function Finance() {
                                 <Search className="h-10 w-10 text-white" />
                               </div>
                             </div>
-                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-300 mb-2">
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-purple-700 mb-2">
                               Recherche en cours...
                             </h3>
-                            <p className="text-gray-300">
+                            <p className="text-slate-700">
                               Chargement des institutions financières...
                             </p>
                           </div>
@@ -1201,11 +1201,11 @@ export default function Finance() {
                           ))
                         ) : (
                           <div className="col-span-full text-center py-[2vh] sm:py-[3vh] md:py-[4vh]">
-                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-gray-300 mb-2">
+                            <Search className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto text-slate-700 mb-4" />
+                            <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-slate-700 mb-2">
                               Aucune institution trouvée
                             </h3>
-                            <p className="text-gray-400">
+                            <p className="text-slate-700">
                               Essayez une autre recherche ou effacez les filtres
                             </p>
                             <Button
@@ -1236,7 +1236,7 @@ export default function Finance() {
                           <ChevronRight className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] mr-1 rotate-180" />
                           Précédent
                         </Button>
-                        <span className="text-purple-400 text-[clamp(0.7rem,1vw,0.875rem)]">
+                        <span className="text-purple-700 text-[clamp(0.7rem,1vw,0.875rem)]">
                           Page {currentPage} sur {Math.ceil(totalResults / 9)}
                         </span>
                         <Button
@@ -1263,7 +1263,7 @@ export default function Finance() {
         )}
 
         {activeTab === "analytics" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <BarChart3 className="h-6 w-6" />
@@ -1334,13 +1334,13 @@ export default function Finance() {
 
             {/* Charts and Details */}
             <div className="grid lg:grid-cols-2 gap-[1vw] mb-[1.5vw]">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-white">
+                    <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold text-slate-900">
                       Tendances revenus & transactions
                     </h3>
-                    <Calendar className="h-5 w-5 text-purple-400" />
+                    <Calendar className="h-5 w-5 text-purple-700" />
                   </div>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
                     <canvas ref={chartRef}></canvas>
@@ -1348,9 +1348,9 @@ export default function Finance() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-white">
+                  <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-6 text-slate-900">
                     Revenue by Category
                   </h3>
                   <div className="chart-container h-48 sm:h-60 md:h-72">
@@ -1362,9 +1362,9 @@ export default function Finance() {
 
             {/* Additional Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[1.5vw]">
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-slate-900">
                     Top Cat\u00e9gories
                   </h3>
                   <div className="space-y-4">
@@ -1374,14 +1374,14 @@ export default function Finance() {
                         className="flex justify-between items-center"
                       >
                         <div>
-                          <span className="block font-medium text-white capitalize">
+                          <span className="block font-medium text-slate-900 capitalize">
                             {category.category}
                           </span>
-                          <span className="text-sm text-green-400">
+                          <span className="text-sm text-green-700">
                             {category.occupancy || 0}% occupation
                           </span>
                         </div>
-                        <span className="font-semibold text-purple-300">
+                        <span className="font-semibold text-purple-700">
                           €{(category.revenue || 0).toLocaleString()}
                         </span>
                       </div>
@@ -1419,14 +1419,14 @@ export default function Finance() {
                             className="flex justify-between items-center"
                           >
                             <div>
-                              <span className="block font-medium text-white">
+                              <span className="block font-medium text-slate-900">
                                 {item.category}
                               </span>
-                              <span className="text-sm text-green-400">
+                              <span className="text-sm text-green-700">
                                 {item.occupancy}% occupancy
                               </span>
                             </div>
-                            <span className="font-semibold text-purple-300">
+                            <span className="font-semibold text-purple-700">
                               €{item.revenue.toLocaleString()}
                             </span>
                           </div>
@@ -1437,19 +1437,19 @@ export default function Finance() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-slate-900">
                     Revenue by Region
                   </h3>
                   <div className="space-y-4">
                     {analytics?.top_regions?.map((region, index) => (
                       <div key={index}>
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium text-white">
+                          <span className="font-medium text-slate-900">
                             {region.region}
                           </span>
-                          <span className="font-semibold text-purple-300">
+                          <span className="font-semibold text-purple-700">
                             €{(region.revenue || 0).toLocaleString()}
                           </span>
                         </div>
@@ -1457,7 +1457,7 @@ export default function Finance() {
                           percent={region.percentage || 0}
                           className="h-2"
                         />
-                        <div className="text-right text-sm text-purple-400 mt-1">
+                        <div className="text-right text-sm text-purple-700 mt-1">
                           {region.percentage || 0}%
                         </div>
                       </div>
@@ -1483,10 +1483,10 @@ export default function Finance() {
                         ].map((region, index) => (
                           <div key={index}>
                             <div className="flex justify-between items-center mb-1">
-                              <span className="font-medium text-white">
+                              <span className="font-medium text-slate-900">
                                 {region.region}
                               </span>
-                              <span className="font-semibold text-purple-300">
+                              <span className="font-semibold text-purple-700">
                                 €{region.revenue.toLocaleString()}
                               </span>
                             </div>
@@ -1494,7 +1494,7 @@ export default function Finance() {
                               percent={region.percentage || 0}
                               className="h-2"
                             />
-                            <div className="text-right text-sm text-purple-400 mt-1">
+                            <div className="text-right text-sm text-purple-700 mt-1">
                               {region.percentage}%
                             </div>
                           </div>
@@ -1505,9 +1505,9 @@ export default function Finance() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
+              <Card className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] shadow-lg border border-purple-500/20">
                 <CardContent>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-white">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-4 text-slate-900">
                     Performance Metrics
                   </h3>
                   <div className="space-y-4">
@@ -1543,16 +1543,16 @@ export default function Finance() {
                         key={index}
                         className="flex justify-between items-center"
                       >
-                        <span className="text-gray-300">{item.metric}</span>
+                        <span className="text-slate-700">{item.metric}</span>
                         <div className="text-right">
-                          <div className="font-semibold text-white">
+                          <div className="font-semibold text-slate-900">
                             {item.value}
                           </div>
                           <div
                             className={`text-sm ${
                               item.change.startsWith("+")
-                                ? "text-green-400"
-                                : "text-red-400"
+                                ? "text-green-700"
+                                : "text-red-700"
                             }`}
                           >
                             {item.change}
@@ -1568,13 +1568,13 @@ export default function Finance() {
         )}
 
         {activeTab === "finance" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <DollarSign className="h-6 w-6" />
               Tableau de bord financier
             </h2>
-            <p className="text-gray-300 mb-6">
+            <p className="text-slate-700 mb-6">
               Analytique financière et indicateurs de performance du secteur
               finance.
             </p>
@@ -1595,15 +1595,15 @@ export default function Finance() {
                 { title: "Marge bénéficiaire", value: "32%", change: "+4%" },
                 { title: "ROI", value: "28%", change: "+6%" },
               ].map((metric, index) => (
-                <Card key={index} className="bg-white/5 border-white/10">
+                <Card key={index} className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {metric.title}
                     </h3>
-                    <div className="text-base sm:text-lg md:text-2xl font-bold text-purple-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-purple-700 mb-1">
                       {metric.value}
                     </div>
-                    <div className="text-green-400 text-sm">
+                    <div className="text-green-700 text-sm">
                       {metric.change} par rapport au mois dernier
                     </div>
                   </CardContent>
@@ -1614,13 +1614,13 @@ export default function Finance() {
         )}
 
         {activeTab === "ads" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
             <DemoMetricsNotice />
             <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-[1vw] flex items-center gap-[0.5vw]">
               <Sparkles className="h-6 w-6" />
               Publicité & Promotions
             </h2>
-            <p className="text-gray-300 mb-6">
+            <p className="text-slate-700 mb-6">
               Gérez les campagnes et activités promotionnelles pour les
               entreprises financières.
             </p>
@@ -1637,23 +1637,23 @@ export default function Finance() {
                 { title: "Taux de conversion", value: "2.8%", status: "Bon" },
                 { title: "ROAS", value: "4.2x", status: "Excellent" },
               ].map((ad, index) => (
-                <Card key={index} className="bg-white/5 border-white/10">
+                <Card key={index} className="text-slate-900 bg-white/5 border-slate-200">
                   <CardContent className="p-[clamp(0.75rem,2vw,2.5rem)]">
                     <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2">
                       {ad.title}
                     </h3>
-                    <div className="text-base sm:text-lg md:text-2xl font-bold text-purple-300 mb-1">
+                    <div className="text-base sm:text-lg md:text-2xl font-bold text-purple-700 mb-1">
                       {ad.value}
                     </div>
                     <div
                       className={`text-sm ${
                         ad.status === "Excellent"
-                          ? "text-green-400"
+                          ? "text-green-700"
                           : ad.status === "Bon"
-                            ? "text-blue-400"
+                            ? "text-blue-700"
                             : ad.status === "Moyen"
-                              ? "text-yellow-400"
-                              : "text-purple-400"
+                              ? "text-yellow-800"
+                              : "text-purple-700"
                       }`}
                     >
                       {ad.status}
@@ -1666,53 +1666,53 @@ export default function Finance() {
         )}
 
         {activeTab === "database" && (
-          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-white/20">
-            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-300 flex items-center gap-[0.5vw]">
+          <div className="bg-white/10 md:backdrop-blur-md rounded-xl p-[clamp(1rem,2vw,2rem)] border border-slate-200">
+            <h2 className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-bold mb-3 sm:mb-4 text-purple-700 flex items-center gap-[0.5vw]">
               <Database className="h-6 w-6" />
               Connexion aux données en direct
             </h2>
             <div className="grid md:grid-cols-2 gap-[1vw]">
               <div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-700">
                   Statistiques de la base
                 </h3>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">
+                    <span className="text-purple-700">
                       Total enregistrements financiers
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {totalResults.toLocaleString()}+
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">
+                    <span className="text-purple-700">
                       Institutions financières actives
                     </span>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {searchResults.length}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">Statut de la base</span>
+                    <span className="text-purple-700">Statut de la base</span>
                     <span
                       className={`font-semibold ${
-                        databaseConnected ? "text-green-400" : "text-red-400"
+                        databaseConnected ? "text-green-700" : "text-red-700"
                       }`}
                     >
                       {databaseConnected ? "Connectée ✅" : "Déconnectée ❌"}
                     </span>
                   </li>
                   <li className="flex items-center justify-between">
-                    <span className="text-purple-300">Point d'accès API</span>
-                    <span className="font-mono text-sm text-purple-400">
+                    <span className="text-purple-700">Point d'accès API</span>
+                    <span className="font-mono text-sm text-purple-700">
                       {API_BASE_URL}
                     </span>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-200">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 text-purple-700">
                   Actions rapides
                 </h3>
                 <div className="space-y-[0.75vw]">
@@ -1729,7 +1729,7 @@ export default function Finance() {
                       handleSearch(1);
                     }}
                     variant="outline"
-                    className="w-full border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                    className="w-full border-purple-500 text-purple-700 hover:bg-purple-500/10"
                   >
                     Actualiser les données
                   </Button>
@@ -1743,7 +1743,7 @@ export default function Finance() {
       {/* Finance Features Section */}
       <div className="w-[96vw] sm:w-[96vw] md:w-[97vw] lg:w-[98vw] mx-auto px-[2vw] py-8 sm:py-12 md:py-16">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8 md:mb-12">
-          <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-slate-50 via-slate-50 to-slate-50 bg-clip-text text-transparent">
             Réseau Financier Verso Air
           </span>
         </h2>
@@ -1754,17 +1754,17 @@ export default function Finance() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-gradient-to-br from-slate-800/50 to-purple-900/30 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-purple-500/20 hover:border-purple-500/40 transition-all"
+              className="bg-gradient-to-br from-slate-50 to-purple-50 md:backdrop-blur-md rounded-xl p-[clamp(0.75rem,2vw,2.5rem)] text-center border border-purple-500/20 hover:border-purple-500/40 transition-all"
             >
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-lg">
                   {feature.icon}
                 </div>
               </div>
-              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-white">
+              <h3 className="text-[clamp(1rem,1.4vw,1.25rem)] font-semibold mb-2 text-slate-900">
                 {feature.title}
               </h3>
-              <p className="text-gray-300">{feature.description}</p>
+              <p className="text-slate-700">{feature.description}</p>
             </motion.div>
           ))}
         </div>
@@ -1784,18 +1784,18 @@ export default function Finance() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-purple-500/30"
+              className="bg-gradient-to-br from-slate-50 to-slate-50 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-purple-500/30"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-slate-800/90 md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
-                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-white">
+              <div className="sticky top-0 bg-white md:backdrop-blur-md border-b border-slate-700 p-[clamp(0.75rem,2vw,2.5rem)] flex justify-between items-center">
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-slate-900">
                   {selectedBusiness.title}
                 </h2>
                 <button
                   onClick={() => setShowBusinessDetails(false)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white rounded-lg transition-colors"
                 >
-                  <X className="h-5 w-5 text-gray-400" />
+                  <X className="h-5 w-5 text-slate-700" />
                 </button>
               </div>
 
@@ -1803,24 +1803,24 @@ export default function Finance() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-[0.5vw] mb-2">
-                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-gray-400" />
-                      <span className="text-gray-300">
+                      <MapPin className="h-[clamp(1rem,1.2vw,1.25rem)] w-[clamp(1rem,1.2vw,1.25rem)] text-slate-700" />
+                      <span className="text-slate-700">
                         {selectedBusiness.location}
                       </span>
                     </div>
                     <div className="flex items-center gap-[0.5vw]">
                       <Badge
                         variant="outline"
-                        className="bg-purple-900/30 text-purple-300 border-purple-500/30"
+                        className="bg-purple-50 text-purple-700 border-purple-500/30"
                       >
                         {selectedBusiness.category}
                       </Badge>
-                      <div className="flex items-center gap-1 bg-purple-900/50 text-yellow-400 px-2 py-1 rounded text-sm">
+                      <div className="flex items-center gap-1 bg-purple-50 text-yellow-800 px-2 py-1 rounded text-sm">
                         <Star className="h-[clamp(0.75rem,1vw,1rem)] w-[clamp(0.75rem,1vw,1rem)] fill-current" />
                         <span className="font-bold">
                           {selectedBusiness.rating}
                         </span>
-                        <span className="text-gray-400 text-xs ml-1">
+                        <span className="text-slate-700 text-xs ml-1">
                           ({selectedBusiness.reviews} avis)
                         </span>
                       </div>
@@ -1829,49 +1829,49 @@ export default function Finance() {
                 </div>
 
                 <div>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                     Description
                   </h3>
-                  <p className="text-gray-300">
+                  <p className="text-slate-700">
                     {selectedBusiness.description}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[0.75vw] sm:gap-[1vw]">
                   {selectedBusiness.revenue && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-slate-700">
                           Chiffre d'affaires
                         </div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           €{selectedBusiness.revenue.toLocaleString()}
                         </div>
                       </CardContent>
                     </Card>
                   )}
                   {selectedBusiness.employees && (
-                    <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                    <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                       <CardContent className="p-0">
-                        <div className="text-sm text-gray-400">Employés</div>
-                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-white">
+                        <div className="text-sm text-slate-700">Employés</div>
+                        <div className="text-[clamp(1rem,1.4vw,1.25rem)] font-bold text-slate-900">
                           {selectedBusiness.employees}+
                         </div>
                       </CardContent>
                     </Card>
                   )}
-                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                  <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">Contact</div>
-                      <div className="text-sm font-semibold text-white">
+                      <div className="text-sm text-slate-700">Contact</div>
+                      <div className="text-sm font-semibold text-slate-900">
                         {selectedBusiness.phone || "Non spécifié"}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
+                  <Card className="text-slate-900 bg-white rounded-lg p-3 sm:p-4">
                     <CardContent className="p-0">
-                      <div className="text-sm text-gray-400">E-mail</div>
-                      <div className="text-sm font-semibold text-white truncate">
+                      <div className="text-sm text-slate-700">E-mail</div>
+                      <div className="text-sm font-semibold text-slate-900 truncate">
                         {selectedBusiness.email || "Non spécifié"}
                       </div>
                     </CardContent>
@@ -1881,7 +1881,7 @@ export default function Finance() {
                 {selectedBusiness.services &&
                   selectedBusiness.services.length > 0 && (
                     <div>
-                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                         Services financiers
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
@@ -1889,7 +1889,7 @@ export default function Finance() {
                           <Badge
                             key={index}
                             variant="outline"
-                            className="bg-purple-900/30 text-purple-300 border-purple-500/30"
+                            className="bg-purple-50 text-purple-700 border-purple-500/30"
                           >
                             {service}
                           </Badge>
@@ -1901,7 +1901,7 @@ export default function Finance() {
                 {selectedBusiness.certifications &&
                   selectedBusiness.certifications.length > 0 && (
                     <div>
-                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 mb-2">
                         Certifications
                       </h3>
                       <div className="flex flex-wrap gap-[0.5vw]">
@@ -1909,7 +1909,7 @@ export default function Finance() {
                           <Badge
                             key={index}
                             variant="outline"
-                            className="bg-slate-800/50 text-gray-300 border-slate-600"
+                            className="bg-white text-slate-700 border-slate-600"
                           >
                             {cert}
                           </Badge>
@@ -1924,7 +1924,7 @@ export default function Finance() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-1 border-slate-600 hover:bg-slate-800"
+                    className="flex-1 border-slate-600 hover:bg-white"
                     onClick={() => setShowBusinessDetails(false)}
                   >
                     Fermer

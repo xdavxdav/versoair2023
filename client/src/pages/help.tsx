@@ -1,3 +1,4 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import {
   LifeBuoy,
   MessageCircle,
@@ -19,6 +20,7 @@ import {
 import ScrollToTop from "@/components/ScrollToTop";
 
 export default function HelpCenter() {
+  const localize = useLocalizedContent();
   const helpCategories = [
     {
       icon: <LifeBuoy className="h-8 w-8" />,
@@ -58,16 +60,16 @@ export default function HelpCenter() {
     },
   ];
 
-  return (
+  return localize((
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       {/* Hero Section */}
       <div className="relative px-4 pb-16 pt-20">
-        <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#0f172a_0%,#111827_25%,#1f2937_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">
+        <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#f8f5f1_0%,#f3efe9_25%,#efe7dd_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">
           <motion.h1
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
-            className="mb-6 text-center text-4xl font-bold text-white md:text-6xl"
+            className="mb-6 text-center text-4xl font-bold text-slate-900 md:text-6xl"
           >
             Help Center
           </motion.h1>
@@ -76,7 +78,7 @@ export default function HelpCenter() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="mx-auto max-w-2xl text-center text-base text-slate-200 md:text-xl"
+            className="mx-auto max-w-2xl text-center text-base text-slate-700 md:text-xl"
           >
             Find answers and get support when you need it
           </motion.p>
@@ -99,7 +101,7 @@ export default function HelpCenter() {
                 whileHover={{ y: -6, scale: 1.02 }}
                 className="group h-full cursor-pointer rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_20px_40px_rgba(15,23,42,0.04)] transition-all hover:border-amber-400/50"
               >
-                <div className="mb-4 text-amber-500 transition-transform group-hover:scale-110">
+                <div className="mb-4 text-amber-800 transition-transform group-hover:scale-110">
                   {category.icon}
                 </div>
                 <h3 className="mb-2 text-lg font-bold text-slate-900">
@@ -160,7 +162,7 @@ export default function HelpCenter() {
                   {section.items.map((item, i) => (
                     <li
                       key={i}
-                      className="cursor-pointer text-sm text-slate-600 transition-colors hover:text-amber-600"
+                      className="cursor-pointer text-sm text-slate-600 transition-colors hover:text-amber-800"
                     >
                       → {item}
                     </li>
@@ -212,14 +214,14 @@ export default function HelpCenter() {
               whileHover={{ y: -5, scale: 1.02 }}
               className="rounded-[24px] border border-slate-200 bg-white p-6 text-center shadow-[0_20px_35px_rgba(15,23,42,0.04)]"
             >
-              <div className="mb-4 flex justify-center text-amber-500">
+              <div className="mb-4 flex justify-center text-amber-800">
                 {option.icon}
               </div>
               <h3 className="mb-2 font-bold text-slate-900">{option.title}</h3>
               <p className="mb-4 text-sm text-slate-600">
                 {option.description}
               </p>
-              <p className="text-sm font-semibold text-amber-600">
+              <p className="text-sm font-semibold text-amber-800">
                 {option.contact}
               </p>
             </motion.div>
@@ -238,14 +240,14 @@ export default function HelpCenter() {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/contact">
-              <Button className="bg-amber-600 text-white hover:bg-amber-500">
+              <Button className="bg-amber-700 text-white hover:bg-amber-800">
                 Contact Us
               </Button>
             </Link>
             <Link href="/sav">
               <Button
                 variant="outline"
-                className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                className="border-slate-300 text-slate-700 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Service Après-Vente
               </Button>
@@ -256,5 +258,5 @@ export default function HelpCenter() {
 
       <ScrollToTop />
     </div>
-  );
+  ));
 }

@@ -12,7 +12,10 @@ import {
 } from "../services/notification-service";
 import { onlinePaymentsEnabled } from "../utils/commercial-gates";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 // Mounted at /api/music
 
 // ── Multer config ────────────────────────────────────────────────────

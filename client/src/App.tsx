@@ -313,7 +313,6 @@ import { CountryDropdown } from "@/components/CountryDropdown";
 import GeoAdminMarketStatusBanner from "@/components/GeoAdminMarketStatusBanner";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
-import { useGTRetranslate } from "@/hooks/use-gt-retranslate";
 
 // Keep beta freeze in place for non-core marketing pages, but allow the
 // live business dashboard, billing, admin, and music ecosystem routes.
@@ -538,10 +537,6 @@ function Router() {
     }
   }, [location, previousLocation]);
 
-  // Re-trigger GT translation after every route change so new page content
-  // gets translated (GT only translates on init — misses React-rendered pages)
-  useGTRetranslate([location]);
-
   if (BETA_SCOPE_FREEZE && !isBetaRoute(location)) {
     return <Redirect to="/" />;
   }
@@ -552,6 +547,19 @@ function Router() {
           🏠 PUBLIC — Marketing & informational pages
           ═══════════════════════════════════════════════ */}
       <Route path="/" component={Home} />
+      <Route path="/podcast">{() => <Redirect to="/blog" />}</Route>
+      <Route path="/artist-directory">{() => <Redirect to="/artistes" />}</Route>
+      <Route path="/account">{() => <Redirect to="/profile" />}</Route>
+      <Route path="/jobs">{() => <Redirect to="/services/careers" />}</Route>
+      <Route path="/artisan">{() => <Redirect to="/artisans" />}</Route>
+      <Route path="/billing">{() => <Redirect to="/account/billing" />}</Route>
+      <Route path="/music/social">{() => <Redirect to="/blog" />}</Route>
+      <Route path="/artist-portal/dashboard">{() => <Redirect to="/music/dashboard" />}</Route>
+      <Route path="/contractor">{() => <Redirect to="/services/contractors" />}</Route>
+      <Route path="/admin">{() => <Redirect to="/geo-admin" />}</Route>
+      <Route path="/finance">{() => <Redirect to="/finances" />}</Route>
+      <Route path="/artist-catalogue">{() => <Redirect to="/artistes" />}</Route>
+      <Route path="/streamroyale-admin">{() => <Redirect to="/admin/streamroyale" />}</Route>
       <Route path="/messages" component={MessagesPage} />
       <Route path="/hub" component={HubPage} />
       <Route path="/about" component={About} />
@@ -1072,7 +1080,7 @@ function AppContent() {
             style={{ overflow: "visible" }}
           >
             {/* Top Banner */}
-            <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white h-7 px-2 flex items-center">
+            <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white h-7 px-2 flex items-center">
               <div
                 className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
                 style={{ overflow: "visible" }}

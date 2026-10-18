@@ -12,7 +12,10 @@ import {
 } from "../services/email-service";
 import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 
+import { numericRouteParam } from "../middleware/numeric-route-param";
+
 const router = Router();
+router.param("id", numericRouteParam);
 
 // ─── Cached column existence checks (production DB may lag behind schema) ───
 const _bizColCache: Record<string, boolean | null> = {};
@@ -252,7 +255,7 @@ router.get("/api/location/ip-data", async (req: Request, res: Response) => {
 
 // GET all businesses with pagination and filtering
 router.get(
-  "/api/businesses",
+  ["/api/businesses", "/api/businesses/search"],
   (req: Request, res: Response, next) => {
     if (req.query.includeUnverified === "true") {
       return requireAuth(["admin", "moderator", "superuser"])(req, res, next);
@@ -267,7 +270,7 @@ router.get(
     const {
       page = 1,
       limit = 50,
-      search = "",
+      search = req.query.q || "",
       location: locationFilter = "",
       category = "",
       categoryId = "",

@@ -30,7 +30,7 @@ export default function News() {
       </div>
 
       {/* Hero Headline Section */}
-      <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
+      <section className="py-20 bg-white text-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"></div>
         <div className="relative max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-10">
           {/* Main headline */}
@@ -49,14 +49,14 @@ export default function News() {
             <h2 className="text-4xl font-extrabold mb-4">
               Global AI Expansion Reshaping Business in 2025
             </h2>
-            <p className="text-lg text-gray-200 mb-6">
+            <p className="text-lg text-slate-700 mb-6">
               Artificial Intelligence adoption has surged worldwide, driving
               innovations across industries from finance to healthcare. Analysts
               forecast an unprecedented wave of automation and smarter
               decision-making.
             </p>
             <Link href="/services">
-              <Button className="bg-primary text-white px-6 py-2 hover:bg-primary/90">
+              <Button className="bg-primary text-slate-900 px-6 py-2 hover:bg-primary/90">
                 Read Full redaction
               </Button>
             </Link>
@@ -141,7 +141,7 @@ export default function News() {
                 <TrendingUp className="h-16 w-16 text-white" />
               </div>
               <div className="p-6">
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                <div className="flex items-center gap-2 text-sm text-slate-700 mb-3">
                   <Calendar className="h-4 w-4" />
                   <span>January 15, 2025</span>
                   <User className="h-4 w-4 ml-2" />
@@ -171,7 +171,7 @@ export default function News() {
                 <span className="text-4xl">🎵</span>
               </div>
               <div className="p-6">
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                <div className="flex items-center gap-2 text-sm text-slate-700 mb-3">
                   <Calendar className="h-4 w-4" />
                   <span>January 10, 2025</span>
                   <User className="h-4 w-4 ml-2" />
@@ -307,7 +307,7 @@ export default function News() {
                 With environmental concerns rising, companies ignoring
                 sustainability risk long-term decline in consumer trust.
               </p>
-              <span className="text-sm text-gray-500">By VERSO AIR INC. Editorial Team</span>
+              <span className="text-sm text-slate-700">By VERSO AIR INC. Editorial Team</span>
             </motion.div>
             <motion.div
               variants={staggerItem}
@@ -321,7 +321,7 @@ export default function News() {
                 Remote-first policies combined with hybrid flexibility continue
                 to redefine corporate culture globally.
               </p>
-              <span className="text-sm text-gray-500">By VERSO AIR INC. Editorial Team</span>
+              <span className="text-sm text-slate-700">By VERSO AIR INC. Editorial Team</span>
             </motion.div>
           </motion.div>
         </div>
@@ -427,8 +427,8 @@ export default function News() {
           viewport={defaultViewport}
           className="max-w-4xl mx-auto px-4 text-center"
         >
-          <h3 className="text-3xl font-bold text-white mb-4">Stay Informed</h3>
-          <p className="text-xl text-white/90 mb-8">
+          <h3 className="text-3xl font-bold text-slate-900 mb-4">Stay Informed</h3>
+          <p className="text-xl text-slate-900 mb-8">
             Subscribe to our newsletter for the latest updates and industry
             insights.
           </p>
@@ -439,7 +439,7 @@ export default function News() {
                 placeholder="Enter your email"
                 className="flex-1 px-4 py-2 outline-none"
               />
-              <Button className="bg-primary text-white px-6 py-2 hover:bg-primary/90">
+              <Button className="bg-primary text-slate-900 px-6 py-2 hover:bg-primary/90">
                 Subscribe
               </Button>
             </div>

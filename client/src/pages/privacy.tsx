@@ -1,15 +1,17 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { Link } from "wouter";
 import { Shield, ArrowLeft } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
 
 export default function PrivacyPolicy() {
-  return (
+  const localize = useLocalizedContent();
+  return localize((
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="mx-auto max-w-4xl px-4 py-16">
         {/* Back link */}
         <Link href="/">
-          <a className="mb-8 inline-flex items-center gap-2 text-amber-600 transition-colors hover:text-amber-700">
+          <a className="mb-8 inline-flex items-center gap-2 text-amber-800 transition-colors hover:text-amber-700">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </a>
@@ -18,13 +20,13 @@ export default function PrivacyPolicy() {
         {/* Header */}
         <div className="mb-10 flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
-            <Shield className="h-6 w-6 text-white" />
+            <Shield className="h-6 w-6 text-slate-900" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-900">
               Privacy Policy
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               Last updated: March 13, 2026
             </p>
           </div>
@@ -33,7 +35,7 @@ export default function PrivacyPolicy() {
         {/* Content */}
         <div className="prose max-w-none space-y-8 text-slate-700">
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               1. Introduction
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -53,7 +55,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               2. Information We Collect
             </h2>
             <h3 className="text-lg font-medium text-slate-900 mt-4">
@@ -103,7 +105,7 @@ export default function PrivacyPolicy() {
               <li>
                 <strong>Cookies:</strong> Session cookies for authentication,
                 preference cookies (see our{" "}
-                <Link href="/cookies" className="text-amber-600 underline">
+                <Link href="/cookies" className="text-amber-800 underline">
                   Cookie Policy
                 </Link>
                 )
@@ -112,7 +114,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               3. How We Use Your Information
             </h2>
             <ul className="list-disc list-inside text-slate-700 space-y-1">
@@ -143,7 +145,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               4. Data Sharing & Third Parties
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -175,7 +177,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               5. Data Retention
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -188,7 +190,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               6. Your Rights
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -204,16 +206,16 @@ export default function PrivacyPolicy() {
             </ul>
             <p className="text-slate-700 leading-relaxed mt-2">
               For GDPR-specific rights, see our{" "}
-              <Link href="/gdpr" className="text-amber-600 underline">
+              <Link href="/gdpr" className="text-amber-800 underline">
                 GDPR page
               </Link>
               . To exercise any rights, contact us at{" "}
-              <strong className="text-white">support@versoair.com</strong>.
+              <strong className="text-slate-900">support@versoair.com</strong>.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               7. Security
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -226,7 +228,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               8. Children's Privacy
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -238,7 +240,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               9. Changes to This Policy
             </h2>
             <p className="text-slate-700 leading-relaxed">
@@ -249,22 +251,22 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-amber-600 border-b border-slate-300 pb-2">
+            <h2 className="text-xl font-semibold text-amber-800 border-b border-slate-300 pb-2">
               10. Contact
             </h2>
             <p className="text-slate-700 leading-relaxed">
               For privacy inquiries, data requests, or complaints:
             </p>
             <div className="bg-white/5 rounded-xl p-4 mt-2 border border-slate-300">
-              <p className="text-white font-medium">
+              <p className="text-slate-900 font-medium">
                 VERSO AIR INC. — Privacy Team
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-700 text-sm">
                 Email: support@versoair.com
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-700 text-sm">
                 Platform:{" "}
-                <Link href="/contact" className="text-amber-600 underline">
+                <Link href="/contact" className="text-amber-800 underline">
                   Contact Page
                 </Link>
               </p>
@@ -273,5 +275,5 @@ export default function PrivacyPolicy() {
         </div>
       </div>
     </div>
-  );
+  ));
 }

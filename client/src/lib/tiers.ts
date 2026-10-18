@@ -30,7 +30,7 @@ export interface TierDefinition {
 export const TIERS: Record<TierKey, TierDefinition> = {
   free: {
     key: "free",
-    name: "Free",
+    name: "Standard",
     tagline: "Get Listed",
     logicKey: "standard",
     rankingPower: 1,
@@ -44,7 +44,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
   },
   essential: {
     key: "essential",
-    name: "Essential",
+    name: "Essentiel",
     tagline: "The Entry Point",
     logicKey: "basic_boost",
     rankingPower: 2,
@@ -58,7 +58,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
   },
   verified: {
     key: "verified",
-    name: "Pro Verified",
+    name: "Pro Vérifié",
     tagline: "The Sweet Spot",
     logicKey: "full_compete",
     rankingPower: 3,

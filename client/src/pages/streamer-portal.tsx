@@ -159,7 +159,7 @@ function TrackThreadCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-4 hover:border-purple-500/20 transition-all"
+      className="bg-white backdrop-blur-xl border border-slate-200 rounded-2xl p-4 hover:border-purple-500/20 transition-all"
     >
       {/* Track Header */}
       <div className="flex gap-4">
@@ -192,22 +192,22 @@ function TrackThreadCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="text-white font-semibold truncate">
+              <h3 className="text-slate-900 font-semibold truncate">
                 {track.title}
               </h3>
-              <p className="text-gray-400 text-sm truncate">
+              <p className="text-slate-700 text-sm truncate">
                 {track.artist_name}
               </p>
             </div>
             {track.artist_verified && (
-              <Badge className="bg-purple-500/20 text-purple-300 text-xs flex-shrink-0">
+              <Badge className="bg-purple-500/20 text-purple-700 text-xs flex-shrink-0">
                 <Star className="w-3 h-3 mr-1 fill-purple-400" />
                 Verified
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+          <div className="flex items-center gap-3 mt-2 text-xs text-slate-700">
             <span className="flex items-center gap-1">
               <Headphones className="w-3 h-3" />
               {formatStreams(track.streams || 0)}
@@ -232,8 +232,8 @@ function TrackThreadCard({
               disabled={!user}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-sm transition-all ${
                 hasReacted
-                  ? "bg-purple-500/30 text-purple-300 border border-purple-500/40"
-                  : "bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent"
+                  ? "bg-purple-500/30 text-purple-700 border border-purple-500/40"
+                  : "bg-white/5 text-slate-700 hover:bg-white/10 border border-transparent"
               } ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span>{r.emoji}</span>
@@ -244,16 +244,16 @@ function TrackThreadCard({
       </div>
 
       {/* Actions Bar */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
         <button
           onClick={() => onOpenThread(track.id)}
-          className="flex items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors text-sm"
+          className="flex items-center gap-2 text-slate-700 hover:text-purple-700 transition-colors text-sm"
         >
           <MessageCircle className="w-4 h-4" />
           <span>{track.comment_count || 0} Comments</span>
         </button>
 
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-slate-700">
           <span className="flex items-center gap-1">
             {totalReactions} reactions
           </span>
@@ -361,7 +361,7 @@ function ThreadModal({
     >
       <div className="max-w-2xl mx-auto p-4 pb-32">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6 sticky top-0 bg-gray-950/90 backdrop-blur-xl py-4 -mx-4 px-4 z-10 border-b border-white/5">
+        <div className="flex items-center gap-4 mb-6 sticky top-0 bg-gray-950/90 backdrop-blur-xl py-4 -mx-4 px-4 z-10 border-b border-slate-200">
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -373,7 +373,7 @@ function ThreadModal({
 
         {/* Track Card */}
         {track && (
-          <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 mb-6">
+          <div className="bg-white backdrop-blur-xl border border-slate-200 rounded-2xl p-5 mb-6">
             <div className="flex gap-4">
               <div
                 className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer group"
@@ -396,9 +396,9 @@ function ThreadModal({
               </div>
 
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-white">{track.title}</h3>
-                <p className="text-purple-400">{track.artist_name}</p>
-                <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
+                <h3 className="text-xl font-bold text-slate-900">{track.title}</h3>
+                <p className="text-purple-700">{track.artist_name}</p>
+                <div className="flex items-center gap-3 mt-2 text-sm text-slate-700">
                   <span className="flex items-center gap-1">
                     <Headphones className="w-3.5 h-3.5" />
                     {formatStreams(track.streams || 0)}
@@ -421,7 +421,7 @@ function ThreadModal({
                   >
                     <span className="text-lg">{r.emoji}</span>
                     {count > 0 && (
-                      <span className="text-gray-400">{count}</span>
+                      <span className="text-slate-700">{count}</span>
                     )}
                   </button>
                 );
@@ -432,7 +432,7 @@ function ThreadModal({
 
         {/* New Comment Input */}
         {user && (
-          <div className="bg-gray-900/40 border border-white/5 rounded-xl p-4 mb-6">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-semibold">
@@ -444,7 +444,7 @@ function ThreadModal({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Share your thoughts on this track..."
-                  className="bg-transparent border-none resize-none text-white placeholder-gray-500 focus:ring-0 p-0 min-h-[60px]"
+                  className="bg-transparent border-none resize-none text-slate-900 placeholder-slate-700 focus:ring-0 p-0 min-h-[60px]"
                 />
                 <div className="flex justify-end mt-2">
                   <Button
@@ -479,10 +479,10 @@ function ThreadModal({
             comments.map((comment: any) => (
               <div
                 key={comment.id}
-                className="bg-gray-900/30 border border-white/5 rounded-xl p-4"
+                className="bg-white border border-slate-200 rounded-xl p-4"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-50 to-slate-50 flex items-center justify-center flex-shrink-0">
                     {comment.avatar_url ? (
                       <img
                         src={comment.avatar_url}
@@ -490,21 +490,21 @@ function ThreadModal({
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-gray-400 text-sm font-medium">
+                      <span className="text-slate-700 text-sm font-medium">
                         {(comment.username || "U")[0].toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-medium text-sm">
+                      <span className="text-slate-900 font-medium text-sm">
                         {comment.display_name || comment.username}
                       </span>
                       <span className="text-gray-600 text-xs">
                         {timeAgo(comment.created_at)}
                       </span>
                     </div>
-                    <p className="text-gray-300 text-sm mt-1 whitespace-pre-wrap break-words">
+                    <p className="text-slate-700 text-sm mt-1 whitespace-pre-wrap break-words">
                       {comment.content}
                     </p>
 
@@ -515,7 +515,7 @@ function ThreadModal({
                           replyingTo === comment.id ? null : comment.id,
                         )
                       }
-                      className="text-gray-500 hover:text-purple-400 text-xs mt-2 flex items-center gap-1"
+                      className="text-slate-700 hover:text-purple-700 text-xs mt-2 flex items-center gap-1"
                     >
                       <MessageCircle className="w-3 h-3" />
                       Reply
@@ -533,7 +533,7 @@ function ThreadModal({
                           value={replyContent}
                           onChange={(e) => setReplyContent(e.target.value)}
                           placeholder="Write a reply..."
-                          className="flex-1 bg-gray-800/50 border-gray-700 text-white text-sm"
+                          className="flex-1 bg-white border-gray-700 text-slate-900 text-sm"
                         />
                         <Button
                           size="sm"
@@ -554,27 +554,27 @@ function ThreadModal({
 
                     {/* Replies */}
                     {comment.replies?.length > 0 && (
-                      <div className="mt-3 pl-4 border-l border-white/10 space-y-3">
+                      <div className="mt-3 pl-4 border-l border-slate-200 space-y-3">
                         {comment.replies.map((reply: any) => (
                           <div
                             key={reply.id}
                             className="flex items-start gap-2"
                           >
-                            <div className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
-                              <span className="text-gray-500 text-xs">
+                            <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                              <span className="text-slate-700 text-xs">
                                 {(reply.username || "U")[0].toUpperCase()}
                               </span>
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-300 text-xs font-medium">
+                                <span className="text-slate-700 text-xs font-medium">
                                   {reply.display_name || reply.username}
                                 </span>
                                 <span className="text-gray-600 text-xs">
                                   {timeAgo(reply.created_at)}
                                 </span>
                               </div>
-                              <p className="text-gray-400 text-xs mt-0.5 break-words whitespace-pre-wrap">
+                              <p className="text-slate-700 text-xs mt-0.5 break-words whitespace-pre-wrap">
                                 {reply.content}
                               </p>
                             </div>
@@ -642,7 +642,7 @@ function ArtistDashboardPanel({
 
   if (isLoading) {
     return (
-      <div className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-gray-950 border-l border-white/10 z-50 flex items-center justify-center">
+      <div className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-gray-950 border-l border-slate-200 z-50 flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
       </div>
     );
@@ -658,7 +658,7 @@ function ArtistDashboardPanel({
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", damping: 25 }}
-      className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-gray-950 border-l border-white/10 z-50 overflow-y-auto"
+      className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-gray-950 border-l border-slate-200 z-50 overflow-y-auto"
     >
       {/* Header with artist image */}
       <div className="relative h-48">
@@ -683,7 +683,7 @@ function ArtistDashboardPanel({
         {/* Artist info overlay */}
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-end gap-4">
-            <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl flex-shrink-0">
+            <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-200 shadow-xl flex-shrink-0">
               {artist?.image_url ? (
                 <img
                   src={artist.image_url}
@@ -715,35 +715,35 @@ function ArtistDashboardPanel({
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4 p-4 bg-gray-900/50">
+      <div className="grid grid-cols-3 gap-4 p-4 bg-white">
         <div className="text-center">
-          <div className="text-xl font-bold text-white">
+          <div className="text-xl font-bold text-slate-900">
             {formatStreams(artist?.total_streams || 0)}
           </div>
-          <div className="text-xs text-gray-500">Total Streams</div>
+          <div className="text-xs text-slate-700">Total Streams</div>
         </div>
         <div className="text-center">
-          <div className="text-xl font-bold text-purple-400">
+          <div className="text-xl font-bold text-purple-700">
             {formatStreams(artist?.monthly_listeners || 0)}
           </div>
-          <div className="text-xs text-gray-500">Monthly Listeners</div>
+          <div className="text-xs text-slate-700">Monthly Listeners</div>
         </div>
         <div className="text-center">
-          <div className="text-xl font-bold text-amber-400">
+          <div className="text-xl font-bold text-amber-800">
             {artist?.follower_count || 0}
           </div>
-          <div className="text-xs text-gray-500">Followers</div>
+          <div className="text-xs text-slate-700">Followers</div>
         </div>
       </div>
 
       {/* Follow button */}
-      <div className="px-4 py-3 border-b border-white/5">
+      <div className="px-4 py-3 border-b border-slate-200">
         <Button
           onClick={() => user && toggleFollow.mutate()}
           disabled={!user}
           className={`w-full ${
             dashboard?.isFollowing
-              ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              ? "bg-white text-gray-300 hover:bg-white"
               : "bg-purple-600 hover:bg-purple-700 text-white"
           }`}
         >
@@ -763,7 +763,7 @@ function ArtistDashboardPanel({
 
       {/* Bio */}
       {artist?.biography && (
-        <div className="p-4 border-b border-white/5">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-sm font-semibold text-gray-400 mb-2">About</h3>
           <p className="text-gray-300 text-sm leading-relaxed">
             {artist.biography}
@@ -772,7 +772,7 @@ function ArtistDashboardPanel({
       )}
 
       {/* Top Tracks */}
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-slate-200">
         <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
           Top Tracks
@@ -795,7 +795,7 @@ function ArtistDashboardPanel({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                  <div className="w-full h-full bg-white flex items-center justify-center">
                     <Music className="w-4 h-4 text-gray-600" />
                   </div>
                 )}
@@ -822,7 +822,7 @@ function ArtistDashboardPanel({
           {recentReleases.slice(0, 4).map((release: any) => (
             <div
               key={release.id}
-              className="bg-gray-900/50 rounded-xl p-3 hover:bg-gray-900/80 transition-colors cursor-pointer"
+              className="bg-white rounded-xl p-3 hover:bg-white transition-colors cursor-pointer"
             >
               <div className="aspect-square rounded-lg overflow-hidden mb-2">
                 {release.cover_art ? (
@@ -832,15 +832,15 @@ function ArtistDashboardPanel({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                  <div className="w-full h-full bg-white flex items-center justify-center">
                     <Disc3 className="w-8 h-8 text-gray-600" />
                   </div>
                 )}
               </div>
-              <p className="text-white text-sm font-medium truncate">
+              <p className="text-slate-900 text-sm font-medium truncate">
                 {release.title}
               </p>
-              <p className="text-gray-500 text-xs">
+              <p className="text-slate-700 text-xs">
                 {release.album_type} • {release.track_count} tracks
               </p>
             </div>
@@ -918,7 +918,7 @@ export default function StreamerPortal() {
           {/* Back button */}
           <button
             onClick={() => navigateBackSafely(navigate, "/stream")}
-            className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-200 text-white mb-4"
+            className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-slate-200 hover:border-white/20 transition-all duration-200 text-slate-900 mb-4"
             title="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -933,7 +933,7 @@ export default function StreamerPortal() {
                 <h1 className="text-xl font-bold text-slate-900">
                   Streamer Portal
                 </h1>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-700">
                   Comment & react to music
                 </p>
               </div>
@@ -951,7 +951,7 @@ export default function StreamerPortal() {
                 </Button>
               </Link>
               {user && (
-                <Badge className="bg-purple-500/20 text-purple-300">
+                <Badge className="bg-purple-500/20 text-purple-700">
                   <Crown className="w-3 h-3 mr-1" />
                   {user.username || user.email?.split("@")[0]}
                 </Badge>
@@ -961,12 +961,12 @@ export default function StreamerPortal() {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tracks, artists..."
-              className="pl-10 bg-gray-900/50 border-white/10 text-white"
+              className="pl-10 bg-white border-slate-200 text-slate-900"
             />
           </div>
         </div>
@@ -974,7 +974,7 @@ export default function StreamerPortal() {
         {/* Tabs */}
         <div className="max-w-4xl mx-auto px-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-transparent border-b border-white/5 w-full justify-start rounded-none p-0 h-auto">
+            <TabsList className="bg-transparent border-b border-slate-200 w-full justify-start rounded-none p-0 h-auto">
               <TabsTrigger
                 value="feed"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 data-[state=active]:bg-transparent px-4 py-3"
@@ -1020,13 +1020,13 @@ export default function StreamerPortal() {
               Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-gray-900/60 rounded-2xl p-4 animate-pulse"
+                  className="bg-white rounded-2xl p-4 animate-pulse"
                 >
                   <div className="flex gap-4">
-                    <div className="w-20 h-20 bg-gray-800 rounded-xl" />
+                    <div className="w-20 h-20 bg-white rounded-xl" />
                     <div className="flex-1">
-                      <div className="h-4 bg-gray-800 rounded w-1/2 mb-2" />
-                      <div className="h-3 bg-gray-800 rounded w-1/3" />
+                      <div className="h-4 bg-white rounded w-1/2 mb-2" />
+                      <div className="h-3 bg-white rounded w-1/3" />
                     </div>
                   </div>
                 </div>
@@ -1034,7 +1034,7 @@ export default function StreamerPortal() {
             ) : tracks.length === 0 ? (
               <div className="text-center py-20">
                 <Music className="w-16 h-16 mx-auto text-gray-700 mb-4" />
-                <p className="text-gray-500">No tracks found</p>
+                <p className="text-slate-700">No tracks found</p>
               </div>
             ) : (
               tracks.map((track: any) => (
@@ -1058,7 +1058,7 @@ export default function StreamerPortal() {
               <div
                 key={artist.id}
                 onClick={() => setSelectedArtist(artist.id)}
-                className="bg-gray-900/60 border border-white/5 rounded-xl p-4 text-center cursor-pointer hover:bg-gray-900/80 hover:border-purple-500/20 transition-all"
+                className="bg-white border border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:bg-white hover:border-purple-500/20 transition-all"
               >
                 <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden">
                   {artist.image_url ? (
@@ -1073,14 +1073,14 @@ export default function StreamerPortal() {
                     </div>
                   )}
                 </div>
-                <h3 className="text-white font-medium truncate text-sm">
+                <h3 className="text-slate-900 font-medium truncate text-sm">
                   {artist.name}
                 </h3>
-                <p className="text-gray-500 text-xs">
+                <p className="text-slate-700 text-xs">
                   {formatStreams(artist.monthly_listeners || 0)} monthly
                 </p>
                 {artist.verified && (
-                  <Badge className="mt-2 bg-purple-500/20 text-purple-300 text-xs">
+                  <Badge className="mt-2 bg-purple-500/20 text-purple-700 text-xs">
                     <Star className="w-3 h-3 mr-1 fill-purple-400" />
                     Verified
                   </Badge>
@@ -1095,7 +1095,7 @@ export default function StreamerPortal() {
             {followedArtists.length === 0 ? (
               <div className="text-center py-20">
                 <Users className="w-16 h-16 mx-auto text-gray-700 mb-4" />
-                <p className="text-gray-500 mb-4">
+                <p className="text-slate-700 mb-4">
                   You're not following any artists yet
                 </p>
                 <Button
@@ -1111,7 +1111,7 @@ export default function StreamerPortal() {
                   <div
                     key={artist.id}
                     onClick={() => setSelectedArtist(artist.id)}
-                    className="bg-gray-900/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-900/80 hover:border-purple-500/20 transition-all"
+                    className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-white hover:border-purple-500/20 transition-all"
                   >
                     <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
                       {artist.image_url ? (
@@ -1128,18 +1128,18 @@ export default function StreamerPortal() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-white font-medium truncate">
+                        <h3 className="text-slate-900 font-medium truncate">
                           {artist.name}
                         </h3>
                         {artist.verified && (
-                          <Star className="w-4 h-4 text-purple-400 fill-purple-400 flex-shrink-0" />
+                          <Star className="w-4 h-4 text-purple-700 fill-purple-400 flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-gray-500 text-sm">
+                      <p className="text-slate-700 text-sm">
                         {artist.genre} • {artist.track_count || 0} tracks
                       </p>
                       {artist.latest_release && (
-                        <p className="text-purple-400 text-xs mt-1">
+                        <p className="text-purple-700 text-xs mt-1">
                           Latest:{" "}
                           {new Date(artist.latest_release).toLocaleDateString()}
                         </p>
@@ -1196,32 +1196,32 @@ function StreamerWalletSection() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/30 to-fuchsia-900/20 border border-purple-500/20 backdrop-blur-xl"
+        className="p-6 rounded-2xl bg-gradient-to-br from-purple-50 via-indigo-50 to-fuchsia-900/20 border border-purple-500/20 backdrop-blur-xl"
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Crown className="w-5 h-5 text-amber-400" /> Streamer Wallet
+          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <Crown className="w-5 h-5 text-amber-800" /> Streamer Wallet
           </h3>
-          <span className="text-xs text-purple-300/60">
+          <span className="text-xs text-purple-700">
             {flag} {currency}
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-white">—</p>
-            <p className="text-xs text-gray-400">Balance</p>
+            <p className="text-2xl font-bold text-slate-900">—</p>
+            <p className="text-xs text-slate-700">Balance</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-400">—</p>
-            <p className="text-xs text-gray-400">Earnings</p>
+            <p className="text-2xl font-bold text-green-700">—</p>
+            <p className="text-xs text-slate-700">Earnings</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-400">—</p>
-            <p className="text-xs text-gray-400">Streams</p>
+            <p className="text-2xl font-bold text-purple-700">—</p>
+            <p className="text-xs text-slate-700">Streams</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-amber-400">—</p>
-            <p className="text-xs text-gray-400">Tips</p>
+            <p className="text-2xl font-bold text-amber-800">—</p>
+            <p className="text-xs text-slate-700">Tips</p>
           </div>
         </div>
       </motion.div>
@@ -1261,7 +1261,7 @@ function StreamerWalletSection() {
               className={`p-4 rounded-xl border bg-gradient-to-br ${action.color} text-center cursor-pointer`}
             >
               <span className="text-2xl block mb-1">{action.icon}</span>
-              <p className="text-xs font-medium text-white">{action.label}</p>
+              <p className="text-xs font-medium text-slate-900">{action.label}</p>
             </motion.div>
           </Link>
         ))}
@@ -1269,8 +1269,8 @@ function StreamerWalletSection() {
 
       {/* Payment Methods */}
       <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-purple-400" />
+        <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-purple-700" />
           Payment Methods for {countryCode}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1279,28 +1279,28 @@ function StreamerWalletSection() {
               key={method.id}
               className={`p-3 rounded-xl border transition-all ${
                 method.available
-                  ? "border-white/10 bg-white/5 hover:border-purple-500/30"
-                  : "border-gray-800 bg-gray-900/30 opacity-50"
+                  ? "border-slate-200 bg-white/5 hover:border-purple-500/30"
+                  : "border-gray-800 bg-white opacity-50"
               }`}
             >
               <div className="flex items-center gap-3">
                 <PaymentLogo methodId={method.id} size={22} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {method.name}
                   </p>
-                  <p className="text-[10px] text-gray-400">
+                  <p className="text-[10px] text-slate-700">
                     {method.fee} • {method.processingTime}
                   </p>
                 </div>
                 {method.available ? (
                   <div className="w-2 h-2 rounded-full bg-green-400" />
                 ) : (
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                  <Clock className="w-3.5 h-3.5 text-amber-800" />
                 )}
               </div>
               {method.comingSoon && (
-                <p className="text-[10px] text-amber-400 mt-1 pl-8">
+                <p className="text-[10px] text-amber-800 mt-1 pl-8">
                   {method.estimatedLaunch}
                 </p>
               )}
@@ -1310,11 +1310,11 @@ function StreamerWalletSection() {
       </div>
 
       {/* Subscription Info */}
-      <div className="p-4 rounded-xl border border-white/10 bg-white/5">
+      <div className="p-4 rounded-xl border border-slate-200 bg-white/5">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-semibold text-white">Subscription</h4>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h4 className="text-sm font-semibold text-slate-900">Subscription</h4>
+            <p className="text-xs text-slate-700 mt-0.5">
               Free tier • Upgrade for premium features
             </p>
           </div>
@@ -1328,29 +1328,29 @@ function StreamerWalletSection() {
 
       {/* Quick Links */}
       <div className="flex flex-wrap items-center gap-2 pt-2">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+        <span className="text-[10px] text-slate-700 uppercase tracking-wider">
           See also:
         </span>
         <Link href="/account/billing">
-          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+          <span className="text-xs text-purple-700 hover:text-purple-700 transition-colors cursor-pointer">
             💳 Billing
           </span>
         </Link>
         <span className="text-gray-700">·</span>
         <Link href="/music/dashboard">
-          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+          <span className="text-xs text-purple-700 hover:text-purple-700 transition-colors cursor-pointer">
             🎵 Dashboard
           </span>
         </Link>
         <span className="text-gray-700">·</span>
         <Link href="/music/royalties">
-          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+          <span className="text-xs text-purple-700 hover:text-purple-700 transition-colors cursor-pointer">
             💰 Royalties
           </span>
         </Link>
         <span className="text-gray-700">·</span>
         <Link href="/reservations">
-          <span className="text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
+          <span className="text-xs text-purple-700 hover:text-purple-700 transition-colors cursor-pointer">
             🏠 Reservations
           </span>
         </Link>

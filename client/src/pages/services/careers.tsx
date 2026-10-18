@@ -878,7 +878,7 @@ export default function Careers() {
   }) => {
     if (!rating && count === 0) {
       return (
-        <span className="flex items-center gap-1 text-gray-400 text-xs">
+        <span className="flex items-center gap-1 text-gray-600 text-xs">
           <MessageCircle className="h-3 w-3" />
           No reviews yet
         </span>
@@ -927,7 +927,7 @@ export default function Careers() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
+    <div className="min-h-screen service-light-portal text-slate-900 bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd] text-slate-900 relative overflow-hidden">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 z-0 opacity-5">
         <div className="absolute inset-0 career-bg-pattern" />
@@ -951,7 +951,7 @@ export default function Careers() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 px-2 sm:px-3"
+                    className="gap-1 sm:gap-2 !text-gray-700 hover:!text-gray-900 hover:!bg-gray-100 transition-all duration-200 px-2 sm:px-3"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     <span className="hidden sm:inline">Back to Services</span>
@@ -1084,7 +1084,7 @@ export default function Careers() {
                 </Badge>
               </Button>
               <Card
-                className={`sticky top-24 border border-gray-200/80 shadow-lg hover:shadow-xl transition-all duration-300 ${showFilters ? "block" : "hidden lg:block"}`}
+                className={`bg-white text-slate-900 sticky top-24 border border-gray-200/80 shadow-lg hover:shadow-xl transition-all duration-300 ${showFilters ? "block" : "hidden lg:block"}`}
               >
                 <CardHeader className="pb-4 border-b border-gray-200/50">
                   <CardTitle className="flex items-center gap-3 text-gray-900">
@@ -1329,7 +1329,7 @@ export default function Careers() {
               />
 
               {/* Database Stats Card */}
-              <Card className="mt-6 border border-gray-200/80 shadow-sm">
+              <Card className="bg-white text-slate-900 mt-6 border border-gray-200/80 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Database className="h-4 w-4 text-blue-600" />
@@ -1378,7 +1378,7 @@ export default function Careers() {
               </Card>
 
               {/* Blog Community Card */}
-              <Card className="mt-6 border border-gray-200/80 shadow-sm overflow-hidden">
+              <Card className="bg-white text-slate-900 mt-6 border border-gray-200/80 shadow-sm overflow-hidden">
                 <div className="h-1.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600" />
                 <CardContent className="pt-5 pb-5">
                   {platformUser ? (
@@ -1429,7 +1429,7 @@ export default function Careers() {
                           Sign In to Community
                         </Button>
                       </Link>
-                      <p className="text-[11px] text-gray-400">
+                      <p className="text-[11px] text-gray-600">
                         Like LinkedIn — post, comment & connect
                       </p>
                     </div>
@@ -1444,7 +1444,7 @@ export default function Careers() {
               <div className="mb-5">
                 <div className="relative">
                   <div className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
                     <Input
                       placeholder="Search jobs, companies, or skills…"
                       value={searchQuery}
@@ -1518,7 +1518,7 @@ export default function Careers() {
                         <ChevronRight
                           className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
                             sectorOpen ? "rotate-90" : ""
-                          } ${selectedSector !== "all" ? "text-white/70" : "text-gray-400"}`}
+                          } ${selectedSector !== "all" ? "text-white/70" : "text-gray-600"}`}
                         />
                       </button>
                     </PopoverTrigger>
@@ -1647,7 +1647,7 @@ export default function Careers() {
                   {isLoading ? (
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
-                        <Card key={i} className="border-gray-200/80">
+                        <Card key={i} className="bg-white text-slate-900 border-gray-200/80">
                           <CardContent className="p-6">
                             <Skeleton className="h-6 w-3/4 mb-2" />
                             <Skeleton className="h-4 w-1/2 mb-4" />
@@ -1657,7 +1657,7 @@ export default function Careers() {
                       ))}
                     </div>
                   ) : filteredJobs.length === 0 ? (
-                    <Card className="border-2 border-dashed border-gray-300/50">
+                    <Card className="bg-white text-slate-900 border-2 border-dashed border-gray-300/50">
                       <CardContent className="p-12 text-center">
                         <Search className="h-16 w-16 mx-auto text-gray-300 mb-6" />
                         <h4 className="text-2xl font-semibold text-gray-700 mb-3">
@@ -1683,7 +1683,7 @@ export default function Careers() {
                       {filteredJobs.map((job, index) => (
                         <Card
                           key={job.id}
-                          className={`border border-gray-200/80 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 scroll-fade-in opacity-0 translate-y-4 ${
+                          className={`bg-white text-slate-900 border border-gray-200/80 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 scroll-fade-in opacity-0 translate-y-4 ${
                             job.is_featured
                               ? "border-blue-200/50 border-l-4 border-l-blue-500"
                               : ""
@@ -1811,7 +1811,7 @@ export default function Careers() {
                                         ).time
                                       }
                                     </span>
-                                    <span className="text-sm text-gray-400">
+                                    <span className="text-sm text-gray-600">
                                       (
                                       {getDaysSince(
                                         job.posted_date || job.created_at,
@@ -1978,7 +1978,7 @@ export default function Careers() {
                     {authVerificationEmail}
                   </p>
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <p className="text-xs text-gray-600 leading-relaxed">
                   Click the link in your email to verify your account, then come
                   back here and sign in.
                 </p>
@@ -2170,7 +2170,7 @@ export default function Careers() {
                   {authMode === "login" ? "Sign In" : "Create Account"}
                 </Button>
 
-                <p className="text-center text-xs text-gray-400 pt-1">
+                <p className="text-center text-xs text-gray-600 pt-1">
                   {authMode === "login" ? (
                     <>
                       Don't have an account?{" "}

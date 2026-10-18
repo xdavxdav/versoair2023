@@ -1,5 +1,8 @@
+import { useLocalizedContent } from "@/hooks/use-localized-content";
+import TranslationAttribution from "@/components/TranslationAttribution";
 import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +11,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  GEOADMIN_OFFER_NAMES,
+  GEOADMIN_OFFER_PRICES_XOF,
+  type GeoAdminOfferKey,
   GEOADMIN_PLAN_DETAILS,
-  GEOADMIN_PLAN_ORDER,
+  GEOADMIN_OFFER_ORDER,
   formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
-import { TIERS, type TierKey } from "@/lib/tiers";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
@@ -29,7 +34,7 @@ const CUSTOM_PLAN_OPTIONS = [
 interface GeoAdminPlanDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialTier?: TierKey;
+  initialTier?: GeoAdminOfferKey;
 }
 
 export default function GeoAdminPlanDetailsDialog({
@@ -37,7 +42,8 @@ export default function GeoAdminPlanDetailsDialog({
   onOpenChange,
   initialTier = "verified",
 }: GeoAdminPlanDetailsDialogProps) {
-  const [selectedTier, setSelectedTier] = useState<TierKey>(initialTier);
+  const localize = useLocalizedContent();
+  const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey>(initialTier);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
@@ -53,8 +59,8 @@ export default function GeoAdminPlanDetailsDialog({
   const marketName = countryCode
     ? getCountryMeta(countryCode).name
     : "Not detected";
-  const planName = TIERS[selectedTier].name;
-  const annualPriceXof = TIERS[selectedTier].annualPriceXof;
+  const planName = GEOADMIN_OFFER_NAMES[selectedTier];
+  const annualPriceXof = GEOADMIN_OFFER_PRICES_XOF[selectedTier];
   const customRequestHref = (() => {
     const subject = encodeURIComponent(`GeoAdmin ${planName} plan inquiry`);
     const body = encodeURIComponent(
@@ -69,6 +75,11 @@ export default function GeoAdminPlanDetailsDialog({
           : ["- Please discuss a suitable plan with me"]),
         "",
         "Please confirm availability, final scope, and written terms.",
+        ...(selectedTier === "premium"
+          ? ["Premium inquiry only; proposed deliverables require written confirmation:",
+             ...GEOADMIN_PLAN_DETAILS.premium.services.map(service => `- ${service}`),
+             "No account upgrade or subscription activation is requested."]
+          : []),
       ].join("\n"),
     );
     return `mailto:support@versoair.com?subject=${subject}&body=${body}`;
@@ -82,7 +93,7 @@ export default function GeoAdminPlanDetailsDialog({
     );
   };
 
-  return (
+  return localize((
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] max-w-3xl overflow-y-auto border-slate-700 bg-slate-950 p-0 text-white">
         <div className="p-5 sm:p-8">
@@ -101,11 +112,11 @@ export default function GeoAdminPlanDetailsDialog({
           </DialogHeader>
 
           <div
-            className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-5"
+            className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3"
             role="tablist"
             aria-label="GeoAdmin plan tiers"
           >
-            {GEOADMIN_PLAN_ORDER.map((tier) => (
+            {GEOADMIN_OFFER_ORDER.map((tier) => (
               <button
                 key={tier}
                 type="button"
@@ -119,22 +130,20 @@ export default function GeoAdminPlanDetailsDialog({
                 }`}
               >
                 <span className="block text-sm font-semibold">
-                  {TIERS[tier].name}
+                  {GEOADMIN_OFFER_NAMES[tier]}
                 </span>
                 <span
                   className="mt-1 block text-xs text-amber-200"
-                  translate="no"
                 >
-                  {TIERS[tier].annualPriceXof === null
+                  {GEOADMIN_OFFER_PRICES_XOF[tier] === null
                     ? "Custom quote"
-                    : `${formatMarketXofPrice(
-                        TIERS[tier].annualPriceXof,
+                    : formatMarketXofPrice(
+                        GEOADMIN_OFFER_PRICES_XOF[tier],
                         selectedCountry ?? "",
                         currency,
                         rates,
-                      )}${
-                        marketAvailability === false ? "" : " / year"
-                      }`}
+                      )}
+                  {GEOADMIN_OFFER_PRICES_XOF[tier] !== null && marketAvailability !== false ? " / year" : ""}
                 </span>
               </button>
             ))}
@@ -146,23 +155,22 @@ export default function GeoAdminPlanDetailsDialog({
           >
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
               <div>
-                <h3 className="text-xl font-bold">{TIERS[selectedTier].name}</h3>
+                <h3 className="text-xl font-bold">{GEOADMIN_OFFER_NAMES[selectedTier]}</h3>
                 <p className="mt-1 text-sm text-slate-300">
                   {GEOADMIN_PLAN_DETAILS[selectedTier].shortDescription}
                 </p>
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-lg font-bold text-amber-200" translate="no">
-                  {TIERS[selectedTier].annualPriceXof === null
+                <p className="text-lg font-bold text-amber-200">
+                  {GEOADMIN_OFFER_PRICES_XOF[selectedTier] === null
                     ? "Custom proposal"
-                    : `${formatMarketXofPrice(
-                        TIERS[selectedTier].annualPriceXof,
+                    : formatMarketXofPrice(
+                        GEOADMIN_OFFER_PRICES_XOF[selectedTier],
                         selectedCountry ?? "",
                         currency,
                         rates,
-                      )}${
-                        marketAvailability === false ? "" : " / year"
-                      }`}
+                      )}
+                  {GEOADMIN_OFFER_PRICES_XOF[selectedTier] !== null && marketAvailability !== false ? " / year" : ""}
                 </p>
                 {selectedCountry && (
                   <p className="text-sm text-slate-300">
@@ -173,17 +181,7 @@ export default function GeoAdminPlanDetailsDialog({
                 )}
               </div>
             </div>
-            <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-              {GEOADMIN_PLAN_DETAILS[selectedTier].benefits.map((benefit) => (
-                <li
-                  key={benefit}
-                  className="flex items-start gap-2.5 text-sm text-slate-200"
-                >
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                  {benefit}
-                </li>
-              ))}
-            </ul>
+            <GeoAdminOfferDetails offer={selectedTier} />
           </section>
 
           <section className="mt-6 rounded-2xl border border-amber-200/20 bg-amber-300/[0.05] p-5">
@@ -234,8 +232,9 @@ export default function GeoAdminPlanDetailsDialog({
               <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </div>
+          <TranslationAttribution />
         </div>
       </DialogContent>
     </Dialog>
-  );
+  ));
 }

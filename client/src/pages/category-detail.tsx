@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { ensureAuthenticated, authenticatedFetch } from "@/lib/auth";
+
 import {
   ChevronLeft,
   Loader2,
@@ -66,17 +66,14 @@ export default function CategoryDetail() {
 
       setLoading(true);
       try {
-        // Ensure user is authenticated
-        await ensureAuthenticated();
-
         // Fetch categories to find matching one
-        const catResponse = await authenticatedFetch(
-          `${API_BASE_URL}/api/v1/admin/categories?limit=100`,
+        const catResponse = await fetch(
+          `${API_BASE_URL}/api/categories`,
         );
         const catData = await catResponse.json();
 
-        if (catData.success) {
-          const foundCategory = catData.data.find(
+        if (catResponse.ok) {
+          const foundCategory = (Array.isArray(catData) ? catData : catData.data || []).find(
             (c: Category) => c.slug === categorySlug,
           );
 
@@ -84,8 +81,8 @@ export default function CategoryDetail() {
             setCategory(foundCategory);
 
             // Fetch businesses in this category
-            const bizResponse = await authenticatedFetch(
-              `${API_BASE_URL}/api/v1/admin/businesses?limit=100&category=${foundCategory.id}`,
+            const bizResponse = await fetch(
+              `${API_BASE_URL}/api/businesses?limit=100&categoryId=${foundCategory.id}`,
             );
             const bizData = await bizResponse.json();
 
@@ -136,7 +133,7 @@ export default function CategoryDetail() {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-blue-700 mx-auto mb-4" />
           <p className="text-gray-600">Loading category...</p>
         </div>
       </div>
@@ -148,7 +145,7 @@ export default function CategoryDetail() {
       <div className="flex flex-col min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100">
         <Card className="max-w-md border-red-200 bg-red-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+            <CardTitle className="flex items-center gap-2 text-red-700">
               <AlertCircle className="h-5 w-5" />
               Error
             </CardTitle>
@@ -191,7 +188,7 @@ export default function CategoryDetail() {
       >
         <div className="max-w-[95vw] mx-auto px-4 py-12">
           <div className="flex items-center gap-3 mb-4">
-            <Tag className="h-8 w-8 text-blue-600" />
+            <Tag className="h-8 w-8 text-blue-700" />
             <h1 className="text-4xl font-bold text-gray-900">
               {category.name}
             </h1>
@@ -221,7 +218,7 @@ export default function CategoryDetail() {
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-700" />
               <Input
                 placeholder="Search businesses..."
                 value={search}
@@ -311,22 +308,22 @@ export default function CategoryDetail() {
                     <div className="space-y-2 text-sm">
                       {business.address && (
                         <p className="text-gray-700 flex items-start gap-2">
-                          <span className="text-gray-500">📍</span>
+                          <span className="text-slate-700">📍</span>
                           {business.address}
                         </p>
                       )}
                       {business.phone && (
                         <p className="text-gray-700 flex items-center gap-2">
-                          <span className="text-gray-500">📞</span>
+                          <span className="text-slate-700">📞</span>
                           {business.phone}
                         </p>
                       )}
                       {business.email && (
                         <p className="text-gray-700 flex items-center gap-2">
-                          <span className="text-gray-500">✉️</span>
+                          <span className="text-slate-700">✉️</span>
                           <a
                             href={`mailto:${business.email}`}
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-700 hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {business.email}
@@ -351,7 +348,7 @@ export default function CategoryDetail() {
         ) : (
           <Card className="border-0 shadow-lg">
             <CardContent className="py-12 text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <AlertCircle className="h-12 w-12 text-slate-700 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">
                 {search
                   ? "No businesses found matching your search"
