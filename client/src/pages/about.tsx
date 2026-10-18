@@ -39,6 +39,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 // Platform sectors – these match the actual routes in your app
 const PLATFORM_SECTORS = [
@@ -164,8 +165,9 @@ const SectorCard = ({
   index: number;
 }) => {
   const Icon = sector.icon;
+  const localize = useLocalizedContent(false);
 
-  return (
+  return localize((
     <Link href={sector.route}>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -204,7 +206,7 @@ const SectorCard = ({
         </Card>
       </motion.div>
     </Link>
-  );
+  ));
 };
 
 // Feature Highlight Component
@@ -220,19 +222,23 @@ const FeatureHighlight = ({
   description: string;
   delay?: number;
   color?: string;
-}) => (
-  <FloatingElement delay={delay}>
-    <div className="flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 transition-colors group">
-      <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 group-hover:scale-110 transition-transform">
-        <Icon className={`h-6 w-6 ${color}`} />
+}) => {
+  const localize = useLocalizedContent(false);
+
+  return localize((
+    <FloatingElement delay={delay}>
+      <div className="flex items-start gap-4 p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm border border-slate-700/50 hover:border-slate-600 transition-colors group">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 group-hover:scale-110 transition-transform">
+          <Icon className={`h-6 w-6 ${color}`} />
+        </div>
+        <div className="flex-1">
+          <h4 className="font-semibold text-slate-900 mb-2">{title}</h4>
+          <p className="text-slate-700 text-sm leading-relaxed">{description}</p>
+        </div>
       </div>
-      <div className="flex-1">
-        <h4 className="font-semibold text-slate-900 mb-2">{title}</h4>
-        <p className="text-slate-700 text-sm leading-relaxed">{description}</p>
-      </div>
-    </div>
-  </FloatingElement>
-);
+    </FloatingElement>
+  ));
+};
 
 // Helper to format numbers nicely
 // ─── Company identity — four questions ───────────────────────────────────────
@@ -242,7 +248,8 @@ const FeatureHighlight = ({
 const COMPANY_COPY = {
   fr: {
     badge: "L'entreprise",
-    heading: "Verso Air Inc. — l'entreprise derrière la plateforme",
+    heading: "Verso Air Inc.",
+    subheading: "l'entreprise derrière la plateforme",
     questions: [
       {
         icon: Building,
@@ -268,7 +275,8 @@ const COMPANY_COPY = {
   },
   en: {
     badge: "The Company",
-    heading: "Verso Air Inc. — the company behind the platform",
+    heading: "Verso Air Inc.",
+    subheading: "the company behind the platform",
     questions: [
       {
         icon: Building,
@@ -312,6 +320,8 @@ function CompanySection() {
           </Badge>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900">
             {copy.heading}
+            <br />
+            {copy.subheading}
           </h2>
         </motion.div>
 
@@ -431,6 +441,8 @@ function BrandRoadmapSection() {
 }
 
 export default function About() {
+  const localize = useLocalizedContent();
+  const { translateText } = useLanguage();
   const [activeSector, setActiveSector] = useState(() => {
     const saved = sessionStorage.getItem("aboutActiveSector");
     return saved || "commerce";
@@ -460,7 +472,7 @@ export default function About() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  return (
+  return localize((
     <div className="flex flex-col min-h-screen bg-[#f3efe9] text-slate-900 overflow-hidden">
       {/* Enhanced Hero with Parallax */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -645,7 +657,7 @@ export default function About() {
                   >
                     <sector.icon className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">
-                      {sector.title.split(" ")[0]}
+                      {translateText(sector.title).split(" ")[0]}
                     </span>
                   </TabsTrigger>
                 ))}
@@ -704,7 +716,7 @@ export default function About() {
                                         variant="outline"
                                         className="border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15"
                                       >
-                                        Ouvrir {sector.title.split(" ")[0]}{" "}
+                                        Ouvrir {translateText(sector.title).split(" ")[0]}{" "}
                                         Tableau de Bord
                                         <ChevronRight className="ml-2 h-4 w-4" />
                                       </Button>
@@ -890,5 +902,5 @@ export default function About() {
       </section>
       <ScrollToTop />
     </div>
-  );
+  ));
 }
