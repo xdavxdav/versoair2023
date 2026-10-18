@@ -1357,10 +1357,12 @@ export default function Home() {
   useLayoutEffect(() => {
     if (!panelsWrapperRef.current || !panelsContainerRef.current) return;
 
-    // Ignore mobile address bar collapse/expand to avoid jitter and re-pinning jumps
+    // ignoreMobileResize skips mobile address-bar height changes; real width
+    // changes (desktop resize, split panes) must still refresh the pin or the
+    // panel strip keeps stale widths and shows clipped/blank panels.
     ScrollTrigger.config({
       ignoreMobileResize: true,
-      autoRefreshEvents: "visibilitychange,orientationchange",
+      autoRefreshEvents: "visibilitychange,DOMContentLoaded,load,resize,orientationchange",
     });
 
     // Kill all existing ScrollTriggers for panels
