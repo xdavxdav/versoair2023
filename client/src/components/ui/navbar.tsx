@@ -19,6 +19,7 @@ import {
   Zap,
   MessageCircle,
   Bell,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "./button";
 import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
@@ -81,6 +82,12 @@ const PORTAL_META: Record<
     icon: <Wrench className="w-3.5 h-3.5" />,
     path: "/contractor",
     color: "text-cyan-400",
+  },
+  careers: {
+    label: "Careers",
+    icon: <Briefcase className="w-3.5 h-3.5" />,
+    path: "/services/careers",
+    color: "text-orange-400",
   },
   admin: {
     label: "Admin",
