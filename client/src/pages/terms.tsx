@@ -94,7 +94,7 @@ export default function TermsOfService() {
             </p>
             <div className="grid gap-3 mt-3">
               <div className="bg-white/5 border border-slate-300 rounded-lg p-3">
-                <p className="text-slate-900 font-medium">General Portal (Free)</p>
+                <p className="text-slate-900 font-medium">General Portal</p>
                 <p className="text-slate-700 text-sm">
                   Browse businesses, view public analytics, basic search
                   functionality

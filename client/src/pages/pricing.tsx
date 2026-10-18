@@ -238,7 +238,7 @@ export default function Pricing() {
               in writing before purchase.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
-              Standard is the basic directory offer. Essentiel proposes initial
+              Essentiel proposes initial
               setup. Premium adds proposed content preparation on request,
               not additional account permissions. Pro Vérifié and Pro Max have
               separate proposed scopes; no ranking or commercial result is guaranteed.

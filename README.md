@@ -22,6 +22,10 @@ The five existing technical subscription IDs and permissions are unchanged.
 account entitlement. The account-admin selector deliberately keeps the five
 technical tiers. Public pricing, comparisons and inquiry dialogs show six
 offers; the navy/gold card shows the five paid/custom offers, not Standard.
+Standard is the only permanently free business plan, at 0 FCFA per year.
+Other plans are paid; any free trial is temporary and subject to eligibility,
+with duration and terms confirmed before activation. This clarification does not
+activate trials or change account permissions.
 Selecting an offer or preparing the mail inquiry never upgrades an account.
 
 The language selector uses a native French/English public-copy catalogue, not

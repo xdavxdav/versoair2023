@@ -16,7 +16,7 @@ export const LEGAL_COPY = [
   ["Accounts inactive for more than 12 months may be deactivated after notice", "Les comptes inactifs depuis plus de 12 mois peuvent être désactivés après notification"],
   ["4. Portal Access & Subscriptions", "4. Accès aux portails et abonnements"],
   ["Verso Air offers multiple portal tiers:", "Verso Air propose plusieurs niveaux de portails :"],
-  ["General Portal (Free)", "Portail général (gratuit)"],
+  ["General Portal", "Portail général"],
   ["Browse businesses, view public analytics, basic search functionality", "Consultation des entreprises et des analyses publiques, fonctions de recherche de base"],
   ["Artist Portal — StreamRoyale", "Portail artiste — StreamRoyale"],
   ["Artist profiles, release tracking, royalty analytics, promotional tools", "Profils d'artistes, suivi des sorties, analyse des redevances, outils promotionnels"],

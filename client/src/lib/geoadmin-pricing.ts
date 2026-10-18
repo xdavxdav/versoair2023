@@ -40,7 +40,7 @@ export const GEOADMIN_OFFER_PRICES_XOF: Record<GeoAdminOfferKey, number | null> 
 };
 
 export const GEOADMIN_REFERENCE_NOTICE =
-  "Non-final annual reference prices; market research is ongoing. Platform availability and all proposed services must be confirmed in a written offer before any commitment. No payment, subscription activation, advertising budget or managed social campaign is included here.";
+  "Non-final annual reference prices; market research is ongoing. Platform availability and all proposed services must be confirmed in a written offer before any commitment. No payment, subscription activation, advertising budget or managed social campaign is included here. Standard is the only permanently free business plan, at 0 FCFA per year. Other plans are paid; any free trial is temporary, subject to eligibility, with duration and terms confirmed before activation.";
 
 export const GEOADMIN_PREMIUM_NOTICE =
   "Premium is available by inquiry only. It uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions.";

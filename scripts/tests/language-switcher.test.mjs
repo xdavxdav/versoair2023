@@ -390,7 +390,7 @@ test("Premium inquiry has six commercial choices and never submits an account up
   } finally { await page.close(); }
 });
 
-test("account comparison shows six reference offers without treating Premium as a current tier", async () => {
+test("account comparison shows six offers with Standard as the only permanently free plan", async () => {
   const { page, errors } = await openHarness({ country: "CI" });
   try {
     await page.click("#screen-comparison");
@@ -401,6 +401,8 @@ test("account comparison shows six reference offers without treating Premium as 
     assert.match(text, /Premium/);
     assert.match(text, /aucun droit supplémentaire/i);
     assert.match(text, /Sur devis/);
+    assert.match(text, /Standard est la seule offre entreprise gratuite à vie/);
+    assert.match(text, /\b0\s*FCFA/);
     for (const width of [320, 375, 768, 1280]) {
       await page.setViewport({ width, height: 900 });
       assert.equal(await page.$eval('[role="dialog"]', element =>
@@ -418,6 +420,10 @@ test("actual pricing page and custom-plan dialog switch natively without activat
     await page.waitForFunction(() => document.querySelector("#real-screen h1")?.textContent.trim() === "Choisissez la visibilité adaptée à votre entreprise");
     const text = await page.$eval("#real-screen", element => element.textContent);
     assert.ok(text.includes("aucun paiement n'est prélevé"));
+    assert.match(text, /Standard est la seule offre entreprise gratuite à vie/);
+    assert.match(text, /\b0\s*FCFA/);
+    assert.equal(await page.$$eval("#real-screen article h3", nodes =>
+      nodes.filter(node => node.textContent.trim() === "Standard").length), 1);
     stage = "opening French dialog";
     await clickButtonWithText(page, "#real-screen button", "En savoir plus");
     await page.waitForSelector('[role="dialog"]');
@@ -428,6 +434,7 @@ test("actual pricing page and custom-plan dialog switch natively without activat
     stage = "selecting English";
     await page.click("#select-en");
     await waitForLanguage(page, "en");
+    assert.match(await page.$eval("#real-screen", element => element.textContent), /Standard is the only permanently free business plan/);
     stage = "opening English dialog";
     await clickButtonWithText(page, "#real-screen button", "Learn more");
     await page.waitForSelector('[role="dialog"]');

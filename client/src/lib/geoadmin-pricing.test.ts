@@ -17,7 +17,7 @@ import {
 import { TIERS, TIER_ORDER, TIER_FEATURES } from "./tiers.ts";
 import { getPublicCopyId } from "../../../shared/public-translations.ts";
 
-test("six commercial offers do not create a Premium entitlement or account tier", () => {
+test("six commercial offers preserve Standard as the only permanently free offer", () => {
   assert.deepEqual(GEOADMIN_OFFER_ORDER, ["free", "essential", "premium", "verified", "max", "enterprise"]);
   assert.deepEqual(GEOADMIN_OFFER_ORDER.map(key => GEOADMIN_OFFER_NAMES[key]),
     ["Standard", "Essentiel", "Premium", "Pro Vérifié", "Pro Max", "Enterprise"]);
@@ -37,6 +37,9 @@ test("Premium has concrete proposed services unlike Essentiel, and Enterprise is
   assert.ok(GEOADMIN_PLAN_DETAILS.enterprise.services.includes("No automatic entitlement to every Pro Max service"));
   assert.match(GEOADMIN_REFERENCE_NOTICE, /Non-final annual reference/);
   assert.match(GEOADMIN_REFERENCE_NOTICE, /written offer/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /Standard is the only permanently free business plan, at 0 FCFA per year/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /duration and terms confirmed before activation/);
+  assert.notEqual(getPublicCopyId(GEOADMIN_REFERENCE_NOTICE), undefined);
 });
 
 test("every proposed commercial benefit has a native translation", () => {
