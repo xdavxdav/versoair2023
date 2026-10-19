@@ -1,6 +1,7 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { useState } from "react";
-import { ArrowRight, Phone } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { Button } from "@/components/ui/button";
 import ScrollToTop from "@/components/ScrollToTop";
 import { SeoHead } from "@/components/seo/SeoHead";
@@ -15,7 +16,6 @@ import {
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_OFFER_ORDER,
   formatMarketXofPrice,
-  getGeoAdminContact,
 } from "@/lib/geoadmin-pricing";
 
 export default function Pricing() {
@@ -24,7 +24,6 @@ export default function Pricing() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
-  const contact = getGeoAdminContact(selectedCountry);
 
   const formatAnnualPrice = (tier: GeoAdminOfferKey) => {
     return formatMarketXofPrice(
@@ -123,21 +122,8 @@ export default function Pricing() {
                 Learn more and customize
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <a
-                href={contact.href}
-                target={contact.whatsapp ? "_blank" : undefined}
-                rel={contact.whatsapp ? "noopener noreferrer" : undefined}
-                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                <Phone className="h-4 w-4" />
-                <span translate="no">{contact.display}</span>
-              </a>
             </div>
-            {contact.whatsapp || contact.href.startsWith("tel:") ? <p className="mt-3 text-sm text-slate-600">
-              <a className="underline" href="mailto:support@versoair.com">
-                support@versoair.com
-              </a>
-            </p> : null}
+            <div className="mt-4"><GeoAdminContacts light /></div>
           </section>
         </div>
 

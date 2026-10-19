@@ -179,7 +179,7 @@ test("native FR/EN work without Google; Enterprise stays custom and numbers/link
     for (const price of ["180 000 FCFA", "300 000 FCFA", "400 000 FCFA", "780 000 FCFA"]) {
       assert.ok((await cardText(page)).replace(/\s/g, " ").includes(price));
     }
-    assert.equal(await page.$eval('[data-testid="geoadmin-market-contact"]', element => element.getAttribute("href")), "tel:+2252720212223");
+    assert.equal(await page.$eval('[data-testid="geoadmin-contacts"] a', element => element.getAttribute("href")), "tel:+2250748343816");
     assert.equal(translations.length, 0);
     assert.equal(external.some(url => /translate.*google/.test(url)), false);
     assert.equal(await page.$(".goog-te-combo"), null);
@@ -410,12 +410,12 @@ test("promo design, prices and contact stay consistent across resolutions and pr
         for (const width of [320, 375, 640, 768, 1024, 1440]) {
           await page.setViewport({ width, height: 900 });
           const card = await page.$eval('#real-screen [data-testid="geoadmin-promo"]', element => {
-            const contact = element.querySelector('[data-testid="geoadmin-market-contact"]');
+            const contact = element.querySelector('[data-testid="geoadmin-contacts"]');
             const columns = getComputedStyle(element.querySelector("article").parentElement).gridTemplateColumns.split(" ").map(parseFloat);
             return {
               text: element.textContent,
               prices: [...element.querySelectorAll("article > p:first-of-type")].map(node => node.textContent),
-              contact: contact.getAttribute("href"),
+              contact: [...contact.querySelectorAll("a")].map(node => node.getAttribute("href")),
               articles: element.querySelectorAll("article").length,
               detailedLists: element.querySelectorAll("article ul").length,
               overflow: element.scrollWidth > element.clientWidth,
@@ -433,21 +433,23 @@ test("promo design, prices and contact stay consistent across resolutions and pr
           assert.equal(card.overflow, false, `${country}/${screen}/${width}: card overflow`);
           assert.equal(card.documentOverflow, false, `${country}/${screen}/${width}: page overflow`);
           assert.match(card.background, /linear-gradient/);
+          assert.deepEqual(card.contact, [
+            "tel:+2250748343816", "https://wa.me/2250748343816",
+            "tel:+2250564606401", "https://wa.me/2250564606401",
+            "tel:+14374359726", "https://wa.me/14374359726",
+            "mailto:support@versoair.com",
+          ]);
           assert.ok(card.columns >= previousColumns, `${width}: squeezed at a larger breakpoint`);
           if (card.columns > 1) assert.ok(card.minColumn >= 255, `${width}: narrow offers`);
           previousColumns = card.columns;
           if (country === "CA") {
             assert.match(card.prices[0], /CA\$437/);
-            assert.equal(card.contact, "https://wa.me/14374359726");
           } else if (country === "FR") {
             assert.match(card.prices[0], /270\s*€/);
-            assert.equal(card.contact, "mailto:support@versoair.com");
           } else if (country === "CI") {
             assert.match(card.prices[0], /180\s*000 FCFA/);
-            assert.equal(card.contact, "tel:+2252720212223");
           } else {
             assert.ok(card.prices.every(price => price === "Coming soon"));
-            assert.equal(card.contact, "mailto:support@versoair.com");
           }
           if (country !== "SN") assert.equal(card.prices[4], "Custom quote");
         }

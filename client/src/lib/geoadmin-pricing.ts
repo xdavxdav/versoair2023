@@ -55,16 +55,11 @@ export const GEOADMIN_AVAILABLE_MARKETS = new Set(
   Object.keys(GEOADMIN_MARKETS),
 );
 
-export function getGeoAdminContact(countryCode: string | null) {
-  switch (countryCode?.trim().toUpperCase()) {
-    case "CA":
-      return { href: "https://wa.me/14374359726", display: "+1 (437) 435-9726", whatsapp: true };
-    case "CI":
-      return { href: "tel:+2252720212223", display: "+225 27 20 21 22 23", whatsapp: false };
-    default:
-      return { href: "mailto:support@versoair.com", display: "support@versoair.com", whatsapp: false };
-  }
-}
+export const GEOADMIN_CONTACTS = [
+  { phone: "+2250748343816", display: "+225 07-48-34-38-16" },
+  { phone: "+2250564606401", display: "+225 05-64-60-64-01" },
+  { phone: "+14374359726", display: "+1 (437) 435-9726" },
+] as const;
 
 interface OfferDetails {
   shortDescription: string;

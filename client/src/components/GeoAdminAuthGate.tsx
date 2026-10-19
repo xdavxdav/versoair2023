@@ -23,7 +23,6 @@ import {
   Zap,
   CheckCircle,
   Loader2,
-  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +35,8 @@ import {
   GEOADMIN_OFFER_ORDER,
   GEOADMIN_OFFER_PRICES_XOF,
 } from "@/lib/geoadmin-pricing";
-import { formatMarketXofPrice, getGeoAdminContact } from "@/lib/geoadmin-pricing";
+import { formatMarketXofPrice } from "@/lib/geoadmin-pricing";
+import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -57,7 +57,6 @@ export default function GeoAdminAuthGate({
   const [, navigateTo] = useLocation();
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
-  const contact = getGeoAdminContact(selectedCountry);
   const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -387,26 +386,8 @@ export default function GeoAdminAuthGate({
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center sm:flex-row sm:items-center">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Contact the team
-              </span>
-              <a
-                href={contact.href}
-                target={contact.whatsapp ? "_blank" : undefined}
-                rel={contact.whatsapp ? "noopener noreferrer" : undefined}
-                className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
-              >
-                <Phone className="h-4 w-4 text-amber-300" />
-                <span translate="no">{contact.display}</span>
-              </a>
-              {contact.href !== "mailto:support@versoair.com" && <a
-                href="mailto:support@versoair.com"
-                className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
-              >
-                <Mail className="h-4 w-4 text-amber-300" />
-                support@versoair.com
-              </a>}
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-slate-200">
+              <GeoAdminContacts />
             </div>
           </section>
 

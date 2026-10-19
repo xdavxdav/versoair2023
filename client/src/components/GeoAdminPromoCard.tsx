@@ -1,11 +1,11 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
-import { GEOADMIN_OFFER_ORDER, GEOADMIN_OFFER_NAMES, GEOADMIN_OFFER_PRICES_XOF, GEOADMIN_PLAN_DETAILS, GEOADMIN_REFERENCE_NOTICE, formatMarketXofPrice, getGeoAdminContact } from "@/lib/geoadmin-pricing";
+import { GEOADMIN_OFFER_ORDER, GEOADMIN_OFFER_NAMES, GEOADMIN_OFFER_PRICES_XOF, GEOADMIN_PLAN_DETAILS, GEOADMIN_REFERENCE_NOTICE, formatMarketXofPrice } from "@/lib/geoadmin-pricing";
+import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 
 export default function GeoAdminPromoCard() {
   const localize = useLocalizedContent();
   const { selectedCountry, currency, rates, marketAvailability } = useGeoAdminPricing();
-  const contact = getGeoAdminContact(selectedCountry);
   return localize((
     <section
       aria-label="Offres de référencement et visibilité des entreprises"
@@ -66,19 +66,7 @@ export default function GeoAdminPromoCard() {
         {GEOADMIN_REFERENCE_NOTICE}
       </p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#d7b652]/45 bg-[#050e1d]/55 p-4">
-        <a
-          data-testid="geoadmin-market-contact"
-          href={contact.href}
-          target={contact.whatsapp ? "_blank" : undefined}
-          rel={contact.whatsapp ? "noopener noreferrer" : undefined}
-          className="min-h-11 rounded-md font-semibold text-[#f4d779] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe394]"
-        >
-          <span className="block">{contact.whatsapp ? "Contactez-nous sur WhatsApp →" : "Contact Us"}</span>
-          <span translate="no" className="notranslate mt-1 block text-sm font-normal text-[#c5d0df]">
-            {contact.display}
-          </span>
-          {contact.whatsapp && <span className="sr-only"> (nouvel onglet)</span>}
-        </a>
+        <GeoAdminContacts />
         <a
           href="https://www.versoair.com"
           translate="no"
