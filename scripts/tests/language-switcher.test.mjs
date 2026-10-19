@@ -23,6 +23,7 @@ import { LanguageProvider, useLanguage } from "/src/components/LanguageSwitcher.
 import { CountryDropdown } from "/src/components/CountryDropdown.tsx";
 import { useLocalizedContent } from "/src/hooks/use-localized-content.tsx";
 import GeoAdminPromoCard from "/src/components/GeoAdminPromoCard.tsx";
+import GeoAdminAuthGate from "/src/components/GeoAdminAuthGate.tsx";
 import { TierComparisonModal } from "/src/components/TierComparisonModal.tsx";
 import HelpCenter from "/src/pages/help.tsx";
 import Pricing from "/src/pages/pricing.tsx";
@@ -44,7 +45,7 @@ function Controls() {
       key:lang, id:"select-"+lang, onClick:()=>language.selectLanguage(lang)
     }, lang)),
     React.createElement("button", {id:"late",onClick:()=>setLate(true)}, "Mount content"),
-    ...["pricing","signin","terms","comparison","about"].map(screen=>React.createElement("button", {
+    ...["pricing","signin","terms","comparison","about","gate"].map(screen=>React.createElement("button", {
       key:screen,id:"screen-"+screen,onClick:()=>setScreen(screen)
     },screen)),
     React.createElement("div", {style:{position:"fixed",top:0,left:0,transform:"translateZ(0)",width:"250px",background:"#172033"}},
@@ -58,6 +59,7 @@ function Controls() {
     React.createElement("div", {id:"real-screen"},screen==="pricing"?React.createElement(Pricing):
       screen==="signin"?React.createElement(SignIn):screen==="terms"?React.createElement(Terms):
       screen==="about"?React.createElement(About):
+      screen==="gate"?React.createElement(GeoAdminAuthGate,{onSignInSuccess:()=>{}}):
       screen==="comparison"?React.createElement(TierComparisonModal,{isOpen:true,currentTier:"essential",onClose:()=>setScreen("sample")}):null));
 }
 createRoot(document.getElementById("root")).render(
@@ -111,7 +113,7 @@ after(async () => {
   if (cacheDir) await rm(cacheDir, { recursive: true, force: true });
 });
 
-async function openHarness({ country = "FR", cached = null, mode = "" } = {}) {
+async function openHarness({ country = "FR", cached = null, mode = "", rates = { XOF: 1, CAD: 0.002428, EUR: 0.0015 } } = {}) {
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", error => {
@@ -119,14 +121,17 @@ async function openHarness({ country = "FR", cached = null, mode = "" } = {}) {
     console.error("Translation harness:", error.message);
   });
   await page.setViewport({ width: 375, height: 800 });
-  await page.evaluateOnNewDocument((country, cached) => {
+  await page.evaluateOnNewDocument((country, cached, rates) => {
     localStorage.clear();
     localStorage.setItem("fsa_detected_country_v2", JSON.stringify({ code: country, ts: Date.now(), manual: true }));
+    if (rates) localStorage.setItem("versoair_xof_exchange_rates_v1", JSON.stringify({
+      rates, expiresAt: Date.now() + 3600000,
+    }));
     if (cached) {
       localStorage.setItem("fsa_selected_language", cached);
       localStorage.setItem("fsa_language_override", "true");
     }
-  }, country, cached);
+  }, country, cached, rates);
   const translations = [];
   const external = [];
   await page.setRequestInterception(true);
@@ -164,17 +169,17 @@ async function clickButtonWithText(page, selector, text) {
 }
 
 test("native FR/EN work without Google; Enterprise stays custom and numbers/links are preserved", async () => {
-  const { page, translations, external, errors } = await openHarness();
+  const { page, translations, external, errors } = await openHarness({ country: "CI" });
   try {
     assert.match(await cardText(page), /Sur devis/);
     await page.click("#select-en");
     await waitForLanguage(page, "en");
     assert.match(await cardText(page), /Custom quote/);
     assert.match(await cardText(page), /Business Directory & Visibility Platform/);
-    for (const price of ["180.000 FCFA", "300.000 FCFA", "400.000 FCFA", "780.000 FCFA"]) {
-      assert.ok((await cardText(page)).includes(price));
+    for (const price of ["180 000 FCFA", "300 000 FCFA", "400 000 FCFA", "780 000 FCFA"]) {
+      assert.ok((await cardText(page)).replace(/\s/g, " ").includes(price));
     }
-    assert.equal(await page.$eval('a[href^="https://wa.me/"]', element => element.href), "https://wa.me/14374359726");
+    assert.equal(await page.$eval('[data-testid="geoadmin-market-contact"]', element => element.getAttribute("href")), "tel:+2252720212223");
     assert.equal(translations.length, 0);
     assert.equal(external.some(url => /translate.*google/.test(url)), false);
     assert.equal(await page.$(".goog-te-combo"), null);
@@ -326,7 +331,8 @@ test("country detection can request its language without a manual override", asy
   const { page } = await openHarness({ country: "ES" });
   try {
     await waitForLanguage(page, "es");
-    assert.match(await cardText(page), /Presupuesto personalizado/);
+    assert.match(await cardText(page), /Próximamente/);
+    assert.match(await cardText(page), /Directorio de empresas/);
   } finally { await page.close(); }
 });
 
@@ -389,6 +395,74 @@ test("five paid/custom promotional offers fit small and wide screens", async () 
       assert.ok(result.titles.includes("Enterprise"));
       assert.equal(result.overflow, false, `overflow at ${width}px`);
     }
+  } finally { await page.close(); }
+});
+
+test("promo design, prices and contact stay consistent across resolutions and pricing surfaces", async () => {
+  for (const country of ["CA", "FR", "CI", "SN"]) {
+    const { page, errors } = await openHarness({ country, cached: "en" });
+    try {
+      let baseline;
+      for (const screen of ["pricing", "gate"]) {
+        await page.click(`#screen-${screen}`);
+        await page.waitForSelector('#real-screen [data-testid="geoadmin-promo"]');
+        let previousColumns = 0;
+        for (const width of [320, 375, 640, 768, 1024, 1440]) {
+          await page.setViewport({ width, height: 900 });
+          const card = await page.$eval('#real-screen [data-testid="geoadmin-promo"]', element => {
+            const contact = element.querySelector('[data-testid="geoadmin-market-contact"]');
+            const columns = getComputedStyle(element.querySelector("article").parentElement).gridTemplateColumns.split(" ").map(parseFloat);
+            return {
+              text: element.textContent,
+              prices: [...element.querySelectorAll("article > p:first-of-type")].map(node => node.textContent),
+              contact: contact.getAttribute("href"),
+              articles: element.querySelectorAll("article").length,
+              detailedLists: element.querySelectorAll("article ul").length,
+              overflow: element.scrollWidth > element.clientWidth,
+              documentOverflow: document.documentElement.scrollWidth > innerWidth,
+              background: getComputedStyle(element).backgroundImage,
+              columns: columns.length,
+              minColumn: Math.min(...columns),
+            };
+          });
+          const content = { text: card.text, prices: card.prices, contact: card.contact };
+          if (!baseline) baseline = content;
+          assert.deepEqual(content, baseline, `${country}/${screen}/${width}: content changed`);
+          assert.equal(card.articles, 5);
+          assert.equal(card.detailedLists, 0);
+          assert.equal(card.overflow, false, `${country}/${screen}/${width}: card overflow`);
+          assert.equal(card.documentOverflow, false, `${country}/${screen}/${width}: page overflow`);
+          assert.match(card.background, /linear-gradient/);
+          assert.ok(card.columns >= previousColumns, `${width}: squeezed at a larger breakpoint`);
+          if (card.columns > 1) assert.ok(card.minColumn >= 255, `${width}: narrow offers`);
+          previousColumns = card.columns;
+          if (country === "CA") {
+            assert.match(card.prices[0], /CA\$437/);
+            assert.equal(card.contact, "https://wa.me/14374359726");
+          } else if (country === "FR") {
+            assert.match(card.prices[0], /270\s*€/);
+            assert.equal(card.contact, "mailto:support@versoair.com");
+          } else if (country === "CI") {
+            assert.match(card.prices[0], /180\s*000 FCFA/);
+            assert.equal(card.contact, "tel:+2252720212223");
+          } else {
+            assert.ok(card.prices.every(price => price === "Coming soon"));
+            assert.equal(card.contact, "mailto:support@versoair.com");
+          }
+          if (country !== "SN") assert.equal(card.prices[4], "Custom quote");
+        }
+      }
+      assert.deepEqual(errors, []);
+    } finally { await page.close(); }
+  }
+});
+
+test("promo does not present missing exchange rates as local prices", async () => {
+  const { page } = await openHarness({ country: "CA", cached: "en", rates: null });
+  try {
+    await waitForLanguage(page, "en");
+    const prices = await page.$$eval('#promo-card article > p:first-of-type', nodes => nodes.map(node => node.textContent));
+    assert.deepEqual(prices, ["Rate unavailable", "Rate unavailable", "Rate unavailable", "Rate unavailable", "Custom quote"]);
   } finally { await page.close(); }
 });
 

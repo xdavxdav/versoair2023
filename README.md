@@ -28,6 +28,17 @@ with duration and terms confirmed before activation. This clarification does not
 activate trials or change account permissions.
 Selecting an offer or preparing the mail inquiry never upgrades an account.
 
+The navy/gold promotional card keeps the same content and visual treatment
+across resolutions. Offer columns adapt to the card's available width, with
+full-width placement above the selector on pricing and the GeoAdmin gate.
+Premium's full breakdown remains in plan details rather than stretching a tile.
+Promotional prices use the same selected-market formatter as the selector:
+CAD for Canada, EUR for France and FCFA for Côte d'Ivoire. Missing rates are
+explicitly unavailable; unsupported markets are coming soon.
+Resizing never changes prices or contacts. The primary contact uses the
+published Canadian WhatsApp in Canada, the published telephone in Côte d'Ivoire,
+and support email elsewhere; no other local channel is implied.
+
 The language selector uses bundled French/English/Spanish public-copy dictionaries, not
 the legacy Google website widget. Initial coverage includes pricing and its
 custom-plan dialog, the promotional card (including Enterprise custom), the

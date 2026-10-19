@@ -15,6 +15,7 @@ import {
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_OFFER_ORDER,
   formatMarketXofPrice,
+  getGeoAdminContact,
 } from "@/lib/geoadmin-pricing";
 
 export default function Pricing() {
@@ -23,6 +24,7 @@ export default function Pricing() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
+  const contact = getGeoAdminContact(selectedCountry);
 
   const formatAnnualPrice = (tier: GeoAdminOfferKey) => {
     return formatMarketXofPrice(
@@ -42,12 +44,8 @@ export default function Pricing() {
       />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-12 sm:py-16">
-        <div className="grid items-center gap-7 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid min-w-0 gap-7">
           <GeoAdminPromoCard />
-          <p className="text-xs leading-relaxed text-slate-700 lg:col-start-1">
-            The promotional card shows FCFA reference amounts. In available markets,
-            plan cards below use the local display currency.
-          </p>
           <section>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
               GeoAdmin plans
@@ -126,23 +124,20 @@ export default function Pricing() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <a
-                href="tel:+14374359726"
+                href={contact.href}
+                target={contact.whatsapp ? "_blank" : undefined}
+                rel={contact.whatsapp ? "noopener noreferrer" : undefined}
                 className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
               >
                 <Phone className="h-4 w-4" />
-                Canada: +1 (437) 435-9726
+                <span translate="no">{contact.display}</span>
               </a>
             </div>
-            <p className="mt-3 text-sm text-slate-600">
-              Côte d’Ivoire:{" "}
-              <a className="underline" href="tel:+2252720212223">
-                +225 27 20 21 22 23
-              </a>
-              {" · "}
+            {contact.whatsapp || contact.href.startsWith("tel:") ? <p className="mt-3 text-sm text-slate-600">
               <a className="underline" href="mailto:support@versoair.com">
                 support@versoair.com
               </a>
-            </p>
+            </p> : null}
           </section>
         </div>
 

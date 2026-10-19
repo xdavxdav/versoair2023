@@ -36,7 +36,7 @@ import {
   GEOADMIN_OFFER_ORDER,
   GEOADMIN_OFFER_PRICES_XOF,
 } from "@/lib/geoadmin-pricing";
-import { formatMarketXofPrice } from "@/lib/geoadmin-pricing";
+import { formatMarketXofPrice, getGeoAdminContact } from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -57,6 +57,7 @@ export default function GeoAdminAuthGate({
   const [, navigateTo] = useLocation();
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
+  const contact = getGeoAdminContact(selectedCountry);
   const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -298,12 +299,12 @@ export default function GeoAdminAuthGate({
           </div>
 
           <section className="mx-auto mb-8 max-w-5xl">
-            <div className="grid items-center gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid min-w-0 gap-5">
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-2xl">
                 <GeoAdminPromoCard />
               </div>
               <div>
-                <div className="mb-4 text-center lg:text-left">
+                <div className="mb-4 text-center">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
                     Annual plan reference prices
                   </p>
@@ -391,26 +392,21 @@ export default function GeoAdminAuthGate({
                 Contact the team
               </span>
               <a
-                href="tel:+14374359726"
+                href={contact.href}
+                target={contact.whatsapp ? "_blank" : undefined}
+                rel={contact.whatsapp ? "noopener noreferrer" : undefined}
                 className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
               >
                 <Phone className="h-4 w-4 text-amber-300" />
-                +1 (437) 435-9726 · Canada
+                <span translate="no">{contact.display}</span>
               </a>
-              <a
-                href="tel:+2252720212223"
-                className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
-              >
-                <Phone className="h-4 w-4 text-amber-300" />
-                +225 27 20 21 22 23 · Côte d’Ivoire
-              </a>
-              <a
+              {contact.href !== "mailto:support@versoair.com" && <a
                 href="mailto:support@versoair.com"
                 className="inline-flex items-center justify-center gap-2 text-sm text-slate-200 underline decoration-white/30 underline-offset-4 hover:text-white"
               >
                 <Mail className="h-4 w-4 text-amber-300" />
                 support@versoair.com
-              </a>
+              </a>}
             </div>
           </section>
 

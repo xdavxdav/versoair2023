@@ -13,6 +13,7 @@ import {
   formatXofPrice,
   getGeoAdminMarket,
   getMarketAvailability,
+  getGeoAdminContact,
 } from "./geoadmin-pricing.ts";
 import { TIERS, TIER_ORDER, TIER_FEATURES } from "./tiers.ts";
 import { getPublicCopyId } from "../../../shared/public-translations.ts";
@@ -136,4 +137,13 @@ test("converts simulated USD amounts into the selected local currency", () => {
 
 test("does not attempt conversion if either currency rate is missing", () => {
   assert.equal(convertUsdToCurrency(100, "CAD", null), null);
+});
+
+test("market contacts use only published channels", () => {
+  assert.equal(getGeoAdminContact("CA").href, "https://wa.me/14374359726");
+  assert.equal(getGeoAdminContact(" ci ").href, "tel:+2252720212223");
+  assert.equal(getGeoAdminContact("CI").whatsapp, false);
+  for (const country of ["FR", "SN", "", null]) {
+    assert.equal(getGeoAdminContact(country).href, "mailto:support@versoair.com");
+  }
 });
