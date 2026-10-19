@@ -1,9 +1,9 @@
 /**
- * Country → language suggestions for native FR/EN and Cloud Translation.
+ * Country → language suggestions for the Google Translate widget.
  * Maps ISO 3166-1 alpha-2 country codes to supported language codes.
  *
- * The site's base language is French (fr), so French-speaking countries
- * use native copy. Other languages require configured Cloud translation.
+ * The site's base language is French (fr); other suggestions are translated
+ * client-side by the Google Translate widget.
  */
 
 // Language code for each country

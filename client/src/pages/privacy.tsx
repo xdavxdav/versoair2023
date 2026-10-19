@@ -103,6 +103,12 @@ export default function PrivacyPolicy() {
                 anonymous usage statistics
               </li>
               <li>
+                <strong>Google Translate:</strong> When you select another
+                language, the browser-based translation widget may send visible
+                page text and language preferences to Google to provide
+                translations.
+              </li>
+              <li>
                 <strong>Cookies:</strong> Session cookies for authentication,
                 preference cookies (see our{" "}
                 <Link href="/cookies" className="text-amber-800 underline">
@@ -161,6 +167,12 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong>Google Analytics:</strong> Anonymous usage statistics
+              </li>
+              <li>
+                <strong>Google Translate:</strong> Browser-based page
+                translation when you choose another language. Google may process
+                page text, language preferences, and related browser
+                information under its own privacy terms.
               </li>
               <li>
                 <strong>Neon / PostgreSQL:</strong> Database hosting (your data

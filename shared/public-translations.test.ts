@@ -8,7 +8,10 @@ import { SPANISH_COPY } from "./spanish-translations";
 test("legal page static copy has native FR/EN coverage, excluding brands and punctuation", () => {
   const fixed = new Set([
     "support@versoair.com", "Verso Air", '"Straight to the point"', "Stripe:",
-    "Groq / Ollama:", "Google Analytics:", "Neon / PostgreSQL:", "Render:",
+    "Groq / Ollama:", "Google Analytics:", "Google Translate:",
+    "When you select another language, the browser-based translation widget may send visible page text and language preferences to Google to provide translations.",
+    "Browser-based page translation when you choose another language. Google may process page text, language preferences, and related browser information under its own privacy terms.",
+    "Neon / PostgreSQL:", "Render:",
     "connect.sid", "Essential", "token", "verso_portal", "verso_theme", "_ga / _gid", "_gat",
     "verso_favorites", "verso_search_history", "verso_notification_prefs", "tanstack_query_cache",
     "Chrome:", "Firefox:", "Safari:", "Edge:", "GDPR",

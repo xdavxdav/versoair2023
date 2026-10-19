@@ -80,37 +80,32 @@ promotional card, pricing page and GeoAdmin gate. The support email remains.
 The promotional card links to the existing `/versoai` assistant route via a
 localized "Ask VersoAI" action instead of repeating the website homepage URL.
 
-The language selector uses bundled French/English/Spanish public-copy dictionaries, not
-the legacy Google website widget. Initial coverage includes pricing and its
-custom-plan dialog, the promotional card (including Enterprise custom), the
-sign-in/registration screens, help, and the terms/privacy/cookie pages.
-Unknown copy stays in its source language; selecting a language does **not**
-claim that every page, server error, or user submission has been translated.
-Bundled legal copy is editorial translation, not external legal certification.
+The country/language selector uses the Google Translate website widget for
+client-side page translation. It offers the widget's supported language list,
+sets the `googtrans` preference before loading the script, and switches through
+the widget's language control. If the control is not ready when a language is
+selected, the page reloads with the saved language preference. Automatic country
+detection selects a suggested language unless the visitor has chosen a manual
+override. Google Translate is an external service and may process page text and
+set its own cookies; the Privacy Policy discloses this behavior.
+
+The application does not use paid Google Cloud Translation credentials or its
+server-side translation endpoint. Legacy `CLOUD_TRANSLATION_ENABLED`,
+`GOOGLE_CLOUD_TRANSLATION_API_KEY` and `TRANSLATION_MONTHLY_CHARACTER_LIMIT`
+settings are not read by the server translation route and can be removed from
+the deployment. Do not remove `REDIS_URL` if another application feature uses it.
+
+`GET /api/translations/:language` still serves bundled editorial dictionaries
+for compatibility; the selector no longer depends on those dictionaries or the
+endpoint. Google Translate is machine translation, not legal certification.
 Have counsel and native speakers approve critical copy before release.
 
-French, English and Spanish work without network translation calls, Google Cloud
-credentials, billing, or Redis. The paid Cloud translation implementation has
-been removed: legacy `CLOUD_TRANSLATION_ENABLED`,
-`GOOGLE_CLOUD_TRANSLATION_API_KEY` and `TRANSLATION_MONTHLY_CHARACTER_LIMIT`
-settings are no longer read and can be removed from the deployment. Do not remove
-`REDIS_URL` if another application feature uses it.
+The retained dictionary endpoint accepts a language, not arbitrary text. It
+does not collect passwords, form values, private messages, or user-generated
+content for translation. The external browser widget has separate processing
+described in the Privacy Policy.
 
-This is a staged dictionary rollout, not a claim that all 52 previously offered
-languages are translated. Other languages remain visible but disabled and marked
-"Not bundled yet". Selecting a country whose language is not bundled keeps the
-previous language and displays an explicit notice. A saved unsupported language
-also displays this notice; it is not silently replaced by a claimed translation.
-Manual preferences still take precedence over automatic country detection.
-Successful notices disappear after three seconds.
-
-`GET /api/translations/:language` serves the same complete bundled dictionary for
-`fr`, `en` or `es`, with `machineTranslated: false`; it never invokes a provider.
-Other languages return HTTP 400 with `TRANSLATION_LANGUAGE_NOT_BUNDLED`.
-The endpoint accepts a language, not arbitrary text. Passwords, forms, private
-messages, and user-generated content are never collected for translation.
-
-To extend coverage, add reviewed EN/FR copy and its Spanish translation in
+To extend the retained dictionary coverage, add reviewed EN/FR copy and its Spanish translation in
 `shared/spanish-translations.ts`, then localize the component with
 `useLocalizedContent`. Spanish uses English source phrases as stable keys rather
 than catalogue positions; TypeScript and completeness tests require an entry
@@ -120,9 +115,8 @@ Review the explicit company copy in the About page as well.
 Keep URLs, values and account data outside the catalogue.
 
 Validation: `npm run test:translation`, `npm run check`, `npm run check:api`,
-and `npm run build`. Tests use no production database or keys and verify
-translation without backend access; they do not establish professional legal
-approval.
+and `npm run build`. Browser tests mock the Google Translate widget and do not
+establish live third-party availability or professional legal approval.
 
 export interface AuthUser {
   userId: string;        // changed from `id` — matches server JWT payload

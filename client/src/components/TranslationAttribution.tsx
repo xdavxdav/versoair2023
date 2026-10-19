@@ -6,13 +6,13 @@ export default function TranslationAttribution() {
   return (
     <aside translate="no" className="notranslate mx-2 my-3 flex flex-wrap items-center justify-center gap-2 text-xs">
       <span className="rounded bg-white px-2 py-1 text-slate-800">
-        Automatic translation · supported public content only
+        Automatic translation by Google Translate
       </span>
       <a
         href="https://translate.google.com"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Automatic translation by Google Translate; supported public content only"
+        aria-label="Automatic translation by Google Translate"
         className="inline-flex min-h-11 items-center rounded bg-white px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
       >
         <img
