@@ -6,10 +6,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import puppeteer from "puppeteer";
 import { createServer } from "vite";
+import { LANG_NAMES } from "../../client/src/utils/country-language.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const googleTranslateStub = `
 window.google = {translate: {TranslateElement: function(options, elementId) {
+  if (new URLSearchParams(window.location.search).get("widget") === "modern") {
+    const gadget = document.createElement("div");
+    gadget.className = "goog-te-gadget-simple";
+    document.getElementById(elementId).appendChild(gadget);
+    return;
+  }
   const combo = document.createElement("select");
   combo.className = "goog-te-combo";
   ["", ...options.includedLanguages.split(",")].forEach(language => {
@@ -38,7 +45,7 @@ function Controls() {
     React.createElement("output", {id:"current-language"}, language.currentLang),
     React.createElement("output", {id:"machine-translated"}, String(language.machineTranslated)),
     language.showBanner && React.createElement("div", {role:"status"}, language.bannerMessage),
-    ...["fr","en","es","de","ar"].map(lang => React.createElement("button", {
+    ...${JSON.stringify(Object.keys(LANG_NAMES))}.map(lang => React.createElement("button", {
       key:lang, id:"select-"+lang, onClick:()=>language.selectLanguage(lang)
     }, lang)),
     React.createElement("p", {id:"sample"},"Bienvenue chez Verso Air"));
@@ -90,7 +97,7 @@ after(async () => {
   if (cacheDir) await rm(cacheDir, { recursive: true, force: true });
 });
 
-async function openHarness({ cached = null } = {}) {
+async function openHarness({ cached = null, widget = "select" } = {}) {
   const page = await browser.newPage();
   const errors = [];
   const requests = [];
@@ -100,6 +107,11 @@ async function openHarness({ cached = null } = {}) {
     if (cachedLanguage) {
       localStorage.setItem("fsa_selected_language", cachedLanguage);
       localStorage.setItem("fsa_language_override", "true");
+    }
+    if (window.location.search.includes("widget=modern")) {
+      const nativeSetInterval = window.setInterval.bind(window);
+      window.setInterval = (callback, delay, ...args) =>
+        nativeSetInterval(callback, Math.min(delay, 5), ...args);
     }
   }, cached);
   await page.setRequestInterception(true);
@@ -119,7 +131,7 @@ async function openHarness({ cached = null } = {}) {
     }
     await request.abort();
   });
-  await page.goto(`${origin}/__gtranslate-test`);
+  await page.goto(`${origin}/__gtranslate-test?widget=${widget}`);
   await page.waitForSelector("#current-language", { timeout: 15_000 });
   return { page, errors, requests };
 }
@@ -149,6 +161,57 @@ test("choosing a language updates Google Translate and persists its cookie", asy
     assert.match(await page.evaluate(() => document.cookie), /googtrans=%2Ffr%2Fde|googtrans=\/fr\/de/);
     assert.equal(await page.evaluate(() => localStorage.getItem("fsa_selected_language")), "de");
     assert.equal(await page.$eval("#machine-translated", element => element.textContent), "true");
+    assert.deepEqual(errors, []);
+  } finally {
+    await page.close();
+  }
+});
+
+test("every language offered by the selector can be applied by the widget", async () => {
+  const { page, errors } = await openHarness();
+  try {
+    await page.waitForSelector(".goog-te-combo");
+    for (const language of Object.keys(LANG_NAMES)) {
+      await page.click(`#select-${language}`);
+      await page.waitForFunction(
+        (selected) =>
+          window.__googleTranslateLanguage === selected &&
+          document.querySelector("#current-language")?.textContent === selected,
+        {},
+        language,
+      );
+      const cookie = await page.evaluate(() => document.cookie);
+      if (language === "fr") {
+        assert.equal(cookie.includes("googtrans="), false);
+      } else {
+        assert.match(
+          cookie,
+          new RegExp(
+            `googtrans=%2Ffr%2F${language}|googtrans=\\/fr\\/${language}`,
+          ),
+        );
+      }
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await page.close();
+  }
+});
+
+test("modern widget without a language select does not trigger a reload loop", async () => {
+  const { page, errors } = await openHarness({
+    cached: "de",
+    widget: "modern",
+  });
+  try {
+    await page.waitForSelector(".goog-te-gadget-simple");
+    let reloads = 0;
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) reloads += 1;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    assert.equal(reloads, 0);
+    assert.equal(await page.$('[role="status"]'), null);
     assert.deepEqual(errors, []);
   } finally {
     await page.close();

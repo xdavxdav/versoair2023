@@ -224,7 +224,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const applyLanguage = useCallback(
-    (language: string, source: "country" | "manual", reloadIfNeeded: boolean) => {
+    (language: string, source: "country" | "manual") => {
       if (!GT_LANGUAGE_CODES.has(language)) {
         console.error("[Language] Google Translate does not support:", language);
         notify(
@@ -242,7 +242,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
       if (language === "fr") {
         const switched = switchGoogleTranslateLanguage(language);
-        if (!switched && reloadIfNeeded && googleTranslateReady) {
+        if (!switched && googleTranslateReady) {
           reloadWithCountdown("Restoring Français.");
         } else {
           notify("Language restored to Français.", 3000);
@@ -252,7 +252,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
       if (switchGoogleTranslateLanguage(language)) {
         notify(`Translating to ${language.toUpperCase()} with Google Translate.`, 5000);
-      } else if (reloadIfNeeded && googleTranslateReady) {
+      } else if (googleTranslateReady) {
         reloadWithCountdown(
           `Applying ${language.toUpperCase()} with Google Translate.`,
         );
@@ -271,7 +271,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     (language: string, source: "country" | "manual" = "manual") => {
       manual.current = source === "manual";
       storePreference(LANG_OVERRIDE_KEY, String(manual.current));
-      applyLanguage(language, source, true);
+      applyLanguage(language, source);
     },
     [applyLanguage],
   );
@@ -318,7 +318,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (lastCountryLanguage.current === language) return;
     lastCountryLanguage.current = language;
     if (!manual.current && language !== currentRef.current) {
-      applyLanguage(language, "country", false);
+      applyLanguage(language, "country");
     }
   }, [selectedCountry, detecting, applyLanguage]);
 
@@ -331,9 +331,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         window.clearInterval(timer);
       } else if (attempts >= 20) {
         window.clearInterval(timer);
-        reloadWithCountdown(
-          `Applying ${currentRef.current.toUpperCase()} with Google Translate.`,
-        );
       }
     }, 250);
     return () => window.clearInterval(timer);
