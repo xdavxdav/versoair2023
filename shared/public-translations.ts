@@ -1,5 +1,6 @@
 import { LEGAL_COPY } from "./legal-translations";
 import { OFFER_COPY } from "./offer-translations";
+import { SPANISH_COPY } from "./spanish-translations";
 
 // Only authored public copy belongs here. Never add account or user-generated content.
 export const PUBLIC_COPY = [
@@ -425,9 +426,13 @@ export const PUBLIC_COPY = [
   ...OFFER_COPY,
 ] as const;
 
-export const SUPPORTED_LANGUAGES = new Set(
-  "fr,en,es,pt,de,ar,zh-CN,zh-TW,ja,ko,ru,tr,it,nl,pl,sv,no,da,fi,cs,ro,hu,el,he,th,vi,id,uk,hi,bn,fa,sw,am,hr,sr,bg,sk,sl,et,lv,lt,my,km,lo,ka,hy,az,uz,tk,mn,ne,si".split(","),
-);
+export const BUNDLED_LANGUAGES = ["fr", "en", "es"] as const;
+export type BundledLanguage = (typeof BUNDLED_LANGUAGES)[number];
+export const SUPPORTED_LANGUAGES: ReadonlySet<string> = new Set(BUNDLED_LANGUAGES);
+
+export function isBundledLanguage(language: string): language is BundledLanguage {
+  return SUPPORTED_LANGUAGES.has(language);
+}
 
 export type TranslationDictionary = Record<string, string>;
 
@@ -445,8 +450,11 @@ export function getPublicCopyId(text: string): string | undefined {
   return sourceIds.get(normalizePublicCopy(text));
 }
 
-export function nativeDictionary(lang: "fr" | "en"): TranslationDictionary {
+export function nativeDictionary(lang: BundledLanguage): TranslationDictionary {
   return Object.fromEntries(
-    PUBLIC_COPY.map((pair, index) => [String(index), pair[lang === "fr" ? 1 : 0]]),
+    PUBLIC_COPY.map(([en, fr], index) => [
+      String(index),
+      lang === "es" ? SPANISH_COPY[en] : lang === "fr" ? fr : en,
+    ]),
   );
 }

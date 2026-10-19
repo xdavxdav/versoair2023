@@ -246,6 +246,33 @@ const FeatureHighlight = ({
 // Incorporation (Ontario, Business Corporations Act), October 5, 2026.
 // If a fact changes, update it here AND in the legal pages.
 const COMPANY_COPY = {
+  es: {
+    badge: "La empresa",
+    heading: "Verso Air Inc.",
+    subheading: "la empresa detrás de la plataforma",
+    questions: [
+      {
+        icon: Building,
+        q: "¿Quién es VERSO AIR INC.?",
+        a: "VERSO AIR INC. es una sociedad constituida en Ontario, Canadá (número de sociedad de Ontario 1001767617), con efectos desde el 5 de octubre de 2026. Cofundada por Boussou Elvis Jonathan y Joel Vanga, tiene su sede en North York, Toronto. Estos datos se pueden verificar en el registro de empresas de Ontario.",
+      },
+      {
+        icon: Briefcase,
+        q: "¿Qué vende exactamente la empresa?",
+        a: "VERSO AIR INC. está preparando una plataforma digital de visibilidad empresarial. El directorio, los espacios publicitarios y las herramientas de análisis se presentarán a medida que estén disponibles y se verifiquen sus datos.",
+      },
+      {
+        icon: MapPin,
+        q: "¿A quién se dirige?",
+        a: "El lanzamiento inicial se centra en Toronto. La expansión a otros sectores y ciudades dependerá de la disponibilidad de los servicios y de datos verificados.",
+      },
+      {
+        icon: Shield,
+        q: "¿Por qué confiar en ella?",
+        a: "La identidad de VERSO AIR INC. se puede verificar en el registro de empresas de Ontario. Los servicios, anuncios e indicadores se describirán según su estado real. VERSO AIR™ — protección de marca en preparación.",
+      },
+    ],
+  },
   fr: {
     badge: "L'entreprise",
     heading: "Verso Air Inc.",
@@ -304,7 +331,7 @@ const COMPANY_COPY = {
 
 function CompanySection() {
   const { currentLang } = useLanguage();
-  const copy = currentLang === "en" ? COMPANY_COPY.en : COMPANY_COPY.fr;
+  const copy = currentLang === "es" ? COMPANY_COPY.es : currentLang === "en" ? COMPANY_COPY.en : COMPANY_COPY.fr;
 
   return (
     <section className="py-16 md:py-20 relative bg-white">
@@ -397,7 +424,7 @@ const BRAND_ROADMAP = {
 } as const;
 
 function BrandRoadmapSection() {
-  const { currentLang } = useLanguage();
+  const { currentLang, translateText } = useLanguage();
   const copy = currentLang === "en" ? BRAND_ROADMAP.en : BRAND_ROADMAP.fr;
 
   return (
@@ -410,12 +437,12 @@ function BrandRoadmapSection() {
           className="text-center mb-10"
         >
           <Badge className="mb-4 px-4 py-2 bg-amber-50 border-amber-200 text-amber-700">
-            {copy.badge}
+            {translateText(copy.badge)}
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            {copy.heading}
+            {translateText(copy.heading)}
           </h2>
-          <p className="text-slate-600 max-w-3xl mx-auto">{copy.intro}</p>
+          <p className="text-slate-600 max-w-3xl mx-auto">{translateText(copy.intro)}</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -429,9 +456,9 @@ function BrandRoadmapSection() {
               className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
               <h3 className="text-lg font-bold text-slate-900 mb-3 notranslate">
-                {item.title}
+                {translateText(item.title)}
               </h3>
-              <p className="text-slate-600 leading-relaxed">{item.text}</p>
+              <p className="text-slate-600 leading-relaxed">{translateText(item.text)}</p>
             </motion.div>
           ))}
         </div>

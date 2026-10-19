@@ -6,7 +6,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import puppeteer from "puppeteer";
 import { createServer } from "vite";
-import { PUBLIC_COPY } from "../../shared/public-translations.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 let server;
@@ -112,7 +111,7 @@ after(async () => {
   if (cacheDir) await rm(cacheDir, { recursive: true, force: true });
 });
 
-async function openHarness({ fail = false, delay = 0, malformed = false, country = "FR", cached = null, mode = "" } = {}) {
+async function openHarness({ country = "FR", cached = null, mode = "" } = {}) {
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", error => {
@@ -134,25 +133,10 @@ async function openHarness({ fail = false, delay = 0, malformed = false, country
   page.on("request", async request => {
     if (request.url().startsWith(`${origin}/api/translations/`)) {
       translations.push({ url: request.url(), body: request.postData() });
-      if (delay) await new Promise(resolve => setTimeout(resolve, delay));
-      const language = new URL(request.url()).pathname.split("/").pop();
-      const dictionary = Object.fromEntries(PUBLIC_COPY.map(([en, fr], index) => [
-        String(index), language === "es"
-          ? en === "Custom quote" ? "Presupuesto personalizado"
-          : en === "Help Center" ? "Centro de ayuda" : `ES ${fr}`
-          : `DE ${fr}`,
-      ]));
-      try {
-        await request.respond({
-          status: fail ? 503 : 200, contentType: "application/json",
-          body: JSON.stringify(fail ? { success: false } : {
-            success: true, language, machineTranslated: true,
-            dictionary: malformed ? {} : dictionary,
-          }),
-        });
-      } catch (error) {
-        if (!request.isInterceptResolutionHandled()) throw error;
-      }
+      await request.respond({
+        status: 503, contentType: "application/json",
+        body: JSON.stringify({ success: false, message: "No translation backend" }),
+      });
       return;
     }
     if (request.url().startsWith(origin)) return void request.continue();
@@ -223,20 +207,20 @@ test("native notice fits mobile, retains contrast and Undo returns to French", a
   } finally { await page.close(); }
 });
 
-test("automatic language uses only same-origin catalogue requests and updates late React content", async () => {
-  const { page, translations, errors } = await openHarness();
+test("bundled Spanish needs no backend or external provider and updates late React content", async () => {
+  const { page, translations, external, errors } = await openHarness();
   try {
     await page.click("#select-es");
     await waitForLanguage(page, "es");
     assert.match(await cardText(page), /Presupuesto personalizado/);
-    assert.equal(translations.length, 1);
-    assert.equal(translations[0].body, undefined);
-    assert.equal(new URL(translations[0].url).search, "");
-    assert.ok(await page.$('a[aria-label^="Automatic translation by Google Translate"]'));
+    assert.equal(translations.length, 0);
+    assert.equal(await page.$('a[aria-label^="Automatic translation by Google Translate"]'), null);
     await page.click("#late");
     await page.waitForFunction(() => document.querySelector("h1")?.textContent.trim() === "Centro de ayuda");
-    assert.ok(await page.$('[lang="es-x-mtfrom-fr"]'));
-    assert.equal(translations.length, 1);
+    assert.ok(await page.$('[lang="es"]'));
+    assert.equal(await page.$('[lang="es-x-mtfrom-fr"]'), null);
+    assert.equal(translations.length, 0);
+    assert.equal(external.some(url => /translate.*google/.test(url)), false);
     assert.deepEqual(errors, []);
   } finally { await page.close(); }
 });
@@ -253,17 +237,17 @@ test("form values, unknown/private text and translate=no are not changed or subm
   } finally { await page.close(); }
 });
 
-test("unavailable or incomplete translation retains the previous language and allows native recovery", async () => {
-  for (const options of [{ fail: true }, { malformed: true }]) {
-    const { page } = await openHarness(options);
+test("an unbundled language retains the previous language and preference with an explicit notice", async () => {
+  for (const language of ["en", "es"]) {
+    const { page, translations } = await openHarness();
     try {
-      await page.click("#select-en");
-      await waitForLanguage(page, "en");
-      await page.click("#select-es");
-      await page.waitForFunction(() => document.querySelector('[role="status"]')?.textContent.includes("Translation unavailable"));
-      await waitForLanguage(page, "en");
-      assert.match(await cardText(page), /Custom quote/);
-      assert.equal(await page.evaluate(() => localStorage.getItem("fsa_selected_language")), "en");
+      await page.click(`#select-${language}`);
+      await waitForLanguage(page, language);
+      await page.click("#select-de");
+      await page.waitForFunction(() => document.querySelector('[role="status"]')?.textContent.includes("not bundled yet"));
+      await waitForLanguage(page, language);
+      assert.equal(await page.evaluate(() => localStorage.getItem("fsa_selected_language")), language);
+      assert.equal(translations.length, 0);
       await page.click("#select-fr");
       await waitForLanguage(page, "fr");
       assert.match(await cardText(page), /Sur devis/);
@@ -271,26 +255,61 @@ test("unavailable or incomplete translation retains the previous language and al
   }
 });
 
-test("a stale delayed Cloud result cannot overwrite a newer native choice", async () => {
-  const { page } = await openHarness({ delay: 500 });
+test("rapid bundled language choices keep the most recent selection without pending requests", async () => {
+  const { page, translations } = await openHarness();
   try {
     await page.click("#select-es");
     await page.click("#select-en");
     await waitForLanguage(page, "en");
-    await new Promise(resolve => setTimeout(resolve, 800));
     assert.equal(await page.$eval("#current-language", element => element.textContent), "en");
     assert.match(await cardText(page), /Custom quote/);
+    assert.equal(translations.length, 0);
   } finally { await page.close(); }
 });
 
-test("dismissing a pending notice does not cancel translation or reopen the notice", async () => {
-  const { page } = await openHarness({ delay: 500 });
+test("dismissing a completed notice does not undo the translation", async () => {
+  const { page } = await openHarness();
   try {
     await page.click("#select-es");
     await page.click('[aria-label="Dismiss translation notification"]');
     await waitForLanguage(page, "es");
     assert.equal(await page.$('[role="status"]'), null);
   } finally { await page.close(); }
+});
+
+test("completed Spanish notice disappears after three seconds without changing language", async () => {
+  const { page } = await openHarness();
+  try {
+    await page.click("#select-es");
+    await waitForLanguage(page, "es");
+    await page.waitForSelector('[role="status"]');
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    assert.ok(await page.$('[role="status"]'));
+    await page.waitForSelector('[role="status"]', { hidden: true, timeout: 1500 });
+    assert.equal(await page.$eval("#current-language", element => element.textContent), "es");
+  } finally { await page.close(); }
+});
+
+test("cached Spanish survives a full reload with the backend disabled", async () => {
+  const { page, translations } = await openHarness({ country: "CA", cached: "es" });
+  try {
+    await waitForLanguage(page, "es");
+    await page.reload();
+    await waitForLanguage(page, "es");
+    assert.match(await cardText(page), /Presupuesto personalizado/);
+    assert.equal(translations.length, 0);
+  } finally { await page.close(); }
+});
+
+test("unsupported country and cached language show a notice instead of a false translation", async () => {
+  for (const options of [{ country: "DE" }, { cached: "de" }]) {
+    const { page, translations } = await openHarness(options);
+    try {
+      await page.waitForFunction(() => document.querySelector('[role="status"]')?.textContent.includes("not bundled yet"));
+      assert.equal(await page.$eval("#current-language", element => element.textContent), "fr");
+      assert.equal(translations.length, 0);
+    } finally { await page.close(); }
+  }
 });
 
 test("manual cached language wins over country detection", async () => {
@@ -308,6 +327,50 @@ test("country detection can request its language without a manual override", asy
   try {
     await waitForLanguage(page, "es");
     assert.match(await cardText(page), /Presupuesto personalizado/);
+  } finally { await page.close(); }
+});
+
+test("Canada defaults to English without backend translation", async () => {
+  const { page, translations } = await openHarness({ country: "CA" });
+  try {
+    await waitForLanguage(page, "en");
+    assert.match(await cardText(page), /Custom quote/);
+    assert.equal(translations.length, 0);
+  } finally { await page.close(); }
+});
+
+test("language selector enables bundled Spanish and disables dictionaries not yet shipped", async () => {
+  const { page } = await openHarness();
+  try {
+    await page.click('[aria-label="Change country or language"]');
+    await clickButtonWithText(page, "button", "Language");
+    const choices = await page.$$eval("button", buttons =>
+      buttons.filter(button => /Español|Deutsch|Português/.test(button.textContent))
+        .map(button => ({ text: button.textContent, disabled: button.disabled })));
+    assert.equal(choices.find(choice => choice.text.includes("Español"))?.disabled, false);
+    for (const name of ["Deutsch", "Português"]) {
+      const choice = choices.find(choice => choice.text.includes(name));
+      assert.ok(choice?.disabled);
+      assert.match(choice.text, /Not bundled yet/);
+    }
+  } finally { await page.close(); }
+});
+
+test("About and legal pages use the bundled Spanish dictionary and company copy", async () => {
+  const { page, translations, errors } = await openHarness({ cached: "es" });
+  try {
+    await waitForLanguage(page, "es");
+    await page.click("#screen-about");
+    await page.waitForFunction(() => document.querySelector("#real-screen h1")?.textContent.includes("Ecosistema de inteligencia empresarial"));
+    const about = await page.$eval("#real-screen", element => element.textContent);
+    assert.match(about, /la empresa detrás de la plataforma/);
+    assert.match(about, /protección de marca en preparación/);
+    assert.match(about, /plataforma digital en Toronto/);
+    await page.click("#screen-terms");
+    await page.waitForFunction(() => document.querySelector("#real-screen h1")?.textContent.trim() === "Términos de servicio");
+    assert.match(await page.$eval("#real-screen", element => element.textContent), /No se cobra ningún pago ni se activa ningún plan/);
+    assert.equal(translations.length, 0);
+    assert.deepEqual(errors, []);
   } finally { await page.close(); }
 });
 

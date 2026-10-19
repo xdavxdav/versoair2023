@@ -27,6 +27,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useCountry } from "@/contexts/CountryContext";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import { isBundledLanguage } from "../../../shared/public-translations";
 import {
   getLanguageForCountry,
   LANG_NAMES,
@@ -384,6 +385,7 @@ export function CountryDropdown() {
           onClick={() => setOpen((o) => !o)}
           className="group flex items-center gap-1 text-white hover:text-white/80 transition-colors focus:outline-none"
           title="Country & Language"
+          aria-label="Change country or language"
           aria-haspopup="true"
           aria-expanded={open}
         >
@@ -549,7 +551,7 @@ export function CountryDropdown() {
                 {/* Info note */}
                 <div className="px-3 py-2 mb-1">
                   <p className="text-[10px] text-gray-400 leading-snug">
-                    Override the auto-detected language. Useful for bilinguals.
+                    Bundled translations: Français, English and Español. Other languages are not available yet.
                   </p>
                 </div>
 
@@ -559,8 +561,9 @@ export function CountryDropdown() {
                   .map((lang) => (
                     <button
                       key={lang}
+                      disabled={!isBundledLanguage(lang)}
                       onClick={() => handleSelectLanguage(lang)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all duration-150 border-l-[3px] ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all duration-150 border-l-[3px] disabled:opacity-50 disabled:cursor-not-allowed ${
                         currentLang === lang
                           ? "border-l-purple-500 bg-purple-50/60 font-semibold"
                           : "border-l-transparent hover:bg-gray-50 hover:border-l-gray-200"
@@ -576,7 +579,7 @@ export function CountryDropdown() {
                           {LANG_NAMES[lang] || lang}
                         </span>
                         <span className="text-[10px] text-gray-400 uppercase tracking-wider">
-                          {lang}
+                          {isBundledLanguage(lang) ? lang : `${lang} · Not bundled yet`}
                         </span>
                       </div>
                       {currentLang === lang && (
@@ -600,8 +603,9 @@ export function CountryDropdown() {
                   .map((lang) => (
                     <button
                       key={lang}
+                      disabled={!isBundledLanguage(lang)}
                       onClick={() => handleSelectLanguage(lang)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-all duration-150 border-l-[3px] ${
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-all duration-150 border-l-[3px] disabled:opacity-50 disabled:cursor-not-allowed ${
                         currentLang === lang
                           ? "border-l-purple-500 bg-purple-50/60 font-semibold"
                           : "border-l-transparent hover:bg-gray-50 hover:border-l-gray-200"
@@ -616,6 +620,7 @@ export function CountryDropdown() {
                         >
                           {LANG_NAMES[lang] || lang}
                         </span>
+                        {!isBundledLanguage(lang) && <span className="text-[10px] text-slate-600">Not bundled yet</span>}
                       </div>
                       {currentLang === lang && (
                         <Check className="ml-auto h-3.5 w-3.5 text-purple-500 shrink-0" />
@@ -671,9 +676,7 @@ export function CountryDropdown() {
             <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
               <span className="text-[10px] text-slate-600">
                 {tab === "language"
-                  ? machineTranslated
-                    ? "Automatic translation by Google Translate"
-                    : "Native FR/EN · automatic translation for other languages"
+                  ? "Bundled FR/EN/ES · no translation service"
                   : `${allOptions.length} countries`}
               </span>
               {tab === "country" && (

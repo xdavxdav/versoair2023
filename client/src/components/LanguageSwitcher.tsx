@@ -2,9 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { useCountry } from "@/contexts/CountryContext";
 import { getLanguageForCountry } from "@/utils/country-language";
 import {
-  PUBLIC_COPY,
-  SUPPORTED_LANGUAGES,
   getPublicCopyId,
+  isBundledLanguage,
   nativeDictionary,
   type TranslationDictionary,
 } from "../../../shared/public-translations";
@@ -80,17 +79,6 @@ function storePreference(key: string, value: string) {
   }
 }
 
-function decodeTranslation(text: string): string {
-  // Decode provider HTML entities without interpreting markup or adding DOM nodes.
-  return text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (entity, code: string) => {
-    const named: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
-    if (!code.startsWith("#")) return named[code.toLowerCase()] ?? entity;
-    const point = code[1].toLowerCase() === "x" ? parseInt(code.slice(2), 16) : Number(code.slice(1));
-    return point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
-      ? String.fromCodePoint(point) : entity;
-  });
-}
-
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const { selectedCountry, detecting } = useCountry();
   const [currentLang, setCurrentLang] = useState("fr");
@@ -102,11 +90,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState("");
   const [romanized, setRomanized] = useState(() => readPreference(ROMANIZATION_KEY) === "true");
-  const request = useRef<AbortController | null>(null);
-  const sequence = useRef(0);
   const bannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dismissed = useRef(false);
-  const cache = useRef(new Map<string, TranslationDictionary>());
   const lastCountryLanguage = useRef<string | null>(null);
 
   const notify = useCallback((message: string, duration = 12_000) => {
@@ -116,68 +101,25 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     bannerTimer.current = setTimeout(() => setShowBanner(false), duration);
   }, []);
 
-  const apply = useCallback(async (language: string) => {
-    request.current?.abort();
-    const serial = ++sequence.current;
-    const controller = new AbortController();
-    request.current = controller;
+  const apply = useCallback((language: string) => {
     dismissed.current = false;
-    if (!SUPPORTED_LANGUAGES.has(language)) {
-      notify("This language is not supported. Please choose French or English.");
+    if (!isBundledLanguage(language)) {
+      notify("This language is not bundled yet. Your previous language is unchanged. Choose Français, English or Español.");
       return;
     }
-    let next = language === "fr" || language === "en"
-      ? nativeDictionary(language) : cache.current.get(language);
-    const timeout = setTimeout(() => controller.abort(), 45_000);
-    try {
-      if (!next) {
-        notify(`Requesting automatic translation: ${language.toUpperCase()}…`);
-        const response = await fetch(`/api/translations/${encodeURIComponent(language)}`, {
-          credentials: "omit",
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`Translation request failed (${response.status})`);
-        const payload: unknown = await response.json();
-        if (!payload || typeof payload !== "object" ||
-            Reflect.get(payload, "success") !== true || Reflect.get(payload, "language") !== language) {
-          throw new Error("Invalid translation response");
-        }
-        const result: unknown = Reflect.get(payload, "dictionary");
-        if (!result || typeof result !== "object" || Array.isArray(result)) {
-          throw new Error("Invalid translation dictionary");
-        }
-        next = {};
-        for (let index = 0; index < PUBLIC_COPY.length; index++) {
-          const value: unknown = Reflect.get(result, String(index));
-          if (typeof value !== "string" || !value.trim() || value.length > 20_000) {
-            throw new Error("Incomplete translation dictionary");
-          }
-          next[String(index)] = decodeTranslation(value);
-        }
-        cache.current.set(language, next);
-      }
-      if (serial !== sequence.current) return;
-      if (currentRef.current !== language) setPreviousLang(currentRef.current);
-      currentRef.current = language;
-      setDictionary(next);
-      setCurrentLang(language);
-      storePreference(LANG_CACHE_KEY, language);
-      notify(language === "fr" || language === "en"
-        ? `${language === "fr" ? "Français" : "English"} selected for supported content.`
-        : `Automatic translation by Google Translate (${language.toUpperCase()}) for supported public content.`, 3_000);
-    } catch (error: unknown) {
-      if (serial !== sequence.current) return;
-      console.warn("[Language] Translation unavailable:", error instanceof Error ? error.message : "request error");
-      notify("Translation unavailable. Your previous language is unchanged. Choose French or English, or select the language again to retry.");
-    } finally {
-      clearTimeout(timeout);
-    }
+    if (currentRef.current !== language) setPreviousLang(currentRef.current);
+    currentRef.current = language;
+    setDictionary(nativeDictionary(language));
+    setCurrentLang(language);
+    storePreference(LANG_CACHE_KEY, language);
+    const name = { fr: "Français", en: "English", es: "Español" }[language];
+    notify(`${name} selected for supported content. Bundled translation; no translation service used.`, 3_000);
   }, [notify]);
 
   const selectLanguage = useCallback((language: string, source: "country" | "manual" = "manual") => {
     manual.current = source === "manual";
     storePreference(LANG_OVERRIDE_KEY, String(manual.current));
-    void apply(language);
+    apply(language);
   }, [apply]);
 
   useEffect(() => {
@@ -187,10 +129,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `googtrans=; Max-Age=0; path=/${domain}`;
     }
     const cached = readPreference(LANG_CACHE_KEY);
-    if (cached && SUPPORTED_LANGUAGES.has(cached)) void apply(cached);
+    if (cached) apply(cached);
     return () => {
-      sequence.current++;
-      request.current?.abort();
       if (bannerTimer.current) clearTimeout(bannerTimer.current);
     };
   }, [apply]);
@@ -201,7 +141,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setAutoDetectedLang(language);
     if (lastCountryLanguage.current === language) return;
     lastCountryLanguage.current = language;
-    if (!manual.current && language !== currentRef.current) void apply(language);
+    if (!manual.current && language !== currentRef.current) apply(language);
   }, [selectedCountry, detecting, apply]);
 
   const dismissBanner = useCallback(() => {
@@ -221,7 +161,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       currentLang, selectLanguage, autoDetectedLang, showBanner, bannerMessage,
       previousLang, dismissBanner, reloadCountdown: null, romanized, toggleRomanization,
       isNonLatinLang: NON_LATIN_LANGS.has(currentLang),
-      machineTranslated: currentLang !== "fr" && currentLang !== "en",
+      machineTranslated: false,
       translateText: localize,
     }}>
       {children}

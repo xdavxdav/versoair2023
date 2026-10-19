@@ -28,61 +28,49 @@ with duration and terms confirmed before activation. This clarification does not
 activate trials or change account permissions.
 Selecting an offer or preparing the mail inquiry never upgrades an account.
 
-The language selector uses a native French/English public-copy catalogue, not
+The language selector uses bundled French/English/Spanish public-copy dictionaries, not
 the legacy Google website widget. Initial coverage includes pricing and its
 custom-plan dialog, the promotional card (including Enterprise custom), the
 sign-in/registration screens, help, and the terms/privacy/cookie pages.
 Unknown copy stays in its source language; selecting a language does **not**
 claim that every page, server error, or user submission has been translated.
-French legal copy is authored translation, not external legal certification.
+Bundled legal copy is editorial translation, not external legal certification.
 Have counsel and native speakers approve critical copy before release.
 
-Other supported languages use **Google Translate through the Cloud Translation
-API**: <https://cloud.google.com/translate>. Results are automatic, visibly
-attributed with Google's unmodified official badge, and marked with
-machine-translation language metadata. Badge source and usage requirements:
-<https://cloud.google.com/translate/attribution>. Only the
-fixed public catalogue in `shared/public-translations.ts` and
-`shared/legal-translations.ts` can be submitted. The endpoint accepts a language,
-not arbitrary text. Passwords, forms, private messages, and user-generated
-content are never collected for translation.
+French, English and Spanish work without network translation calls, Google Cloud
+credentials, billing, or Redis. The paid Cloud translation implementation has
+been removed: legacy `CLOUD_TRANSLATION_ENABLED`,
+`GOOGLE_CLOUD_TRANSLATION_API_KEY` and `TRANSLATION_MONTHLY_CHARACTER_LIMIT`
+settings are no longer read and can be removed from the deployment. Do not remove
+`REDIS_URL` if another application feature uses it.
 
-FR/EN work without any Cloud credentials or billing. Cloud translation is
-disabled unless all of these server-only Render environment variables are set:
+This is a staged dictionary rollout, not a claim that all 52 previously offered
+languages are translated. Other languages remain visible but disabled and marked
+"Not bundled yet". Selecting a country whose language is not bundled keeps the
+previous language and displays an explicit notice. A saved unsupported language
+also displays this notice; it is not silently replaced by a claimed translation.
+Manual preferences still take precedence over automatic country detection.
+Successful notices disappear after three seconds.
 
-- `CLOUD_TRANSLATION_ENABLED=true` (explicit opt-in after billing approval)
-- `GOOGLE_CLOUD_TRANSLATION_API_KEY` (Cloud Translation Basic API key; restrict
-  it to the Cloud Translation API and appropriate server restrictions)
-- `REDIS_URL` (persistent Redis; translation never uses an in-memory fallback)
-- `TRANSLATION_MONTHLY_CHARACTER_LIMIT` (explicit positive integer approved by
-  the owner; no default spending allowance)
+`GET /api/translations/:language` serves the same complete bundled dictionary for
+`fr`, `en` or `es`, with `machineTranslated: false`; it never invokes a provider.
+Other languages return HTTP 400 with `TRANSLATION_LANGUAGE_NOT_BUNDLED`.
+The endpoint accepts a language, not arbitrary text. Passwords, forms, private
+messages, and user-generated content are never collected for translation.
 
-Enable the Cloud Translation API and billing in the owner's Google Cloud
-project. Configure provider quotas as an independent hard safeguard; Google
-Cloud budget alerts alone are not spending caps. Never use a `VITE_` variable for
-the key or paste it into source control/chat. This setup does not create a Cloud
-account, enable billing, or change the database connection.
-
-`GET /api/translations/:language` returns a complete versioned public dictionary.
-Successful automatic translations are cached in Redis for 30 days; catalogue
-changes invalidate them. Concurrent requests are deduplicated with a Redis
-lease. A shared atomic monthly UTC character counter reserves the full
-catalogue before calling Google, across app instances and deployments.
-Reservations are not refunded on failures because provider charges may already
-have occurred. Use durable Redis without eviction of translation usage keys;
-clearing Redis loses this application-side accounting, so provider quotas
-remain necessary. The character limit is not a currency-denominated guarantee
-and does not cover other applications using the same Google project.
-
-Missing configuration, cache outages, timeouts, malformed responses, or an
-exhausted allowance produce an explicit error; the previous language remains
-active and can be retried. No automatic reload or success-shaped fallback occurs.
-To extend coverage, add reviewed EN/FR copy and localize the component with
-`useLocalizedContent`. Keep URLs, values and account data outside the catalogue.
+To extend coverage, add reviewed EN/FR copy and its Spanish translation in
+`shared/spanish-translations.ts`, then localize the component with
+`useLocalizedContent`. Spanish uses English source phrases as stable keys rather
+than catalogue positions; TypeScript and completeness tests require an entry
+for every catalogue phrase. To add another language, provide its complete
+dictionary and register it in `BUNDLED_LANGUAGES` and `nativeDictionary`.
+Review the explicit company copy in the About page as well.
+Keep URLs, values and account data outside the catalogue.
 
 Validation: `npm run test:translation`, `npm run check`, `npm run check:api`,
-and `npm run build`. Tests mock Google and use no production database or keys;
-they do not establish live Cloud availability or professional legal approval.
+and `npm run build`. Tests use no production database or keys and verify
+translation without backend access; they do not establish professional legal
+approval.
 
 export interface AuthUser {
   userId: string;        // changed from `id` — matches server JWT payload

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
-import { getPublicCopyId, nativeDictionary, PUBLIC_COPY } from "./public-translations";
+import { BUNDLED_LANGUAGES, isBundledLanguage, getPublicCopyId, nativeDictionary, PUBLIC_COPY } from "./public-translations";
+import { SPANISH_COPY } from "./spanish-translations";
 
 test("legal page static copy has native FR/EN coverage, excluding brands and punctuation", () => {
   const fixed = new Set([
@@ -37,6 +38,29 @@ test("every catalogue phrase has nonempty native translations and stable lookup 
     assert.notEqual(getPublicCopyId(en), undefined);
     assert.notEqual(getPublicCopyId(fr), undefined);
   }
+});
+
+test("every bundled language covers the whole current catalogue without ordinal drift or fallback", () => {
+  for (const language of BUNDLED_LANGUAGES) {
+    const dictionary = nativeDictionary(language);
+    assert.equal(Object.keys(dictionary).length, PUBLIC_COPY.length);
+    PUBLIC_COPY.forEach(([en, fr], index) => {
+      const expected = language === "es" ? SPANISH_COPY[en] : language === "fr" ? fr : en;
+      assert.equal(dictionary[String(index)], expected);
+      assert.ok(dictionary[String(index)].trim(), `${language}: ${en}`);
+    });
+  }
+  assert.equal(isBundledLanguage("es"), true);
+  assert.equal(isBundledLanguage("de"), false);
+  assert.equal(isBundledLanguage("../private"), false);
+});
+
+test("Spanish critical commercial and legal copy preserves no-payment and no-entitlement terms", () => {
+  assert.equal(SPANISH_COPY["Custom quote"], "Presupuesto personalizado");
+  assert.match(SPANISH_COPY["GeoAdmin pricing is provided for reference and inquiry only. No payment is taken and no plan is activated from the pricing page. Availability, deliverables, taxes, billing, renewal, cancellation, and any refund conditions must be confirmed in a written offer before you accept."],
+    /No se cobra ningún pago ni se activa ningún plan/);
+  assert.match(SPANISH_COPY["Premium is available by inquiry only. It uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions."],
+    /No concede permisos adicionales/);
 });
 
 test("the About page's primary French copy has native English translations", () => {
