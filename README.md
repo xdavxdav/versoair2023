@@ -88,6 +88,11 @@ selected, the page reloads with the saved language preference. Automatic country
 detection selects a suggested language unless the visitor has chosen a manual
 override. Google Translate is an external service and may process page text and
 set its own cookies; the Privacy Policy discloses this behavior.
+The UI stores standard language codes; Hebrew (`he`) is mapped to the widget's
+legacy `iw` code for its language control and cookie. French restores the original
+page copy, so untranslated English in the original copy still needs editorial
+localization. A missing widget select must not trigger repeated page reloads:
+the simple widget applies the saved cookie on initial load.
 
 The application does not use paid Google Cloud Translation credentials or its
 server-side translation endpoint. Legacy `CLOUD_TRANSLATION_ENABLED`,

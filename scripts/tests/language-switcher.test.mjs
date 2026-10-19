@@ -175,7 +175,7 @@ test("every language offered by the selector can be applied by the widget", asyn
       await page.click(`#select-${language}`);
       await page.waitForFunction(
         (selected) =>
-          window.__googleTranslateLanguage === selected &&
+          window.__googleTranslateLanguage === (selected === "he" ? "iw" : selected) &&
           document.querySelector("#current-language")?.textContent === selected,
         {},
         language,
@@ -184,10 +184,11 @@ test("every language offered by the selector can be applied by the widget", asyn
       if (language === "fr") {
         assert.equal(cookie.includes("googtrans="), false);
       } else {
+        const providerLanguage = language === "he" ? "iw" : language;
         assert.match(
           cookie,
           new RegExp(
-            `googtrans=%2Ffr%2F${language}|googtrans=\\/fr\\/${language}`,
+            `googtrans=%2Ffr%2F${providerLanguage}|googtrans=\\/fr\\/${providerLanguage}`,
           ),
         );
       }

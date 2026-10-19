@@ -16,6 +16,8 @@ const GT_SCRIPT_ID = "gt-script";
 const GT_LANGUAGES =
   "af,sq,am,ar,hy,as,ay,az,bm,eu,be,bn,bho,bs,bg,ca,ceb,zh-CN,zh-TW,co,hr,cs,da,dv,doi,nl,en,eo,et,ee,fil,fi,fr,fy,gl,ka,de,el,gn,gu,ht,ha,haw,he,hi,hmn,hu,is,ig,ilo,id,ga,it,ja,jv,kn,kk,km,rw,gom,ko,kri,ku,ckb,ky,lo,la,lv,ln,lt,lb,lg,mai,mg,ms,ml,mt,mni-Mtei,mi,mr,mn,my,ne,no,ny,or,om,ps,fa,pl,pt,pa,qu,ro,ru,sm,sa,gd,nso,sr,st,sn,sd,si,sk,sl,so,es,su,sw,sv,tg,ta,tt,te,th,ti,ts,tr,tk,ak,uk,ur,ug,uz,vi,cy,xh,yi,yo,zu";
 const GT_LANGUAGE_CODES = new Set(GT_LANGUAGES.split(","));
+const googleLanguageCode = (language: string) =>
+  language === "he" ? "iw" : language;
 
 export const NON_LATIN_LANGS = new Set(
   "ja,zh-CN,zh-TW,ko,ar,he,hi,bn,th,my,km,lo,ka,hy,am,ne,si,fa,ru,uk,bg,sr,mn,el".split(
@@ -116,7 +118,7 @@ function getInitialLanguage(): string {
 }
 
 function setGoogleTranslateCookie(language: string) {
-  const value = language === "fr" ? "" : `/fr/${language}`;
+  const value = language === "fr" ? "" : `/fr/${googleLanguageCode(language)}`;
   const host = window.location.hostname;
   const domains = new Set(["", `; domain=${host}`]);
   if (!["localhost", "127.0.0.1", "::1"].includes(host)) {
@@ -134,7 +136,7 @@ function setGoogleTranslateCookie(language: string) {
 function switchGoogleTranslateLanguage(language: string): boolean {
   const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
   if (!combo) return false;
-  combo.value = language === "fr" ? "" : language;
+  combo.value = language === "fr" ? "" : googleLanguageCode(language);
   combo.dispatchEvent(new Event("change", { bubbles: true }));
   return true;
 }
@@ -167,7 +169,7 @@ function initializeGoogleTranslate() {
   new TranslateElement(
     {
       pageLanguage: "fr",
-      includedLanguages: GT_LANGUAGES,
+      includedLanguages: [...GT_LANGUAGE_CODES].map(googleLanguageCode).join(","),
       layout: TranslateElement.InlineLayout.SIMPLE,
       autoDisplay: false,
     },
