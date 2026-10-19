@@ -20,6 +20,9 @@ const { pool } = await import("../../server/db.ts");
 const { ensureAllTables } = await import("../../server/services/ensure-tables.ts");
 const { default: tickets } = await import("../../server/routes/tickets.ts");
 const { default: tracking } = await import("../../server/routes/implementation-tracking.ts");
+const { default: properties } = await import("../../server/routes/properties.ts");
+const { default: submissionRequests } = await import("../../server/routes/submission-requests.ts");
+const { default: geoActions } = await import("../../server/routes/geo-actions.ts");
 const { requireOwner, requireAuth, isOwner } = await import("../../server/middleware/auth.ts");
 const backgroundIntervals = [];
 const createInterval = globalThis.setInterval;
@@ -70,7 +73,7 @@ before(async () => {
   await ensureAllTables();
   await ensureAllTables();
   for (const [key, role] of Object.entries({
-    owner: "superuser", otherOwner: "superuser", admin: "admin", moderator: "moderator",
+    owner: "superuser", otherOwner: "superuser", admin: "admin", browserAdmin: "admin", moderator: "moderator",
     otherModerator: "moderator", customer: "user", otherCustomer: "user",
   })) {
     const email = `${key}_${runId}@example.test`;
@@ -97,6 +100,9 @@ before(async () => {
   app.get("/api/csrf-token", (_req, res) => res.json({ csrfToken: "isolated-test-token" }));
   app.use("/api/tickets", tickets);
   app.use("/api/implementation-tracking", tracking);
+  app.use("/", properties);
+  app.use("/api/request", submissionRequests);
+  app.use("/api/geo-actions", geoActions);
   app.use("/api/v1/admin", adminRouter);
   app.use("/api/admin", tableAdminRouter);
   app.use("/api/manage", managementRouter);
@@ -116,7 +122,9 @@ after(async () => {
 });
 test("owner boundary rejects every other role and fails closed without configuration", async () => {
   assert.equal((await request("owner", "/owner-zone")).status, 200);
-  for (const role of ["otherOwner", "admin", "moderator", "customer"]) {
+  assert.equal((await request("admin", "/api/implementation-tracking")).status, 200);
+  assert.equal((await request("admin", "/api/implementation-tracking/activity")).status, 200);
+  for (const role of ["otherOwner", "moderator", "customer"]) {
     assert.equal((await request(role, "/owner-zone")).status, 403);
     assert.equal((await request(role, "/api/implementation-tracking")).status, 403);
   }
@@ -124,6 +132,53 @@ test("owner boundary rejects every other role and fails closed without configura
   delete process.env.SUPERADMIN_EMAIL;
   assert.equal((await request("owner", "/owner-zone")).status, 403);
   process.env.SUPERADMIN_EMAIL = ownerEmail;
+});
+test("subscribers cannot mutate GeoAdmin content while public requests remain anonymous", async () => {
+  await pool.query(
+    "UPDATE users SET subscription_tier='max', subscription_status='active' WHERE id=$1",
+    [users.customer],
+  );
+  for (const [path, method, body] of [
+    ["/api/properties", "POST", { name: "Subscriber listing", type: "house", city: "Abidjan", price: 100 }],
+    ["/api/verifications/submit", "POST", { contactName: "Subscriber", contactEmail: "subscriber@example.test", businessRegistrationNumber: "X" }],
+    ["/api/request/artist", "POST", { stageName: "Subscriber Artist" }],
+    ["/api/request/job", "POST", { title: "Subscriber Job", company: "Example" }],
+    ["/api/geo-actions/request", "POST", { actionType: "edit", entityType: "business", entityId: "1", requestedChange: { name: "Changed" } }],
+  ]) {
+    assert.equal((await request("customer", path, method, body)).status, 403, `${method} ${path}`);
+  }
+  assert.equal((await request("owner", "/api/properties", "POST", {})).status, 400);
+  await pool.query(
+    "UPDATE users SET subscription_tier='free', subscription_status='active' WHERE id=$1",
+    [users.customer],
+  );
+});
+test("Admins can read tracker history and signal the owner but cannot edit the tracker", async () => {
+  const lots = await request("admin", "/api/implementation-tracking");
+  assert.equal(lots.status, 200);
+  assert.equal(lots.body.length, 11);
+  const forbiddenUpdate = await request("admin", "/api/implementation-tracking/A1", "PUT", {
+    status: "tested",
+    evidence: "Not allowed",
+    blocker: "",
+  });
+  assert.equal(forbiddenUpdate.status, 403);
+  assert.equal((await request("admin", "/api/implementation-tracking/signals")).status, 403);
+
+  const sent = await request("admin", "/api/implementation-tracking/signals", "POST", {
+    lotId: "A1",
+    message: "Please review the acceptance evidence for this lot.",
+  });
+  assert.equal(sent.status, 201, JSON.stringify(sent.body));
+  const signals = await request("owner", "/api/implementation-tracking/signals");
+  assert.equal(signals.status, 200);
+  assert.ok(signals.body.some((signal) => signal.changes.message === "Please review the acceptance evidence for this lot."));
+  const notification = await pool.query(
+    "SELECT type, action_url FROM notifications WHERE user_id=$1 AND type='implementation_tracker_signal' ORDER BY created_at DESC LIMIT 1",
+    [users.owner],
+  );
+  assert.equal(notification.rows[0]?.type, "implementation_tracker_signal");
+  assert.equal(notification.rows[0]?.action_url, "/geo-admin/dashboard");
 });
 test("actual financial, database, admin and invitation routes reject non-owners", async () => {
   for (const role of ["otherOwner", "admin", "moderator", "customer"]) {
@@ -349,6 +404,13 @@ test("tracking requires evidence and deployed prerequisites, and persists update
   assert.equal((await request("owner", "/api/implementation-tracking/A2", "PUT", { status: "deployed", evidence: "test", blocker: "" })).status, 409);
   assert.equal((await request("owner", "/api/implementation-tracking/A1", "PUT", { status: "tested", evidence: "Isolated local integration test", blocker: "" })).status, 200);
   assert.equal((await request("owner", "/api/implementation-tracking")).body.find((lot) => lot.id === "A1").status, "tested");
+  const history = await request("admin", "/api/implementation-tracking/activity");
+  assert.equal(history.status, 200);
+  assert.ok(history.body.some((entry) =>
+    entry.lotId === "A1" &&
+    entry.changedBy.startsWith("ticket_test_owner_") &&
+    entry.changes.status === "tested",
+  ));
 });
 test("revoked sessions and changed roles cannot retain privileged access", async () => {
   const tokenHash = crypto.createHash("sha256").update(tokens.admin).digest("hex");
@@ -378,11 +440,15 @@ test("browser: responsive staff queue, eight states, localization and owner trac
     import Tracker from "/src/components/ImplementationTracker.tsx";
     import {UsersSection} from "/src/components/sections/UsersSection.tsx";
     import "/src/index.css";
-    const tracker = new URLSearchParams(location.search).has("tracker");
-    const accounts = new URLSearchParams(location.search).has("accounts");
+    const params = new URLSearchParams(location.search);
+    const tracker = params.has("tracker");
+    const trackerReadOnly = params.has("readonly");
+    const accounts = params.has("accounts");
+    const TrackerView = () => React.createElement(Tracker, {readOnly:trackerReadOnly});
+    const SelectedComponent = tracker ? TrackerView : accounts ? UsersSection : Tickets;
     createRoot(document.getElementById("root")).render(React.createElement(QueryClientProvider,{client:new QueryClient({defaultOptions:{queries:{retry:false}}})},
       React.createElement(CountryProvider,null,React.createElement(LanguageProvider,null,React.createElement(AuthProvider,null,
-        React.createElement(ProtectedRoute,{ownerOnly:tracker||accounts,component:tracker?Tracker:accounts?UsersSection:Tickets}))))));
+        React.createElement(ProtectedRoute,{roles:tracker?["admin"]:undefined,ownerOnly:accounts,component:SelectedComponent}))))));
   </script></body></html>`;
   const vite = await createServer({
     configFile: `${root}vite.config.ts`, envFile: false, cacheDir,
@@ -434,6 +500,33 @@ test("browser: responsive staff queue, eight states, localization and owner trac
     await page.goto(`${browserOrigin}/__ticket-ui?tracker=1`);
     await page.waitForSelector("[data-testid=implementation-tracker] article");
     assert.equal(await page.$$eval("[data-testid=implementation-tracker] article", (items) => items.length), 11);
+    assert.equal(await page.$eval("[data-testid=implementation-tracker]", (section) =>
+      [...section.querySelectorAll("button")].some((button) => button.textContent.trim() === "Save"),
+    ), true);
+    await page.goto(`${origin}/__test/login/browserAdmin`);
+    await page.goto(`${browserOrigin}/__ticket-ui?tracker=1&readonly=1`);
+    await page.waitForSelector("[data-testid=implementation-tracker] article");
+    assert.equal(await page.$$eval("[data-testid=implementation-tracker] article", (items) => items.length), 11);
+    assert.equal(await page.$eval("[data-testid=implementation-tracker]", (section) =>
+      [...section.querySelectorAll("button")].some((button) => button.textContent.trim() === "Save"),
+    ), false);
+    await page.type('textarea[aria-label="Describe the concern or follow-up needed"]', "Browser Admin signal");
+    const signalResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/implementation-tracking/signals") &&
+        response.request().method() === "POST",
+    );
+    await page.$eval('[data-testid="implementation-tracker"] form button[type="submit"]', (button) => button.click());
+    const signalResponse = await signalResponsePromise;
+    assert.equal(signalResponse.status(), 201, await signalResponse.text());
+    await page.waitForFunction(() =>
+      document.querySelector('[role="status"], [role="alert"]') !== null,
+    );
+    assert.match(
+      await page.$eval('[role="status"], [role="alert"]', (message) => message.textContent),
+      /Signal sent to the owner\./,
+    );
+    await page.goto(`${origin}/__test/login/owner`);
     await page.goto(`${browserOrigin}/__ticket-ui?accounts=1`);
     await page.waitForFunction(() => [...document.querySelectorAll("button")].some(button => button.textContent.trim() === "New User"));
     await page.evaluate(() => [...document.querySelectorAll("button")].find(button => button.textContent.trim() === "New User").click());

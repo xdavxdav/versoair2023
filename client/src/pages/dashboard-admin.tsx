@@ -7277,7 +7277,7 @@ export default function AdminDashboard() {
             {/* Main content sections based on activeSection - APPEARS FIRST FOR IMMEDIATE VISIBILITY */}
             {sectionAllowed && activeSection === "dashboard" && (
               <>
-                {isPanelOwner && <ImplementationTracker />}
+                <ImplementationTracker readOnly={!isPanelOwner} />
                 {isPanelOwner && <GeoAdminAccessManager />}
                 <GeoAdminSummary />
                 <PendingApprovals />

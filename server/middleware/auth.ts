@@ -6,6 +6,7 @@ import { db } from "../db";
 import * as schema from "@shared/schema";
 import { isConfiguredOwner } from "@shared/owner-access";
 import { canUseAdminPanel } from "@shared/admin-panel-access";
+import { isGeoAdminStaff, isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
 
 export interface AuthUser {
   userId: string;
@@ -495,6 +496,66 @@ export function requireAdminPanel(req: Request, res: Response, next: NextFunctio
     }
     next();
   });
+}
+
+/** Prevent authenticated GeoAdmin subscribers from mutating portal data. */
+export async function denyGeoAdminSubscriberMutation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (!req.user || isGeoAdminStaff({ role: req.user.role })) {
+    next();
+    return;
+  }
+
+  const userId = Number(req.user.userId);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    res.status(401).json({
+      success: false,
+      error: { code: "INVALID_AUTHENTICATED_USER", message: "Please sign in again." },
+    });
+    return;
+  }
+
+  try {
+    const [account] = await db
+      .select({
+        subscriptionTier: schema.users.subscriptionTier,
+        subscriptionStatus: schema.users.subscriptionStatus,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+
+    if (
+      account &&
+      isReadOnlyGeoAdminSubscriber({
+        role: req.user.role,
+        tier: account.subscriptionTier,
+        subscriptionStatus: account.subscriptionStatus,
+      })
+    ) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: "GEOADMIN_SUBSCRIBER_READ_ONLY",
+          message: "GeoAdmin Subscriber access is read-only.",
+        },
+      });
+      return;
+    }
+    next();
+  } catch (error) {
+    console.error("Failed to verify GeoAdmin subscriber write access:", error);
+    res.status(503).json({
+      success: false,
+      error: {
+        code: "GEOADMIN_ACCESS_CHECK_FAILED",
+        message: "Could not verify GeoAdmin write access. Please try again.",
+      },
+    });
+  }
 }
 
 /**

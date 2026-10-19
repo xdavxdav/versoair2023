@@ -1,6 +1,10 @@
 import { Router, Request, Response } from "express";
 import { sendEmail } from "../services/email-service";
 import { pool } from "../db";
+import {
+  denyGeoAdminSubscriberMutation,
+  optionalAuth,
+} from "../middleware/auth";
 
 const router = Router();
 
@@ -163,7 +167,11 @@ router.post("/business", async (req: Request, res: Response) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // POST /api/request/artist — Email-only artist submission (no DB insert)
 // ══════════════════════════════════════════════════════════════════════════════
-router.post("/artist", async (req: Request, res: Response) => {
+router.post(
+  "/artist",
+  optionalAuth,
+  denyGeoAdminSubscriberMutation,
+  async (req: Request, res: Response) => {
   try {
     const { stageName, genre, labelStatus, spotifyUrl, countryCode, username } =
       req.body;
@@ -179,7 +187,8 @@ router.post("/artist", async (req: Request, res: Response) => {
         success: false,
         error:
           "Duplicate submission detected. Please wait 5 minutes before resubmitting.",
-      });
+        },
+      );
     }
 
     const refId = `REQ-ART-${Date.now().toString(36).toUpperCase()}`;
@@ -293,7 +302,11 @@ router.post("/artist", async (req: Request, res: Response) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // POST /api/request/job — Email-only job submission (no DB insert)
 // ══════════════════════════════════════════════════════════════════════════════
-router.post("/job", async (req: Request, res: Response) => {
+router.post(
+  "/job",
+  optionalAuth,
+  denyGeoAdminSubscriberMutation,
+  async (req: Request, res: Response) => {
   try {
     const {
       title,
@@ -324,7 +337,8 @@ router.post("/job", async (req: Request, res: Response) => {
         success: false,
         error:
           "Duplicate submission detected. Please wait 5 minutes before resubmitting.",
-      });
+        },
+      );
     }
 
     const refId = `REQ-JOB-${Date.now().toString(36).toUpperCase()}`;

@@ -57,6 +57,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ScrollToTop from "@/components/ScrollToTop";
+import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
 
 const API_BASE_URL = "";
 
@@ -197,6 +198,11 @@ const emptyListing: NewListing = {
 export default function ImmobilierPortal() {
   const { isAuthenticated, loading, tier, tierName, user, refetch } =
     useSubscription();
+  const readOnlySubscriber = isReadOnlyGeoAdminSubscriber({
+    role: user?.role,
+    isAdmin: user?.isAdmin,
+    tier,
+  });
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<PortalTab>("dashboard");
   const [myListings, setMyListings] = useState<Property[]>([]);
@@ -245,6 +251,7 @@ export default function ImmobilierPortal() {
 
   // Handle new listing submission
   const handleSubmitListing = async () => {
+    if (readOnlySubscriber) return;
     if (
       !newListing.name ||
       !newListing.type ||
@@ -365,8 +372,9 @@ export default function ImmobilierPortal() {
                     </Badge>
                   </h1>
                   <p className="text-slate-700 text-sm mt-1">
-                    Gérez vos biens, trouvez des locataires, vendez vos
-                    propriétés
+                    {readOnlySubscriber
+                      ? "Consultez les offres immobilières publiées sur la plateforme"
+                      : "Gérez vos biens, trouvez des locataires, vendez vos propriétés"}
                   </p>
                 </div>
               </div>
@@ -400,10 +408,9 @@ export default function ImmobilierPortal() {
                   Avantage Exclusif Abonnés
                 </h3>
                 <p className="text-slate-700 text-xs mt-1">
-                  En tant qu'abonné Verso Air, vous bénéficiez d'un accès
-                  privilégié à notre plateforme immobilière. Publiez vos offres
-                  de vente et location, et trouvez des locataires qualifiés pour
-                  vos biens en Côte d'Ivoire.
+                  {readOnlySubscriber
+                    ? "En tant qu'abonné GeoAdmin, vous pouvez consulter les offres immobilières vérifiées. La création et la modification d'annonces ne sont pas disponibles dans le portail en lecture seule."
+                    : "En tant qu'abonné Verso Air, vous bénéficiez d'un accès privilégié à notre plateforme immobilière. Publiez vos offres de vente et location, et trouvez des locataires qualifiés pour vos biens en Côte d'Ivoire."}
                 </p>
               </div>
             </div>
@@ -431,7 +438,9 @@ export default function ImmobilierPortal() {
               label: "Demandes",
               icon: MessageCircle,
             },
-          ].map((tab) => (
+          ]
+            .filter((tab) => !readOnlySubscriber || tab.key !== "add")
+            .map((tab) => (
             <Button
               key={tab.key}
               variant={activeTab === tab.key ? "default" : "ghost"}
@@ -546,18 +555,20 @@ export default function ImmobilierPortal() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <Button
-                      onClick={() => setActiveTab("add")}
-                      className="h-auto py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 gap-3"
-                    >
-                      <Plus className="h-5 w-5" />
-                      <div className="text-left">
-                        <div className="font-medium">Publier une offre</div>
-                        <div className="text-xs text-emerald-700">
-                          Vente ou location
+                    {!readOnlySubscriber && (
+                      <Button
+                        onClick={() => setActiveTab("add")}
+                        className="h-auto py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 gap-3"
+                      >
+                        <Plus className="h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-medium">Publier une offre</div>
+                          <div className="text-xs text-emerald-700">
+                            Vente ou location
+                          </div>
                         </div>
-                      </div>
-                    </Button>
+                      </Button>
+                    )}
                     <Button
                       onClick={() => setActiveTab("listings")}
                       variant="outline"
@@ -634,13 +645,15 @@ export default function ImmobilierPortal() {
                   <Building2 className="h-5 w-5 text-emerald-700" />
                   Mes Offres ({myListings.length})
                 </h2>
-                <Button
-                  onClick={() => setActiveTab("add")}
-                  className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter
-                </Button>
+                {!readOnlySubscriber && (
+                  <Button
+                    onClick={() => setActiveTab("add")}
+                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Ajouter
+                  </Button>
+                )}
               </div>
 
               {isLoadingListings ? (
@@ -655,15 +668,19 @@ export default function ImmobilierPortal() {
                     Aucune offre pour l'instant
                   </h3>
                   <p className="text-slate-700 mb-6">
-                    Commencez par publier votre première annonce immobilière
+                    {readOnlySubscriber
+                      ? "Aucune offre vérifiée à consulter pour le moment."
+                      : "Commencez par publier votre première annonce immobilière"}
                   </p>
-                  <Button
-                    onClick={() => setActiveTab("add")}
-                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Publier ma première offre
-                  </Button>
+                  {!readOnlySubscriber && (
+                    <Button
+                      onClick={() => setActiveTab("add")}
+                      className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Publier ma première offre
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -743,7 +760,7 @@ export default function ImmobilierPortal() {
           )}
 
           {/* ═══ ADD LISTING TAB ═════════════════════════════════════════════ */}
-          {activeTab === "add" && (
+          {!readOnlySubscriber && activeTab === "add" && (
             <motion.div
               key="add"
               initial={{ opacity: 0, y: 20 }}

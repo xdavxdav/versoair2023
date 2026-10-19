@@ -2,7 +2,11 @@ import { Router, Request, Response } from "express";
 import { db, pool } from "../db";
 import { properties } from "@shared/schema";
 import { eq, and, gte, lte, like, desc, asc, or } from "drizzle-orm";
-import { requireAuth } from "../middleware/auth";
+import {
+  denyGeoAdminSubscriberMutation,
+  optionalAuth,
+  requireAuth,
+} from "../middleware/auth";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
@@ -172,7 +176,11 @@ router.get("/api/properties/:id", async (req: Request, res: Response) => {
 });
 
 // POST create a new property listing
-router.post("/api/properties", async (req: Request, res: Response) => {
+router.post(
+  "/api/properties",
+  optionalAuth,
+  denyGeoAdminSubscriberMutation,
+  async (req: Request, res: Response) => {
   try {
     const {
       name,
@@ -198,7 +206,8 @@ router.post("/api/properties", async (req: Request, res: Response) => {
         success: false,
         error:
           "Missing required fields: name, type, city, and price are required",
-      });
+        },
+      );
     }
 
     const result = await db
@@ -431,6 +440,8 @@ router.get(
 // POST submit verification (Digital Passport)
 router.post(
   "/api/verifications/submit",
+  optionalAuth,
+  denyGeoAdminSubscriberMutation,
   async (req: Request, res: Response) => {
     try {
       const {

@@ -23,7 +23,13 @@ GeoAdmin access has three lanes:
 
 1. **GeoAdmin Subscriber** — paid Pro Max/Enterprise subscribers at
    `/geo-admin`. This is a customer subscription, not a staff
-   role, and it grants no Admin Panel or support-workspace authority.
+   role, and it grants no Admin Panel or support-workspace authority. The
+   `/geo-admin`, `/geo-admin/business-verification` and
+   `/geo-admin/immobilier` experiences are consultation-only: subscribers
+   cannot submit GeoAdmin requests, Digital Passport applications or property
+   listings, or change the portal's business data. Subscriber-specific write
+   APIs reject authenticated active Max/Enterprise accounts; anonymous public
+   submission routes remain available to non-portal visitors.
 2. **GeoAdmin Admin Panel** — an invited `admin` at `/geo-admin/dashboard`.
    Delegated sections: overview, businesses, categories, jobs, advertising,
    marketplace, artists, analytics, content, contractor applications and
@@ -31,12 +37,20 @@ GeoAdmin access has three lanes:
    activity log only shows artist, business, campaign, category and job events.
 3. **Owner** — the same panel plus the owner-only areas below.
 
-Invited Admins never access the 11-lot implementation tracker, ticket voiding,
-users/roles/security/SMTP/TSR whitelist, artisan identity profiles,
-verification, invitations, SQL/backup/import/export/database management,
-`/api/admin`, credentials, payment settings or the Card Vault. These limits are
-enforced by the API; hidden menu items are only a convenience. Moderators do not
-enter the Admin Panel.
+Invited Admins may view the 11-lot implementation tracker and its change
+history, and can send an append-only signal to the configured owner's
+in-application notification inbox. They cannot edit lot statuses, evidence,
+blockers, versions or history, and cannot mark signals as owner decisions. The
+owner alone makes and records final technical decisions.
+
+Invited Admins never access ticket voiding, users/roles/security/SMTP/TSR
+whitelist, artisan identity profiles, verification, invitations,
+SQL/backup/import/export/database management, `/api/admin`, credentials,
+payment settings or the Card Vault. These limits are enforced by the API;
+hidden menu items are only a convenience. Moderators do not enter the Admin
+Panel. Public email-only business/artist/job request endpoints remain public
+for non-portal website visitors; the subscriber GeoAdmin UI does not expose
+their submit actions.
 
 Owner-only areas include the technical parts of `/geo-admin/dashboard`, the
 `/api/admin` and database-management APIs, `/api/v1/admin/{users,roles,security,verification}`,
@@ -133,16 +147,24 @@ run the minute job until it wakes; persisted deadlines are processed then.
 The Admin Panel overview contains the 11 lots from
 [implementation-plan.ts](../shared/implementation-plan.ts), their priorities,
 dependencies, acceptance criteria, blockers, evidence and last update.
-It polls every 15 seconds while open, and displays the hosting release SHA
-when supplied by the deployment environment.
+The owner and invited Admins can read these lots and the change timeline.
+Admins can send a separate signal for an owner to review; that signal is
+persisted and generates an in-application notification with a link to the
+panel. It is not email, SMS or WhatsApp delivery. The tracker polls every 15
+seconds while open, and displays the hosting release SHA when supplied by the
+deployment environment.
 
-Statuses are manually recorded, not auto-certified:
+Only the configured owner can edit statuses, evidence or blockers. Statuses are
+manually recorded, not auto-certified:
 `todo`, `in-progress`, `in-review`, `tested`, `deployed`, `live-verified`,
 `blocked`. Unrecorded lots initially display `in-review`, because this release
 includes their implementation but does not certify their acceptance.
 Tests/deployment/live verification require evidence; blockers require an
 explanation. Deployment requires deployed prerequisites. Updates are saved
-with an audit entry. A push alone is not a successful production acceptance.
+with an audit entry including the deployed version when available. The
+read-only history shows who changed each lot, what was recorded and the
+version; legacy entries may not contain a version. A push alone is not a
+successful production acceptance.
 
 ## Schema rollout and rollback
 

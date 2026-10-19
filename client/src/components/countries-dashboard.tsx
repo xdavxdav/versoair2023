@@ -911,10 +911,12 @@ export default function DatabaseExpert({
   username,
   tier = "free",
   role,
+  readOnly = false,
 }: {
   username: string | null;
   tier?: string;
   role?: string | null;
+  readOnly?: boolean;
 }) {
   const { logout } = useAuthContext();
   const normalizedRole = role?.toLowerCase() || "subscriber";
@@ -3037,23 +3039,25 @@ export default function DatabaseExpert({
                     >
                       {artistsData.length} artists
                     </Badge>
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
-                      onClick={() => {
-                        setNewArtist((prev) => ({
-                          ...prev,
-                          countryCode:
-                            selectedCountryCode !== "all"
-                              ? selectedCountryCode
-                              : "",
-                        }));
-                        setShowAddArtist(true);
-                      }}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Add Artist
-                    </Button>
+                    {!readOnly && (
+                      <Button
+                        size="sm"
+                        className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={() => {
+                          setNewArtist((prev) => ({
+                            ...prev,
+                            countryCode:
+                              selectedCountryCode !== "all"
+                                ? selectedCountryCode
+                                : "",
+                          }));
+                          setShowAddArtist(true);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Add Artist
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -3295,23 +3299,25 @@ export default function DatabaseExpert({
                     >
                       {jobsData.length} jobs
                     </Badge>
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => {
-                        setNewJob((prev) => ({
-                          ...prev,
-                          countryCode:
-                            selectedCountryCode !== "all"
-                              ? selectedCountryCode
-                              : "",
-                        }));
-                        setShowAddJob(true);
-                      }}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Request Job
-                    </Button>
+                    {!readOnly && (
+                      <Button
+                        size="sm"
+                        className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => {
+                          setNewJob((prev) => ({
+                            ...prev,
+                            countryCode:
+                              selectedCountryCode !== "all"
+                                ? selectedCountryCode
+                                : "",
+                          }));
+                          setShowAddJob(true);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Request Job
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>

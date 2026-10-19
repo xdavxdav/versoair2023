@@ -7,6 +7,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
+import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
 import {
   Loader2,
   TrendingUp,
@@ -34,6 +35,11 @@ export default function GeoAdminPage() {
 
   // Superuser always has full access regardless of tier
   const isSuperuser = user?.role === "superuser";
+  const isReadOnlySubscriber = isReadOnlyGeoAdminSubscriber({
+    role: user?.role,
+    isAdmin: user?.isAdmin,
+    tier,
+  });
 
   // Initialize CSRF token on component mount
   useEffect(() => {
@@ -345,6 +351,7 @@ export default function GeoAdminPage() {
           username={username || displayName}
           tier={tier}
           role={displayRole}
+          readOnly={isReadOnlySubscriber}
         />
       </div>
     );
@@ -460,6 +467,7 @@ export default function GeoAdminPage() {
         username={username || displayName}
         tier={tier}
         role={displayRole}
+        readOnly={isReadOnlySubscriber}
       />
     </div>
   );

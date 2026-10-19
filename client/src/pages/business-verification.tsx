@@ -34,6 +34,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { GeolocationFields } from "@/components/ui/geolocation-fields";
+import { useSubscription } from "@/hooks/use-subscription";
+import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
 
 interface VerificationFormData {
   // Step 1: Basic
@@ -69,6 +71,12 @@ const DAYS = [
 ];
 
 export default function BusinessVerificationPage() {
+  const { tier, user } = useSubscription();
+  const readOnlySubscriber = isReadOnlyGeoAdminSubscriber({
+    role: user?.role,
+    isAdmin: user?.isAdmin,
+    tier,
+  });
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<VerificationFormData>({
@@ -114,6 +122,7 @@ export default function BusinessVerificationPage() {
 
   // Save to localStorage
   useEffect(() => {
+    if (readOnlySubscriber) return;
     const toSave = {
       contactName: formData.contactName,
       contactEmail: formData.contactEmail,
@@ -126,7 +135,7 @@ export default function BusinessVerificationPage() {
       socialLinks: formData.socialLinks,
     };
     localStorage.setItem("verificationFormData", JSON.stringify(toSave));
-  }, [formData]);
+  }, [formData, readOnlySubscriber]);
 
   // Calculate trust score
   const calculateTrustScore = () => {
@@ -158,6 +167,9 @@ export default function BusinessVerificationPage() {
   // Submit mutation
   const submitMutation = useMutation({
     mutationFn: async () => {
+      if (readOnlySubscriber) {
+        throw new Error("GeoAdmin Subscriber access is read-only.");
+      }
       const formDataToSend = new FormData();
 
       // Add all text fields
@@ -217,6 +229,30 @@ export default function BusinessVerificationPage() {
       });
     },
   });
+
+  if (readOnlySubscriber) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 dark:from-gray-900 dark:to-gray-800">
+        <Card className="mx-auto mt-16 max-w-2xl">
+          <CardHeader>
+            <CardTitle>Consultation-only access</CardTitle>
+            <CardDescription>
+              GeoAdmin Subscriber access is read-only. Digital Passport
+              submissions and changes are unavailable in this account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button asChild variant="outline">
+              <Link href="/businesses-directory">View business directory</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/geo-admin">Back to GeoAdmin</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-6">
