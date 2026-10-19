@@ -204,7 +204,7 @@ router.get("/status", async (_req: Request, res: Response) => {
   const model = ollamaOnline
     ? (process.env.OLLAMA_MODEL ?? "llama3.2")
     : groqConfigured
-      ? (process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile")
+      ? (process.env.GROQ_MODEL || "openai/gpt-oss-120b")
       : "rule-based";
   const message = ollamaOnline
     ? "Ollama is running — full AI mode active"
@@ -482,7 +482,7 @@ router.get("/support/stream", async (req: Request, res: Response) => {
   const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
   const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "llama3.2";
   const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
-  const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+  const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
   let fullReply = "";
 

@@ -278,7 +278,7 @@ function detectLanguage(text: string): "en" | "fr" | "es" | "other" {
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "llama3.2";
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
-const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 const INTENT_PROMPT = `You are an intent parser for a business directory platform. Given a user query, extract:
 - sector: one of [batiment, hotellerie, commerce, automobile, finances, divertissement, sante, restauration, services-professionnels, immobilier, education, technologie, transport, beaute, agriculture] or null

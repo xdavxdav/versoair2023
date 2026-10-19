@@ -7,7 +7,9 @@ required. In Render, open the `versoair` web service, select **Environment**,
 add the key, and save/redeploy. For local development, copy `.env.example` to
 the ignored `.env`, set the key, and restart the backend. Never commit the key,
 paste it into chat, or expose it through a `VITE_` variable.
-`GROQ_MODEL` defaults to `llama-3.3-70b-versatile`.
+`GROQ_MODEL` defaults to `openai/gpt-oss-120b`. Choose a model returned by
+Groq's `/openai/v1/models` endpoint for your account; a model documented publicly
+may still be unavailable to your key.
 Groq usage limits, billing and applicable service/model terms still apply.
 
 After deploying, check `GET /api/ai/status`, then send a chat through the widget.

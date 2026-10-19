@@ -4,7 +4,7 @@ import { buildAIContext, groundedSearch, type AIContext } from "./ai-context";
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "llama3.2";
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
-const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -457,7 +457,7 @@ function smartFallback(
       `• Searching businesses & providing analytics\n` +
       `• Describing and categorizing businesses\n` +
       `• Navigating platform features\n\n` +
-      `For full conversational AI on any topic, install **Ollama** and I'll upgrade to a real language model automatically. Want to know how?`
+      `Full conversational AI is currently unavailable. The platform operator can check the backend Groq configuration or connect a self-hosted Ollama server.`
     );
   }
 
@@ -492,7 +492,7 @@ function smartFallback(
     `• *"How many businesses are listed?"*\n` +
     `• *"What sectors are available?"*\n` +
     `• *"Tell me about yourself"*\n\n` +
-    `Or install **Ollama** for full conversational AI — ask *"How do I upgrade?"*`
+    `Full conversational AI requires a working backend Groq configuration or a connected self-hosted Ollama server.`
   );
 }
 
