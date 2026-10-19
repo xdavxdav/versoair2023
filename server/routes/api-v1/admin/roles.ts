@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { db } from "../../../db";
-import { requireAuth } from "../../../middleware/auth";
+import { requireAuth, requireOwner } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { users, auditLogs, adminRoles } from "../../../../shared/schema";
 import { eq, count, asc } from "drizzle-orm";
 import { ownerRoleMutationError, isReservedOwnerRole } from "@shared/owner-access";
 
 const router = Router();
+// Account, role, security and identity-verification management is owner-only.
+router.use(requireOwner);
 
 // Available permissions for role management
 const AVAILABLE_PERMISSIONS = [

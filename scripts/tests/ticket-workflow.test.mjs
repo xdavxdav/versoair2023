@@ -128,8 +128,12 @@ test("owner boundary rejects every other role and fails closed without configura
 test("actual financial, database, admin and invitation routes reject non-owners", async () => {
   for (const role of ["otherOwner", "admin", "moderator", "customer"]) {
     for (const [path, method, body] of [
-      ["/api/v1/admin/control-center/summary", "GET"],
       ["/api/manage/countries", "GET"],
+      ["/api/admin/execute-query", "POST", { query: "SELECT 1" }],
+      ["/api/v1/admin/users", "GET"],
+      ["/api/v1/admin/roles", "GET"],
+      ["/api/v1/admin/security/users", "GET"],
+      ["/api/v1/admin/verification/queue", "GET"],
       ["/auth/geoadmin-access", "GET"],
       ["/auth/geoadmin-access", "POST", {}],
       ["/auth/tsr/whitelist", "GET"],
@@ -144,6 +148,25 @@ test("actual financial, database, admin and invitation routes reject non-owners"
       assert.equal((await request(role, path, method, body)).status, 403, `${role}: ${method} ${path}`);
     }
   }
+});
+test("invited Admins use the delegated Admin Panel without owner-only data", async () => {
+  await pool.query(
+    "INSERT INTO audit_logs(user_id,action,entity_type,entity_id) VALUES ($1,'tracker-update','implementation_lot','A1'),($1,'business-update','business','1')",
+    [users.owner],
+  );
+  for (const path of ["/api/v1/admin/stats", "/api/v1/admin/businesses", "/api/v1/admin/categories", "/api/v1/admin/jobs", "/api/v1/admin/pages"]) {
+    assert.equal((await request("admin", path)).status, 200, path);
+  }
+  const adminLog = await request("admin", "/api/v1/admin/activity-log");
+  assert.equal(adminLog.status, 200);
+  assert.ok(adminLog.body.data.some((row) => row.entity === "business"));
+  assert.ok(adminLog.body.data.every((row) => ["artist", "business", "campaign", "category", "job"].includes(row.entity)));
+  const ownerLog = await request("owner", "/api/v1/admin/activity-log");
+  assert.ok(ownerLog.body.data.some((row) => row.entity === "implementation_lot"));
+  for (const role of ["otherOwner", "moderator", "customer"]) {
+    assert.equal((await request(role, "/api/v1/admin/stats")).status, 403, role);
+  }
+  assert.equal((await request(null, "/api/v1/admin/stats")).status, 401);
 });
 test("ticket scopes, claim/reassignment and internal note privacy hold through HTTP", async () => {
   const ticket = await create();

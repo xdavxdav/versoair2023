@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { isConfiguredOwner } from "@shared/owner-access";
+import { canUseAdminPanel } from "@shared/admin-panel-access";
 
 export interface AuthUser {
   userId: string;
@@ -473,6 +474,22 @@ export function requireOwner(req: Request, res: Response, next: NextFunction) {
         error: {
           code: "OWNER_ONLY",
           message: "This area is restricted to the configured platform owner.",
+        },
+      });
+    }
+    next();
+  });
+}
+
+/** Owner or an invited Admin may enter the delegated GeoAdmin Admin Panel APIs. */
+export function requireAdminPanel(req: Request, res: Response, next: NextFunction) {
+  return requireAuth(["admin", "superuser"])(req, res, () => {
+    if (!canUseAdminPanel(req.user, isOwner(req.user))) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: "ADMIN_PANEL_ONLY",
+          message: "The GeoAdmin Admin Panel is restricted to the owner and invited Admins.",
         },
       });
     }

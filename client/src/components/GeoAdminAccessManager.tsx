@@ -97,8 +97,8 @@ export default function GeoAdminAccessManager() {
           <select id="geo-invite-role" value={role}
             onChange={(event) => setRole(event.target.value === "moderator" ? "moderator" : "admin")}
             className="mt-1 block h-10 w-full rounded-md border border-amber-400 bg-violet-950 px-3 text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
-            <option value="admin">Admin</option>
-            <option value="moderator">Moderator</option>
+            <option value="admin">Admin — GeoAdmin Admin Panel</option>
+            <option value="moderator">Moderator — support workspace</option>
           </select>
         </div>
         <Button type="submit" disabled={working} className="self-end">

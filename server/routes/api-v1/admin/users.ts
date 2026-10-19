@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../../../db";
-import { requireAuth } from "../../../middleware/auth";
+import { requireAuth, requireOwner } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { users, auditLogs, artistProfiles } from "../../../../shared/schema";
 import { ownerRoleMutationError } from "@shared/owner-access";
@@ -9,6 +9,8 @@ import bcrypt from "bcryptjs";
 import { generateArtistCode } from "../../../utils/artist-code";
 
 const router = Router();
+// Account, role, security and identity-verification management is owner-only.
+router.use(requireOwner);
 
 // Helper: derive isActive from lock/verification status
 function deriveUserStatus(user: any) {

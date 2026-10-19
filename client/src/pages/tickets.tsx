@@ -68,7 +68,7 @@ export function Tickets() {
         <div><h1 className="text-2xl font-bold">{staff ? t("workspace") : t("tickets")}</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-200">{staff ? t("scope") : t("policy")}</p></div>
         <div className="flex flex-wrap gap-2">
-          {actor.owner && <Link href="/geo-admin/dashboard"><Button variant="secondary">{t("ownerPanel")}</Button></Link>}
+          {(actor.owner || actor.role === "admin") && <Link href="/geo-admin/dashboard"><Button variant="secondary">{t(actor.owner ? "ownerPanel" : "adminPanel")}</Button></Link>}
           <Button variant="secondary" onClick={refresh}>{t("refresh")}</Button>
           <Button className="bg-amber-400 text-slate-950 hover:bg-amber-300" onClick={() => setCreating(true)}>{t("create")}</Button>
         </div>

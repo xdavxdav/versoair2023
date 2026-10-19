@@ -128,7 +128,7 @@ function Router() {
       </Route>
       <Route path="/geo-admin/dashboard">
         <ProtectedRoute
-          ownerOnly
+          roles={["admin"]}
           unauthorizedRedirect="/geo-admin"
         >
           <Suspense fallback={<PageLoader />}>

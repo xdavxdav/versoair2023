@@ -9,12 +9,14 @@ import nodemailer from "nodemailer";
 import { eq, desc, isNotNull, gt } from "drizzle-orm";
 import { db } from "../../../db";
 import * as schema from "../../../../shared/schema";
-import { requireAuth } from "../../../middleware/auth";
+import { requireAuth, requireOwner } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { encryptSetting } from "../../../utils/encrypted-settings";
 import { ownerRoleMutationError } from "@shared/owner-access";
 
 const router = Router();
+// Account, role, security and identity-verification management is owner-only.
+router.use(requireOwner);
 
 // All routes require admin role
 router.use(requireAuth(["admin", "superuser"]));

@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { db, pool } from "../../../db";
 import {
+  isOwner,
+  requireAdminPanel,
   requireAuth,
   requireOwner,
 } from "../../../middleware/auth";
+import { DELEGATED_ADMIN_AUDIT_ENTITIES } from "../../../../shared/admin-panel-access";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import {
   businesses,
@@ -24,7 +27,9 @@ import rolesRouter from "./roles";
 import communitiesRouter from "./communities";
 
 const router = Router();
-router.use(requireOwner);
+// Invited Admins use the delegated panel; account, role, security and identity
+// verification management below remain owner-only.
+router.use(requireAdminPanel);
 
 const ADMIN_ANALYTICS_PERIODS: Record<string, number> = {
   day: 1,
@@ -97,6 +102,7 @@ router.get("/analytics", requireAuth(["admin"]), async (req, res) => {
 router.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
   try {
     const days = ADMIN_ANALYTICS_PERIODS[String(req.query.period)] || 7;
+    const ownerView = isOwner(req.user);
     const result = await pool.query(
       `SELECT al.id, al.action, al.entity_type AS entity,
               al.created_at AS timestamp,
@@ -104,9 +110,10 @@ router.get("/activity-log", requireAuth(["admin"]), async (req, res) => {
        FROM audit_logs al
        LEFT JOIN users u ON u.id = al.user_id
        WHERE al.created_at >= NOW() - ($1::int * INTERVAL '1 day')
+         AND ($2::boolean OR al.entity_type = ANY($3::text[]))
        ORDER BY al.created_at DESC
        LIMIT 100`,
-      [days],
+      [days, ownerView, [...DELEGATED_ADMIN_AUDIT_ENTITIES]],
     );
     res.json({ success: true, data: result.rows });
   } catch (error: any) {

@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { pool } from "../../../db";
-import { requireAuth } from "../../../middleware/auth";
+import { requireAuth, requireOwner } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 
 const router = Router();
+// Account, role, security and identity-verification management is owner-only.
+router.use(requireOwner);
 
 type VerificationStatus = "unverified" | "verified" | "rejected";
 

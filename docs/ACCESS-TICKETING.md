@@ -19,8 +19,28 @@ invitations are the supported delegation path. This does not prevent an
 infrastructure operator with direct database/configuration access from changing
 the system outside these application workflows.
 
-Owner-only areas include the technical Admin Panel at `/geo-admin/dashboard`,
-its `/api/admin`, `/api/v1/admin` and database-management APIs, the global Card
+GeoAdmin access has three lanes:
+
+1. **GeoAdmin Subscriber** — paid Pro Max/Enterprise subscribers at
+   `/geo-admin`. This is a customer subscription, not a staff
+   role, and it grants no Admin Panel or support-workspace authority.
+2. **GeoAdmin Admin Panel** — an invited `admin` at `/geo-admin/dashboard`.
+   Delegated sections: overview, businesses, categories, jobs, advertising,
+   marketplace, artists, analytics, content, contractor applications and
+   assignments, community operations, events and the geo-action queue. The
+   activity log only shows artist, business, campaign, category and job events.
+3. **Owner** — the same panel plus the owner-only areas below.
+
+Invited Admins never access the 11-lot implementation tracker, ticket voiding,
+users/roles/security/SMTP/TSR whitelist, artisan identity profiles,
+verification, invitations, SQL/backup/import/export/database management,
+`/api/admin`, credentials, payment settings or the Card Vault. These limits are
+enforced by the API; hidden menu items are only a convenience. Moderators do not
+enter the Admin Panel.
+
+Owner-only areas include the technical parts of `/geo-admin/dashboard`, the
+`/api/admin` and database-management APIs, `/api/v1/admin/{users,roles,security,verification}`,
+the global Card
 Vault at `/account/cards`, privileged financial operations, credentials
 management, payment-provider settings, GeoAdmin invitations and the legacy TSR
 whitelist. Only the owner can revoke another account's session. Customer access to their own

@@ -713,7 +713,7 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={AdminDashboard}
-            ownerOnly
+            roles={["admin"]}
             unauthorizedRedirect="/geo-admin/workspace"
           />
         )}

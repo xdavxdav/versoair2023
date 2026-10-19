@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isReservedOwnerRole } from "@shared/owner-access";
+import { canAccessAdminPanelSection } from "@shared/admin-panel-access";
+import { useOwnerAccess } from "@/hooks/use-owner-access";
 import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6571,6 +6573,12 @@ export default function AdminDashboard() {
   });
   const [, setLocation] = useLocation();
   const { user: sessionUser } = useAuthContext();
+  const ownerAccess = useOwnerAccess();
+  const isPanelOwner = ownerAccess.data?.isOwner === true;
+  const visibleSections = MAIN_SECTIONS.filter((section) =>
+    canAccessAdminPanelSection(section.id, isPanelOwner),
+  );
+  const sectionAllowed = canAccessAdminPanelSection(activeSection, isPanelOwner);
 
   const [isAdminGateAuthenticated, setIsAdminGateAuthenticated] = useState(
     () => {
@@ -7182,11 +7190,11 @@ export default function AdminDashboard() {
       </div>
 
       <DashboardLayout
-        sections={MAIN_SECTIONS}
+        sections={visibleSections}
         activeSection={activeSection}
         onSelectSection={setActiveSection}
         title="VersoAir Business Platform"
-        subtitle={`Premium Admin Dashboard • Welcome, ${authenticatedAdminUsername || "Administrator"}`}
+        subtitle={`${isPanelOwner ? "Owner Admin Panel" : "GeoAdmin Admin Panel • delegated access"} • Welcome, ${authenticatedAdminUsername || "Administrator"}`}
         onRefresh={handleRefresh}
       >
         {/* Wrap all children in a flex column that takes full height of the main content area */}
@@ -7267,10 +7275,10 @@ export default function AdminDashboard() {
           {/* Content area — scroll handled by DashboardLayout */}
           <div className="flex-1 space-y-6 pb-6">
             {/* Main content sections based on activeSection - APPEARS FIRST FOR IMMEDIATE VISIBILITY */}
-            {activeSection === "dashboard" && (
+            {sectionAllowed && activeSection === "dashboard" && (
               <>
-                <ImplementationTracker />
-                {sessionUser?.role === "superuser" && <GeoAdminAccessManager />}
+                {isPanelOwner && <ImplementationTracker />}
+                {isPanelOwner && <GeoAdminAccessManager />}
                 <GeoAdminSummary />
                 <PendingApprovals />
                 <BusinessManagement />
@@ -7278,39 +7286,39 @@ export default function AdminDashboard() {
                 <JobManagement />
               </>
             )}
-            {activeSection === "businesses" && (
+            {sectionAllowed && activeSection === "businesses" && (
               <>
                 <PendingApprovals />
                 <BusinessManagement />
               </>
             )}
-            {activeSection === "categories" && <CategoryManagement />}
-            {activeSection === "jobs" && <JobManagement />}
-            {activeSection === "advertising" && <AdvertisingSection />}
-            {activeSection === "marketplace" && <MarketplaceModeration />}
-            {activeSection === "artists" && <ArtistsSection />}
-            {activeSection === "users" && <UsersSection />}
-            {activeSection === "roles" && <RoleManagementSection />}
-            {activeSection === "analytics" && <AnalyticsSection />}
-            {activeSection === "cms" && <CMSSection />}
-            {activeSection === "security" && <SecuritySection />}
-            {activeSection === "smtp" && <SmtpSection />}
-            {activeSection === "tsr-whitelist" && <TSRWhitelistSection />}
-            {activeSection === "contractor-apps" && (
+            {sectionAllowed && activeSection === "categories" && <CategoryManagement />}
+            {sectionAllowed && activeSection === "jobs" && <JobManagement />}
+            {sectionAllowed && activeSection === "advertising" && <AdvertisingSection />}
+            {sectionAllowed && activeSection === "marketplace" && <MarketplaceModeration />}
+            {sectionAllowed && activeSection === "artists" && <ArtistsSection />}
+            {sectionAllowed && activeSection === "users" && <UsersSection />}
+            {sectionAllowed && activeSection === "roles" && <RoleManagementSection />}
+            {sectionAllowed && activeSection === "analytics" && <AnalyticsSection />}
+            {sectionAllowed && activeSection === "cms" && <CMSSection />}
+            {sectionAllowed && activeSection === "security" && <SecuritySection />}
+            {sectionAllowed && activeSection === "smtp" && <SmtpSection />}
+            {sectionAllowed && activeSection === "tsr-whitelist" && <TSRWhitelistSection />}
+            {sectionAllowed && activeSection === "contractor-apps" && (
               <ContractorApplicationsSection />
             )}
-            {activeSection === "community-ops" && (
+            {sectionAllowed && activeSection === "community-ops" && (
               <CommunityOperationsSection />
             )}
-            {activeSection === "artisan-profiles" && <ArtisanProfilesSection />}
-            {activeSection === "events" && <EventsModerationSection />}
-            {activeSection === "geo-queue" && <GeoActionQueueSection />}
-            {activeSection === "contractor-assign" && (
+            {sectionAllowed && activeSection === "artisan-profiles" && <ArtisanProfilesSection />}
+            {sectionAllowed && activeSection === "events" && <EventsModerationSection />}
+            {sectionAllowed && activeSection === "geo-queue" && <GeoActionQueueSection />}
+            {sectionAllowed && activeSection === "contractor-assign" && (
               <ContractorAssignmentSection />
             )}
 
             {/* Dashboard Stats - shown at the bottom for reference */}
-            {activeSection === "dashboard" && (
+            {sectionAllowed && activeSection === "dashboard" && (
               <>
                 <Separator className="my-6" />
                 <h3 className="text-lg font-semibold mb-4">
@@ -7354,6 +7362,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+            {isPanelOwner && (
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -7396,9 +7405,10 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             <AnimatePresence>
-              {showHealthPanel && (
+              {isPanelOwner && showHealthPanel && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -7435,7 +7445,7 @@ export default function AdminDashboard() {
 
       {/* SQL Editor Modal */}
       <Dialog
-        open={showSqlEditor}
+        open={isPanelOwner && showSqlEditor}
         onOpenChange={(open) => {
           setShowSqlEditor(open);
           if (open) {
@@ -7870,7 +7880,7 @@ export default function AdminDashboard() {
       </Dialog>
 
       {/* Backup Modal */}
-      <Dialog open={showBackupModal} onOpenChange={setShowBackupModal}>
+      <Dialog open={isPanelOwner && showBackupModal} onOpenChange={setShowBackupModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -7919,7 +7929,7 @@ export default function AdminDashboard() {
       </Dialog>
 
       {/* Export Modal */}
-      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+      <Dialog open={isPanelOwner && showExportModal} onOpenChange={setShowExportModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -7993,7 +8003,7 @@ export default function AdminDashboard() {
       </Dialog>
 
       {/* Import Modal */}
-      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+      <Dialog open={isPanelOwner && showImportModal} onOpenChange={setShowImportModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -8071,7 +8081,7 @@ export default function AdminDashboard() {
 
       {/* Performance Panel Modal */}
       <Dialog
-        open={showPerformancePanel}
+        open={isPanelOwner && showPerformancePanel}
         onOpenChange={setShowPerformancePanel}
       >
         <DialogContent className="sm:max-w-lg">

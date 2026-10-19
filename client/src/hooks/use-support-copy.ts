@@ -73,6 +73,7 @@ const COPY = {
   policy: ["Calendar-hour targets; no automatic SLA pause, closure or abandonment.", "Délais calendaires ; aucune pause SLA, clôture ou abandon automatique.", "Plazos naturales; sin pausa SLA, cierre o abandono automáticos."],
   scope: ["Moderators: unassigned tickets and your assignments. Managers: all support tickets.", "Moderators : tickets non assignés et vos attributions. Admins : tous les tickets de support.", "Moderadores: tickets sin asignar y propios. Administradores: todos los tickets de soporte."],
   ownerPanel: ["Owner Admin Panel", "Admin Panel propriétaire", "Panel del propietario"],
+  adminPanel: ["GeoAdmin Admin Panel", "GeoAdmin Admin Panel", "Panel GeoAdmin Admin"],
   tracker: ["Implementation tracking", "Suivi des travaux", "Seguimiento de implementación"],
   trackerInfo: ["Manual evidence log, refreshed every 15 seconds. Status is not automatically certified.", "Journal de preuves manuel, actualisé toutes les 15 secondes. L’état n’est pas certifié automatiquement.", "Registro manual de pruebas, actualizado cada 15 segundos. El estado no se certifica automáticamente."],
   evidence: ["Test / commit / deployment evidence", "Preuves : tests / commit / déploiement", "Pruebas / commit / despliegue"],
