@@ -109,11 +109,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const cache = useRef(new Map<string, TranslationDictionary>());
   const lastCountryLanguage = useRef<string | null>(null);
 
-  const notify = useCallback((message: string) => {
+  const notify = useCallback((message: string, duration = 12_000) => {
     if (bannerTimer.current) clearTimeout(bannerTimer.current);
     setBannerMessage(message);
     setShowBanner(!dismissed.current);
-    bannerTimer.current = setTimeout(() => setShowBanner(false), 12_000);
+    bannerTimer.current = setTimeout(() => setShowBanner(false), duration);
   }, []);
 
   const apply = useCallback(async (language: string) => {
@@ -164,7 +164,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       storePreference(LANG_CACHE_KEY, language);
       notify(language === "fr" || language === "en"
         ? `${language === "fr" ? "Français" : "English"} selected for supported content.`
-        : `Automatic translation by Google Translate (${language.toUpperCase()}) for supported public content.`);
+        : `Automatic translation by Google Translate (${language.toUpperCase()}) for supported public content.`, 3_000);
     } catch (error: unknown) {
       if (serial !== sequence.current) return;
       console.warn("[Language] Translation unavailable:", error instanceof Error ? error.message : "request error");
