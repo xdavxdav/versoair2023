@@ -2,6 +2,7 @@ import type { PUBLIC_COPY } from "./public-translations";
 
 // Bundled editorial translation; legal copy still requires professional review.
 export const SPANISH_COPY = {
+  "Ask VersoAI": "Preguntar a VersoAI",
   "Back to Home": "Volver al inicio",
   "Contact Us": "Contáctanos",
   "Contact Page": "Página de contacto",

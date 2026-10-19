@@ -424,6 +424,7 @@ export const PUBLIC_COPY = [
   ["The professional network connecting businesses, craftspeople and artists.", "Le réseau professionnel qui connecte entreprises, artisans et artistes."],
   ...LEGAL_COPY,
   ...OFFER_COPY,
+  ["Ask VersoAI", "Demander à VersoAI"],
 ] as const;
 
 export const BUNDLED_LANGUAGES = ["fr", "en", "es"] as const;

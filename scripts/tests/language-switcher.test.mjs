@@ -180,6 +180,8 @@ test("native FR/EN work without Google; Enterprise stays custom and numbers/link
       assert.ok((await cardText(page)).replace(/\s/g, " ").includes(price));
     }
     assert.equal(await page.$eval('[data-testid="geoadmin-contacts"] a', element => element.getAttribute("href")), "tel:+2250748343816");
+    assert.equal(await page.$eval('#promo-card a[href="/versoai"]', element => element.textContent.trim()), "Ask VersoAI");
+    assert.equal(await page.$('#promo-card a[href="https://www.versoair.com"]'), null);
     assert.equal(translations.length, 0);
     assert.equal(external.some(url => /translate.*google/.test(url)), false);
     assert.equal(await page.$(".goog-te-combo"), null);
@@ -239,6 +241,16 @@ test("form values, unknown/private text and translate=no are not changed or subm
     assert.equal(await page.$eval("#protected", element => element.textContent), "Contact Us");
     assert.equal(await page.$eval("#unknown", element => element.textContent), "Private message outside the public catalogue");
     assert.equal(translations.some(request => JSON.stringify(request).includes("private")), false);
+  } finally { await page.close(); }
+});
+
+test("promo VersoAI action is localized and navigates to the existing assistant route", async () => {
+  const { page } = await openHarness({ cached: "es" });
+  try {
+    await waitForLanguage(page, "es");
+    assert.equal(await page.$eval('#promo-card a[href="/versoai"]', node => node.textContent.trim()), "Preguntar a VersoAI");
+    await page.click('#promo-card a[href="/versoai"]');
+    await page.waitForFunction(() => location.pathname === "/versoai");
   } finally { await page.close(); }
 });
 

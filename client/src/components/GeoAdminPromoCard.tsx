@@ -2,6 +2,7 @@ import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { GEOADMIN_OFFER_ORDER, GEOADMIN_OFFER_NAMES, GEOADMIN_OFFER_PRICES_XOF, GEOADMIN_PLAN_DETAILS, GEOADMIN_REFERENCE_NOTICE, formatMarketXofPrice } from "@/lib/geoadmin-pricing";
 import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
+import { Link } from "wouter";
 
 export default function GeoAdminPromoCard() {
   const localize = useLocalizedContent();
@@ -67,13 +68,12 @@ export default function GeoAdminPromoCard() {
       </p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#d7b652]/45 bg-[#050e1d]/55 p-4">
         <GeoAdminContacts />
-        <a
-          href="https://www.versoair.com"
-          translate="no"
-          className="notranslate inline-flex min-h-11 items-center break-all rounded-md text-sm font-semibold text-[#e6c15b] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe394]"
+        <Link
+          href="/versoai"
+          className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-[#e6c15b] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe394]"
         >
-          https://www.versoair.com
-        </a>
+          Ask VersoAI
+        </Link>
       </div>
       <p className="mt-4 text-xs leading-relaxed text-[#c5d0df]">
         Annual reference prices are shown in Canadian dollars in Canada, euros in France, and FCFA in Côte d’Ivoire. Other countries are marked as coming soon.

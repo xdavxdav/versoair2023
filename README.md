@@ -40,6 +40,8 @@ confirmed contacts: +225 07-48-34-38-16, +225 05-64-60-64-01 and
 +1 (437) 435-9726, each with separate direct-call and WhatsApp links.
 `GEOADMIN_CONTACTS` supplies the shared `GeoAdminContacts` component on the
 promotional card, pricing page and GeoAdmin gate. The support email remains.
+The promotional card links to the existing `/versoai` assistant route via a
+localized "Ask VersoAI" action instead of repeating the website homepage URL.
 
 The language selector uses bundled French/English/Spanish public-copy dictionaries, not
 the legacy Google website widget. Initial coverage includes pricing and its
