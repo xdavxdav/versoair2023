@@ -17,6 +17,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import { useLayoutEffect, useRef } from "react";
 import { RefreshCw } from "lucide-react";
+import { useOwnerAccess } from "@/hooks/use-owner-access";
 
 interface ProtectedRouteProps {
   /** The page component to render when authorized (alternative to children) */
@@ -25,6 +26,7 @@ interface ProtectedRouteProps {
   children?: React.ReactNode;
   /** Required roles (any match grants access). Leave empty for "any authenticated user". */
   roles?: string[];
+  ownerOnly?: boolean;
   /** Route to send authenticated-but-unauthorized users to. */
   unauthorizedRedirect?: string;
 }
@@ -33,11 +35,13 @@ export default function ProtectedRoute({
   component: Component,
   children,
   roles,
+  ownerOnly = false,
   unauthorizedRedirect = "/",
 }: ProtectedRouteProps) {
   const { user, loading, authError, restoreAuth } = useAuthContext();
   const [, setLocation] = useLocation();
   const redirectingRef = useRef(false);
+  const owner = useOwnerAccess();
 
   useLayoutEffect(() => {
     if (loading) return;
@@ -59,6 +63,10 @@ export default function ProtectedRoute({
 
     redirectingRef.current = false;
 
+    if (ownerOnly && owner.isSuccess && !owner.data.isOwner) {
+      setLocation(unauthorizedRedirect);
+      return;
+    }
     if (roles && roles.length > 0) {
       const userRole = user.role || "";
       // Superuser always has access
@@ -66,7 +74,7 @@ export default function ProtectedRoute({
         setLocation(unauthorizedRedirect);
       }
     }
-  }, [user, loading, authError, roles, setLocation, unauthorizedRedirect]);
+  }, [user, loading, authError, roles, setLocation, unauthorizedRedirect, ownerOnly, owner.isSuccess, owner.data]);
 
   // Still verifying — never redirect while loading, even if `user` is null
   if (loading) {
@@ -101,6 +109,16 @@ export default function ProtectedRoute({
 
   if (!user) {
     return null;
+  }
+
+  if (ownerOnly && owner.isError) {
+    return <div role="alert" className="p-8 text-center">
+      <p>Could not verify owner access.</p>
+      <button onClick={() => void owner.refetch()}>Retry</button>
+    </div>;
+  }
+  if (ownerOnly && !owner.data?.isOwner) {
+    return owner.isPending ? <p className="p-8">Verifying owner access…</p> : null;
   }
 
   if (roles && roles.length > 0) {

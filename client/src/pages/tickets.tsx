@@ -1,1352 +1,239 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { authenticatedFetch } from "@/lib/auth";
-import {
-  Search,
-  Plus,
-  Filter,
-  Eye,
-  Trash2,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Zap,
-  AlertTriangle,
-  Shield,
-  LayoutDashboard,
-} from "lucide-react";
+import { useState } from "react";
+import { Link } from "wouter";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { ticketRequest } from "@/lib/support-api";
+import { useOwnerAccess } from "@/hooks/use-owner-access";
+import { useSupportCopy } from "@/hooks/use-support-copy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  canWorkTicket, isTicketManager, isTicketStaff, PENDING_REASONS, TERMINAL_STATUSES,
+  TICKET_PRIORITIES, TICKET_STATUSES, transitionError, type SupportTicket, type TicketActor, type TicketStatus,
+} from "@shared/ticket-policy";
 
-interface Ticket {
-  id: number;
-  title: string;
-  description: string;
-  status: "open" | "in-progress" | "resolved" | "closed";
-  priority: "critical" | "high" | "medium" | "low";
-  category: string;
-  reporter: string;
-  requester_email?: string;
-  assignee_id?: number;
-  team?: string;
-  source: string;
-  sla_target_hours: number;
-  sla_breached: boolean;
-  created_at: string;
-  updated_at: string;
-  resolved_at?: string;
-}
-
-interface TicketStats {
-  total: number;
-  open: number;
-  inProgress: number;
-  resolved: number;
-  closed: number;
-  slaBreaches: number;
-  slaCompliance: number;
-  avgResolutionTime: number;
-}
+const selectClass = "min-h-11 rounded-md border border-slate-400 bg-white px-3 text-slate-900 max-w-full";
+const errorText = (error: unknown) => error instanceof Error ? error.message : "Support request failed";
 
 export function Tickets() {
-  const [, navigate] = useLocation();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [scrollY, setScrollY] = useState(0);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  // Parallax scroll effect - simple, non-blocking
-  useEffect(() => {
-    const handleScroll = () => {
-      requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
-      });
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Calculate title transformations based on scroll position
-  const titleOpacityBar = Math.max(0, 1 - scrollY / 150);
-  const titleOpacityBody = Math.min(1, scrollY / 150);
-
-  // Check if user has active admin session
-  const hasActiveAdminSession = (() => {
-    const savedAccessTime = localStorage.getItem("adminAccessTime");
-    if (!savedAccessTime) return false;
-
-    const accessTime = parseInt(savedAccessTime);
-    const now = new Date().getTime();
-    const sessionDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
-    return now - accessTime <= sessionDuration;
-  })();
-
-  // Check if user is admin (either regular admin or geoadmin)
-  const isAdmin =
-    user?.role === "admin" ||
-    localStorage.getItem("geoadmin_session") === "true";
-
-  // TAM access: only superuser & moderator
-  const canAccessTAM = user?.role === "superuser" || user?.role === "moderator";
-
-  // Staff roles don't need subscriber upgrade prompts — they manage the platform
-  const isStaffRole = ["superuser", "admin", "moderator"].includes(
-    user?.role || "",
-  );
-
-  // Subscription Tier Permissions
-  type SubscriptionTier =
-    | "free"
-    | "essential"
-    | "verified"
-    | "max"
-    | "enterprise";
-  // Staff always get enterprise-level access — no upgrade prompts, no limits
-  const subscriptionTier: SubscriptionTier = isStaffRole
-    ? "enterprise"
-    : ((user?.subscriptionTier || "free") as SubscriptionTier);
-
-  // Permission matrix based on subscription tier
-  const subscriptionPermissions = {
-    free: {
-      maxTicketsPerMonth: 5,
-      canCreateTicket: true,
-      canAssignTeam: false,
-      maxTeamMembers: 1,
-      slaTier: "none",
-      showAnalytics: false,
-      canViewSla: false,
-      showUpgradePrompt: true,
-    },
-    essential: {
-      maxTicketsPerMonth: -1, // unlimited
-      canCreateTicket: true,
-      canAssignTeam: false,
-      maxTeamMembers: 1,
-      slaTier: "standard", // 48h response
-      showAnalytics: false,
-      canViewSla: true,
-      showUpgradePrompt: true,
-    },
-    verified: {
-      maxTicketsPerMonth: -1,
-      canCreateTicket: true,
-      canAssignTeam: true,
-      maxTeamMembers: 5,
-      slaTier: "priority", // 24h response
-      showAnalytics: true,
-      canViewSla: true,
-      showUpgradePrompt: true,
-    },
-    max: {
-      maxTicketsPerMonth: -1,
-      canCreateTicket: true,
-      canAssignTeam: true,
-      maxTeamMembers: 10,
-      slaTier: "priority", // 24h response
-      showAnalytics: true,
-      canViewSla: true,
-      showUpgradePrompt: false,
-    },
-    enterprise: {
-      maxTicketsPerMonth: -1,
-      canCreateTicket: true,
-      canAssignTeam: true,
-      maxTeamMembers: -1, // unlimited
-      slaTier: "guaranteed", // 4-24h response
-      showAnalytics: true,
-      canViewSla: true,
-      showUpgradePrompt: false,
-    },
-  };
-
-  const currentPermissions = subscriptionPermissions[subscriptionTier];
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterPriority, setFilterPriority] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-
-  // Fetch all tickets
-  const { data: ticketsData, isLoading: ticketsLoading } = useQuery<Ticket[]>({
-    queryKey: ["tickets", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const res = await authenticatedFetch("/api/tickets");
-      if (!res.ok) throw new Error("Failed to fetch tickets");
-      return res.json();
-    },
+  const { user } = useAuthContext();
+  const owner = useOwnerAccess();
+  const t = useSupportCopy();
+  const client = useQueryClient();
+  const actor: TicketActor = { id: Number(user?.id), role: user?.role || "user", owner: owner.data?.isOwner === true };
+  const staff = isTicketStaff(actor);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState<number | null>(() => {
+    const value = new URLSearchParams(window.location.search).get("ticket");
+    return value && /^[1-9]\d{0,8}$/.test(value) ? Number(value) : null;
   });
-
-  // Fetch ticket stats
-  const { data: statsData } = useQuery<TicketStats>({
-    queryKey: ["ticket-stats", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const res = await authenticatedFetch("/api/tickets/stats/summary");
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      return res.json();
-    },
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const tickets = useQuery<SupportTicket[]>({
+    queryKey: ["support-tickets", user?.id],
+    enabled: Boolean(user),
+    queryFn: () => ticketRequest("/api/tickets"),
+    refetchInterval: 15000,
   });
-
-  // Create ticket mutation
-  const createTicketMutation = useMutation({
-    mutationFn: async (newTicket: Partial<Ticket>) => {
-      // Check free tier limit (5 tickets/month)
-      if (
-        subscriptionTier === "free" &&
-        currentPermissions.maxTicketsPerMonth > 0
-      ) {
-        const thisMonth = new Date();
-        const monthStart = new Date(
-          thisMonth.getFullYear(),
-          thisMonth.getMonth(),
-          1,
-        );
-        const monthTickets =
-          ticketsData?.filter((t) => {
-            const ticketDate = new Date(t.created_at);
-            return ticketDate >= monthStart;
-          }).length || 0;
-
-        if (monthTickets >= currentPermissions.maxTicketsPerMonth) {
-          throw new Error(
-            `Free tier limit reached: ${currentPermissions.maxTicketsPerMonth} tickets/month`,
-          );
-        }
-      }
-
-      const res = await authenticatedFetch("/api/tickets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTicket),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to create ticket");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket-stats"] });
-      setShowCreateModal(false);
-    },
-    onError: (error: any) => {
-      if (error.message.includes("limit reached")) {
-        setShowUpgradeModal(true);
-      }
-    },
+  const alerts = useQuery<{ id: number; ticket_id: number; kind: string; message: string }[]>({
+    queryKey: ["support-alerts", user?.id],
+    enabled: Boolean(user) && staff,
+    queryFn: () => ticketRequest("/api/tickets/alerts"),
+    refetchInterval: 15000,
   });
-
-  // Update ticket mutation
-  const updateTicketMutation = useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: number;
-      updates: Partial<Ticket>;
-    }) => {
-      const res = await authenticatedFetch(`/api/tickets/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update ticket");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket-stats"] });
-      setShowDetailModal(false);
-    },
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ["support-tickets"] });
+    void client.invalidateQueries({ queryKey: ["support-alerts"] });
+    void client.invalidateQueries({ queryKey: ["support-detail"] });
+  };
+  const create = useMutation({
+    mutationFn: () => ticketRequest<SupportTicket>("/api/tickets", "POST", { title, description }),
+    onSuccess: (ticket) => { setCreating(false); setTitle(""); setDescription(""); setSelectedId(ticket.id); refresh(); },
   });
+  const selected = tickets.data?.find((ticket) => ticket.id === selectedId);
+  const visible = tickets.data?.filter((ticket) =>
+    (status === "all" || ticket.status === status) &&
+    (priorityFilter === "all" || ticket.priority === priorityFilter) &&
+    `${ticket.id} ${ticket.title} ${ticket.description || ""}`.toLowerCase().includes(search.toLowerCase()),
+  ) || [];
 
-  // Delete ticket mutation
-  const deleteTicketMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await authenticatedFetch(`/api/tickets/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete ticket");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["ticket-stats"] });
-      setShowDetailModal(false);
-    },
-  });
-
-  // Filter and search tickets
-  const filteredTickets = useMemo(() => {
-    if (!ticketsData) return [];
-
-    let filtered = ticketsData;
-
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (t) =>
-          t.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
-          t.description?.toLowerCase().startsWith(searchQuery.toLowerCase()),
-      );
-    }
-
-    // Priority filter
-    if (filterPriority && filterPriority !== "all") {
-      filtered = filtered.filter((t) => t.priority === filterPriority);
-    }
-
-    // Status filter
-    if (filterStatus && filterStatus !== "all") {
-      filtered = filtered.filter((t) => t.status === filterStatus);
-    }
-
-    // Tab filter
-    if (activeTab === "open") {
-      filtered = filtered.filter((t) => t.status === "open");
-    } else if (activeTab === "progress") {
-      filtered = filtered.filter((t) => t.status === "in-progress");
-    } else if (activeTab === "resolved") {
-      filtered = filtered.filter((t) =>
-        ["resolved", "closed"].includes(t.status),
-      );
-    }
-
-    return filtered.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
-  }, [ticketsData, searchQuery, filterPriority, filterStatus, activeTab]);
-
-  const getPriorityColor = (priority: string) => {
-    const colors: Record<string, string> = {
-      critical: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-      high: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-      medium:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-      low: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    };
-    return colors[priority] || colors["medium"];
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
-      "in-progress":
-        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-      resolved:
-        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      closed: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-slate-700",
-    };
-    return colors[status] || colors["open"];
-  };
-
-  const getSLAColor = (percentage: number, breached: boolean) => {
-    if (breached) return "from-red-500 to-red-600";
-    if (percentage >= 80) return "from-orange-500 to-orange-600";
-    if (percentage >= 60) return "from-yellow-500 to-yellow-600";
-    return "from-green-500 to-green-600";
-  };
-
-  const calculateSLAPercentage = (createdAt: string, targetHours: number) => {
-    const elapsed =
-      (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60);
-    return Math.min(Math.round((elapsed / targetHours) * 100), 100);
-  };
-
-  if (ticketsLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-8">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Loading tickets...</p>
+  return <main className="min-h-screen bg-slate-50 px-4 pb-24 pt-24 text-slate-900" data-testid="ticket-workspace">
+    <div className="mx-auto max-w-6xl space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#0b1f3a] p-6 text-white">
+        <div><h1 className="text-2xl font-bold">{staff ? t("workspace") : t("tickets")}</h1>
+          <p className="mt-2 max-w-3xl text-sm text-slate-200">{staff ? t("scope") : t("policy")}</p></div>
+        <div className="flex flex-wrap gap-2">
+          {actor.owner && <Link href="/geo-admin/dashboard"><Button variant="secondary">{t("ownerPanel")}</Button></Link>}
+          <Button variant="secondary" onClick={refresh}>{t("refresh")}</Button>
+          <Button className="bg-amber-400 text-slate-950 hover:bg-amber-300" onClick={() => setCreating(true)}>{t("create")}</Button>
         </div>
+      </header>
+      <div className="flex flex-wrap gap-3">
+        <Input aria-label={t("search")} placeholder={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-0 flex-1 bg-white" />
+        <select className={selectClass} aria-label={t("status")} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="all">{t("all")}</option>{TICKET_STATUSES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+        </select>
+        <select className={selectClass} aria-label={t("priority")} value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+          <option value="all">{t("all")}</option>{TICKET_PRIORITIES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+        </select>
       </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      {/* Quick Navigation Bar - Top Priority */}
-      <div className="bg-slate-900/50 border-b border-slate-700 backdrop-blur dark:bg-[#f3efe9]/50">
-        <div className="max-w-[95vw] mx-auto px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-sm text-slate-400 transition-all duration-300"
-              style={{
-                opacity: titleOpacityBar,
-              }}
-            >
-              🎫 Ticket Management
-            </span>
+      {tickets.isPending && <p>{t("loading")}</p>}
+      {tickets.isError && <p role="alert">{errorText(tickets.error)} <Button onClick={() => void tickets.refetch()}>{t("retry")}</Button></p>}
+      {tickets.isSuccess && !visible.length && <p>{t("empty")}</p>}
+      <div className="grid gap-4 md:grid-cols-2">
+        {visible.map((ticket) => <button key={ticket.id} onClick={() => setSelectedId(ticket.id)}
+          className="min-w-0 rounded-xl border border-slate-300 bg-white p-5 text-left shadow-sm hover:border-amber-500">
+          <div className="flex flex-wrap justify-between gap-2 text-sm">
+            <span>#{ticket.id} · {t(ticket.status)}</span><span>{t(ticket.priority)}</span>
           </div>
-          <div className="flex gap-2">
-            <a href="/geo-admin">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 border-blue-600 text-blue-400 hover:bg-blue-600/10"
-              >
-                🌍 Geo Admin
-              </Button>
-            </a>
-            <a href="/geo-admin/dashboard">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
-              >
-                🛡️ Admin Dashboard
-              </Button>
-            </a>
-            {canAccessTAM && (
-              <a href="/admin/tickets">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 border-purple-600 text-purple-400 hover:bg-purple-600/10"
-                >
-                  🎛️ TAM
-                </Button>
-              </a>
-            )}
-          </div>
-        </div>
+          <h2 className="mt-2 break-words font-bold">{ticket.title}</h2>
+          <p className="mt-2 break-words text-sm text-slate-600">{ticket.description?.slice(0, 180)}</p>
+          <p className="mt-3 text-sm">{t("assignee")}: {ticket.assignee_id || t("unassigned")}</p>
+          {ticket.abandonment_proposed_at && staff && <p className="mt-2 font-semibold text-amber-800">{t("abandonment")}</p>}
+          {ticket.sla_due_at && <p className={`mt-2 text-xs ${ticket.sla_breached ? "text-red-700" : "text-slate-600"}`}>{t("target")}: {new Date(ticket.sla_due_at).toLocaleString()}</p>}
+        </button>)}
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 px-6 md:px-12 py-8 md:py-12" ref={contentRef}>
-        {/* Subscription Tier Banner — hidden for staff (they're not subscribers) */}
-        {!isStaffRole && (
-          <div
-            className={`mb-6 p-4 rounded-lg border ${
-              subscriptionTier === "free"
-                ? "bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800"
-                : subscriptionTier === "enterprise"
-                  ? "bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800"
-                  : "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p
-                  className={`text-sm font-semibold ${
-                    subscriptionTier === "free"
-                      ? "text-yellow-900 dark:text-yellow-100"
-                      : subscriptionTier === "enterprise"
-                        ? "text-purple-900 dark:text-purple-100"
-                        : "text-blue-900 dark:text-blue-100"
-                  }`}
-                >
-                  📊{" "}
-                  <Badge className="ml-2 capitalize">
-                    {subscriptionTier} Plan
-                  </Badge>
-                </p>
-                <p
-                  className={`text-xs mt-1 ${
-                    subscriptionTier === "free"
-                      ? "text-yellow-800 dark:text-yellow-200"
-                      : subscriptionTier === "enterprise"
-                        ? "text-purple-800 dark:text-purple-200"
-                        : "text-blue-800 dark:text-blue-200"
-                  }`}
-                >
-                  {subscriptionTier === "free" &&
-                    "Max 5 tickets/month • No SLA • No team assignment"}
-                  {subscriptionTier === "essential" &&
-                    "Unlimited tickets • 48h SLA • Email support"}
-                  {subscriptionTier === "verified" &&
-                    "Unlimited tickets • 24h SLA • Team (5) • Analytics"}
-                  {subscriptionTier === "max" &&
-                    "Unlimited tickets • 24h SLA • Team (10) • Full analytics"}
-                  {subscriptionTier === "enterprise" &&
-                    "Unlimited everything • Guaranteed SLA • Dedicated support"}
-                </p>
-              </div>
-              {currentPermissions.showUpgradePrompt && (
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => setShowUpgradeModal(true)}
-                >
-                  Upgrade
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Header with Parallax Effect */}
-        <div className="mb-8">
-          <h1
-            className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-900 mb-3 transition-all duration-300 ${scrollY > 0 ? "opacity-100" : "opacity-0"}`}
-          >
-            Ticket Management System
-          </h1>
-          <p
-            className={`text-gray-600 dark:text-gray-400 text-lg transition-all duration-300 ${scrollY > 0 ? "opacity-100" : "opacity-0"}`}
-          >
-            Professional CRM ticketing with SLA tracking
-          </p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
-          <Card className="dark:bg-slate-800 dark:border-slate-700">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Tickets
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
-                    {statsData?.total || 0}
-                  </p>
-                </div>
-                <AlertCircle className="h-12 w-12 text-blue-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="dark:bg-slate-800 dark:border-slate-700">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Open
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
-                    {statsData?.open || 0}
-                  </p>
-                </div>
-                <Zap className="h-12 w-12 text-yellow-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="dark:bg-slate-800 dark:border-slate-700">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    In Progress
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
-                    {statsData?.inProgress || 0}
-                  </p>
-                </div>
-                <Clock className="h-12 w-12 text-blue-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="dark:bg-slate-800 dark:border-slate-700">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Resolved
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
-                    {statsData?.resolved || 0}
-                  </p>
-                </div>
-                <CheckCircle className="h-12 w-12 text-green-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="dark:bg-slate-800 dark:border-slate-700">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    SLA Breaches
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-900">
-                    {currentPermissions.canViewSla ? (
-                      statsData?.slaBreaches || 0
-                    ) : (
-                      <span className="text-lg">
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto text-blue-600"
-                          onClick={() => setShowUpgradeModal(true)}
-                        >
-                          Upgrade
-                        </Button>
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <AlertTriangle className="h-12 w-12 text-red-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Actions */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow mb-10 p-6 border dark:border-slate-700">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-3 items-center">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search by title or description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
-                />
-              </div>
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-40 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => {
-                  if (
-                    subscriptionTier === "free" &&
-                    currentPermissions.showUpgradePrompt
-                  ) {
-                    setShowUpgradeModal(true);
-                  } else {
-                    setShowCreateModal(true);
-                  }
-                }}
-                disabled={!currentPermissions.canCreateTicket}
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Ticket
-              </Button>
-              {canAccessTAM && (
-                <Button
-                  onClick={() => navigate("/admin/tickets")}
-                  className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 shrink-0"
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  TAM
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="mb-10 bg-white dark:bg-slate-800 rounded-lg shadow border dark:border-slate-700"
-        >
-          <TabsList className="w-full bg-slate-100 dark:bg-slate-700 border-b dark:border-slate-600 rounded-t-lg">
-            <TabsTrigger
-              value="all"
-              className="data-[state=active]:dark:bg-slate-800"
-            >
-              All ({filteredTickets.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="open"
-              className="data-[state=active]:dark:bg-slate-800"
-            >
-              Open (
-              {ticketsData?.filter((t) => t.status === "open").length || 0})
-            </TabsTrigger>
-            <TabsTrigger
-              value="progress"
-              className="data-[state=active]:dark:bg-slate-800"
-            >
-              In Progress (
-              {ticketsData?.filter((t) => t.status === "in-progress").length ||
-                0}
-              )
-            </TabsTrigger>
-            <TabsTrigger
-              value="resolved"
-              className="data-[state=active]:dark:bg-slate-800"
-            >
-              Resolved (
-              {ticketsData?.filter((t) =>
-                ["resolved", "closed"].includes(t.status),
-              ).length || 0}
-              )
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value={activeTab} className="p-8">
-            {filteredTickets.length === 0 ? (
-              <div className="text-center py-24">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 text-lg">
-                  No tickets yet — create your first ticket
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {filteredTickets.map((ticket) => {
-                  const slaPercent = calculateSLAPercentage(
-                    ticket.created_at,
-                    ticket.sla_target_hours,
-                  );
-
-                  return (
-                    <div
-                      key={ticket.id}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 bg-slate-50 dark:bg-slate-700 rounded-lg border dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 transition"
-                    >
-                      <div
-                        className="flex-1 min-w-0 w-full cursor-pointer"
-                        onClick={() => {
-                          setSelectedTicket(ticket);
-                          setShowDetailModal(true);
-                        }}
-                      >
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                          <div className="flex-1 min-w-0 w-full">
-                            <h3 className="font-semibold text-gray-900 dark:text-slate-900 truncate">
-                              {ticket.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                              {ticket.description?.substring(0, 60) ||
-                                "No description"}
-                              ...
-                            </p>
-                          </div>
-                          <div className="flex gap-2 flex-wrap">
-                            <Badge
-                              className={getPriorityColor(ticket.priority)}
-                            >
-                              {ticket.priority}
-                            </Badge>
-                            <Badge className={getStatusColor(ticket.status)}>
-                              {ticket.status}
-                            </Badge>
-                            {ticket.sla_breached && (
-                              <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                BREACHED
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="w-full sm:w-32 flex-shrink-0">
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                              SLA: {slaPercent}%
-                            </div>
-                            <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full bg-gradient-to-r ${getSLAColor(slaPercent, ticket.sla_breached)} transition-[width]`}
-                                style={{
-                                  width: `${Math.min(100, Math.max(0, slaPercent))}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="dark:hover:bg-slate-500 self-end sm:self-auto"
-                        onClick={() => {
-                          setSelectedTicket(ticket);
-                          setShowDetailModal(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Create Ticket Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="dark:bg-slate-800 dark:border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="dark:text-slate-900">New Ticket</DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
-              Create a new support ticket
-            </DialogDescription>
-          </DialogHeader>
-          <CreateTicketForm
-            onSubmit={(data) => {
-              createTicketMutation.mutate(data);
-            }}
-            isLoading={createTicketMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Ticket Detail Modal */}
-      {selectedTicket && (
-        <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-          <DialogContent className="dark:bg-slate-800 dark:border-slate-700 max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="dark:text-slate-900">
-                Ticket #{selectedTicket.id}
-              </DialogTitle>
-              <DialogDescription className="dark:text-gray-400">
-                {selectedTicket.title}
-              </DialogDescription>
-            </DialogHeader>
-            <TicketDetailView
-              ticket={selectedTicket}
-              onStatusChange={(status: Ticket["status"]) => {
-                updateTicketMutation.mutate({
-                  id: selectedTicket.id,
-                  updates: { status },
-                });
-              }}
-              onDelete={() => {
-                deleteTicketMutation.mutate(selectedTicket.id);
-              }}
-              isUpdating={
-                updateTicketMutation.isPending || deleteTicketMutation.isPending
-              }
-            />
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Subscription Upgrade Modal */}
-      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
-        <DialogContent className="dark:bg-slate-800 dark:border-slate-700 max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="dark:text-slate-900 flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-500" />
-              Upgrade Your Plan
-            </DialogTitle>
-            <DialogDescription className="dark:text-gray-400">
-              Current Plan:{" "}
-              <Badge variant="outline" className="ml-2">
-                {subscriptionTier.toUpperCase()}
-              </Badge>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            {subscriptionTier === "free" && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
-                  📌 <strong>Free Tier Limit:</strong> You've reached your 5
-                  tickets/month limit. Upgrade to create unlimited tickets!
-                </p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 gap-4">
-              {/* Essential Tier */}
-              <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-lg dark:text-slate-900">
-                      Essential
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      $9-29/month
-                    </p>
-                  </div>
-                  <Badge variant="secondary">48h SLA</Badge>
-                </div>
-                <ul className="text-sm space-y-2 text-gray-700 dark:text-slate-700">
-                  <li>✅ Unlimited tickets</li>
-                  <li>✅ Basic SLA (48h response)</li>
-                  <li>✅ Email + Chat support</li>
-                  <li>❌ Team assignment</li>
-                </ul>
-              </div>
-
-              {/* Professional Tier */}
-              <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-lg dark:text-slate-900">
-                      Professional <Badge className="ml-2">Popular</Badge>
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      $49-99/month
-                    </p>
-                  </div>
-                  <Badge className="bg-blue-600">24h SLA</Badge>
-                </div>
-                <ul className="text-sm space-y-2 text-gray-700 dark:text-slate-700">
-                  <li>✅ Unlimited tickets</li>
-                  <li>✅ Priority SLA (24h response)</li>
-                  <li>✅ Team assignment (5 members)</li>
-                  <li>✅ Analytics dashboard</li>
-                  <li>✅ Phone + Email + Chat</li>
-                </ul>
-              </div>
-
-              {/* Enterprise Tier */}
-              <div className="border border-purple-500 rounded-lg p-4 hover:border-purple-600 cursor-pointer transition">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-lg dark:text-slate-900">
-                      Enterprise
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Custom pricing
-                    </p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="border-purple-500 text-purple-600"
-                  >
-                    Guaranteed SLA
-                  </Badge>
-                </div>
-                <ul className="text-sm space-y-2 text-gray-700 dark:text-slate-700">
-                  <li>✅ Everything in Professional</li>
-                  <li>✅ Unlimited team members</li>
-                  <li>✅ Full API access</li>
-                  <li>✅ Custom integrations</li>
-                  <li>✅ Dedicated support (24/7)</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                💡 <strong>Need more?</strong> Contact our sales team for
-                enterprise features and custom pricing.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowUpgradeModal(false)}
-            >
-              Close
-            </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Upgrade Now
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Subscription Tier Badge - Fixed Bottom Right (subscribers only) */}
-      {!isStaffRole && (
-        <div className="fixed bottom-6 right-6 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg p-3 z-40">
-          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-            Current Plan
-          </div>
-          <Badge className="bg-blue-600 text-slate-900 capitalize">
-            {subscriptionTier}
-          </Badge>
-          <Button
-            variant="link"
-            size="sm"
-            className="text-xs p-0 h-auto mt-2 w-full justify-center"
-            onClick={() => setShowUpgradeModal(true)}
-          >
-            Upgrade Plan
-          </Button>
-        </div>
-      )}
+      {staff && <section className="rounded-xl border bg-white p-5"><h2 className="font-bold">{t("alerts")}</h2>
+        {alerts.isError && <p role="alert">{errorText(alerts.error)}</p>}
+        <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto">{alerts.data?.map((alert) =>
+          <li key={alert.id} className="border-b pb-2 text-sm"><button className="underline" onClick={() => setSelectedId(alert.ticket_id)}>#{alert.ticket_id}</button> · {alert.message}</li>,
+        )}</ul></section>}
     </div>
-  );
+    <Dialog open={creating} onOpenChange={setCreating}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto bg-white text-slate-900">
+        <DialogTitle>{t("create")}</DialogTitle><DialogDescription>{t("policy")}</DialogDescription>
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
+          <label className="block">{t("title")}<Input required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+          <label className="block">{t("description")}<Textarea maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} /></label>
+          {create.isError && <p role="alert">{errorText(create.error)}</p>}
+          <Button disabled={create.isPending} type="submit">{t("create")}</Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+    {selectedId !== null && <TicketDetails key={selectedId} id={selectedId} initial={selected} actor={actor} onClose={() => setSelectedId(null)} refresh={refresh} />}
+  </main>;
 }
 
-function CreateTicketForm({
-  onSubmit,
-  isLoading,
-}: {
-  onSubmit: (data: Partial<Ticket>) => void;
-  isLoading: boolean;
+interface Comment { id: number; author_name: string; body: string; internal: boolean; created_at: string }
+interface TicketEvent { id: number; kind: string; details: Record<string, unknown>; created_at: string; internal: boolean }
+
+function TicketDetails({ id, initial, actor, onClose, refresh }: {
+  id: number; initial?: SupportTicket; actor: TicketActor; onClose: () => void; refresh: () => void;
 }) {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    priority: "medium" as Ticket["priority"],
-    category: "general",
-    requesterEmail: "",
-    source: "portal",
-  });
-
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(formData);
-      }}
-      className="space-y-4"
-    >
-      <div>
-        <Label className="dark:text-slate-700">Title *</Label>
-        <Input
-          required
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
-        />
-      </div>
-      <div>
-        <Label className="dark:text-slate-700">Description</Label>
-        <Textarea
-          value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
-          className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="dark:text-slate-700">Priority</Label>
-          <Select
-            value={formData.priority}
-            onValueChange={(priority) =>
-              setFormData({
-                ...formData,
-                priority: priority as Ticket["priority"],
-              })
-            }
-          >
-            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="dark:text-slate-700">Category</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(category) => setFormData({ ...formData, category })}
-          >
-            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
-              <SelectItem value="bug">Bug</SelectItem>
-              <SelectItem value="infrastructure">Infrastructure</SelectItem>
-              <SelectItem value="ui-ux">UI/UX</SelectItem>
-              <SelectItem value="enhancement">Enhancement</SelectItem>
-              <SelectItem value="general">General</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div>
-        <Label className="dark:text-slate-700">Requester Email</Label>
-        <Input
-          type="email"
-          value={formData.requesterEmail}
-          onChange={(e) =>
-            setFormData({ ...formData, requesterEmail: e.target.value })
-          }
-          className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
-        />
-      </div>
-      <DialogFooter>
-        <Button
-          type="submit"
-          disabled={isLoading || !formData.title}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {isLoading ? "Creating..." : "Create Ticket"}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-interface TicketComment {
-  id: number;
-  ticket_id: number;
-  author_id?: number;
-  author_name?: string;
-  body: string;
-  created_at: string;
-}
-
-function TicketDetailView({
-  ticket,
-  onStatusChange,
-  onDelete,
-  isUpdating,
-}: {
-  ticket: Ticket;
-  onStatusChange: (status: Ticket["status"]) => void;
-  onDelete: () => void;
-  isUpdating: boolean;
-}) {
-  const { user } = useAuth();
+  const t = useSupportCopy();
   const queryClient = useQueryClient();
-  const [commentText, setCommentText] = useState("");
-
-  const { data: comments = [], isLoading: commentsLoading } = useQuery<
-    TicketComment[]
-  >({
-    queryKey: ["ticket-comments", ticket.id],
-    queryFn: async () => {
-      const res = await authenticatedFetch(
-        `/api/tickets/${ticket.id}/comments`,
-      );
-      if (!res.ok) throw new Error("Failed to fetch comments");
-      return res.json();
-    },
+  const ticket = useQuery<SupportTicket>({
+    queryKey: ["support-detail", id, actor.id],
+    initialData: initial,
+    queryFn: () => ticketRequest(`/api/tickets/${id}`),
+    refetchInterval: 15000,
   });
-
-  const addCommentMutation = useMutation({
-    mutationFn: async (body: string) => {
-      const res = await authenticatedFetch(
-        `/api/tickets/${ticket.id}/comments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            body,
-            authorName: user?.username || user?.email,
-          }),
-        },
-      );
-      if (!res.ok) throw new Error("Failed to add comment");
-      return res.json();
-    },
+  const comments = useQuery<Comment[]>({
+    queryKey: ["support-comments", id, actor.id],
+    queryFn: () => ticketRequest(`/api/tickets/${id}/comments`), refetchInterval: 15000,
+  });
+  const history = useQuery<TicketEvent[]>({
+    queryKey: ["support-history", id, actor.id],
+    queryFn: () => ticketRequest(`/api/tickets/${id}/events`), refetchInterval: 15000,
+  });
+  const staffList = useQuery<{ id: number; username: string; role: string }[]>({
+    queryKey: ["support-staff", actor.id],
+    enabled: isTicketManager(actor),
+    queryFn: () => ticketRequest("/api/tickets/staff"),
+  });
+  const [status, setStatus] = useState<TicketStatus | "">("");
+  const [reason, setReason] = useState("");
+  const [pendingReason, setPendingReason] = useState<(typeof PENDING_REASONS)[number]>("customer");
+  const [followUpAt, setFollowUpAt] = useState("");
+  const [assigneeId, setAssigneeId] = useState("");
+  const [priority, setPriority] = useState("");
+  const [body, setBody] = useState("");
+  const [internal, setInternal] = useState(false);
+  const mutation = useMutation({
+    mutationFn: ({ path, method, input }: { path: string; method: string; input: object }) => ticketRequest(path, method, input),
     onSuccess: () => {
-      setCommentText("");
-      queryClient.invalidateQueries({
-        queryKey: ["ticket-comments", ticket.id],
-      });
+      setReason(""); setBody(""); setStatus(""); setPriority("");
+      refresh();
+      void queryClient.invalidateQueries({ queryKey: ["support-comments", id] });
+      void queryClient.invalidateQueries({ queryKey: ["support-history", id] });
     },
   });
-
-  const slaPercent = calculateSLAPercentage(
-    ticket.created_at,
-    ticket.sla_target_hours,
-  );
-
-  const getSLAColor = (percentage: number, breached: boolean) => {
-    if (breached) return "text-red-600 dark:text-red-400";
-    if (percentage >= 80) return "text-orange-600 dark:text-orange-400";
-    if (percentage >= 60) return "text-yellow-600 dark:text-yellow-400";
-    return "text-green-600 dark:text-green-400";
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
-          <Select value={ticket.status} onValueChange={onStatusChange}>
-            <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900 mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="in-progress">In Progress</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Priority</p>
-          <p className="font-semibold dark:text-slate-900 capitalize">
-            {ticket.priority}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Category</p>
-          <p className="font-semibold dark:text-slate-900 capitalize">
-            {ticket.category}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Source</p>
-          <p className="font-semibold dark:text-slate-900 capitalize">
-            {ticket.source}
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          SLA Status
-        </p>
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <div className="h-3 rounded-full bg-gradient-to-r from-green-500 to-red-500 overflow-hidden">
-              <div
-                className="h-full bg-white"
-                style={{ width: `${100 - slaPercent}%` }}
-              />
-            </div>
+  const current = ticket.data;
+  const work = current ? canWorkTicket(actor, current) : false;
+  const submit = (path: string, method: string, input: object) => mutation.mutate({ path: `/api/tickets/${id}${path}`, method, input });
+  const changes = current ? TICKET_STATUSES.filter((next) => !transitionError(actor, current, next)) : [];
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto bg-white text-slate-900">
+      <DialogTitle>#{id} {current?.title}</DialogTitle><DialogDescription>{t("policy")}</DialogDescription>
+      {[ticket.error, comments.error, history.error, staffList.error, mutation.error].filter(Boolean).map((error, index) =>
+        <p role="alert" key={index}>{errorText(error)}</p>)}
+      {current && <>
+        <p className="whitespace-pre-wrap break-words">{current.description}</p>
+        <p>{t("status")}: {t(current.status)} · {t(current.priority)}</p>
+        {current.follow_up_at && <p>{t("followUp")}: {new Date(current.follow_up_at).toLocaleString()}</p>}
+        {current.abandonment_proposed_at && <p className="text-amber-800">{t("abandonment")}</p>}
+        {isTicketStaff(actor) && current.assignee_id === null && !TERMINAL_STATUSES.includes(current.status) &&
+          <Button disabled={mutation.isPending} onClick={() => submit("/assign", "PUT", { assigneeId: actor.id, reason: t("claim") })}>{t("claim")}</Button>}
+        {(changes.length > 0 || isTicketManager(actor)) && <form className="space-y-3 rounded-lg border p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit("", "PUT", {
+              ...(status ? { status } : {}), ...(priority ? { priority } : {}), reason,
+              ...(status === "pending" ? { pendingReason, followUpAt: new Date(followUpAt).toISOString() } : {}),
+            });
+          }}>
+          <div className="flex flex-wrap gap-3">
+            <label>{t("status")}<select className={`${selectClass} ml-2`} value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | "")}>
+              <option value="">{t(current.status)}</option>{changes.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+            </select></label>
+            {isTicketManager(actor) && <label>{t("priority")}<select className={`${selectClass} ml-2`} value={priority} onChange={(e) => setPriority(e.target.value)}>
+              <option value="">{t(current.priority)}</option>{TICKET_PRIORITIES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+            </select></label>}
           </div>
-          <span
-            className={`font-semibold ${getSLAColor(slaPercent, ticket.sla_breached)}`}
-          >
-            {slaPercent}% {ticket.sla_breached ? "BREACHED" : ""}
-          </span>
-        </div>
-      </div>
-
-      <div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Description</p>
-        <p className="mt-2 text-gray-900 dark:text-slate-900">
-          {ticket.description || "No description provided"}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Created At</p>
-          <p className="font-semibold dark:text-slate-900">
-            {new Date(ticket.created_at).toLocaleDateString()}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Reporter</p>
-          <p className="font-semibold dark:text-slate-900">
-            {ticket.reporter || "Unknown"}
-          </p>
-        </div>
-      </div>
-
-      {/* Comments / Activity thread — Remedy-style */}
-      <div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-          Comments
-        </p>
-        <div className="max-h-52 overflow-y-auto space-y-3 border dark:border-slate-600 rounded-lg p-3 bg-slate-50 dark:bg-slate-900/40">
-          {commentsLoading ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Loading comments...
-            </p>
-          ) : comments.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              No comments yet — be the first to reply.
-            </p>
-          ) : (
-            comments.map((c) => (
-              <div
-                key={c.id}
-                className="text-sm bg-white dark:bg-slate-800 rounded-lg p-3 border dark:border-slate-700"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold dark:text-slate-900">
-                    {c.author_name || "Anonymous"}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(c.created_at).toLocaleString()}
-                  </span>
-                </div>
-                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                  {c.body}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-        <div className="flex gap-2 mt-3">
-          <Textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Leave a comment..."
-            className="dark:bg-slate-700 dark:border-slate-600 dark:text-slate-900"
-            rows={2}
-          />
-          <Button
-            onClick={() => {
-              if (commentText.trim())
-                addCommentMutation.mutate(commentText.trim());
-            }}
-            disabled={!commentText.trim() || addCommentMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 self-end"
-          >
-            {addCommentMutation.isPending ? "Posting..." : "Post"}
-          </Button>
-        </div>
-      </div>
-
-      <DialogFooter className="flex gap-2 justify-end">
-        <Button
-          variant="destructive"
-          onClick={onDelete}
-          disabled={isUpdating}
-          className="bg-red-600 hover:bg-red-700"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
-      </DialogFooter>
-    </div>
-  );
-}
-
-function calculateSLAPercentage(createdAt: string, targetHours: number) {
-  const elapsed =
-    (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60);
-  return Math.min(Math.round((elapsed / targetHours) * 100), 100);
+          {status === "pending" && <>
+            <label className="block">{t("pendingReason")}<select className={`${selectClass} ml-2`} value={pendingReason}
+              onChange={(e) => setPendingReason(e.target.value as (typeof PENDING_REASONS)[number])}>
+              {PENDING_REASONS.map((value) => <option key={value} value={value}>{t(value)}</option>)}</select></label>
+            <label className="block">{t("followUp")}<Input type="datetime-local" required value={followUpAt} onChange={(e) => setFollowUpAt(e.target.value)} /></label>
+          </>}
+          <label className="block">{t("reason")}<Textarea required maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+          <Button type="submit" disabled={mutation.isPending || (!status && !priority)}>{t("save")}</Button>
+        </form>}
+        {isTicketManager(actor) && !TERMINAL_STATUSES.includes(current.status) && <form className="space-y-3 rounded-lg border p-4"
+          onSubmit={(e) => { e.preventDefault(); submit("/assign", "PUT", { assigneeId: assigneeId ? Number(assigneeId) : null, reason }); }}>
+          <label>{t("assignee")}<select className={`${selectClass} ml-2`} value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+            <option value="">{t("unassigned")}</option>{staffList.data?.map((person) => <option key={person.id} value={person.id}>{person.username} · {person.role}</option>)}
+          </select></label>
+          <label className="block">{t("reason")}<Input required value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+          <Button disabled={mutation.isPending} type="submit">{t("assign")}</Button>
+        </form>}
+        {work && <Button variant="outline" disabled={mutation.isPending || !reason.trim()}
+          onClick={() => submit("/escalate", "POST", { reason })}>{t("escalate")}</Button>}
+        <section><h2 className="font-bold">{t("comments")}</h2>
+          {comments.data?.map((comment) => <article key={comment.id} className={`my-3 rounded-lg border p-3 ${comment.internal ? "border-amber-400 bg-amber-50" : "bg-slate-50"}`}>
+            <p className="text-xs">{comment.author_name} · {new Date(comment.created_at).toLocaleString()} · {t(comment.internal ? "note" : "reply")}</p>
+            <p className="mt-2 whitespace-pre-wrap break-words">{comment.body}</p>
+          </article>)}
+          {(!isTicketStaff(actor) || work) && <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); submit("/comments", "POST", { body, internal }); }}>
+            <label className="block">{t(internal ? "note" : "reply")}<Textarea required maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+            {isTicketStaff(actor) && <label className="flex items-center gap-2"><input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />{t("note")}</label>}
+            <Button disabled={mutation.isPending} type="submit">{t("send")}</Button>
+          </form>}
+        </section>
+        <section><h2 className="font-bold">{t("history")}</h2><ol className="mt-2 space-y-2 text-xs">
+          {history.data?.map((entry) => <li key={entry.id} className="break-words border-b pb-2">
+            {new Date(entry.created_at).toLocaleString()} · {entry.kind} {entry.internal && `· ${t("note")}`}
+            <pre className="mt-1 whitespace-pre-wrap">{JSON.stringify(entry.details, null, 2)}</pre>
+          </li>)}
+        </ol></section>
+      </>}
+    </DialogContent>
+  </Dialog>;
 }
 
 export default Tickets;

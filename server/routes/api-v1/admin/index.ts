@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db, pool } from "../../../db";
 import {
   requireAuth,
-  requireJoelSuperadminForMutations,
+  requireOwner,
 } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import {
@@ -24,7 +24,7 @@ import rolesRouter from "./roles";
 import communitiesRouter from "./communities";
 
 const router = Router();
-router.use(requireJoelSuperadminForMutations);
+router.use(requireOwner);
 
 const ADMIN_ANALYTICS_PERIODS: Record<string, number> = {
   day: 1,

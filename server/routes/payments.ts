@@ -36,6 +36,7 @@ import {
 } from "../utils/commercial-gates";
 
 const router = Router();
+router.use("/admin", requireSuperuser());
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAYMENT METHOD AVAILABILITY MAP

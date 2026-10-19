@@ -128,59 +128,10 @@ export function getDashboardTheme(
 }
 
 export function normalizeAccountRoleFromEmail(
-  email?: string,
+  _email?: string,
   fallbackRole?: string,
 ): string {
-  const normalizedEmail = (email || "").toLowerCase();
   const normalizedRole = (fallbackRole || "").toLowerCase();
-
-  if (
-    normalizedEmail.includes("@versoair-gu") ||
-    normalizedEmail.includes("@versoair.gu") ||
-    normalizedEmail.includes("@versoair-general") ||
-    normalizedEmail.includes("@versoair-generaluser")
-  ) {
-    return "user";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-geoa") ||
-    normalizedEmail.includes("@versoair.geoa") ||
-    normalizedEmail.includes("@versoair-geo-admin") ||
-    normalizedEmail.includes("@versoair-geo")
-  ) {
-    return "geo-admin";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-supa") ||
-    normalizedEmail.includes("@versoair.supa") ||
-    normalizedEmail.includes("@versoair-superadmin") ||
-    normalizedEmail.includes("@versoair-admin")
-  ) {
-    return "superuser";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-art") ||
-    normalizedEmail.includes("@versoair.art") ||
-    normalizedEmail.includes("@versoair-artist")
-  ) {
-    return "artist";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-cr") ||
-    normalizedEmail.includes("@versoair.cr") ||
-    normalizedEmail.includes("@versoair-creator") ||
-    normalizedEmail.includes("@versoair-creator-user") ||
-    normalizedEmail.includes("@versoair-stream") ||
-    normalizedEmail.includes("@versoair-streamer") ||
-    normalizedEmail.includes("@versoair-music") ||
-    normalizedEmail.includes("@versoair-musical")
-  ) {
-    return "streamer";
-  }
 
   if (
     normalizedRole &&
@@ -211,7 +162,7 @@ export function getDashboardDestination(
 
   switch (family) {
     case "staff":
-      return { path: "/geo-admin/dashboard", label: "Staff Dashboard" };
+      return { path: "/geo-admin/workspace", label: "Staff Dashboard" };
     case "geo-admin":
       return { path: "/geo-admin/dashboard", label: "GeoAdmin Dashboard" };
     case "artist":

@@ -73,7 +73,7 @@ export default function OAuthComplete() {
             const owned: string[] =
               caps?.capabilities?.portals || caps?.portals || [];
             const hrefs: Record<string, string> = {
-              admin: "/geo-admin/dashboard",
+              admin: "/geo-admin/workspace",
               artist: "/artist-portal",
               artisan: "/artisans-portal",
               contractor: "/services/contractors",

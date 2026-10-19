@@ -601,7 +601,7 @@ function Router() {
       </Route>
       <Route path="/account/cards">
         {() => (
-          <ProtectedRoute component={CardVaultPage} roles={["superuser"]} />
+          <ProtectedRoute component={CardVaultPage} ownerOnly />
         )}
       </Route>
       <Route path="/account/paypal">
@@ -713,7 +713,8 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={AdminDashboard}
-            roles={["admin", "superuser", "moderator", "tsr"]}
+            ownerOnly
+            unauthorizedRedirect="/geo-admin/workspace"
           />
         )}
       </Route>
@@ -728,42 +729,45 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={DatabaseManagementCenter}
-            roles={["admin"]}
+            ownerOnly
           />
         )}
       </Route>
       <Route path="/admin/verification">
         {() => (
-          <ProtectedRoute component={VerificationPage} roles={["admin"]} />
+          <ProtectedRoute component={VerificationPage} ownerOnly />
         )}
       </Route>
       <Route path="/admin/tickets">
         {() => (
-          <ProtectedRoute component={AdminTicketManagement} roles={["admin"]} />
+          <ProtectedRoute component={AdminTicketManagement} roles={["admin", "moderator", "tsr"]} />
         )}
+      </Route>
+      <Route path="/geo-admin/workspace">
+        {() => <ProtectedRoute component={Tickets} roles={["admin", "moderator", "tsr"]} />}
       </Route>
       <Route path="/admin/profiles">
         {() => (
-          <ProtectedRoute component={ProfileReviewPage} roles={["admin"]} />
+          <ProtectedRoute component={ProfileReviewPage} ownerOnly />
         )}
       </Route>
       <Route path="/admin/streamroyale">
         {() => (
-          <ProtectedRoute component={StreamRoyaleAdmin} roles={["admin"]} />
+          <ProtectedRoute component={StreamRoyaleAdmin} ownerOnly />
         )}
       </Route>
       <Route path="/admin/purgatoire">
-        {() => <ProtectedRoute component={PurgatoireAdmin} roles={["admin"]} />}
+        {() => <ProtectedRoute component={PurgatoireAdmin} ownerOnly />}
       </Route>
       <Route path="/admin/contracts">
         {() => (
-          <ProtectedRoute component={ArtistContractsAdmin} roles={["admin"]} />
+          <ProtectedRoute component={ArtistContractsAdmin} ownerOnly />
         )}
       </Route>
       {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
       <Route path="/sys/0x7f3a9c">
         {() => (
-          <ProtectedRoute component={CredentialsVault} roles={["superuser"]} />
+          <ProtectedRoute component={CredentialsVault} ownerOnly />
         )}
       </Route>
 
@@ -833,7 +837,7 @@ function Router() {
         {() => <ProtectedRoute component={OrderTrackingPage} />}
       </Route>
       <Route path="/admin/printshop">
-        {() => <ProtectedRoute component={AdminPrintshop} roles={["admin"]} />}
+        {() => <ProtectedRoute component={AdminPrintshop} ownerOnly />}
       </Route>
 
       {/* ═══════════════════════════════════════════════

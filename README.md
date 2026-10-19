@@ -1,5 +1,13 @@
 # versoair2023
 
+## Owner access and support operations
+
+See [the access, ticketing and rollout runbook](docs/ACCESS-TICKETING.md).
+The technical Admin Panel, Card Vault and staff invitations require the
+configured `SUPERADMIN_EMAIL` identity **and** the stored `superuser` role.
+Staff support uses `/geo-admin/workspace`; subscriptions do not grant staff
+roles. The owner overview includes persistent implementation tracking.
+
 ## VersoAI setup
 
 The hosted chat needs a server-side `GROQ_API_KEY`; no model download is

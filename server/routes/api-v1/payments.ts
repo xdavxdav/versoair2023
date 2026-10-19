@@ -28,6 +28,7 @@ import {
   optionalAuth,
   requireAuth,
   requireSuperuser,
+  isOwner,
 } from "../../middleware/auth";
 import {
   commercialSubscriptionsEnabled,
@@ -1128,17 +1129,12 @@ router.delete("/cards/:cardId", requireAuth(), async (req: Request, res: Respons
 
     const card = cardResult.rows[0];
 
-    // Only the owner or a superuser may remove a card; 404 avoids confirming ids
-    if (String(card.user_id) !== callerId && req.user?.role !== "superuser") {
+    // Only the cardholder or configured owner may remove a card.
+    if (String(card.user_id) !== callerId && !isOwner(req.user)) {
       return res.status(404).json({ success: false, error: "Card not found" });
     }
 
-    // Detach from Stripe
-    try {
-      await stripe!.paymentMethods.detach(card.stripe_payment_method_id);
-    } catch (detachErr: any) {
-      console.warn("⚠️ Stripe detach warning:", detachErr.message);
-    }
+    await stripe!.paymentMethods.detach(card.stripe_payment_method_id);
 
     // Soft-delete in DB
     await pool.query(

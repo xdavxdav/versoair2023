@@ -21,55 +21,10 @@ const router = Router();
 // ─── Shared helper: compute capabilities for a user ────────────────────────
 
 function normalizeAccountRoleFromEmail(
-  email?: string,
+  _email?: string,
   fallbackRole?: string,
 ): string {
-  const normalizedEmail = (email || "").toLowerCase();
   const normalizedRole = (fallbackRole || "").toLowerCase();
-
-  if (
-    normalizedEmail.includes("@versoair-gu") ||
-    normalizedEmail.includes("@versoair.gu") ||
-    normalizedEmail.includes("@versoair-general") ||
-    normalizedEmail.includes("@versoair-generaluser")
-  ) {
-    return "user";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-geoa") ||
-    normalizedEmail.includes("@versoair.geoa") ||
-    normalizedEmail.includes("@versoair-geo-admin") ||
-    normalizedEmail.includes("@versoair-geo")
-  ) {
-    return "geo-admin";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-supa") ||
-    normalizedEmail.includes("@versoair.supa") ||
-    normalizedEmail.includes("@versoair-superadmin") ||
-    normalizedEmail.includes("@versoair-admin")
-  ) {
-    return "superuser";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-art") ||
-    normalizedEmail.includes("@versoair.art") ||
-    normalizedEmail.includes("@versoair-artist")
-  ) {
-    return "artist";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-cr") ||
-    normalizedEmail.includes("@versoair.cr") ||
-    normalizedEmail.includes("@versoair-creator") ||
-    normalizedEmail.includes("@versoair-creator-user")
-  ) {
-    return "creator";
-  }
 
   if (
     [

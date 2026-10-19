@@ -11,6 +11,7 @@ import oauthRouter from "./routes/oauth";
 import socialApiRoutes from "./routes/social-api";
 import faqApiRoutes from "./routes/faq-api";
 import ticketsRouter from "./routes/tickets";
+import implementationTrackingRouter from "./routes/implementation-tracking";
 import { requireAdminElevation } from "./middleware/admin-elevation";
 import jobsRouter from "./routes/jobs";
 import musicRouter from "./routes/music";
@@ -59,7 +60,7 @@ import communityRouter from "./routes/community";
 import geoActionsRouter from "./routes/geo-actions";
 import contractorPipelineRouter from "./routes/contractor-pipeline";
 import purgatoireRouter from "./routes/purgatoire";
-import { requireAuth } from "./middleware/auth";
+import { requireAuth, requireOwner, isOwner } from "./middleware/auth";
 import translationsRouter from "./routes/translations";
 
 // Map snake_case table names to camelCase schema exports
@@ -117,6 +118,13 @@ import seedRouter from "./routes/seed";
 import systemRouter from "./routes/system";
 import usersRouter from "./routes/users";
 export async function registerRoutes(app: Express) {
+  app.use("/api/admin", requireOwner);
+  app.get("/auth/owner-status", requireAuth(), (req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({
+      isOwner: isOwner(req.user),
+    });
+  });
   app.use("/api/translations", translationsRouter);
   app.get("/auth/signup", (_req, res) => {
     res.redirect(302, "/auth/signin?mode=register");
@@ -198,6 +206,7 @@ export async function registerRoutes(app: Express) {
 
   // Register extracted domain routers
   app.use("/api/tickets", ticketsRouter);
+  app.use("/api/implementation-tracking", implementationTrackingRouter);
   app.use("/api/jobs", jobsRouter);
   app.use("/api/music", musicRouter);
   app.use("/api/notifications", notificationsRouter);

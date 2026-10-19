@@ -13,6 +13,7 @@
 
 import { pool } from "../db";
 import type { PoolClient } from "pg";
+import { TICKET_SCHEMA_UPGRADES } from "./ticket-schema";
 
 export async function ensureAllTables(
   connect: () => Promise<PoolClient> = () => pool.connect(),
@@ -77,6 +78,10 @@ export async function ensureAllTables(
       } catch (err: any) {
         recordSchemaFailure(`ensure table ${stmt.table}`, err);
       }
+    }
+
+    for (const statement of TICKET_SCHEMA_UPGRADES) {
+      await client.query(statement);
     }
 
     const systemRoles = [
@@ -454,6 +459,20 @@ const TABLE_STATEMENTS: TableDef[] = [
       oauth_provider_id TEXT,
       gate_username TEXT UNIQUE,
       portal_access JSONB DEFAULT '["general"]',
+      created_at TIMESTAMP DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "active_sessions",
+    sql: `CREATE TABLE IF NOT EXISTS active_sessions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash VARCHAR(64) NOT NULL UNIQUE,
+      device TEXT, ip VARCHAR(45), country VARCHAR(2), city TEXT,
+      is_revoked BOOLEAN DEFAULT false,
+      revoked_at TIMESTAMP, revoked_reason VARCHAR(50),
+      last_active TIMESTAMP DEFAULT NOW(),
+      expires_at TIMESTAMP NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     )`,
   },

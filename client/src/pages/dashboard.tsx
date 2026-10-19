@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import SupportHandoff from "@/components/SupportHandoff";
 import {
   Card,
   CardContent,
@@ -832,7 +833,7 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
 
     // Persist user message to DB
     try {
-      await fetch(
+      const response = await fetch(
         `${API_BASE_URL}/api/inbox/conversations/${activeConversationId}/messages`,
         {
           method: "POST",
@@ -845,10 +846,14 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
           }),
         },
       );
+      if (!response.ok) throw new Error("Could not save support message");
       await refetchMessages();
       queryClient.invalidateQueries({ queryKey: ["inbox-conversations"] });
-    } catch {
-      /* queued in Redis by server */
+    } catch (error) {
+      console.error("[SUPPORT] Message persistence failed:", error);
+      setNewMessage(text);
+      toast({ title: "Message not saved", description: "Please retry before requesting human support.", variant: "destructive" });
+      return;
     }
 
     // If this is the support thread, trigger VersoAI via SSE
@@ -1218,6 +1223,7 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
 
             {/* Input */}
             <div className="p-4 border-t border-slate-200">
+              {activeConversation.type === "support" && activeConversationId && <SupportHandoff key={activeConversationId} conversationId={activeConversationId} />}
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Textarea
@@ -2419,8 +2425,8 @@ export default function UserDashboard() {
                     {isStaffRole && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/geo-admin/dashboard">
-                            <MapPin className="h-4 w-4 mr-2" /> GEO Admin Panel
+                          <Link href="/geo-admin/workspace">
+                            <MapPin className="h-4 w-4 mr-2" /> Staff workspace
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -2724,7 +2730,7 @@ export default function UserDashboard() {
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Link href="/geo-admin/dashboard?from=sv">
+                  <Link href="/geo-admin/workspace">
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-700/50 hover:bg-blue-500/20 text-slate-300 hover:text-blue-400 transition-all cursor-pointer text-sm">
                       <MapPin className="h-4 w-4" /> GEO Admin
                     </div>

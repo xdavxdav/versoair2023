@@ -170,7 +170,7 @@ export default function GeoAdminAuthGate({
           isStaffCodeEntry &&
           (data.user?.role === "superuser" || data.user?.role === "admin")
         ) {
-          navigateTo("/geo-admin/dashboard");
+          navigateTo("/geo-admin/workspace");
         }
         onSignInSuccess(
           isStaffCodeEntry

@@ -359,6 +359,25 @@ router.get("/support/stream", async (req: Request, res: Response) => {
     return;
   }
 
+  if (convId) {
+    try {
+      const [conversation] = await db.select({ id: schema.inboxConversations.id })
+        .from(schema.inboxConversations).where(and(
+          eq(schema.inboxConversations.id, convId),
+          eq(schema.inboxConversations.userId, Number(user.userId)),
+          eq(schema.inboxConversations.type, "support"),
+        )).limit(1);
+      if (!conversation) {
+        res.status(404).json({ error: "Support conversation not found" });
+        return;
+      }
+    } catch (error) {
+      console.error("[SUPPORT] Conversation authorization failed:", error);
+      res.status(503).json({ error: "Could not verify support conversation access" });
+      return;
+    }
+  }
+
   // ── SSE headers ─────────────────────────────────────────────────────────────
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache, no-transform");

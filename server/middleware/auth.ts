@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
+import { isConfiguredOwner } from "@shared/owner-access";
 
 export interface AuthUser {
   userId: string;
@@ -23,6 +24,7 @@ export interface AuthUser {
     | "user"
     | "artist"
     | "listener";
+  subscriptionTier?: string;
 }
 
 declare global {
@@ -62,12 +64,8 @@ function extractToken(req: Request): string | null {
  * Check if a JWT token has been revoked in the active_sessions table.
  * Returns true if revoked, false if not found or not revoked.
  *
- * On a DB error (e.g. missing table pre-migration, connection failure), the
- * behavior depends on environment:
- *  - production: fail CLOSED — treat the request as revoked (reject it)
- *    rather than silently letting a possibly-revoked session through.
- *  - development: fail OPEN — don't block local work if the table hasn't
- *    been migrated yet.
+ * Database failures are surfaced to the caller; access is never granted
+ * without checking revocation.
  */
 async function isSessionRevoked(token: string): Promise<boolean> {
   try {
@@ -81,13 +79,8 @@ async function isSessionRevoked(token: string): Promise<boolean> {
     if (!session) return false;
     return session.isRevoked === true;
   } catch (err) {
-    const isProd = process.env.NODE_ENV === "production";
-    console.error(
-      "[AUTH] Session revocation check failed — failing",
-      isProd ? "closed (blocking request)" : "open (dev mode)",
-      err,
-    );
-    return isProd;
+    console.error("[AUTH] Session revocation check failed:", err);
+    throw err;
   }
 }
 
@@ -319,7 +312,11 @@ export async function globalAuthGate(
     }
 
     const [dbUser] = await db
-      .select({ email: schema.users.email, role: schema.users.role })
+      .select({
+        email: schema.users.email,
+        role: schema.users.role,
+        subscriptionTier: schema.users.subscriptionTier,
+      })
       .from(schema.users)
       .where(eq(schema.users.id, Number(userId)))
       .limit(1);
@@ -337,13 +334,18 @@ export async function globalAuthGate(
       id: String(userId),
       email: dbUser.email,
       role: dbUser.role as AuthUser["role"],
+      subscriptionTier: dbUser.subscriptionTier || "free",
     };
 
     // 4. Superuser gets unrestricted free pass
     // 5. All other authenticated users pass through the gate
     //    (route-level requireAuth() still enforces role checks downstream)
     next();
-  } catch {
+  } catch (error) {
+    if (!(error instanceof jwt.JsonWebTokenError)) {
+      console.error("[AUTH] Authentication check failed:", error);
+      return res.status(503).json({ success: false, error: { code: "AUTHORIZATION_CHECK_FAILED", message: "Authentication service unavailable" } });
+    }
     return res.status(401).json({
       success: false,
       status: 401,
@@ -390,8 +392,18 @@ export function requireAuth(allowedRoles?: string[]) {
         });
       }
 
+      if (await isSessionRevoked(token)) {
+        return res.status(401).json({
+          success: false,
+          error: { code: "SESSION_REVOKED", message: "Session has been revoked" },
+        });
+      }
       const [dbUser] = await db
-        .select({ email: schema.users.email, role: schema.users.role })
+        .select({
+          email: schema.users.email,
+          role: schema.users.role,
+          subscriptionTier: schema.users.subscriptionTier,
+        })
         .from(schema.users)
         .where(eq(schema.users.id, Number(userId)))
         .limit(1);
@@ -409,6 +421,7 @@ export function requireAuth(allowedRoles?: string[]) {
         id: String(userId),
         email: dbUser.email,
         role: dbUser.role as AuthUser["role"],
+        subscriptionTier: dbUser.subscriptionTier || "free",
       };
 
       // Superuser always has full access — bypass role checks
@@ -429,7 +442,11 @@ export function requireAuth(allowedRoles?: string[]) {
 
       req.user = user;
       next();
-    } catch {
+    } catch (error) {
+      if (!(error instanceof jwt.JsonWebTokenError)) {
+        console.error("[AUTH] Authorization check failed:", error);
+        return res.status(503).json({ success: false, error: { code: "AUTHORIZATION_CHECK_FAILED", message: "Authentication service unavailable" } });
+      }
       return res.status(401).json({
         success: false,
         status: 401,
@@ -439,16 +456,32 @@ export function requireAuth(allowedRoles?: string[]) {
   };
 }
 
-/** Restrict highly sensitive financial and credential operations to superusers. */
+/** Compatibility name for the owner-only financial boundary. */
 export function requireSuperuser() {
-  return requireAuth(["superuser"]);
+  return requireOwner;
+}
+
+export function isOwner(user: Parameters<typeof isConfiguredOwner>[0]): boolean {
+  return isConfiguredOwner(user, process.env.SUPERADMIN_EMAIL);
+}
+
+export function requireOwner(req: Request, res: Response, next: NextFunction) {
+  return requireAuth(["superuser"])(req, res, () => {
+    if (!isOwner(req.user)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: "OWNER_ONLY",
+          message: "This area is restricted to the configured platform owner.",
+        },
+      });
+    }
+    next();
+  });
 }
 
 /**
- * Allow read-only admin-panel access to authorized roles, but reserve every
- * mutation on admin/database routers for Joel's named superadmin account.
- * The identity is resolved from the database, never from a client-provided
- * username or localStorage value.
+ * Geo-action reads use their own scope checks; mutations require the owner.
  */
 export function requireJoelSuperadminForMutations(
   req: Request,
@@ -459,63 +492,7 @@ export function requireJoelSuperadminForMutations(
     return next();
   }
 
-  const userId = Number(req.user?.userId);
-  if (!Number.isInteger(userId) || userId <= 0) {
-    return res.status(401).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Authentication required" },
-    });
-  }
-
-  void db
-    .select({
-      email: schema.users.email,
-      username: schema.users.username,
-      gateUsername: schema.users.gateUsername,
-      role: schema.users.role,
-    })
-    .from(schema.users)
-    .where(eq(schema.users.id, userId))
-    .limit(1)
-    .then(([user]) => {
-      const username = String(user?.username || "").toLowerCase();
-      const gateUsername = String(user?.gateUsername || "").toLowerCase();
-      const role = String(user?.role || "").toLowerCase();
-      const configuredOwnerEmail = String(process.env.SUPERADMIN_EMAIL || "")
-        .trim()
-        .toLowerCase();
-      const isNamedOwner =
-        username === "joel_007" || gateUsername === "joel_007";
-      const isOwner =
-        ["superuser", "superadmin"].includes(role) &&
-        (configuredOwnerEmail
-          ? String(user?.email || "").toLowerCase() === configuredOwnerEmail
-          : process.env.NODE_ENV !== "production" && isNamedOwner);
-
-      if (!isOwner) {
-        res.status(403).json({
-          success: false,
-          error: {
-            code: "JOEL_SUPERADMIN_ONLY",
-            message:
-              "Database mutations are restricted to Joel's superadmin account.",
-          },
-        });
-        return;
-      }
-
-      next();
-    })
-    .catch((error) => {
-      console.error("[AUTH] Failed to verify mutation owner:", error);
-      res.status(500).json({
-        success: false,
-        error: {
-          code: "AUTHORIZATION_CHECK_FAILED",
-          message: "Could not verify mutation access",
-        },
-      });
-    });
+  return requireOwner(req, res, next);
 }
 
 /**
@@ -523,14 +500,6 @@ export function requireJoelSuperadminForMutations(
  * Doesn't fail if no token, but attaches user if valid token provided.
  */
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
-  try {
-    const token = extractToken(req);
-    if (token) {
-      const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
-      req.user = { ...decoded, id: decoded.userId };
-    }
-    next();
-  } catch {
-    next();
-  }
+  if (req.user || !extractToken(req)) return next();
+  return requireAuth()(req, res, next);
 }

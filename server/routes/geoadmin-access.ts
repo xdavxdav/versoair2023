@@ -22,7 +22,7 @@ import {
   type GeoAdminInvitableRole,
 } from "@shared/geoadmin-invitation";
 import { asyncHandler } from "../middleware/asyncHandler";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireOwner } from "../middleware/auth";
 import { invitationAcceptLimiter } from "../middleware/rate-limiter";
 import { sendGeoAdminInvitationEmail } from "../services/email-service";
 import {
@@ -39,7 +39,7 @@ import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 const router = Router();
 
 const PASSWORD_SALT_ROUNDS = 12;
-const superuserOnly = requireAuth(["superuser"]);
+const superuserOnly = requireOwner;
 
 type GeoAdminAccessEntry = {
   id: string;

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import SupportHandoff from "@/components/SupportHandoff";
 import { buildChatRequest } from "@shared/ai-chat";
 import {
   MessageSquare,
@@ -879,6 +880,8 @@ export default function VersoAIChat() {
 
           {/* Input & Voice Controls */}
           <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t border-blue-500/20 bg-slate-900/80 rounded-b-2xl shrink-0">
+            {messages.some((message) => message.role === "user") &&
+              <SupportHandoff message={[...messages].reverse().find((message) => message.role === "user")?.content} />}
             <div className="flex gap-2 items-center">
               {/* Mic Voice Button */}
               {speechSupported && (

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useOwnerAccess } from "@/hooks/use-owner-access";
 import { authenticatedFetch } from "@/lib/auth";
 import { BusinessForm } from "@/components/BusinessForm";
 import { EditBusinessForm } from "@/components/EditBusinessForm";
@@ -917,7 +918,8 @@ export default function DatabaseExpert({
 }) {
   const { logout } = useAuthContext();
   const normalizedRole = role?.toLowerCase() || "subscriber";
-  const isSuperAdmin = ["superadmin", "superuser"].includes(normalizedRole);
+  const owner = useOwnerAccess();
+  const isSuperAdmin = owner.data?.isOwner === true;
   const canManage = isSuperAdmin;
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -1500,7 +1502,7 @@ export default function DatabaseExpert({
                 </Button>
               </Link>
 
-              <Link href="/geo-admin/dashboard">
+              <Link href={canManage ? "/geo-admin/dashboard" : "/geo-admin/workspace"}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1602,11 +1604,11 @@ export default function DatabaseExpert({
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/geo-admin/dashboard"
+                      href={canManage ? "/geo-admin/dashboard" : "/geo-admin/workspace"}
                       className="cursor-pointer text-slate-300 flex items-center"
                     >
                       <Shield className="h-4 w-4 mr-2" />
-                      <span>Admin Dashboard</span>
+                      <span>{canManage ? "Owner Admin Panel" : "Staff workspace"}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -2179,7 +2181,7 @@ export default function DatabaseExpert({
                       </div>
                     </Button>
                     {canManage ? (
-                      <Link href="/geo-admin/dashboard">
+                      <Link href={canManage ? "/geo-admin/dashboard" : "/geo-admin/workspace"}>
                         <Button
                           variant="outline"
                           className="w-full justify-start gap-3 h-auto py-4 bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"

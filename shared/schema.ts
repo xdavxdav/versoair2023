@@ -938,7 +938,7 @@ export const tickets = pgTable(
     id: serial("id").primaryKey(),
     title: text("title").notNull(),
     description: text("description"),
-    status: varchar("status").default("open"), // 'open' | 'in-progress' | 'resolved' | 'closed'
+    status: varchar("status").default("open"),
     priority: varchar("priority").default("medium"), // 'critical' | 'high' | 'medium' | 'low'
     category: varchar("category").default("general"), // 'bug' | 'infrastructure' | 'ui-ux' | 'enhancement' | 'general'
     reporter: text("reporter"), // Original reporter name or ID
@@ -952,6 +952,13 @@ export const tickets = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     resolvedAt: timestamp("resolved_at"),
+    pendingReason: varchar("pending_reason"),
+    pendingSince: timestamp("pending_since", { withTimezone: true }),
+    followUpAt: timestamp("follow_up_at", { withTimezone: true }),
+    slaDueAt: timestamp("sla_due_at", { withTimezone: true }),
+    abandonmentProposedAt: timestamp("abandonment_proposed_at", { withTimezone: true }),
+    conversationId: integer("conversation_id"),
+    duplicateOf: integer("duplicate_of"),
   },
   (t) => ({
     statusIdx: index("tickets_status_idx").on(t.status),
@@ -983,6 +990,35 @@ export type Ticket = typeof tickets.$inferSelect;
 export type InsertTicket = typeof tickets.$inferInsert;
 export type TicketAssignment = typeof ticketAssignments.$inferSelect;
 export type InsertTicketAssignment = typeof ticketAssignments.$inferInsert;
+
+export const ticketEvents = pgTable("ticket_events", {
+  id: serial("id").primaryKey(),
+  ticketId: integer("ticket_id").notNull().references(() => tickets.id),
+  actorId: integer("actor_id").references(() => users.id),
+  kind: varchar("kind").notNull(),
+  details: jsonb("details").notNull().default({}),
+  internal: boolean("internal").notNull().default(false),
+  dedupeKey: varchar("dedupe_key").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ ticketIdx: index("ticket_events_ticket_idx").on(t.ticketId, t.id) }));
+
+export const ticketAlerts = pgTable("ticket_alerts", {
+  id: serial("id").primaryKey(),
+  ticketId: integer("ticket_id").notNull().references(() => tickets.id),
+  kind: varchar("kind").notNull(),
+  cycleKey: varchar("cycle_key").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ cycleUnique: unique().on(t.ticketId, t.kind, t.cycleKey) }));
+
+export const implementationTracking = pgTable("implementation_tracking", {
+  lotId: varchar("lot_id").primaryKey(),
+  status: varchar("status").notNull().default("todo"),
+  evidence: text("evidence").notNull().default(""),
+  blocker: text("blocker").notNull().default(""),
+  updatedBy: integer("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 // ── UNIFIED PROFILE (master source of truth for all partner types) ────────────
 // Recycles existing business/artisan/foundation data via a migration backfill.
@@ -1284,6 +1320,7 @@ export const ticketComments = pgTable(
     authorId: integer("author_id").references(() => users.id),
     authorName: varchar("author_name"),
     body: text("body").notNull(),
+    internal: boolean("internal").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => ({

@@ -34,6 +34,7 @@ import { MusicArtistRoute } from "@/components/music/MusicProtectedRoute";
 
 // Auth
 const SignIn = lazy(() => import("@/pages/signin"));
+const TicketWorkspace = lazy(() => import("@/pages/tickets"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const PasswordPage = lazy(() => import("@/pages/password"));
@@ -127,12 +128,17 @@ function Router() {
       </Route>
       <Route path="/geo-admin/dashboard">
         <ProtectedRoute
-          roles={["admin", "superuser", "moderator", "tsr"]}
+          ownerOnly
           unauthorizedRedirect="/geo-admin"
         >
           <Suspense fallback={<PageLoader />}>
             <AdminDashboard />
           </Suspense>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/geo-admin/workspace">
+        <ProtectedRoute roles={["admin", "moderator", "tsr"]}>
+          <Suspense fallback={<PageLoader />}><TicketWorkspace /></Suspense>
         </ProtectedRoute>
       </Route>
       <Route path="/profile">

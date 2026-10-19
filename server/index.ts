@@ -101,6 +101,7 @@ import { setupCategoryIntegrityCheck } from "./services/category-integrity-check
 import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
 import { ensureAllTables } from "./services/ensure-tables";
+import { startTicketMonitor } from "./services/ticket-monitor";
 import { syncLegacyProfiles } from "./services/profile-migration";
 import { createLogger } from "./utils/logger";
 import { getPostgresErrorDetails } from "./utils/postgres-errors";
@@ -409,6 +410,7 @@ app.use((req, res, next) => {
         serverLog.info("Marketplace auto-approve cron scheduled (hourly)");
 
         setupSessionCleanup();
+        startTicketMonitor();
         serverLog.info("Session cleanup job scheduled (every 30 minutes)");
 
         if (process.env.NODE_ENV === "production") {

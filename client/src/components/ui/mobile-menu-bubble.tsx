@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { isContentNavPath } from "@/components/ContentNav";
 import { LogoutDropdown } from "@/components/ui/logout-dropdown";
+import { useOwnerAccess } from "@/hooks/use-owner-access";
 import {
   Menu,
   X,
@@ -207,6 +208,7 @@ export function MobileMenuBubble() {
   const { user, loading: authLoading } = useAuthContext();
   const dashboard = getDashboardDestination(user);
   const isSuperuser = user?.role === "superuser";
+  const owner = useOwnerAccess();
   const isAdmin = user?.role === "admin" || user?.role === "moderator";
 
   // ── Account Settings Modal ──
@@ -577,7 +579,7 @@ export function MobileMenuBubble() {
                     </button>
                   </Link>
 
-                  {(isAdmin || isSuperuser || user?.isAdmin) && (
+                  {owner.data?.isOwner && (
                     <Link href="/account/cards">
                       <button
                         onClick={close}

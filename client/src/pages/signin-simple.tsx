@@ -99,7 +99,7 @@ export default function SignIn() {
         {showSplash && (
           <AuthSplash
             action="signing-in"
-            onDone={() => navigate("/geo-admin/dashboard")}
+            onDone={() => navigate("/geo-admin/workspace")}
           />
         )}
       </AnimatePresence>

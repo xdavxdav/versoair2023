@@ -12,7 +12,7 @@ import {
   freeTrialsEnabled,
   rejectUnavailableTrial,
 } from "../utils/commercial-gates";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireOwner, isOwner } from "../middleware/auth";
 import { issueAdminElevation, clearAdminElevation, hasAdminElevation } from "../middleware/admin-elevation";
 import {
   loginLimiter,
@@ -48,6 +48,8 @@ function isPlaceholderName(name: unknown, username?: unknown): boolean {
 const router = Router();
 
 router.use(geoAdminAccessRouter);
+router.use("/admin", requireOwner);
+router.use("/tsr/whitelist", requireOwner);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -106,55 +108,10 @@ function getTokenFromRequest(req: Request): string | null {
 }
 
 function normalizeAccountRoleFromEmail(
-  email?: string,
+  _email?: string,
   fallbackRole?: string,
 ): string {
-  const normalizedEmail = (email || "").toLowerCase();
   const normalizedRole = (fallbackRole || "").toLowerCase();
-
-  if (
-    normalizedEmail.includes("@versoair-gu") ||
-    normalizedEmail.includes("@versoair.gu") ||
-    normalizedEmail.includes("@versoair-general") ||
-    normalizedEmail.includes("@versoair-generaluser")
-  ) {
-    return "user";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-geoa") ||
-    normalizedEmail.includes("@versoair.geoa") ||
-    normalizedEmail.includes("@versoair-geo-admin") ||
-    normalizedEmail.includes("@versoair-geo")
-  ) {
-    return "geo-admin";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-supa") ||
-    normalizedEmail.includes("@versoair.supa") ||
-    normalizedEmail.includes("@versoair-superadmin") ||
-    normalizedEmail.includes("@versoair-admin")
-  ) {
-    return "superuser";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-art") ||
-    normalizedEmail.includes("@versoair.art") ||
-    normalizedEmail.includes("@versoair-artist")
-  ) {
-    return "artist";
-  }
-
-  if (
-    normalizedEmail.includes("@versoair-cr") ||
-    normalizedEmail.includes("@versoair.cr") ||
-    normalizedEmail.includes("@versoair-creator") ||
-    normalizedEmail.includes("@versoair-creator-user")
-  ) {
-    return "creator";
-  }
 
   if (
     [
@@ -1139,6 +1096,7 @@ router.get(
  */
 router.get(
   "/session",
+  requireAuth(),
   asyncHandler(async (req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
 
@@ -1161,6 +1119,10 @@ router.get(
             FROM users WHERE id = ${Number(userId)} LIMIT 1`,
       );
       const dbUser = dbResult.rows?.[0] as any;
+      if (!dbUser) {
+        res.status(401).json({ success: false, user: null, message: "Account not found" });
+        return;
+      }
 
       const isAdmin =
         (dbUser?.role || decoded.role) === "admin" ||
@@ -2103,6 +2065,7 @@ router.post(
  */
 router.post(
   "/logout/:sessionId",
+  requireAuth(),
   asyncHandler(async (req: Request, res: Response) => {
     const userId = (req as any).user?.userId;
     if (!userId) {
@@ -2120,10 +2083,9 @@ router.post(
         .json({ success: false, message: "Invalid session ID" });
     }
 
-    // Only allow revoking own sessions (unless admin)
-    const userRole = (req as any).user?.role;
+    // Only the configured owner can revoke somebody else's session.
     const whereConditions = [eq(schema.activeSessions.id, sessionId)];
-    if (userRole !== "superuser" && userRole !== "admin") {
+    if (!isOwner(req.user)) {
       whereConditions.push(eq(schema.activeSessions.userId, numericId));
     }
 

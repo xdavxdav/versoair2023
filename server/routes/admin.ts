@@ -6,7 +6,7 @@ import * as os from "os";
 import { execSync } from "child_process";
 import {
   requireAuth,
-  requireJoelSuperadminForMutations,
+  requireOwner,
 } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { notifyReservationUpdate } from "../services/notification-service";
@@ -51,7 +51,7 @@ const TABLE_NAME_MAP: Record<string, string> = {
 };
 
 const router = Router();
-router.use(requireJoelSuperadminForMutations);
+router.use(requireOwner);
 
 // ========== ADMIN DATABASE MANAGEMENT ENDPOINTS ==========
 

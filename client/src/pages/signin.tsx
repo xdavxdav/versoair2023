@@ -139,7 +139,7 @@ const getPortalChoices = (userData: any): PortalChoice[] => {
           id: "geo-admin",
           name: "GeoAdmin",
           detail: "Geographic business intelligence tools",
-          path: "/geo-admin/dashboard",
+          path: "/geo-admin",
         }
       : null,
   ];
@@ -1487,7 +1487,7 @@ export default function SignIn() {
         });
         const role = (data.user.role || "user").toLowerCase();
         if (role === "admin" || role === "moderator") {
-          navigate("/geo-admin/dashboard");
+          navigate("/geo-admin/workspace");
         } else {
           navigate("/dashboard");
         }
