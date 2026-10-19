@@ -13,6 +13,7 @@ import {
   rejectUnavailableTrial,
 } from "../utils/commercial-gates";
 import { requireAuth, requireOwner, isOwner } from "../middleware/auth";
+import { ownerRoleMutationError } from "@shared/owner-access";
 import { issueAdminElevation, clearAdminElevation, hasAdminElevation } from "../middleware/admin-elevation";
 import {
   loginLimiter,
@@ -2413,8 +2414,12 @@ router.post(
   requireSuperuser,
   asyncHandler(async (req: Request, res: Response) => {
     const { userId, newRole } = req.body;
+    const ownerRoleError = ownerRoleMutationError(newRole);
+    if (ownerRoleError) {
+      res.status(403).json({ success: false, message: ownerRoleError });
+      return;
+    }
     const validRoles = [
-      "superuser",
       "admin",
       "moderator",
       "business_owner",
@@ -2425,6 +2430,10 @@ router.post(
         success: false,
         message: `userId and valid role required (${validRoles.join(", ")})`,
       });
+      return;
+    }
+    if (String(userId) === req.user?.userId) {
+      res.status(403).json({ success: false, message: "The platform owner's role cannot be changed." });
       return;
     }
     await db

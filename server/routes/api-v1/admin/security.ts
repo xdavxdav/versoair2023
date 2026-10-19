@@ -12,6 +12,7 @@ import * as schema from "../../../../shared/schema";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { encryptSetting } from "../../../utils/encrypted-settings";
+import { ownerRoleMutationError } from "@shared/owner-access";
 
 const router = Router();
 
@@ -123,12 +124,16 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const userId = Number(req.params.id);
     const { role } = req.body;
+    const ownerRoleError = ownerRoleMutationError(role);
+    if (ownerRoleError) {
+      res.status(403).json({ success: false, message: ownerRoleError });
+      return;
+    }
 
     const validRoles = [
       "user",
       "moderator",
       "admin",
-      "superuser",
       "business_owner",
     ];
     if (!role || !validRoles.includes(role)) {
@@ -137,20 +142,6 @@ router.post(
         message: `Role must be one of: ${validRoles.join(", ")}`,
       });
       return;
-    }
-
-    if (role === "superuser") {
-      const ownerEmail = String(process.env.SUPERADMIN_EMAIL || "")
-        .trim()
-        .toLowerCase();
-      if (!ownerEmail || req.user?.email.toLowerCase() !== ownerEmail) {
-        res.status(403).json({
-          success: false,
-          message:
-            "Only the designated superadmin owner can grant superuser access",
-        });
-        return;
-      }
     }
 
     // Prevent demoting self

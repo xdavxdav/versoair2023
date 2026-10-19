@@ -586,8 +586,8 @@ export default function UsersControlPanel() {
         );
       } else if (action === "role-change") {
         const newRole = prompt(
-          `Set role for ${user?.username}\n\nOptions: superuser, admin, moderator, artist, business_owner, user`,
-          user?.role,
+          `Set role for ${user?.username}\n\nOptions: admin, moderator, artist, business_owner, user\nSuperAdmin is personal and non-transferable.`,
+          user?.role === "superuser" ? "" : user?.role,
         );
         if (!newRole) return;
         const ok = await tryAction(

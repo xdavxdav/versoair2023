@@ -34,6 +34,7 @@ const { default: paymentRouter } = await import("../../server/routes/api-v1/paym
 const { default: paymentSettingsRouter } = await import("../../server/routes/payments.ts");
 const { default: invitationRouter } = await import("../../server/routes/geoadmin-access.ts");
 const { default: authRouter } = await import("../../server/routes/auth.ts");
+const { default: tableAdminRouter } = await import("../../server/routes/admin.ts");
 intervalMock.mock.restore();
 const { runTicketMonitor, dueTicketAlerts } = await import("../../server/services/ticket-monitor.ts");
 let server, origin;
@@ -97,6 +98,7 @@ before(async () => {
   app.use("/api/tickets", tickets);
   app.use("/api/implementation-tracking", tracking);
   app.use("/api/v1/admin", adminRouter);
+  app.use("/api/admin", tableAdminRouter);
   app.use("/api/manage", managementRouter);
   app.use("/api/v1/payments", paymentRouter);
   app.use("/api/payments", paymentSettingsRouter);
@@ -161,6 +163,51 @@ test("ticket scopes, claim/reassignment and internal note privacy hold through H
   assert.ok(events.body.every((entry) => !entry.internal));
   assert.equal((await request("owner", `/api/tickets/${ticket.id}`, "DELETE")).status, 405);
   assert.equal((await request("admin", `/api/tickets/${ticket.id}`, "PUT", { status: "voided", reason: "Not owner" })).status, 403);
+});
+test("even the owner cannot grant SuperAdmin through any account-management route", async () => {
+  const { rows: [reservedRole] } = await pool.query(
+    `INSERT INTO admin_roles(name,description,permissions,is_system,color)
+     VALUES ('superuser','Personal owner status','[]',true,'bg-red-100 text-red-800')
+     ON CONFLICT(name) DO UPDATE SET description=EXCLUDED.description RETURNING id`,
+  );
+  const { rows: [adminRole] } = await pool.query(
+    `INSERT INTO admin_roles(name,description,permissions,is_system,color)
+     VALUES ('admin','Operational administrator','[]',true,'bg-orange-100 text-orange-800')
+     ON CONFLICT(name) DO UPDATE SET description=EXCLUDED.description RETURNING id`,
+  );
+  for (const role of ["superuser", "superadmin", "Super_Admin", "owner"]) {
+    for (const [path, method, body] of [
+      [`/api/v1/admin/security/users/${users.otherCustomer}/change-role`, "POST", { role }],
+      ["/auth/admin/change-role", "POST", { userId: users.otherCustomer, newRole: role }],
+      ["/api/v1/admin/users", "POST", { username: `blocked_${runId}`, email: `blocked_${runId}@example.test`, password: "NotARealPassword123", role }],
+      [`/api/v1/admin/users/${users.otherCustomer}`, "PUT", { role }],
+      ["/api/v1/admin/roles", "POST", { name: role, permissions: [] }],
+      ["/api/admin/table/users", "POST", { username: `blocked_${runId}`, role }],
+      [`/api/admin/table/users/${users.otherCustomer}`, "PUT", { role }],
+    ]) {
+      assert.equal((await request("owner", path, method, body)).status, 403, `${method} ${path}: ${role}`);
+    }
+  }
+  assert.equal((await request("owner", `/api/v1/admin/roles/${reservedRole.id}/assign`, "POST", { userId: users.otherCustomer })).status, 403);
+  assert.equal((await request("owner", `/api/v1/admin/roles/${adminRole.id}/assign`, "POST", { userId: users.owner })).status, 403);
+  assert.equal((await request("owner", `/api/v1/admin/users/${users.owner}`, "PUT", { role: "admin" })).status, 403);
+  assert.equal((await request("owner", "/auth/admin/change-role", "POST", { userId: users.owner, newRole: "admin" })).status, 403);
+  assert.equal((await request("owner", `/api/admin/table/users/${users.owner}`, "PUT", { role: "admin" })).status, 403);
+  assert.equal((await request("owner", "/api/admin/execute-query", "POST", { query: "SELECT 1 AS diagnostic" })).body.data[0].diagnostic, 1);
+  for (const query of [
+    `UPDATE users SET role='superuser' WHERE id=${users.otherCustomer}`,
+    `WITH promoted AS (UPDATE users SET role='superuser' WHERE id=${users.otherCustomer} RETURNING id) SELECT * FROM promoted`,
+    `COMMIT; UPDATE users SET role='superuser' WHERE id=${users.otherCustomer}`,
+    "SET TRANSACTION READ WRITE",
+  ]) {
+    assert.equal((await request("owner", "/api/admin/execute-query", "POST", { query })).status, 403, query);
+  }
+  assert.equal((await pool.query("SELECT role FROM users WHERE id=$1", [users.otherCustomer])).rows[0].role, "user");
+  assert.equal((await pool.query("SELECT role FROM users WHERE id=$1", [users.owner])).rows[0].role, "superuser");
+
+  assert.equal((await request("owner", `/api/v1/admin/security/users/${users.otherCustomer}/change-role`, "POST", { role: "moderator" })).status, 200);
+  assert.equal((await request("owner", "/auth/admin/change-role", "POST", { userId: users.otherCustomer, newRole: "admin" })).status, 200);
+  await pool.query("UPDATE users SET role='user' WHERE id=$1", [users.otherCustomer]);
 });
 test("staff cannot revoke the owner's session, but can revoke their own", async () => {
   for (const role of ["otherOwner", "admin", "moderator", "customer"]) {
@@ -306,11 +353,13 @@ test("browser: responsive staff queue, eight states, localization and owner trac
     import ProtectedRoute from "/src/components/ProtectedRoute.tsx";
     import Tickets from "/src/pages/tickets.tsx";
     import Tracker from "/src/components/ImplementationTracker.tsx";
+    import {UsersSection} from "/src/components/sections/UsersSection.tsx";
     import "/src/index.css";
     const tracker = new URLSearchParams(location.search).has("tracker");
+    const accounts = new URLSearchParams(location.search).has("accounts");
     createRoot(document.getElementById("root")).render(React.createElement(QueryClientProvider,{client:new QueryClient({defaultOptions:{queries:{retry:false}}})},
       React.createElement(CountryProvider,null,React.createElement(LanguageProvider,null,React.createElement(AuthProvider,null,
-        React.createElement(ProtectedRoute,{ownerOnly:tracker,component:tracker?Tracker:Tickets}))))));
+        React.createElement(ProtectedRoute,{ownerOnly:tracker||accounts,component:tracker?Tracker:accounts?UsersSection:Tickets}))))));
   </script></body></html>`;
   const vite = await createServer({
     configFile: `${root}vite.config.ts`, envFile: false, cacheDir,
@@ -362,6 +411,14 @@ test("browser: responsive staff queue, eight states, localization and owner trac
     await page.goto(`${browserOrigin}/__ticket-ui?tracker=1`);
     await page.waitForSelector("[data-testid=implementation-tracker] article");
     assert.equal(await page.$$eval("[data-testid=implementation-tracker] article", (items) => items.length), 11);
+    await page.goto(`${browserOrigin}/__ticket-ui?accounts=1`);
+    await page.waitForFunction(() => [...document.querySelectorAll("button")].some(button => button.textContent.trim() === "New User"));
+    await page.evaluate(() => [...document.querySelectorAll("button")].find(button => button.textContent.trim() === "New User").click());
+    await page.waitForSelector("form select");
+    const availableRoles = await page.$$eval("form select:first-of-type option", options => options.map(option => option.value));
+    assert.equal(availableRoles.includes("superuser"), false);
+    assert.ok(availableRoles.includes("admin"));
+    assert.ok(availableRoles.includes("moderator"));
     await page.evaluateOnNewDocument(() => localStorage.setItem("fsa_selected_language", "fr"));
     await page.goto(`${browserOrigin}/__ticket-ui`);
     await page.waitForFunction(() => document.querySelector("h1")?.textContent === "Espace collaborateurs");

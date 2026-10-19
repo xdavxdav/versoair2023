@@ -1459,7 +1459,7 @@ export default function CommandCenter() {
                 <div className="grid sm:grid-cols-2 gap-x-8 gap-y-0">
                   <InfoRow
                     label="Roles"
-                    value="superuser, admin, moderator, business_owner, user"
+                    value="admin, moderator, business_owner, user (SuperAdmin: owner only, non-transferable)"
                   />
                   <InfoRow
                     label="Tier Hierarchy"

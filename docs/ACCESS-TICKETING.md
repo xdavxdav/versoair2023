@@ -7,6 +7,18 @@ The stored role must also be `superuser`. Do not expose this setting through
 a `VITE_` variable. Missing configuration denies access, including development;
 there is no email-domain, username or arbitrary-superuser fallback.
 
+SuperAdmin is a personal, non-transferable owner status, not a delegable staff
+role. Even the owner cannot assign `superuser`, `superadmin` or owner aliases
+through invitations, user creation/editing, security role changes, role
+assignment or generic user-table forms. Owner role controls are read-only.
+The integrated SQL console runs one read-only statement per request, in a
+read-only transaction on a discarded connection, so it cannot bypass the
+role-management policy. Use dedicated forms for authorized mutations.
+The owner's identity/role bootstrap remains server-managed. Admin/Moderator
+invitations are the supported delegation path. This does not prevent an
+infrastructure operator with direct database/configuration access from changing
+the system outside these application workflows.
+
 Owner-only areas include the technical Admin Panel at `/geo-admin/dashboard`,
 its `/api/admin`, `/api/v1/admin` and database-management APIs, the global Card
 Vault at `/account/cards`, privileged financial operations, credentials

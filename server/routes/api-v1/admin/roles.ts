@@ -4,6 +4,7 @@ import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { users, auditLogs, adminRoles } from "../../../../shared/schema";
 import { eq, count, asc } from "drizzle-orm";
+import { ownerRoleMutationError, isReservedOwnerRole } from "@shared/owner-access";
 
 const router = Router();
 
@@ -229,6 +230,9 @@ router.post(
     }
 
     const roleName = name.toLowerCase().replace(/\s+/g, "_");
+    if (isReservedOwnerRole(roleName)) {
+      return res.status(403).json({ success: false, error: { code: "OWNER_ROLE_RESERVED", message: ownerRoleMutationError(roleName) } });
+    }
 
     const existing = await db
       .select({ id: adminRoles.id })
@@ -468,6 +472,13 @@ router.post(
     }
 
     const roleName = role.name;
+    const ownerRoleError = ownerRoleMutationError(roleName);
+    if (ownerRoleError || String(userId) === req.user?.userId) {
+      return res.status(403).json({
+        success: false,
+        error: { code: "OWNER_ROLE_RESERVED", message: ownerRoleError || "The platform owner's role cannot be changed." },
+      });
+    }
 
     // Update user's role
     const [updated] = await db

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { isReservedOwnerRole } from "@shared/owner-access";
 import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -5418,6 +5419,7 @@ const RoleManagementSection = () => {
                       variant="outline"
                       size="sm"
                       className="flex-1 gap-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      disabled={isReservedOwnerRole(role.name)}
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedRole(role);
@@ -5428,7 +5430,7 @@ const RoleManagementSection = () => {
                       }}
                     >
                       <UserPlus className="h-3 w-3" />
-                      Assign
+                      {isReservedOwnerRole(role.name) ? "Owner only · non-transferable" : "Assign"}
                     </Button>
                     {!role.isSystem && (
                       <Button
@@ -6194,11 +6196,11 @@ const SecuritySection = () => {
                                   "user",
                                   "moderator",
                                   "admin",
-                                  "superuser",
                                   "business_owner",
                                 ].map((r) => (
                                   <DropdownMenuItem
                                     key={r}
+                                    disabled={isReservedOwnerRole(u.role)}
                                     onClick={() =>
                                       doAction(u.id, "change-role", { role: r })
                                     }
@@ -7465,7 +7467,7 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-mono min-w-0">
                 <Terminal className="h-3 w-3 text-purple-400 flex-shrink-0" />
                 <span className="text-purple-300 font-semibold tracking-wide">
-                  SQL Console
+                  SQL Console · Read-only
                 </span>
                 <span className="text-slate-500 truncate hidden sm:inline">
                   · versoair_business_intelligence

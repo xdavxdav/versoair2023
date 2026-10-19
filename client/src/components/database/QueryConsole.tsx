@@ -55,7 +55,7 @@ export const QueryConsole = memo(
                   SQL Query Console
                 </CardTitle>
                 <CardDescription>
-                  Execute SQL queries against the database
+                  Run one read-only SQL statement against the database
                 </CardDescription>
               </div>
               <Button
@@ -107,8 +107,7 @@ export const QueryConsole = memo(
               >
                 <AlertCircle className="h-3 w-3" />
                 <span>
-                  Execute SELECT queries to view data. Be careful with UPDATE,
-                  DELETE, and DROP commands.
+                  Read-only diagnostics. Use the dedicated management forms for changes.
                 </span>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { isReservedOwnerRole } from "@shared/owner-access";
 import {
   Plus,
   X,
@@ -366,7 +367,7 @@ export function UsersSection() {
       const payload: Record<string, any> = {
         username: formData.username,
         email: finalEmail,
-        role: formData.role,
+        ...(!isReservedOwnerRole(editingUser?.role) ? { role: formData.role } : {}),
         gateUsername: formData.gateUsername || null,
         isVerified: autoVerify ? true : formData.isVerified,
         subscriptionTier: formData.subscriptionTier,
@@ -945,12 +946,13 @@ export function UsersSection() {
                 </label>
                 <select
                   value={formData.role}
+                  disabled={isReservedOwnerRole(editingUser?.role)}
                   onChange={(e) =>
                     setFormData({ ...formData, role: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
-                  {ROLES.map((r) => (
+                  {ROLES.filter((r) => !isReservedOwnerRole(r) || r === editingUser?.role).map((r) => (
                     <option key={r} value={r}>
                       {ROLE_CONFIG[r].label}
                     </option>
@@ -964,7 +966,7 @@ export function UsersSection() {
                   {formData.role === "business_owner" &&
                     "Business owner with directory listing access"}
                   {formData.role === "superuser" &&
-                    "⚠️ Full system access — use with caution"}
+                    "Owner only — personal, non-transferable status"}
                 </p>
               </div>
 

@@ -3,6 +3,7 @@ import { db } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import { users, auditLogs, artistProfiles } from "../../../../shared/schema";
+import { ownerRoleMutationError } from "@shared/owner-access";
 import { eq, ilike, and, count, desc, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { generateArtistCode } from "../../../utils/artist-code";
@@ -123,6 +124,11 @@ router.post(
       country,
       bio,
     } = req.body;
+
+    const ownerRoleError = ownerRoleMutationError(role);
+    if (ownerRoleError) {
+      return res.status(403).json({ success: false, error: { code: "OWNER_ROLE_RESERVED", message: ownerRoleError } });
+    }
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -412,6 +418,14 @@ router.put(
           message: "User not found",
         },
       });
+    }
+
+    const ownerRoleError = ownerRoleMutationError(role, existing[0].role);
+    if (ownerRoleError) {
+      return res.status(403).json({ success: false, error: { code: "OWNER_ROLE_RESERVED", message: ownerRoleError } });
+    }
+    if (email !== undefined && email !== existing[0].email && existing[0].id === Number(req.user?.userId)) {
+      return res.status(403).json({ success: false, error: { code: "OWNER_IDENTITY_RESERVED", message: "Owner identity must be maintained outside account management." } });
     }
 
     if (

@@ -10,6 +10,8 @@ import {
 } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { notifyReservationUpdate } from "../services/notification-service";
+import { ownerRoleMutationError } from "@shared/owner-access";
+import type { QueryConfig } from "pg";
 
 // Map snake_case table names to camelCase schema exports
 const TABLE_NAME_MAP: Record<string, string> = {
@@ -205,6 +207,12 @@ router.post("/table/:tableName", requireAuth(["admin"]), async (req, res) => {
   try {
     const { tableName } = req.params;
     const data = req.body;
+    if (tableName === "users") {
+      for (const row of Array.isArray(data) ? data : [data]) {
+        const error = ownerRoleMutationError(row?.role);
+        if (error) return res.status(403).json({ success: false, error });
+      }
+    }
 
     // Validate table name
     const validTables = Object.keys(TABLE_NAME_MAP);
@@ -271,6 +279,13 @@ router.put(
 
       // Remove id from data as we use it in the where clause
       const { id: _, ...updateData } = data;
+      if (tableName === "users") {
+        const error = ownerRoleMutationError(updateData.role);
+        if (error) return res.status(403).json({ success: false, error });
+        if (id === req.user?.userId && (updateData.role !== undefined || updateData.email !== undefined)) {
+          return res.status(403).json({ success: false, error: "The platform owner's identity and role cannot be changed through table editing." });
+        }
+      }
 
       // Update the data — use raw id (supports both integer and UUID pks)
       const idValue = /^[0-9]+$/.test(id) ? parseInt(id) : id;
@@ -418,7 +433,7 @@ router.delete(
   },
 );
 
-// Execute arbitrary SQL query (ADMIN ONLY — runs raw SQL)
+// Diagnostic SQL is read-only so it cannot bypass account-management policy.
 router.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
   try {
     const { query: sqlQuery } = req.body;
@@ -431,7 +446,6 @@ router.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
     }
 
     // 🛡️ Block destructive DDL statements (DROP, TRUNCATE, ALTER)
-    const normalized = sqlQuery.trim().toUpperCase();
     const destructivePatterns = [
       /^\s*DROP\s/i,
       /^\s*TRUNCATE\s/i,
@@ -456,7 +470,21 @@ router.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
     );
 
     const startTime = Date.now();
-    const result = await db.execute(sql.raw(sqlQuery));
+    const client = await pool.connect();
+    let result;
+    try {
+      await client.query("BEGIN READ ONLY");
+      await client.query("SELECT 1");
+      const query: QueryConfig & { queryMode: "extended" } = {
+        text: sqlQuery,
+        queryMode: "extended",
+      };
+      result = await client.query(query);
+      await client.query("ROLLBACK");
+    } finally {
+      // Discard the console connection, including any user-issued session settings.
+      client.release(true);
+    }
     const duration = Date.now() - startTime;
 
     // Get column names from the result
@@ -471,6 +499,12 @@ router.post("/execute-query", requireAuth(["admin"]), async (req, res) => {
     });
   } catch (error: any) {
     console.error("❌ Query execution failed:", error);
+    if (["25006", "25001", "42601"].includes(error.code)) {
+      return res.status(403).json({
+        success: false,
+        error: "The SQL console accepts one read-only statement. Use the dedicated management forms for authorized changes.",
+      });
+    }
     res.status(500).json({
       success: false,
       error: error.message || "Query execution failed",

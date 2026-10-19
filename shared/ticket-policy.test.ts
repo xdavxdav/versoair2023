@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isConfiguredOwner } from "./owner-access";
+import { isConfiguredOwner, isReservedOwnerRole, ownerRoleMutationError } from "./owner-access";
 import {
   canReadTicket, canWorkTicket, createTicketSchema, isTicketManager, isTicketStaff,
   transitionError, updateTicketSchema, TICKET_STATUSES, type TicketActor,
@@ -32,6 +32,17 @@ test("staff scope does not treat an arbitrary superuser as owner or support staf
   assert.equal(canWorkTicket(moderator, ticket), true);
   assert.equal(canReadTicket(customer, ticket), true);
   assert.equal(canReadTicket({ ...customer, id: 10 }, ticket), false);
+});
+test("owner status cannot be assigned, cloned or demoted through role management", () => {
+  for (const role of ["superuser", "SuperAdmin", " SUPER_USER ", "super-admin", "owner"]) {
+    assert.equal(isReservedOwnerRole(role), true);
+    assert.match(ownerRoleMutationError(role)!, /cannot be assigned/);
+  }
+  assert.match(ownerRoleMutationError("admin", "superuser")!, /cannot be changed/);
+  assert.equal(ownerRoleMutationError(undefined, "superuser"), null);
+  for (const role of ["user", "admin", "moderator", "artist", "business_owner"]) {
+    assert.equal(ownerRoleMutationError(role, "user"), null);
+  }
 });
 test("eight states are distinct and transitions are explicit", () => {
   assert.equal(TICKET_STATUSES.length, 8);
