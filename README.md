@@ -1,5 +1,32 @@
 # versoair2023
 
+## VersoAI setup
+
+The hosted chat needs a server-side `GROQ_API_KEY`; no model download is
+required. In Render, open the `versoair` web service, select **Environment**,
+add the key, and save/redeploy. For local development, copy `.env.example` to
+the ignored `.env`, set the key, and restart the backend. Never commit the key,
+paste it into chat, or expose it through a `VITE_` variable.
+`GROQ_MODEL` defaults to `llama-3.3-70b-versatile`.
+Groq usage limits, billing and applicable service/model terms still apply.
+
+After deploying, check `GET /api/ai/status`, then send a chat through the widget.
+A successful `/api/ai/chat` response must have `success: true`, a nonempty
+`reply`, and `provider: "groq"` to verify a real cloud-model reply. Status alone
+only indicates configuration, not that the key is valid or quota is available.
+If replies use `provider: "fallback"`, inspect backend provider errors for
+authentication, quota or model failures. Rule-based directory responses are
+not a local AI model. Ollama is an optional self-hosted alternative; installing
+it on a visitor's machine does not connect the hosted backend to that machine.
+
+The widget and API share the request schema in `shared/ai-chat.ts`. Clients
+send only `user`/`assistant` messages and optional page context; trusted system
+instructions remain on the backend. History is bounded to the most recent 12
+messages, matching the model context window used by the service.
+
+Validate the request contract without a key or database:
+`node --import tsx --test shared/ai-chat.test.ts`.
+
 ## Website languages
 
 ### GeoAdmin commercial offers

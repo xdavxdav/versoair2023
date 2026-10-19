@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import { chatRequestSchema as chatSchema } from "@shared/ai-chat";
 import { chat, groundedChat } from "../services/ai-service";
 import { optionalAuth } from "../middleware/auth";
 import { aiLimiter } from "../middleware/rate-limiter";
@@ -26,18 +27,6 @@ router.use(optionalAuth);
 router.use(aiLimiter);
 
 // ─── Validation schema ────────────────────────────────────────────────────────
-const chatSchema = z.object({
-  messages: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string().min(1).max(4000),
-      }),
-    )
-    .min(1)
-    .max(50),
-});
-
 const askSchema = z.object({
   question: z.string().min(1).max(2000),
 });
@@ -54,10 +43,10 @@ router.post("/chat", async (req: Request, res: Response) => {
       });
     }
 
-    const { messages } = parsed.data;
+    const { messages, pageContext } = parsed.data;
     const userRole = req.user?.role;
 
-    const result = await chat(messages, userRole);
+    const result = await chat(messages, userRole, pageContext);
 
     return res.json({
       success: true,
@@ -119,7 +108,7 @@ router.post("/smart-chat", async (req: Request, res: Response) => {
       });
     }
 
-    const { messages } = parsed.data;
+    const { messages, pageContext } = parsed.data;
     const userRole = req.user?.role;
     const lastUserMsg =
       [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
@@ -172,7 +161,7 @@ router.post("/smart-chat", async (req: Request, res: Response) => {
       return m;
     });
 
-    const result = await chat(enrichedMessages, userRole);
+    const result = await chat(enrichedMessages, userRole, pageContext);
 
     return res.json({
       success: true,

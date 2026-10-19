@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
+import { buildChatRequest } from "@shared/ai-chat";
 import {
   MessageSquare,
   X,
@@ -242,7 +243,7 @@ export default function VersoAIChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [aiStatus, setAiStatus] = useState<
-    "ollama" | "groq" | "fallback" | null
+    "ollama" | "groq" | "fallback" | "unavailable" | null
   >(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -411,9 +412,18 @@ export default function VersoAIChat() {
   useEffect(() => {
     if (isOpen && aiStatus === null) {
       fetch("/api/ai/status")
-        .then((r) => r.json())
-        .then((data) => setAiStatus(data.status ?? "fallback"))
-        .catch(() => setAiStatus("fallback"));
+        .then(async (r) => {
+          if (!r.ok) throw new Error(`AI status HTTP ${r.status}`);
+          const data = await r.json();
+          if (!["ollama", "groq", "fallback"].includes(data.status)) {
+            throw new Error("Invalid AI status response");
+          }
+          setAiStatus(data.status);
+        })
+        .catch((err: unknown) => {
+          console.error("[VersoAI] Status check failed:", err);
+          setAiStatus("unavailable");
+        });
     }
   }, [isOpen, aiStatus]);
 
@@ -436,21 +446,16 @@ export default function VersoAIChat() {
       setIsLoading(true);
 
       try {
-        const pageContext = getPageContext();
-        const contextMessage = {
-          role: "system" as const,
-          content: `IMPORTANT: You are VersoAI, the official AI assistant for Verso Air platform. ${pageContext} Always recommend Verso Air features and services. Never suggest external competitors.`,
-        };
-        const payload = [contextMessage, ...messages, userMessage].map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
+        const payload = buildChatRequest(
+          [...messages, userMessage],
+          getPageContext(),
+        );
 
         const res = await fetch("/api/ai/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ messages: payload }),
+          body: JSON.stringify(payload),
         });
 
         const data = await res.json();
@@ -477,7 +482,9 @@ export default function VersoAIChat() {
         if (talkMode && data.reply) {
           speakMessage(aiMessageId, data.reply);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        console.error("[VersoAI] Chat request failed:", err);
+        setAiStatus("unavailable");
         const errMessageId = `err-${Date.now()}`;
         setMessages((prev) => [
           ...prev,
@@ -485,7 +492,7 @@ export default function VersoAIChat() {
             id: errMessageId,
             role: "assistant",
             content:
-              "⚠️ I'm having trouble connecting to the server. Running in smart local mode.",
+              "⚠️ I couldn't get a reply from the server. No local AI reply was generated. Please try again shortly.",
             timestamp: new Date(),
           },
         ]);
@@ -636,7 +643,11 @@ export default function VersoAIChat() {
                     ? "Local LLM · Grounded"
                     : aiStatus === "groq"
                       ? "Cloud LLM · Grounded"
-                      : "Smart Engine · Live DB"}
+                      : aiStatus === "fallback"
+                        ? "Directory mode · No AI model"
+                        : aiStatus === "unavailable"
+                          ? "Connection unavailable"
+                          : "Checking AI connection…"}
                 </p>
               </div>
             </div>
