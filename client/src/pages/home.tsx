@@ -1860,20 +1860,22 @@ export default function Home() {
       />
       {/* Hero Section */}
       <div className="relative flex min-h-[clamp(36rem,78vh,52rem)] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
-        <video
-          className="absolute inset-0 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/Logo-page.png"
-          aria-hidden="true"
-        >
-          <source
-            src="https://videos.pexels.com/video-files/3195394/3195394-hd_1920_1080_25fps.mp4"
-            type="video/mp4"
-          />
-        </video>
+        {isAuthenticated && (
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/Logo-page.png"
+            aria-hidden="true"
+          >
+            <source
+              src="https://videos.pexels.com/video-files/3195394/3195394-hd_1920_1080_25fps.mp4"
+              type="video/mp4"
+            />
+          </video>
+        )}
         <div className="absolute inset-0 bg-slate-950/70 dark:bg-slate-950/75" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.22),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.12),rgba(15,23,42,0.7))]" />
         {!isAuthenticated && (
@@ -1885,20 +1887,22 @@ export default function Home() {
           />
         )}
 
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="absolute h-2 w-2 rounded-full bg-slate-400/30"
-              style={{
-                left: `${15 + i * 15}%`,
-                top: `${20 + (i % 3) * 25}%`,
-                animation: `floatParticle ${5 + i}s ease-in-out infinite ${i * 0.8}s`,
-              }}
-            />
-          ))}
-          <style>{`@keyframes floatParticle { 0%,100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-80px); opacity: 0.7; } }`}</style>
-        </div>
+        {isAuthenticated && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="absolute h-2 w-2 rounded-full bg-slate-400/30"
+                style={{
+                  left: `${15 + i * 15}%`,
+                  top: `${20 + (i % 3) * 25}%`,
+                  animation: `floatParticle ${5 + i}s ease-in-out infinite ${i * 0.8}s`,
+                }}
+              />
+            ))}
+            <style>{`@keyframes floatParticle { 0%,100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-80px); opacity: 0.7; } }`}</style>
+          </div>
+        )}
 
         <div className="relative z-10 mx-auto w-full max-w-6xl px-2 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
           <div className="mx-auto max-w-5xl text-center text-white drop-shadow-[0_2px_18px_rgba(15,23,42,0.45)]">
