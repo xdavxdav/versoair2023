@@ -88,6 +88,9 @@ does not become available, a failure notice is shown instead. Automatic country
 detection selects a suggested language unless the visitor has chosen a manual
 override. Google Translate is an external service and may process page text and
 set its own cookies; the Privacy Policy discloses this behavior.
+Refreshing location detection preserves a manually selected language. Selecting
+a country explicitly clears that language override and applies the country's
+suggested language (Canada suggests English).
 Language-selection information disappears after three seconds without changing
 the selected language; failure notices remain visible longer.
 The UI stores standard language codes; Hebrew (`he`) is mapped to the widget's
@@ -103,9 +106,15 @@ server-side translation endpoint. Legacy `CLOUD_TRANSLATION_ENABLED`,
 settings are not read by the server translation route and can be removed from
 the deployment. Do not remove `REDIS_URL` if another application feature uses it.
 
-`GET /api/translations/:language` still serves bundled editorial dictionaries
-for compatibility; the selector no longer depends on those dictionaries or the
-endpoint. Google Translate is machine translation, not legal certification.
+Components using `useLocalizedContent` render exact catalogue matches from the
+bundled French, English, and Spanish editorial dictionaries, even if Google is
+unavailable. Native text spans and options are marked `translate="no"` to avoid
+double translation; unknown text and other languages remain eligible for Google
+translation. Catalogue spans retain a stable element when switching between
+native and provider translations.
+`GET /api/translations/:language` still serves these dictionaries for
+compatibility; the selector imports them locally and does not call that endpoint.
+Google Translate is machine translation, not legal certification.
 Have counsel and native speakers approve critical copy before release.
 
 The retained dictionary endpoint accepts a language, not arbitrary text. It
@@ -113,7 +122,7 @@ does not collect passwords, form values, private messages, or user-generated
 content for translation. The external browser widget has separate processing
 described in the Privacy Policy.
 
-To extend the retained dictionary coverage, add reviewed EN/FR copy and its Spanish translation in
+To extend native coverage, add reviewed EN/FR copy and its Spanish translation in
 `shared/spanish-translations.ts`, then localize the component with
 `useLocalizedContent`. Spanish uses English source phrases as stable keys rather
 than catalogue positions; TypeScript and completeness tests require an entry

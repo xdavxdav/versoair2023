@@ -3,11 +3,17 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { useCountry } from "@/contexts/CountryContext";
 import { getLanguageForCountry } from "@/utils/country-language";
+import {
+  getPublicCopyId,
+  isBundledLanguage,
+  nativeDictionary,
+} from "../../../shared/public-translations";
 
 const LANG_CACHE_KEY = "fsa_selected_language";
 const LANG_OVERRIDE_KEY = "fsa_language_override";
@@ -191,6 +197,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [googleTranslateFailed, setGoogleTranslateFailed] = useState(false);
   const bannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastCountryLanguage = useRef<string | null>(null);
+  const dictionary = useMemo(
+    () => isBundledLanguage(currentLang) ? nativeDictionary(currentLang) : null,
+    [currentLang],
+  );
+  const translateText = useCallback((text: string) => {
+    if (!dictionary) return text;
+    const id = getPublicCopyId(text);
+    if (id === undefined) return text;
+    return text.replace(/\S[\s\S]*\S|\S/, () => dictionary[id]);
+  }, [dictionary]);
 
   const notify = useCallback((message: string, duration = 12_000) => {
     if (bannerTimer.current) clearTimeout(bannerTimer.current);
@@ -336,7 +352,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         toggleRomanization,
         isNonLatinLang: NON_LATIN_LANGS.has(currentLang),
         machineTranslated: googleTranslateReady && !googleTranslateFailed,
-        translateText: (text) => text,
+        translateText,
       }}
     >
       <div

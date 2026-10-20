@@ -2,6 +2,7 @@ import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { transliterate } from "transliteration";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import TranslationAttribution from "@/components/TranslationAttribution";
+import { getPublicCopyId, isBundledLanguage } from "../../../shared/public-translations";
 
 interface ContentProps {
   children?: ReactNode;
@@ -20,12 +21,23 @@ export function useLocalizedContent(includeAttribution = true) {
   const visit = (node: ReactNode): ReactNode => {
     if (typeof node === "string") {
       const text = translateText(node);
-      if (text === node) return node;
+      const catalogued = getPublicCopyId(node) !== undefined;
+      const native = isBundledLanguage(currentLang) && catalogued;
+      if (text === node && !catalogued) return node;
       const hint = romanized && isNonLatinLang ? transliterate(text) : null;
       return (
-        <span lang={machineTranslated ? `${currentLang}-x-mtfrom-fr` : currentLang} dir="auto">
-          {text}
-          {hint && hint !== text && <span aria-hidden="true" className="block text-xs italic opacity-80">{hint}</span>}
+        <span
+          lang={native ? currentLang : undefined}
+          dir="auto"
+          translate={native ? "no" : undefined}
+          className={native ? "notranslate" : undefined}
+        >
+          {hint && hint !== text ? (
+            <>
+              {text}
+              <span aria-hidden="true" className="block text-xs italic opacity-80">{hint}</span>
+            </>
+          ) : text}
         </span>
       );
     }
@@ -41,6 +53,10 @@ export function useLocalizedContent(includeAttribution = true) {
       if (typeof value === "string") props[key] = translateText(value);
     }
     if (node.type === "option" && typeof node.props.children === "string") {
+      if (isBundledLanguage(currentLang) && getPublicCopyId(node.props.children) !== undefined) {
+        props.translate = "no";
+        props.lang = currentLang;
+      }
       return cloneElement(node, props, translateText(node.props.children));
     }
     // Do not override explicit per-section source language metadata with a false
