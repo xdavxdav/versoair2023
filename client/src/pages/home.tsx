@@ -1136,6 +1136,16 @@ export default function Home() {
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const explicitClassicSearchRef = useRef<{
+    query: string;
+    location: string;
+    configKey: string;
+  } | null>(null);
+  const explicitAiSearchRef = useRef<{
+    query: string;
+    language: string;
+    country: string | undefined;
+  } | null>(null);
   const { selectedCountry } = useCountry();
   const { currentLang } = useLanguage();
   const [aiLanguageFilter, setAiLanguageFilter] = useState("fr");
@@ -1290,8 +1300,8 @@ export default function Home() {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const debouncedLocationQuery = useDebounce(locationQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 5000);
+  const debouncedLocationQuery = useDebounce(locationQuery, 5000);
 
   // Number of panels
   const NUM_PANELS = 4;
@@ -1469,93 +1479,143 @@ export default function Home() {
   }, [searchResults.length]);
 
   // Search handler - ONLY uses database
-  const handleSearch = useCallback(async () => {
-    if (
-      !debouncedSearchQuery.trim() &&
-      !debouncedLocationQuery.trim() &&
-      activeFilters.length === 0
-    ) {
-      // If no search criteria, show latest businesses from database (filtered by country)
-      try {
-        const params: SearchParams = { query: "", limit: 5 };
-        if (selectedCountry) params.countryCode = selectedCountry;
-        const result = await searchBusinessesAPI(params);
-        if (result.success && result.data.length > 0) {
-          setSearchResults(result.data.slice(0, 5));
-          setTotalDatabaseCount(result.totalInDatabase || result.total);
-          setHasSearched(true);
-        } else {
+  const handleSearch = useCallback(
+    async (queryOverride?: string, locationOverride?: string) => {
+      const query =
+        queryOverride !== undefined ? queryOverride : debouncedSearchQuery;
+      const location =
+        locationOverride !== undefined
+          ? locationOverride
+          : debouncedLocationQuery;
+      const configKey = JSON.stringify([
+        activeFilters,
+        userLocation,
+        selectedCountry,
+      ]);
+
+      if (queryOverride !== undefined || locationOverride !== undefined) {
+        explicitClassicSearchRef.current = { query, location, configKey };
+      }
+
+      if (!query.trim() && !location.trim() && activeFilters.length === 0) {
+        // If no search criteria, show latest businesses from database (filtered by country)
+        try {
+          const params: SearchParams = { query: "", limit: 5 };
+          if (selectedCountry) params.countryCode = selectedCountry;
+          const result = await searchBusinessesAPI(params);
+          if (result.success && result.data.length > 0) {
+            setSearchResults(result.data.slice(0, 5));
+            setTotalDatabaseCount(result.totalInDatabase || result.total);
+            setHasSearched(true);
+          } else {
+            setSearchResults([]);
+            setHasSearched(false);
+          }
+        } catch {
           setSearchResults([]);
           setHasSearched(false);
         }
-      } catch {
-        setSearchResults([]);
-        setHasSearched(false);
+        return;
       }
+
+      setIsSearching(true);
+      setSearchError("");
+      setHasSearched(true);
+
+      const searchParams: SearchParams = {
+        query,
+        limit: 5, // Limit to 5 results for initial display
+      };
+
+      if (location.trim()) {
+        searchParams.location = location.toLowerCase();
+      }
+
+      if (selectedCountry) {
+        searchParams.countryCode = selectedCountry;
+      }
+
+      activeFilters.forEach((filter) => {
+        if (filter.id.startsWith("category-")) {
+          searchParams.category = filter.value;
+        } else if (filter.id.startsWith("location-")) {
+          searchParams.location = filter.value;
+        } else if (filter.id.startsWith("range-")) {
+          searchParams.range = filter.value;
+        }
+      });
+
+      if (userLocation) {
+        searchParams.lat = userLocation.lat;
+        searchParams.lng = userLocation.lng;
+      }
+
+      try {
+        const result = await searchBusinessesAPI(searchParams);
+        if (result.success) {
+          setSearchResults(result.data);
+          setTotalDatabaseCount(result.totalInDatabase || result.total || 0);
+        } else {
+          setSearchError(result.error || "Failed to fetch results");
+          setSearchResults([]);
+        }
+      } catch (error: any) {
+        console.error("Search error:", error);
+        setSearchError("An error occurred during search");
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [
+      debouncedSearchQuery,
+      debouncedLocationQuery,
+      activeFilters,
+      userLocation,
+      selectedCountry,
+      databaseConnected,
+    ],
+  );
+
+  // Wait until both search inputs have been idle before issuing automatic searches.
+  useEffect(() => {
+    if (
+      searchMode !== "classic" ||
+      searchQuery !== debouncedSearchQuery ||
+      locationQuery !== debouncedLocationQuery
+    ) {
       return;
     }
 
-    setIsSearching(true);
-    setSearchError("");
-    setHasSearched(true);
-
-    const searchParams: SearchParams = {
-      query: debouncedSearchQuery,
-      limit: 5, // Limit to 5 results for initial display
-    };
-
-    if (debouncedLocationQuery.trim()) {
-      searchParams.location = debouncedLocationQuery.toLowerCase();
+    const explicitSearch = explicitClassicSearchRef.current;
+    const configKey = JSON.stringify([
+      activeFilters,
+      userLocation,
+      selectedCountry,
+    ]);
+    if (
+      explicitSearch &&
+      explicitSearch.query === debouncedSearchQuery &&
+      explicitSearch.location === debouncedLocationQuery &&
+      explicitSearch.configKey === configKey
+    ) {
+      explicitClassicSearchRef.current = null;
+      return;
     }
 
-    if (selectedCountry) {
-      searchParams.countryCode = selectedCountry;
-    }
-
-    activeFilters.forEach((filter) => {
-      if (filter.id.startsWith("category-")) {
-        searchParams.category = filter.value;
-      } else if (filter.id.startsWith("location-")) {
-        searchParams.location = filter.value;
-      } else if (filter.id.startsWith("range-")) {
-        searchParams.range = filter.value;
-      }
-    });
-
-    if (userLocation) {
-      searchParams.lat = userLocation.lat;
-      searchParams.lng = userLocation.lng;
-    }
-
-    try {
-      const result = await searchBusinessesAPI(searchParams);
-      if (result.success) {
-        setSearchResults(result.data);
-        setTotalDatabaseCount(result.totalInDatabase || result.total || 0);
-      } else {
-        setSearchError(result.error || "Failed to fetch results");
-        setSearchResults([]);
-      }
-    } catch (error: any) {
-      console.error("Search error:", error);
-      setSearchError("An error occurred during search");
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+    explicitClassicSearchRef.current = null;
+    handleSearch();
   }, [
+    handleSearch,
+    searchQuery,
+    locationQuery,
     debouncedSearchQuery,
     debouncedLocationQuery,
+    searchMode,
     activeFilters,
     userLocation,
     selectedCountry,
-    databaseConnected,
   ]);
-
-  // Auto-search on query changes
-  useEffect(() => {
-    handleSearch();
-  }, [handleSearch]);
 
   // Handle scroll indicator visibility
   useEffect(() => {
@@ -1668,6 +1728,14 @@ export default function Home() {
       ).trim();
       if (!query || searchMode !== "ai") return;
 
+      if (overrideQuery !== undefined) {
+        explicitAiSearchRef.current = {
+          query,
+          language: effectiveAiLanguage,
+          country: selectedCountry || undefined,
+        };
+      }
+
       setIsAiSearching(true);
       setSearchError("");
       setHasSearched(true);
@@ -1732,10 +1800,35 @@ export default function Home() {
 
   // Trigger AI search when mode is AI and query changes
   useEffect(() => {
-    if (searchMode === "ai" && debouncedSearchQuery.trim()) {
-      handleAiSearch();
+    if (
+      searchMode !== "ai" ||
+      !debouncedSearchQuery.trim() ||
+      searchQuery !== debouncedSearchQuery
+    ) {
+      return;
     }
-  }, [handleAiSearch, searchMode, debouncedSearchQuery]);
+
+    const explicitSearch = explicitAiSearchRef.current;
+    if (
+      explicitSearch &&
+      explicitSearch.query === debouncedSearchQuery.trim() &&
+      explicitSearch.language === effectiveAiLanguage &&
+      explicitSearch.country === (selectedCountry || undefined)
+    ) {
+      explicitAiSearchRef.current = null;
+      return;
+    }
+
+    explicitAiSearchRef.current = null;
+    handleAiSearch();
+  }, [
+    handleAiSearch,
+    searchMode,
+    debouncedSearchQuery,
+    searchQuery,
+    effectiveAiLanguage,
+    selectedCountry,
+  ]);
 
   // Annuaire Musicale — fetch genres and countries on mount
   // Annuaire Musicale — fetch genres, countries, and initial popular preview on mount
