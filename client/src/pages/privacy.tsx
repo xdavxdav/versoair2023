@@ -99,8 +99,9 @@ export default function PrivacyPolicy() {
                 screen resolution, IP address
               </li>
               <li>
-                <strong>Analytics:</strong> Google Analytics (G-V74QCY3MYD) for
-                anonymous usage statistics
+                <strong>Analytics:</strong> Google Analytics
+                (G-V74QCY3MYD) for usage statistics only after you accept
+                optional cookies
               </li>
               <li>
                 <strong>Google Translate:</strong> When you select another

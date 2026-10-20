@@ -89,7 +89,7 @@ import { searchBusinesses, Business } from "@/lib/business-data";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { CulturalProgramsModal } from "@/components/home/CulturalProgramsModal";
-import { CookieConsentBanner } from "@/components/home/CookieConsentBanner";
+import { CookieConsentManager } from "@/components/CookieConsentManager";
 import { ArtistCarouselByCountry } from "@/components/home/ArtistCarouselByCountry";
 import LocalizedGoldHeading from "@/components/home/LocalizedGoldHeading";
 import { isBaseLang } from "@/utils/country-language";
@@ -1220,7 +1220,6 @@ export default function Home() {
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
   const [isCulturalModalOpen, setIsCulturalModalOpen] = useState(false);
   useScrollLock(isCulturalModalOpen);
-  const [showCookieConsent, setShowCookieConsent] = useState(false);
   const [showAllResults, setShowAllResults] = useState(false);
   const [showTopRatedOnly, setShowTopRatedOnly] = useState(false);
 
@@ -1423,22 +1422,6 @@ export default function Home() {
 
     return () => clearTimeout(refreshTimeout);
   }, [searchResults.length, showAllResults, filtersVisible]);
-
-  // Cookie consent check
-  useEffect(() => {
-    const consent = localStorage.getItem("cookieConsent");
-    if (!consent) setTimeout(() => setShowCookieConsent(true), 2000);
-  }, []);
-
-  const handleCookieAccept = () => {
-    localStorage.setItem("cookieConsent", "accepted");
-    setShowCookieConsent(false);
-  };
-
-  const handleCookieDecline = () => {
-    localStorage.setItem("cookieConsent", "declined");
-    setShowCookieConsent(false);
-  };
 
   // Gentle slide effect for cards when they appear - FIXED
   useLayoutEffect(() => {
@@ -4299,14 +4282,7 @@ export default function Home() {
         </div>
       </section>
 
-      <AnimatePresence>
-        {showCookieConsent && (
-          <CookieConsentBanner
-            onAccept={handleCookieAccept}
-            onDecline={handleCookieDecline}
-          />
-        )}
-      </AnimatePresence>
+      <CookieConsentManager />
       <CulturalProgramsModal
         isOpen={isCulturalModalOpen}
         onClose={() => setIsCulturalModalOpen(false)}

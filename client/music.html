@@ -35,79 +35,11 @@
     />
     <!-- Chart.js for analytics visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-V74QCY3MYD"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-
-      gtag("config", "G-V74QCY3MYD");
-    </script>
+    <script src="/consent-trackers.js"></script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main-music.tsx"></script>
 
-    <!-- Klaviyo Onsite Tracking -->
-    <script
-      async
-      type="text/javascript"
-      src="https://static.klaviyo.com/onsite/js/Ygrd6h/klaviyo.js?company_id=Ygrd6h"
-    ></script>
-    <script type="text/javascript">
-      !(function () {
-        if (!window.klaviyo) {
-          window._klOnsite = window._klOnsite || [];
-          try {
-            window.klaviyo = new Proxy(
-              {},
-              {
-                get: function (n, i) {
-                  return "push" === i
-                    ? function () {
-                        var n;
-                        (n = window._klOnsite).push.apply(n, arguments);
-                      }
-                    : function () {
-                        for (
-                          var n = arguments.length, o = new Array(n), w = 0;
-                          w < n;
-                          w++
-                        )
-                          o[w] = arguments[w];
-                        var t =
-                            "function" == typeof o[o.length - 1]
-                              ? o.pop()
-                              : void 0,
-                          e = new Promise(function (n) {
-                            window._klOnsite.push(
-                              [i].concat(o, [
-                                function (i) {
-                                  (t && t(i), n(i));
-                                },
-                              ]),
-                            );
-                          });
-                        return e;
-                      };
-                },
-              },
-            );
-          } catch (n) {
-            ((window.klaviyo = window.klaviyo || []),
-              (window.klaviyo.push = function () {
-                var n;
-                (n = window._klOnsite).push.apply(n, arguments);
-              }));
-          }
-        }
-      })();
-    </script>
   </body>
 </html>

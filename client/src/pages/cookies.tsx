@@ -41,7 +41,9 @@ export default function CookiePolicy() {
               a website. They help the website remember your preferences, keep
               you logged in, and understand how you interact with the site.
               VERSO AIR INC. uses cookies to provide a secure, personalized
-              experience across our Platform.
+              experience across our Platform. Optional analytics and marketing
+              trackers load only after you choose “Accept All”; choosing
+              “Decline” keeps those trackers disabled.
             </p>
           </section>
 
@@ -139,7 +141,8 @@ export default function CookiePolicy() {
                       </span>
                     </td>
                     <td className="py-3 px-2">
-                      Google Analytics (G-V74QCY3MYD) — anonymous usage tracking
+                      Google Analytics (G-V74QCY3MYD) — usage tracking after
+                      consent
                     </td>
                     <td className="py-3 px-2">2 years / 24h</td>
                   </tr>
@@ -153,13 +156,19 @@ export default function CookiePolicy() {
                       </span>
                     </td>
                     <td className="py-3 px-2">
-                      Google Analytics throttle cookie — limits request rate
+                      Google Analytics throttle cookie after consent — limits
+                      request rate
                     </td>
                     <td className="py-3 px-2">1 minute</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <p className="mt-4 text-sm leading-relaxed">
+              The Klaviyo onsite marketing tracker is also held until you
+              accept optional cookies. Its cookie names and retention periods
+              are controlled by the provider.
+            </p>
           </section>
 
           <section>

@@ -4,6 +4,7 @@
  */
 
 import { authenticatedFetch, getAuthToken } from "./auth";
+import { hasAnalyticsConsent } from "./cookie-consent";
 
 declare global {
   interface Window {
@@ -94,6 +95,8 @@ export function withCampaignContext(href: string): string {
  * Initialize GTM tracking session
  */
 export function initializeGTMSession() {
+  if (!hasAnalyticsConsent()) return;
+
   // Generate or retrieve session ID
   sessionId =
     sessionStorage.getItem("gtm_session_id") ||
@@ -124,6 +127,8 @@ export function trackEvent(
   eventValue?: number,
   customData?: Record<string, any>,
 ) {
+  if (!hasAnalyticsConsent()) return;
+
   // Ensure session is initialized
   if (!sessionId) {
     initializeGTMSession();
@@ -312,7 +317,7 @@ function getCountryFromIP(): string | undefined {
 export function setUserId(newUserId: string | null) {
   userId = newUserId;
 
-  if (typeof window !== "undefined" && window.gtag) {
+  if (hasAnalyticsConsent() && typeof window !== "undefined" && window.gtag) {
     window.gtag("set", { user_id: newUserId });
   }
 }
@@ -321,13 +326,8 @@ export function setUserId(newUserId: string | null) {
  * Get current session ID
  */
 export function getSessionId(): string {
-  if (!sessionId) {
+  if (!sessionId && hasAnalyticsConsent()) {
     initializeGTMSession();
   }
   return sessionId;
-}
-
-// Initialize on module load
-if (typeof window !== "undefined") {
-  initializeGTMSession();
 }

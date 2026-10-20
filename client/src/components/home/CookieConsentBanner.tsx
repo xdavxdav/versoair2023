@@ -4,11 +4,13 @@ import { Cookie } from "lucide-react";
 type CookieConsentBannerProps = {
   onAccept: () => void;
   onDecline: () => void;
+  errorMessage?: string;
 };
 
 export const CookieConsentBanner = ({
   onAccept,
   onDecline,
+  errorMessage,
 }: CookieConsentBannerProps) => {
   return (
     <motion.div
@@ -25,24 +27,31 @@ export const CookieConsentBanner = ({
               🍪 Cookie Preferences
             </h3>
             <p className="text-xs md:text-sm text-gray-300">
-              We use cookies to enhance your experience and analyze site
-              performance.
+              Essential cookies keep the site working. Optional analytics and
+              marketing trackers run only if you accept.
             </p>
           </div>
         </div>
-        <div className="flex gap-2 md:gap-3 flex-shrink-0">
-          <button
-            onClick={onDecline}
-            className="px-4 md:px-6 py-2 border border-gray-400 rounded-lg hover:bg-gray-800/50 transition-colors text-xs md:text-sm font-medium"
-          >
-            Decline
-          </button>
-          <button
-            onClick={onAccept}
-            className="px-4 md:px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all text-xs md:text-sm font-bold shadow-lg"
-          >
-            Accept All
-          </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2 md:gap-3 flex-shrink-0">
+            <button
+              onClick={onDecline}
+              className="px-4 md:px-6 py-2 border border-gray-400 rounded-lg hover:bg-gray-800/50 transition-colors text-xs md:text-sm font-medium"
+            >
+              Decline
+            </button>
+            <button
+              onClick={onAccept}
+              className="px-4 md:px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all text-xs md:text-sm font-bold shadow-lg"
+            >
+              Accept All
+            </button>
+          </div>
+          {errorMessage && (
+            <p role="alert" className="max-w-xs text-xs text-red-200">
+              {errorMessage}
+            </p>
+          )}
         </div>
       </div>
     </motion.div>

@@ -31,6 +31,7 @@ import NotFound from "@/pages/not-found";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import MusicProtectedRoute from "@/components/music/MusicProtectedRoute";
 import { MusicArtistRoute } from "@/components/music/MusicProtectedRoute";
+import { CookieConsentManager } from "@/components/CookieConsentManager";
 
 // Auth
 const SignIn = lazy(() => import("@/pages/signin"));
@@ -351,6 +352,7 @@ function AppContent() {
         onClose={() => setShowQuickSignIn(false)}
         onSuccess={() => window.location.reload()}
       />
+      <CookieConsentManager />
     </div>
   );
 }
