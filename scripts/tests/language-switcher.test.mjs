@@ -175,6 +175,28 @@ test("choosing a language updates Google Translate and persists its cookie", asy
   }
 });
 
+test("language information disappears after three seconds without resetting translation", async () => {
+  const { page, errors } = await openHarness();
+  try {
+    await page.waitForSelector(".goog-te-combo");
+    await page.click("#select-en");
+    await page.waitForSelector('[role="status"]');
+    assert.match(
+      await page.$eval('[role="status"]', element => element.textContent),
+      /Translating to EN/,
+    );
+    await page.waitForSelector('[role="status"]', {
+      hidden: true,
+      timeout: 4000,
+    });
+    assert.equal(await page.$eval("#current-language", element => element.textContent), "en");
+    assert.equal(await page.evaluate(() => window.__googleTranslateLanguage), "en");
+    assert.deepEqual(errors, []);
+  } finally {
+    await page.close();
+  }
+});
+
 test("every language offered by the selector can be applied by the widget", async () => {
   const { page, errors } = await openHarness();
   try {

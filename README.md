@@ -88,6 +88,8 @@ does not become available, a failure notice is shown instead. Automatic country
 detection selects a suggested language unless the visitor has chosen a manual
 override. Google Translate is an external service and may process page text and
 set its own cookies; the Privacy Policy discloses this behavior.
+Language-selection information disappears after three seconds without changing
+the selected language; failure notices remain visible longer.
 The UI stores standard language codes; Hebrew (`he`) is mapped to the widget's
 legacy `iw` code for its language control and cookie. Source detection is automatic
 because original pages mix English and French. French is a real translation target

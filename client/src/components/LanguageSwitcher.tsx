@@ -217,13 +217,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setGoogleTranslateCookie(language);
 
       if (switchGoogleTranslateLanguage(language)) {
-        notify(`Translating to ${language.toUpperCase()} with Google Translate.`, 5000);
+        notify(`Translating to ${language.toUpperCase()} with Google Translate.`, 3000);
       } else if (googleTranslateFailed) {
         notify(
           "Google Translate could not load. Check your connection and try again.",
         );
       } else {
-        notify(`Language ${source === "country" ? "suggested" : "selected"}: ${language.toUpperCase()}. Waiting for Google Translate.`, 5000);
+        notify(`Language ${source === "country" ? "suggested" : "selected"}: ${language.toUpperCase()}. Waiting for Google Translate.`, 3000);
       }
     },
     [googleTranslateFailed, notify],
