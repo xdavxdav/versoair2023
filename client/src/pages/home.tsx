@@ -1876,6 +1876,14 @@ export default function Home() {
         </video>
         <div className="absolute inset-0 bg-slate-950/70 dark:bg-slate-950/75" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.22),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.12),rgba(15,23,42,0.7))]" />
+        {!isAuthenticated && (
+          <img
+            src="/Logo-page.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-50 mix-blend-multiply"
+          />
+        )}
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -1911,15 +1919,7 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.2 }}
               className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
-              {isAuthenticated ? (
-                "vHeartz"
-              ) : (
-                <img
-                  src="/Logo-page.png"
-                  alt="Verso Air"
-                  className="mx-auto block h-40 w-40 rounded-xl bg-white object-contain p-1 shadow-2xl sm:h-48 sm:w-48 md:h-56 md:w-56"
-                />
-              )}
+              vHeartz
             </motion.h1>
 
             <motion.p
