@@ -83,16 +83,17 @@ localized "Ask VersoAI" action instead of repeating the website homepage URL.
 The country/language selector uses the Google Translate website widget for
 client-side page translation. It offers the widget's supported language list,
 sets the `googtrans` preference before loading the script, and switches through
-the widget's language control. If the control is not ready when a language is
-selected, the page reloads with the saved language preference. Automatic country
+the standard widget's language control without reloading the page. If the control
+does not become available, a failure notice is shown instead. Automatic country
 detection selects a suggested language unless the visitor has chosen a manual
 override. Google Translate is an external service and may process page text and
 set its own cookies; the Privacy Policy discloses this behavior.
 The UI stores standard language codes; Hebrew (`he`) is mapped to the widget's
-legacy `iw` code for its language control and cookie. French restores the original
-page copy, so untranslated English in the original copy still needs editorial
-localization. A missing widget select must not trigger repeated page reloads:
-the simple widget applies the saved cookie on initial load.
+legacy `iw` code for its language control and cookie. Source detection is automatic
+because original pages mix English and French. French is a real translation target
+(`googtrans=/auto/fr`), not an instruction to restore the original mixed copy.
+Google's translation quality and availability still require live checks; brand
+names and intentionally excluded `notranslate` content remain unchanged.
 
 The application does not use paid Google Cloud Translation credentials or its
 server-side translation endpoint. Legacy `CLOUD_TRANSLATION_ENABLED`,

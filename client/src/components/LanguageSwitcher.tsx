@@ -30,12 +30,10 @@ interface GoogleTranslateElementConstructor {
     options: {
       pageLanguage: string;
       includedLanguages: string;
-      layout: number;
       autoDisplay: boolean;
     },
     elementId: string,
   ): unknown;
-  InlineLayout: { SIMPLE: number };
 }
 
 declare global {
@@ -118,7 +116,7 @@ function getInitialLanguage(): string {
 }
 
 function setGoogleTranslateCookie(language: string) {
-  const value = language === "fr" ? "" : `/fr/${googleLanguageCode(language)}`;
+  const value = `/auto/${googleLanguageCode(language)}`;
   const host = window.location.hostname;
   const domains = new Set(["", `; domain=${host}`]);
   if (!["localhost", "127.0.0.1", "::1"].includes(host)) {
@@ -126,17 +124,16 @@ function setGoogleTranslateCookie(language: string) {
     if (host.endsWith(".versoair.com")) domains.add("; domain=.versoair.com");
   }
   for (const domain of domains) {
-    document.cookie =
-      language === "fr"
-        ? `googtrans=; Max-Age=0; path=/${domain}`
-        : `googtrans=${value}; path=/${domain}; SameSite=Lax`;
+    document.cookie = `googtrans=${value}; path=/${domain}; SameSite=Lax`;
   }
 }
 
 function switchGoogleTranslateLanguage(language: string): boolean {
   const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
   if (!combo) return false;
-  combo.value = language === "fr" ? "" : googleLanguageCode(language);
+  const code = googleLanguageCode(language);
+  if (![...combo.options].some((option) => option.value === code)) return false;
+  combo.value = code;
   combo.dispatchEvent(new Event("change", { bubbles: true }));
   return true;
 }
@@ -168,9 +165,8 @@ function initializeGoogleTranslate() {
   container.replaceChildren();
   new TranslateElement(
     {
-      pageLanguage: "fr",
+      pageLanguage: "auto",
       includedLanguages: [...GT_LANGUAGE_CODES].map(googleLanguageCode).join(","),
-      layout: TranslateElement.InlineLayout.SIMPLE,
       autoDisplay: false,
     },
     "google_translate_element",
@@ -188,14 +184,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const manual = useRef(readPreference(LANG_OVERRIDE_KEY) === "true");
   const [showBanner, setShowBanner] = useState(false);
   const [bannerMessage, setBannerMessage] = useState("");
-  const [reloadCountdown, setReloadCountdown] = useState<number | null>(null);
   const [romanized, setRomanized] = useState(
     () => readPreference(ROMANIZATION_KEY) === "true",
   );
   const [googleTranslateReady, setGoogleTranslateReady] = useState(false);
   const [googleTranslateFailed, setGoogleTranslateFailed] = useState(false);
   const bannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastCountryLanguage = useRef<string | null>(null);
 
   const notify = useCallback((message: string, duration = 12_000) => {
@@ -203,26 +197,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setBannerMessage(message);
     setShowBanner(true);
     bannerTimer.current = setTimeout(() => setShowBanner(false), duration);
-  }, []);
-
-  const reloadWithCountdown = useCallback((message: string) => {
-    if (bannerTimer.current) clearTimeout(bannerTimer.current);
-    if (countdownTimer.current) clearInterval(countdownTimer.current);
-    setBannerMessage(message);
-    setShowBanner(true);
-    bannerTimer.current = setTimeout(() => {
-      let count = 3;
-      setReloadCountdown(count);
-      countdownTimer.current = setInterval(() => {
-        count -= 1;
-        if (count <= 0) {
-          if (countdownTimer.current) clearInterval(countdownTimer.current);
-          window.location.reload();
-        } else {
-          setReloadCountdown(count);
-        }
-      }, 1000);
-    }, 1000);
   }, []);
 
   const applyLanguage = useCallback(
@@ -242,31 +216,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       storePreference(LANG_CACHE_KEY, language);
       setGoogleTranslateCookie(language);
 
-      if (language === "fr") {
-        const switched = switchGoogleTranslateLanguage(language);
-        if (!switched && googleTranslateReady) {
-          reloadWithCountdown("Restoring Français.");
-        } else {
-          notify("Language restored to Français.", 3000);
-        }
-        return;
-      }
-
       if (switchGoogleTranslateLanguage(language)) {
         notify(`Translating to ${language.toUpperCase()} with Google Translate.`, 5000);
-      } else if (googleTranslateReady) {
-        reloadWithCountdown(
-          `Applying ${language.toUpperCase()} with Google Translate.`,
-        );
       } else if (googleTranslateFailed) {
         notify(
           "Google Translate could not load. Check your connection and try again.",
         );
-      } else if (source === "country") {
-        notify(`Language set to ${language.toUpperCase()}. Translation is starting.`, 5000);
+      } else {
+        notify(`Language ${source === "country" ? "suggested" : "selected"}: ${language.toUpperCase()}. Waiting for Google Translate.`, 5000);
       }
     },
-    [googleTranslateFailed, googleTranslateReady, notify, reloadWithCountdown],
+    [googleTranslateFailed, notify],
   );
 
   const selectLanguage = useCallback(
@@ -309,7 +269,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         delete window.googleTranslateElementInit;
       }
       if (bannerTimer.current) clearTimeout(bannerTimer.current);
-      if (countdownTimer.current) clearInterval(countdownTimer.current);
     };
   }, [notify]);
 
@@ -325,7 +284,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [selectedCountry, detecting, applyLanguage]);
 
   useEffect(() => {
-    if (!googleTranslateReady || currentRef.current === "fr") return;
+    if (!googleTranslateReady) return;
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;
@@ -333,10 +292,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         window.clearInterval(timer);
       } else if (attempts >= 20) {
         window.clearInterval(timer);
+        console.error("[Language] Google Translate language control is unavailable:", currentRef.current);
+        notify("Google Translate's language control could not load. Translation was not applied. Please try again.");
       }
     }, 250);
     return () => window.clearInterval(timer);
-  }, [googleTranslateReady, reloadWithCountdown]);
+  }, [googleTranslateReady, currentLang, notify]);
 
   useEffect(() => {
     const resetBodyOffset = () => {
@@ -350,9 +311,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const dismissBanner = useCallback(() => {
     setShowBanner(false);
-    setReloadCountdown(null);
     if (bannerTimer.current) clearTimeout(bannerTimer.current);
-    if (countdownTimer.current) clearInterval(countdownTimer.current);
   }, []);
 
   const toggleRomanization = useCallback(() => {
@@ -372,11 +331,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         bannerMessage,
         previousLang,
         dismissBanner,
-        reloadCountdown,
+        reloadCountdown: null,
         romanized,
         toggleRomanization,
         isNonLatinLang: NON_LATIN_LANGS.has(currentLang),
-        machineTranslated: currentLang !== "fr" && googleTranslateReady,
+        machineTranslated: googleTranslateReady && !googleTranslateFailed,
         translateText: (text) => text,
       }}
     >

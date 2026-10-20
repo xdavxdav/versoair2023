@@ -2,13 +2,13 @@
  * Country → language suggestions for the Google Translate widget.
  * Maps ISO 3166-1 alpha-2 country codes to supported language codes.
  *
- * The site's base language is French (fr); other suggestions are translated
- * client-side by the Google Translate widget.
+ * Pages contain mixed source languages. Each suggestion, including French,
+ * is a translation target for the Google Translate widget.
  */
 
 // Language code for each country
 const COUNTRY_TO_LANG: Record<string, string> = {
-  // ── French-speaking (no translation needed) ──
+  // ── French-speaking ──
   FR: "fr",
   CI: "fr",
   SN: "fr",

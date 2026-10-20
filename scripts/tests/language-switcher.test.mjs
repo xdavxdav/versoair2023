@@ -11,6 +11,7 @@ import { LANG_NAMES } from "../../client/src/utils/country-language.ts";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const googleTranslateStub = `
 window.google = {translate: {TranslateElement: function(options, elementId) {
+  window.__googleTranslateOptions = options;
   if (new URLSearchParams(window.location.search).get("widget") === "modern") {
     const gadget = document.createElement("div");
     gadget.className = "goog-te-gadget-simple";
@@ -140,6 +141,13 @@ test("Google Translate engine loads into an active hidden widget", async () => {
   const { page, errors, requests } = await openHarness();
   try {
     await page.waitForSelector(".goog-te-combo");
+    assert.deepEqual(
+      await page.evaluate(() => ({
+        source: window.__googleTranslateOptions.pageLanguage,
+        layout: window.__googleTranslateOptions.layout ?? null,
+      })),
+      { source: "auto", layout: null },
+    );
     assert.equal(requests.length, 1);
     assert.match(requests[0], /translate_a\/element\.js/);
     assert.equal(await page.$eval("#google_translate_element", element =>
@@ -158,7 +166,7 @@ test("choosing a language updates Google Translate and persists its cookie", asy
     await page.waitForFunction(() =>
       window.__googleTranslateLanguage === "de" &&
       document.querySelector("#current-language")?.textContent === "de");
-    assert.match(await page.evaluate(() => document.cookie), /googtrans=%2Ffr%2Fde|googtrans=\/fr\/de/);
+    assert.match(await page.evaluate(() => document.cookie), /googtrans=%2Fauto%2Fde|googtrans=\/auto\/de/);
     assert.equal(await page.evaluate(() => localStorage.getItem("fsa_selected_language")), "de");
     assert.equal(await page.$eval("#machine-translated", element => element.textContent), "true");
     assert.deepEqual(errors, []);
@@ -181,17 +189,13 @@ test("every language offered by the selector can be applied by the widget", asyn
         language,
       );
       const cookie = await page.evaluate(() => document.cookie);
-      if (language === "fr") {
-        assert.equal(cookie.includes("googtrans="), false);
-      } else {
-        const providerLanguage = language === "he" ? "iw" : language;
-        assert.match(
-          cookie,
-          new RegExp(
-            `googtrans=%2Ffr%2F${providerLanguage}|googtrans=\\/fr\\/${providerLanguage}`,
-          ),
-        );
-      }
+      const providerLanguage = language === "he" ? "iw" : language;
+      assert.match(
+        cookie,
+        new RegExp(
+          `googtrans=%2Fauto%2F${providerLanguage}|googtrans=\\/auto\\/${providerLanguage}`,
+        ),
+      );
     }
     assert.deepEqual(errors, []);
   } finally {
@@ -199,7 +203,7 @@ test("every language offered by the selector can be applied by the widget", asyn
   }
 });
 
-test("modern widget without a language select does not trigger a reload loop", async () => {
+test("a missing language control reports failure without reloading", async () => {
   const { page, errors } = await openHarness({
     cached: "de",
     widget: "modern",
@@ -212,14 +216,17 @@ test("modern widget without a language select does not trigger a reload loop", a
     });
     await new Promise((resolve) => setTimeout(resolve, 2000));
     assert.equal(reloads, 0);
-    assert.equal(await page.$('[role="status"]'), null);
+    assert.match(
+      await page.$eval('[role="status"]', element => element.textContent),
+      /language control could not load/,
+    );
     assert.deepEqual(errors, []);
   } finally {
     await page.close();
   }
 });
 
-test("returning to French resets Google Translate and clears its cookie", async () => {
+test("French is a translation target, including after another language", async () => {
   const { page, errors } = await openHarness({ cached: "de" });
   try {
     await page.waitForSelector(".goog-te-combo");
@@ -228,8 +235,19 @@ test("returning to French resets Google Translate and clears its cookie", async 
     await page.waitForFunction(() =>
       window.__googleTranslateLanguage === "fr" &&
       document.querySelector("#current-language")?.textContent === "fr");
-    assert.equal(await page.evaluate(() => document.cookie.includes("googtrans=")), false);
-    assert.equal(await page.$eval("#machine-translated", element => element.textContent), "false");
+    assert.match(await page.evaluate(() => document.cookie), /googtrans=\/auto\/fr/);
+    assert.equal(await page.$eval("#machine-translated", element => element.textContent), "true");
+    assert.deepEqual(errors, []);
+  } finally {
+    await page.close();
+  }
+});
+
+test("French is applied on first load without a stored language", async () => {
+  const { page, errors } = await openHarness();
+  try {
+    await page.waitForFunction(() => window.__googleTranslateLanguage === "fr");
+    assert.match(await page.evaluate(() => document.cookie), /googtrans=\/auto\/fr/);
     assert.deepEqual(errors, []);
   } finally {
     await page.close();
