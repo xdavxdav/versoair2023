@@ -91,6 +91,7 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { CulturalProgramsModal } from "@/components/home/CulturalProgramsModal";
 import { CookieConsentBanner } from "@/components/home/CookieConsentBanner";
 import { ArtistCarouselByCountry } from "@/components/home/ArtistCarouselByCountry";
+import LocalizedGoldHeading from "@/components/home/LocalizedGoldHeading";
 import { isBaseLang } from "@/utils/country-language";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -3162,13 +3163,7 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3"
-                    >
-                      <span className="gold-text__shine">
-                        Marché Artisanal
-                      </span>
-                    </h2>
+                    <LocalizedGoldHeading text="Marché Artisanal" />
                     <div
                       className="hidden sm:inline-block"
                       style={{
@@ -3326,13 +3321,7 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3"
-                    >
-                      <span className="gold-text__shine">
-                        Tableau d'impact
-                      </span>
-                    </h2>
+                    <LocalizedGoldHeading text="Tableau d'impact" />
                     <div
                       className="hidden sm:inline-block"
                       style={{
@@ -3528,13 +3517,7 @@ export default function Home() {
               <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
                   <div className="text-center mb-[1vw]">
-                    <h2
-                      className="gold-text mb-1 sm:mb-2 md:mb-3"
-                    >
-                      <span className="gold-text__shine">
-                        S'impliquer
-                      </span>
-                    </h2>
+                    <LocalizedGoldHeading text="S'impliquer" />
                     <div
                       className="hidden sm:inline-block"
                       style={{

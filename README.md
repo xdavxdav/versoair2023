@@ -111,7 +111,8 @@ bundled French, English, and Spanish editorial dictionaries, even if Google is
 unavailable. Native text spans and options are marked `translate="no"` to avoid
 double translation; unknown text and other languages remain eligible for Google
 translation. Catalogue spans retain a stable element when switching between
-native and provider translations.
+native and provider translations. The homepage's Artisan Marketplace, Impact
+Dashboard, and Get Involved headings use the same native catalogue translations.
 `GET /api/translations/:language` still serves these dictionaries for
 compatibility; the selector imports them locally and does not call that endpoint.
 Google Translate is machine translation, not legal certification.

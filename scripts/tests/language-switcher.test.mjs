@@ -43,6 +43,7 @@ import { LanguageProvider, useLanguage } from "/src/components/LanguageSwitcher.
 import { CountryProvider, useCountry } from "/src/contexts/CountryContext.tsx";
 import { useLocalizedContent } from "/src/hooks/use-localized-content.tsx";
 import { CountryDropdown } from "/src/components/CountryDropdown.tsx";
+import LocalizedGoldHeading from "/src/components/home/LocalizedGoldHeading.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 function Controls() {
   const language = useLanguage();
@@ -63,7 +64,11 @@ function Controls() {
       React.createElement("p", null, "Sign In"),
       React.createElement("p", null, "Custom quote"),
       React.createElement("p", {id:"unknown-copy"}, "Unknown authored sample"),
-      React.createElement("input", {id:"private-input", defaultValue:"Private account value"}))));
+      React.createElement("input", {id:"private-input", defaultValue:"Private account value"}))),
+    React.createElement("section", {id:"gold-headings"},
+      React.createElement(LocalizedGoldHeading, {text:"Marché Artisanal"}),
+      React.createElement(LocalizedGoldHeading, {text:"Tableau d'impact"}),
+      React.createElement(LocalizedGoldHeading, {text:"S'impliquer"})));
 }
 createRoot(document.getElementById("root")).render(
   React.createElement(QueryClientProvider, {client:new QueryClient()},
@@ -287,6 +292,22 @@ test("native public copy works without Google and stays protected across languag
       assert.equal(await page.$eval("#native-copy h1 span", el => el.lang), language);
       assert.equal(await page.$eval("#native-copy p:nth-child(2)", el => el.textContent), signIn);
       assert.equal(await page.$eval("#native-copy p:nth-child(3)", el => el.textContent), quote);
+      const expectedHeadings = {
+        fr: ["Marché Artisanal", "Tableau d'impact", "S'impliquer"],
+        en: ["Artisan Marketplace", "Impact Dashboard", "Get Involved"],
+        es: ["Mercado artesanal", "Panel de impacto", "Involúcrate"],
+      }[language];
+      assert.deepEqual(
+        await page.$$eval("#gold-headings h2", els => els.map(el => el.textContent.trim())),
+        expectedHeadings,
+      );
+      assert.equal(
+        await page.$$eval("#gold-headings span", (els, lang) =>
+          els.every(el => el.getAttribute("translate") === "no" && el.lang === lang),
+        language,
+        ),
+        true,
+      );
     }
     assert.equal(await page.$eval("#unknown-copy", el => el.textContent), "Unknown authored sample");
     assert.equal(await page.$eval("#private-input", el => el.value), "Private account value");
@@ -305,7 +326,7 @@ test("catalogue nodes survive provider DOM changes when switching back to native
     await page.waitForFunction(() =>
       document.querySelector("#current-language")?.textContent === "de");
     await page.evaluate(() => {
-      for (const span of document.querySelectorAll("#native-copy span")) {
+      for (const span of document.querySelectorAll("#native-copy span, #gold-headings span")) {
         if (span.closest('[translate="no"], .notranslate')) continue;
         const translated = document.createElement("font");
         translated.textContent = "Provider translation";
@@ -319,6 +340,16 @@ test("catalogue nodes survive provider DOM changes when switching back to native
     await page.waitForFunction(() =>
       document.querySelector("#native-copy h1")?.textContent === "Politique de confidentialité");
     assert.equal(await page.$eval("#native-copy h1 span", el => el.getAttribute("translate")), "no");
+    assert.deepEqual(
+      await page.$$eval("#gold-headings h2", els => els.map(el => el.textContent.trim())),
+      ["Marché Artisanal", "Tableau d'impact", "S'impliquer"],
+    );
+    assert.equal(
+      await page.$$eval("#gold-headings span", els =>
+        els.every(el => el.getAttribute("translate") === "no" && el.lang === "fr"),
+      ),
+      true,
+    );
     assert.deepEqual(errors, []);
   } finally {
     await page.close();
