@@ -1911,7 +1911,15 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.2 }}
               className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
-              vHeartz
+              {isAuthenticated ? (
+                "vHeartz"
+              ) : (
+                <img
+                  src="/Logo-page.png"
+                  alt="Verso Air"
+                  className="mx-auto block h-40 w-40 rounded-xl bg-white object-contain p-1 shadow-2xl sm:h-48 sm:w-48 md:h-56 md:w-56"
+                />
+              )}
             </motion.h1>
 
             <motion.p
