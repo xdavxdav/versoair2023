@@ -246,6 +246,32 @@ export function useStreamRoyaleAdmin() {
   });
 }
 
+export function useStreamRoyaleReview(period?: {
+  weekNumber: number;
+  yearNumber: number;
+}) {
+  const params = new URLSearchParams();
+  if (period) {
+    params.set("weekNumber", String(period.weekNumber));
+    params.set("yearNumber", String(period.yearNumber));
+  }
+
+  return useQuery({
+    queryKey: ["streamroyale", "admin", "review", period],
+    queryFn: async () => {
+      const query = params.toString();
+      const res = await fetch(
+        `/api/streamroyale/admin/review${query ? `?${query}` : ""}`,
+        { credentials: "include" },
+      );
+      if (!res.ok) throw new Error("Failed to fetch streaming review");
+      return res.json();
+    },
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+}
+
 export function useAdminPayouts(status?: string) {
   return useQuery({
     queryKey: ["streamroyale", "admin", "payouts", status],

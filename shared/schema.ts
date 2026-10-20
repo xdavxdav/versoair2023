@@ -12,10 +12,11 @@ import {
   char,
   index,
   unique,
+  uniqueIndex,
   date,
   customType,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -136,6 +137,51 @@ export const geoAdminInvitations = pgTable("geo_admin_invitations", {
   revokedAt: timestamp("revoked_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const geoAdminAddons = pgTable(
+  "geo_admin_addons",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    baseTier: varchar("base_tier", { length: 20 }).notNull(),
+    marketCode: char("market_code", { length: 2 }).notNull(),
+    businessName: text("business_name"),
+    businessType: text("business_type").notNull(),
+    studyPriorities: jsonb("study_priorities")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    proposedFeePercent: integer("proposed_fee_percent"),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    agreedAnnualAmount: decimal("agreed_annual_amount", {
+      precision: 12,
+      scale: 2,
+    }),
+    agreedCurrency: varchar("agreed_currency", { length: 3 }),
+    requestedAt: timestamp("requested_at").notNull().defaultNow(),
+    reviewedBy: integer("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at"),
+    startsAt: timestamp("starts_at"),
+    expiresAt: timestamp("expires_at"),
+    reviewNotes: text("review_notes"),
+  },
+  (table) => ({
+    openRequestPerUser: uniqueIndex(
+      "geo_admin_addons_one_open_request_per_user",
+    )
+      .on(table.userId)
+      .where(sql`${table.status} IN ('pending', 'active')`),
+    statusRequestedAt: index("geo_admin_addons_status_requested_idx").on(
+      table.status,
+      table.requestedAt,
+    ),
+  }),
+);
+
+export type GeoAdminAddon = typeof geoAdminAddons.$inferSelect;
+export type InsertGeoAdminAddon = typeof geoAdminAddons.$inferInsert;
 
 // --- EMAIL VERIFICATION TOKENS ---
 export const verificationTokens = pgTable("verification_tokens", {
@@ -830,10 +876,32 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 // --- 8. RELATION MAPS (Drizzle Query API) ---
 export const userRelations = relations(users, ({ many }) => ({
   businessesOwned: many(businesses),
+  requestedGeoAdminAddons: many(geoAdminAddons, {
+    relationName: "geoAdminAddonUser",
+  }),
+  reviewedGeoAdminAddons: many(geoAdminAddons, {
+    relationName: "geoAdminAddonReviewer",
+  }),
   connectionsSent: many(connections, { relationName: "requester" }),
   connectionsReceived: many(connections, { relationName: "receiver" }),
   reviews: many(businessReviews),
 }));
+
+export const geoAdminAddonRelations = relations(
+  geoAdminAddons,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [geoAdminAddons.userId],
+      references: [users.id],
+      relationName: "geoAdminAddonUser",
+    }),
+    reviewer: one(users, {
+      fields: [geoAdminAddons.reviewedBy],
+      references: [users.id],
+      relationName: "geoAdminAddonReviewer",
+    }),
+  }),
+);
 
 export const businessRelations = relations(businesses, ({ one, many }) => ({
   owner: one(users, { fields: [businesses.ownerId], references: [users.id] }),
@@ -1618,6 +1686,12 @@ export const artistProfiles = pgTable(
       precision: 12,
       scale: 2,
     }).default("0.00"),
+    royaltyCarryForward: decimal("royalty_carry_forward", {
+      precision: 12,
+      scale: 2,
+    })
+      .notNull()
+      .default("0.00"),
     payoutEmail: text("payout_email"),
     payoutMethod: varchar("payout_method", { length: 20 }).default("paypal"), // paypal, bank, credits
     verifiedForPayout: boolean("verified_for_payout").default(false),

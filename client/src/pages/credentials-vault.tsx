@@ -9,8 +9,6 @@ import {
 import {
   Search,
   Copy,
-  Eye,
-  EyeOff,
   X,
   Shield,
   ShieldCheck,
@@ -589,17 +587,13 @@ function CredentialCard({
   credential,
   index,
   copiedId,
-  showPasswords,
   onCopy,
-  onTogglePassword,
   onQuickLogin,
 }: {
   credential: Credential;
   index: number;
   copiedId: string | null;
-  showPasswords: Record<string, boolean>;
   onCopy: (text: string, id: string) => void;
-  onTogglePassword: (id: string) => void;
   onQuickLogin: (cred: Credential) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -725,42 +719,9 @@ function CredentialCard({
               onCopy={onCopy}
             />
 
-            {/* Password */}
-            <div>
-              <label className="text-gray-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
-                <Key className="h-2.5 w-2.5" /> PASSWORD
-              </label>
-              <div className="flex items-center gap-1.5 mt-1">
-                <code
-                  className={`flex-1 bg-black/50 border border-gray-800 px-2.5 py-1.5 rounded-md text-xs font-mono truncate transition-colors ${
-                    showPasswords[credential.id]
-                      ? "text-green-400"
-                      : "text-gray-600"
-                  }`}
-                >
-                  {showPasswords[credential.id]
-                    ? credential.password
-                    : "•".repeat(credential.password.length)}
-                </code>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onTogglePassword(credential.id)}
-                  className="p-1.5 rounded-md hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  {showPasswords[credential.id] ? (
-                    <EyeOff className="h-3.5 w-3.5" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5" />
-                  )}
-                </motion.button>
-                <CopyButton
-                  onClick={() =>
-                    onCopy(credential.password, `pass-${credential.id}`)
-                  }
-                  isCopied={copiedId === `pass-${credential.id}`}
-                />
-              </div>
-            </div>
+            <p className="text-[11px] text-gray-500">
+              Password is configured locally and is not stored or exported here.
+            </p>
           </div>
 
           {/* Action footer */}
@@ -970,12 +931,8 @@ export default function CredentialsVault() {
   const [gateComplete, setGateComplete] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>(
-    {},
-  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "compact">("grid");
-  const [showAllPasswords, setShowAllPasswords] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcut: Cmd/Ctrl + K to focus search
@@ -1013,26 +970,10 @@ export default function CredentialsVault() {
     setTimeout(() => setCopiedId(null), 2000);
   }, []);
 
-  // Toggle individual password
-  const togglePassword = useCallback((id: string) => {
-    setShowPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
-
-  // Toggle all passwords
-  const toggleAllPasswords = useCallback(() => {
-    const newState = !showAllPasswords;
-    setShowAllPasswords(newState);
-    const map: Record<string, boolean> = {};
-    CREDENTIALS.forEach((c) => {
-      map[c.id] = newState;
-    });
-    setShowPasswords(map);
-  }, [showAllPasswords]);
-
   // Quick login
   const handleQuickLogin = useCallback((credential: Credential) => {
+    sessionStorage.removeItem("quick_login_password");
     sessionStorage.setItem("quick_login_email", credential.email);
-    sessionStorage.setItem("quick_login_password", credential.password);
     window.location.href = "/auth/signin";
   }, []);
 
@@ -1041,7 +982,6 @@ export default function CredentialsVault() {
     const data = displayedCredentials.map((c) => ({
       username: c.username,
       email: c.email,
-      password: c.password,
       role: c.role,
       sector: c.sector || "—",
     }));
@@ -1293,18 +1233,6 @@ export default function CredentialsVault() {
               <div className="flex items-center gap-2">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={toggleAllPasswords}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-800 text-gray-400 hover:text-gray-300 hover:border-gray-700 text-xs font-mono transition-all"
-                >
-                  {showAllPasswords ? (
-                    <EyeOff className="h-3.5 w-3.5" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5" />
-                  )}
-                  {showAllPasswords ? "HIDE ALL" : "REVEAL ALL"}
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
                   onClick={handleExport}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-800 text-gray-400 hover:text-gray-300 hover:border-gray-700 text-xs font-mono transition-all"
                 >
@@ -1360,9 +1288,7 @@ export default function CredentialsVault() {
                     credential={credential}
                     index={index}
                     copiedId={copiedId}
-                    showPasswords={showPasswords}
                     onCopy={copyToClipboard}
-                    onTogglePassword={togglePassword}
                     onQuickLogin={handleQuickLogin}
                   />
                 ))}

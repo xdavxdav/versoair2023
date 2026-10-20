@@ -20,6 +20,18 @@ function locs(xml: string): string[] {
   return [...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map((m) => m[1]);
 }
 
+function parseTags(html: string, tag: string): Array<Record<string, string>> {
+  const tagRe = new RegExp(`<${tag}\\b([^>]*)>`, "gi");
+  const attrRe = /([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+  return [...html.matchAll(tagRe)].map((match) => {
+    const attrs: Record<string, string> = {};
+    for (const attr of match[1].matchAll(attrRe)) {
+      attrs[attr[1].toLowerCase()] = attr[2] ?? attr[3] ?? attr[4] ?? "";
+    }
+    return attrs;
+  });
+}
+
 async function fetchXml(url: string, rootTag: "sitemapindex" | "urlset") {
   const { res, body } = await get(url);
   const type = res.headers.get("content-type") ?? "";
@@ -90,10 +102,80 @@ async function main() {
   }
 
   // Spot-check that listed URLs resolve directly (no redirect, no error).
-  const sample = [...seen].sort(() => Math.random() - 0.5).slice(0, sampleSize);
+  const sample = [...seen].slice(0, sampleSize);
+  const sampledTitles = new Map<string, string>();
+  const sampledDescriptions = new Map<string, string>();
   for (const url of sample) {
-    const { res } = await get(url);
+    const { res, body } = await get(url);
     if (res.status !== 200) fail(`sampled URL returned HTTP ${res.status}: ${url}`);
+    if (res.status !== 200) continue;
+
+    const title = body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim();
+    const metas = parseTags(body, "meta");
+    const links = parseTags(body, "link");
+    const description = metas.find(
+      (meta) => meta.name?.toLowerCase() === "description",
+    )?.content?.trim();
+    const canonicals = links
+      .filter((link) => link.rel?.toLowerCase().split(/\s+/).includes("canonical"))
+      .map((link) => link.href?.trim())
+      .filter((value): value is string => Boolean(value));
+
+    if (!title || /^versoair$/i.test(title)) {
+      fail(`${url} has no specific title`);
+    } else if (sampledTitles.has(title.toLowerCase())) {
+      fail(
+        `duplicate title in sampled pages: ${sampledTitles.get(title.toLowerCase())} and ${url}`,
+      );
+    } else {
+      sampledTitles.set(title.toLowerCase(), url);
+    }
+    if (!description) {
+      fail(`${url} has no meta description`);
+    } else if (sampledDescriptions.has(description.toLowerCase())) {
+      fail(
+        `duplicate description in sampled pages: ${sampledDescriptions.get(description.toLowerCase())} and ${url}`,
+      );
+    } else {
+      sampledDescriptions.set(description.toLowerCase(), url);
+    }
+    if (canonicals.length !== 1 || canonicals[0] !== url) {
+      fail(`${url} canonical must appear exactly once and match the sitemap URL`);
+    }
+    if (
+      !metas.some((meta) => meta.property?.toLowerCase() === "og:title" && meta.content) ||
+      !metas.some((meta) => meta.property?.toLowerCase() === "og:description" && meta.content) ||
+      !metas.some((meta) => meta.property?.toLowerCase() === "og:url" && meta.content === url) ||
+      !metas.some((meta) => meta.name?.toLowerCase() === "twitter:card" && meta.content)
+    ) {
+      fail(`${url} is missing required Open Graph or Twitter metadata`);
+    }
+    if (BUSINESS_URL.test(new URL(url).pathname)) {
+      const hasLocalBusinessJsonLd = [
+        ...body.matchAll(
+          /<script\b([^>]*)>([\s\S]*?)<\/script>/gi,
+        ),
+      ].some((match) => {
+        if (!/type\s*=\s*["']?application\/ld\+json/i.test(match[1])) {
+          return false;
+        }
+        try {
+          const json = JSON.parse(match[2]);
+          const types = ([] as unknown[]).concat(json["@type"] ?? []);
+          return (
+            types.includes("LocalBusiness") &&
+            typeof json.name === "string" &&
+            Boolean(json.name.trim()) &&
+            json.url === url
+          );
+        } catch {
+          return false;
+        }
+      });
+      if (!hasLocalBusinessJsonLd) {
+        fail(`${url} has no valid LocalBusiness JSON-LD`);
+      }
+    }
   }
   if (sample.length > 0) ok(`sampled ${sample.length} listed URL(s)`);
 

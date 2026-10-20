@@ -1262,7 +1262,7 @@
 .panels-wrapper {
   position: relative;
   height: 100svh;
-  width: 100vw;
+  width: 100%;
   overflow: clip;
 }
 
@@ -1275,8 +1275,8 @@
 /* Main panels container */
 .panels-container {
   display: flex;
-  height: 100svh;
-  width: 400vw; /* 4 panels * 100vw each */
+  height: 100%;
+  width: 100%;
   position: relative;
   will-change: transform;
   backface-visibility: hidden;
@@ -1286,10 +1286,11 @@
 
 /* Individual panel styling */
 .panel {
-  width: 100vw;
+  width: 100%;
+  min-width: 0;
   height: 100svh;
   min-height: 100svh;
-  flex-shrink: 0;
+  flex: 0 0 100%;
   position: relative;
   overflow: clip;
   will-change: transform;
@@ -1438,9 +1439,6 @@
   .panel-content {
     padding: 0.75rem;
     max-width: 95%;
-  }
-  .panels-container {
-    width: 400vw;
   }
   /* Further shrink for very small phones */
   .panel > .relative {

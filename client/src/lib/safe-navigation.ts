@@ -1,6 +1,6 @@
 const AUTH_PATH_PREFIX = "/auth/";
 
-export function getSafeReturnPath(fallback = "/stream"): string {
+export function getSafeReturnPath(fallback = "/"): string {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return fallback;
   }
@@ -27,7 +27,7 @@ export function getSafeReturnPath(fallback = "/stream"): string {
 
 export function navigateBackSafely(
   navigate: (path: string) => void,
-  fallback = "/stream",
+  fallback = "/",
 ): void {
   navigate(getSafeReturnPath(fallback));
 }

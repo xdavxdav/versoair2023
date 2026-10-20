@@ -15,8 +15,7 @@
   "tailwindCSS.files.exclude": [
     "**/node_modules/**",
     "**/.hg/**",
-    "**/.svn/**",
-    "VersoAIR.tm/**"
+    "**/.svn/**"
   ],
   "files.associations": {
     "*.css": "tailwindcss"
@@ -45,5 +44,6 @@
   "python.envFile": "${workspaceFolder}/.env",
   "files.readonlyInclude": {
     "{**/.c4z/.extsrcs/*.PROTSYM.cbl,**/.c4z/.extsrcs/*.PROTSYM.listing}": true
-  }
+  },
+  "js/ts.experimental.useTsgo": false
 }

@@ -5,6 +5,11 @@ import { requireAuth, optionalAuth } from "../middleware/auth";
 import { getIO } from "../websocket/socket-config";
 import { distributeWeeklyPool } from "../services/royalty-engine.ts";
 import {
+  getRoyaltyQualification,
+  ROYALTY_RULES,
+} from "../services/royalty-calculation";
+import { isPayingListenerStreamSql } from "../services/royalty-sql";
+import {
   onlinePaymentsEnabled,
   rejectUnavailablePayment,
 } from "../utils/commercial-gates";
@@ -17,7 +22,9 @@ const router = Router();
 
 // --- Helpers ---
 function getWeekNumber(d: Date = new Date()): { week: number; year: number } {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const date = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+  );
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil(
@@ -98,6 +105,7 @@ async function ensureStreamRoyaleTables() {
           weekly_streams INTEGER DEFAULT 0,
           current_badge_tier INTEGER DEFAULT 1,
           wallet_balance DECIMAL(12,2) DEFAULT 0.00,
+          royalty_carry_forward DECIMAL(12,2) NOT NULL DEFAULT 0.00,
           payout_email TEXT,
           payout_method VARCHAR(20) DEFAULT 'paypal',
           verified_for_payout BOOLEAN DEFAULT false,
@@ -815,7 +823,8 @@ router.get("/artist/me", optionalAuth, async (req: Request, res: Response) => {
 
     // Last 8 weeks earnings
     const earningsHistory = await pool.query(
-      `SELECT week_number, year_number, total_earnings, stream_count, global_rank, regional_rank, pool_share_percent
+      `SELECT week_number, year_number, total_earnings, stream_count, global_rank,
+              regional_rank, pool_share_percent, badge_bonus, tip_income
        FROM artist_royalties 
        WHERE artist_profile_id = $1
        ORDER BY year_number DESC, week_number DESC
@@ -867,6 +876,9 @@ router.get("/artist/me", optionalAuth, async (req: Request, res: Response) => {
         leagueId: profile.league_id,
         lifetimeStreams: parseInt(profile.lifetime_streams) || 0,
         walletBalance: parseFloat(profile.wallet_balance) || 0,
+        royaltyCarryForward:
+          parseFloat(profile.royalty_carry_forward) || 0,
+        payoutsEnabled: onlinePaymentsEnabled(),
         payoutEmail: profile.payout_email,
         payoutMethod: profile.payout_method,
         verifiedForPayout: profile.verified_for_payout,
@@ -910,6 +922,8 @@ router.get("/artist/me", optionalAuth, async (req: Request, res: Response) => {
         totalEarnings: parseFloat(r.total_earnings) || 0,
         guaranteedAmount: parseFloat(r.guaranteed_amount) || 0,
         performanceAmount: parseFloat(r.performance_amount) || 0,
+        badgeBonus: parseFloat(r.badge_bonus) || 0,
+        tipIncome: parseFloat(r.tip_income) || 0,
         streamCount: parseInt(r.stream_count) || 0,
         globalRank: r.global_rank,
         regionalRank: r.regional_rank,
@@ -1430,6 +1444,203 @@ router.get(
 );
 
 /**
+ * GET /api/streamroyale/admin/review
+ * Read-only stream activity and royalty-rule review for one week.
+ */
+router.get(
+  "/admin/review",
+  requireAuth(["admin", "superuser"]),
+  async (req: Request, res: Response) => {
+    const current = getWeekNumber();
+    const weekValue = req.query.weekNumber;
+    const yearValue = req.query.yearNumber;
+    const week =
+      weekValue === undefined ? current.week : Number(weekValue);
+    const year =
+      yearValue === undefined ? current.year : Number(yearValue);
+    if (
+      (weekValue !== undefined &&
+        (typeof weekValue !== "string" || !/^\d+$/.test(weekValue))) ||
+      (yearValue !== undefined &&
+        (typeof yearValue !== "string" || !/^\d+$/.test(yearValue))) ||
+      !Number.isInteger(week) ||
+      week < 1 ||
+      week > 53 ||
+      !Number.isInteger(year) ||
+      year < 2000 ||
+      year > current.year + 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "weekNumber must be 1-53 and yearNumber must be a valid year",
+      });
+    }
+
+    try {
+      const [poolResult, artistResult, recentStreams, storedRoyalties] =
+        await Promise.all([
+          pool.query(
+            `SELECT id, total_pool, guaranteed_fund, performance_pool,
+                    platform_cut, qualifying_artists, status, distributed_at
+             FROM weekly_pools WHERE week_number = $1 AND year_number = $2`,
+            [week, year],
+          ),
+          pool.query(
+            `WITH weekly_events AS (
+               SELECT se.artist_profile_id, se.user_id, se.boost_multiplier,
+                      ${isPayingListenerStreamSql} AS is_paying_listener
+               FROM stream_events se
+               WHERE se.week_number = $1 AND se.year_number = $2
+                 AND se.is_valid = true
+                 AND COALESCE(se.is_self_stream, false) = false
+             )
+             SELECT ap.id AS artist_profile_id, ap.stage_name,
+                    ap.current_badge_tier, ap.revenue_boost_percent,
+                    ap.royalty_carry_forward,
+                    COUNT(*)::int AS valid_streams,
+                    COUNT(DISTINCT we.user_id)
+                      FILTER (WHERE we.is_paying_listener)::int AS paying_listeners,
+                    COALESCE(SUM(CASE WHEN we.is_paying_listener
+                                      THEN COALESCE(we.boost_multiplier::numeric, 0)
+                                      ELSE 0 END), 0) AS weighted_streams
+             FROM weekly_events we
+             JOIN artist_profiles ap ON ap.id = we.artist_profile_id
+             GROUP BY ap.id, ap.stage_name, ap.current_badge_tier,
+                      ap.revenue_boost_percent, ap.royalty_carry_forward
+             ORDER BY valid_streams DESC, ap.stage_name`,
+            [week, year],
+          ),
+          pool.query(
+            `SELECT se.id, se.created_at, se.duration, se.is_valid,
+                    se.is_self_stream, se.boosted, se.boost_multiplier,
+                    se.super_stream, ap.stage_name,
+                    mt.title AS track_title,
+                    ${isPayingListenerStreamSql} AS paying_listener
+             FROM stream_events se
+             LEFT JOIN artist_profiles ap ON ap.id = se.artist_profile_id
+             LEFT JOIN music_tracks mt ON mt.id = se.track_id
+             WHERE se.week_number = $1 AND se.year_number = $2
+             ORDER BY se.created_at DESC
+             LIMIT 50`,
+            [week, year],
+          ),
+          pool.query(
+            `SELECT ar.artist_profile_id, ar.guaranteed_amount,
+                    ar.performance_amount, ar.badge_bonus, ar.total_earnings,
+                    ar.tip_income, ar.stream_count
+             FROM artist_royalties ar
+             WHERE ar.week_number = $1 AND ar.year_number = $2`,
+            [week, year],
+          ),
+        ]);
+
+      const poolRow = poolResult.rows[0] ?? null;
+      const distributionPreview = await distributeWeeklyPool(week, year, {
+        dryRun: true,
+      });
+      const projectedByArtist = new Map(
+        ((distributionPreview.distributions as any[] | undefined) ?? []).map(
+          (row) => [Number(row.artistProfileId), row],
+        ),
+      );
+      const storedByArtist = new Map(
+        storedRoyalties.rows.map((row: any) => [
+          Number(row.artist_profile_id),
+          row,
+        ]),
+      );
+      const artists = artistResult.rows.map((artist: any) => {
+        const validStreams = Number(artist.valid_streams) || 0;
+        const payingListeners = Number(artist.paying_listeners) || 0;
+        const qualification = getRoyaltyQualification(
+          validStreams,
+          payingListeners,
+        );
+        const projected = projectedByArtist.get(
+          Number(artist.artist_profile_id),
+        );
+        const stored = storedByArtist.get(Number(artist.artist_profile_id));
+        return {
+          artistProfileId: Number(artist.artist_profile_id),
+          stageName: artist.stage_name,
+          badgeTier: artist.current_badge_tier,
+          badgeBoostPercent: Number(artist.revenue_boost_percent) || 0,
+          validStreams,
+          payingListeners,
+          weightedStreams: Number(artist.weighted_streams) || 0,
+          carryForward: Number(artist.royalty_carry_forward) || 0,
+          qualifies: qualification.qualifies,
+          qualificationReason: qualification.reason,
+          projected: projected
+            ? {
+                guaranteedAmount: projected.guaranteedAmount,
+                performanceAmount: projected.performanceAmount,
+                badgeBonus: projected.badgeBonus,
+                totalEarnings: projected.totalEarnings,
+                walletCredit: projected.walletCredit,
+                carryForward: projected.carryForward,
+              }
+            : null,
+          actual: stored
+            ? {
+                guaranteedAmount: Number(stored.guaranteed_amount) || 0,
+                performanceAmount: Number(stored.performance_amount) || 0,
+                badgeBonus: Number(stored.badge_bonus) || 0,
+                totalEarnings:
+                  Number(stored.total_earnings) || 0,
+                tipIncome: Number(stored.tip_income) || 0,
+                streamCount: Number(stored.stream_count) || 0,
+              }
+            : null,
+        };
+      });
+
+      res.set("Cache-Control", "private, no-store").json({
+        success: true,
+        period: { weekNumber: week, yearNumber: year },
+        rules: {
+          ...ROYALTY_RULES,
+          minimumWalletCredit: ROYALTY_RULES.minimumWalletCreditCents / 100,
+          source: "StreamRoyale weekly royalty policy",
+        },
+        pool: poolRow
+          ? {
+              total: Number(poolRow.total_pool) || 0,
+              guaranteedFund: Number(poolRow.guaranteed_fund) || 0,
+              performancePool: Number(poolRow.performance_pool) || 0,
+              platformCut: Number(poolRow.platform_cut) || 0,
+              qualifyingArtists: Number(poolRow.qualifying_artists) || 0,
+              status: poolRow.status,
+              distributedAt: poolRow.distributed_at,
+            }
+          : null,
+        preview: distributionPreview,
+        artists,
+        recentActivity: recentStreams.rows.map((event: any) => ({
+          id: event.id,
+          createdAt: event.created_at,
+          trackTitle: event.track_title || "Unknown track",
+          artistName: event.stage_name || "Unknown artist",
+          durationSeconds: Number(event.duration) || 0,
+          isValid: event.is_valid === true,
+          isSelfStream: event.is_self_stream === true,
+          payingListener: event.paying_listener === true,
+          boosted: event.boosted === true,
+          boostMultiplier: Number(event.boost_multiplier) || 0,
+          superStream: event.super_stream === true,
+        })),
+        activityCount: recentStreams.rows.length,
+      });
+    } catch (err) {
+      console.error("[STREAMROYALE] Admin review error:", err);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to load streaming review" });
+    }
+  },
+);
+
+/**
  * POST /api/streamroyale/admin/distribute
  * Manually trigger weekly pool distribution
  */
@@ -1438,13 +1649,17 @@ router.post(
   requireAuth(["admin", "superuser"]),
   async (req: Request, res: Response) => {
     await ensureStreamRoyaleTables();
-    const { weekNumber, yearNumber } = req.body;
+    const { weekNumber, yearNumber, dryRun = false } = req.body;
+    if (typeof dryRun !== "boolean") {
+      return res
+        .status(400)
+        .json({ success: false, message: "dryRun must be a boolean" });
+    }
     const week = weekNumber || getWeekNumber().week;
     const year = yearNumber || getWeekNumber().year;
 
     try {
-      // Run distribution
-      const result = await distributeWeeklyPool(week, year);
+      const result = await distributeWeeklyPool(week, year, { dryRun });
       res.json({ success: true, ...result });
     } catch (err: any) {
       console.error("[STREAMROYALE] Manual distribution error:", err);

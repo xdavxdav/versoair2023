@@ -189,6 +189,7 @@ const AdminTicketManagement = lazy(
 );
 const ProfileReviewPage = lazy(() => import("@/pages/admin/profile-review"));
 const StreamRoyaleAdmin = lazy(() => import("@/pages/streamroyale-admin"));
+const StreamRoyaleReview = lazy(() => import("@/pages/streamroyale-review"));
 const PurgatoireAdmin = lazy(() => import("@/pages/admin/purgatoire"));
 const ArtistContractsAdmin = lazy(
   () => import("@/pages/admin/artist-contracts"),
@@ -226,6 +227,7 @@ const AdCampaignsPage = lazy(() => import("@/pages/ad-campaigns"));
 // ─────────────────────────────────────────────────────
 const APIDocumentation = lazy(() => import("@/pages/api"));
 const APITestPage = lazy(() => import("@/pages/api-test"));
+const Documentation = lazy(() => import("@/pages/docs"));
 
 // ─────────────────────────────────────────────────────
 // ⚖️ Legal Pages (lazy-loaded)
@@ -279,6 +281,7 @@ const NewslettersPage = lazy(() => import("@/pages/marketing-newsletters"));
 const CartPage = lazy(() => import("@/pages/marketing-cart"));
 const OrderTrackingPage = lazy(() => import("@/pages/marketing-orders"));
 const AdminPrintshop = lazy(() => import("@/pages/admin-printshop"));
+const GeoInsightsPage = lazy(() => import("@/pages/geo-insights"));
 
 // ─────────────────────────────────────────────────────
 // 🧩 Layout Components
@@ -680,6 +683,8 @@ function Router() {
       <Route path="/auth/reset-password" component={AuthRecoveryPage} />
       <Route path="/geo-admin/accept-invitation" component={AuthRecoveryPage} />
       <Route path="/auth/signin" component={SignIn} />
+      <Route path="/auth/forgot-password" component={AuthRecoveryPage} />
+      <Route path="/auth/reset-password" component={AuthRecoveryPage} />
       <Route path="/auth/signup">
         {() => <Redirect to="/auth/signin?mode=register" />}
       </Route>
@@ -705,6 +710,8 @@ function Router() {
           🌍 GEO ADMIN — Subscriber portal (auth required)
           ═══════════════════════════════════════════════ */}
       <Route path="/geo-admin" component={GeoAdminPage} />
+      <Route path="/geo-admin/accept-invitation" component={AuthRecoveryPage} />
+      <Route path="/geo-insights" component={GeoInsightsPage} />
       <Route path="/geo-admin/business-verification">
         {() => <ProtectedRoute component={BusinessVerification} />}
       </Route>
@@ -756,6 +763,11 @@ function Router() {
           <ProtectedRoute component={StreamRoyaleAdmin} ownerOnly />
         )}
       </Route>
+      <Route path="/admin/streamroyale/review">
+        {() => (
+          <ProtectedRoute component={StreamRoyaleReview} roles={["admin"]} />
+        )}
+      </Route>
       <Route path="/admin/purgatoire">
         {() => <ProtectedRoute component={PurgatoireAdmin} ownerOnly />}
       </Route>
@@ -795,7 +807,7 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/api" component={APIDocumentation} />
       <Route path="/api-test" component={APITestPage} />
-      <Route path="/docs">{() => <Redirect to="/help" />}</Route>
+      <Route path="/docs" component={Documentation} />
 
       {/* ═══════════════════════════════════════════════
           ⚖️ LEGAL PAGES

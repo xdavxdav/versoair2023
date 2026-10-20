@@ -1260,9 +1260,13 @@ router.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
 // 📊 EARNINGS SUMMARY — GET /api/music/earnings
 // (aggregates all track revenue — shown in Vault / Card settings)
 // ═════════════════════════════════════════════════════════════════════
-router.get("/earnings", async (_req, res) => {
+router.get("/earnings", requireAuth(), async (req, res) => {
   try {
     await ensureTrackColumns();
+    const userId = Number(req.user?.userId);
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ success: false, error: "Not authenticated" });
+    }
 
     const result = await pool.query(`
       SELECT
@@ -1275,17 +1279,19 @@ router.get("/earnings", async (_req, res) => {
         COALESCE(SUM(CASE WHEN created_at > NOW() - INTERVAL '1 day'
           THEN revenue::numeric ELSE 0 END), 0)::text AS revenue_today
       FROM music_tracks
-      WHERE file_path IS NOT NULL OR audio_data IS NOT NULL
-    `);
+      WHERE (file_path IS NOT NULL OR audio_data IS NOT NULL)
+        AND artist_id IN (SELECT id FROM artists WHERE user_id = $1)
+    `, [userId]);
 
     // Per-track breakdown
     const tracks = await pool.query(`
       SELECT id, title, genre, price, downloads, revenue, streams, play_count, status, created_at
       FROM music_tracks
-      WHERE file_path IS NOT NULL OR audio_data IS NOT NULL
+      WHERE (file_path IS NOT NULL OR audio_data IS NOT NULL)
+        AND artist_id IN (SELECT id FROM artists WHERE user_id = $1)
       ORDER BY revenue::numeric DESC
       LIMIT 50
-    `);
+    `, [userId]);
 
     res.json({
       success: true,

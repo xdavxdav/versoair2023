@@ -12,6 +12,7 @@ import { db, pool } from "../../db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
 import { requireAuth } from "../../middleware/auth";
+import { getGeoAdminEntitlement } from "../../services/geoadmin-entitlement";
 import {
   freeTrialsEnabled,
   rejectUnavailablePayment,
@@ -110,12 +111,11 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
       "job_alerts",
       "contract_alerts",
       "reservation_tracking",
-      "geoadmin_reports",
       "platform_updates",
     ],
     instantDelivery: true,
     reservationTracking: true,
-    geoAdminReports: true,
+    geoAdminReports: false,
   },
   max: {
     photos: 50,
@@ -137,12 +137,11 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
       "job_alerts",
       "contract_alerts",
       "reservation_tracking",
-      "geoadmin_reports",
       "platform_updates",
     ],
     instantDelivery: true,
     reservationTracking: true,
-    geoAdminReports: true,
+    geoAdminReports: false,
   },
   enterprise: {
     photos: -1, // unlimited
@@ -164,12 +163,11 @@ const TIER_FEATURES: Record<TierKey, Record<string, any>> = {
       "job_alerts",
       "contract_alerts",
       "reservation_tracking",
-      "geoadmin_reports",
       "platform_updates",
     ],
     instantDelivery: true,
     reservationTracking: true,
-    geoAdminReports: true,
+    geoAdminReports: false,
   },
 };
 
@@ -220,7 +218,13 @@ router.get("/status", async (req: Request, res: Response) => {
 
     const user = result.rows[0];
     const effectiveTier = getEffectiveTier(user);
-    const features = TIER_FEATURES[effectiveTier];
+    const geoAdminEntitlement = await getGeoAdminEntitlement(
+      Number(user.userId ?? user.id),
+    );
+    const features = {
+      ...TIER_FEATURES[effectiveTier],
+      geoAdminReports: geoAdminEntitlement?.hasAccess ?? false,
+    };
 
     const isTrialing =
       user.trial_tier &&

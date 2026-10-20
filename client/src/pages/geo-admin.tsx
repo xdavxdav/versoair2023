@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GeoAdmin from "@/components/geo-admin";
 import GeoAdminAuthGate from "@/components/GeoAdminAuthGate";
+import GeoAdminAccessManager from "@/components/GeoAdminAccessManager";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
@@ -31,7 +32,8 @@ export default function GeoAdminPage() {
     user?.isAdmin ||
     user?.role === "admin" ||
     user?.role === "superuser" ||
-    user?.role === "moderator";
+    user?.role === "moderator" ||
+    user?.role === "tsr";
 
   // Superuser always has full access regardless of tier
   const isSuperuser = user?.role === "superuser";
@@ -69,9 +71,7 @@ export default function GeoAdminPage() {
     }
   }, []);
 
-  // Session timer - use gateBypass as indicator of authentication
-  // Also checks geoadmin_session which persists even after JWT expiry
-  // (only cleared on explicit Sign Out in the auth gate)
+  // This marker controls the timer only; access still requires server authentication.
   const [gateBypass, setGateBypass] = useState(() => {
     // Only bypass the auth gate if there's an active geoadmin session
     // (not just any auth token from elsewhere on the site)
@@ -79,7 +79,8 @@ export default function GeoAdminPage() {
     return !!geoSession;
   });
 
-  const handleGeoSessionExpired = useCallback(() => {
+  const handleGeoSessionExpired = useCallback(async () => {
+    await logout();
     setGateBypass(false);
     setIsStillConnected(false);
     localStorage.removeItem("geoadmin_session");
@@ -91,7 +92,8 @@ export default function GeoAdminPage() {
       title: "Session disconnected",
       description: "Your GeoAdmin session has ended. Please sign in again.",
     });
-  }, []);
+    await refetch();
+  }, [logout, refetch]);
 
   const handleGeoAdminLogout = useCallback(async () => {
     await logout();
@@ -116,7 +118,11 @@ export default function GeoAdminPage() {
     isSessionLow,
     handleExtendSession,
     formatTimeLeft,
-  } = useSessionTimer(gateBypass, true, handleGeoSessionExpired); // enableTimeout=true for geo-admin
+  } = useSessionTimer(
+    gateBypass,
+    true,
+    handleGeoSessionExpired,
+  );
   const [isStillConnected, setIsStillConnected] = useState(() => {
     const geoSession = localStorage.getItem("geoadmin_session");
     return !!geoSession;
@@ -184,9 +190,7 @@ export default function GeoAdminPage() {
     }
     setGateBypass(true);
 
-    // Refetch to get updated tier info
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    refetch();
+    await refetch();
 
     // Clear the redirect flag
     localStorage.removeItem("geo_admin_redirect_intended");
@@ -205,8 +209,35 @@ export default function GeoAdminPage() {
   }
 
   // Not signed in → show the auth gate
-  if (!isAuthenticated && !gateBypass) {
+  if (!isAuthenticated) {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
+  }
+
+  if (!isGeoAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f3efe9] px-4 py-12">
+        <Card className="w-full max-w-xl p-7">
+          <Lock className="h-8 w-8 text-amber-700" />
+          <h1 className="mt-4 text-2xl font-bold text-slate-900">
+            Internal GeoAdmin access
+          </h1>
+          <p className="mt-2 leading-relaxed text-slate-600">
+            This administration console is restricted to authorized VersoAir
+            staff. Subscribers can request an annual market-study add-on from
+            GeoAdmin Insights; paid subscriptions do not grant admin-console
+            access.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button onClick={() => setLocation("/geo-insights")}>
+              GeoAdmin Insights
+            </Button>
+            <Button variant="outline" onClick={() => setLocation("/")}>
+              Home
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   // Tier check for regular subscribers who didn't come through the admin gate
@@ -226,7 +257,7 @@ export default function GeoAdminPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => void handleGeoAdminLogout}
+              onClick={() => void handleGeoAdminLogout()}
             >
               Déconnexion
             </Button>
@@ -367,7 +398,7 @@ export default function GeoAdminPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => void handleGeoAdminLogout}
+            onClick={() => void handleGeoAdminLogout()}
           >
             Déconnexion
           </Button>
@@ -463,6 +494,7 @@ export default function GeoAdminPage() {
           </div>
         </div>
       ) : null}
+      {isSuperuser && <GeoAdminAccessManager />}
       <GeoAdmin
         username={username || displayName}
         tier={tier}

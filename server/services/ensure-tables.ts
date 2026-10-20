@@ -668,6 +668,92 @@ const TABLE_STATEMENTS: TableDef[] = [
     )`,
   },
   {
+    table: "geo_admin_addons",
+    sql: `CREATE TABLE IF NOT EXISTS geo_admin_addons (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      base_tier VARCHAR(20) NOT NULL
+        CHECK (base_tier IN ('essential', 'verified', 'max', 'enterprise')),
+      market_code CHAR(2) NOT NULL CHECK (market_code IN ('CA', 'FR', 'CI')),
+      business_name TEXT,
+      business_type TEXT NOT NULL,
+      study_priorities JSONB NOT NULL DEFAULT '[]'::jsonb,
+      proposed_fee_percent INTEGER
+        CHECK (proposed_fee_percent IS NULL OR proposed_fee_percent IN (10, 15, 20)),
+      status VARCHAR(20) NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'active', 'rejected', 'cancelled', 'expired')),
+      agreed_annual_amount DECIMAL(12,2),
+      agreed_currency VARCHAR(3),
+      requested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      reviewed_by INTEGER REFERENCES users(id),
+      reviewed_at TIMESTAMP,
+      starts_at TIMESTAMP,
+      expires_at TIMESTAMP,
+      review_notes TEXT,
+      CHECK (
+        status <> 'active' OR (
+          agreed_annual_amount IS NOT NULL AND agreed_annual_amount > 0
+          AND agreed_currency IS NOT NULL
+          AND reviewed_by IS NOT NULL
+          AND starts_at IS NOT NULL
+          AND expires_at IS NOT NULL
+        )
+      )
+    )`,
+  },
+  {
+    table: "geo_admin_addons",
+    sql: `ALTER TABLE geo_admin_addons
+      ADD COLUMN IF NOT EXISTS study_priorities JSONB NOT NULL DEFAULT '[]'::jsonb`,
+  },
+  {
+    table: "geo_admin_addons",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS geo_admin_addons_one_open_request_per_user
+      ON geo_admin_addons(user_id)
+      WHERE status IN ('pending', 'active')`,
+  },
+  {
+    table: "geo_admin_addons",
+    sql: `CREATE INDEX IF NOT EXISTS geo_admin_addons_status_requested_idx
+      ON geo_admin_addons(status, requested_at)`,
+  },
+  {
+    table: "geo_admin_invitations",
+    sql: `CREATE TABLE IF NOT EXISTS geo_admin_invitations (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      gate_username TEXT NOT NULL,
+      role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'moderator')),
+      token_hash VARCHAR(64) NOT NULL UNIQUE,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'accepted', 'revoked', 'expired', 'delivery_failed')),
+      invited_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      accepted_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      revoked_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      expires_at TIMESTAMP NOT NULL,
+      accepted_at TIMESTAMP,
+      revoked_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    table: "geo_admin_invitations",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS geo_admin_invitations_pending_email_uidx
+      ON geo_admin_invitations(email)
+      WHERE status = 'pending'`,
+  },
+  {
+    table: "geo_admin_invitations",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS geo_admin_invitations_pending_gate_uidx
+      ON geo_admin_invitations(gate_username)
+      WHERE status = 'pending'`,
+  },
+  {
+    table: "geo_admin_invitations",
+    sql: `CREATE INDEX IF NOT EXISTS geo_admin_invitations_status_expires_idx
+      ON geo_admin_invitations(status, expires_at)`,
+  },
+  {
     table: "geo_action_requests",
     sql: `CREATE TABLE IF NOT EXISTS geo_action_requests (
       id SERIAL PRIMARY KEY,
@@ -1725,6 +1811,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       weekly_streams INTEGER DEFAULT 0,
       current_badge_tier INTEGER DEFAULT 1,
       wallet_balance DECIMAL(12,2) DEFAULT 0.00,
+      royalty_carry_forward DECIMAL(12,2) NOT NULL DEFAULT 0.00,
       payout_email TEXT,
       payout_method VARCHAR(20) DEFAULT 'paypal',
       verified_for_payout BOOLEAN DEFAULT false,

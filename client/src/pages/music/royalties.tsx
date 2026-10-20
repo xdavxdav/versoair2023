@@ -62,7 +62,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
-import { useMusicEarnings, useMyArtist } from "@/hooks/use-music";
+import { useMusicEarnings } from "@/hooks/use-music";
+import { useArtistStats } from "@/hooks/use-streamroyale";
 import { usePayoutHistory, useRequestPayout } from "@/hooks/use-streamroyale";
 
 /* ─── Tier configuration with royalty rates ─── */
@@ -74,7 +75,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.5,
     perStream: "$0.002",
     perDownload: "50%",
-    minPayout: "$50",
     features: ["Basic analytics", "Standard support"],
   },
   spark: {
@@ -84,7 +84,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.6,
     perStream: "$0.003",
     perDownload: "60%",
-    minPayout: "$25",
     features: ["Enhanced analytics", "Priority support", "Early payouts"],
   },
   supporter: {
@@ -94,7 +93,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.6,
     perStream: "$0.003",
     perDownload: "60%",
-    minPayout: "$25",
     features: ["Enhanced analytics", "Priority support", "Early payouts"],
   },
   flame: {
@@ -104,7 +102,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.7,
     perStream: "$0.004",
     perDownload: "70%",
-    minPayout: "$15",
     features: [
       "Pro analytics",
       "Dedicated support",
@@ -119,7 +116,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.7,
     perStream: "$0.004",
     perDownload: "70%",
-    minPayout: "$15",
     features: [
       "Pro analytics",
       "Dedicated support",
@@ -134,7 +130,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.8,
     perStream: "$0.005",
     perDownload: "80%",
-    minPayout: "$10",
     features: [
       "Full analytics suite",
       "VIP support",
@@ -149,7 +144,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.85,
     perStream: "$0.006",
     perDownload: "85%",
-    minPayout: "$5",
     features: [
       "Elite analytics",
       "Personal manager",
@@ -165,7 +159,6 @@ const TIER_CONFIG = {
     royaltyRate: 0.85,
     perStream: "$0.006",
     perDownload: "85%",
-    minPayout: "$5",
     features: [
       "Elite analytics",
       "Personal manager",
@@ -246,7 +239,7 @@ function TransactionRow({
   description: string;
   amount: string;
   date: string;
-  status: "completed" | "pending" | "processing";
+  status: "completed" | "pending" | "processing" | "rejected";
 }) {
   const icons = {
     stream: Play,
@@ -260,6 +253,7 @@ function TransactionRow({
     completed: "text-emerald-400 bg-emerald-400/10",
     pending: "text-amber-400 bg-amber-400/10",
     processing: "text-blue-400 bg-blue-400/10",
+    rejected: "text-red-400 bg-red-400/10",
   };
 
   return (
@@ -297,7 +291,7 @@ export default function MusicRoyalties() {
     isPremium,
     isLoading: accessLoading,
   } = useMusicAccess();
-  const { data: myArtist } = useMyArtist();
+  const { data: artistStats, isLoading: artistStatsLoading } = useArtistStats();
   const { data: earningsData, isLoading: earningsLoading } = useMusicEarnings();
   const { data: payoutHistory, isLoading: payoutLoading } = usePayoutHistory();
   const requestPayout = useRequestPayout();
@@ -324,9 +318,49 @@ export default function MusicRoyalties() {
   const totalRevenue = parseFloat(summary.total_revenue || "0");
   const monthlyRevenue = parseFloat(summary.revenue_this_month || "0");
   const dailyRevenue = parseFloat(summary.revenue_today || "0");
-  const pendingPayout = totalRevenue * 0.3; // Example: 30% pending
-  const minPayout = parseFloat(currentTier.minPayout.replace("$", ""));
-  const canRequestPayout = pendingPayout >= minPayout;
+  const pendingPayout = Number(artistStats?.profile?.walletBalance) || 0;
+  const royaltyCarryForward =
+    Number(artistStats?.profile?.royaltyCarryForward) || 0;
+  const payoutsEnabled = artistStats?.profile?.payoutsEnabled === true;
+  const minPayout = 10;
+  const canRequestPayout = payoutsEnabled && pendingPayout >= minPayout;
+  const latestRoyalty = artistStats?.earningsHistory?.[0];
+  const transactions = [
+    ...(artistStats?.earningsHistory ?? []).map((earning: any) => ({
+      key: `royalty-${earning.yearNumber}-${earning.weekNumber}`,
+      type: "bonus" as const,
+      description: `StreamRoyale earnings · Week ${earning.weekNumber}, ${earning.yearNumber}`,
+      amount: `$${Number(earning.totalEarnings || 0).toFixed(2)}`,
+      date: `Week ${earning.weekNumber}, ${earning.yearNumber}`,
+      status: "completed" as const,
+      sortDate:
+        Date.UTC(earning.yearNumber, 0, 4) -
+        ((new Date(Date.UTC(earning.yearNumber, 0, 4)).getUTCDay() + 6) % 7) *
+          86_400_000 +
+        (earning.weekNumber - 1) * 604_800_000,
+    })),
+    ...(payoutHistory?.payouts ?? []).map((payout: any) => {
+      const createdAt = new Date(payout.createdAt);
+      const status = ["completed", "processing", "rejected"].includes(
+        payout.status,
+      )
+        ? payout.status
+        : "pending";
+      return {
+        key: `payout-${payout.id}`,
+        type: "payout" as const,
+        description: `Payout request · ${payout.method}`,
+        amount: `$${Number(payout.amount || 0).toFixed(2)}`,
+        date: Number.isNaN(createdAt.getTime())
+          ? "Date unavailable"
+          : createdAt.toLocaleDateString(),
+        status: status as "completed" | "pending" | "processing" | "rejected",
+        sortDate: createdAt.getTime() || 0,
+      };
+    }),
+  ]
+    .sort((a, b) => b.sortDate - a.sortDate)
+    .slice(0, 8);
 
   // Handle payout request
   const handleRequestPayout = async () => {
@@ -342,7 +376,12 @@ export default function MusicRoyalties() {
   };
 
   // Loading state
-  if (accessLoading || earningsLoading) {
+  if (
+    accessLoading ||
+    earningsLoading ||
+    artistStatsLoading ||
+    payoutLoading
+  ) {
     return (
       <MusicLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -412,9 +451,9 @@ export default function MusicRoyalties() {
           />
           <RoyaltyStatCard
             icon={Wallet}
-            label="Available Payout"
+            label="Available Balance"
             value={`$${pendingPayout.toFixed(2)}`}
-            subValue={`Min: ${currentTier.minPayout}`}
+            subValue={`Minimum payout: $${minPayout.toFixed(2)}`}
             color="amber"
           />
         </div>
@@ -470,7 +509,7 @@ export default function MusicRoyalties() {
               </div>
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="text-2xl font-bold text-white">
-                  {currentTier.minPayout}
+                  ${minPayout.toFixed(2)}
                 </p>
                 <p className="text-sm text-white/50">min payout</p>
               </div>
@@ -515,13 +554,25 @@ export default function MusicRoyalties() {
               <p className="text-4xl font-bold text-white mb-1">
                 ${pendingPayout.toFixed(2)}
               </p>
-              <p className="text-sm text-white/50">Available for withdrawal</p>
+              <p className="text-sm text-white/50">
+                {payoutsEnabled
+                  ? "Available for withdrawal"
+                  : "External payouts are currently disabled"}
+              </p>
+              {royaltyCarryForward > 0 && (
+                <p className="text-xs text-white/40 mt-2">
+                  Royalty carry-forward: ${royaltyCarryForward.toFixed(2)}.
+                  Credited to your wallet when it reaches $1.00.
+                </p>
+              )}
 
               {!canRequestPayout && (
                 <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                   <p className="text-sm text-amber-400 flex items-center justify-center gap-2">
                     <AlertCircle className="w-4 h-4" />
-                    Minimum: {currentTier.minPayout}
+                    {payoutsEnabled
+                      ? `Minimum payout: $${minPayout.toFixed(2)}`
+                      : "Payout requests are unavailable"}
                   </p>
                 </div>
               )}
@@ -563,14 +614,16 @@ export default function MusicRoyalties() {
             </Button>
 
             <p className="text-xs text-white/30 text-center mt-3">
-              Payouts processed within 3-5 business days
+              {payoutsEnabled
+                ? "Payout timing is confirmed after your request is reviewed."
+                : "Payout requests will be available after online payments are enabled."}
             </p>
           </motion.div>
         </div>
 
         {/* Revenue Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* By Source */}
+          {/* Latest weekly StreamRoyale distribution */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -579,58 +632,39 @@ export default function MusicRoyalties() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-purple-400" />
-                <h3 className="font-semibold text-white">Revenue by Source</h3>
+                <h3 className="font-semibold text-white">
+                  Latest Weekly Royalty
+                </h3>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {[
-                {
-                  label: "Streaming",
-                  value: totalRevenue * 0.6,
-                  percent: 60,
-                  color: "from-purple-500 to-fuchsia-500",
-                },
-                {
-                  label: "Downloads",
-                  value: totalRevenue * 0.25,
-                  percent: 25,
-                  color: "from-pink-500 to-rose-500",
-                },
-                {
-                  label: "StreamRoyale",
-                  value: totalRevenue * 0.1,
-                  percent: 10,
-                  color: "from-amber-500 to-orange-500",
-                },
-                {
-                  label: "Tips",
-                  value: totalRevenue * 0.05,
-                  percent: 5,
-                  color: "from-emerald-500 to-green-500",
-                },
-              ].map((source) => (
-                <div key={source.label}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white/70">{source.label}</span>
-                    <div className="text-right">
-                      <span className="text-white font-medium">
-                        ${source.value.toFixed(2)}
-                      </span>
-                      <span className="text-white/40 text-sm ml-2">
-                        {source.percent}%
-                      </span>
-                    </div>
+            {latestRoyalty ? (
+              <div className="space-y-4">
+                {[
+                  ["Guaranteed", latestRoyalty.guaranteedAmount],
+                  ["Performance", latestRoyalty.performanceAmount],
+                  ["Badge bonus", latestRoyalty.badgeBonus],
+                  ["Tips", latestRoyalty.tipIncome],
+                ].map(([label, amount]) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="text-white/70">{label}</span>
+                    <span className="font-medium text-white">
+                      ${Number(amount || 0).toFixed(2)}
+                    </span>
                   </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-gradient-to-r ${source.color} rounded-full`}
-                      style={{ width: `${source.percent}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+                <p className="border-t border-white/10 pt-3 text-sm text-white/50">
+                  Week {latestRoyalty.weekNumber}, {latestRoyalty.yearNumber}
+                </p>
+              </div>
+            ) : (
+              <p className="py-8 text-center text-sm text-white/40">
+                No royalty distributions yet.
+              </p>
+            )}
           </motion.div>
 
           {/* Top Earning Tracks */}
@@ -713,52 +747,18 @@ export default function MusicRoyalties() {
               <Clock className="w-5 h-5 text-white/50" />
               <h3 className="font-semibold text-white">Recent Transactions</h3>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white/50 hover:text-white"
-            >
-              Export
-              <Download className="w-4 h-4 ml-2" />
-            </Button>
           </div>
 
           <div className="space-y-3">
-            <TransactionRow
-              type="stream"
-              description="Stream revenue - Daily batch"
-              amount="$2.45"
-              date="Today, 3:00 PM"
-              status="completed"
-            />
-            <TransactionRow
-              type="download"
-              description='Download - "Track Name"'
-              amount="$0.99"
-              date="Yesterday, 11:30 AM"
-              status="completed"
-            />
-            <TransactionRow
-              type="bonus"
-              description="StreamRoyale weekly bonus"
-              amount="$5.00"
-              date="Mar 25, 2026"
-              status="completed"
-            />
-            <TransactionRow
-              type="payout"
-              description="Payout to PayPal"
-              amount="$25.00"
-              date="Mar 20, 2026"
-              status="completed"
-            />
-            <TransactionRow
-              type="stream"
-              description="Stream revenue - Daily batch"
-              amount="$1.87"
-              date="Mar 19, 2026"
-              status="completed"
-            />
+            {transactions.length > 0 ? (
+              transactions.map((transaction) => (
+                <TransactionRow key={transaction.key} {...transaction} />
+              ))
+            ) : (
+              <p className="py-6 text-center text-sm text-white/40">
+                No royalty or payout activity yet.
+              </p>
+            )}
           </div>
         </motion.div>
 

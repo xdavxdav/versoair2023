@@ -7,12 +7,18 @@
  *   • 70% Performance Pool → proportional to weighted stream count
  *   • 10% Platform Cut → operational expenses
  *
- * Badge-tier artists with revenue boost get bonus on top.
+ * Badge-tier boosts affect performance weight inside the 70% performance pool.
  */
 
 import cron from "node-cron";
+import type { PoolClient } from "pg";
 import { pool } from "../db";
 import { getIO } from "../websocket/socket-config";
+import {
+  calculateWeeklyRoyalties,
+  ROYALTY_RULES,
+} from "./royalty-calculation";
+import { isPayingListenerStreamSql } from "./royalty-sql";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POOL DISTRIBUTION
@@ -21,12 +27,14 @@ import { getIO } from "../websocket/socket-config";
 export async function distributeWeeklyPool(
   weekNumber: number,
   yearNumber: number,
+  options: { dryRun?: boolean; connect?: () => Promise<PoolClient> } = {},
 ) {
+  const dryRun = options.dryRun === true;
   console.log(
-    `📊 [ROYALTY] Starting distribution for Week ${weekNumber}, ${yearNumber}...`,
+    `📊 [ROYALTY] Starting ${dryRun ? "dry-run " : ""}distribution for Week ${weekNumber}, ${yearNumber}...`,
   );
 
-  const client = await pool.connect();
+  const client = await (options.connect ?? (() => pool.connect()))();
   const pendingNotifications: any[] = [];
   let clientReleaseError: Error | undefined;
 
@@ -35,12 +43,19 @@ export async function distributeWeeklyPool(
     await client.query("BEGIN");
 
     // 1. Lock the pool
-    const poolResult = await client.query(
-      `UPDATE weekly_pools SET status = 'locked' 
-       WHERE week_number = $1 AND year_number = $2 AND status = 'open'
-       RETURNING *`,
-      [weekNumber, yearNumber],
-    );
+    const poolResult = dryRun
+      ? await client.query(
+          `SELECT * FROM weekly_pools
+           WHERE week_number = $1 AND year_number = $2 AND status = 'open'
+           FOR UPDATE`,
+          [weekNumber, yearNumber],
+        )
+      : await client.query(
+          `UPDATE weekly_pools SET status = 'locked'
+           WHERE week_number = $1 AND year_number = $2 AND status = 'open'
+           RETURNING *`,
+          [weekNumber, yearNumber],
+        );
 
     if (poolResult.rows.length === 0) {
       const existingPool = await client.query(
@@ -54,14 +69,27 @@ export async function distributeWeeklyPool(
       );
       return {
         distributed: false,
+        ...(dryRun ? { dryRun: true } : {}),
         reason: `No open pool found or already ${currentStatus}`,
       };
     }
 
     const weeklyPool = poolResult.rows[0];
-    const totalPool = parseFloat(weeklyPool.total_pool) || 0;
+    const totalPool = Number(weeklyPool.total_pool);
+    if (!Number.isFinite(totalPool) || totalPool < 0) {
+      throw new Error(`Invalid total_pool for Week ${weekNumber}, ${yearNumber}`);
+    }
 
-    if (totalPool <= 0) {
+    if (totalPool === 0) {
+      if (dryRun) {
+        await client.query("ROLLBACK");
+        return {
+          distributed: false,
+          dryRun: true,
+          totalPool: 0,
+          reason: "Empty pool",
+        };
+      }
       await client.query(
         `UPDATE weekly_pools SET status = 'distributed', distributed_at = NOW() 
          WHERE id = $1`,
@@ -72,35 +100,78 @@ export async function distributeWeeklyPool(
       return { distributed: true, totalPool: 0, reason: "Empty pool" };
     }
 
-    // 2. Calculate splits
-    const guaranteedFund = totalPool * 0.2;
-    const performancePool = totalPool * 0.7;
-    const platformCut = totalPool * 0.1;
-
-    // 3. Get all artists with valid streams this week
+    // 2. Count all valid streams, but only paid-listener streams earn performance weight.
     const artistStreams = await client.query(
-      `SELECT 
-         se.artist_profile_id,
-         ap.current_badge_tier,
-         ap.revenue_boost_percent,
-         ap.user_id,
-         ap.stage_name,
-         ap.league_id,
-         COUNT(*) as stream_count,
-         SUM(se.boost_multiplier::numeric) as weighted_streams
-       FROM stream_events se
-       JOIN artist_profiles ap ON ap.id = se.artist_profile_id
-       WHERE se.week_number = $1 AND se.year_number = $2 AND se.is_valid = true
-       GROUP BY se.artist_profile_id, ap.current_badge_tier, ap.revenue_boost_percent, 
-                ap.user_id, ap.stage_name, ap.league_id
+      `WITH weekly_events AS (
+         SELECT se.artist_profile_id, se.user_id, se.boost_multiplier,
+                  ${isPayingListenerStreamSql} AS is_paying_listener
+         FROM stream_events se
+         WHERE se.week_number = $1 AND se.year_number = $2
+           AND se.is_valid = true AND COALESCE(se.is_self_stream, false) = false
+       )
+       SELECT we.artist_profile_id,
+              ap.current_badge_tier,
+              ap.revenue_boost_percent,
+              ap.royalty_carry_forward,
+              ap.user_id,
+              ap.stage_name,
+              ap.league_id,
+              COUNT(*)::int AS stream_count,
+              COUNT(DISTINCT we.user_id) FILTER (WHERE we.is_paying_listener)::int AS paying_listener_count,
+              COALESCE(SUM(CASE WHEN we.is_paying_listener
+                                THEN COALESCE(we.boost_multiplier::numeric, 0)
+                                ELSE 0 END), 0) AS weighted_streams
+       FROM weekly_events we
+       JOIN artist_profiles ap ON ap.id = we.artist_profile_id
+       GROUP BY we.artist_profile_id, ap.current_badge_tier, ap.revenue_boost_percent,
+                ap.royalty_carry_forward, ap.user_id, ap.stage_name, ap.league_id
+       HAVING COUNT(*) >= ${ROYALTY_RULES.minimumValidStreams}
+          AND COUNT(DISTINCT we.user_id) FILTER (WHERE we.is_paying_listener) >= ${ROYALTY_RULES.minimumPayingListeners}
        ORDER BY weighted_streams DESC`,
       [weekNumber, yearNumber],
     );
 
     const artists = artistStreams.rows;
     const qualifyingArtists = artists.length;
+    const calculation = calculateWeeklyRoyalties(
+      totalPool,
+      artists.map((artist: any) => ({
+        artistProfileId: Number(artist.artist_profile_id),
+        weightedStreams: Number(artist.weighted_streams) || 0,
+        badgeBoostPercent: Number(artist.revenue_boost_percent) || 0,
+        carryForwardCents:
+          Math.round((Number(artist.royalty_carry_forward) || 0) * 100),
+      })),
+    );
+    const guaranteedFund = calculation.guaranteedFundCents / 100;
+    const performancePool = calculation.performancePoolCents / 100;
+    const platformCut = calculation.platformCutCents / 100;
 
     if (qualifyingArtists === 0) {
+      if (dryRun) {
+        await client.query("ROLLBACK");
+        return {
+          distributed: false,
+          dryRun: true,
+          totalPool,
+          guaranteedFund,
+          performancePool,
+          platformCut,
+          qualifyingArtists: 0,
+          reason: "No qualifying artists",
+        };
+      }
+      await client.query(
+        `UPDATE artist_profiles ap SET weekly_streams = 0, updated_at = NOW()
+         WHERE EXISTS (
+           SELECT 1 FROM stream_events se
+           WHERE se.artist_profile_id = ap.id
+             AND se.week_number = $1 AND se.year_number = $2
+             AND se.is_valid = true
+             AND COALESCE(se.is_self_stream, false) = false
+         )`,
+        [weekNumber, yearNumber],
+      );
       await client.query(
         `UPDATE weekly_pools SET 
          guaranteed_fund = $1, performance_pool = $2, platform_cut = $3,
@@ -117,14 +188,14 @@ export async function distributeWeeklyPool(
       };
     }
 
-    // 4. Calculate total weighted streams
-    const totalWeightedStreams = artists.reduce(
-      (sum: number, a: any) => sum + (parseFloat(a.weighted_streams) || 0),
-      0,
+    // 3. Prepare deterministic rankings and allocations before any wallet writes.
+    const allocations = new Map(
+      calculation.allocations.map((allocation) => [
+        allocation.artistProfileId,
+        allocation,
+      ]),
     );
-
-    // 5. Distribute to each artist
-    let totalDistributed = 0;
+    const totalDistributed = calculation.totalEarnedCents / 100;
     const distributions: any[] = [];
 
     // Calculate global rankings
@@ -148,26 +219,59 @@ export async function distributeWeeklyPool(
       });
     }
 
+    if (dryRun) {
+      const preview = artists.map((artist: any) => {
+        const allocation = allocations.get(Number(artist.artist_profile_id));
+        if (!allocation) {
+          throw new Error(
+            `Missing royalty allocation for artist ${artist.artist_profile_id}`,
+          );
+        }
+        return {
+          artistProfileId: Number(artist.artist_profile_id),
+          stageName: artist.stage_name,
+          streams: Number(artist.stream_count) || 0,
+          weightedStreams: Number(artist.weighted_streams) || 0,
+          guaranteedAmount: allocation.guaranteedCents / 100,
+          performanceAmount: allocation.performanceCents / 100,
+          badgeBonus: allocation.badgeBonusCents / 100,
+          totalEarnings: allocation.earnedCents / 100,
+          walletCredit: allocation.walletCreditCents / 100,
+          carryForward: allocation.carryForwardCents / 100,
+        };
+      });
+      await client.query("ROLLBACK");
+      return {
+        distributed: false,
+        dryRun: true,
+        weekNumber,
+        yearNumber,
+        totalPool,
+        guaranteedFund,
+        performancePool,
+        platformCut,
+        totalDistributed,
+        qualifyingArtists,
+        distributions: preview,
+      };
+    }
+
+    // 4. Persist the royalty breakdown and wallet carry-forward atomically.
     for (let i = 0; i < artists.length; i++) {
       const artist = artists[i];
       const artistProfileId = artist.artist_profile_id;
       const weightedStreams = parseFloat(artist.weighted_streams) || 0;
       const streamCount = parseInt(artist.stream_count) || 0;
-      const boostPercent = parseFloat(artist.revenue_boost_percent) || 0;
-
-      // Guaranteed portion: equal split
-      const guaranteedAmount = guaranteedFund / qualifyingArtists;
-
-      // Performance portion: proportional to weighted streams
-      const streamShare =
-        totalWeightedStreams > 0 ? weightedStreams / totalWeightedStreams : 0;
-      const performanceAmount = performancePool * streamShare;
-
-      // Badge bonus: applied to performance portion
-      const badgeBonus = performanceAmount * (boostPercent / 100);
-
-      const totalEarnings = guaranteedAmount + performanceAmount + badgeBonus;
-      totalDistributed += totalEarnings;
+      const allocation = allocations.get(Number(artistProfileId));
+      if (!allocation) {
+        throw new Error(`Missing royalty allocation for artist ${artistProfileId}`);
+      }
+      const guaranteedAmount = allocation.guaranteedCents / 100;
+      const performanceAmount = allocation.performanceCents / 100;
+      const badgeBonus = allocation.badgeBonusCents / 100;
+      const totalEarnings = allocation.earnedCents / 100;
+      const walletCredit = allocation.walletCreditCents / 100;
+      const carryForward = allocation.carryForwardCents / 100;
 
       const globalRank =
         rankedByWeighted.findIndex(
@@ -188,7 +292,7 @@ export async function distributeWeeklyPool(
            guaranteed_amount = $4,
            performance_amount = $5,
            badge_bonus = $6,
-           total_earnings = $7,
+           total_earnings = $7 + COALESCE(artist_royalties.tip_income, 0),
            stream_count = $8,
            pool_share_percent = $9,
            global_rank = $10,
@@ -211,11 +315,11 @@ export async function distributeWeeklyPool(
       // Add to artist wallet
       await client.query(
         `UPDATE artist_profiles SET 
-         wallet_balance = wallet_balance + $1,
-         weekly_streams = 0,
+         wallet_balance = COALESCE(wallet_balance, 0) + $1,
+         royalty_carry_forward = $2,
          updated_at = NOW()
-         WHERE id = $2`,
-        [totalEarnings.toFixed(2), artistProfileId],
+         WHERE id = $3`,
+        [walletCredit.toFixed(2), carryForward.toFixed(2), artistProfileId],
       );
 
       distributions.push({
@@ -227,6 +331,8 @@ export async function distributeWeeklyPool(
         performanceAmount: parseFloat(performanceAmount.toFixed(2)),
         badgeBonus: parseFloat(badgeBonus.toFixed(2)),
         totalEarnings: parseFloat(totalEarnings.toFixed(2)),
+        walletCredit: parseFloat(walletCredit.toFixed(2)),
+        carryForward: parseFloat(carryForward.toFixed(2)),
         globalRank,
         regionalRank: regRank,
       });
@@ -235,6 +341,8 @@ export async function distributeWeeklyPool(
         pendingNotifications.push({
           userId: artist.user_id,
           totalEarnings,
+          walletCredit,
+          carryForward,
           guaranteedAmount,
           performanceAmount,
           badgeBonus,
@@ -242,6 +350,18 @@ export async function distributeWeeklyPool(
         });
       }
     }
+
+    await client.query(
+      `UPDATE artist_profiles ap SET weekly_streams = 0, updated_at = NOW()
+       WHERE EXISTS (
+         SELECT 1 FROM stream_events se
+         WHERE se.artist_profile_id = ap.id
+           AND se.week_number = $1 AND se.year_number = $2
+           AND se.is_valid = true
+           AND COALESCE(se.is_self_stream, false) = false
+       )`,
+      [weekNumber, yearNumber],
+    );
 
     // 6. Update pool record
     await client.query(
@@ -268,7 +388,10 @@ export async function distributeWeeklyPool(
           id: `royalty-${weekNumber}-${yearNumber}-${Date.now()}`,
           type: "royalty_payout",
           title: `💰 Weekly Earnings: $${n.totalEarnings.toFixed(2)}`,
-          message: `Week ${weekNumber} distribution complete! Rank #${n.globalRank}. Check your Royalties tab.`,
+          message:
+            n.walletCredit > 0
+              ? `Week ${weekNumber}: $${n.walletCredit.toFixed(2)} added to your wallet. Rank #${n.globalRank}.`
+              : `Week ${weekNumber}: earnings below $1.00 carried forward ($${n.carryForward.toFixed(2)}). Rank #${n.globalRank}.`,
           timestamp: new Date().toISOString(),
           read: false,
         });
@@ -281,7 +404,7 @@ export async function distributeWeeklyPool(
             n.userId,
             "royalty_payout",
             `💰 Weekly Earnings: $${n.totalEarnings.toFixed(2)}`,
-            `Week ${weekNumber}: Guaranteed $${n.guaranteedAmount.toFixed(2)} + Performance $${n.performanceAmount.toFixed(2)}${n.badgeBonus > 0 ? ` + Badge Bonus $${n.badgeBonus.toFixed(2)}` : ""}. Rank #${n.globalRank}.`,
+            `Week ${weekNumber}: Guaranteed $${n.guaranteedAmount.toFixed(2)} + Performance $${n.performanceAmount.toFixed(2)}${n.badgeBonus > 0 ? ` + Badge Bonus $${n.badgeBonus.toFixed(2)}` : ""}. ${n.walletCredit > 0 ? `$${n.walletCredit.toFixed(2)} added to your wallet.` : `$${n.carryForward.toFixed(2)} carried forward.`} Rank #${n.globalRank}.`,
             JSON.stringify({
               actionUrl: "/artist-portal/dashboard?tab=royalties",
             }),
@@ -304,7 +427,7 @@ export async function distributeWeeklyPool(
     }
 
     console.log(
-      `✅ [ROYALTY] Week ${weekNumber} distributed: $${totalDistributed.toFixed(2)} to ${qualifyingArtists} artists`,
+      `✅ [ROYALTY] Week ${weekNumber} distributed: $${totalDistributed.toFixed(2)} earned by ${qualifyingArtists} artists`,
     );
 
     return {
@@ -396,7 +519,9 @@ export async function calculatePoolContributions() {
 }
 
 function getWeekNumber(d: Date = new Date()): { week: number; year: number } {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const date = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+  );
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil(

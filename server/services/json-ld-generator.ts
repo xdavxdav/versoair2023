@@ -41,9 +41,9 @@ export function generateBusinessJsonLd(biz: BusinessJsonLd): object {
   const ld: Record<string, any> = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `${siteOrigin}/businesses/${biz.id}`,
+    "@id": `${siteOrigin}/business/${biz.id}`,
     name: biz.name,
-    url: `${siteOrigin}/businesses/${biz.id}`,
+    url: `${siteOrigin}/business/${biz.id}`,
   };
 
   if (biz.description) ld.description = biz.description.substring(0, 500);

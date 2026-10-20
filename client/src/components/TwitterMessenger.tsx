@@ -260,6 +260,7 @@ export function TwitterMessenger({
   const [showNewConvoModal, setShowNewConvoModal] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactsError, setContactsError] = useState<string | null>(null);
   const [contactSearch, setContactSearch] = useState("");
   const [contactTab, setContactTab] = useState<"following" | "all">(
     "following",
@@ -270,17 +271,33 @@ export function TwitterMessenger({
 
   const fetchContacts = useCallback(async (query = "") => {
     setLoadingContacts(true);
+    setContactsError(null);
     try {
       const q = query ? `?q=${encodeURIComponent(query)}` : "";
       const res = await fetch(`/api/inbox/contacts${q}`, {
         credentials: "include",
       });
       const data = await res.json();
-      if (data?.success && Array.isArray(data.contacts)) {
-        setContacts(data.contacts);
+      if (!res.ok || !data?.success || !Array.isArray(data.contacts)) {
+        const apiError =
+          typeof data?.error === "string"
+            ? data.error
+            : data?.error?.message;
+        setContacts([]);
+        setContactsError(
+          apiError ||
+            "Could not load contacts. Please try again.",
+        );
+        return;
       }
-    } catch {
-      /* non-critical */
+      setContacts(data.contacts);
+    } catch (err) {
+      setContacts([]);
+      setContactsError(
+        err instanceof Error
+          ? err.message
+          : "Could not load contacts. Please try again.",
+      );
     } finally {
       setLoadingContacts(false);
     }
@@ -1145,35 +1162,53 @@ export function TwitterMessenger({
                   </div>
                 )}
 
-                {!loadingContacts && filteredContacts.length === 0 && (
-                  <div className="py-12 text-center px-4 space-y-2">
-                    <Users className="h-8 w-8 text-white/20 mx-auto" />
-                    <p className="text-sm font-medium text-white/60">
-                      No contacts found
+                {!loadingContacts && contactsError && (
+                  <div className="space-y-3 px-4 py-12 text-center">
+                    <p className="text-sm text-red-300" role="alert">
+                      {contactsError}
                     </p>
-                    <p className="text-xs text-white/30 max-w-xs mx-auto">
-                      {contactTab === "following"
-                        ? "You are not following anyone yet, or no matches found."
-                        : "No platform members matched your search query."}
-                    </p>
-                    {contactTab === "following" && (
-                      <button
-                        onClick={() => setContactTab("all")}
-                        className="mt-2 text-xs text-cyan-400 hover:underline"
-                      >
-                        Browse all members
-                      </button>
-                    )}
+                    <button
+                      onClick={() => fetchContacts(contactSearch)}
+                      className="text-xs text-cyan-400 hover:underline"
+                    >
+                      Retry
+                    </button>
                   </div>
                 )}
 
-                {filteredContacts.map((contact) => (
-                  <button
-                    key={contact.id}
-                    onClick={() => handleStartConversation(contact)}
-                    disabled={startingConvoId === contact.id}
-                    className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-white/[0.06] border border-transparent hover:border-white/5 group"
-                  >
+                {!loadingContacts &&
+                  !contactsError &&
+                  filteredContacts.length === 0 && (
+                    <div className="py-12 text-center px-4 space-y-2">
+                      <Users className="h-8 w-8 text-white/20 mx-auto" />
+                      <p className="text-sm font-medium text-white/60">
+                        No contacts found
+                      </p>
+                      <p className="text-xs text-white/30 max-w-xs mx-auto">
+                        {contactTab === "following"
+                          ? "You are not following anyone yet, or no matches found."
+                          : "No platform members matched your search query."}
+                      </p>
+                      {contactTab === "following" && (
+                        <button
+                          onClick={() => setContactTab("all")}
+                          className="mt-2 text-xs text-cyan-400 hover:underline"
+                        >
+                          Browse all members
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                {!loadingContacts &&
+                  !contactsError &&
+                  filteredContacts.map((contact) => (
+                    <button
+                      key={contact.id}
+                      onClick={() => handleStartConversation(contact)}
+                      disabled={startingConvoId === contact.id}
+                      className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-white/[0.06] border border-transparent hover:border-white/5 group"
+                    >
                     <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-300 font-semibold text-sm border border-cyan-500/20 overflow-hidden">
                       {contact.avatar ? (
                         <img
@@ -1221,8 +1256,8 @@ export function TwitterMessenger({
                         </span>
                       )}
                     </div>
-                  </button>
-                ))}
+                    </button>
+                  ))}
               </div>
             </motion.div>
           </motion.div>

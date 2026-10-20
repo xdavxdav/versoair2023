@@ -21,7 +21,7 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -49,6 +49,7 @@ import {
 } from "@/hooks/use-streamroyale";
 
 export default function StreamRoyaleAdmin() {
+  const [location] = useLocation();
   const { data: overview, isLoading } = useStreamRoyaleAdmin();
   const [payoutFilter, setPayoutFilter] = useState("pending");
   const { data: payoutsData } = useAdminPayouts(payoutFilter);
@@ -56,6 +57,9 @@ export default function StreamRoyaleAdmin() {
   const distribute = useManualDistribution();
   const addToPool = useAddToPool();
   const [addAmount, setAddAmount] = useState("");
+  const reviewHref = location.startsWith("/streamroyale-admin")
+    ? "/streamroyale-admin/review"
+    : "/admin/streamroyale/review";
 
   if (isLoading) {
     return (
@@ -92,6 +96,15 @@ export default function StreamRoyaleAdmin() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Link href={reviewHref}>
+            <Button
+              variant="outline"
+              className="border-blue-300/30 text-blue-100 hover:bg-blue-300/10"
+            >
+              <Music className="mr-2 h-4 w-4" />
+              Review activity & royalties
+            </Button>
+          </Link>
           <Button
             variant="outline"
             className="border-white/20 text-white hover:bg-white/10"

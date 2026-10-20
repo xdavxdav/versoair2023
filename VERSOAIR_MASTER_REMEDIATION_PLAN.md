@@ -427,3 +427,27 @@ This update supplements the older evidence snapshot above; it is not a deploymen
 The public `/marketplace` page rendered `0°, 0°`, `Active Users: 0`, `Coverage Areas: 0%`, `No artists registered`, `Total Streams: 0`, and `Active Artists: 0`. These may be empty states or defaults; this browser check did not establish whether they are backed by real current data. The local location panel contains fallback display values of `"0"` when analytics values are absent, so zero is not necessarily evidence of measured activity. The page also produced a 401 resource failure and browser console CSP blocks for the Klaviyo script and a framing request. Check intended integrations and policy before changing production configuration. Until data sources and fallback semantics are verified, label these values as unavailable/empty or suppress them rather than presenting them as measured coverage or usage.
 
 The production health check reported API/database availability, while `/api/ai/status` reported `fallback` / `rule-based`; this does not prove Ollama or another LLM provider is active. The code audit documents Ollama's local-server role and possible Groq fallback, so use of Ollama must not be described as a guarantee that all inference remains local. No deployment, production database mutation, account creation, contact submission, or payment operation was performed for this continuation.
+
+## 2026-10-20 continuation — local release preparation
+
+These notes supplement the upstream evidence above. Local `main` was
+fast-forwarded to `origin/main` at `b8e69654` and remains unpushed. Earlier
+local changes are preserved in stash `pre-upstream-reconcile-2026-10-20`;
+overlapping files were reconciled in favor of the newer upstream versions, and
+the stash is intentionally retained until the complete release review.
+
+The StreamRoyale remuneration review page and protected read-only API are
+present locally. On the reconciled tree, `npm run check`, `npm run build`, and
+`npm run check:api` pass. The reachable API contract has no missing routes.
+The explicit non-database test run passed 125/125 tests. The ticket workflow
+integration test was not run because it requires an explicitly disposable
+PostgreSQL database; no database URL was supplied for that test. The local
+home-panel test did not fit the selected upstream home-page implementation and
+was not ported; its original file remains in the preserved stash.
+
+Migration `0005_streamroyale_royalty_carry_forward.sql` and synthetic
+qualification/remuneration checks were run only on isolated Neon branch
+`streamroyale-review-test-2026-10-20` (`br-crimson-feather-ardp4bd2`); the
+synthetic records were removed. Production was not modified. Production
+migration, deployment, and live verification remain blocked pending the full
+release review, migration approval, and confirmed deploy procedure.

@@ -1,5 +1,11 @@
 import type { TierKey } from "@/lib/tiers";
 import { TIERS } from "@/lib/tiers";
+export {
+  calculateGeoAdminFeeXof,
+  calculateGeoAdminTotalXof,
+  GEOADMIN_PROPOSED_FEE_PERCENTAGES,
+  type GeoAdminProposedFeePercent,
+} from "@shared/geoadmin-pricing";
 
 export const GEOADMIN_PLAN_ORDER: TierKey[] = [
   "free",

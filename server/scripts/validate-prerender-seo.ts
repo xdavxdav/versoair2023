@@ -37,6 +37,7 @@ type RouteResult = {
   filePath: string;
   checks: Check[];
   title: string | null;
+  description: string | null;
   canonical: string | null;
 };
 
@@ -172,6 +173,7 @@ async function validateRoute(route: string): Promise<RouteResult> {
       filePath: "(missing)",
       checks: [{ label: "HTML file", ok: false, detail: "not found" }],
       title: null,
+      description: null,
       canonical: null,
     };
   }
@@ -191,11 +193,19 @@ async function validateRoute(route: string): Promise<RouteResult> {
     checks.push({ label: "title", ok: true });
   }
 
-  checks.push({
-    label: "description",
-    ok: metaValues(metas, "name", "description").length > 0,
-    detail: "missing",
-  });
+  const descriptions = metaValues(metas, "name", "description");
+  const description = descriptions[0] ?? null;
+  if (descriptions.length === 0) {
+    checks.push({ label: "description", ok: false, detail: "missing" });
+  } else if (new Set(descriptions).size > 1) {
+    checks.push({
+      label: "description",
+      ok: false,
+      detail: `conflicting descriptions: ${descriptions.join(", ")}`,
+    });
+  } else {
+    checks.push({ label: "description", ok: true });
+  }
 
   const canonicals = links
     .filter((l) => l.rel?.toLowerCase().split(/\s+/).includes("canonical"))
@@ -256,12 +266,16 @@ async function validateRoute(route: string): Promise<RouteResult> {
     filePath: path.relative(process.cwd(), htmlFile),
     checks,
     title,
+    description,
     canonical,
   };
 }
 
 // Duplicates are reported on every route involved so each one shows up in the output.
-function flagDuplicates(results: RouteResult[], field: "title" | "canonical") {
+function flagDuplicates(
+  results: RouteResult[],
+  field: "title" | "description" | "canonical",
+) {
   const groups = new Map<string, RouteResult[]>();
   for (const r of results) {
     const value = r[field];
@@ -325,6 +339,7 @@ async function main() {
 
   const results = await mapWithConcurrency(routes, CONCURRENCY, validateRoute);
   flagDuplicates(results, "title");
+  flagDuplicates(results, "description");
   flagDuplicates(results, "canonical");
 
   const failed = results.filter((r) => r.checks.some((c) => !c.ok));

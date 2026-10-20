@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development node --import tsx server/index.ts",
+    "dev:test": "NODE_ENV=test node --import tsx server/index.ts",
     "dev:music": "NODE_ENV=development MUSIC_PORT=5004 node --import tsx server/index-music.ts",
     "build": "rm -rf dist/public && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --external:./server/vite --outfile=dist/index.js && echo '✅ Build complete: dist/index.js created'",
     "build:music": "vite build -c vite.music.config.ts && esbuild server/index-music.ts --platform=node --packages=external --bundle --format=esm --splitting --external:./server/vite --external:../vite.music.config --outdir=dist-music",
@@ -14,8 +15,6 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed-streaming": "node _seed_streaming_data.cjs",
-    "db:seed-streaming:reset": "node _seed_streaming_data.cjs --reset",
     "db:seed-launch-businesses": "node scripts/seed-launch-businesses.cjs",
     "db:seed-admin-test": "node scripts/seed-admin-test-data.cjs",
     "db:seed-geoadmin-test": "node scripts/tests/_create_test_users.cjs",

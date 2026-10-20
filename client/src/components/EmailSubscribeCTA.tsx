@@ -218,7 +218,14 @@ export default function EmailSubscribeCTA({
             )}
           </button>
         ) : !hasAccess ? (
-          <span className="p-2 text-gray-400" title="Upgrade to unlock">
+          <span
+            className="p-2 text-gray-400"
+            title={
+              channelType === "geoadmin_reports"
+                ? "Requires an active GeoAdmin add-on"
+                : "Upgrade to unlock"
+            }
+          >
             <Lock className="w-4 h-4" />
           </span>
         ) : (
@@ -339,7 +346,9 @@ export default function EmailSubscribeCTA({
               <div className="flex flex-col items-center gap-1">
                 <Lock className="w-5 h-5 text-gray-400" />
                 <span className="text-[10px] text-gray-400 font-medium">
-                  Upgrade
+                  {channelType === "geoadmin_reports"
+                    ? "GeoAdmin add-on"
+                    : "Upgrade"}
                 </span>
               </div>
             ) : (

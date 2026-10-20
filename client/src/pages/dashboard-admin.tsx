@@ -16,6 +16,7 @@ import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
 import { CMSSection } from "@/components/sections/CMSSection";
+import GeoAdminAddonRequests from "@/components/GeoAdminAddonRequests";
 
 import {
   Store,
@@ -7280,6 +7281,7 @@ export default function AdminDashboard() {
                 <ImplementationTracker readOnly={!isPanelOwner} />
                 {isPanelOwner && <GeoAdminAccessManager />}
                 <GeoAdminSummary />
+                <GeoAdminAddonRequests />
                 <PendingApprovals />
                 <BusinessManagement />
                 <CategoryManagement />

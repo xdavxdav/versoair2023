@@ -85,6 +85,7 @@ if (!isDev) {
             "https://www.gstatic.com",
           ],
           imgSrc: ["'self'", "data:", "https:", "blob:"],
+          mediaSrc: ["'self'", "https://videos.pexels.com"],
           connectSrc: [
             "'self'",
             "ws:",
@@ -186,19 +187,27 @@ app.use((req, res, next) => {
 (async () => {
   console.log("🔧 [SERVER] Starting server initialization...");
 
-  // Non-blocking: SMTP setup isn't required to start serving requests/health checks
-  initializeEmailTransporter()
-    .then(() => console.log("✅ [SERVER] Email service initialized"))
-    .catch((err) =>
-      console.error(
-        "❌ [SERVER] Email service init failed (non-fatal):",
-        err.message,
-      ),
-    );
+  if (process.env.NODE_ENV === "test") {
+    console.log("[SERVER] Email service initialization skipped in test mode");
+  } else {
+    // Non-blocking: SMTP setup isn't required to start serving requests/health checks
+    initializeEmailTransporter()
+      .then(() => console.log("✅ [SERVER] Email service initialized"))
+      .catch((err) =>
+        console.error(
+          "❌ [SERVER] Email service init failed (non-fatal):",
+          err.message,
+        ),
+      );
+  }
 
   // Ensure ALL schema tables exist (critical for Neon/Render fresh deploys)
-  await ensureAllTables();
-  console.log("✅ [SERVER] Database tables verified");
+  const tableCheck = await ensureAllTables();
+  if (tableCheck === "skipped") {
+    console.warn("⚠️ [SERVER] Database schema check was explicitly skipped");
+  } else {
+    console.log("✅ [SERVER] Database tables verified");
+  }
 
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
@@ -251,31 +260,35 @@ app.use((req, res, next) => {
       console.log("🌍 [SERVER] NODE_ENV:", process.env.NODE_ENV);
       log(`serving on port ${port}`);
 
-      // ---------- BACKGROUND JOBS (non-blocking, started after listen) ----------
-      setupCategoryIntegrityCheck();
-      console.log("✅ [SERVER] Category integrity check scheduled");
+      if (process.env.NODE_ENV === "test") {
+        console.log("[SERVER] Background jobs skipped in test mode");
+      } else {
+        // ---------- BACKGROUND JOBS (non-blocking, started after listen) ----------
+        setupCategoryIntegrityCheck();
+        console.log("✅ [SERVER] Category integrity check scheduled");
 
-      startDigestWorker();
-      console.log(
-        "✅ [SERVER] Digest worker started (hourly email queue processor)",
-      );
+        startDigestWorker();
+        console.log(
+          "✅ [SERVER] Digest worker started (hourly email queue processor)",
+        );
 
-      setupSubscriptionExpiryCron();
-      console.log("✅ [SERVER] Subscription expiry cron scheduled");
+        setupSubscriptionExpiryCron();
+        console.log("✅ [SERVER] Subscription expiry cron scheduled");
 
-      setupRoyaltyEngine();
-      console.log("✅ [SERVER] StreamRoyale royalty engine started");
+        setupRoyaltyEngine();
+        console.log("✅ [SERVER] StreamRoyale royalty engine started");
 
-      setupJournalCron();
-      console.log("✅ [SERVER] Journal cron scheduled (weekly + monthly)");
+        setupJournalCron();
+        console.log("✅ [SERVER] Journal cron scheduled (weekly + monthly)");
 
-      setupNewsletterCron();
-      console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
+        setupNewsletterCron();
+        console.log("✅ [SERVER] Newsletter cron scheduled (hourly)");
 
-      setupMarketplaceAutoApprove();
-      console.log(
-        "✅ [SERVER] Marketplace auto-approve cron scheduled (hourly)",
-      );
+        setupMarketplaceAutoApprove();
+        console.log(
+          "✅ [SERVER] Marketplace auto-approve cron scheduled (hourly)",
+        );
+      }
     },
   );
 })().catch((err) => {

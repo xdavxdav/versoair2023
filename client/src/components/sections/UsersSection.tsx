@@ -31,10 +31,6 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
   isValidEmail,
-  checkPasswordLength,
-  checkPasswordUpper,
-  checkPasswordNumber,
-  passwordStrengthLevel,
   isPasswordStrong,
   isValidPhone,
 } from "@/lib/auth-validation";

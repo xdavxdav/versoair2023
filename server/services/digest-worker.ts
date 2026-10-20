@@ -21,6 +21,7 @@ import {
   createPgAdvisoryLockSession,
   withAdvisoryLock,
 } from "./advisory-lock";
+import { getGeoAdminEntitlement } from "./geoadmin-entitlement";
 import {
   sendJobAlertEmail,
   sendContractAlertEmail,
@@ -274,6 +275,7 @@ async function processGeoAdminReports(): Promise<void> {
     const subscribers = await db
       .select({
         subscription: emailSubscriptions,
+        userId: users.id,
         email: users.email,
         username: users.username,
       })
@@ -286,7 +288,19 @@ async function processGeoAdminReports(): Promise<void> {
         ),
       );
 
-    if (subscribers.length === 0) {
+    const entitledSubscribers = await Promise.all(
+      subscribers.map(async (subscriber) =>
+        (await getGeoAdminEntitlement(subscriber.userId))?.hasAccess
+          ? subscriber
+          : null,
+      ),
+    );
+    const recipients = entitledSubscribers.filter(
+      (subscriber): subscriber is (typeof subscribers)[number] =>
+        subscriber !== null,
+    );
+
+    if (recipients.length === 0) {
       console.log("[DIGEST] No GeoAdmin report subscribers");
       return;
     }
@@ -310,7 +324,7 @@ async function processGeoAdminReports(): Promise<void> {
     };
 
     let sent = 0;
-    for (const sub of subscribers) {
+    for (const sub of recipients) {
       const unsubscribeUrl = `${appUrl}/api/v1/email-subscriptions/unsubscribe/${sub.subscription.unsubscribeToken}`;
       const success = await sendGeoAdminReportEmail(
         sub.email!,
@@ -329,7 +343,7 @@ async function processGeoAdminReports(): Promise<void> {
     }
 
     console.log(
-      `[DIGEST] GeoAdmin reports: ${sent}/${subscribers.length} sent`,
+      `[DIGEST] GeoAdmin reports: ${sent}/${recipients.length} sent`,
     );
   } catch (error) {
     console.error("[DIGEST] Error processing GeoAdmin reports:", error);

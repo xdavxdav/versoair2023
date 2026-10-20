@@ -5,6 +5,10 @@ import { QRCodeSVG } from "qrcode.react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import {
+  isArtistCodeLoginInput,
+  isStaffArtistCode,
+} from "@/lib/artist-code-input";
+import {
   Music,
   Mic2,
   Headphones,
@@ -2173,14 +2177,9 @@ export default function ArtistPortalWelcome() {
     rememberMe: false,
   });
 
-  // Detect if user is entering an artist code (starts with VA_ or VA-)
-  const isStaffShapedCode = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i.test(
-    signInForm.email.trim(),
-  );
-  const isArtistCodeInput =
-    /^VA[_-]/i.test(signInForm.email.trim()) || isStaffShapedCode;
+  const isArtistCodeInput = isArtistCodeLoginInput(signInForm.email);
   // Staff codes never take a password, so the field is greyed out for them
-  const isStaffCodeInput = isStaffShapedCode;
+  const isStaffCodeInput = isStaffArtistCode(signInForm.email);
   // Code-only sign-in is a merit perk; the password stays optional for those who earned it
 
   const [applyForm, setApplyForm] = useState({
@@ -2238,9 +2237,7 @@ export default function ArtistPortalWelcome() {
     setIsAuthLoading(true);
     setAuthError("");
     try {
-      const isCodeLogin =
-        /^VA[_-]/i.test(signInForm.email.trim()) ||
-        /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i.test(signInForm.email.trim());
+      const isCodeLogin = isArtistCodeLoginInput(signInForm.email);
       const res = await fetch("/auth/artist/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

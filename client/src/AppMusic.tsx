@@ -60,6 +60,7 @@ const ArcadePage = lazy(() => import("@/pages/arcade"));
 const ListenerPortal = lazy(() => import("@/pages/listener-portal"));
 const StreamerPortal = lazy(() => import("@/pages/streamer-portal"));
 const StreamRoyaleAdmin = lazy(() => import("@/pages/streamroyale-admin"));
+const StreamRoyaleReview = lazy(() => import("@/pages/streamroyale-review"));
 
 // Artist Portal
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
@@ -105,7 +106,7 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/">{() => <Redirect to="/stream" />}</Route>
+      <Route path="/">{() => <Redirect to="/listener-portal" />}</Route>
       <Route path="/auth/signin" component={SignIn} />
       <Route path="/auth/forgot-password" component={AuthRecoveryPage} />
       <Route path="/auth/reset-password" component={AuthRecoveryPage} />
@@ -248,6 +249,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <StreamRoyaleAdmin />
+          </Suspense>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/streamroyale-admin/review">
+        <ProtectedRoute roles={["admin"]}>
+          <Suspense fallback={<PageLoader />}>
+            <StreamRoyaleReview />
           </Suspense>
         </ProtectedRoute>
       </Route>

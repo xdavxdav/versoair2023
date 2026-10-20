@@ -25,6 +25,7 @@ export type AccountFamily =
 const STAFF_ROLES = new Set(["admin", "moderator", "superuser", "tsr"]);
 const STREAMER_ALIASES = new Set([
   "streamer",
+  "listener",
   "creator",
   "music",
   "musical",
@@ -54,7 +55,9 @@ export function getAccountFamily(
     return "contractor";
   if (portals.includes("community")) return "general";
   if (
-    STREAMER_ALIASES.has(role)
+    STREAMER_ALIASES.has(role) ||
+    portals.includes("music") ||
+    portals.includes("musical")
   )
     return "streamer";
 

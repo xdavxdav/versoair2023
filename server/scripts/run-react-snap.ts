@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import puppeteer from "puppeteer";
 
 type ReactSnapModule = {
   run?: (options: Record<string, unknown>) => Promise<void>;
@@ -37,6 +38,18 @@ async function readRoutesFromBuild(): Promise<string[]> {
 
 async function run() {
   const routes = await readRoutesFromBuild();
+  let puppeteerExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+
+  if (!puppeteerExecutablePath && process.platform === "darwin" && process.arch === "arm64") {
+    puppeteerExecutablePath = puppeteer.executablePath();
+    try {
+      await fs.access(puppeteerExecutablePath);
+    } catch {
+      throw new Error(
+        "Chrome for Puppeteer is not installed for Apple silicon. Run `npx puppeteer browsers install chrome` and retry.",
+      );
+    }
+  }
 
   const mod = (await import("react-snap")) as ReactSnapModule;
   const runSnap = mod.run ?? mod.default?.run;
@@ -54,9 +67,7 @@ async function run() {
     skipThirdPartyRequests: true,
     removeBlobs: true,
     puppeteerArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
-    ...(process.env.PUPPETEER_EXECUTABLE_PATH
-      ? { puppeteerExecutablePath: process.env.PUPPETEER_EXECUTABLE_PATH }
-      : {}),
+    ...(puppeteerExecutablePath ? { puppeteerExecutablePath } : {}),
   });
 
   console.log("[react-snap] Done.");

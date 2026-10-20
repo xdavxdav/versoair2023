@@ -97,12 +97,9 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
   isValidEmail,
-  checkPasswordLength,
-  checkPasswordUpper,
-  checkPasswordNumber,
-  passwordStrengthLevel,
   isPasswordStrong,
   validateRegistrationForm,
 } from "@/lib/auth-validation";
@@ -111,7 +108,6 @@ import {
   JobApplicationModal,
   type ApplicationJob,
 } from "@/components/job-application-modal";
-import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
 // Database API configuration - Use the same as other pages
 const API_BASE_URL = "";

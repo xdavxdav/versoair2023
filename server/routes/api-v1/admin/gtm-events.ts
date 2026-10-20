@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth, optionalAuth } from "../../../middleware/auth";
+import { apiLimiter } from "../../../middleware/rate-limiter";
 import { requireTier } from "../../../middleware/tierGate";
 import { asyncHandler } from "../../../middleware/asyncHandler";
 import * as gtmService from "../../../services/gtm-events";
@@ -12,6 +13,7 @@ const router = Router();
  */
 router.post(
   "/",
+  apiLimiter,
   optionalAuth,
   asyncHandler(async (req, res) => {
     const {

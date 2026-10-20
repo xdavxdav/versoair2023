@@ -1,6 +1,9 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { pool } from "./db";
+import { injectBusinessRouteSeoMeta } from "./utils/business-route-seo";
+import { publicBusinessVisibilitySql } from "./utils/business-visibility";
 import { injectRouteSeoMeta } from "./utils/route-seo-meta";
 
 export function log(message: string, source = "express") {
@@ -115,11 +118,65 @@ export function serveStatic(app: Express) {
         `$1${origin}${req.originalUrl}"`,
       );
 
-      // Last, so its canonical www URLs are not rewritten to the runtime origin above.
-      injected = injectRouteSeoMeta(injected, req.originalUrl.split("?")[0]);
+      const businessMatch = req.path.match(/^\/business\/(\d+)\/?$/);
+      if (!businessMatch) {
+        // Last, so canonical www URLs are not rewritten to the runtime origin above.
+        injected = injectRouteSeoMeta(injected, req.originalUrl.split("?")[0]);
+        res.set("Content-Type", "text/html").send(injected);
+        return;
+      }
 
-      res.set("Content-Type", "text/html");
-      res.send(injected);
+      const businessId = Number(businessMatch[1]);
+      pool
+        .query(
+          `SELECT b.id, b.name, b.description, b.address, b.city, b.country_code,
+                  c.name AS country_name, bc.name AS category_name, b.phone,
+                  b.email, b.website, b.rating, b.reviews, b.latitude,
+                  b.longitude, b.logo_url
+           FROM businesses b
+           LEFT JOIN business_categories bc ON bc.id = b.category_id
+           LEFT JOIN countries c ON c.code = b.country_code
+           WHERE b.id = $1 AND ${publicBusinessVisibilitySql("b")}`,
+          [businessId],
+        )
+        .then(({ rows }) => {
+          res.set("Content-Type", "text/html");
+          if (rows.length === 0) {
+            res.status(404).send(injected);
+            return;
+          }
+
+          const business = rows[0];
+          const seoHtml = injectBusinessRouteSeoMeta(injected, {
+            id: Number(business.id),
+            name: business.name,
+            description: business.description,
+            category: business.category_name,
+            city: business.city,
+            country: business.country_name,
+            countryCode: business.country_code,
+            address: business.address,
+            phone: business.phone,
+            email: business.email,
+            website: business.website,
+            rating: business.rating == null ? undefined : Number(business.rating),
+            reviewCount:
+              business.reviews == null ? undefined : Number(business.reviews),
+            latitude:
+              business.latitude == null ? undefined : Number(business.latitude),
+            longitude:
+              business.longitude == null ? undefined : Number(business.longitude),
+            imageUrl: business.logo_url,
+          });
+          res.send(seoHtml);
+        })
+        .catch((error) => {
+          console.error(
+            `[STATIC] Business SEO lookup failed for id ${businessId}:`,
+            error,
+          );
+          res.status(503).type("text/html").send(injected);
+        });
     });
   });
 }

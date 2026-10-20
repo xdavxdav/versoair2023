@@ -58,6 +58,7 @@ import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
 import communityRouter from "./routes/community";
 import geoActionsRouter from "./routes/geo-actions";
+import geoAdminAddonsRouter from "./routes/geo-admin-addons";
 import contractorPipelineRouter from "./routes/contractor-pipeline";
 import purgatoireRouter from "./routes/purgatoire";
 import { requireAuth, requireOwner, isOwner } from "./middleware/auth";
@@ -306,6 +307,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/communities", artisanCommunitiesRouter);
   app.use("/api/events", eventsRouter);
   app.use("/api/geo-actions", geoActionsRouter); // Geo-Action Queue — tiered geo-admin access control
+  app.use("/api/geo-admin/addons", geoAdminAddonsRouter);
   app.use("/api/contractor-pipeline", contractorPipelineRouter); // Contractor Pipeline — apply → verify → assign
 
   // ─── CSRF token endpoint (returns token in response body for clients where cookies don't work) ───

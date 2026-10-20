@@ -27,10 +27,10 @@ const CSRF_EXEMPT_PATHS = [
   "/auth/logout",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/auth/accept-geoadmin-invitation", // public, authorised by its one-use invitation token
   "/auth/geo-admin", // geo-admin login — must be exempt so it can bootstrap the token
   "/auth/admin-gate", // admin gate login — must be exempt so it can bootstrap the token
-  // "/auth/register-geoadmin" requires an authenticated Admin/Superadmin session,
-  // so it goes through normal CSRF validation like any other protected write.
+  // "/auth/register-geoadmin" is retired (410) and stays CSRF-protected.
   "/api/users/heartbeat", // public presence-tracking ping — no CSRF needed
   "/api/v1/payments/webhook", // Stripe webhook — authenticated by signature, not cookies
   "/api/v1/cards/webhook/issuing", // Stripe Issuing webhook — signature-verified

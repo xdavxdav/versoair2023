@@ -112,7 +112,7 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
     setCancelled(true);
     navigateBackSafely((path) => {
       window.location.href = path;
-    }, "/stream");
+    }, "/dashboard");
   }, []);
 
   // ── 1. SuperAdmin / artist / session-passed → render children immediately ──
@@ -155,7 +155,7 @@ export default function ArtistPortalGate({ children }: ArtistPortalGateProps) {
               onClick={() =>
                 navigateBackSafely((path) => {
                   window.location.href = path;
-                }, "/stream")
+                }, "/dashboard")
               }
               className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 hover:text-white/80 hover:border-white/20 transition-all text-sm font-medium"
             >

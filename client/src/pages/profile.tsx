@@ -109,7 +109,7 @@ export default function ProfilePage() {
   }, [user?.id]);
 
   const handleBack = () => {
-    navigateBackSafely(navigate, "/stream");
+    navigateBackSafely(navigate, "/dashboard");
   };
 
   const handleSaveDisplayName = async () => {

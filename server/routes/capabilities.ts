@@ -12,6 +12,7 @@ import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
+import { hasGeoAdminAccess } from "@shared/geoadmin-access";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { generateArtistCode } from "../utils/artist-code";
@@ -49,6 +50,7 @@ export async function computeUserCapabilities(userId: number) {
   // 1. Fetch base user data
   const userResult = await db.execute(
     sql`SELECT id, username, email, role, subscription_tier, subscription_status,
+               premium_expires_at,
                trial_tier, trial_started_at, trial_expires_at,
                oauth_provider, portal_access
         FROM users WHERE id = ${userId} LIMIT 1`,
@@ -108,9 +110,26 @@ export async function computeUserCapabilities(userId: number) {
   ) {
     portals.add("streamer");
   }
+  const addonResult = await db.execute(sql`
+    SELECT base_tier, status, expires_at
+    FROM geo_admin_addons
+    WHERE user_id = ${userId}
+    ORDER BY requested_at DESC, id DESC
+    LIMIT 1
+  `);
+  const addon = addonResult.rows?.[0] as
+    | { base_tier: string; status: string; expires_at: Date | null }
+    | undefined;
   if (
-    effectiveTier !== "free" &&
-    ["active", "trialing"].includes(user.subscription_status || "active")
+    hasGeoAdminAccess({
+      role: effectiveRole,
+      subscriptionTier: user.subscription_tier,
+      subscriptionStatus: user.subscription_status,
+      subscriptionExpiresAt: user.premium_expires_at,
+      addonBaseTier: addon?.base_tier,
+      addonStatus: addon?.status,
+      addonExpiresAt: addon?.expires_at,
+    })
   ) {
     portals.add("geo-admin");
   }
@@ -129,11 +148,6 @@ export async function computeUserCapabilities(userId: number) {
   if (existingPortalAccess.includes("artisan")) {
     portals.add("artisan");
   }
-  // TSR (Technical Service Representative) always gets geo-admin
-  if (user.role === "tsr" || effectiveRole === "geo-admin") {
-    portals.add("geo-admin");
-  }
-
   // Admin/moderator/superuser get all portals
   if (["admin", "moderator", "superuser"].includes(effectiveRole)) {
     portals.add("artist");

@@ -63,21 +63,59 @@ export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const loadRequestId = useRef(0);
+  const currentUserId = useRef(user?.id);
+  currentUserId.current = user?.id;
   const push = usePushNotifications();
 
   const unread = notifications.filter((n) => !n.read).length;
 
+  useEffect(() => {
+    loadRequestId.current++;
+    setNotifications([]);
+    setLoadError(null);
+    setLoading(false);
+  }, [user?.id]);
+
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
+    const requestId = ++loadRequestId.current;
+    const userId = user.id;
+    setLoading(true);
+    setLoadError(null);
     try {
       const r = await authenticatedFetch("/api/notifications");
-      const data = await r.json();
-      if (data?.notifications && Array.isArray(data.notifications)) {
-        setNotifications(data.notifications);
+      if (!r.ok) {
+        throw new Error(`Request failed with status ${r.status}`);
       }
-    } catch {
-      /* non-critical */
+      const data = await r.json();
+      if (!data?.success || !Array.isArray(data.notifications)) {
+        throw new Error("Unexpected notifications response");
+      }
+      if (
+        requestId !== loadRequestId.current ||
+        currentUserId.current !== userId
+      ) {
+        return;
+      }
+      setNotifications(data.notifications);
+    } catch (error) {
+      console.error("[NotificationCenter] Failed to load notifications:", error);
+      if (
+        requestId === loadRequestId.current &&
+        currentUserId.current === userId
+      ) {
+        setLoadError("Unable to load notifications. Please try again.");
+      }
+    } finally {
+      if (
+        requestId === loadRequestId.current &&
+        currentUserId.current === userId
+      ) {
+        setLoading(false);
+      }
     }
   }, [user]);
 
@@ -141,36 +179,71 @@ export default function NotificationCenter() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Mark all as read when opened so red dot disappears immediately when viewed
-  const handleOpenToggle = () => {
-    const nextOpen = !open;
-    setOpen(nextOpen);
-
-    if (nextOpen && unread > 0) {
-      // Clear red dot locally immediately
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      authenticatedFetch("/api/notifications/read-all", {
+  const markAllRead = async () => {
+    const userId = user?.id;
+    const previousReadState = new Map(
+      notifications.map((notification) => [notification.id, notification.read]),
+    );
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      const response = await authenticatedFetch("/api/notifications/read-all", {
         method: "POST",
-      }).catch(() => {});
+      });
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      if (currentUserId.current !== userId) return;
       window.dispatchEvent(new CustomEvent("notifications:read"));
+      setLoadError(null);
+    } catch (error) {
+      console.error("[NotificationCenter] Failed to mark all as read:", error);
+      if (currentUserId.current !== userId) return;
+      setNotifications((current) =>
+        current.map((notification) => ({
+          ...notification,
+          read:
+            previousReadState.get(notification.id) ?? notification.read,
+        })),
+      );
+      setLoadError("Unable to update notifications. Please try again.");
     }
   };
 
-  const markAllRead = async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    authenticatedFetch("/api/notifications/read-all", { method: "POST" }).catch(
-      () => {},
-    );
-    window.dispatchEvent(new CustomEvent("notifications:read"));
-  };
-
-  const markOne = (id: string) => {
+  const markOne = async (id: string): Promise<boolean> => {
+    const userId = user?.id;
+    const notification = notifications.find((item) => item.id === id);
+    if (!notification) return false;
+    if (notification.read) return true;
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-    authenticatedFetch(`/api/notifications/${id}/read`, {
-      method: "POST",
-    }).catch(() => {});
+    try {
+      const response = await authenticatedFetch(`/api/notifications/${id}/read`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+      if (currentUserId.current !== userId) return false;
+      setLoadError(null);
+      return true;
+    } catch (error) {
+      console.error("[NotificationCenter] Failed to mark notification as read:", error);
+      if (currentUserId.current !== userId) return false;
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === id ? { ...item, read: notification.read } : item,
+        ),
+      );
+      setLoadError("Unable to update notifications. Please try again.");
+      return false;
+    }
+  };
+
+  const handleOpenToggle = () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && unread > 0) void markAllRead();
   };
 
   if (!user) return null;
@@ -248,19 +321,52 @@ export default function NotificationCenter() {
                   <span className="w-5 h-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
                 </div>
               )}
-              {!loading && notifications.length === 0 && (
-                <div className="py-12 text-center space-y-2">
-                  <Bell className="w-8 h-8 text-white/20 mx-auto" />
-                  <p className="text-white/40 text-sm">No notifications yet</p>
+              {!loading && loadError && (
+                <div className="py-8 text-center space-y-3">
+                  <p className="text-rose-300 text-sm">{loadError}</p>
+                  <button
+                    onClick={fetchNotifications}
+                    className="text-sm text-amber-300 underline underline-offset-4"
+                  >
+                    Retry
+                  </button>
                 </div>
+              )}
+              {!loading && !loadError && notifications.length === 0 && (
+                  <div className="py-12 text-center space-y-2">
+                    <Bell className="w-8 h-8 text-white/20 mx-auto" />
+                    <p className="text-white/40 text-sm">
+                      No notifications yet
+                    </p>
+                  </div>
               )}
               {notifications.map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => {
-                    markOne(n.id);
+                  onClick={async () => {
+                    const markedRead = await markOne(n.id);
+                    if (!markedRead) return;
+                    if (n.entityUrl) {
+                      try {
+                        const destination = new URL(
+                          n.entityUrl,
+                          window.location.origin,
+                        );
+                        if (destination.origin !== window.location.origin) {
+                          setLoadError("This notification link is unavailable.");
+                          return;
+                        }
+                        window.location.assign(destination.href);
+                      } catch (error) {
+                        console.error(
+                          "[NotificationCenter] Invalid notification link:",
+                          error,
+                        );
+                        setLoadError("This notification link is unavailable.");
+                        return;
+                      }
+                    }
                     setOpen(false);
-                    if (n.entityUrl) window.location.href = n.entityUrl;
                   }}
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${!n.read ? "bg-amber-500/5" : ""}`}
                 >

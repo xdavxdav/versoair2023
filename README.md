@@ -143,6 +143,57 @@ export interface AuthUser {
   username?: string;
 }
 
+## Local desktop development
+
+Open this repository folder directly in VS Code. The workspace tasks and
+debugger launch configurations use the local Node.js installation; a VS Code
+Remote Tunnel is not required.
+
+Install dependencies with `npm ci`, then create `.env` from `.env.example` if
+you do not already have a local environment file. Keep `.env` private and
+configure `DATABASE_URL`, `JWT_SECRET`, and `SESSION_SECRET` before starting
+the server. The database URL must be reachable from this computer; using a
+remote database service does not require a VS Code tunnel.
+
+- Run **Terminal → Run Task → Start Development** for the main app.
+- Press **F5** and choose **Versoair: Debug Local Server** to debug it.
+- Run **Start Music App** or choose **Versoair: Debug Music Server** for the
+  music app.
+- Use the **Type Check** and **Build Production** tasks to validate changes.
+
+## Sign-in provider status
+
+Google, Microsoft, and LinkedIn are the only OAuth providers wired on the
+server; each still requires valid provider credentials and configuration.
+Indeed and Glassdoor sign-in are deferred pending provider authorization and
+working integrations, so the login UI does not advertise them as available.
+
+## StreamRoyale activity and royalty review
+
+Admins can open `/admin/streamroyale/review` (or **Review activity & royalties**
+from the StreamRoyale admin page) to inspect up to 50 recent stream records for
+a selected week, artist qualification counts, the active royalty rules, and
+recorded earnings or a dry-run estimate. The page refreshes automatically and
+does not offer distribution, payout, or approval actions. The API requires an
+admin or superuser session and does not return listener IDs, IP addresses, or
+user-agent strings.
+
+## Homepage panel layout regression
+
+With the frontend running, check horizontal panel coverage, scroll alignment,
+and resizing between desktop, phone, and landscape sizes:
+
+```bash
+npx vite --host 127.0.0.1 --port 5178 --strictPort
+# In another terminal:
+node --test scripts/tests/home-panels.test.mjs
+```
+
+Set `HOME_LAYOUT_URL` to test another running instance. The test uses Puppeteer's
+installed Chrome and checks rendered geometry, including resizing while pinned
+and reaching the final panel. A frontend-only server is sufficient for this
+layout check; it does not validate API data or authentication.
+
 ## SEO prerender route list
 
 Generate the route list for prerender tools (the shared public static routes in
@@ -158,8 +209,11 @@ This command writes:
 - `client/public/prerender-routes.txt`
 
 Dynamic `/business/:id` pages are intentionally **not** prerendered: react-snap has
-no API/database behind it, so they would snapshot as error pages without JSON-LD.
-They are listed in the sitemap and render their `<SeoHead>` + JSON-LD client-side.
+no API/database behind it, so they would snapshot as error pages. In production,
+the server looks up public businesses and injects route-specific metadata and
+`LocalBusiness` JSON-LD into the initial HTML; the client page also renders its
+`<SeoHead>` metadata. This server-rendered behavior requires a database and is
+not covered by the static prerender build.
 
 Run full prerender pipeline (route list → build → react-snap):
 

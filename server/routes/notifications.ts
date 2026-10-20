@@ -5,13 +5,13 @@
 import { Router } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import { markNotificationReadStatement } from "./notification-queries";
 
 const router = Router();
 
 async function ensureNotifTable() {
-  await pool
-    .query(
-      `
+  await pool.query(
+    `
     CREATE TABLE IF NOT EXISTS notifications (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id INTEGER NOT NULL,
@@ -28,10 +28,7 @@ async function ensureNotifTable() {
       read_at TIMESTAMP
     )
   `,
-    )
-    .catch(() => {
-      /* may already exist with different shape */
-    });
+  );
 
   // Ensure all potential columns exist so reads & writes never fail
   const cols = [
@@ -49,11 +46,9 @@ async function ensureNotifTable() {
   ];
   for (const col of cols) {
     const [name] = col.split(" ");
-    await pool
-      .query(
-        `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS ${name} ${col.split(" ").slice(1).join(" ")}`,
-      )
-      .catch(() => {});
+    await pool.query(
+      `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS ${name} ${col.split(" ").slice(1).join(" ")}`,
+    );
   }
 }
 
@@ -88,7 +83,7 @@ router.get("/", requireAuth(), async (req, res) => {
               COALESCE(actor_name, title, 'Someone') AS "actorName",
               actor_avatar AS "actorAvatar",
               COALESCE(entity_url, action_url) AS "entityUrl",
-              COALESCE(read, is_read, false) AS "read",
+              (COALESCE(read, false) OR COALESCE(is_read, false)) AS "read",
               COALESCE(created_at, NOW()) AS "createdAt"
        FROM notifications
        WHERE user_id = $1
@@ -108,8 +103,11 @@ router.get("/", requireAuth(), async (req, res) => {
     }));
     res.json({ success: true, notifications: rows });
   } catch (err: any) {
-    console.error("[NOTIFICATIONS] GET error:", err.message);
-    res.json({ success: true, notifications: [] });
+    console.error("[NOTIFICATIONS] GET error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Unable to load notifications.",
+    });
   }
 });
 
@@ -121,13 +119,17 @@ router.get("/unread-count", requireAuth(), async (req, res) => {
     const result = await pool.query(
       `SELECT COUNT(*)::int AS count
        FROM notifications
-       WHERE user_id = $1 AND COALESCE(read, is_read, false) = false`,
+       WHERE user_id = $1
+         AND (COALESCE(read, false) OR COALESCE(is_read, false)) = false`,
       [userId],
     );
     res.json({ success: true, count: result.rows[0]?.count || 0 });
   } catch (err: any) {
-    console.error("[NOTIFICATIONS] GET /unread-count error:", err.message);
-    res.json({ success: true, count: 0 });
+    console.error("[NOTIFICATIONS] GET /unread-count error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Unable to load unread notification count.",
+    });
   }
 });
 
@@ -144,7 +146,11 @@ router.post("/read-all", requireAuth(), async (req, res) => {
     );
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("[NOTIFICATIONS] POST /read-all error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Unable to mark notifications as read.",
+    });
   }
 });
 
@@ -152,15 +158,24 @@ router.post("/read-all", requireAuth(), async (req, res) => {
 router.post("/:id/read", requireAuth(), async (req, res) => {
   try {
     await ensureNotifTable();
-    await pool.query(
-      `UPDATE notifications 
-       SET read = true, is_read = true, read_at = NOW() 
-       WHERE id::text = $1`,
-      [req.params.id],
+    const statement = markNotificationReadStatement(
+      req.params.id,
+      parseInt(req.user!.userId),
     );
+    const result = await pool.query(statement.text, statement.values);
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Notification not found.",
+      });
+    }
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("[NOTIFICATIONS] POST /:id/read error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Unable to mark notification as read.",
+    });
   }
 });
 

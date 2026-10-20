@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Copy, Eye, EyeOff, LogIn, Filter, X } from "lucide-react";
+import { Search, Copy, LogIn, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CREDENTIALS,
@@ -13,9 +13,6 @@ import {
 export default function PasswordPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [showPasswords, setShowPasswords] = useState<{
-    [key: string]: boolean;
-  }>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedCredential, setSelectedCredential] =
     useState<Credential | null>(null);
@@ -36,9 +33,8 @@ export default function PasswordPage() {
   };
 
   const handleLoginClick = (credential: Credential) => {
-    // Store credential in sessionStorage for quick login
+    sessionStorage.removeItem("quick_login_password");
     sessionStorage.setItem("quick_login_email", credential.email);
-    sessionStorage.setItem("quick_login_password", credential.password);
     window.location.href = "/auth/signin";
   };
 
@@ -264,57 +260,10 @@ export default function PasswordPage() {
                       </div>
                     </div>
 
-                    {/* Password */}
-                    <div>
-                      <label className="text-slate-500 text-xs font-semibold uppercase">
-                        Password
-                      </label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <code
-                          className={`bg-slate-900 px-2 py-1 rounded text-xs flex-1 overflow-x-auto font-mono ${
-                            showPasswords[credential.id]
-                              ? "text-emerald-400"
-                              : "text-slate-500"
-                          }`}
-                        >
-                          {showPasswords[credential.id]
-                            ? credential.password
-                            : "••••••••••"}
-                        </code>
-                        <button
-                          onClick={() =>
-                            setShowPasswords((prev) => ({
-                              ...prev,
-                              [credential.id]: !prev[credential.id],
-                            }))
-                          }
-                          className="p-2 hover:bg-slate-700 rounded transition-colors text-slate-400"
-                          title="Toggle password visibility"
-                        >
-                          {showPasswords[credential.id] ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() =>
-                            copyToClipboard(
-                              credential.password,
-                              `pass-${credential.id}`,
-                            )
-                          }
-                          className={`p-2 rounded transition-colors ${
-                            copiedId === `pass-${credential.id}`
-                              ? "bg-green-600 text-white"
-                              : "hover:bg-slate-700 text-slate-400"
-                          }`}
-                          title="Copy password"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
+                    <p className="text-xs text-slate-500">
+                      Passwords are configured locally and are not stored in
+                      this identity catalog.
+                    </p>
 
                     {/* Sector (if applicable) */}
                     {credential.sector && (
@@ -782,7 +731,8 @@ export default function PasswordPage() {
             <li>✅ Filter by role type to test different permission levels</li>
             <li>✅ Click "Quick Login" to auto-fill the signin form</li>
             <li>
-              ✅ Copy credentials (passwords show on hover) to test manually
+              ✅ Use the listed test identities; enter their locally configured
+              passwords manually.
             </li>
             <li>
               ✅ Use Superuser@2026! for full admin access during development

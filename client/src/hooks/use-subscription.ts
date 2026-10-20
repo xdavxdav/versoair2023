@@ -5,8 +5,8 @@
  * Used by Geo Admin, navbar, home page, and any future gated features.
  *
  * Flow:
- *   1. Check localStorage for auth_token (JWT)
- *   2. If token exists → fetch /api/auth/me for user info
+ *   1. Verify the HttpOnly session cookie (or a legacy stored JWT)
+ *   2. Fetch /auth/session for authoritative user info
  *   3. Derive subscription tier from user record (default: "free")
  *   4. Expose: isAuthenticated, user, tier, loading, helpers
  */
@@ -26,6 +26,7 @@ export interface SubscriptionUser {
   isAdmin?: boolean;
   subscriptionTier: TierKey;
   subscriptionStatus: string;
+  subscriptionExpiresAt?: string | null;
   trialTier?: TierKey | null;
   trialExpiresAt?: string | null;
 }
@@ -75,22 +76,16 @@ export function useSubscription(): UseSubscriptionReturn {
       setLoading(true);
       const token = getStoredToken();
 
-      if (!token) {
-        setUser(null);
-        return;
-      }
-
       const res = await fetch("/auth/session", {
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           "Content-Type": "application/json",
         },
       });
 
       if (!res.ok) {
-        // Token expired or invalid — clear in-memory state only.
-        // Keep localStorage tokens so gateBypass persists across reloads.
-        // Tokens are only cleared on explicit signOut().
+        // Local session markers must never substitute for server authentication.
         setUser(null);
         return;
       }
@@ -111,6 +106,8 @@ export function useSubscription(): UseSubscriptionReturn {
             "free") as TierKey,
           subscriptionStatus:
             u.subscriptionStatus || u.subscription_status || "active",
+          subscriptionExpiresAt:
+            u.premiumExpiresAt || u.premium_expires_at || null,
           trialTier: (u.trialTier || u.trial_tier || null) as TierKey | null,
           trialExpiresAt: u.trialExpiresAt || u.trial_expires_at || null,
         });

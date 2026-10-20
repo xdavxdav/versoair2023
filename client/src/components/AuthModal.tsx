@@ -73,27 +73,9 @@ function BlogSsoButtons() {
           Continue with LinkedIn
         </motion.button>
 
-        {/* Indeed */}
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => handleSso("indeed")}
-          disabled={!!loading}
-          className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-[#2164f3] to-[#1a4fc7] hover:from-[#1a4fc7] hover:to-[#153fa0] border border-white/10 rounded-lg text-white transition-all text-sm font-handstyle font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading === "indeed" ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11.566 21.552v-8.706c0-2.26.438-4.47 2.15-5.85 1.398-1.13 3.248-1.478 5.06-1.478.6 0 1.188.05 1.724.13v3.2a8.98 8.98 0 00-1.244-.08c-2.478 0-3.588 1.348-3.588 3.788v8.996h-4.102zM8.2 5.506a2.384 2.384 0 01-2.39 2.39A2.384 2.384 0 013.42 5.506a2.384 2.384 0 012.39-2.39 2.384 2.384 0 012.39 2.39zM3.756 21.552V9.524h4.102v12.028H3.756z" />
-            </svg>
-          )}
-          Continue with Indeed
-        </motion.button>
-
         {/* Glassdoor */}
         <motion.button
+          hidden
           type="button"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

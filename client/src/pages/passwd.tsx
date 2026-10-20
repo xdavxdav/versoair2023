@@ -1,18 +1,12 @@
 /**
- * CREDENTIALS VAULT
- * Single master credential for ALL portals
- * FOR DEVELOPMENT & ADMIN USE ONLY
- *
- * One account — superadmin@versoair.test / JoeyD000
- * Works on: /auth/login, /auth/artist/login, /auth/community/login,
- *           /auth/subscriber/login, /auth/admin-gate, /api/vault/authorize
+ * Development-only test identities. Passwords are configured locally and
+ * must never be stored in this client-side catalog.
  */
 
 export interface Credential {
   id: string;
   username: string;
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   businessName: string;
@@ -29,7 +23,6 @@ export const CREDENTIALS: Credential[] = import.meta.env.DEV
         id: "superuser-master",
         username: "superadmin_test",
         email: "superadmin@versoair.test",
-        password: "JoeyD000",
         firstName: "Joel",
         lastName: "D",
         businessName: "Verso Air — Master Control",
@@ -38,6 +31,19 @@ export const CREDENTIALS: Credential[] = import.meta.env.DEV
           "Universal master account — connects to General, Artist Portal, Blog/Community, Geo-Admin, Vault, and all portals",
         color: "from-red-600 to-pink-600",
         icon: "crown",
+      },
+      {
+        id: "subsuperadmin-test",
+        username: "subsupadmin_test",
+        email: "subsupadmin@versoair.test",
+        firstName: "Test",
+        lastName: "Admin",
+        businessName: "Verso Air — Test Admin",
+        role: "admin",
+        description:
+          "Local test identity with admin access; configure its password in the ignored local environment",
+        color: "from-blue-600 to-cyan-600",
+        icon: "shield",
       },
     ]
   : [];

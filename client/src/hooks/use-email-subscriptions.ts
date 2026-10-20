@@ -181,7 +181,7 @@ export function useEmailSubscriptions(
 
   // Helper: check if a channel type is available for the user's tier
   const canAccess = (type: SubscriptionType): boolean => {
-    if (!subscriptionsQuery.data) return true; // Assume yes while loading
+    if (!subscriptionsQuery.data) return type !== "geoadmin_reports";
     return subscriptionsQuery.data.tierAccess.allowedTypes.includes(type);
   };
 

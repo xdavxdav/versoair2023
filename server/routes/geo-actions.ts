@@ -2,7 +2,7 @@
  * Geo-Action Queue — tiered access control for geo-admin operations
  *
  * TSR users → full CRUD, immediate execution (no delays)
- * High-tier subscribers (max/enterprise) → read-only + request queue with delays:
+ * Subscribers with an approved GeoAdmin add-on → read-only + request queue:
  *   - view actions: instant
  *   - edit requests: 24h delay (auto-approve after delay)
  *   - delete requests: 72h delay + admin approval required
@@ -25,6 +25,7 @@ import {
   requireJoelSuperadminForMutations,
 } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { getGeoAdminEntitlement } from "../services/geoadmin-entitlement";
 
 const router = Router();
 router.use(requireJoelSuperadminForMutations);
@@ -200,11 +201,8 @@ interface GeoAccess {
 }
 
 async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
-  const result = await db.execute(
-    sql`SELECT role, subscription_tier, subscription_status FROM users WHERE id = ${userId} LIMIT 1`,
-  );
-  const user = result.rows?.[0] as any;
-  if (!user) {
+  const entitlement = await getGeoAdminEntitlement(userId);
+  if (!entitlement) {
     return {
       level: "none",
       role: "unknown",
@@ -217,11 +215,10 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
     };
   }
 
-  const staffRoles = ["admin", "moderator", "superuser", "tsr"];
-  if (staffRoles.includes(user.role)) {
+  if (entitlement.isStaff) {
     return {
       level: "full",
-      role: user.role,
+      role: entitlement.role,
       canCreate: true,
       canEdit: true,
       canDelete: true,
@@ -231,14 +228,10 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
     };
   }
 
-  const paidTiers = ["max", "enterprise"];
-  const isActive = ["active", "trialing"].includes(
-    user.subscription_status || "active",
-  );
-  if (paidTiers.includes(user.subscription_tier || "") && isActive) {
+  if (entitlement.hasAccess) {
     return {
       level: "read-only",
-      role: user.role || "user",
+      role: entitlement.role,
       canCreate: false,
       canEdit: false, // through queue only
       canDelete: false, // through queue only
@@ -250,7 +243,7 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
 
   return {
     level: "none",
-    role: user.role || "user",
+    role: entitlement.role,
     canCreate: false,
     canEdit: false,
     canDelete: false,
@@ -290,7 +283,7 @@ router.post(
       res.status(403).json({
         success: false,
         message:
-          "You do not have geo-admin access. Upgrade to Max or Enterprise tier.",
+          "GeoAdmin action requests require an active paid subscription and an approved, active GeoAdmin add-on.",
       });
       return;
     }

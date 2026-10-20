@@ -6,6 +6,9 @@ import { injectRouteSeoMeta, ROUTE_SEO_META } from "./route-seo-meta.ts";
 const html = "<html><head><title>Default</title></head><body></body></html>";
 
 test("injects complete canonical metadata for every supported route", () => {
+  const titles = new Set<string>();
+  const descriptions = new Set<string>();
+
   for (const [route, meta] of Object.entries(ROUTE_SEO_META)) {
     const canonical = `https://www.versoair.com${route}`;
     const result = injectRouteSeoMeta(html, route);
@@ -37,6 +40,13 @@ test("injects complete canonical metadata for every supported route", () => {
       result.includes('<meta name="twitter:card" content="summary_large_image" data-rh="true">'),
       route,
     );
+    assert.ok(!titles.has(meta.title.toLowerCase()), `duplicate title: ${route}`);
+    assert.ok(
+      !descriptions.has(meta.description.toLowerCase()),
+      `duplicate description: ${route}`,
+    );
+    titles.add(meta.title.toLowerCase());
+    descriptions.add(meta.description.toLowerCase());
   }
 });
 

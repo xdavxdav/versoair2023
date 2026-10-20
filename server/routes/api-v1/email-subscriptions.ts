@@ -8,14 +8,16 @@
  *   - geoadmin_reports  (Market study digests)
  *   - platform_updates  (General platform news)
  *
- * Separate from GeoAdmin tier pricing — tiers gate *enhanced* features,
- * but basic subscriptions are available to all authenticated users.
+ * GeoAdmin reports require a separately approved active add-on; base subscription
+ * tiers only govern the other email channels and their delivery frequencies.
  */
 
 import { Router, Request, Response } from "express";
 import { db, pool } from "../../db";
 import { eq, and, sql } from "drizzle-orm";
 import { emailSubscriptions, emailQueue, users } from "@shared/schema";
+import { requireAuth } from "../../middleware/auth";
+import { getGeoAdminEntitlement } from "../../services/geoadmin-entitlement";
 import crypto from "crypto";
 
 const router = Router();
@@ -47,21 +49,18 @@ const TIER_ACCESS: Record<string, SubscriptionType[]> = {
     "job_alerts",
     "contract_alerts",
     "reservation_tracking",
-    "geoadmin_reports",
     "platform_updates",
   ],
   max: [
     "job_alerts",
     "contract_alerts",
     "reservation_tracking",
-    "geoadmin_reports",
     "platform_updates",
   ],
   enterprise: [
     "job_alerts",
     "contract_alerts",
     "reservation_tracking",
-    "geoadmin_reports",
     "platform_updates",
   ],
 };
@@ -107,14 +106,20 @@ async function getUserTier(userId: number): Promise<string> {
  * Create or re-activate an email subscription for the authenticated user.
  * Body: { userId, type, frequency?, filters? }
  */
-router.post("/subscribe", async (req: Request, res: Response) => {
+router.post("/subscribe", requireAuth(), async (req: Request, res: Response) => {
   try {
     const { userId, type, frequency = "daily_digest", filters = {} } = req.body;
 
-    if (!userId) {
+    const authenticatedUserId = Number(req.user?.userId);
+    if (!authenticatedUserId) {
       return res
         .status(401)
         .json({ success: false, error: "Authentication required" });
+    }
+    if (Number(userId) !== authenticatedUserId) {
+      return res
+        .status(403)
+        .json({ success: false, error: "Cannot change another user's subscriptions" });
     }
 
     if (!type || !VALID_TYPES.includes(type as SubscriptionType)) {
@@ -136,11 +141,25 @@ router.post("/subscribe", async (req: Request, res: Response) => {
     const allowedTypes = TIER_ACCESS[tier] || TIER_ACCESS.free;
     const allowedFrequencies = TIER_FREQUENCIES[tier] || TIER_FREQUENCIES.free;
 
-    if (!allowedTypes.includes(type as SubscriptionType)) {
+    if (
+      type === "geoadmin_reports" &&
+      !(await getGeoAdminEntitlement(authenticatedUserId))?.hasAccess
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "GeoAdmin reports require an active, approved GeoAdmin add-on.",
+        requiredTier: "geo-admin-addon",
+      });
+    }
+
+    if (
+      type !== "geoadmin_reports" &&
+      !allowedTypes.includes(type as SubscriptionType)
+    ) {
       return res.status(403).json({
         success: false,
         error: `Your ${tier} tier doesn't include ${type}. Upgrade to unlock this channel.`,
-        requiredTier: type === "geoadmin_reports" ? "verified" : "essential",
+        requiredTier: "essential",
       });
     }
 
@@ -229,7 +248,9 @@ router.get("/my", async (req: Request, res: Response) => {
 
     // Also return what the user's tier allows
     const tier = await getUserTier(Number(userId));
-    const allowedTypes = TIER_ACCESS[tier] || TIER_ACCESS.free;
+    const allowedTypes = [...(TIER_ACCESS[tier] || TIER_ACCESS.free)];
+    const entitlement = await getGeoAdminEntitlement(Number(userId));
+    if (entitlement?.hasAccess) allowedTypes.push("geoadmin_reports");
     const allowedFrequencies = TIER_FREQUENCIES[tier] || TIER_FREQUENCIES.free;
 
     res.json({
@@ -283,6 +304,17 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res
         .status(404)
         .json({ success: false, error: "Subscription not found" });
+    }
+
+    if (
+      existing.type === "geoadmin_reports" &&
+      isActive !== false &&
+      !(await getGeoAdminEntitlement(Number(userId)))?.hasAccess
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "GeoAdmin reports require an active, approved GeoAdmin add-on.",
+      });
     }
 
     // Validate frequency against tier if changing
@@ -464,7 +496,7 @@ router.get("/available", async (_req: Request, res: Response) => {
         "Exclusive market study digests and business intelligence reports",
       icon: "📊",
       color: "#7c3aed",
-      minTier: "verified",
+      minTier: "geo-admin-addon",
     },
     {
       type: "platform_updates",

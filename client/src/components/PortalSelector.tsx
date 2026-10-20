@@ -81,7 +81,7 @@ const PORTAL_DEFINITIONS: PortalDefinition[] = [
     label: "Streamer / Listener",
     description: "Music streaming, arcade & community",
     icon: <Headphones className="w-6 h-6" />,
-    href: "/stream",
+    href: "/listener-portal",
     gradient: "from-fuchsia-600 to-purple-500",
     borderColor: "border-fuchsia-500/30",
     badge: "Free",

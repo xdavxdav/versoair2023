@@ -6,6 +6,17 @@ import "./index.css";
 
 const BOOT_TIMEOUT_MS = 15000;
 
+// A deployment can replace hashed lazy-load chunks while a tab is open. Retry
+// once with the current HTML shell instead of surfacing a JavaScript MIME error.
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  const reloadKey = "versoair_vite_preload_retry";
+  if (!sessionStorage.getItem(reloadKey)) {
+    sessionStorage.setItem(reloadKey, "1");
+    window.location.reload();
+  }
+});
+
 function showBootstrapState(title: string, message: string, retry = true) {
   const root = document.getElementById("root");
   if (!root) {
