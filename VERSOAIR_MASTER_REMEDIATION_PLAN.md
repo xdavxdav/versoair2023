@@ -460,7 +460,8 @@ with API and database connected; `/api/streamroyale/admin/review` returned
 HTTP 401 without authentication, as expected for this protected endpoint; the
 review page route and production JavaScript asset were served. The owner can
 test the authenticated review page at
-`https://www.versoair.com/streamroyale-admin/review`.
+`https://www.versoair.com/admin/streamroyale/review`. The
+`/streamroyale-admin/review` path belongs to the separate music-app router.
 
 The GitHub `Prerender SEO CI` run for the release commit failed. Its job logs
 were unavailable from the Actions log endpoint (HTTP 404); the local standard
