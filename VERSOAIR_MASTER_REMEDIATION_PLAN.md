@@ -431,10 +431,11 @@ The production health check reported API/database availability, while `/api/ai/s
 ## 2026-10-20 continuation — local release preparation
 
 These notes supplement the upstream evidence above. Local `main` was
-fast-forwarded to `origin/main` at `b8e69654` and remains unpushed. Earlier
-local changes are preserved in stash `pre-upstream-reconcile-2026-10-20`;
-overlapping files were reconciled in favor of the newer upstream versions, and
-the stash is intentionally retained until the complete release review.
+fast-forwarded to `origin/main` at `b8e69654`; release commit
+`7f95c9fd16e503d8fdaecd5d9575426172c5333b` was pushed to `origin/main`.
+Earlier local changes are preserved in stash
+`pre-upstream-reconcile-2026-10-20`; overlapping files were reconciled in
+favor of newer upstream versions, and the stash remains as a safety copy.
 
 The StreamRoyale remuneration review page and protected read-only API are
 present locally. On the reconciled tree, `npm run check`, `npm run build`, and
@@ -446,8 +447,25 @@ home-panel test did not fit the selected upstream home-page implementation and
 was not ported; its original file remains in the preserved stash.
 
 Migration `0005_streamroyale_royalty_carry_forward.sql` and synthetic
-qualification/remuneration checks were run only on isolated Neon branch
+qualification/remuneration checks were first run only on isolated Neon branch
 `streamroyale-review-test-2026-10-20` (`br-crimson-feather-ardp4bd2`); the
-synthetic records were removed. Production was not modified. Production
-migration, deployment, and live verification remain blocked pending the full
-release review, migration approval, and confirmed deploy procedure.
+synthetic records were removed. With the owner's explicit approval, a
+non-expiring pre-release copy of production was created as Neon branch
+`pre-streamroyale-release-2026-10-20` (`br-dawn-pond-arkbxw5y`). The additive
+column migration was applied to production and verified as `NOT NULL` with
+default `0.00`.
+
+After pushing the release commit, production `/api/health` returned HTTP 200
+with API and database connected; `/api/streamroyale/admin/review` returned
+HTTP 401 without authentication, as expected for this protected endpoint; the
+review page route and production JavaScript asset were served. The owner can
+test the authenticated review page at
+`https://www.versoair.com/streamroyale-admin/review`.
+
+The GitHub `Prerender SEO CI` run for the release commit failed. Its job logs
+were unavailable from the Actions log endpoint (HTTP 404); the local standard
+production build, type check, API contract check, and 125 non-database tests
+passed. Diagnose and rerun this CI workflow. The ticket workflow integration
+test still requires an explicitly disposable PostgreSQL database and was not
+run. The local home-panel test did not fit the selected upstream home-page
+implementation and was not ported; its original file remains in the stash.
