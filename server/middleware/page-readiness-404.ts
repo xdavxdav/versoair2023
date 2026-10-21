@@ -1,13 +1,64 @@
 import type { RequestHandler } from "express";
 import { isLocalPreviewOnlyPath } from "@shared/page-readiness";
 
-const PAGE_READINESS_NOTICE = `<!doctype html>
+const PAGE_TITLES: Record<string, string> = {
+  "get-involved": "Get Involved",
+  "ong-culturelle": "ONG Culturelle",
+  vheartz: "vHeartz",
+  vheatrz: "vHeatrz",
+  "artihuman-foundation": "Artihuman Foundation",
+  programs: "Programs",
+  partners: "Partners",
+  sponsorship: "Sponsorship",
+  "businesses-directory": "Businesses Directory",
+  commerce: "Commerce",
+  hotellerie: "Hospitality",
+  batiment: "Construction",
+  automobile: "Automotive",
+  finances: "Finance",
+  divertissement: "Entertainment",
+};
+
+function getPageTitle(pathname: string): string {
+  const path = pathname.split(/[?#]/, 1)[0].replace(/\/+$/, "").toLowerCase();
+  const segments = path.split("/").filter(Boolean);
+  return segments
+    .map(
+      (segment) =>
+        PAGE_TITLES[segment] ??
+        segment
+          .replace(/[-_]+/g, " ")
+          .replace(/\b\w/g, (character) => character.toUpperCase()),
+    )
+    .join(" / ");
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      default:
+        return "&#39;";
+    }
+  });
+}
+
+function renderPageReadinessNotice(pageTitle: string): string {
+  const safeTitle = escapeHtml(pageTitle);
+  return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f766e">
-    <title>Will be ready soon | Verso Air</title>
+    <title>${safeTitle} | Will be ready soon | Verso Air</title>
     <style>
       :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       * { box-sizing: border-box; }
@@ -16,6 +67,7 @@ const PAGE_READINESS_NOTICE = `<!doctype html>
       .brand { margin: 0 0 32px; color: #0f766e; font-size: 14px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
       .eyebrow { margin: 0 0 10px; color: #0f766e; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
       h1 { margin: 0; font-size: clamp(30px, 6vw, 46px); line-height: 1.1; letter-spacing: -.04em; }
+      .readiness { margin: 16px 0 0; color: #0f766e; font-size: 20px; font-weight: 700; }
       .message { margin: 18px auto 0; max-width: 460px; color: #475569; font-size: 17px; line-height: 1.65; }
       .countdown { margin: 20px 0 0; color: #64748b; font-size: 14px; }
       .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
@@ -35,7 +87,8 @@ const PAGE_READINESS_NOTICE = `<!doctype html>
     <main>
       <p class="brand">Verso Air</p>
       <p class="eyebrow">A little more time</p>
-      <h1>Will be ready soon</h1>
+      <h1>${safeTitle}</h1>
+      <p class="readiness">Will be ready soon</p>
       <p class="message">We're preparing this part of Verso Air. Please check back soon.</p>
       <p class="countdown" id="countdown" role="status" aria-live="polite">Returning to the homepage in 5 seconds.</p>
       <div class="actions">
@@ -66,6 +119,7 @@ const PAGE_READINESS_NOTICE = `<!doctype html>
     </script>
   </body>
 </html>`;
+}
 
 export function pageReadinessNotFound(
   isProduction = process.env.NODE_ENV === "production",
@@ -77,7 +131,10 @@ export function pageReadinessNotFound(
       isLocalPreviewOnlyPath(req.path)
     ) {
       res.set("Cache-Control", "no-store");
-      res.status(404).type("html").send(PAGE_READINESS_NOTICE);
+      res
+        .status(404)
+        .type("html")
+        .send(renderPageReadinessNotice(getPageTitle(req.path)));
       return;
     }
     next();

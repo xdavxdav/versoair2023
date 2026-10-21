@@ -49,6 +49,20 @@ test("production shows a readiness notice and redirects to home after five secon
       }
     }
 
+    const getInvolvedPage = await fetch(`${origin}/get-involved`);
+    const getInvolvedHtml = await getInvolvedPage.text();
+    assert.match(getInvolvedHtml, /<title>Get Involved \| Will be ready soon \| Verso Air<\/title>/);
+    assert.match(getInvolvedHtml, /<h1>Get Involved<\/h1>/);
+
+    const nestedPage = await fetch(`${origin}/get-involved/opportunities`);
+    const nestedHtml = await nestedPage.text();
+    assert.match(nestedHtml, /<title>Get Involved \/ Opportunities \| Will be ready soon \| Verso Air<\/title>/);
+    assert.match(nestedHtml, /<h1>Get Involved \/ Opportunities<\/h1>/);
+
+    const brandedPage = await fetch(`${origin}/vheartz`);
+    const brandedHtml = await brandedPage.text();
+    assert.match(brandedHtml, /<h1>vHeartz<\/h1>/);
+
     const openResponse = await fetch(`${origin}/about`);
     assert.equal(openResponse.status, 200);
   });
