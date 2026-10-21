@@ -1,7 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Loader2, MapPin, ShieldCheck } from "lucide-react";
+import {
+  Building2,
+  CreditCard,
+  Home,
+  Loader2,
+  LogOut,
+  MapPin,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
+import { Link } from "wouter";
 import { authenticatedFetch } from "@/lib/auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -38,6 +50,7 @@ export default function GeoAdminSubscriberView({
   tierName,
   isFree,
 }: GeoAdminSubscriberViewProps) {
+  const { logout } = useAuthContext();
   const numericUserId =
     typeof userId === "number"
       ? userId
@@ -68,7 +81,52 @@ export default function GeoAdminSubscriberView({
   });
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10">
+    <>
+      <nav
+        aria-label="Account navigation"
+        className="border-b border-slate-200 bg-white"
+      >
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+          <Link
+            href="/"
+            className="inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Link>
+          <Link
+            href="/businesses-directory"
+            className="inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+          >
+            <Building2 className="h-4 w-4" />
+            Business directory
+          </Link>
+          <Link
+            href="/pricing"
+            className="inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+          >
+            <CreditCard className="h-4 w-4" />
+            Plans
+          </Link>
+          <Link
+            href="/profile"
+            className="inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950"
+          >
+            <UserRound className="h-4 w-4" />
+            My account
+          </Link>
+          <Button
+            type="button"
+            variant="ghost"
+            className="ml-auto text-slate-700"
+            onClick={() => void logout()}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </Button>
+        </div>
+      </nav>
+      <main className="mx-auto w-full max-w-5xl px-4 py-10">
       <Card className="border-slate-200 bg-white shadow-sm">
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -175,6 +233,7 @@ export default function GeoAdminSubscriberView({
           )}
         </CardContent>
       </Card>
-    </main>
+      </main>
+    </>
   );
 }
