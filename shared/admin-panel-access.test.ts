@@ -26,5 +26,6 @@ test("invited Admins see delegated sections but never owner configuration", () =
     assert.equal(canAccessAdminPanelSection(section, true), true, section);
   }
   assert.equal(canAccessAdminPanelSection("database", false), false);
+  assert.equal(canAccessAdminPanelSection("page-readiness", false), true);
   assert.equal(canAccessAdminPanelSection("unknown", true), false);
 });

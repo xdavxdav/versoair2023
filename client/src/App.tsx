@@ -316,6 +316,14 @@ import { CountryDropdown } from "@/components/CountryDropdown";
 import GeoAdminMarketStatusBanner from "@/components/GeoAdminMarketStatusBanner";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
+import {
+  getClientBlockedPaths,
+  isPageBlocked,
+  useDisableBlockedPageLinks,
+  usePageReadiness,
+} from "@/hooks/use-page-readiness";
+import { isLocalPreviewOnlyPath } from "@shared/page-readiness";
+import { authenticatedFetch } from "@/lib/auth";
 
 // Keep beta freeze in place for non-core marketing pages, but allow the
 // live business dashboard, billing, admin, and music ecosystem routes.
@@ -510,8 +518,55 @@ function getDocumentTitle(pathname: string) {
 // Main loader — shown while lazy chunks download and on every navigation.
 function Router() {
   const [location] = useLocation();
+  const readinessQuery = usePageReadiness();
+  const blockedPaths = getClientBlockedPaths(
+    readinessQuery.data?.blockedPaths ?? [],
+  );
+  useDisableBlockedPageLinks(blockedPaths);
+  const pageIsBlocked = isPageBlocked(location, blockedPaths);
+  const [adminPreview, setAdminPreview] = useState<{
+    path: string;
+    status: "checking" | "allowed" | "denied" | "error";
+    message?: string;
+  } | null>(null);
   const [previousLocation, setPreviousLocation] = useState(location);
   const isInitialRender = useRef(true);
+
+  useEffect(() => {
+    if (!pageIsBlocked) return;
+    if (isLocalPreviewOnlyPath(location)) {
+      setAdminPreview({ path: location, status: "denied" });
+      return;
+    }
+    const controller = new AbortController();
+    setAdminPreview({ path: location, status: "checking" });
+    authenticatedFetch("/api/page-readiness/admin", {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (response.ok) {
+          setAdminPreview({ path: location, status: "allowed" });
+          return;
+        }
+        if (response.status === 401 || response.status === 403) {
+          setAdminPreview({ path: location, status: "denied" });
+          return;
+        }
+        throw new Error((await response.text()) || response.statusText);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setAdminPreview({
+          path: location,
+          status: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Admin preview access could not be checked.",
+        });
+      });
+    return () => controller.abort();
+  }, [location, pageIsBlocked]);
 
   // Scroll to top BEFORE paint (useLayoutEffect) so the user never sees the footer
   useLayoutEffect(() => {
@@ -539,6 +594,39 @@ function Router() {
 
   if (BETA_SCOPE_FREEZE && !isBetaRoute(location)) {
     return <Redirect to="/" />;
+  }
+
+  if (readinessQuery.isPending) {
+    return <PageReadinessMessage title="Checking page availability…" />;
+  }
+  if (readinessQuery.isError) {
+    return (
+      <PageReadinessMessage
+        title="Page availability could not be checked."
+        detail={readinessQuery.error.message}
+        onRetry={() => void readinessQuery.refetch()}
+      />
+    );
+  }
+  if (pageIsBlocked && adminPreview?.path !== location) {
+    return <PageReadinessMessage title="Checking access…" />;
+  }
+  if (pageIsBlocked && adminPreview?.status === "checking") {
+    return <PageReadinessMessage title="Checking access…" />;
+  }
+  if (pageIsBlocked && isLocalPreviewOnlyPath(location)) {
+    return <PageUnavailable />;
+  }
+  if (pageIsBlocked && adminPreview?.status === "error") {
+    return (
+      <PageReadinessMessage
+        title="Page access could not be verified."
+        detail={adminPreview.message}
+      />
+    );
+  }
+  if (pageIsBlocked && adminPreview?.status === "denied") {
+    return <PageUnavailable />;
   }
 
   return (
@@ -904,6 +992,60 @@ function Router() {
       {/* 404 Fallback */}
       <Route component={NotFound} />
     </Switch>
+  );
+}
+
+function PageReadinessMessage({
+  title,
+  detail,
+  onRetry,
+}: {
+  title: string;
+  detail?: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 text-center">
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+        {title}
+      </h1>
+      {detail && (
+        <p
+          role="alert"
+          className="max-w-xl text-sm text-slate-600 dark:text-slate-300"
+        >
+          {detail}
+        </p>
+      )}
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white"
+        >
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PageUnavailable() {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 text-center">
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+        This page is not available yet
+      </h1>
+      <p className="max-w-xl text-slate-600 dark:text-slate-300">
+        We’re preparing this part of Verso Air. Please check back later.
+      </p>
+      <Link
+        href="/"
+        className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white"
+      >
+        Return home
+      </Link>
+    </div>
   );
 }
 

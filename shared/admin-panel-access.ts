@@ -20,6 +20,7 @@ export const DELEGATED_ADMIN_PANEL_SECTIONS = [
   "events",
   "geo-queue",
   "contractor-assign",
+  "page-readiness",
 ] as const;
 
 export const OWNER_ONLY_ADMIN_PANEL_SECTIONS = [

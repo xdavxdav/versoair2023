@@ -17,6 +17,7 @@ import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
 import { CMSSection } from "@/components/sections/CMSSection";
 import GeoAdminAddonRequests from "@/components/GeoAdminAddonRequests";
+import { PageReadinessSection } from "@/components/sections/PageReadinessSection";
 
 import {
   Store,
@@ -491,6 +492,12 @@ const MAIN_SECTIONS = [
     label: "Contracts",
     icon: Briefcase,
     description: "Assign & manage contracts",
+  },
+  {
+    id: "page-readiness",
+    label: "Page Readiness",
+    icon: Globe,
+    description: "Gate unfinished public pages",
   },
 ];
 
@@ -7317,6 +7324,9 @@ export default function AdminDashboard() {
             {sectionAllowed && activeSection === "geo-queue" && <GeoActionQueueSection />}
             {sectionAllowed && activeSection === "contractor-assign" && (
               <ContractorAssignmentSection />
+            )}
+            {sectionAllowed && activeSection === "page-readiness" && (
+              <PageReadinessSection />
             )}
 
             {/* Dashboard Stats - shown at the bottom for reference */}

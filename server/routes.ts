@@ -12,6 +12,7 @@ import socialApiRoutes from "./routes/social-api";
 import faqApiRoutes from "./routes/faq-api";
 import ticketsRouter from "./routes/tickets";
 import implementationTrackingRouter from "./routes/implementation-tracking";
+import pageReadinessRouter from "./routes/page-readiness";
 import { requireAdminElevation } from "./middleware/admin-elevation";
 import jobsRouter from "./routes/jobs";
 import musicRouter from "./routes/music";
@@ -63,6 +64,7 @@ import contractorPipelineRouter from "./routes/contractor-pipeline";
 import purgatoireRouter from "./routes/purgatoire";
 import { requireAuth, requireOwner, isOwner } from "./middleware/auth";
 import translationsRouter from "./routes/translations";
+import { pageReadinessNotFound } from "./middleware/page-readiness-404";
 
 // Map snake_case table names to camelCase schema exports
 const TABLE_NAME_MAP: Record<string, string> = {
@@ -208,6 +210,7 @@ export async function registerRoutes(app: Express) {
   // Register extracted domain routers
   app.use("/api/tickets", ticketsRouter);
   app.use("/api/implementation-tracking", implementationTrackingRouter);
+  app.use("/api/page-readiness", pageReadinessRouter);
   app.use("/api/jobs", jobsRouter);
   app.use("/api/music", musicRouter);
   app.use("/api/notifications", notificationsRouter);
@@ -1193,6 +1196,8 @@ export async function registerRoutes(app: Express) {
       ],
     });
   });
+
+  app.use(pageReadinessNotFound());
 
   console.log("✅ [SERVER] All routes registered successfully");
 }
