@@ -4,7 +4,7 @@ import test from "node:test";
 import express from "express";
 import translations from "../routes/translations";
 
-test("anonymous translation and OAuth discovery work through the global auth gate", async () => {
+test("anonymous public reads work through the global auth gate without exposing protected routes", async () => {
   const previousUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = "postgresql://test:test@127.0.0.1:1/test";
   const { globalAuthGate } = await import("./auth");
@@ -13,6 +13,13 @@ test("anonymous translation and OAuth discovery work through the global auth gat
   app.use(globalAuthGate);
   app.use("/api/translations", translations);
   app.get("/auth/oauth/providers", (_req, res) => res.json({ providers: [] }));
+  app.get("/api/page-readiness", (_req, res) =>
+    res.json({ blockedPaths: ["/get-involved"] }),
+  );
+  app.get("/api/page-readiness/admin", (_req, res) =>
+    res.json({ eligiblePaths: ["/get-involved"] }),
+  );
+  app.post("/api/page-readiness", (_req, res) => res.sendStatus(204));
   app.use((_req, res) => res.sendStatus(404));
   const server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
@@ -26,6 +33,14 @@ test("anonymous translation and OAuth discovery work through the global auth gat
     assert.equal((await fetch(`${origin}/api/translations/not-a-language`)).status, 400);
     assert.equal((await fetch(`${origin}/api/translations/en?text=private`)).status, 400);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`)).status, 200);
+    const pageReadiness = await fetch(`${origin}/api/page-readiness`);
+    assert.equal(pageReadiness.status, 200);
+    assert.deepEqual(await pageReadiness.json(), { blockedPaths: ["/get-involved"] });
+    assert.equal((await fetch(`${origin}/api/page-readiness/admin`)).status, 401);
+    assert.equal(
+      (await fetch(`${origin}/api/page-readiness`, { method: "POST" })).status,
+      401,
+    );
     assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`, { method: "POST" })).status, 404);
     assert.equal((await fetch(`${origin}/api/v1/admin/users`)).status, 401);

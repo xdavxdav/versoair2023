@@ -228,6 +228,7 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/arena/history",
       "/api/revenue-pulse/pool",
       "/api/revenue-pulse/leaderboard",
+      "/api/page-readiness",
     ].includes(path)) return true;
     if (/^\/api\/translations\/[^/]+\/?$/.test(path)) return true;
     if (new RegExp("^/api/social/posts/[^/]+/comments$").test(path) ||
