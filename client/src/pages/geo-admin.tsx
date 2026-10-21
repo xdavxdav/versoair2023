@@ -234,7 +234,7 @@ export default function GeoAdminPage() {
   }
 
   if (!isGeoAdmin && hasFreeBasicAccess) {
-    return <Redirect to="/dashboard" />;
+    return <Redirect to="/dashboard?account=geo-admin&from=geoadmin" />;
   }
 
   if (!isGeoAdmin && !isReadOnlySubscriber) {

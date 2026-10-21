@@ -22,6 +22,40 @@ export type AccountFamily =
   | "contractor"
   | "staff";
 
+export type DashboardAccountId =
+  | "general"
+  | "business"
+  | "geo-admin"
+  | "artist"
+  | "streamer"
+  | "contractor"
+  | "staff";
+
+export interface DashboardAccountOption {
+  id: DashboardAccountId;
+  label: string;
+}
+
+const DASHBOARD_ACCOUNTS: readonly DashboardAccountOption[] = [
+  { id: "general", label: "General Account" },
+  { id: "business", label: "Business" },
+  { id: "geo-admin", label: "Geo Admin" },
+  { id: "artist", label: "Artist" },
+  { id: "streamer", label: "Streamer" },
+  { id: "contractor", label: "Contractor" },
+  { id: "staff", label: "Staff" },
+];
+
+const DASHBOARD_ACCOUNT_LABELS: Record<DashboardAccountId, string> = {
+  general: "General Account",
+  business: "Business",
+  "geo-admin": "Geo Admin",
+  artist: "Artist",
+  streamer: "Streamer",
+  contractor: "Contractor",
+  staff: "Staff",
+};
+
 const STAFF_ROLES = new Set(["admin", "moderator", "superuser", "tsr"]);
 const STREAMER_ALIASES = new Set([
   "streamer",
@@ -62,6 +96,80 @@ export function getAccountFamily(
     return "streamer";
 
   return "general";
+}
+
+export function getDashboardAccountOptions(
+  user: AuthUser | null | undefined,
+  hasBusiness: boolean,
+  cameFromGeoAdmin: boolean,
+): DashboardAccountOption[] {
+  if (!user) return [];
+
+  const role = normalizeAccountRoleFromEmail(
+    user.email,
+    user.role,
+  ).toLowerCase();
+  const portals = (user.portals || []).map((portal) => portal.toLowerCase());
+  const isStaff = STAFF_ROLES.has(role);
+  const available = new Set<DashboardAccountId>(["general", "streamer"]);
+
+  if (isStaff) available.add("staff");
+  if (isStaff || hasBusiness) available.add("business");
+  if (
+    isStaff ||
+    role === "geo-admin" ||
+    portals.includes("geo-admin") ||
+    cameFromGeoAdmin
+  ) {
+    available.add("geo-admin");
+  }
+  if (
+    isStaff ||
+    role === "artist" ||
+    user.hasArtistProfile ||
+    portals.includes("artist")
+  ) {
+    available.add("artist");
+  }
+  if (
+    isStaff ||
+    role === "contractor" ||
+    user.isContractor ||
+    portals.includes("contractor")
+  ) {
+    available.add("contractor");
+  }
+
+  return DASHBOARD_ACCOUNTS.filter((account) => available.has(account.id));
+}
+
+export function getSelectedDashboardAccount(
+  user: AuthUser | null | undefined,
+  options: readonly DashboardAccountOption[],
+  requestedAccount: string | null,
+): DashboardAccountId {
+  const selected = options.find((account) => account.id === requestedAccount);
+  if (selected) return selected.id;
+
+  const family = getAccountFamily(user);
+  if (family === "staff" && options.some((account) => account.id === "staff")) {
+    return "staff";
+  }
+  if (
+    family === "general" &&
+    options.some((account) => account.id === "business")
+  ) {
+    return "business";
+  }
+  if (family !== "artisan" && options.some((account) => account.id === family)) {
+    return family;
+  }
+
+  return "general";
+}
+
+export function getDashboardAccountLabel(account: DashboardAccountId): string {
+  return DASHBOARD_ACCOUNT_LABELS[account];
 }
 
 export function getDashboardTheme(

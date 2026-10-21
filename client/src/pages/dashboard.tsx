@@ -1,6 +1,12 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import GeoAdminSubscriberView from "@/components/GeoAdminSubscriberView";
+import {
+  getDashboardAccountLabel,
+  getDashboardAccountOptions,
+  getSelectedDashboardAccount,
+} from "@/lib/dashboard-routes";
 import { Button } from "@/components/ui/button";
 import SupportHandoff from "@/components/SupportHandoff";
 import {
@@ -1457,6 +1463,7 @@ const ACCOUNT_THEMES: Record<
 export default function UserDashboard() {
   const queryClient = useQueryClient();
   const { user: authUser } = useAuthContext();
+  const [location, setLocation] = useLocation();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [selectedBusinessIdx, setSelectedBusinessIdx] = useState(0);
@@ -1667,7 +1674,8 @@ export default function UserDashboard() {
     });
 
   // Navigation context
-  const fromParam = new URLSearchParams(window.location.search).get("from");
+  const routeParams = new URLSearchParams(location.split("?")[1] || "");
+  const fromParam = routeParams.get("from");
   const cameFromGeoAdmin =
     fromParam === "geoadmin" || fromParam === "geo-admin";
 
@@ -1817,11 +1825,20 @@ export default function UserDashboard() {
 
   const hasRealBusiness = !!(userBusinesses && userBusinesses.length > 0);
 
-  // A general account that owns a business is shown as a Business account
+  const accountOptions = getDashboardAccountOptions(
+    authUser,
+    hasRealBusiness,
+    cameFromGeoAdmin,
+  );
+  const selectedAccount = getSelectedDashboardAccount(
+    authUser,
+    accountOptions,
+    routeParams.get("account"),
+  );
   const accountLabel =
-    accountFamilySummary.label === "General Account" && hasRealBusiness
-      ? "Business"
-      : accountFamilySummary.label;
+    selectedAccount === "staff"
+      ? "Staff"
+      : getDashboardAccountLabel(selectedAccount);
   const accountTheme =
     ACCOUNT_THEMES[accountLabel] ?? ACCOUNT_THEMES["General Account"];
   const accountText =
@@ -2372,13 +2389,39 @@ export default function UserDashboard() {
                 </Button>
               </Link>
               <div className="hidden lg:flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                <div
+                  className={`h-8 w-8 rounded-lg bg-gradient-to-br ${accountTheme.gradient} flex items-center justify-center`}
+                >
                   <Globe className="h-5 w-5 text-white" />
                 </div>
                 <h1 className="text-lg font-bold text-slate-800">
-                  General Account
+                  {accountLabel}
                 </h1>
               </div>
+              {isLoggedIn && accountOptions.length > 1 && (
+                <select
+                  aria-label="Select account dashboard"
+                  className="max-w-36 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:max-w-48"
+                  value={selectedAccount}
+                  onChange={(event) => {
+                    const nextAccount = accountOptions.find(
+                      (account) => account.id === event.target.value,
+                    );
+                    if (!nextAccount) return;
+
+                    const nextParams = new URLSearchParams(routeParams);
+                    nextParams.set("account", nextAccount.id);
+                    if (cameFromGeoAdmin) nextParams.set("from", "geoadmin");
+                    setLocation(`/dashboard?${nextParams.toString()}`);
+                  }}
+                >
+                  {accountOptions.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {isLoggedIn && <TierBadge tier={currentTier} size="sm" />}
@@ -2547,6 +2590,20 @@ export default function UserDashboard() {
         </div>
       </div>
 
+      {selectedAccount === "geo-admin" && isLoggedIn ? (
+        <GeoAdminSubscriberView
+          userId={userSession!.user.id}
+          username={
+            userSession!.user.displayName ||
+            userSession!.user.name ||
+            userSession!.user.email
+          }
+          tierName={tierDef.name}
+          isFree={currentTier === "free"}
+          showNavigation={false}
+        />
+      ) : (
+        <>
       {statsError && (
         <div className="mx-auto mt-4 flex w-full max-w-6xl items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
           <span>
@@ -4607,6 +4664,8 @@ export default function UserDashboard() {
           </div>
         </div>
       </footer>
+        </>
+      )}
 
       {/* MODALS */}
       <TierComparisonModal
