@@ -370,6 +370,7 @@ async function finishLogin(
   res: Response,
   rememberMe?: boolean,
   ownerMfaVerified = false,
+  geoAdminCodeVerified = false,
 ): Promise<void> {
   const token = jwt.sign(
     {
@@ -378,6 +379,9 @@ async function finishLogin(
       role: effectiveLoginRole,
       subscriptionTier: user.subscription_tier || "free",
       ...(ownerMfaVerified ? { ownerMfa: true } : {}),
+      ...(geoAdminCodeVerified
+        ? { geoAdminCodeAuthenticated: true }
+        : {}),
     },
     getJwtSecret(),
     { expiresIn: rememberMe ? "30d" : JWT_EXPIRES_IN },
@@ -872,6 +876,7 @@ router.post(
         res,
         payload.rememberMe === true,
         true,
+        payload.geoAdminCodeAuthenticated === true,
       );
       return;
     }
@@ -1475,6 +1480,7 @@ router.post(
           purpose: "login_otp",
           factor: "totp",
           rememberMe: false,
+          geoAdminCodeAuthenticated: true,
         },
         getJwtSecret(),
         { expiresIn: "10m" },
@@ -1500,6 +1506,7 @@ router.post(
         email: user.email,
         role,
         subscriptionTier: user.subscriptionTier || "free",
+        geoAdminCodeAuthenticated: true,
       },
       getJwtSecret(),
       { expiresIn: JWT_EXPIRES_IN },

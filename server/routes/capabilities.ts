@@ -13,7 +13,10 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { hasGeoAdminAccess } from "@shared/geoadmin-access";
-import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
+import {
+  hasGeoAdminFreeAccess,
+  isReadOnlyGeoAdminSubscriber,
+} from "@shared/geoadmin-access-policy";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { generateArtistCode } from "../utils/artist-code";
@@ -144,6 +147,9 @@ export async function computeUserCapabilities(userId: number) {
         : user.premium_expires_at,
     })
   ) {
+    portals.add("geo-admin");
+  }
+  if (hasGeoAdminFreeAccess({ role: effectiveRole, tier: effectiveTier })) {
     portals.add("geo-admin");
   }
   // Community: check portal_access JSONB, or fallback to username prefix

@@ -27,6 +27,7 @@ export interface AuthUser {
     | "artist"
     | "listener";
   subscriptionTier?: string;
+  geoAdminCodeAuthenticated?: boolean;
 }
 
 declare global {
@@ -287,6 +288,7 @@ export async function globalAuthGate(
       email?: string;
       role?: AuthUser["role"];
       ownerMfa?: boolean;
+      geoAdminCodeAuthenticated?: boolean;
     };
 
     const userId = decoded.userId ?? decoded.id;
@@ -358,6 +360,8 @@ export async function globalAuthGate(
       email: dbUser.email,
       role: dbUser.role as AuthUser["role"],
       subscriptionTier: dbUser.subscriptionTier || "free",
+      geoAdminCodeAuthenticated:
+        decoded.geoAdminCodeAuthenticated === true,
     };
 
     // 4. Superuser gets unrestricted free pass
@@ -405,6 +409,7 @@ export function requireAuth(allowedRoles?: string[]) {
         email?: string;
         role?: AuthUser["role"];
         ownerMfa?: boolean;
+        geoAdminCodeAuthenticated?: boolean;
       };
 
       const userId = decoded.userId ?? decoded.id;
@@ -464,6 +469,8 @@ export function requireAuth(allowedRoles?: string[]) {
         email: dbUser.email,
         role: dbUser.role as AuthUser["role"],
         subscriptionTier: dbUser.subscriptionTier || "free",
+        geoAdminCodeAuthenticated:
+          decoded.geoAdminCodeAuthenticated === true,
       };
 
       // Superuser always has full access — bypass role checks
@@ -507,6 +514,21 @@ export function isOwner(user: Parameters<typeof isConfiguredOwner>[0]): boolean 
   return isConfiguredOwner(user, process.env.SUPERADMIN_EMAIL);
 }
 
+export function requireGeoAdminCode(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (req.user?.geoAdminCodeAuthenticated === true) return next();
+  return res.status(401).json({
+    success: false,
+    error: {
+      code: "GEOADMIN_CODE_REQUIRED",
+      message: "Sign in to GeoAdmin with your personal access code.",
+    },
+  });
+}
+
 export function requireOwner(req: Request, res: Response, next: NextFunction) {
   return requireAuth(["superuser"])(req, res, () => {
     if (!isOwner(req.user)) {
@@ -518,6 +540,16 @@ export function requireOwner(req: Request, res: Response, next: NextFunction) {
         },
       });
     }
+    if (req.user?.geoAdminCodeAuthenticated !== true) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "GEOADMIN_CODE_REQUIRED",
+          message:
+            "Sign in to owner GeoAdmin tools with your personal code and authenticator.",
+        },
+      });
+    }
     next();
   });
 }
@@ -525,16 +557,18 @@ export function requireOwner(req: Request, res: Response, next: NextFunction) {
 /** Owner or an invited Admin may enter the delegated GeoAdmin Admin Panel APIs. */
 export function requireAdminPanel(req: Request, res: Response, next: NextFunction) {
   return requireAuth(["admin", "superuser"])(req, res, () => {
-    if (!canUseAdminPanel(req.user, isOwner(req.user))) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: "ADMIN_PANEL_ONLY",
-          message: "The GeoAdmin Admin Panel is restricted to the owner and invited Admins.",
-        },
-      });
-    }
-    next();
+    return requireGeoAdminCode(req, res, () => {
+      if (!canUseAdminPanel(req.user, isOwner(req.user))) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: "ADMIN_PANEL_ONLY",
+            message: "The GeoAdmin Admin Panel is restricted to the owner and invited Admins.",
+          },
+        });
+      }
+      next();
+    });
   });
 }
 

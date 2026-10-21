@@ -44,7 +44,7 @@ const ADMIN_ROLES = new Set(["admin", "moderator", "superuser"]);
 export const UNLOCK_REASONS: Record<string, string> = {
   artist: "Create an artist profile to unlock",
   artisan: "Create an artisan craft profile to unlock",
-  "geo-admin": "Upgrade to Premium to unlock",
+  "geo-admin": "Upgrade for paid read-only access",
   community: "Join the community to unlock",
   contractor: "Register as a contractor to unlock",
   careers: "Post a job as a business owner to unlock",
@@ -125,19 +125,13 @@ export function getPortalAccess(
     if (capabilities.hasArtistProfile) access.artist = true;
     if (capabilities.isContractor) access.contractor = true;
     if (capabilities.canAccessBlog) access.community = true;
-    if (
-      capabilities.subscriptionTier &&
-      capabilities.subscriptionTier !== "free"
-    ) {
-      access["geo-admin"] = true;
-    }
+    access["geo-admin"] = true;
   } else {
     // Derive from AuthUser fields
     if (user.hasArtistProfile) access.artist = true;
     if (user.isContractor) access.contractor = true;
     if (user.canAccessBlog) access.community = true;
-    const tier = user.subscriptionTier || user.subscription_tier || "free";
-    if (tier !== "free") access["geo-admin"] = true;
+    access["geo-admin"] = true;
   }
 
   return access;

@@ -1,9 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  hasGeoAdminFreeAccess,
   isGeoAdminStaff,
   isReadOnlyGeoAdminSubscriber,
 } from "./geoadmin-access-policy";
+
+test("free accounts get basic account-scoped access, not paid read-only access", () => {
+  assert.equal(hasGeoAdminFreeAccess({ role: "user", tier: "free" }), true);
+  assert.equal(hasGeoAdminFreeAccess({ role: "admin", tier: "free" }), false);
+  assert.equal(hasGeoAdminFreeAccess({ role: "user", tier: "essential" }), false);
+  assert.equal(
+    isReadOnlyGeoAdminSubscriber({
+      role: "user",
+      tier: "free",
+      subscriptionStatus: "active",
+    }),
+    false,
+  );
+});
 
 test("all active paid GeoAdmin subscribers are read-only, not staff", () => {
   for (const tier of ["essential", "verified", "max", "enterprise"]) {

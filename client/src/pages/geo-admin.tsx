@@ -9,7 +9,10 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
-import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
+import {
+  hasGeoAdminFreeAccess,
+  isReadOnlyGeoAdminSubscriber,
+} from "@shared/geoadmin-access-policy";
 import {
   Loader2,
   TrendingUp,
@@ -47,6 +50,11 @@ export default function GeoAdminPage() {
       user?.trialTier === tier && user.trialExpiresAt
         ? user.trialExpiresAt
         : user?.subscriptionExpiresAt,
+  });
+  const hasFreeBasicAccess = hasGeoAdminFreeAccess({
+    role: user?.role,
+    isAdmin: user?.isAdmin,
+    tier,
   });
 
   // Initialize CSRF token on component mount
@@ -170,7 +178,9 @@ export default function GeoAdminPage() {
       if (e.key === "auth_token" || e.key === "authToken") {
         if (e.newValue) {
           setIsStillConnected(true);
-          setGateBypass(true);
+          setGateBypass(
+            localStorage.getItem("geoadmin_session") === "true",
+          );
         } else {
           setIsStillConnected(false);
           setGateBypass(false);
@@ -219,19 +229,23 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
-  if (!isGeoAdmin && !isReadOnlySubscriber) {
+  if (isGeoAdmin && !gateBypass) {
+    return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
+  }
+
+  if (!isGeoAdmin && !isReadOnlySubscriber && !hasFreeBasicAccess) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f3efe9] px-4 py-12">
         <Card className="w-full max-w-xl p-7">
           <Lock className="h-8 w-8 text-amber-700" />
           <h1 className="mt-4 text-2xl font-bold text-slate-900">
-            Paid subscription required
+            GeoAdmin access unavailable
           </h1>
           <p className="mt-2 leading-relaxed text-slate-600">
-            GeoAdmin read-only access is included with active Essential,
-            Verified, Max, and Enterprise subscriptions. Free or inactive
-            accounts cannot access this account-specific view. Staff tools
-            remain restricted to authorized GeoAdmin staff.
+            Free accounts receive a limited view of their own business
+            listings. Active Essential, Verified, Max, and Enterprise
+            subscribers receive the fuller account-specific read-only view.
+            Staff tools remain restricted to authorized GeoAdmin staff.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Button onClick={() => setLocation("/pricing")}>
@@ -246,13 +260,14 @@ export default function GeoAdminPage() {
     );
   }
 
-  if (!isGeoAdmin && isReadOnlySubscriber) {
+  if (!isGeoAdmin && (isReadOnlySubscriber || hasFreeBasicAccess)) {
     return (
       <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
         <GeoAdminSubscriberView
           userId={user?.id ?? 0}
           username={displayName || "Subscriber"}
           tierName={tierName}
+          isFree={hasFreeBasicAccess}
         />
       </div>
     );

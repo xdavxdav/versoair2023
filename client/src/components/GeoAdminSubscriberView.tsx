@@ -76,7 +76,9 @@ export default function GeoAdminSubscriberView({
               <div className="mb-3 flex items-center gap-2 text-emerald-700">
                 <ShieldCheck className="h-5 w-5" />
                 <span className="text-sm font-semibold">
-                  {isFree ? "Free account · Basic access" : "Subscriber · Read-only"}
+                  {isFree
+                    ? "Free account · Basic access"
+                    : "Subscriber · Read-only"}
                 </span>
               </div>
               <CardTitle className="text-2xl text-slate-900">
@@ -148,9 +150,11 @@ export default function GeoAdminSubscriberView({
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline">
-                          {!isFree && (business.is_active ? "Active" : "Inactive")}
-                        </Badge>
+                        {!isFree && (
+                          <Badge variant="outline">
+                            {business.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        )}
                         {!isFree && business.is_verified && (
                           <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
                             Verified

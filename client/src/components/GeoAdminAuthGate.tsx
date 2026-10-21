@@ -101,6 +101,17 @@ export default function GeoAdminAuthGate({
       }
 
       if (data.success && data.token) {
+        if (
+          ["admin", "moderator", "superuser", "tsr"].includes(
+            data.user?.role,
+          ) ||
+          data.user?.isAdmin
+        ) {
+          setError(
+            "GeoAdmin staff must sign in with their personal access code.",
+          );
+          return;
+        }
         localStorage.setItem("auth_token", data.token);
         localStorage.setItem("authToken", data.token); // legacy compat
         localStorage.setItem("geoadmin_session", "true");

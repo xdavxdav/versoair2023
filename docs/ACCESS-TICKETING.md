@@ -19,23 +19,32 @@ invitations are the supported delegation path. This does not prevent an
 infrastructure operator with direct database/configuration access from changing
 the system outside these application workflows.
 
-GeoAdmin access has three lanes:
+GeoAdmin access has four lanes:
 
-1. **GeoAdmin Subscriber** — paid Pro Max/Enterprise subscribers at
-   `/geo-admin`. This is a customer subscription, not a staff
-   role, and it grants no Admin Panel or support-workspace authority. The
-   `/geo-admin`, `/geo-admin/business-verification` and
-   `/geo-admin/immobilier` experiences are consultation-only: subscribers
-   cannot submit GeoAdmin requests, Digital Passport applications or property
-   listings, or change the portal's business data. Subscriber-specific write
-   APIs reject authenticated active Max/Enterprise accounts; anonymous public
-   submission routes remain available to non-portal visitors.
-2. **GeoAdmin Admin Panel** — an invited `admin` at `/geo-admin/dashboard`.
+1. **Free account** — an authenticated Free user at `/geo-admin` sees a
+   basic account-scoped business listing view. It does not expose staff tools
+   or another customer's information.
+2. **GeoAdmin Subscriber** — active Essential, Verified, Max and Enterprise
+   subscribers at `/geo-admin` get a fuller account-tailored, read-only view.
+   This is a customer subscription, not a staff role, and grants no Admin
+   Panel or support-workspace authority. Paid subscribers cannot submit
+   Digital Passport applications or property listings, or directly change
+   portal business data. An approved GeoAdmin add-on allows queued action
+   requests: edits have a 24-hour delay, and deletes have a 72-hour delay and
+   require Admin approval. Subscriber-specific write APIs enforce read-only
+   access; anonymous public submission routes remain available to non-portal
+   visitors.
+3. **GeoAdmin Admin Panel** — an invited `admin` at `/geo-admin/dashboard`.
    Delegated sections: overview, businesses, categories, jobs, advertising,
    marketplace, artists, analytics, content, contractor applications and
    assignments, community operations, events and the geo-action queue. The
    activity log only shows artist, business, campaign, category and job events.
-3. **Owner** — the same panel plus the owner-only areas below.
+4. **Owner** — the same panel plus the owner-only areas below.
+
+GeoAdmin staff sign in with their individual passwordless `AAA-000-AAA`
+access codes. Owner sign-in additionally requires the configured authenticator
+app code. A normal account password session does not authorize the GeoAdmin
+Admin Panel or owner-only APIs.
 
 Invited Admins may view the 11-lot implementation tracker and its change
 history, and can send an append-only signal to the configured owner's
