@@ -5,6 +5,11 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { fanChatSlowMode } from "../middleware/rate-limiter";
+import { requireAuth } from "../middleware/auth";
+import {
+  getActiveListenerSubscription,
+  normalizeListenerTier,
+} from "../services/listener-subscription";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
@@ -464,14 +469,14 @@ async function getStreamBudget(userId: number | null): Promise<{
     };
   }
 
-  // Fetch listener subscription + plan name
   const sub = await pool.query(
-    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset, 
-            sp.name as plan_name, sp.preview_duration_seconds, sp.preview_bitrate
+    `SELECT ls.id, ls.streams_used_this_week, ls.streams_rollover, ls.last_stream_reset,
+            sp.name AS plan_name, sp.preview_duration_seconds, sp.preview_bitrate
      FROM listener_subscriptions ls
      JOIN streaming_plans sp ON sp.id = ls.plan_id
      WHERE ls.user_id = $1 AND ls.status = 'active'
-     ORDER BY sp.monthly_fee DESC LIMIT 1`,
+     ORDER BY sp.monthly_fee DESC, ls.created_at DESC
+     LIMIT 1`,
     [userId],
   );
 
@@ -508,9 +513,9 @@ async function getStreamBudget(userId: number | null): Promise<{
   }
 
   const s = sub.rows[0];
-  const tierName = (s.plan_name || "supporter").toLowerCase();
-  const tierLevel = TIER_LEVEL[tierName] || 1;
-  const baseCap = STREAM_CAPS[tierName] || STREAM_CAPS.supporter;
+  const tierName = normalizeListenerTier(s.plan_name);
+  const tierLevel = TIER_LEVEL[tierName];
+  const baseCap = STREAM_CAPS[tierName];
   const previewDuration = parseInt(s.preview_duration_seconds || "30");
   const previewBitrate = parseInt(
     s.preview_bitrate || String(PREVIEW_BITRATE[tierName] || 192),
@@ -2101,7 +2106,10 @@ router.get("/history", async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════
 
 // GET /api/streaming/analytics/overview — Platform-wide analytics
-router.get("/analytics/overview", async (_req: Request, res: Response) => {
+router.get(
+  "/analytics/overview",
+  requireAuth(),
+  async (_req: Request, res: Response) => {
   try {
     // Total stats
     const stats = await pool.query(`
@@ -2183,13 +2191,28 @@ router.get("/analytics/overview", async (_req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ error: "Failed to fetch analytics" });
   }
-});
+  },
+);
 
 // GET /api/streaming/analytics/artist/:id — Artist-specific analytics
 // Revenue is now calculated based on contract grade tier
-router.get("/analytics/artist/:id", async (req: Request, res: Response) => {
+router.get(
+  "/analytics/artist/:id",
+  requireAuth(),
+  async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = Number(req.user?.userId);
+    const isAdmin = ["admin", "superuser"].includes(req.user?.role || "");
+    if (!isAdmin) {
+      const ownership = await pool.query(
+        `SELECT 1 FROM music_artists WHERE id = $1 AND user_id = $2`,
+        [id, userId],
+      );
+      if (!ownership.rows.length) {
+        return res.status(404).json({ error: "Artist not found" });
+      }
+    }
 
     const artist = await pool.query(
       `SELECT * FROM music_artists WHERE id = $1`,
@@ -2287,7 +2310,8 @@ router.get("/analytics/artist/:id", async (req: Request, res: Response) => {
           }
         : null,
       demographics,
-    });
+      },
+    );
   } catch (err: any) {
     res.status(500).json({ error: "Failed to fetch artist analytics" });
   }
@@ -2454,20 +2478,28 @@ router.get("/subscription/plans", async (_req: Request, res: Response) => {
 router.get("/subscription/status", async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    if (!userId) return res.json({ tier: "free", authenticated: false });
+    if (!userId) return res.json({ tier: "guest", authenticated: false });
 
-    const sub = await pool.query(
-      `
-      SELECT * FROM streaming_subscriptions WHERE user_id = $1
-    `,
-      [userId],
-    );
-
-    if (sub.rows.length === 0) {
-      return res.json({ tier: "free", authenticated: true });
+    const subscription = await getActiveListenerSubscription(userId);
+    if (!subscription) {
+      return res.json({
+        tier: "guest",
+        status: "inactive",
+        authenticated: true,
+      });
     }
 
-    res.json({ ...sub.rows[0], authenticated: true });
+    res.json({
+      id: subscription.id,
+      tier: subscription.tier,
+      planId: subscription.plan_id,
+      status: subscription.status,
+      stripeSubscriptionId: subscription.stripe_subscription_id,
+      monthlyPrice: subscription.monthly_fee,
+      currentPeriodStart: subscription.current_period_start,
+      currentPeriodEnd: subscription.current_period_end,
+      authenticated: true,
+    });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to fetch subscription" });
   }
@@ -2606,9 +2638,23 @@ router.post("/play", async (req: Request, res: Response) => {
 });
 
 // GET /api/streaming/stats/:artistId — Artist streaming stats
-router.get("/stats/:artistId", async (req: Request, res: Response) => {
+router.get(
+  "/stats/:artistId",
+  requireAuth(),
+  async (req: Request, res: Response) => {
   try {
     const { artistId } = req.params;
+    const userId = Number(req.user?.userId);
+    const isAdmin = ["admin", "superuser"].includes(req.user?.role || "");
+    if (!isAdmin) {
+      const ownership = await pool.query(
+        `SELECT 1 FROM music_artists WHERE id = $1 AND user_id = $2`,
+        [artistId, userId],
+      );
+      if (!ownership.rows.length) {
+        return res.status(404).json({ error: "Artist not found" });
+      }
+    }
 
     const artist = await pool.query(
       `SELECT id, name, total_streams, revenue, monthly_listeners FROM music_artists WHERE id = $1`,
@@ -2633,7 +2679,8 @@ router.get("/stats/:artistId", async (req: Request, res: Response) => {
       artist: artist.rows[0],
       topTracks: topTracks.rows,
       weeklyPlays: parseInt(recentPlays.rows[0]?.count || "0"),
-    });
+      },
+    );
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

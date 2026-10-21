@@ -5,6 +5,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import { getActiveListenerSubscription } from "../services/listener-subscription";
 
 const router = Router();
 
@@ -34,15 +35,9 @@ router.get("/stats", requireAuth(), async (req: Request, res: Response) => {
         .json({ success: false, error: "Not authenticated" });
     }
 
-    // Get streaming subscription tier
-    const subResult = await pool
-      .query(
-        `SELECT tier, status FROM streaming_subscriptions WHERE user_id = $1`,
-        [userId],
-      )
-      .catch(() => ({ rows: [] }));
-    const streamingTier = subResult.rows[0]?.tier || "guest";
-    const subscriptionStatus = subResult.rows[0]?.status || "inactive";
+    const subscription = await getActiveListenerSubscription(userId);
+    const streamingTier = subscription?.tier || "guest";
+    const subscriptionStatus = subscription?.status || "inactive";
 
     // Get or create listener stats
     let statsResult = await pool.query(

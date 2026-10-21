@@ -2229,7 +2229,8 @@ export const artistFollows = pgTable(
   }),
 );
 
-// --- USER SUBSCRIPTION TIERS (for the streaming platform) ---
+// Legacy streaming subscription records are retained but no longer grant
+// listener entitlements; listenerSubscriptions is the canonical source.
 export const streamingSubscriptions = pgTable(
   "streaming_subscriptions",
   {

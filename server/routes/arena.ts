@@ -32,6 +32,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
+import { getActiveListenerSubscription } from "../services/listener-subscription";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
@@ -58,11 +59,8 @@ const CONTEST_VOTE_WEIGHTS: Record<string, number> = {
 };
 
 async function getContestVoteWeight(userId: number): Promise<number> {
-  const result = await pool.query(
-    `SELECT tier FROM streaming_subscriptions WHERE user_id = $1 LIMIT 1`,
-    [userId],
-  );
-  const tier = String(result.rows[0]?.tier || "free").toLowerCase();
+  const subscription = await getActiveListenerSubscription(userId);
+  const tier = subscription?.tier || "guest";
   return CONTEST_VOTE_WEIGHTS[tier] ?? CONTEST_VOTE_WEIGHTS.free;
 }
 const BADGE_HIERARCHY = [
