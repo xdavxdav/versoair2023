@@ -5,6 +5,10 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { asyncHandler } from "../middleware/asyncHandler";
+import {
+  getEnabledSignInProviders,
+  SIGN_IN_PROVIDERS,
+} from "../services/oauth-providers";
 
 const router = Router();
 
@@ -56,30 +60,20 @@ interface OAuthProviderConfig {
 }
 
 // Apple is deferred (paid developer account); Indeed/Glassdoor have no public SSO.
-// A supported provider is offered only when it is also listed in
-// OAUTH_ENABLED_PROVIDERS and has client credentials configured.
-const SIGN_IN_PROVIDERS = ["google", "microsoft", "linkedin"] as const;
-
-function getEnabledSignInProviders(): (typeof SIGN_IN_PROVIDERS)[number][] {
-  const enabled = new Set(
-    (process.env.OAUTH_ENABLED_PROVIDERS || "")
-      .split(",")
-      .map((provider) => provider.trim().toLowerCase())
-      .filter(Boolean),
+// Provider credentials enable sign-in. OAUTH_ENABLED_PROVIDERS can optionally
+// restrict the configured providers.
+function getConfiguredSignInProviders() {
+  return getEnabledSignInProviders(
+    process.env.OAUTH_ENABLED_PROVIDERS,
+    (provider) => {
+      const config = getProviderConfig(provider);
+      return !!config?.clientId.trim() && !!config.clientSecret.trim();
+    },
   );
-
-  return SIGN_IN_PROVIDERS.filter((provider) => {
-    const config = getProviderConfig(provider);
-    return (
-      enabled.has(provider) &&
-      !!config?.clientId.trim() &&
-      !!config.clientSecret.trim()
-    );
-  });
 }
 
 function isSignInProviderEnabled(provider: string): boolean {
-  return getEnabledSignInProviders().some(
+  return getConfiguredSignInProviders().some(
     (enabledProvider) => enabledProvider === provider,
   );
 }
@@ -181,7 +175,7 @@ router.get(
   "/oauth/providers",
   asyncHandler(async (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
-    res.json({ providers: getEnabledSignInProviders() });
+    res.json({ providers: getConfiguredSignInProviders() });
   }),
 );
 
