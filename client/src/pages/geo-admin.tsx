@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useLocation } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import GeoAdmin from "@/components/geo-admin";
 import GeoAdminSubscriberView from "@/components/GeoAdminSubscriberView";
 import GeoAdminAuthGate from "@/components/GeoAdminAuthGate";
@@ -233,7 +233,11 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
-  if (!isGeoAdmin && !isReadOnlySubscriber && !hasFreeBasicAccess) {
+  if (!isGeoAdmin && hasFreeBasicAccess) {
+    return <Redirect to="/dashboard" />;
+  }
+
+  if (!isGeoAdmin && !isReadOnlySubscriber) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f3efe9] px-4 py-12">
         <Card className="w-full max-w-xl p-7">
@@ -260,7 +264,7 @@ export default function GeoAdminPage() {
     );
   }
 
-  if (!isGeoAdmin && (isReadOnlySubscriber || hasFreeBasicAccess)) {
+  if (!isGeoAdmin && isReadOnlySubscriber) {
     return (
       <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
         <GeoAdminSubscriberView
