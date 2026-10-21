@@ -2,8 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { injectRouteSeoMeta, ROUTE_SEO_META } from "./route-seo-meta.ts";
+import { PUBLIC_STATIC_ROUTES } from "./seo-routes.ts";
 
 const html = "<html><head><title>Default</title></head><body></body></html>";
+
+test("every public sitemap route has server-injected SEO metadata", () => {
+  assert.deepEqual(
+    Object.keys(ROUTE_SEO_META).sort(),
+    PUBLIC_STATIC_ROUTES.map(({ path }) => path).sort(),
+  );
+});
 
 test("injects complete canonical metadata for every supported route", () => {
   const titles = new Set<string>();
