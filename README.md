@@ -101,9 +101,11 @@ The navy/gold promotional card keeps the same content and visual treatment
 across resolutions. Offer columns adapt to the card's available width, with
 full-width placement above the selector on pricing and the GeoAdmin gate.
 Premium's full breakdown remains in plan details rather than stretching a tile.
-Promotional prices use the same selected-market formatter as the selector:
-CAD for Canada, EUR for France and FCFA for Côte d'Ivoire. Missing rates are
-explicitly unavailable; unsupported markets are coming soon.
+The navy/gold promotional card shows the original reference schedule in FCFA.
+The separate offer selector shows indicative conversions for the selected
+market: CAD for Canada, EUR for France and FCFA for Côte d'Ivoire. Missing
+conversion rates are explicitly unavailable; unsupported markets are coming
+soon.
 Resizing never changes prices or contacts. All markets show the owner's
 confirmed contacts: +225 07-48-34-38-16, +225 05-64-60-64-01 and
 +1 (437) 435-9726, each with separate direct-call and WhatsApp links.

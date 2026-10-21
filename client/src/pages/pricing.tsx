@@ -47,15 +47,15 @@ export default function Pricing() {
           <GeoAdminPromoCard />
           <section>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
-              GeoAdmin plans
+              Annual prices converted for your market
             </p>
             <h1 className="mb-4 text-4xl font-bold md:text-5xl">
               Choose the visibility that fits your business
             </h1>
             <p className="mb-6 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Annual reference prices are shown in Canadian dollars in Canada,
-              euros in France, and FCFA in Côte d’Ivoire. Other countries are
-              marked as coming soon.
+              These indicative conversions use the FCFA reference prices above:
+              Canadian dollars in Canada, euros in France, and FCFA in Côte
+              d’Ivoire. Other countries are marked as coming soon.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_OFFER_ORDER.map((tier) => (

@@ -344,10 +344,11 @@ export default function GeoAdminAuthGate({
               <div>
                 <div className="mb-4 text-center">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
-                    Annual plan reference prices
+                    Annual prices converted for your market
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Canada: CAD · France: EUR · Côte d’Ivoire: FCFA. Other
+                    Converted from the FCFA reference prices above: Canada in
+                    CAD, France in EUR, and Côte d’Ivoire in FCFA. Other
                     countries are coming soon. No online checkout is offered.
                   </p>
                 </div>
@@ -395,10 +396,10 @@ export default function GeoAdminAuthGate({
                           )}
                         </span>
                         {annualXof !== null && marketAvailability === true && (
-                            <span className="mt-0.5 block text-[10px] text-slate-400">
-                              Annual reference price
-                            </span>
-                          )}
+                          <span className="mt-0.5 block text-[10px] text-slate-400">
+                            Converted estimate
+                          </span>
+                        )}
                         <span className="mt-2 block text-xs leading-relaxed text-slate-400">
                           {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
                         </span>
