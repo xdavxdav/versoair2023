@@ -418,20 +418,6 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
       conversationId: data.conversationId,
       message: data.message,
     });
-
-    io.to(roomName).emit("notification", {
-      id: `inbox-${data.message?.id ?? Date.now()}`,
-      type: "message",
-      actorName: data.message?.senderName || "Someone",
-      actorAvatar: data.message?.senderAvatar || null,
-      title: `New message from ${data.message?.senderName || "someone"}`,
-      message: data.message?.content?.slice(0, 100) || "",
-      text: data.message?.content?.slice(0, 100) || "sent you a message",
-      entityUrl: `/messages`,
-      timestamp: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      read: false,
-    });
   });
 
   return io;

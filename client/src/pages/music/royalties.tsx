@@ -8,8 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   Download,
   Calendar,
   Clock,
@@ -18,25 +16,15 @@ import {
   Wallet,
   PieChart,
   BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle,
   AlertCircle,
   Info,
   RefreshCw,
   Play,
   Music2,
-  Users,
-  Headphones,
   Star,
-  Crown,
-  Sparkles,
-  Flame,
-  Zap,
-  Award,
 } from "lucide-react";
 import { MusicLayout } from "@/layouts/MusicLayout";
-import { MusicTierBadge, MusicUpgradeGate } from "@/components/music";
+import { MusicTierBadge } from "@/components/music";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -65,109 +53,7 @@ import { useMusicAccess } from "@/hooks/useMusicAccess";
 import { useMusicEarnings } from "@/hooks/use-music";
 import { useArtistStats } from "@/hooks/use-streamroyale";
 import { usePayoutHistory, useRequestPayout } from "@/hooks/use-streamroyale";
-
-/* ─── Tier configuration with royalty rates ─── */
-const TIER_CONFIG = {
-  free: {
-    name: "Free",
-    icon: Sparkles,
-    gradient: "from-gray-500 to-gray-600",
-    royaltyRate: 0.5,
-    perStream: "$0.002",
-    perDownload: "50%",
-    features: ["Basic analytics", "Standard support"],
-  },
-  spark: {
-    name: "Spark",
-    icon: Sparkles,
-    gradient: "from-blue-400 to-cyan-500",
-    royaltyRate: 0.6,
-    perStream: "$0.003",
-    perDownload: "60%",
-    features: ["Enhanced analytics", "Priority support", "Early payouts"],
-  },
-  supporter: {
-    name: "Supporter",
-    icon: Sparkles,
-    gradient: "from-blue-400 to-cyan-500",
-    royaltyRate: 0.6,
-    perStream: "$0.003",
-    perDownload: "60%",
-    features: ["Enhanced analytics", "Priority support", "Early payouts"],
-  },
-  flame: {
-    name: "Flame",
-    icon: Flame,
-    gradient: "from-orange-400 to-red-500",
-    royaltyRate: 0.7,
-    perStream: "$0.004",
-    perDownload: "70%",
-    features: [
-      "Pro analytics",
-      "Dedicated support",
-      "Weekly payouts",
-      "Revenue boost",
-    ],
-  },
-  champion: {
-    name: "Champion",
-    icon: Flame,
-    gradient: "from-purple-400 to-fuchsia-500",
-    royaltyRate: 0.7,
-    perStream: "$0.004",
-    perDownload: "70%",
-    features: [
-      "Pro analytics",
-      "Dedicated support",
-      "Weekly payouts",
-      "Revenue boost",
-    ],
-  },
-  blaze: {
-    name: "Blaze",
-    icon: Zap,
-    gradient: "from-purple-400 to-pink-500",
-    royaltyRate: 0.8,
-    perStream: "$0.005",
-    perDownload: "80%",
-    features: [
-      "Full analytics suite",
-      "VIP support",
-      "Daily payouts",
-      "15% bonus",
-    ],
-  },
-  inferno: {
-    name: "Inferno",
-    icon: Crown,
-    gradient: "from-amber-400 via-orange-500 to-red-500",
-    royaltyRate: 0.85,
-    perStream: "$0.006",
-    perDownload: "85%",
-    features: [
-      "Elite analytics",
-      "Personal manager",
-      "Instant payouts",
-      "25% bonus",
-      "Exclusive events",
-    ],
-  },
-  patron: {
-    name: "Patron",
-    icon: Crown,
-    gradient: "from-amber-400 via-orange-500 to-red-500",
-    royaltyRate: 0.85,
-    perStream: "$0.006",
-    perDownload: "85%",
-    features: [
-      "Elite analytics",
-      "Personal manager",
-      "Instant payouts",
-      "25% bonus",
-      "Exclusive events",
-    ],
-  },
-};
+import { STREAMROYALE_ROYALTY_RULES } from "@shared/streamroyale-policy";
 
 /* ─── Stat Card ─── */
 function RoyaltyStatCard({
@@ -175,14 +61,12 @@ function RoyaltyStatCard({
   label,
   value,
   subValue,
-  trend,
   color,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   subValue?: string;
-  trend?: { value: string; positive: boolean };
   color: "purple" | "pink" | "amber" | "emerald" | "violet";
 }) {
   const colors = {
@@ -205,20 +89,6 @@ function RoyaltyStatCard({
         >
           <Icon className="w-5 h-5 text-white" />
         </div>
-        {trend && (
-          <div
-            className={`flex items-center gap-1 text-sm ${
-              trend.positive ? "text-emerald-400" : "text-red-400"
-            }`}
-          >
-            {trend.positive ? (
-              <ArrowUpRight className="w-4 h-4" />
-            ) : (
-              <ArrowDownRight className="w-4 h-4" />
-            )}
-            {trend.value}
-          </div>
-        )}
       </div>
       <p className="text-3xl font-bold text-white mb-1">{value}</p>
       <p className="text-sm text-white/50">{label}</p>
@@ -287,8 +157,6 @@ export default function MusicRoyalties() {
   const { user } = useAuthContext();
   const {
     userTier,
-    isArtist,
-    isPremium,
     isLoading: accessLoading,
   } = useMusicAccess();
   const { data: artistStats, isLoading: artistStatsLoading } = useArtistStats();
@@ -298,12 +166,6 @@ export default function MusicRoyalties() {
 
   const [timeRange, setTimeRange] = useState("30d");
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
-
-  // Get tier config
-  const tierKey = (userTier?.toLowerCase() ||
-    "free") as keyof typeof TIER_CONFIG;
-  const currentTier = TIER_CONFIG[tierKey] || TIER_CONFIG.free;
-  const TierIcon = currentTier.icon;
 
   // Earnings summary
   const summary = earningsData?.summary || {
@@ -322,7 +184,7 @@ export default function MusicRoyalties() {
   const royaltyCarryForward =
     Number(artistStats?.profile?.royaltyCarryForward) || 0;
   const payoutsEnabled = artistStats?.profile?.payoutsEnabled === true;
-  const minPayout = 10;
+  const minPayout = STREAMROYALE_ROYALTY_RULES.minimumPayoutRequestDollars;
   const canRequestPayout = payoutsEnabled && pendingPayout >= minPayout;
   const latestRoyalty = artistStats?.earningsHistory?.[0];
   const transactions = [
@@ -431,22 +293,18 @@ export default function MusicRoyalties() {
             label="Total Earnings"
             value={`$${totalRevenue.toFixed(2)}`}
             subValue={`${summary.total_streams.toLocaleString()} streams`}
-            trend={{ value: "+12.5%", positive: true }}
             color="emerald"
           />
           <RoyaltyStatCard
             icon={Calendar}
             label="This Month"
             value={`$${monthlyRevenue.toFixed(2)}`}
-            subValue="vs last month"
-            trend={{ value: "+8.2%", positive: true }}
             color="purple"
           />
           <RoyaltyStatCard
             icon={Clock}
             label="Today"
             value={`$${dailyRevenue.toFixed(2)}`}
-            subValue={`${Math.floor(dailyRevenue / 0.003)} streams`}
             color="pink"
           />
           <RoyaltyStatCard
@@ -458,9 +316,9 @@ export default function MusicRoyalties() {
           />
         </div>
 
-        {/* Tier Benefits + Payout Request */}
+        {/* Royalty policy + payout request */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Current Tier Benefits */}
+          {/* Weekly royalty policy */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -469,73 +327,59 @@ export default function MusicRoyalties() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${currentTier.gradient} flex items-center justify-center shadow-lg`}
+                  className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center shadow-lg"
                 >
-                  <TierIcon className="w-6 h-6 text-white" />
+                  <Info className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">
-                    {currentTier.name} Tier Benefits
+                    Weekly royalty policy
                   </h3>
                   <p className="text-sm text-white/50">
-                    Your current royalty rates
+                    Pool-based distribution; no fixed per-stream rate
                   </p>
                 </div>
               </div>
-              <Link href="/music/upgrade">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
-                >
-                  Upgrade
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="text-2xl font-bold text-white">
-                  {currentTier.perStream}
+                  {STREAMROYALE_ROYALTY_RULES.guaranteedPoolPercent}%
                 </p>
-                <p className="text-sm text-white/50">per stream</p>
+                <p className="text-sm text-white/50">guaranteed pool</p>
               </div>
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="text-2xl font-bold text-white">
-                  {currentTier.perDownload}
+                  {STREAMROYALE_ROYALTY_RULES.performancePoolPercent}%
                 </p>
-                <p className="text-sm text-white/50">per download</p>
+                <p className="text-sm text-white/50">performance pool</p>
               </div>
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="text-2xl font-bold text-white">
-                  ${minPayout.toFixed(2)}
+                  {STREAMROYALE_ROYALTY_RULES.minimumValidStreams}
                 </p>
-                <p className="text-sm text-white/50">min payout</p>
+                <p className="text-sm text-white/50">valid streams per week</p>
               </div>
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <p className="text-2xl font-bold text-white">
-                  {Math.round(currentTier.royaltyRate * 100)}%
+                  {STREAMROYALE_ROYALTY_RULES.minimumPayingListeners}
                 </p>
-                <p className="text-sm text-white/50">royalty rate</p>
+                <p className="text-sm text-white/50">distinct paying listeners</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-sm text-white/50 mb-3">Included Features:</p>
-              <div className="flex flex-wrap gap-2">
-                {currentTier.features.map((feature, i) => (
-                  <Badge
-                    key={i}
-                    variant="outline"
-                    className="border-purple-500/20 text-purple-300 bg-purple-500/5"
-                  >
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    {feature}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+            <p className="text-sm text-white/60">
+              Valid streams must reach 30 seconds, and self-streams do not count.
+              The remaining {STREAMROYALE_ROYALTY_RULES.platformCutPercent}% is
+              the platform share. The performance pool is weighted by eligible
+              activity from paying listeners, with badge boosts applied. Artist
+              agreements govern individual entitlements. Accrued royalties below $
+              {(STREAMROYALE_ROYALTY_RULES.minimumWalletCreditCents / 100).toFixed(2)}
+              {" "}carry forward until the credit threshold is reached. Payout
+              requests require a ${minPayout.toFixed(2)} balance and enabled
+              external payouts.
+            </p>
           </motion.div>
 
           {/* Payout Request */}
@@ -762,45 +606,6 @@ export default function MusicRoyalties() {
           </div>
         </motion.div>
 
-        {/* Upgrade CTA */}
-        {!isPremium && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-900/30 via-fuchsia-900/20 to-pink-900/30 p-8"
-          >
-            <div className="absolute inset-0 overflow-hidden">
-              <motion.div
-                className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px]"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                transition={{ duration: 5, repeat: Infinity }}
-              />
-            </div>
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Award className="w-5 h-5 text-amber-400" />
-                  <span className="text-sm font-medium text-amber-400">
-                    Upgrade to Earn More
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Increase Your Royalty Rate
-                </h3>
-                <p className="text-white/60 max-w-md">
-                  Higher tiers unlock better rates, lower minimum payouts, and
-                  exclusive features.
-                </p>
-              </div>
-              <Link href="/music/upgrade">
-                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25">
-                  <Crown className="w-4 h-4 mr-2" />
-                  View Upgrade Options
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-        )}
       </div>
     </MusicLayout>
   );

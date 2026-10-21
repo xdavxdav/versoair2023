@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function NewslettersPage() {
   const { toast } = useToast();
@@ -61,6 +62,11 @@ export default function NewslettersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
+      <SeoHead
+        title="Newsletters | Verso Air"
+        description="Subscribe to Verso Air updates and browse published newsletters about business visibility and creative projects."
+        canonicalPath="/marketing/newsletters"
+      />
       <div className="max-w-4xl mx-auto">
         {/* Subscribe Section */}
         <Card className="bg-gradient-to-br from-purple-900/30 to-gray-800/50 border-purple-500/30 mb-12">

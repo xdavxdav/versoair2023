@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 const LOGO_URL = "https://i.ibb.co/d0PtnHS2/Adobe-Express-file.png";
 
@@ -173,6 +174,11 @@ export default function JournalPage() {
 
   return (
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
+      <SeoHead
+        title="Business Journal | Verso Air"
+        description="Read Verso Air journal articles and updates on business visibility, community, and creative projects."
+        canonicalPath="/marketing/journal"
+      />
       {/* ── Sticky compact header with logo ── */}
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between gap-3">

@@ -14,9 +14,9 @@ import {
   Radio,
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { authenticatedFetch } from "@/lib/auth";
 import {
-  useInboxSocket,
   useNotificationSocket,
   type SocketNotificationEvent,
 } from "@/hooks/use-inbox-socket";
@@ -60,6 +60,7 @@ const TYPE_ICON: Record<AppNotification["type"], React.ReactNode> = {
 
 export default function NotificationCenter() {
   const { user } = useAuthContext();
+  const { translateText } = useLanguage();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -107,7 +108,7 @@ export default function NotificationCenter() {
         requestId === loadRequestId.current &&
         currentUserId.current === userId
       ) {
-        setLoadError("Unable to load notifications. Please try again.");
+        setLoadError(translateText("Unable to load notifications. Please try again."));
       }
     } finally {
       if (
@@ -117,7 +118,7 @@ export default function NotificationCenter() {
         setLoading(false);
       }
     }
-  }, [user]);
+  }, [user, translateText]);
 
   // Fetch immediately on mount so red dot shows on page load
   useEffect(() => {
@@ -134,7 +135,8 @@ export default function NotificationCenter() {
         type: TYPE_ICON[typeKey] ? typeKey : "publish",
         actorName: data.actorName || data.title || "Someone",
         actorAvatar: data.actorAvatar || null,
-        text: data.text || data.message || "New notification",
+        text:
+          data.text || data.message || translateText("New notification"),
         entityUrl: data.entityUrl || undefined,
         read: false,
         createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
@@ -145,27 +147,9 @@ export default function NotificationCenter() {
         ...prev.filter((n) => n.id !== newNotif.id),
       ]);
     },
-    [],
+    [translateText],
   );
   useNotificationSocket(user ? handleRealtimeNotification : undefined);
-
-  // Live push via inbox socket for messages
-  const handleLiveMessage = useCallback(() => {
-    if (!open) {
-      setNotifications((prev) => [
-        {
-          id: `live-msg-${Date.now()}`,
-          type: "message",
-          actorName: "Someone",
-          text: "sent you a message",
-          read: false,
-          createdAt: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
-    }
-  }, [open]);
-  useInboxSocket(user ? handleLiveMessage : undefined);
 
   // Close on outside click
   useEffect(() => {
@@ -205,7 +189,7 @@ export default function NotificationCenter() {
             previousReadState.get(notification.id) ?? notification.read,
         })),
       );
-      setLoadError("Unable to update notifications. Please try again.");
+      setLoadError(translateText("Unable to update notifications. Please try again."));
     }
   };
 
@@ -235,7 +219,7 @@ export default function NotificationCenter() {
           item.id === id ? { ...item, read: notification.read } : item,
         ),
       );
-      setLoadError("Unable to update notifications. Please try again.");
+      setLoadError(translateText("Unable to update notifications. Please try again."));
       return false;
     }
   };
@@ -254,7 +238,7 @@ export default function NotificationCenter() {
       <button
         onClick={handleOpenToggle}
         className="relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-white transition-colors"
-        aria-label="Notifications"
+        aria-label={translateText("Notifications")}
       >
         <Bell className="w-5 h-5" />
         {unread > 0 && (
@@ -276,7 +260,7 @@ export default function NotificationCenter() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <span className="font-semibold text-white text-sm">
-                Notifications
+                {translateText("Notifications")}
               </span>
               <div className="flex items-center gap-2">
                 {push.isSupported && (
@@ -288,8 +272,10 @@ export default function NotificationCenter() {
                     className="flex items-center gap-1 text-xs text-white/50 hover:text-amber-300 transition-colors disabled:opacity-50"
                     title={
                       push.isSubscribed
-                        ? "Disable browser notifications"
-                        : "Enable browser notifications (even when the app is closed)"
+                        ? translateText("Disable browser notifications")
+                        : translateText(
+                            "Enable browser notifications (even when the app is closed)",
+                          )
                     }
                   >
                     <BellRing className="w-3.5 h-3.5" />
@@ -299,10 +285,10 @@ export default function NotificationCenter() {
                   <button
                     onClick={markAllRead}
                     className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors"
-                    title="Mark all as read"
+                    title={translateText("Mark all as read")}
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
-                    All read
+                    {translateText("All read")}
                   </button>
                 )}
                 <button
@@ -328,7 +314,7 @@ export default function NotificationCenter() {
                     onClick={fetchNotifications}
                     className="text-sm text-amber-300 underline underline-offset-4"
                   >
-                    Retry
+                    {translateText("Retry")}
                   </button>
                 </div>
               )}
@@ -336,7 +322,7 @@ export default function NotificationCenter() {
                   <div className="py-12 text-center space-y-2">
                     <Bell className="w-8 h-8 text-white/20 mx-auto" />
                     <p className="text-white/40 text-sm">
-                      No notifications yet
+                      {translateText("No notifications yet")}
                     </p>
                   </div>
               )}
@@ -353,7 +339,9 @@ export default function NotificationCenter() {
                           window.location.origin,
                         );
                         if (destination.origin !== window.location.origin) {
-                          setLoadError("This notification link is unavailable.");
+                          setLoadError(
+                            translateText("This notification link is unavailable."),
+                          );
                           return;
                         }
                         window.location.assign(destination.href);
@@ -362,7 +350,9 @@ export default function NotificationCenter() {
                           "[NotificationCenter] Invalid notification link:",
                           error,
                         );
-                        setLoadError("This notification link is unavailable.");
+                        setLoadError(
+                          translateText("This notification link is unavailable."),
+                        );
                         return;
                       }
                     }

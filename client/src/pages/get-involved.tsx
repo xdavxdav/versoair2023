@@ -11,6 +11,7 @@ import {
   defaultViewport,
 } from "@/lib/animations";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 // Community activities data
 const COMMUNITY_ACTIVITIES = [
@@ -277,6 +278,11 @@ export default function GetInvolved() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f3efe9] to-[#f3efe9]">
+      <SeoHead
+        title="Get Involved | Verso Air and vHeartz"
+        description="Explore future ways to participate in Verso Air and vHeartz community initiatives. Programs are announced when confirmed."
+        canonicalPath="/get-involved"
+      />
       {/* Hero Section */}
       <section className="relative pt-20 pb-24 px-4 overflow-hidden">
         {/* Background decoration */}

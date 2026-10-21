@@ -1120,10 +1120,16 @@ router.post(
     const { amount, method, paypalEmail, bankDetails } = req.body;
     const payoutAmount = parseFloat(amount);
 
-    if (!payoutAmount || payoutAmount < 10) {
+    if (
+      !payoutAmount ||
+      payoutAmount < ROYALTY_RULES.minimumPayoutRequestDollars
+    ) {
       return res
         .status(400)
-        .json({ success: false, message: "Minimum payout is $10.00" });
+        .json({
+          success: false,
+          message: `Minimum payout is $${ROYALTY_RULES.minimumPayoutRequestDollars.toFixed(2)}`,
+        });
     }
 
     try {

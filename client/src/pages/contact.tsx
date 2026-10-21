@@ -12,6 +12,7 @@ import {
 import ScrollToTop from "@/components/ScrollToTop";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function Contact() {
   const search = useSearch();
@@ -90,6 +91,11 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
+      <SeoHead
+        title="Contact Verso Air | Toronto"
+        description="Contact Verso Air Inc. in Toronto for business directory, platform, partnership, and support inquiries."
+        canonicalPath="/contact"
+      />
       {/* Hero Section */}
       <div className="relative px-4 pb-16 pt-20">
         <div className="mx-auto max-w-[1400px] rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.08),transparent_35%),linear-gradient(135deg,#f8f5f1_0%,#f3efe9_25%,#efe7dd_100%)] p-6 shadow-[0_25px_60px_rgba(15,23,42,0.15)] sm:p-8 lg:p-12">

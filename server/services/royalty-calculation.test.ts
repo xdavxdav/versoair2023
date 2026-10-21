@@ -4,7 +4,32 @@ import test from "node:test";
 import {
   calculateWeeklyRoyalties,
   getRoyaltyQualification,
+  ROYALTY_RULES,
 } from "./royalty-calculation.ts";
+
+test("shared royalty policy defines consistent pool, qualification, and payout limits", () => {
+  assert.deepEqual(
+    {
+      guaranteedPoolPercent: ROYALTY_RULES.guaranteedPoolPercent,
+      performancePoolPercent: ROYALTY_RULES.performancePoolPercent,
+      platformCutPercent: ROYALTY_RULES.platformCutPercent,
+      minimumValidStreams: ROYALTY_RULES.minimumValidStreams,
+      minimumPayingListeners: ROYALTY_RULES.minimumPayingListeners,
+      minimumWalletCreditCents: ROYALTY_RULES.minimumWalletCreditCents,
+      minimumPayoutRequestDollars:
+        ROYALTY_RULES.minimumPayoutRequestDollars,
+    },
+    {
+      guaranteedPoolPercent: 20,
+      performancePoolPercent: 70,
+      platformCutPercent: 10,
+      minimumValidStreams: 10,
+      minimumPayingListeners: 3,
+      minimumWalletCreditCents: 100,
+      minimumPayoutRequestDollars: 10,
+    },
+  );
+});
 
 test("qualification matches the configured stream and paying-listener thresholds", () => {
   assert.deepEqual(getRoyaltyQualification(9, 3), {

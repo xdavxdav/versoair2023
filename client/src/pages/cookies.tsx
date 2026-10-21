@@ -2,10 +2,18 @@ import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { Link } from "wouter";
 import { Cookie, ArrowLeft } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function CookiePolicy() {
   const localize = useLocalizedContent();
-  return localize((
+  return (
+    <>
+      <SeoHead
+        title="Cookie Policy | Verso Air"
+        description="Learn how Verso Air uses essential cookies and optional analytics technologies, and how to manage your consent."
+        canonicalPath="/cookies"
+      />
+      {localize((
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="mx-auto max-w-4xl px-4 py-16">
@@ -332,5 +340,7 @@ export default function CookiePolicy() {
         </div>
       </div>
     </div>
-  ));
+      ))}
+    </>
+  );
 }

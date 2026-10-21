@@ -1,11 +1,19 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { Link } from "wouter";
+import { SeoHead } from "@/components/seo/SeoHead";
 import { FileText, ArrowLeft } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
 
 export default function TermsOfService() {
   const localize = useLocalizedContent();
-  return localize((
+  return (
+    <>
+      <SeoHead
+        title="Terms of Service | Verso Air"
+        description="Review the terms governing use of Verso Air Inc.'s business directory, platform tools, and creative services."
+        canonicalPath="/terms"
+      />
+      {localize((
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="mx-auto max-w-4xl px-4 py-16">
@@ -340,5 +348,7 @@ export default function TermsOfService() {
         </div>
       </div>
     </div>
-  ));
+      ))}
+    </>
+  );
 }

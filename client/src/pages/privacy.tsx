@@ -2,10 +2,18 @@ import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { Link } from "wouter";
 import { Shield, ArrowLeft } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function PrivacyPolicy() {
   const localize = useLocalizedContent();
-  return localize((
+  return (
+    <>
+      <SeoHead
+        title="Privacy Policy | Verso Air"
+        description="Read how Verso Air Inc. collects, uses, protects, and retains personal information on its platform."
+        canonicalPath="/privacy"
+      />
+      {localize((
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="mx-auto max-w-4xl px-4 py-16">
@@ -288,5 +296,7 @@ export default function PrivacyPolicy() {
         </div>
       </div>
     </div>
-  ));
+      ))}
+    </>
+  );
 }

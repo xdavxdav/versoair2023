@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 // Platform sectors – these match the actual routes in your app
 const PLATFORM_SECTORS = [
@@ -499,7 +500,14 @@ export default function About() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  return localize((
+  return (
+    <>
+      <SeoHead
+        title="About Verso Air | Business Directory and Creative Platform"
+        description="Learn about Verso Air Inc., a Toronto-focused platform preparing business visibility tools and creative community projects."
+        canonicalPath="/about"
+      />
+      {localize((
     <div className="flex flex-col min-h-screen bg-[#f3efe9] text-slate-900 overflow-hidden">
       {/* Enhanced Hero with Parallax */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -929,5 +937,7 @@ export default function About() {
       </section>
       <ScrollToTop />
     </div>
-  ));
+      ))}
+    </>
+  );
 }

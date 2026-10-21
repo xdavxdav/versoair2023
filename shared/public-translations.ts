@@ -428,6 +428,17 @@ export const PUBLIC_COPY = [
   ...LEGAL_COPY,
   ...OFFER_COPY,
   ["Ask VersoAI", "Demander à VersoAI"],
+  ["Notifications", "Notifications"],
+  ["Disable browser notifications", "Désactiver les notifications du navigateur"],
+  ["Enable browser notifications (even when the app is closed)", "Activer les notifications du navigateur, même lorsque l'application est fermée"],
+  ["Mark all as read", "Tout marquer comme lu"],
+  ["All read", "Tout marquer comme lu"],
+  ["Retry", "Réessayer"],
+  ["No notifications yet", "Aucune notification pour le moment"],
+  ["Unable to load notifications. Please try again.", "Impossible de charger les notifications. Veuillez réessayer."],
+  ["Unable to update notifications. Please try again.", "Impossible de mettre à jour les notifications. Veuillez réessayer."],
+  ["This notification link is unavailable.", "Ce lien de notification n'est pas disponible."],
+  ["New notification", "Nouvelle notification"],
 ] as const;
 
 export const BUNDLED_LANGUAGES = ["fr", "en", "es"] as const;

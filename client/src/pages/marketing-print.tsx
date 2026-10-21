@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function PrintServicesPage() {
   const { addItem } = useCart();
@@ -145,6 +146,11 @@ export default function PrintServicesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
+      <SeoHead
+        title="Professional Print Services | Verso Air"
+        description="Explore Verso Air professional printing services for business cards, flyers, brochures, posters, and banners."
+        canonicalPath="/marketing/print"
+      />
       <div className="max-w-[95vw] mx-auto">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-green-500/10 text-green-400 px-4 py-1.5 rounded-full text-sm font-medium mb-4">

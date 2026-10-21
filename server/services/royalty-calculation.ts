@@ -1,12 +1,6 @@
-export const ROYALTY_RULES = {
-  guaranteedPoolPercent: 20,
-  performancePoolPercent: 70,
-  platformCutPercent: 10,
-  minimumValidStreams: 10,
-  minimumPayingListeners: 3,
-  freePlanPerformanceWeight: 0,
-  minimumWalletCreditCents: 100,
-} as const;
+import { STREAMROYALE_ROYALTY_RULES } from "@shared/streamroyale-policy";
+
+export const ROYALTY_RULES = STREAMROYALE_ROYALTY_RULES;
 
 export const MINIMUM_ROYALTY_CREDIT_CENTS =
   ROYALTY_RULES.minimumWalletCreditCents;

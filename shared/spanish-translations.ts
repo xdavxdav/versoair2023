@@ -3,6 +3,17 @@ import type { PUBLIC_COPY } from "./public-translations";
 // Bundled editorial translation; legal copy still requires professional review.
 export const SPANISH_COPY = {
   "Ask VersoAI": "Preguntar a VersoAI",
+  "Notifications": "Notificaciones",
+  "Disable browser notifications": "Desactivar las notificaciones del navegador",
+  "Enable browser notifications (even when the app is closed)": "Activar las notificaciones del navegador, incluso con la aplicación cerrada",
+  "Mark all as read": "Marcar todas como leídas",
+  "All read": "Marcar todo como leído",
+  "Retry": "Reintentar",
+  "No notifications yet": "Aún no hay notificaciones",
+  "Unable to load notifications. Please try again.": "No se pudieron cargar las notificaciones. Inténtalo de nuevo.",
+  "Unable to update notifications. Please try again.": "No se pudieron actualizar las notificaciones. Inténtalo de nuevo.",
+  "This notification link is unavailable.": "Este enlace de notificación no está disponible.",
+  "New notification": "Nueva notificación",
   "Back to Home": "Volver al inicio",
   "Contact Us": "Contáctanos",
   "Contact Page": "Página de contacto",
