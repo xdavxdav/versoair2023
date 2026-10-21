@@ -24,7 +24,7 @@ async function withServer(
   }
 }
 
-test("production returns a real 404 for local-preview-only pages and descendants", async () => {
+test("production shows a readiness notice and redirects to home after five seconds", async () => {
   await withServer(true, async (origin) => {
     for (const path of LOCAL_PREVIEW_ONLY_PATHS) {
       for (const route of [path, `${path}/child?preview=1`]) {
@@ -32,9 +32,19 @@ test("production returns a real 404 for local-preview-only pages and descendants
           const response = await fetch(`${origin}${route}`, { method });
           assert.equal(response.status, 404, `${method} ${route} should return 404`);
           if (method === "GET") {
-            assert.equal(await response.text(), "Not Found");
+            const body = await response.text();
+            assert.match(body, /Will be ready soon/);
+            assert.match(body, /We're preparing this part of Verso Air/);
+            assert.match(body, /href="\/"/);
+            assert.match(body, /setTimeout\(returnHome, 5000\)/);
+            assert.match(body, /Stay on this page/);
+            assert.match(body, /clearTimeout\(redirectTimer\)/);
           }
           assert.equal(response.headers.get("cache-control"), "no-store");
+          assert.match(
+            response.headers.get("content-type") ?? "",
+            /^text\/html/,
+          );
         }
       }
     }
