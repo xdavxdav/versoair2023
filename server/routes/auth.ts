@@ -33,6 +33,10 @@ import {
   getAdminGateLockout,
   getAdminGatePostPasswordDenial,
 } from "../services/admin-gate-policy";
+import {
+  isValidTotpSecret,
+  verifyTotpCode,
+} from "../services/totp";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -344,13 +348,12 @@ const SUPERADMIN_EMAIL = process.env.SUPERADMIN_EMAIL || "";
 function isSuperadmin(email: string): boolean {
   // If no superadmin email is configured, no one can be superadmin via this check
   if (!SUPERADMIN_EMAIL) return false;
-  return email.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase();
+  return email.trim().toLowerCase() === SUPERADMIN_EMAIL.trim().toLowerCase();
 }
 
-// ─── Login OTP (2FA for staff accounts) ───────────────────────────────────────
-// Required for admin/moderator roles. Superadmin (superuser) is exempt — it's
-// the owner's own recovery account and must never be lockable out via email.
-const OTP_REQUIRED_ROLES = ["admin", "moderator"];
+// ─── Login MFA ────────────────────────────────────────────────────────────────
+// The configured owner uses an authenticator app; other staff use email OTP.
+const OTP_REQUIRED_ROLES = ["admin", "moderator", "superuser"];
 const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
 function generateOtpCode(): string {
@@ -368,6 +371,7 @@ async function finishLogin(
   req: Request,
   res: Response,
   rememberMe?: boolean,
+  ownerMfaVerified = false,
 ): Promise<void> {
   const token = jwt.sign(
     {
@@ -375,6 +379,7 @@ async function finishLogin(
       email: user.email,
       role: effectiveLoginRole,
       subscriptionTier: user.subscription_tier || "free",
+      ...(ownerMfaVerified ? { ownerMfa: true } : {}),
     },
     getJwtSecret(),
     { expiresIn: rememberMe ? "30d" : JWT_EXPIRES_IN },
@@ -639,7 +644,7 @@ router.post(
     }
 
     // Detect OAuth-only users (they have random hex passwords, not user-set)
-    if (user?.oauth_provider) {
+    if (user?.oauth_provider && !isSuperadmin(user.email)) {
       const provider = user.oauth_provider;
       res.status(400).json({
         success: false,
@@ -707,34 +712,58 @@ router.post(
       }
     }
 
-    // Staff 2FA gate — admin/moderator must verify a one-time email code
-    // before a session is issued. Superuser (superadmin) is exempt — it's
-    // the owner's own recovery account and must never be lockable via email.
+    // Require a second factor before issuing any privileged staff session.
     if (OTP_REQUIRED_ROLES.includes(effectiveLoginRole)) {
-      const code = generateOtpCode();
-      const codeHash = await bcrypt.hash(code, 10);
+      const ownerTotpRequired =
+        effectiveLoginRole === "superuser" && isSuperadmin(user.email);
+      if (ownerTotpRequired && !isValidTotpSecret(process.env.SUPERADMIN_TOTP_SECRET)) {
+        console.error(
+          "[AUTH] Owner sign-in blocked: SUPERADMIN_TOTP_SECRET is not configured with a valid Base32 secret",
+        );
+        res.status(503).json({
+          success: false,
+          message:
+            "Owner authenticator is not configured. Contact the deployment administrator.",
+        });
+        return;
+      }
 
-      // Clear any previous pending OTPs for this user, then store the new one
-      await db.execute(
-        sql`DELETE FROM verification_tokens WHERE user_id = ${user.id} AND type = 'login_otp'`,
-      );
-      await db.insert(schema.verificationTokens).values({
-        userId: user.id,
-        token: codeHash,
-        type: "login_otp",
-        expiresAt: new Date(Date.now() + OTP_EXPIRY_MS),
-      });
+      if (!ownerTotpRequired) {
+        const code = generateOtpCode();
+        const codeHash = await bcrypt.hash(code, 10);
+        await db.execute(
+          sql`DELETE FROM verification_tokens WHERE user_id = ${user.id} AND type = 'login_otp'`,
+        );
+        await db.insert(schema.verificationTokens).values({
+          userId: user.id,
+          token: codeHash,
+          type: "login_otp",
+          expiresAt: new Date(Date.now() + OTP_EXPIRY_MS),
+        });
 
-      sendEmail(
-        user.email,
-        "Your Verso Air sign-in code",
-        `<p>Your verification code is:</p><h2 style="letter-spacing:4px">${code}</h2><p>This code expires in 10 minutes. If you didn't try to sign in, ignore this email.</p>`,
-      ).catch((e) => console.warn("[AUTH] Failed to send OTP email:", e));
+        const emailSent = await sendEmail(
+          user.email,
+          "Your Verso Air sign-in code",
+          `<p>Your verification code is:</p><h2 style="letter-spacing:4px">${code}</h2><p>This code expires in 10 minutes. If you didn't try to sign in, ignore this email.</p>`,
+        );
+        if (!emailSent) {
+          await db.execute(
+            sql`DELETE FROM verification_tokens WHERE user_id = ${user.id} AND type = 'login_otp'`,
+          );
+          res.status(503).json({
+            success: false,
+            message:
+              "Unable to send the sign-in verification code. Please try again later.",
+          });
+          return;
+        }
+      }
 
       const otpToken = jwt.sign(
         {
           userId: String(user.id),
           purpose: "login_otp",
+          factor: ownerTotpRequired ? "totp" : "email",
           rememberMe,
         },
         getJwtSecret(),
@@ -745,6 +774,7 @@ router.post(
         success: true,
         requiresOtp: true,
         otpToken,
+        otpMethod: ownerTotpRequired ? "authenticator" : "email",
         email: user.email,
       });
       return;
@@ -756,8 +786,7 @@ router.post(
 
 /**
  * POST /auth/verify-login-otp
- * Completes login for staff accounts (admin/moderator) after they submit
- * the 6-digit code emailed to them by /auth/login.
+ * Completes privileged login after the required second factor is verified.
  */
 router.post(
   "/verify-login-otp",
@@ -787,6 +816,72 @@ router.post(
     }
 
     const userId = parseInt(payload.userId, 10);
+    if (!Number.isSafeInteger(userId) || userId <= 0) {
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
+    }
+
+    if (payload.factor === "totp") {
+      const result = await db.execute(
+        sql`SELECT id, username, email, role, is_verified, display_name, must_change_password,
+                   subscription_tier, subscription_status, trial_tier, trial_started_at, trial_expires_at
+            FROM users WHERE id = ${userId} LIMIT 1`,
+      );
+      const user = result.rows?.[0] as any;
+      const secret = process.env.SUPERADMIN_TOTP_SECRET;
+      if (
+        !user ||
+        user.role !== "superuser" ||
+        !isSuperadmin(user.email) ||
+        !isValidTotpSecret(secret)
+      ) {
+        res.status(401).json({
+          success: false,
+          message: "Authenticator verification is unavailable. Sign in again.",
+        });
+        return;
+      }
+
+      const acceptedStep = verifyTotpCode(secret, String(code), Date.now());
+      if (acceptedStep === null) {
+        res.status(401).json({ success: false, message: "Incorrect or expired code" });
+        return;
+      }
+
+      const now = new Date();
+      await db.execute(
+        sql`DELETE FROM verification_tokens
+            WHERE user_id = ${userId} AND type = 'login_totp' AND expires_at < ${now}`,
+      );
+      const consumedStep = await db.execute(
+        sql`INSERT INTO verification_tokens (user_id, token, type, expires_at)
+            VALUES (${userId}, ${`totp:${userId}:${acceptedStep}`}, 'login_totp', ${new Date(now.getTime() + 120_000)})
+            ON CONFLICT (token) DO NOTHING
+            RETURNING id`,
+      );
+      if (!consumedStep.rows?.length) {
+        res.status(401).json({
+          success: false,
+          message: "That authenticator code was already used. Wait for a new code.",
+        });
+        return;
+      }
+
+      await finishLogin(
+        user,
+        user.role,
+        req,
+        res,
+        payload.rememberMe === true,
+        true,
+      );
+      return;
+    }
+
+    if (payload.factor !== "email") {
+      res.status(401).json({ success: false, message: "Invalid token" });
+      return;
+    }
 
     const tokenRows = await db.execute(
       sql`SELECT id, token, expires_at FROM verification_tokens
@@ -822,6 +917,13 @@ router.post(
     const user = result.rows?.[0] as any;
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    if (user.role === "superuser" && isSuperadmin(user.email)) {
+      res.status(401).json({
+        success: false,
+        message: "Owner accounts must verify with their authenticator app.",
+      });
       return;
     }
 
@@ -960,6 +1062,13 @@ router.get(
     ).replace(/\/$/, "");
 
     if (verifiedUser) {
+      if (verifiedUser.role === "superuser") {
+        res.redirect(
+          `${appUrl}/auth/signin?redirect=%2Fgeo-admin&error=owner_password_totp_required`,
+        );
+        return;
+      }
+
       const verifyToken = jwt.sign(
         {
           userId: String(verifiedUser.id),
@@ -1345,6 +1454,15 @@ router.post(
         success: false,
         message: denial.message,
         error: { code: denial.code, message: denial.message },
+      });
+    }
+
+    if (user.role === "superuser") {
+      return res.status(403).json({
+        success: false,
+        code: "OWNER_USE_SECURE_SIGN_IN",
+        message:
+          "Owner accounts must sign in with their email and password through the secure sign-in page.",
       });
     }
 
@@ -2506,9 +2624,6 @@ const artistLoginSchema = z.union([
   }),
 ]);
 
-// Superuser artist-code shortcut is disabled unless explicitly configured.
-// Superusers should sign in with email + password.
-const SUPERUSER_ARTIST_CODE = process.env.SUPERUSER_ARTIST_CODE || "";
 // Failure throttle: per client IP (any code), plus a global cap on
 // staff-code-shaped guesses so short codes cannot be brute-forced.
 const CODE_FAIL_LIMIT = 8;
@@ -2543,8 +2658,8 @@ const codeFailed = (key: string, code = "") => {
 };
 
 // Staff codes are random secrets; only their SHA-256 hashes live in env vars.
+// Owner codes are unsupported: the owner must use password + authenticator.
 const STAFF_CODE_HASHES: Array<{ env: string; who: string }> = [
-  { env: "STAFF_CODE_HASH_OWNER", who: "owner" },
   { env: "STAFF_CODE_HASH_ADMIN", who: "admin_025" },
   { env: "STAFF_CODE_HASH_MOD", who: "mod_010" },
 ];
@@ -2559,13 +2674,6 @@ function matchStaffCode(code: string): string | null {
   }
   return null;
 }
-
-const isSuperuserArtistCode = (candidate: string): boolean => {
-  if (!SUPERUSER_ARTIST_CODE || SUPERUSER_ARTIST_CODE.length < 16) return false;
-  const a = Buffer.from(candidate);
-  const b = Buffer.from(SUPERUSER_ARTIST_CODE);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-};
 
 /**
  * POST /auth/artist/register
@@ -2817,25 +2925,8 @@ router.post(
     let user: any = null;
     let skipPasswordCheck = false;
 
-    // ── Path 1: Superuser artist code (exact case match) ──
-    if ("artistCode" in data && isSuperuserArtistCode(data.artistCode)) {
-      // Find superuser account
-      const [superuser] = await db
-        .select()
-        .from(schema.users)
-        .where(eq(schema.users.role, "superuser"))
-        .limit(1);
-      if (!superuser) {
-        res
-          .status(401)
-          .json({ success: false, message: "Invalid artist code" });
-        return;
-      }
-      user = superuser;
-      skipPasswordCheck = true;
-    }
-    // ── Path 2: Regular artist code lookup ──
-    else if ("artistCode" in data) {
+    // ── Path 1: Regular artist code lookup ──
+    if ("artistCode" in data) {
       const code = data.artistCode.trim();
       const throttleKey = codeKey(req, code);
       let profileDivision = "";
@@ -2881,61 +2972,20 @@ router.post(
         }
       }
       if (!user) {
-        // Staff secret codes map to a staff account (owner via SUPERADMIN_EMAIL)
+        // Staff codes are limited to explicitly configured non-owner staff.
         const staffWho = matchStaffCode(code);
         if (staffWho) {
           let resolved: any;
-          if (staffWho === "owner") {
-            if (SUPERADMIN_EMAIL) {
-              [resolved] = await db
-                .select()
-                .from(schema.users)
-                .where(
-                  sql`lower(${schema.users.email}) = ${SUPERADMIN_EMAIL.trim().toLowerCase()}`,
-                )
-                .limit(1);
-            }
-            // The code itself is the secret; fall back to the superuser account
-            if (!resolved) {
-              [resolved] = await db
-                .select()
-                .from(schema.users)
-                .where(inArray(schema.users.role, ["superuser", "superadmin"]))
-                .limit(1);
-            }
-            // First sign-in on a fresh database: bootstrap the owner account
-            if (!resolved && SUPERADMIN_EMAIL) {
-              const ownerEmail = SUPERADMIN_EMAIL.trim().toLowerCase();
-              const base =
-                ownerEmail.split("@")[0].replace(/[^a-z0-9_]/g, "") || "owner";
-              const randomPassword = await bcrypt.hash(
-                crypto.randomBytes(32).toString("hex"),
-                SALT_ROUNDS,
-              );
-              [resolved] = await db
-                .insert(schema.users)
-                .values({
-                  username: `${base}_${crypto.randomBytes(2).toString("hex")}`,
-                  email: ownerEmail,
-                  password: randomPassword,
-                  role: "superuser",
-                  isVerified: true,
-                } as any)
-                .returning();
-              console.warn("[ARTIST AUTH] Owner account bootstrapped");
-            }
-          } else {
-            [resolved] = await db
-              .select()
-              .from(schema.users)
-              .where(
-                or(
-                  eq(schema.users.username, staffWho),
-                  eq(schema.users.gateUsername, staffWho),
-                ),
-              )
-              .limit(1);
-          }
+          [resolved] = await db
+            .select()
+            .from(schema.users)
+            .where(
+              or(
+                eq(schema.users.username, staffWho),
+                eq(schema.users.gateUsername, staffWho),
+              ),
+            )
+            .limit(1);
           if (resolved) {
             user = resolved;
             skipPasswordCheck = true;
@@ -2946,6 +2996,14 @@ router.post(
           }
         }
       }
+      if (user?.role === "superuser") {
+        codeFailed(throttleKey, code);
+        res.status(401).json({
+          success: false,
+          message: "Owner accounts must use email, password, and an authenticator code.",
+        });
+        return;
+      }
       if (!user) {
         codeFailed(throttleKey, code);
         res.status(401).json({
@@ -2954,10 +3012,9 @@ router.post(
         });
         return;
       }
-      // Password-free code sign-in is a merit perk of the top divisions.
-      // Staff (admin/superuser) hold issued secret codes and bypass the password.
+      // Password-free code sign-in is a merit perk of the top artist divisions.
       const codeOnlyDivisions = ["elite", "signed", "legend"];
-      const isStaffAccount = user.role === "superuser" || user.role === "admin";
+      const isStaffAccount = user.role === "admin";
       const needsPassword =
         !isStaffAccount &&
         profileDivision !== "" &&
@@ -3043,6 +3100,16 @@ router.post(
       res
         .status(400)
         .json({ success: false, message: "Email or artist code required" });
+      return;
+    }
+
+    if (user.role === "superuser") {
+      res.status(403).json({
+        success: false,
+        code: "OWNER_USE_SECURE_SIGN_IN",
+        message:
+          "Owner accounts must sign in with their email, password, and authenticator code.",
+      });
       return;
     }
 
@@ -3213,6 +3280,16 @@ router.post(
 
     // --- TSR whitelist check for subscriber login ---
     let effectiveSubRole = user.role || "user";
+    if (effectiveSubRole === "superuser") {
+      res.status(403).json({
+        success: false,
+        code: "OWNER_USE_SECURE_SIGN_IN",
+        message:
+          "Owner accounts must sign in with their email, password, and authenticator code.",
+      });
+      return;
+    }
+
     if (
       effectiveSubRole === "user" &&
       ["max", "enterprise"].includes(user.subscriptionTier || "")
@@ -3459,6 +3536,16 @@ router.post(
       res
         .status(401)
         .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    if (user.role === "superuser") {
+      res.status(403).json({
+        success: false,
+        code: "OWNER_USE_SECURE_SIGN_IN",
+        message:
+          "Owner accounts must sign in with their email, password, and authenticator code.",
+      });
       return;
     }
 

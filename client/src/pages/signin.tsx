@@ -301,8 +301,9 @@ export default function SignIn() {
   const [passwordChangeSaving, setPasswordChangeSaving] = useState(false);
   const [passwordChangeError, setPasswordChangeError] = useState("");
 
-  // Staff 2FA (admin/moderator) — one-time email code after password check
+  // Privileged accounts require a second factor after the password check.
   const [otpToken, setOtpToken] = useState("");
+  const [otpMethod, setOtpMethod] = useState<"email" | "authenticator">("email");
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState("");
   const [otpResending, setOtpResending] = useState(false);
@@ -480,9 +481,10 @@ export default function SignIn() {
         return;
       }
 
-      // Staff 2FA — password was correct, code was emailed
+      // Privileged sign-in — password was correct; verify the second factor.
       if (data.requiresOtp) {
         setOtpToken(data.otpToken);
+        setOtpMethod(data.otpMethod === "authenticator" ? "authenticator" : "email");
         setMfaCode(["", "", "", "", "", ""]);
         setOtpError("");
         setStep("login-otp");
@@ -1428,7 +1430,7 @@ export default function SignIn() {
     ));
   }
 
-  // ── Staff 2FA: email one-time code (admin / moderator) ──────────────────
+  // ── Privileged login second factor ──────────────────────────────────────
   if (step === "login-otp") {
     const handleVerifyOtp = async () => {
       const code = mfaCode.join("");
@@ -1485,8 +1487,13 @@ export default function SignIn() {
           title: "✅ Signed in",
           description: `Welcome back, ${data.user.name || data.user.email}!`,
         });
+        const redirectTarget = getQueryParam("redirect");
+        if (redirectTarget?.startsWith("/")) {
+          navigate(redirectTarget);
+          return;
+        }
         const role = (data.user.role || "user").toLowerCase();
-        if (role === "admin" || role === "moderator") {
+        if (role === "admin" || role === "moderator" || role === "superuser") {
           navigate("/geo-admin/workspace");
         } else {
           navigate("/dashboard");
@@ -1514,8 +1521,18 @@ export default function SignIn() {
         const data = await res.json();
         if (data.requiresOtp) {
           setOtpToken(data.otpToken);
+          setOtpMethod(data.otpMethod === "authenticator" ? "authenticator" : "email");
           setMfaCode(["", "", "", "", "", ""]);
-          toast({ title: "📧 New code sent", description: data.email });
+          toast({
+            title:
+              data.otpMethod === "authenticator"
+                ? "Authenticator required"
+                : "📧 New code sent",
+            description:
+              data.otpMethod === "authenticator"
+                ? "Enter the current code from your authenticator app."
+                : data.email,
+          });
         } else {
           setOtpError("Couldn't resend — please sign in again");
         }
@@ -1539,9 +1556,15 @@ export default function SignIn() {
                   Enter Verification Code
                 </h2>
                 <p className="text-gray-600 mt-2">
-                  We've emailed a 6-digit code to
-                  <br />
-                  <span className="font-medium">{formData.email}</span>
+                  {otpMethod === "authenticator" ? (
+                    "Enter the current 6-digit code from your authenticator app."
+                  ) : (
+                    <>
+                      We've emailed a 6-digit code to
+                      <br />
+                      <span className="font-medium">{formData.email}</span>
+                    </>
+                  )}
                 </p>
               </div>
 
@@ -1587,16 +1610,18 @@ export default function SignIn() {
                 </Button>
 
                 <div className="text-center space-y-3">
-                  <p className="text-gray-600 text-sm">
-                    Didn't receive the code?{" "}
-                    <button
-                      onClick={handleResendOtp}
-                      disabled={otpResending}
-                      className="text-[#bf831c] hover:underline font-medium"
-                    >
-                      {otpResending ? "Sending..." : "Resend Code"}
-                    </button>
-                  </p>
+                  {otpMethod === "email" && (
+                    <p className="text-gray-600 text-sm">
+                      Didn't receive the code?{" "}
+                      <button
+                        onClick={handleResendOtp}
+                        disabled={otpResending}
+                        className="text-[#bf831c] hover:underline font-medium"
+                      >
+                        {otpResending ? "Sending..." : "Resend Code"}
+                      </button>
+                    </p>
+                  )}
                   <button
                     onClick={() => setStep("login")}
                     className="text-[#bf831c] hover:underline font-medium"
@@ -2087,6 +2112,11 @@ export default function SignIn() {
 
                     if (nextData.requiresOtp) {
                       setOtpToken(nextData.otpToken);
+                      setOtpMethod(
+                        nextData.otpMethod === "authenticator"
+                          ? "authenticator"
+                          : "email",
+                      );
                       setMfaCode(["", "", "", "", "", ""]);
                       setOtpError("");
                       setStep("login-otp");

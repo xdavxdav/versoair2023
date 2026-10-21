@@ -89,6 +89,11 @@ export default function GeoAdminAuthGate({
 
       const data = await res.json();
 
+      if (data.requiresOtp) {
+        navigateTo("/auth/signin?redirect=%2Fgeo-admin");
+        return;
+      }
+
       if (data.success && data.token) {
         localStorage.setItem("auth_token", data.token);
         localStorage.setItem("authToken", data.token); // legacy compat
@@ -112,10 +117,6 @@ export default function GeoAdminAuthGate({
     }
   };
 
-  const isStaffCodeEntry = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i.test(
-    username.trim(),
-  );
-
   const handleGeoAdminSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -128,36 +129,28 @@ export default function GeoAdminAuthGate({
         return;
       }
 
-      // A staff code (AAA-000-AAA) signs in directly, no password
-      const res = isStaffCodeEntry
-        ? await fetch("/auth/artist/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ artistCode: username.trim() }),
-          })
-        : await fetch("/auth/admin-gate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              username: username.toLowerCase().trim(),
-              password,
-            }),
-          });
+      const res = await fetch("/auth/admin-gate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          username: username.toLowerCase().trim(),
+          password,
+        }),
+      });
 
       const data = await res.json();
+
+      if (data.code === "OWNER_USE_SECURE_SIGN_IN") {
+        navigateTo("/auth/signin?redirect=%2Fgeo-admin");
+        return;
+      }
 
       if (data.success && data.token) {
         localStorage.setItem("auth_token", data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("geoadmin_session", "true");
-        localStorage.setItem(
-          "geoadmin_username",
-          isStaffCodeEntry
-            ? data.user?.name || "staff"
-            : username.toLowerCase(),
-        );
+        localStorage.setItem("geoadmin_username", username.toLowerCase());
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
         setAuthToken(data.token);
         if (data.user) {
@@ -165,18 +158,7 @@ export default function GeoAdminAuthGate({
         }
         await initializeCsrfToken();
         setIsSuccess(true);
-        // Owner and admin staff codes go straight to the admin panel
-        if (
-          isStaffCodeEntry &&
-          (data.user?.role === "superuser" || data.user?.role === "admin")
-        ) {
-          navigateTo("/geo-admin/workspace");
-        }
-        onSignInSuccess(
-          isStaffCodeEntry
-            ? data.user?.name || "staff"
-            : username.toLowerCase(),
-        );
+        onSignInSuccess(username.toLowerCase());
       } else {
         setError(data.message || "Invalid credentials.");
       }
@@ -540,15 +522,10 @@ export default function GeoAdminAuthGate({
                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
                       type={showPassword ? "text" : "password"}
-                      value={isStaffCodeEntry ? "" : password}
+                      value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder={
-                        isStaffCodeEntry
-                          ? "No password for a staff code"
-                          : "••••••••"
-                      }
-                      disabled={isStaffCodeEntry}
-                      required={!isStaffCodeEntry}
+                      placeholder="••••••••"
+                      required
                       className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
                     />
                     <button
@@ -681,7 +658,7 @@ export default function GeoAdminAuthGate({
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Admin username or staff code"
+                      placeholder="Admin username"
                       required
                       className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
                     />
@@ -718,7 +695,7 @@ export default function GeoAdminAuthGate({
 
                 <Button
                   type="submit"
-                  disabled={loading || !username.trim() || (!isStaffCodeEntry && !password)}
+                  disabled={loading || !username.trim() || !password}
                   className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50"
                 >
                   {loading ? (

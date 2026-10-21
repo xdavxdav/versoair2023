@@ -415,6 +415,13 @@ async function handleOAuthCallback(req: Request, res: Response) {
     let accountEmail = email;
 
     if (existing) {
+      if (existing.role === "superuser") {
+        res.redirect(
+          `${appUrl}/auth/signin?redirect=%2Fgeo-admin&error=owner_password_totp_required`,
+        );
+        return;
+      }
+
       if (
         existing.oauth_provider &&
         (existing.oauth_provider !== provider ||

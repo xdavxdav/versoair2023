@@ -286,6 +286,7 @@ export async function globalAuthGate(
       id?: string | number;
       email?: string;
       role?: AuthUser["role"];
+      ownerMfa?: boolean;
     };
 
     const userId = decoded.userId ?? decoded.id;
@@ -329,6 +330,24 @@ export async function globalAuthGate(
         success: false,
         status: 401,
         error: { code: "INVALID_TOKEN", message: "Account not found" },
+      });
+    }
+
+    if (
+      isConfiguredOwner(
+        { email: dbUser.email, role: dbUser.role },
+        process.env.SUPERADMIN_EMAIL,
+      ) &&
+      decoded.ownerMfa !== true
+    ) {
+      res.clearCookie("auth_token", { path: "/" });
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "OWNER_MFA_REQUIRED",
+          message: "Please sign in again using your password and authenticator code.",
+        },
       });
     }
 
@@ -384,6 +403,7 @@ export function requireAuth(allowedRoles?: string[]) {
         id?: string | number;
         email?: string;
         role?: AuthUser["role"];
+        ownerMfa?: boolean;
       };
 
       const userId = decoded.userId ?? decoded.id;
@@ -416,6 +436,23 @@ export function requireAuth(allowedRoles?: string[]) {
           success: false,
           status: 401,
           error: { code: "INVALID_TOKEN", message: "Account not found" },
+        });
+      }
+
+      if (
+        isConfiguredOwner(
+          { email: dbUser.email, role: dbUser.role },
+          process.env.SUPERADMIN_EMAIL,
+        ) &&
+        decoded.ownerMfa !== true
+      ) {
+        res.clearCookie("auth_token", { path: "/" });
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: "OWNER_MFA_REQUIRED",
+            message: "Please sign in again using your password and authenticator code.",
+          },
         });
       }
 

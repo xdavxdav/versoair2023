@@ -8,6 +8,22 @@ configured `SUPERADMIN_EMAIL` identity **and** the stored `superuser` role.
 Staff support uses `/geo-admin/workspace`; subscriptions do not grant staff
 roles. The owner overview includes persistent implementation tracking.
 
+The configured owner signs in at `/auth/signin` with the owner email and
+password, then enters a six-digit code from an authenticator app. Before
+deploying owner TOTP enforcement, generate a private secret with
+`npm run security:generate-owner-totp-secret`, store it as
+`SUPERADMIN_TOTP_SECRET` in Render (and local `.env` for development), and add
+the same key to an authenticator app as a time-based one-time password. The
+secret is intentionally not stored in the database or source control. Keep a
+secure offline backup; without the secret, owner sign-in fails closed and
+requires an operator to rotate the environment secret. Existing owner sessions
+without a verified TOTP claim are rejected after deployment. OAuth, GeoAdmin
+gate, artist-code, subscriber, and community login shortcuts cannot create an
+owner session; use the password-plus-authenticator flow. Admin and Moderator
+continue to verify with an email one-time code. Remove legacy
+`STAFF_CODE_HASH_OWNER` and `SUPERUSER_ARTIST_CODE` variables from Render after
+deploying; those owner-code sign-in paths are no longer supported.
+
 ## VersoAI setup
 
 The hosted chat needs a server-side `GROQ_API_KEY`; no model download is
