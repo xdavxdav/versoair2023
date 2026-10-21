@@ -146,6 +146,7 @@ const ArtistPortalWelcomePage = (props: any) => {
       </div>
     );
   }
+
   return (
     <Suspense fallback={<PageLoader />}>
       <ArtistPortalWelcome {...props} />
@@ -886,7 +887,19 @@ function Router() {
           ❓ HELP & SUPPORT
           ═══════════════════════════════════════════════ */}
       <Route path="/sav" component={SAV} />
-      <Route path="/versoai" component={VersoAI} />
+      <Route path="/versoai">
+        {() => (
+          <ErrorBoundary
+            fallback={
+              <VersoAIErrorFallback
+                title="VersoAI is temporarily unavailable."
+              />
+            }
+          >
+            <VersoAI />
+          </ErrorBoundary>
+        )}
+      </Route>
       <Route path="/ai">{() => <Redirect to="/versoai" />}</Route>
       <Route path="/help" component={HelpCenter} />
       <Route path="/help/account" component={AccountHelp} />
@@ -1055,6 +1068,35 @@ function PageUnavailable() {
       >
         Return home
       </Link>
+    </div>
+  );
+}
+
+function VersoAIErrorFallback({ title }: { title: string }) {
+  return (
+    <div
+      role="alert"
+      className="mx-auto my-8 flex max-w-xl flex-col items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-6 text-center text-slate-900 dark:border-amber-700 dark:bg-slate-900 dark:text-white"
+    >
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <p className="text-sm text-slate-600 dark:text-slate-300">
+        The rest of Verso Air is still available. You can retry or return to the homepage.
+      </p>
+      <div className="flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white"
+        >
+          Retry VersoAI
+        </button>
+        <Link
+          href="/"
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200"
+        >
+          Return home
+        </Link>
+      </div>
     </div>
   );
 }
@@ -1489,9 +1531,17 @@ function AppContent() {
 
       {/* Global VersoAI Assistant (Talk & Chat) */}
       {isVersoAIPage && (
-        <Suspense fallback={null}>
-          <VersoAIChat />
-        </Suspense>
+        <ErrorBoundary
+          fallback={
+            <VersoAIErrorFallback
+              title="The VersoAI assistant is temporarily unavailable."
+            />
+          }
+        >
+          <Suspense fallback={null}>
+            <VersoAIChat />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* Notification bell — fixed top-right, visible on all non-auth pages.

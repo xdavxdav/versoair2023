@@ -37,8 +37,8 @@ test("production shows a readiness notice and redirects to home after five secon
             assert.match(body, /We're preparing this part of Verso Air/);
             assert.match(body, /href="\/"/);
             assert.match(body, /setTimeout\(returnHome, 5000\)/);
-            assert.match(body, /Stay on this page/);
-            assert.match(body, /clearTimeout\(redirectTimer\)/);
+            assert.match(body, /Review Verso Air/);
+            assert.doesNotMatch(body, /Stay on this page|You're staying here/);
           }
           assert.equal(response.headers.get("cache-control"), "no-store");
           assert.match(

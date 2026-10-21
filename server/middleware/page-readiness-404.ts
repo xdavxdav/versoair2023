@@ -92,29 +92,20 @@ function renderPageReadinessNotice(pageTitle: string): string {
       <p class="message">We're preparing this part of Verso Air. Please check back soon.</p>
       <p class="countdown" id="countdown" role="status" aria-live="polite">Returning to the homepage in 5 seconds.</p>
       <div class="actions">
-        <a class="primary" href="/">Go to homepage</a>
-        <button class="secondary" id="stay" type="button">Stay on this page</button>
+        <a class="primary" href="/">Review Verso Air</a>
       </div>
     </main>
     <script>
       (() => {
         let seconds = 5;
         const countdown = document.getElementById("countdown");
-        const stay = document.getElementById("stay");
         const returnHome = () => { window.location.replace("/"); };
-        const redirectTimer = window.setTimeout(returnHome, 5000);
+        window.setTimeout(returnHome, 5000);
         const countdownTimer = window.setInterval(() => {
           seconds -= 1;
           if (countdown) countdown.textContent = "Returning to the homepage in " + seconds + " second" + (seconds === 1 ? "" : "s.");
           if (seconds <= 0) window.clearInterval(countdownTimer);
         }, 1000);
-        stay?.addEventListener("click", () => {
-          window.clearTimeout(redirectTimer);
-          window.clearInterval(countdownTimer);
-          if (countdown) countdown.textContent = "You're welcome to stay here. Use the homepage button whenever you're ready.";
-          stay.disabled = true;
-          stay.textContent = "You're staying here";
-        });
       })();
     </script>
   </body>
