@@ -1465,11 +1465,12 @@ function AppContent() {
 
       {/* Main Router */}
       <main
+        translate={isGeoAdminPage ? "no" : undefined}
         className={`flex-1 min-h-screen transition-opacity duration-300 ${
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${isMessagesPage ? "h-screen min-h-0 overflow-hidden" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""}`}
+        } ${pageEnter ? "page-enter" : ""} ${isMessagesPage ? "h-screen min-h-0 overflow-hidden" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""} ${isGeoAdminPage ? "notranslate" : ""}`}
         style={{ overflowX: isMessagesPage ? "hidden" : "clip" }}
       >
         <ErrorBoundary>
