@@ -153,8 +153,12 @@ function Router() {
       <Route path="/stream" component={StreamPage} />
       <Route path="/track/:id" component={TrackDetailPage} />
       <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
-      <Route path="/library" component={LibraryPage} />
-      <Route path="/analytics" component={AnalyticsStreamingPage} />
+      <Route path="/library">
+        {() => <ProtectedRoute component={LibraryPage} />}
+      </Route>
+      <Route path="/analytics">
+        {() => <ProtectedRoute component={AnalyticsStreamingPage} />}
+      </Route>
       <Route path="/arena" component={ArenaContestPage} />
       <Route path="/arena/:id" component={ArenaContestPage} />
       <Route path="/revenue-pulse" component={RevenuePulsePage} />

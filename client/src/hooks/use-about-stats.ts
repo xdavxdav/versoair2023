@@ -18,12 +18,6 @@ export interface OverallStats {
   max_rating: number;
 }
 
-export interface MusicStats {
-  totalArtists: number;
-  totalTracks: number;
-  totalStreams: number;
-}
-
 export interface DatabaseStats {
   totalRecords: number;
   activeTables: number;
@@ -32,7 +26,6 @@ export interface DatabaseStats {
 export interface AboutStats {
   categoryStats: CategoryStat[];
   overallStats: OverallStats | null;
-  musicStats: MusicStats | null;
   dbStats: DatabaseStats | null;
   topLocations: { location: string; count: number }[];
   loading: boolean;
@@ -42,7 +35,6 @@ export interface AboutStats {
 export function useAboutStats(): AboutStats {
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
-  const [musicStats, setMusicStats] = useState<MusicStats | null>(null);
   const [dbStats] = useState<DatabaseStats | null>(null);
   const [topLocations, setTopLocations] = useState<
     { location: string; count: number }[]
@@ -57,11 +49,10 @@ export function useAboutStats(): AboutStats {
         setError(null);
 
         // Fetch all endpoints in parallel
-        const [categoryRes, statsRes, musicRes, businessesRes] =
+        const [categoryRes, statsRes, businessesRes] =
           await Promise.allSettled([
             fetch("/api/business-categories"),
             fetch("/api/businesses/stats/summary"),
-            fetch("/api/music/analytics"),
             fetch("/api/businesses?limit=100"),
           ]);
 
@@ -86,19 +77,6 @@ export function useAboutStats(): AboutStats {
               avg_rating: parseFloat(d.avg_rating) || 0,
               total_reviews: Number(d.total_reviews) || 0,
               max_rating: parseFloat(d.max_rating) || 0,
-            });
-          }
-        }
-
-        // Parse music stats
-        if (musicRes.status === "fulfilled" && musicRes.value.ok) {
-          const json = await musicRes.value.json();
-          const d = json?.data;
-          if (d) {
-            setMusicStats({
-              totalArtists: Number(d.totalArtists) || 0,
-              totalTracks: Number(d.totalTracks) || 0,
-              totalStreams: Number(d.totalStreams) || 0,
             });
           }
         }
@@ -136,7 +114,6 @@ export function useAboutStats(): AboutStats {
   return {
     categoryStats,
     overallStats,
-    musicStats,
     dbStats,
     topLocations,
     loading,

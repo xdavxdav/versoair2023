@@ -2105,6 +2105,24 @@ router.get("/history", async (req: Request, res: Response) => {
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
 
+async function userOwnsMusicArtist(
+  artistId: string,
+  userId: number,
+): Promise<boolean> {
+  const ownership = await pool.query(
+    `SELECT 1
+     FROM music_artists ma
+     WHERE ma.id = $1 AND ma.user_id = $2
+     UNION ALL
+     SELECT 1
+     FROM artist_profiles ap
+     WHERE ap.music_artist_id = $1 AND ap.user_id = $2
+     LIMIT 1`,
+    [artistId, userId],
+  );
+  return ownership.rows.length > 0;
+}
+
 // GET /api/streaming/analytics/overview — Platform-wide analytics
 router.get(
   "/analytics/overview",
@@ -2204,14 +2222,8 @@ router.get(
     const { id } = req.params;
     const userId = Number(req.user?.userId);
     const isAdmin = ["admin", "superuser"].includes(req.user?.role || "");
-    if (!isAdmin) {
-      const ownership = await pool.query(
-        `SELECT 1 FROM music_artists WHERE id = $1 AND user_id = $2`,
-        [id, userId],
-      );
-      if (!ownership.rows.length) {
-        return res.status(404).json({ error: "Artist not found" });
-      }
+    if (!isAdmin && !(await userOwnsMusicArtist(id, userId))) {
+      return res.status(404).json({ error: "Artist not found" });
     }
 
     const artist = await pool.query(
@@ -2646,14 +2658,8 @@ router.get(
     const { artistId } = req.params;
     const userId = Number(req.user?.userId);
     const isAdmin = ["admin", "superuser"].includes(req.user?.role || "");
-    if (!isAdmin) {
-      const ownership = await pool.query(
-        `SELECT 1 FROM music_artists WHERE id = $1 AND user_id = $2`,
-        [artistId, userId],
-      );
-      if (!ownership.rows.length) {
-        return res.status(404).json({ error: "Artist not found" });
-      }
+    if (!isAdmin && !(await userOwnsMusicArtist(artistId, userId))) {
+      return res.status(404).json({ error: "Artist not found" });
     }
 
     const artist = await pool.query(

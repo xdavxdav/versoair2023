@@ -282,7 +282,7 @@ router.get("/my-tracks", requireAuth(), async (req, res) => {
 });
 
 // GET /api/music/analytics
-router.get("/analytics", async (_req, res) => {
+router.get("/analytics", requireAuth(), async (_req, res) => {
   try {
     const analytics = await db
       .select()

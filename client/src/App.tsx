@@ -648,7 +648,9 @@ function Router() {
       <Route path="/finance">{() => <Redirect to="/finances" />}</Route>
       <Route path="/artist-catalogue">{() => <Redirect to="/artistes" />}</Route>
       <Route path="/streamroyale-admin">{() => <Redirect to="/admin/streamroyale" />}</Route>
-      <Route path="/messages" component={MessagesPage} />
+      <Route path="/messages">
+        {() => <ProtectedRoute component={MessagesPage} />}
+      </Route>
       <Route path="/hub" component={HubPage} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
@@ -686,7 +688,9 @@ function Router() {
         {() => <Redirect to="/vheartz" />}
       </Route>
       <Route path="/impact" component={Impact} />
-      <Route path="/tickets" component={Tickets} />
+      <Route path="/tickets">
+        {() => <ProtectedRoute component={Tickets} />}
+      </Route>
       <Route path="/account/billing">
         {() => <ProtectedRoute component={BillingPage} />}
       </Route>
@@ -748,7 +752,9 @@ function Router() {
         </Suspense>
       </Route>
       <Route path="/artisans" component={ArtisansDirectory} />
-      <Route path="/artisans-portal" component={ArtisansPortal} />
+      <Route path="/artisans-portal">
+        {() => <ProtectedRoute component={ArtisansPortal} />}
+      </Route>
       <Route path="/artistes" component={ArtistDirectory} />
       {/* On unified domain: /artist-portal renders welcome page directly (no cross-domain redirect) */}
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
@@ -946,8 +952,12 @@ function Router() {
       <Route path="/stream" component={StreamPage} />
       <Route path="/track/:id" component={TrackDetailPage} />
       <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
-      <Route path="/library" component={LibraryPage} />
-      <Route path="/analytics" component={AnalyticsStreamingPage} />
+      <Route path="/library">
+        {() => <ProtectedRoute component={LibraryPage} />}
+      </Route>
+      <Route path="/analytics">
+        {() => <ProtectedRoute component={AnalyticsStreamingPage} />}
+      </Route>
       <Route path="/arena" component={ArenaContestPage} />
       <Route path="/arena/:id" component={ArenaContestPage} />
       <Route path="/revenue-pulse" component={RevenuePulsePage} />

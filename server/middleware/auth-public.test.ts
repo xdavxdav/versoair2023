@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import test from "node:test";
 import express from "express";
+import music from "../routes/music";
 import translations from "../routes/translations";
 
 test("anonymous public reads work through the global auth gate without exposing protected routes", async () => {
@@ -12,6 +13,7 @@ test("anonymous public reads work through the global auth gate without exposing 
   const app = express();
   app.use(globalAuthGate);
   app.use("/api/translations", translations);
+  app.use("/api/music", music);
   app.get("/auth/oauth/providers", (_req, res) => res.json({ providers: [] }));
   app.get("/api/page-readiness", (_req, res) =>
     res.json({ blockedPaths: ["/get-involved"] }),
@@ -32,6 +34,7 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await response.json()).language, "en");
     assert.equal((await fetch(`${origin}/api/translations/not-a-language`)).status, 400);
     assert.equal((await fetch(`${origin}/api/translations/en?text=private`)).status, 400);
+    assert.equal((await fetch(`${origin}/api/music/analytics`)).status, 401);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`)).status, 200);
     const pageReadiness = await fetch(`${origin}/api/page-readiness`);
     assert.equal(pageReadiness.status, 200);

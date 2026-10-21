@@ -21,16 +21,6 @@ interface MusicArtist {
   createdAt: string;
 }
 
-interface MusicAnalytics {
-  id: number;
-  trackId: number;
-  artistId: number;
-  metricType: string;
-  value: number;
-  period: string;
-  recordedAt: string;
-}
-
 export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
   useScrollLock(isOpen);
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -64,13 +54,7 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
     enabled: isOpen,
   });
 
-  const { data: analyticsResponse } = useQuery<{ data: MusicAnalytics[] }>({
-    queryKey: ["/api/music/analytics"],
-    enabled: isOpen,
-  });
-
   const artists = artistsResponse?.data;
-  const analytics = analyticsResponse?.data;
 
   useEffect(() => {
     if (isOpen && chartRef.current && artists && artists.length > 0) {
