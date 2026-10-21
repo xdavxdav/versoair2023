@@ -1,7 +1,8 @@
 /**
  * Geo-Action Queue — tiered access control for geo-admin operations
  *
- * TSR users → full CRUD, immediate execution (no delays)
+ * GeoAdmin staff → full CRUD, immediate execution (no delays)
+ * Paid subscribers → account-scoped read-only access
  * Subscribers with an approved GeoAdmin add-on → read-only + request queue:
  *   - view actions: instant
  *   - edit requests: 24h delay (auto-approve after delay)
@@ -195,6 +196,7 @@ interface GeoAccess {
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
+  canRequestActions: boolean;
   requiresQueue: boolean;
   editDelayHours: number;
   deleteDelayHours: number;
@@ -209,6 +211,7 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
       canCreate: false,
       canEdit: false,
       canDelete: false,
+      canRequestActions: false,
       requiresQueue: true,
       editDelayHours: 24,
       deleteDelayHours: 72,
@@ -222,6 +225,7 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
       canCreate: true,
       canEdit: true,
       canDelete: true,
+      canRequestActions: false,
       requiresQueue: false,
       editDelayHours: 0,
       deleteDelayHours: 0,
@@ -235,9 +239,24 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
       canCreate: false,
       canEdit: false, // through queue only
       canDelete: false, // through queue only
+      canRequestActions: true,
       requiresQueue: true,
       editDelayHours: 24,
       deleteDelayHours: 72,
+    };
+  }
+
+  if (entitlement.hasActiveSubscription) {
+    return {
+      level: "read-only",
+      role: entitlement.role,
+      canCreate: false,
+      canEdit: false,
+      canDelete: false,
+      canRequestActions: false,
+      requiresQueue: false,
+      editDelayHours: 0,
+      deleteDelayHours: 0,
     };
   }
 
@@ -247,6 +266,7 @@ async function getGeoAccessLevel(userId: number): Promise<GeoAccess> {
     canCreate: false,
     canEdit: false,
     canDelete: false,
+    canRequestActions: false,
     requiresQueue: true,
     editDelayHours: 24,
     deleteDelayHours: 72,
@@ -284,6 +304,15 @@ router.post(
         success: false,
         message:
           "GeoAdmin action requests require an active paid subscription and an approved, active GeoAdmin add-on.",
+      });
+      return;
+    }
+
+    if (access.level === "read-only" && !access.canRequestActions) {
+      res.status(403).json({
+        success: false,
+        message:
+          "GeoAdmin subscribers have account-scoped read-only access. An approved GeoAdmin add-on is required to submit action requests.",
       });
       return;
     }

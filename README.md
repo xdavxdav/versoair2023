@@ -8,21 +8,37 @@ configured `SUPERADMIN_EMAIL` identity **and** the stored `superuser` role.
 Staff support uses `/geo-admin/workspace`; subscriptions do not grant staff
 roles. The owner overview includes persistent implementation tracking.
 
-The configured owner signs in at `/auth/signin` with the owner email and
-password, then enters a six-digit code from an authenticator app. Before
-deploying owner TOTP enforcement, generate a private secret with
-`npm run security:generate-owner-totp-secret`, store it as
+The configured owner signs in at `/geo-admin` with the dedicated
+`AAA-000-AAA` GeoAdmin code instead of email/password, then enters a
+six-digit code from an authenticator app. Configure `SUPERADMIN_GEOADMIN_CODE_HASH`
+as the SHA-256 hex digest of the uppercase owner code, and set
+`SUPERADMIN_EMAIL` to the owner's account email. Never store the raw code in
+Render or source control. Before enabling this flow, generate a private TOTP
+secret with `npm run security:generate-owner-totp-secret`, store it as
 `SUPERADMIN_TOTP_SECRET` in Render (and local `.env` for development), and add
-the same key to an authenticator app as a time-based one-time password. The
-secret is intentionally not stored in the database or source control. Keep a
-secure offline backup; without the secret, owner sign-in fails closed and
-requires an operator to rotate the environment secret. Existing owner sessions
-without a verified TOTP claim are rejected after deployment. OAuth, GeoAdmin
-gate, artist-code, subscriber, and community login shortcuts cannot create an
-owner session; use the password-plus-authenticator flow. Admin and Moderator
-continue to verify with an email one-time code. Remove legacy
-`STAFF_CODE_HASH_OWNER` and `SUPERUSER_ARTIST_CODE` variables from Render after
-deploying; those owner-code sign-in paths are no longer supported.
+the same key to an authenticator app as a time-based one-time password. Keep
+both credentials private and retain a secure offline backup. Owner code login
+fails closed if either hash or TOTP configuration is missing. The code is
+accepted only by the GeoAdmin gate; an owner session is not issued until TOTP
+verification succeeds. Existing owner sessions without a verified TOTP claim
+are rejected.
+
+All GeoAdmin staff, including Admins and Moderators, use passwordless
+`AAA-000-AAA` codes on the GeoAdmin gate. Give every staff identity a different
+code and configure only its SHA-256 digest in `GEOADMIN_STAFF_CODE_HASHES`, a
+JSON object keyed by the staff account username (for example,
+`{"admin_025":"<64-character-sha256-hex>","mod_010":"<64-character-sha256-hex>"}`).
+The owner's code remains configured separately in
+`SUPERADMIN_GEOADMIN_CODE_HASH`. Do not reuse a digest between staff or the
+owner; the server rejects duplicate assignments. Keep raw codes out of Render,
+source control, logs, and invitation email. After inviting a staff member,
+assign their unique code through the deployment's trusted secret-management
+process. An account password set during invitation remains for normal account
+sign-in and does not grant GeoAdmin access. The legacy
+`STAFF_CODE_HASH_ADMIN` and `STAFF_CODE_HASH_MOD` variables are compatibility
+fallbacks for `admin_025` and `mod_010`; migrate them into the JSON mapping
+when convenient.
+`SUPERUSER_ARTIST_CODE` is not accepted for GeoAdmin or artist login.
 
 ## VersoAI setup
 
@@ -294,9 +310,10 @@ Geo Admin staff access is invite-only. A signed-in superuser can open
 `/geo-admin/dashboard` and use **Manage Geo Admin access** to invite selected
 staff by real email address, assigned admin username, and the Admin or
 Moderator role. Invitations are one-use links that expire after 72 hours.
-New recipients set a password; an existing verified account must sign in with
-the invited email and accept the link, preserving its password and other portal
-access. Password recovery is linked from the Geo Admin sign-in page. Invitation
+New recipients set a password for their normal account; an existing verified
+account must sign in with the invited email and accept the link, preserving its
+password and other portal access. Neither password signs in to GeoAdmin; each
+staff member needs a separately provisioned code as described above. Invitation
 messages use `noreply@versoair.com`; make sure this sender is permitted by the
 configured SMTP provider.
 

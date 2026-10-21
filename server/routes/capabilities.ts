@@ -13,6 +13,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { hasGeoAdminAccess } from "@shared/geoadmin-access";
+import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { generateArtistCode } from "../utils/artist-code";
@@ -129,6 +130,18 @@ export async function computeUserCapabilities(userId: number) {
       addonBaseTier: addon?.base_tier,
       addonStatus: addon?.status,
       addonExpiresAt: addon?.expires_at,
+    })
+  ) {
+    portals.add("geo-admin");
+  }
+  if (
+    isReadOnlyGeoAdminSubscriber({
+      role: effectiveRole,
+      tier: effectiveTier,
+      subscriptionStatus: user.subscription_status,
+      subscriptionExpiresAt: isTrialing
+        ? user.trial_expires_at
+        : user.premium_expires_at,
     })
   ) {
     portals.add("geo-admin");

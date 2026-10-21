@@ -346,7 +346,8 @@ export async function globalAuthGate(
         status: 401,
         error: {
           code: "OWNER_MFA_REQUIRED",
-          message: "Please sign in again using your password and authenticator code.",
+          message:
+            "Please sign in again using your GeoAdmin owner code and authenticator code.",
         },
       });
     }
@@ -451,7 +452,8 @@ export function requireAuth(allowedRoles?: string[]) {
           success: false,
           error: {
             code: "OWNER_MFA_REQUIRED",
-            message: "Please sign in again using your password and authenticator code.",
+            message:
+              "Please sign in again using your GeoAdmin owner code and authenticator code.",
           },
         });
       }
@@ -561,17 +563,29 @@ export async function denyGeoAdminSubscriberMutation(
       .select({
         subscriptionTier: schema.users.subscriptionTier,
         subscriptionStatus: schema.users.subscriptionStatus,
+        subscriptionExpiresAt: schema.users.premiumExpiresAt,
+        trialTier: schema.users.trialTier,
+        trialExpiresAt: schema.users.trialExpiresAt,
       })
       .from(schema.users)
       .where(eq(schema.users.id, userId))
       .limit(1);
 
+    const trialActive =
+      !!account?.trialTier &&
+      !!account.trialExpiresAt &&
+      account.trialExpiresAt.getTime() > Date.now();
     if (
       account &&
       isReadOnlyGeoAdminSubscriber({
         role: req.user.role,
-        tier: account.subscriptionTier,
-        subscriptionStatus: account.subscriptionStatus,
+        tier: trialActive ? account.trialTier : account.subscriptionTier,
+        subscriptionStatus: trialActive
+          ? "trialing"
+          : account.subscriptionStatus,
+        subscriptionExpiresAt: trialActive
+          ? account.trialExpiresAt
+          : account.subscriptionExpiresAt,
       })
     ) {
       res.status(403).json({

@@ -1300,8 +1300,8 @@ export default function Home() {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 5000);
-  const debouncedLocationQuery = useDebounce(locationQuery, 5000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 3000);
+  const debouncedLocationQuery = useDebounce(locationQuery, 3000);
 
   // Number of panels
   const NUM_PANELS = 4;

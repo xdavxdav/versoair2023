@@ -523,3 +523,35 @@ passed. Diagnose and rerun this CI workflow. The ticket workflow integration
 test still requires an explicitly disposable PostgreSQL database and was not
 run. The local home-panel test did not fit the selected upstream home-page
 implementation and was not ported; its original file remains in the stash.
+
+## Owner-provided open-items tracker — 2026-10-21
+
+This list records the status reported by the owner on 2026-10-21. It is a
+tracking snapshot, not evidence that an operation was performed or permission
+to change production, delete an account, deploy pricing, or alter legal copy.
+Update each row only when its stated evidence or decision exists.
+
+### Technical work
+
+| ID | Priority | Item | Status | Next action / completion evidence |
+| --- | --- | --- | --- | --- |
+| TECH-01 | P1 | Logout ghost session | **Open — unverified** | Confirm the server logout handler invalidates the session/token and clears the relevant cookie. Run the reported 30-second test: log out, hard-refresh, and verify the protected session stays invalid. Record the observed response and result. |
+| TECH-02 | P1 | `/terms` §4 still references Stripe while `/pricing` says there is no checkout | **Awaiting owner approval** | The copy fix is drafted. Do not change legal copy until the owner approves it; then apply the approved wording consistently and verify the live pages. |
+| TECH-03 | P1 | Seven empty directory pages remain in the sitemap | **Open** | Identify the seven URLs, verify their empty/unready state, exclude or gate them using the existing SEO/readiness policy, and validate the generated and live sitemap. Record the seven URLs and validation results. |
+| TECH-04 | P1 | CSP blocks first-party resources | **Open — investigation needed** | Capture the blocked resource URLs and directives, distinguish genuine first-party assets from third-party integrations, then make the narrowest policy correction and verify with browser console/network checks. |
+| TECH-05 | P2 | Accessibility contrast issues | **Open — in register** | Link each registered finding to the affected UI, measure contrast against the applicable WCAG criterion, fix the failing states, and record before/after measurements. |
+
+### Decisions and external evidence
+
+| ID | Item | Status | Next action / completion evidence |
+| --- | --- | --- | --- |
+| DEC-01 | Initial Return, due 2026-12-04 | **Awaiting proof of filing** | The tracker reportedly says “complete”, but no receipt was provided. Verify the actual filing and attach a receipt/reference. If it has not been filed, keep the 2026-11-20 reminder armed. Do not mark complete based only on the tracker label. |
+| DEC-02 | Remove `test@versoair-superadmin.com` from production | **Awaiting explicit approval and target verification** | Confirm the exact production account and authorize the deletion before any destructive action. Verify the target and report the result afterward. |
+| DEC-03 | `/sys/0x7f3a9c` route | **Awaiting intent clarification** | Explain the route’s purpose and whether it is intentional. Inspect access controls, exposure, and references before recommending removal or changes. |
+| DEC-04 | Premium 300k on `/pricing` | **Awaiting deployment authorization confirmation** | Confirm whether that specific production deployment and offer were authorized. Preserve deployment evidence; do not infer approval from the page being live. |
+| DEC-05 | Translation scope | **Decision pending** | Choose between limiting the language menu to French/English/Spanish or creating the missing dictionaries. No language removal or translation work is authorized by this tracker entry alone. |
+| DEC-06 | Market-study interview feedback / final pricing | **Blocked — external input pending** | Collect and record the interview responses. Final prices remain undecided until the study feedback is reviewed. |
+
+**Next review:** Resolve the approval/evidence rows as input becomes available, then
+update statuses with links or reproducible evidence. No production deletion,
+pricing deployment, or legal-copy change is implied by this list.

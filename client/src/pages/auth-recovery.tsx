@@ -81,15 +81,32 @@ export default function AuthRecoveryPage() {
         <CardContent className="space-y-5 p-6">
           <h1 className="text-2xl font-bold">{title}</h1>
           {complete ? (
-            <p role="status">
-              {isForgot
-                ? "If that email is registered and delivery succeeds, you will receive a reset link. Check your inbox and spam folder. The link expires in one hour."
-                : isInvitation
+            isForgot ? (
+              <div className="space-y-4">
+                <p role="status">
+                  If that email is registered and delivery succeeds, you will receive a reset link. Check your inbox and spam folder. The link expires in one hour.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setComplete(false);
+                    setError("");
+                  }}
+                >
+                  Edit email and try again
+                </Button>
+              </div>
+            ) : (
+              <p role="status">
+                {isInvitation
                   ? acceptedExistingAccount
                     ? "Geo Admin access is now linked to your existing account. Your password and other portal access were kept unchanged. Use your assigned admin username and existing password at Geo Admin sign-in."
                     : "Your Geo Admin account is ready. Sign in with your assigned admin username and the password you just set."
                   : "Your password has been reset. Sign in with your new password."}
-            </p>
+              </p>
+            )
           ) : !isForgot && !token ? (
             <p role="alert">This link is missing its token. Request a new reset link or ask your superadmin for another invitation.</p>
           ) : (

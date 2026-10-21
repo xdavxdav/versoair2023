@@ -29,10 +29,8 @@ import { computeUserCapabilities } from "./capabilities";
 import { generateArtistCode } from "../utils/artist-code";
 import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 import geoAdminAccessRouter from "./geoadmin-access";
-import {
-  getAdminGateLockout,
-  getAdminGatePostPasswordDenial,
-} from "../services/admin-gate-policy";
+import { getAdminGateLockout } from "../services/admin-gate-policy";
+import { matchGeoAdminStaffCode } from "../services/geoadmin-staff-codes";
 import {
   isValidTotpSecret,
   verifyTotpCode,
@@ -316,7 +314,7 @@ const registerSchema = z.object({
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address").max(254),
+  email: z.string().trim().email("Invalid email address").max(254),
 });
 
 const resetPasswordSchema = z.object({
@@ -1365,40 +1363,43 @@ router.post(
   }),
 );
 
-/**
- * POST /auth/admin-gate
- * Issues a JWT for users who have a gate_username set in the DB.
- * Requires the user's account password for verification.
- * The frontend auto-fills the gate_username; user only types their password.
- */
+/** POST /auth/admin-gate — passwordless, account-specific GeoAdmin code login. */
 router.post(
   "/admin-gate",
   loginLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const { username, password } = req.body ?? {};
-
-    if (typeof username !== "string" || !username.trim()) {
-      return res.status(403).json({
+    const { staffCode } = req.body ?? {};
+    if (
+      typeof staffCode !== "string" ||
+      !STAFF_CODE_SHAPE.test(normalizeCode(staffCode))
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "Username is required.",
+        message: "Enter your GeoAdmin access code.",
+      });
+    }
+    const normalizedCode = normalizeCode(staffCode);
+    const throttleKey = codeKey(req, normalizedCode);
+    if (codeBlocked(throttleKey, normalizedCode)) {
+      return res.status(429).json({
+        success: false,
+        message: "Too many attempts. Try again later.",
       });
     }
 
-    if (typeof password !== "string" || !password) {
+    const staffIdentity = matchGeoAdminStaffCode(normalizedCode);
+    if (!staffIdentity) {
+      codeFailed(throttleKey, normalizedCode);
       return res.status(403).json({
         success: false,
-        message: "Password is required.",
+        message: "Invalid credentials.",
       });
     }
 
-    const gateUsername = username.trim().toLowerCase();
-
-    // Look up user by gate_username
-    const [user] = await db
+    const userQuery = db
       .select({
         id: schema.users.id,
         email: schema.users.email,
-        password: schema.users.password,
         role: schema.users.role,
         subscriptionTier: schema.users.subscriptionTier,
         isVerified: schema.users.isVerified,
@@ -1406,11 +1407,34 @@ router.post(
         lockedUntil: schema.users.lockedUntil,
         mustChangePassword: schema.users.mustChangePassword,
       })
-      .from(schema.users)
-      .where(eq(schema.users.gateUsername, gateUsername))
-      .limit(1);
+      .from(schema.users);
+    const ownerEmail = process.env.SUPERADMIN_EMAIL?.trim().toLowerCase();
+    if (staffIdentity === "superadmin" && !ownerEmail) {
+      console.error(
+        "[AUTH] SuperAdmin GeoAdmin code login blocked: SUPERADMIN_EMAIL is not configured",
+      );
+      return res.status(503).json({
+        success: false,
+        message: "Owner GeoAdmin sign-in is not configured.",
+      });
+    }
+    const identityCondition =
+      staffIdentity === "superadmin"
+        ? and(
+            eq(schema.users.email, ownerEmail ?? ""),
+            eq(schema.users.role, "superuser"),
+          )
+        : and(
+            or(
+              eq(schema.users.username, staffIdentity),
+              eq(schema.users.gateUsername, staffIdentity),
+            ),
+            inArray(schema.users.role, ["admin", "moderator", "tsr"]),
+          );
+    const [user] = await userQuery.where(identityCondition).limit(1);
 
     if (!user) {
+      codeFailed(throttleKey, normalizedCode);
       return res.status(403).json({
         success: false,
         message: "Invalid credentials.",
@@ -1426,43 +1450,41 @@ router.post(
       });
     }
 
-    // 🔒 Verify password — no more username-only access
-    const passwordValid = await bcrypt.compare(password, user.password);
-    if (!passwordValid) {
-      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
-      await db
-        .update(schema.users)
-        .set({
-          failedLoginAttempts: failedAttempts,
-          lockedUntil:
-            failedAttempts >= MAX_FAILED_ATTEMPTS
-              ? new Date(Date.now() + LOCK_DURATION_MS)
-              : null,
-        })
-        .where(eq(schema.users.id, user.id));
+    const ownerCodeLogin = staffIdentity === "superadmin";
+    if (!user.isVerified && !ownerCodeLogin) {
       return res.status(403).json({
         success: false,
-        message: "Invalid credentials.",
+        message: "This GeoAdmin account must be verified before code sign-in.",
       });
     }
 
-    const denial = getAdminGatePostPasswordDenial(user, {
-      isSuperadminEmail: isSuperadmin(user.email),
-    });
-    if (denial) {
-      return res.status(denial.status).json({
-        success: false,
-        message: denial.message,
-        error: { code: denial.code, message: denial.message },
-      });
-    }
-
-    if (user.role === "superuser") {
-      return res.status(403).json({
-        success: false,
-        code: "OWNER_USE_SECURE_SIGN_IN",
-        message:
-          "Owner accounts must sign in with their email and password through the secure sign-in page.",
+    if (ownerCodeLogin) {
+      if (!isValidTotpSecret(process.env.SUPERADMIN_TOTP_SECRET)) {
+        console.error(
+          "[AUTH] Owner GeoAdmin code login blocked: SUPERADMIN_TOTP_SECRET is not configured with a valid Base32 secret",
+        );
+        return res.status(503).json({
+          success: false,
+          message:
+            "Owner authenticator is not configured. Contact the deployment administrator.",
+        });
+      }
+      const otpToken = jwt.sign(
+        {
+          userId: String(user.id),
+          purpose: "login_otp",
+          factor: "totp",
+          rememberMe: false,
+        },
+        getJwtSecret(),
+        { expiresIn: "10m" },
+      );
+      return res.json({
+        success: true,
+        requiresOtp: true,
+        otpToken,
+        otpMethod: "authenticator",
+        email: user.email,
       });
     }
 
@@ -1501,7 +1523,7 @@ router.post(
       user: {
         id: String(user.id),
         email: user.email,
-        username: gateUsername,
+        username: staffIdentity,
         role,
         portals: capabilities?.portals || ["general"],
       },
@@ -2657,24 +2679,6 @@ const codeFailed = (key: string, code = "") => {
   if (isStaffShaped(code)) bump(STAFF_GLOBAL_KEY);
 };
 
-// Staff codes are random secrets; only their SHA-256 hashes live in env vars.
-// Owner codes are unsupported: the owner must use password + authenticator.
-const STAFF_CODE_HASHES: Array<{ env: string; who: string }> = [
-  { env: "STAFF_CODE_HASH_ADMIN", who: "admin_025" },
-  { env: "STAFF_CODE_HASH_MOD", who: "mod_010" },
-];
-function matchStaffCode(code: string): string | null {
-  const digest = crypto.createHash("sha256").update(normalizeCode(code)).digest();
-  for (const { env, who } of STAFF_CODE_HASHES) {
-    const expected = (process.env[env] || "").trim().toLowerCase();
-    if (!/^[0-9a-f]{64}$/.test(expected)) continue;
-    if (crypto.timingSafeEqual(digest, Buffer.from(expected, "hex"))) {
-      return who;
-    }
-  }
-  return null;
-}
-
 /**
  * POST /auth/artist/register
  * Create an artist account + artist_profiles row
@@ -2937,6 +2941,15 @@ router.post(
         });
         return;
       }
+      if (matchGeoAdminStaffCode(code)) {
+        codeFailed(throttleKey, code);
+        res.status(403).json({
+          success: false,
+          message:
+            "GeoAdmin staff codes can only be used on the GeoAdmin sign-in form.",
+        });
+        return;
+      }
       // Look up artist by code in artist_profiles
       try {
         const profiles = await db
@@ -2971,31 +2984,6 @@ router.post(
           skipPasswordCheck = true;
         }
       }
-      if (!user) {
-        // Staff codes are limited to explicitly configured non-owner staff.
-        const staffWho = matchStaffCode(code);
-        if (staffWho) {
-          let resolved: any;
-          [resolved] = await db
-            .select()
-            .from(schema.users)
-            .where(
-              or(
-                eq(schema.users.username, staffWho),
-                eq(schema.users.gateUsername, staffWho),
-              ),
-            )
-            .limit(1);
-          if (resolved) {
-            user = resolved;
-            skipPasswordCheck = true;
-          } else {
-            console.warn(
-              `[ARTIST AUTH] Valid staff code (${staffWho}) but no matching account found`,
-            );
-          }
-        }
-      }
       if (user?.role === "superuser") {
         codeFailed(throttleKey, code);
         res.status(401).json({
@@ -3014,11 +3002,16 @@ router.post(
       }
       // Password-free code sign-in is a merit perk of the top artist divisions.
       const codeOnlyDivisions = ["elite", "signed", "legend"];
-      const isStaffAccount = user.role === "admin";
+      const isStaffAccount = [
+        "admin",
+        "moderator",
+        "superuser",
+        "tsr",
+      ].includes(user.role);
       const needsPassword =
-        !isStaffAccount &&
-        profileDivision !== "" &&
-        !codeOnlyDivisions.includes(profileDivision.toLowerCase());
+        isStaffAccount ||
+        (profileDivision !== "" &&
+          !codeOnlyDivisions.includes(profileDivision.toLowerCase()));
       if (needsPassword) {
         const pwd = "password" in data ? data.password : undefined;
         const ok =

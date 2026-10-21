@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import GeoAdmin from "@/components/geo-admin";
+import GeoAdminSubscriberView from "@/components/GeoAdminSubscriberView";
 import GeoAdminAuthGate from "@/components/GeoAdminAuthGate";
 import GeoAdminAccessManager from "@/components/GeoAdminAccessManager";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -41,6 +42,11 @@ export default function GeoAdminPage() {
     role: user?.role,
     isAdmin: user?.isAdmin,
     tier,
+    subscriptionStatus: user?.subscriptionStatus,
+    subscriptionExpiresAt:
+      user?.trialTier === tier && user.trialExpiresAt
+        ? user.trialExpiresAt
+        : user?.subscriptionExpiresAt,
   });
 
   // Initialize CSRF token on component mount
@@ -213,23 +219,23 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
-  if (!isGeoAdmin) {
+  if (!isGeoAdmin && !isReadOnlySubscriber) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f3efe9] px-4 py-12">
         <Card className="w-full max-w-xl p-7">
           <Lock className="h-8 w-8 text-amber-700" />
           <h1 className="mt-4 text-2xl font-bold text-slate-900">
-            Internal GeoAdmin access
+            Paid subscription required
           </h1>
           <p className="mt-2 leading-relaxed text-slate-600">
-            This administration console is restricted to authorized VersoAir
-            staff. Subscribers can request an annual market-study add-on from
-            GeoAdmin Insights; paid subscriptions do not grant admin-console
-            access.
+            GeoAdmin read-only access is included with active Essential,
+            Verified, Max, and Enterprise subscriptions. Free or inactive
+            accounts cannot access this account-specific view. Staff tools
+            remain restricted to authorized GeoAdmin staff.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button onClick={() => setLocation("/geo-insights")}>
-              GeoAdmin Insights
+            <Button onClick={() => setLocation("/pricing")}>
+              View plans
             </Button>
             <Button variant="outline" onClick={() => setLocation("/")}>
               Home
@@ -240,149 +246,13 @@ export default function GeoAdminPage() {
     );
   }
 
-  // Tier check for regular subscribers who didn't come through the admin gate
-  // Gate-authenticated users (gateBypass) already proved access via /auth/admin-gate
-  // Superusers and GeoAdmins always bypass tier checks
-  const isMaxOrEnterprise = tier === "max" || tier === "enterprise";
-  const hasGateAccess =
-    gateBypass && !!localStorage.getItem("geoadmin_session");
-
-  if (!isMaxOrEnterprise && !isSuperuser && !isGeoAdmin && !hasGateAccess) {
+  if (!isGeoAdmin && isReadOnlySubscriber) {
     return (
       <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
-        {/* Connection status dot */}
-        {isStillConnected && (
-          <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void handleGeoAdminLogout()}
-            >
-              Déconnexion
-            </Button>
-          </div>
-        )}
-
-        {/* Session Timer Bar */}
-        {gateBypass && (
-          <div className="px-4 py-2 sm:px-6 sm:py-3">
-            <SessionTimerBar
-              sessionTimeLeft={sessionTimeLeft}
-              sessionProgress={sessionProgress}
-              isSessionCritical={isSessionCritical}
-              isSessionLow={isSessionLow}
-              onExtendSession={handleExtendSession}
-              formatTimeLeft={formatTimeLeft}
-            />
-          </div>
-        )}
-
-        {/* Upgrade required banner — gate users must have max/enterprise */}
-        <div className="bg-gradient-to-r from-red-500/20 to-rose-500/20 border-b border-red-500/30">
-          <div className="max-w-[95vw] mx-auto px-4 py-6 sm:py-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 flex-shrink-0">
-                  <Lock className="h-6 w-6 text-red-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 text-base sm:text-lg">
-                    GeoAdmin access requires an Enterprise plan
-                  </h3>
-                  <p className="text-red-200/80 text-sm sm:text-base mt-2">
-                    Your current tier{" "}
-                    <span className="font-mono font-bold text-red-300">
-                      {tier}
-                    </span>{" "}
-                    doesn't include GeoAdmin access. Only Pro Max and Enterprise
-                    subscribers can use this portal. Please upgrade to continue.
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={() => setLocation("/pricing?plan=max")}
-                className="whitespace-nowrap bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-slate-900 px-6 py-2 text-sm font-semibold"
-              >
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Upgrade Now
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Signed in as Free tier (non-admin, non-gate subscribers only) → show upgrade banner
-  // GeoAdmins and gate-authenticated users always get full access — no tier required
-  if (
-    tier === "free" &&
-    !isGeoAdmin &&
-    !hasGateAccess &&
-    isAuthenticated &&
-    gateBypass
-  ) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
-        {/* Connection status dot */}
-        {isStillConnected && (
-          <div className="fixed top-4 right-4 z-50 h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
-        )}
-
-        {/* Session Timer Bar */}
-        {gateBypass && (
-          <div className="px-4 py-2 sm:px-6 sm:py-3">
-            <SessionTimerBar
-              sessionTimeLeft={sessionTimeLeft}
-              sessionProgress={sessionProgress}
-              isSessionCritical={isSessionCritical}
-              isSessionLow={isSessionLow}
-              onExtendSession={handleExtendSession}
-              formatTimeLeft={formatTimeLeft}
-            />
-          </div>
-        )}
-
-        {/* Upgrade banner for free users */}
-        <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-b border-amber-500/30">
-          <div className="max-w-[95vw] mx-auto px-4 py-4 sm:py-5">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 flex-shrink-0">
-                  <Lock className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 text-sm sm:text-base">
-                    Explore GeoAdmin annual plans
-                  </h3>
-                  <p className="text-amber-200/80 text-xs sm:text-sm mt-1">
-                    Review the published FCFA reference prices and plan
-                    benefits. Availability and final terms are confirmed
-                    directly; existing account access is unchanged.
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={() =>
-                  setLocation(
-                    "/pricing",
-                  )
-                }
-                className="whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 px-4 py-2 text-sm"
-              >
-                View plan details
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Limited Geo Admin view */}
-        <GeoAdmin
-          username={username || displayName}
-          tier={tier}
-          role={displayRole}
-          readOnly={isReadOnlySubscriber}
+        <GeoAdminSubscriberView
+          userId={user?.id ?? 0}
+          username={displayName || "Subscriber"}
+          tierName={tierName}
         />
       </div>
     );
@@ -499,7 +369,6 @@ export default function GeoAdminPage() {
         username={username || displayName}
         tier={tier}
         role={displayRole}
-        readOnly={isReadOnlySubscriber}
       />
     </div>
   );

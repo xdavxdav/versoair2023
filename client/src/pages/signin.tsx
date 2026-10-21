@@ -2692,6 +2692,15 @@ export default function SignIn() {
                 .
               </p>
               <button
+                onClick={() => {
+                  setResetError("");
+                  setStep("forgot-password");
+                }}
+                className="block w-full text-[#bf831c] hover:underline font-medium mb-4"
+              >
+                Wrong email? Edit it and try again
+              </button>
+              <button
                 onClick={() => setStep("login")}
                 className="text-[#bf831c] hover:underline font-medium"
               >

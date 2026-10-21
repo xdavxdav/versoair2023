@@ -45,6 +45,8 @@ import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
 import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 
+const GEOADMIN_STAFF_CODE_PATTERN = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i;
+
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
 }
@@ -57,17 +59,21 @@ export default function GeoAdminAuthGate({
   const [, navigateTo] = useLocation();
   const { currency, rates, selectedCountry, marketAvailability } =
     useGeoAdminPricing();
-  const [mode, setMode] = useState<"gate" | "signin" | "geoadmin">("gate");
+  const [mode, setMode] = useState<
+    "gate" | "signin" | "geoadmin" | "owner-totp"
+  >("gate");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [ownerOtpToken, setOwnerOtpToken] = useState("");
+  const [ownerOtpCode, setOwnerOtpCode] = useState("");
+  const [signedInUsername, setSignedInUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey | "">("");
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
-
   // NOTE: Self-service ".test" account creation was removed from this public,
   // unauthenticated gate — it allowed anyone to register a privileged admin
   // account. Creating .test accounts now requires an existing Admin/Superadmin
@@ -100,6 +106,7 @@ export default function GeoAdminAuthGate({
         localStorage.setItem("geoadmin_session", "true");
         localStorage.setItem("geoadmin_username", email.split("@")[0]);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
+        setSignedInUsername(email.split("@")[0]);
         setAuthToken(data.token);
         if (data.user) {
           authContextLogin(data.token, data.user);
@@ -123,8 +130,8 @@ export default function GeoAdminAuthGate({
     setLoading(true);
 
     try {
-      if (!username.trim()) {
-        setError("Please enter your admin username.");
+      if (!GEOADMIN_STAFF_CODE_PATTERN.test(username.trim())) {
+        setError("Enter your GeoAdmin access code in AAA-000-AAA format.");
         setLoading(false);
         return;
       }
@@ -133,16 +140,15 @@ export default function GeoAdminAuthGate({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          username: username.toLowerCase().trim(),
-          password,
-        }),
+        body: JSON.stringify({ staffCode: username.trim().toUpperCase() }),
       });
 
       const data = await res.json();
 
-      if (data.code === "OWNER_USE_SECURE_SIGN_IN") {
-        navigateTo("/auth/signin?redirect=%2Fgeo-admin");
+      if (data.requiresOtp && data.otpMethod === "authenticator") {
+        setOwnerOtpToken(data.otpToken);
+        setOwnerOtpCode("");
+        setMode("owner-totp");
         return;
       }
 
@@ -150,18 +156,57 @@ export default function GeoAdminAuthGate({
         localStorage.setItem("auth_token", data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("geoadmin_session", "true");
-        localStorage.setItem("geoadmin_username", username.toLowerCase());
+        const signedInAs = data.user?.username || "";
+        localStorage.setItem("geoadmin_username", signedInAs);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
+        setSignedInUsername(signedInAs);
         setAuthToken(data.token);
         if (data.user) {
           authContextLogin(data.token, data.user);
         }
         await initializeCsrfToken();
         setIsSuccess(true);
-        onSignInSuccess(username.toLowerCase());
+        onSignInSuccess(signedInAs);
       } else {
         setError(data.message || "Invalid credentials.");
       }
+    } catch {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOwnerTotpSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/auth/verify-login-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ otpToken: ownerOtpToken, code: ownerOtpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.token || !data.user) {
+        setError(data.message || "Incorrect or expired authenticator code.");
+        return;
+      }
+
+      const signedInAs = data.user.username || data.user.email.split("@")[0];
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("geoadmin_session", "true");
+      localStorage.setItem("geoadmin_username", signedInAs);
+      localStorage.setItem("geoadmin_login_time", new Date().toISOString());
+      setSignedInUsername(signedInAs);
+      setAuthToken(data.token);
+      authContextLogin(data.token, data.user);
+      await initializeCsrfToken();
+      setIsSuccess(true);
+      onSignInSuccess(signedInAs);
     } catch {
       setError("Connection error. Please try again.");
     } finally {
@@ -187,6 +232,7 @@ export default function GeoAdminAuthGate({
       setUsername("");
       setPassword("");
       setEmail("");
+      setSignedInUsername("");
     };
 
     return localize(
@@ -215,7 +261,7 @@ export default function GeoAdminAuthGate({
 
               <div className="space-y-4">
                 <Button
-                  onClick={() => onSignInSuccess(email.split("@")[0])}
+                  onClick={() => onSignInSuccess(signedInUsername)}
                   className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
                 >
                   <ArrowRight className="mr-2 h-4 w-4" />
@@ -494,6 +540,63 @@ export default function GeoAdminAuthGate({
               </div>
             )}
 
+            {mode === "owner-totp" && (
+              <form onSubmit={handleOwnerTotpSignIn} className="space-y-4">
+                <p className="text-sm text-slate-300">
+                  Staff code accepted. Enter the current six-digit code from
+                  your authenticator app to finish signing in.
+                </p>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    Authenticator code
+                  </label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    value={ownerOtpCode}
+                    onChange={(event) =>
+                      setOwnerOtpCode(event.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="000000"
+                    required
+                    className="bg-white/5 border-white/10 text-white text-center text-lg tracking-[0.4em] placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading || ownerOtpCode.length !== 6}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying…
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Verify and access GeoAdmin
+                    </>
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("geoadmin");
+                    setOwnerOtpToken("");
+                    setOwnerOtpCode("");
+                    setError("");
+                  }}
+                  className="w-full text-sm text-slate-400 hover:text-slate-200"
+                >
+                  Back to staff code
+                </button>
+              </form>
+            )}
+
             {/* SUBSCRIBER SIGN-IN FORM */}
             {mode === "signin" && (
               <form onSubmit={handleSubscriberSignIn} className="space-y-4">
@@ -650,52 +753,32 @@ export default function GeoAdminAuthGate({
               <form onSubmit={handleGeoAdminSignIn} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                    Admin Username
+                    GeoAdmin Access Code
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Admin username"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setUsername(value);
+                      }}
+                      placeholder="AAA-000-AAA"
                       required
                       className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
+                <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-200">
+                  GeoAdmin uses an individual passwordless access code.
+                  Owner access also requires an authenticator code.
+                </p>
 
                 <Button
                   type="submit"
-                  disabled={loading || !username.trim() || !password}
+                  disabled={loading || !GEOADMIN_STAFF_CODE_PATTERN.test(username.trim())}
                   className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50"
                 >
                   {loading ? (
@@ -713,7 +796,8 @@ export default function GeoAdminAuthGate({
 
                 <p className="text-[11px] text-slate-600 text-center">
                   Admin &amp; CEO accounts only. Regular users sign in via the
-                  Subscriber tab. Geo Admin staff accounts are invitation-only.
+                  Subscriber tab. Staff codes only work for configured GeoAdmin
+                  staff accounts.
                 </p>
               </form>
             )}
@@ -728,13 +812,17 @@ export default function GeoAdminAuthGate({
               </button>
 
               <div className="flex items-center justify-center gap-4 text-xs text-slate-600">
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-emerald-400/70 hover:text-emerald-400"
-                >
-                  Forgot password?
-                </Link>
-                <span>·</span>
+                {mode !== "geoadmin" && (
+                  <>
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-emerald-400/70 hover:text-emerald-400"
+                    >
+                      Forgot password?
+                    </Link>
+                    <span>·</span>
+                  </>
+                )}
                 <Link
                   href="/auth/signin?mode=register&redirect=%2Fgeo-admin"
                   className="text-emerald-400/70 hover:text-emerald-400"

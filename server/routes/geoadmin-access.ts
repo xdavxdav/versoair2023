@@ -675,7 +675,7 @@ router.post(
     return res.status(201).json({
       success: true,
       message:
-        "Invitation accepted. You can now sign in to GeoAdmin with your gate username and new password.",
+        "Invitation accepted. GeoAdmin sign-in requires a separate access code from your superuser.",
     });
   }),
 );
@@ -728,7 +728,7 @@ router.post(
     return res.json({
       success: true,
       message:
-        "Geo Admin access is linked to your existing account. Your password and other portal access were kept unchanged.",
+        "Geo Admin access is linked to your existing account. Your account password and other portal access were kept unchanged; GeoAdmin sign-in requires a separate access code from your superuser.",
     });
   }),
 );

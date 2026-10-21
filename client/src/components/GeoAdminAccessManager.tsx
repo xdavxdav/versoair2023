@@ -39,7 +39,9 @@ export default function GeoAdminAccessManager() {
     setWorking(true);
     try {
       await apiRequest("POST", "/auth/geoadmin-access", parsed.data);
-      setMessage("Invitation sent. Access starts only after the recipient sets a password.");
+      setMessage(
+        "Invitation sent. Assign the recipient a unique GeoAdmin access code separately.",
+      );
       setEmail("");
       setGateUsername("");
       await queryClient.invalidateQueries({ queryKey: ["/auth/geoadmin-access"] });
@@ -72,7 +74,9 @@ export default function GeoAdminAccessManager() {
       <p className="mt-2 text-sm text-slate-600">
         Superadmin only. Invite selected staff using real email addresses.
         Admin and Moderator use the existing staff permissions; neither can
-        invite others here. Invitations do not include a paid subscription.
+        invite others here. Each staff member signs in to GeoAdmin with a
+        separately configured, unique access code. Invitations do not include
+        a paid subscription.
       </p>
       <form onSubmit={invite} className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
