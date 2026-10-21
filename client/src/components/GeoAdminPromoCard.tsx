@@ -1,12 +1,9 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
-import { GEOADMIN_OFFER_ORDER, GEOADMIN_OFFER_NAMES, GEOADMIN_OFFER_PRICES_XOF, GEOADMIN_PLAN_DETAILS, GEOADMIN_REFERENCE_NOTICE, formatMarketXofPrice } from "@/lib/geoadmin-pricing";
 import GeoAdminContacts from "@/components/GeoAdminContacts";
-import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { Link } from "wouter";
 
 export default function GeoAdminPromoCard() {
   const localize = useLocalizedContent();
-  const { selectedCountry, currency, rates, marketAvailability } = useGeoAdminPricing();
   return localize((
     <section
       aria-label="Offres de référencement et visibilité des entreprises"
@@ -34,38 +31,6 @@ export default function GeoAdminPromoCard() {
       <h2 className="mt-4 text-2xl font-bold leading-tight text-white sm:text-3xl">
         Plateforme de Référencement &amp; Visibilité des Entreprises
       </h2>
-      <div className="mt-7 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] items-start gap-3">
-        {GEOADMIN_OFFER_ORDER.filter(tier => tier !== "free").map((tier, index) => {
-          const price = formatMarketXofPrice(GEOADMIN_OFFER_PRICES_XOF[tier], selectedCountry ?? "", currency, rates);
-          return (
-          <article
-            key={tier}
-            className={`min-w-0 rounded-xl border p-4 ${
-              index === 1
-                ? "border-[#ffe394] bg-[#e0b94f]/10"
-                : "border-[#d7b652]/50 bg-white/5"
-            }`}
-          >
-            <h3 className="text-base font-bold uppercase text-[#f1d47a]">
-              {GEOADMIN_OFFER_NAMES[tier]}
-            </h3>
-            <p className="mt-3 text-xl font-bold text-white">
-              {price}
-              {GEOADMIN_OFFER_PRICES_XOF[tier] !== null && marketAvailability === true && price !== "Rate unavailable" && (
-                <span className="text-sm font-normal"> / an</span>
-              )}
-            </p>
-            <p className="mt-1 text-xs text-[#bac7d8]">
-              {GEOADMIN_OFFER_PRICES_XOF[tier] === null ? "Proposition personnalisée" : "Tarif de référence"}
-            </p>
-            <p className="mt-3 text-sm text-[#e8edf4]">{GEOADMIN_PLAN_DETAILS[tier].shortDescription}</p>
-          </article>
-          );
-        })}
-      </div>
-      <p className="mt-5 text-sm leading-relaxed text-[#c5d0df]">
-        {GEOADMIN_REFERENCE_NOTICE}
-      </p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#d7b652]/45 bg-[#050e1d]/55 p-4">
         <GeoAdminContacts />
         <Link
@@ -75,9 +40,6 @@ export default function GeoAdminPromoCard() {
           Ask VersoAI
         </Link>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-[#c5d0df]">
-        Annual reference prices are shown in Canadian dollars in Canada, euros in France, and FCFA in Côte d’Ivoire. Other countries are marked as coming soon.
-      </p>
       <p className="mt-5 text-sm leading-relaxed text-[#b8c6d9]">
         Le réseau professionnel qui connecte entreprises, artisans et artistes.
       </p>
