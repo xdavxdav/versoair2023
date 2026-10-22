@@ -43,6 +43,13 @@
       "when": 1792504140000,
       "tag": "0005_streamroyale_royalty_carry_forward",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792676575973,
+      "tag": "0006_geoadmin_staff_code_hashes",
+      "breakpoints": true
     }
   ]
 }
