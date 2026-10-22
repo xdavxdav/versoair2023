@@ -1,5 +1,5 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -305,6 +305,7 @@ export default function SignIn() {
   const [otpToken, setOtpToken] = useState("");
   const [otpMethod, setOtpMethod] = useState<"email" | "authenticator">("email");
   const [otpVerifying, setOtpVerifying] = useState(false);
+  const otpVerificationInFlight = useRef(false);
   const [otpError, setOtpError] = useState("");
   const [otpResending, setOtpResending] = useState(false);
 
@@ -425,18 +426,102 @@ export default function SignIn() {
     setStep("register");
   };
 
-  const handleMfaCodeChange = (index: number, value: string) => {
-    if (value.length <= 1) {
-      const newCode = [...mfaCode];
-      newCode[index] = value;
-      setMfaCode(newCode);
+  const handleVerifyOtp = async (submittedCode = mfaCode.join("")) => {
+    if (submittedCode.length !== 6 || otpVerificationInFlight.current) return;
 
-      // Auto-focus next input
-      if (value && index < 5) {
-        const nextInput = document.getElementById(`mfa-${index + 1}`);
-        nextInput?.focus();
+    otpVerificationInFlight.current = true;
+    setOtpVerifying(true);
+    setOtpError("");
+    try {
+      const res = await fetch("/auth/verify-login-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ otpToken, code: submittedCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.token || !data.user) {
+        setOtpError(data.message || "Incorrect or expired code");
+        return;
       }
+
+      if (data.needsPasswordChange) {
+        authLogin(data.token, {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+        });
+        setPendingLoginData(data);
+        setStep("change-password");
+        return;
+      }
+      if (data.needsDisplayName) {
+        authLogin(data.token, {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+        });
+        setPendingLoginData(data);
+        setStep("set-display-name");
+        return;
+      }
+
+      authLogin(data.token, {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role,
+      });
+      localStorage.setItem("signin_timestamp", new Date().toISOString());
+      toast({
+        title: "✅ Signed in",
+        description: `Welcome back, ${data.user.name || data.user.email}!`,
+      });
+      const redirectTarget = getQueryParam("redirect");
+      if (redirectTarget?.startsWith("/")) {
+        navigate(redirectTarget);
+        return;
+      }
+      const role = (data.user.role || "user").toLowerCase();
+      if (role === "admin" || role === "moderator" || role === "superuser") {
+        navigate("/geo-admin/workspace");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch {
+      setOtpError("Something went wrong. Please try again.");
+    } finally {
+      otpVerificationInFlight.current = false;
+      setOtpVerifying(false);
     }
+  };
+
+  const handleMfaCodeChange = (index: number, value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) {
+      const newCode = [...mfaCode];
+      newCode[index] = "";
+      setMfaCode(newCode);
+      return;
+    }
+
+    const newCode = [...mfaCode];
+    const pastedDigits = digits.length > 1;
+    const startIndex = pastedDigits ? 0 : index;
+    for (let i = 0; i < digits.length && startIndex + i < newCode.length; i++) {
+      newCode[startIndex + i] = digits[i];
+    }
+    setMfaCode(newCode);
+
+    if (newCode.every((digit) => digit !== "")) {
+      void handleVerifyOtp(newCode.join(""));
+      return;
+    }
+
+    const nextIndex = Math.min(startIndex + digits.length, newCode.length - 1);
+    document.getElementById(`mfa-${nextIndex}`)?.focus();
   };
 
   const submitLoginRequest = async (accountId?: number | null) => {
@@ -1432,79 +1517,6 @@ export default function SignIn() {
 
   // ── Privileged login second factor ──────────────────────────────────────
   if (step === "login-otp") {
-    const handleVerifyOtp = async () => {
-      const code = mfaCode.join("");
-      if (code.length !== 6) {
-        setOtpError("Enter the full 6-digit code");
-        return;
-      }
-      setOtpVerifying(true);
-      setOtpError("");
-      try {
-        const res = await fetch("/auth/verify-login-otp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ otpToken, code }),
-        });
-        const data = await res.json();
-        if (!data.success) {
-          setOtpError(data.message || "Incorrect or expired code");
-          return;
-        }
-
-        if (data.needsPasswordChange) {
-          authLogin(data.token, {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            role: data.user.role,
-          });
-          setPendingLoginData(data);
-          setStep("change-password");
-          return;
-        }
-        if (data.needsDisplayName) {
-          authLogin(data.token, {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            role: data.user.role,
-          });
-          setPendingLoginData(data);
-          setStep("set-display-name");
-          return;
-        }
-
-        authLogin(data.token, {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.role,
-        });
-        localStorage.setItem("signin_timestamp", new Date().toISOString());
-        toast({
-          title: "✅ Signed in",
-          description: `Welcome back, ${data.user.name || data.user.email}!`,
-        });
-        const redirectTarget = getQueryParam("redirect");
-        if (redirectTarget?.startsWith("/")) {
-          navigate(redirectTarget);
-          return;
-        }
-        const role = (data.user.role || "user").toLowerCase();
-        if (role === "admin" || role === "moderator" || role === "superuser") {
-          navigate("/geo-admin/workspace");
-        } else {
-          navigate("/dashboard");
-        }
-      } catch {
-        setOtpError("Something went wrong. Please try again.");
-      } finally {
-        setOtpVerifying(false);
-      }
-    };
-
     const handleResendOtp = async () => {
       setOtpResending(true);
       setOtpError("");
@@ -1576,8 +1588,11 @@ export default function SignIn() {
                         key={index}
                         id={`mfa-${index}`}
                         type="text"
-                        maxLength={1}
+                        inputMode="numeric"
+                        autoComplete={index === 0 ? "one-time-code" : "off"}
+                        maxLength={6}
                         value={digit}
+                        disabled={otpVerifying}
                         onChange={(e) =>
                           handleMfaCodeChange(index, e.target.value)
                         }
@@ -1602,11 +1617,20 @@ export default function SignIn() {
                 )}
 
                 <Button
-                  onClick={handleVerifyOtp}
+                  onClick={() => void handleVerifyOtp()}
                   disabled={otpVerifying || mfaCode.join("").length !== 6}
                   className="w-full bg-gradient-to-r from-[#bf831c] to-[#d4941f] hover:from-[#a6701a] hover:to-[#c0841c] text-white py-3 rounded-lg font-medium"
                 >
-                  {otpVerifying ? "Verifying..." : "Verify & Continue"}
+                  {otpVerifying ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying automatically...
+                    </span>
+                  ) : otpError && mfaCode.join("").length === 6 ? (
+                    "Try again"
+                  ) : (
+                    "Code verifies automatically"
+                  )}
                 </Button>
 
                 <div className="text-center space-y-3">
