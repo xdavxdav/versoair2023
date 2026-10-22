@@ -30,7 +30,10 @@ import { generateArtistCode } from "../utils/artist-code";
 import { isUniqueConstraintViolation } from "../utils/postgres-errors";
 import geoAdminAccessRouter from "./geoadmin-access";
 import { getAdminGateLockout } from "../services/admin-gate-policy";
-import { matchGeoAdminStaffCode } from "../services/geoadmin-staff-codes";
+import {
+  hashGeoAdminAccessCode,
+  matchGeoAdminStaffCode,
+} from "../services/geoadmin-staff-codes";
 import {
   isValidTotpSecret,
   verifyTotpCode,
@@ -1392,14 +1395,47 @@ router.post(
       });
     }
 
-    const staffIdentity = matchGeoAdminStaffCode(normalizedCode);
-    if (!staffIdentity) {
+    const configuredIdentity = matchGeoAdminStaffCode(normalizedCode);
+    const [codeUser] = await db
+      .select({
+        id: schema.users.id,
+        email: schema.users.email,
+        username: schema.users.username,
+        gateUsername: schema.users.gateUsername,
+        role: schema.users.role,
+        subscriptionTier: schema.users.subscriptionTier,
+        isVerified: schema.users.isVerified,
+        failedLoginAttempts: schema.users.failedLoginAttempts,
+        lockedUntil: schema.users.lockedUntil,
+        mustChangePassword: schema.users.mustChangePassword,
+      })
+      .from(schema.users)
+      .where(
+        and(
+          eq(
+            schema.users.geoAdminCodeHash,
+            hashGeoAdminAccessCode(normalizedCode),
+          ),
+          inArray(schema.users.role, ["admin", "moderator", "tsr"]),
+        ),
+      )
+      .limit(1);
+    if (configuredIdentity && codeUser) {
+      console.error("[AUTH] GeoAdmin code is configured for multiple identities");
+      return res.status(503).json({
+        success: false,
+        message: "GeoAdmin access-code configuration conflict.",
+      });
+    }
+    if (!configuredIdentity && !codeUser) {
       codeFailed(throttleKey, normalizedCode);
       return res.status(403).json({
         success: false,
         message: "Invalid credentials.",
       });
     }
+    const staffIdentity =
+      codeUser?.gateUsername || codeUser?.username || configuredIdentity;
 
     const userQuery = db
       .select({
@@ -1424,19 +1460,21 @@ router.post(
       });
     }
     const identityCondition =
-      staffIdentity === "superadmin"
+      configuredIdentity === "superadmin"
         ? and(
             eq(schema.users.email, ownerEmail ?? ""),
             eq(schema.users.role, "superuser"),
           )
         : and(
             or(
-              eq(schema.users.username, staffIdentity),
-              eq(schema.users.gateUsername, staffIdentity),
+              eq(schema.users.username, staffIdentity ?? ""),
+              eq(schema.users.gateUsername, staffIdentity ?? ""),
             ),
             inArray(schema.users.role, ["admin", "moderator", "tsr"]),
           );
-    const [user] = await userQuery.where(identityCondition).limit(1);
+    const [user] = codeUser
+      ? [codeUser]
+      : await userQuery.where(identityCondition).limit(1);
 
     if (!user) {
       codeFailed(throttleKey, normalizedCode);
@@ -1455,7 +1493,7 @@ router.post(
       });
     }
 
-    const ownerCodeLogin = staffIdentity === "superadmin";
+    const ownerCodeLogin = configuredIdentity === "superadmin";
     if (!user.isVerified && !ownerCodeLogin) {
       return res.status(403).json({
         success: false,

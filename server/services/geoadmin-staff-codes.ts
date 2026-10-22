@@ -1,9 +1,20 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 const STAFF_CODE_SHAPE = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/;
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
 type StaffCodeEnvironment = Record<string, string | undefined>;
+
+export function generateGeoAdminAccessCode(): string {
+  const pick = (alphabet: string) => alphabet[crypto.randomInt(alphabet.length)];
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const digits = "0123456789";
+  return `${Array.from({ length: 3 }, () => pick(letters)).join("")}-${Array.from({ length: 3 }, () => pick(digits)).join("")}-${Array.from({ length: 3 }, () => pick(letters)).join("")}`;
+}
+
+export function hashGeoAdminAccessCode(code: string): string {
+  return crypto.createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
+}
 
 export function matchGeoAdminStaffCode(
   code: string,

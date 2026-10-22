@@ -40,7 +40,7 @@ export default function GeoAdminAccessManager() {
     try {
       await apiRequest("POST", "/auth/geoadmin-access", parsed.data);
       setMessage(
-        "Invitation sent. Assign the recipient a unique GeoAdmin access code separately.",
+        "Invitation sent. A unique personal access code is generated when the recipient accepts; they will see it once and must save it.",
       );
       setEmail("");
       setGateUsername("");
@@ -75,8 +75,10 @@ export default function GeoAdminAccessManager() {
         Superadmin only. Invite selected staff using real email addresses.
         Admin and Moderator use the existing staff permissions; neither can
         invite others here. Each staff member signs in to GeoAdmin with a
-        separately configured, unique access code. Invitations do not include
-        a paid subscription.
+        unique account-specific access code generated at invitation acceptance.
+        Their selected role controls their permissions; the owner code and
+        privileges are never shared. Invitations do not include a paid
+        subscription.
       </p>
       <form onSubmit={invite} className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>

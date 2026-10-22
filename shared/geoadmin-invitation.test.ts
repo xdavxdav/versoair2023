@@ -175,6 +175,7 @@ test("revocation strips staff access and preserves other portal access", () => {
     role: "user",
     previousRole: null,
     gateUsername: null,
+    geoAdminCodeHash: null,
     portalAccess: ["general", "community"],
   });
   const artistMode = buildGeoAdminRevocationUpdate({
@@ -197,6 +198,7 @@ test("revocation strips staff access and preserves other portal access", () => {
     role: "business_owner",
     previousRole: null,
     gateUsername: null,
+    geoAdminCodeHash: null,
     portalAccess: ["general", "business"],
   });
 });

@@ -23,21 +23,24 @@ accepted only by the GeoAdmin gate; an owner session is not issued until TOTP
 verification succeeds. Existing owner sessions without a verified TOTP claim
 are rejected.
 
-All GeoAdmin staff, including Admins and Moderators, use passwordless
-`AAA-000-AAA` codes on the GeoAdmin gate. Give every staff identity a different
-code and configure only its SHA-256 digest in `GEOADMIN_STAFF_CODE_HASHES`, a
-JSON object keyed by the staff account username (for example,
-`{"admin_025":"<64-character-sha256-hex>","mod_010":"<64-character-sha256-hex>"}`).
-The owner's code remains configured separately in
-`SUPERADMIN_GEOADMIN_CODE_HASH`. Do not reuse a digest between staff or the
-owner; the server rejects duplicate assignments. Keep raw codes out of Render,
-source control, logs, and invitation email. After inviting a staff member,
-assign their unique code through the deployment's trusted secret-management
-process. An account password set during invitation remains for normal account
-sign-in and does not grant GeoAdmin access. The legacy
-`STAFF_CODE_HASH_ADMIN` and `STAFF_CODE_HASH_MOD` variables are compatibility
-fallbacks for `admin_025` and `mod_010`; migrate them into the JSON mapping
-when convenient.
+Generate the owner's code and matching hash together on your own computer
+with `npm run security:generate-geoadmin-code -- owner`. Save the raw code in
+a password manager and copy only its hash into Render's
+`SUPERADMIN_GEOADMIN_CODE_HASH`; the command runs locally and does not upload
+either value. New invited Admins and Moderators receive a separate random code
+when they accept the invitation. Only its SHA-256 hash is stored on that staff
+account in the database, and the raw code is shown once to the invitee. Each
+staff member saves their own code; it does not grant owner access or share the
+owner's permissions. Apply `migrations/0006_geoadmin_staff_code_hashes.sql`
+before deploying this per-account staff-code flow. If a staff member loses
+their code, revoke and re-invite them to issue a replacement. Legacy staff
+codes can still use the `GEOADMIN_STAFF_CODE_HASHES`,
+`STAFF_CODE_HASH_ADMIN`, or `STAFF_CODE_HASH_MOD` environment variables during
+migration.
+
+An account password set during invitation remains for normal account sign-in
+and does not grant GeoAdmin access. Raw staff codes are never placed in Render,
+source control, logs, or invitation email.
 `SUPERUSER_ARTIST_CODE` is not accepted for GeoAdmin or artist login.
 
 ## VersoAI setup

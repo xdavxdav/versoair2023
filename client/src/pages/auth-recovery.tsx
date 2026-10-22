@@ -20,6 +20,8 @@ export default function AuthRecoveryPage() {
   const [working, setWorking] = useState(false);
   const [complete, setComplete] = useState(false);
   const [acceptedExistingAccount, setAcceptedExistingAccount] = useState(false);
+  const [geoAdminAccessCode, setGeoAdminAccessCode] = useState("");
+  const [codeCopyError, setCodeCopyError] = useState("");
   const [error, setError] = useState("");
   const title = isForgot ? "Forgot password" : isInvitation ? "Accept Geo Admin invitation" : "Reset password";
 
@@ -27,7 +29,13 @@ export default function AuthRecoveryPage() {
     setError("");
     setWorking(true);
     try {
-      await apiRequest("POST", "/auth/accept-geoadmin-invitation-existing", { token });
+      const response = await apiRequest(
+        "POST",
+        "/auth/accept-geoadmin-invitation-existing",
+        { token },
+      );
+      const data = await response.json();
+      setGeoAdminAccessCode(data.geoAdminAccessCode || "");
       setAcceptedExistingAccount(true);
       setComplete(true);
       await restoreAuth();
@@ -55,7 +63,7 @@ export default function AuthRecoveryPage() {
     try {
       const endpoint = isForgot ? "/auth/forgot-password" :
         isInvitation ? "/auth/accept-geoadmin-invitation" : "/auth/reset-password";
-      await apiRequest(
+      const response = await apiRequest(
         "POST",
         endpoint,
         isForgot
@@ -64,6 +72,10 @@ export default function AuthRecoveryPage() {
             ? { token, password }
             : { token, password },
       );
+      if (isInvitation) {
+        const data = await response.json();
+        setGeoAdminAccessCode(data.geoAdminAccessCode || "");
+      }
       setComplete(true);
       setPassword("");
       setConfirmPassword("");
@@ -99,13 +111,53 @@ export default function AuthRecoveryPage() {
                 </Button>
               </div>
             ) : (
-              <p role="status">
-                {isInvitation
-                  ? acceptedExistingAccount
-                    ? "Geo Admin access is now linked to your existing account. Your password and other portal access were kept unchanged. Use your assigned admin username and existing password at Geo Admin sign-in."
-                    : "Your Geo Admin account is ready. Sign in with your assigned admin username and the password you just set."
-                  : "Your password has been reset. Sign in with your new password."}
-              </p>
+              <>
+                <p role="status">
+                  {isInvitation
+                    ? acceptedExistingAccount
+                      ? "Geo Admin access is linked to your existing account. Your account password and other portal access were not changed."
+                      : "Your Geo Admin account is ready. The password you set remains for ordinary account sign-in; GeoAdmin uses the access code below."
+                    : "Your password has been reset. Sign in with your new password."}
+                </p>
+                {isInvitation && geoAdminAccessCode && (
+                  <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-amber-950">
+                      Your personal GeoAdmin code — shown only now
+                    </p>
+                    <code className="block rounded bg-white p-3 text-center text-xl font-bold tracking-widest text-slate-950">
+                      {geoAdminAccessCode}
+                    </code>
+                    <p className="text-sm text-amber-950">
+                      Save this code in your password manager now. It is not
+                      emailed or stored in readable form and cannot be displayed
+                      again. If you lose it, ask the owner to revoke and re-invite
+                      you for a replacement.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={async () => {
+                        setCodeCopyError("");
+                        try {
+                          await navigator.clipboard.writeText(geoAdminAccessCode);
+                        } catch {
+                          setCodeCopyError(
+                            "Clipboard access was unavailable. Select and copy the code above.",
+                          );
+                        }
+                      }}
+                    >
+                      Copy code
+                    </Button>
+                    {codeCopyError && (
+                      <p role="alert" className="text-sm text-red-700">
+                        {codeCopyError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
             )
           ) : !isForgot && !token ? (
             <p role="alert">This link is missing its token. Request a new reset link or ask your superadmin for another invitation.</p>

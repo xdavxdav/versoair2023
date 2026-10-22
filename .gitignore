@@ -23,6 +23,7 @@ vite.config.ts.*
 *.sql
 !migrations/**/*.sql
 *.txt
+scredkey.txt
 *.bak
 pwds*
 
@@ -58,9 +59,11 @@ scripts/*
 !scripts/seed-production.cjs
 !scripts/seed-launch-businesses.cjs
 !scripts/check-api-contract.cjs
+!scripts/generate-geoadmin-code.cjs
 !scripts/tests/
 scripts/tests/*
 !scripts/tests/language-switcher.test.mjs
+!scripts/tests/geoadmin-code-generator.test.cjs
 
 # Backup & duplicate configs
 client/postcss.config.cjs

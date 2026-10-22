@@ -394,6 +394,7 @@ export function buildGeoAdminRevocationUpdate(
         : (target.role ?? "user"),
     previousRole: null,
     gateUsername: null,
+    geoAdminCodeHash: null,
     portalAccess: preservedPortals.length > 0 ? preservedPortals : ["general"],
   };
 }

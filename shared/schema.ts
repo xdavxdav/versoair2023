@@ -101,6 +101,7 @@ export const users = pgTable("users", {
 
   // GeoAdmin gate access — nullable, unique alias for admin-gate login
   gateUsername: text("gate_username").unique(),
+  geoAdminCodeHash: varchar("geo_admin_code_hash", { length: 64 }).unique(),
 
   // Portal access — JSONB array tracking which portals the user can access
   // Possible values: "general", "artist", "geo-admin", "contractor", "community"

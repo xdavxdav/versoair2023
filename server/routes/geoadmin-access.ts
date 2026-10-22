@@ -672,10 +672,12 @@ router.post(
       `[ADMIN] GeoAdmin invitation #${result.invitation.id} accepted by ${result.invitation.email} (user #${result.userId}, ${result.invitation.role})`,
     );
 
+    res.set("Cache-Control", "no-store");
     return res.status(201).json({
       success: true,
       message:
-        "Invitation accepted. GeoAdmin sign-in requires a separate access code from your superuser.",
+        "Invitation accepted. Save your one-time GeoAdmin access code; it will not be shown again.",
+      geoAdminAccessCode: result.geoAdminAccessCode,
     });
   }),
 );
@@ -725,10 +727,12 @@ router.post(
       `[ADMIN] GeoAdmin invitation #${result.invitation.id} accepted by existing account ${result.invitation.email} (user #${result.userId}, ${result.invitation.role})`,
     );
 
+    res.set("Cache-Control", "no-store");
     return res.json({
       success: true,
       message:
-        "Geo Admin access is linked to your existing account. Your account password and other portal access were kept unchanged; GeoAdmin sign-in requires a separate access code from your superuser.",
+        "Geo Admin access is linked to your account. Save your one-time GeoAdmin access code; it will not be shown again.",
+      geoAdminAccessCode: result.geoAdminAccessCode,
     });
   }),
 );

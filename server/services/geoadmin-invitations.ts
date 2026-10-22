@@ -2,6 +2,10 @@ import { createHash, randomBytes, timingSafeEqual } from "crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { geoAdminInvitations, users } from "@shared/schema";
 import {
+  generateGeoAdminAccessCode,
+  hashGeoAdminAccessCode,
+} from "./geoadmin-staff-codes";
+import {
   GEOADMIN_INVITATION_TTL_MS,
   canLinkExistingUserToGeoAdmin,
   getInvitationClaimFailure,
@@ -75,12 +79,14 @@ export interface GeoAdminInvitationTxStore {
     role: GeoAdminInvitableRole;
     gateUsername: string;
     verifiedAt: Date;
+    geoAdminCodeHash: string;
   }): Promise<{ id: number }>;
   attachExistingUser(data: {
     userId: number;
     email: string;
     role: GeoAdminInvitableRole;
     gateUsername: string;
+    geoAdminCodeHash: string;
   }): Promise<boolean>;
   linkAcceptedUser(invitationId: number, userId: number): Promise<void>;
 }
@@ -95,6 +101,7 @@ export type AcceptGeoAdminInvitationResult =
       userId: number;
       accountType: "created" | "existing";
       invitation: ClaimedGeoAdminInvitation;
+      geoAdminAccessCode: string;
     }
   | { ok: false; status: number; code: string; message: string };
 
@@ -183,11 +190,13 @@ export async function acceptGeoAdminInvitation(
         "existingUserId" in input &&
         typeof input.existingUserId === "number"
       ) {
+        const geoAdminAccessCode = generateGeoAdminAccessCode();
         const attached = await tx.attachExistingUser({
           userId: input.existingUserId,
           email: invitation.email,
           role: invitation.role,
           gateUsername: invitation.gateUsername,
+          geoAdminCodeHash: hashGeoAdminAccessCode(geoAdminAccessCode),
         });
         if (!attached) {
           throw new AcceptConflict("email");
@@ -198,6 +207,7 @@ export async function acceptGeoAdminInvitation(
           userId: input.existingUserId,
           accountType: "existing" as const,
           invitation,
+          geoAdminAccessCode,
         };
       }
 
@@ -212,6 +222,7 @@ export async function acceptGeoAdminInvitation(
       if (conflict) throw new AcceptConflict(conflict);
 
       const username = await allocateUsername(tx, invitation.gateUsername);
+      const geoAdminAccessCode = generateGeoAdminAccessCode();
       const user = await tx.createStaffUser({
         username,
         email: invitation.email,
@@ -219,6 +230,7 @@ export async function acceptGeoAdminInvitation(
         role: invitation.role,
         gateUsername: invitation.gateUsername,
         verifiedAt: now,
+        geoAdminCodeHash: hashGeoAdminAccessCode(geoAdminAccessCode),
       });
       await tx.linkAcceptedUser(invitation.id, user.id);
 
@@ -227,6 +239,7 @@ export async function acceptGeoAdminInvitation(
         userId: user.id,
         accountType: "created" as const,
         invitation,
+        geoAdminAccessCode,
       };
     });
   } catch (error) {
@@ -321,6 +334,7 @@ function createTxStore(executor: DbOrTx): GeoAdminInvitationTxStore {
           email: data.email,
           password: data.passwordHash,
           role: data.role,
+          geoAdminCodeHash: data.geoAdminCodeHash,
           isVerified: true,
           verifiedAt: data.verifiedAt,
           gateUsername: data.gateUsername,
@@ -362,6 +376,7 @@ function createTxStore(executor: DbOrTx): GeoAdminInvitationTxStore {
           role: data.role,
           previousRole: user.role,
           gateUsername: data.gateUsername,
+          geoAdminCodeHash: data.geoAdminCodeHash,
           portalAccess: [...new Set([...portalAccess, "geo-admin"])],
         })
         .where(

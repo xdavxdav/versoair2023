@@ -12,6 +12,7 @@ import {
   type GeoAdminInvitationTxStore,
 } from "./geoadmin-invitations";
 import { canLinkExistingUserToGeoAdmin } from "@shared/geoadmin-invitation";
+import { hashGeoAdminAccessCode } from "./geoadmin-staff-codes";
 
 type Inv = {
   id: number;
@@ -33,6 +34,7 @@ type User = {
   isVerified: boolean;
   portalAccess: string[];
   password: string;
+  geoAdminCodeHash?: string | null;
 };
 
 /** In-memory store with serialized, all-or-nothing transactions. */
@@ -68,6 +70,7 @@ function createFakeStore(state: { invitations: Inv[]; users: User[] }) {
         isVerified: true,
         portalAccess: ["general", "geo-admin"],
         password: data.passwordHash,
+        geoAdminCodeHash: data.geoAdminCodeHash,
       };
       state.users.push(user);
       return { id: user.id };
@@ -84,6 +87,7 @@ function createFakeStore(state: { invitations: Inv[]; users: User[] }) {
       user.previousRole = user.role;
       user.role = data.role;
       user.gateUsername = data.gateUsername;
+      user.geoAdminCodeHash = data.geoAdminCodeHash;
       user.portalAccess = [...new Set([...user.portalAccess, "geo-admin"])];
       return true;
     },
@@ -167,6 +171,8 @@ test("accepting creates a verified staff account exactly once", async () => {
   assert.equal(user.isVerified, true);
   assert.deepEqual(user.portalAccess, ["general", "geo-admin"]);
   assert.equal(user.password, `hashed:${PASSWORD}`);
+  assert.match(result.ok ? result.geoAdminAccessCode : "", /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/);
+  assert.equal(user.geoAdminCodeHash, hashGeoAdminAccessCode(result.ok ? result.geoAdminAccessCode : ""));
   assert.equal(state.invitations[0].status, "accepted");
   assert.equal(state.invitations[0].acceptedUserId, user.id);
 
@@ -254,6 +260,8 @@ test("an existing verified account can accept only while authenticated as the in
   assert.equal(existing.gateUsername, "ops_lead");
   assert.deepEqual(existing.portalAccess, ["general", "business", "geo-admin"]);
   assert.equal(existing.password, "original-hash");
+  assert.match(result.ok ? result.geoAdminAccessCode : "", /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/);
+  assert.equal(existing.geoAdminCodeHash, hashGeoAdminAccessCode(result.ok ? result.geoAdminAccessCode : ""));
   assert.equal(state.invitations[0].status, "accepted");
   assert.equal(state.invitations[0].acceptedUserId, existing.id);
 });
