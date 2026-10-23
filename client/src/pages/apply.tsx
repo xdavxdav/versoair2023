@@ -1373,14 +1373,17 @@ export default function ApplyPage() {
                       onValueChange={(v) => handleInputChange("genre", v)}
                     >
                       <SelectTrigger
-                        className="bg-white/10 border-white/20 text-white"
+                        className="bg-white/10 border-white/20 text-white notranslate"
                         translate="no"
                       >
                         <SelectValue placeholder="Select genre">
                           {formData.genre || undefined}
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent
+                        className="notranslate"
+                        translate="no"
+                      >
                         {[
                           "Pop",
                           "Hip-Hop",
@@ -1428,10 +1431,16 @@ export default function ApplyPage() {
                       handleInputChange("specialization", v)
                     }
                   >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectTrigger
+                      className="bg-white/10 border-white/20 text-white"
+                      translate="no"
+                    >
                       <SelectValue placeholder="Select your field" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent
+                      className="notranslate"
+                      translate="no"
+                    >
                       {[
                         "General Construction",
                         "Electrical",

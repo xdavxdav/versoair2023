@@ -1210,7 +1210,8 @@ function AppContent() {
     currentPath === "/blog" || currentPath === "/marketplace";
   const isAuthPage = currentPath.startsWith("/auth");
   const isGeoAdminPage = currentPath.startsWith("/geo-admin");
-  const isTranslationSensitivePage = isAuthPage || isGeoAdminPage;
+  const isTranslationSensitivePage =
+    isAuthPage || isGeoAdminPage || currentPath === "/apply";
   const isMessagesPage = currentPath === "/messages";
   const showAccountBlogNavbar =
     isAuthed &&
