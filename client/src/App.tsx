@@ -846,7 +846,13 @@ function Router() {
         )}
       </Route>
       <Route path="/geo-admin/workspace">
-        {() => <ProtectedRoute component={Tickets} roles={["admin", "moderator", "tsr"]} />}
+        {() => (
+          <ProtectedRoute
+            component={Tickets}
+            roles={["admin", "moderator", "tsr"]}
+            unauthorizedRedirect="/dashboard"
+          />
+        )}
       </Route>
       <Route path="/admin/profiles">
         {() => (

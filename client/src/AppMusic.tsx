@@ -139,7 +139,10 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/geo-admin/workspace">
-        <ProtectedRoute roles={["admin", "moderator", "tsr"]}>
+        <ProtectedRoute
+          roles={["admin", "moderator", "tsr"]}
+          unauthorizedRedirect="/dashboard"
+        >
           <Suspense fallback={<PageLoader />}><TicketWorkspace /></Suspense>
         </ProtectedRoute>
       </Route>
