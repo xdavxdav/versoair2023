@@ -22,6 +22,9 @@ test("anonymous public reads work through the global auth gate without exposing 
     res.json({ eligiblePaths: ["/get-involved"] }),
   );
   app.post("/api/page-readiness", (_req, res) => res.sendStatus(204));
+  app.post("/auth/verify-login-otp", (_req, res) =>
+    res.status(400).json({ success: false, message: "Missing code or token" }),
+  );
   app.use((_req, res) => res.sendStatus(404));
   const server = app.listen(0, "127.0.0.1");
   await once(server, "listening");
@@ -47,6 +50,14 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`, { method: "POST" })).status, 404);
     assert.equal((await fetch(`${origin}/api/v1/admin/users`)).status, 401);
+    // OTP completion happens before any session exists, so the gate must let the route answer
+    const otpVerification = await fetch(`${origin}/auth/verify-login-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(otpVerification.status, 400);
+    assert.equal((await otpVerification.json()).message, "Missing code or token");
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     await pool.end();

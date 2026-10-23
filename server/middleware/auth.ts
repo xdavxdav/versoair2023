@@ -110,6 +110,8 @@ const PUBLIC_PATHS: string[] = [
   "/auth/refresh-token",
   "/auth/admin-gate",
   "/auth/geo-admin",
+  // Second-factor completion: the caller has no session yet, only the short-lived OTP token
+  "/auth/verify-login-otp",
   // Invitation acceptance is public only with a one-use token; management
   // endpoints remain protected by the authenticated superuser role.
   "/auth/accept-geoadmin-invitation",
