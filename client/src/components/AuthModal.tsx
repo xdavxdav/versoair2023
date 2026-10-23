@@ -23,6 +23,13 @@ import {
   validateRegistrationForm,
 } from "@/lib/auth-validation";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import VerificationPendingNotice from "@/components/VerificationPendingNotice";
+
+interface VerificationPendingState {
+  email: string;
+  emailSent?: boolean | null;
+  message?: string;
+}
 
 function BlogSsoButtons() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -108,6 +115,7 @@ interface AuthModalProps {
   isLoading?: boolean;
   error?: string; // External error from parent (e.g., server response)
   showProfessionalSSO?: boolean;
+  verificationPending?: VerificationPendingState | null;
 }
 
 export default function AuthModal({
@@ -117,6 +125,7 @@ export default function AuthModal({
   isLoading = false,
   error: externalError,
   showProfessionalSSO = false,
+  verificationPending = null,
 }: AuthModalProps) {
   const localize = useLocalizedContent();
   useScrollLock(isOpen);
@@ -207,6 +216,15 @@ export default function AuthModal({
                 </div>
 
                 {/* Content */}
+                {verificationPending ? (
+                  <div className="p-4 sm:p-6">
+                    <VerificationPendingNotice
+                      email={verificationPending.email}
+                      emailSent={verificationPending.emailSent}
+                      message={verificationPending.message}
+                    />
+                  </div>
+                ) : (
                 <form
                   onSubmit={handleSubmit}
                   className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
@@ -334,6 +352,7 @@ export default function AuthModal({
                   {/* Error Message */}
                   {displayError && (
                     <motion.div
+                      role="alert"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm font-handstyle"
@@ -404,6 +423,7 @@ export default function AuthModal({
                     )}
                   </p>
                 </form>
+                )}
                 <TranslationAttribution />
               </div>
             </motion.div>

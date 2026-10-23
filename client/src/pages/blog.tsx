@@ -27,6 +27,11 @@ export default function BlogPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [verificationPending, setVerificationPending] = useState<{
+    email: string;
+    emailSent?: boolean | null;
+    message?: string;
+  } | null>(null);
 
   // Check auth on mount — global AuthContext first, then community session
   useEffect(() => {
@@ -117,7 +122,23 @@ export default function BlogPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
+      if (data.requiresVerification) {
+        setVerificationPending({
+          email: data.email || identifier,
+          emailSent: data.emailSent,
+          message: data.message,
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        setAuthError(
+          data.message || data.error || "Sign-in could not be completed.",
+        );
+        return;
+      }
 
       if (data.success) {
         // Store token if provided
@@ -355,9 +376,14 @@ export default function BlogPage() {
         />
         <AuthModal
           isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setVerificationPending(null);
+          }}
           onAuthenticate={handleAuthenticate}
           isLoading={isAuthLoading}
+          error={authError}
+          verificationPending={verificationPending}
         />
       </>
     );
@@ -597,10 +623,12 @@ export default function BlogPage() {
         onClose={() => {
           setIsAuthModalOpen(false);
           setAuthError("");
+          setVerificationPending(null);
         }}
         onAuthenticate={handleAuthenticate}
         isLoading={isAuthLoading}
         error={authError}
+        verificationPending={verificationPending}
       />
     </div>
   );

@@ -324,6 +324,7 @@ export async function globalAuthGate(
         email: schema.users.email,
         role: schema.users.role,
         subscriptionTier: schema.users.subscriptionTier,
+        isVerified: schema.users.isVerified,
       })
       .from(schema.users)
       .where(eq(schema.users.id, Number(userId)))
@@ -337,11 +338,23 @@ export async function globalAuthGate(
       });
     }
 
+    const isConfiguredOwnerAccount = isConfiguredOwner(
+      { email: dbUser.email, role: dbUser.role },
+      process.env.SUPERADMIN_EMAIL,
+    );
+    if (!dbUser.isVerified && !isConfiguredOwnerAccount) {
+      res.clearCookie("auth_token", { path: "/" });
+      return res.status(403).json({
+        success: false,
+        status: 403,
+        requiresVerification: true,
+        email: dbUser.email,
+        message: "Please verify your email before accessing this portal.",
+      });
+    }
+
     if (
-      isConfiguredOwner(
-        { email: dbUser.email, role: dbUser.role },
-        process.env.SUPERADMIN_EMAIL,
-      ) &&
+      isConfiguredOwnerAccount &&
       decoded.ownerMfa !== true
     ) {
       res.clearCookie("auth_token", { path: "/" });
@@ -434,6 +447,7 @@ export function requireAuth(allowedRoles?: string[]) {
           email: schema.users.email,
           role: schema.users.role,
           subscriptionTier: schema.users.subscriptionTier,
+          isVerified: schema.users.isVerified,
         })
         .from(schema.users)
         .where(eq(schema.users.id, Number(userId)))
@@ -447,11 +461,23 @@ export function requireAuth(allowedRoles?: string[]) {
         });
       }
 
+      const isConfiguredOwnerAccount = isConfiguredOwner(
+        { email: dbUser.email, role: dbUser.role },
+        process.env.SUPERADMIN_EMAIL,
+      );
+      if (!dbUser.isVerified && !isConfiguredOwnerAccount) {
+        res.clearCookie("auth_token", { path: "/" });
+        return res.status(403).json({
+          success: false,
+          status: 403,
+          requiresVerification: true,
+          email: dbUser.email,
+          message: "Please verify your email before accessing this portal.",
+        });
+      }
+
       if (
-        isConfiguredOwner(
-          { email: dbUser.email, role: dbUser.role },
-          process.env.SUPERADMIN_EMAIL,
-        ) &&
+        isConfiguredOwnerAccount &&
         decoded.ownerMfa !== true
       ) {
         res.clearCookie("auth_token", { path: "/" });

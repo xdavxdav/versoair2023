@@ -30,6 +30,9 @@ export interface AuthUser {
 
 export interface AuthResponse {
   success: boolean;
+  requiresVerification?: boolean;
+  emailSent?: boolean;
+  email?: string;
   token?: string;
   user?: AuthUser;
   message?: string;
@@ -129,7 +132,7 @@ export async function login(
 
     const data: AuthResponse = await response.json();
 
-    if (data.success) {
+    if (data.success && !data.requiresVerification) {
       if (data.user) cacheUser(data.user);
       // Store token in memory for Authorization header (cookie fallback)
       if (data.token) _authToken = data.token;
@@ -163,7 +166,7 @@ export async function register(payload: {
 
     const data: AuthResponse = await response.json();
 
-    if (data.success) {
+    if (data.success && !data.requiresVerification) {
       if (data.user) cacheUser(data.user);
       // Store token in memory for Authorization header (cookie fallback)
       if (data.token) _authToken = data.token;

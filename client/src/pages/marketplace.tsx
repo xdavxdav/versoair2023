@@ -168,6 +168,11 @@ export default function MarketplacePage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [verificationPending, setVerificationPending] = useState<{
+    email: string;
+    emailSent?: boolean | null;
+    message?: string;
+  } | null>(null);
 
   const promptMarketplaceAuth = (reason?: string) => {
     if (reason) setAuthError(reason);
@@ -255,7 +260,23 @@ export default function MarketplacePage() {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
+      if (data.requiresVerification) {
+        setVerificationPending({
+          email: data.email || identifier,
+          emailSent: data.emailSent,
+          message: data.message,
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        setAuthError(
+          data.message || data.error || "Sign-in could not be completed.",
+        );
+        return;
+      }
 
       if (data.success) {
         if (data.token) {
@@ -698,10 +719,12 @@ export default function MarketplacePage() {
           onClose={() => {
             setIsAuthModalOpen(false);
             setAuthError("");
+            setVerificationPending(null);
           }}
           onAuthenticate={handleAuthenticate}
           isLoading={isAuthLoading}
           error={authError}
+          verificationPending={verificationPending}
           showProfessionalSSO={false}
         />
       </>

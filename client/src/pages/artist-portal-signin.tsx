@@ -30,6 +30,7 @@ import {
 } from "@/lib/auth-validation";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { useAuth } from "@/contexts/AuthContext";
+import VerificationPendingNotice from "@/components/VerificationPendingNotice";
 
 // ─── Floating Background Particles (lighter version) ─
 function LightParticles() {
@@ -74,6 +75,11 @@ export default function ArtistPortalSignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
+  const [verificationPending, setVerificationPending] = useState<{
+    email: string;
+    emailSent?: boolean | null;
+    message?: string;
+  } | null>(null);
   const [step, setStep] = useState(1); // For multi-step apply form
 
   // Display name onboarding state
@@ -141,6 +147,15 @@ export default function ArtistPortalSignIn() {
         }),
       });
       const data = await res.json();
+      if (data.requiresVerification) {
+        setVerificationPending({
+          email: data.email || signInForm.email,
+          emailSent: data.emailSent,
+          message: data.message,
+        });
+        setIsLoading(false);
+        return;
+      }
       if (!res.ok || !data.success) {
         setAuthError(
           data.message ||
@@ -224,6 +239,15 @@ export default function ArtistPortalSignIn() {
         }),
       });
       const data = await res.json();
+      if (data.requiresVerification) {
+        setVerificationPending({
+          email: data.user?.email || applyForm.email,
+          emailSent: data.emailSent,
+          message: data.message,
+        });
+        setIsLoading(false);
+        return;
+      }
       if (!res.ok || !data.success) {
         setAuthError(
           data.message || "Échec de l'inscription. Veuillez réessayer.",
@@ -304,6 +328,29 @@ export default function ArtistPortalSignIn() {
       setOnboardingSaving(false);
     }
   };
+
+  if (verificationPending) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#06020f] px-4 py-12">
+        <div className="w-full max-w-lg">
+          <VerificationPendingNotice
+            email={verificationPending.email}
+            emailSent={verificationPending.emailSent}
+            message={verificationPending.message}
+            onContinue={() => {
+              setSignInForm((current) => ({
+                ...current,
+                email: verificationPending.email,
+                password: "",
+              }));
+              setVerificationPending(null);
+              setActiveTab("signin");
+            }}
+          />
+        </div>
+      </main>
+    );
+  }
 
   // ── Name Onboarding Screen ──
   if (showNameOnboarding) {

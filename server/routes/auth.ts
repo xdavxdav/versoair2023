@@ -3156,6 +3156,16 @@ router.post(
       return;
     }
 
+    if (!user.isVerified && !isSuperadmin(user.email)) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message: "Please verify your email before logging in.",
+        email: user.email,
+      });
+      return;
+    }
+
     // ── Common: Generate token and respond ──
     const effectiveRole = normalizeAccountRoleFromEmail(
       user.email,

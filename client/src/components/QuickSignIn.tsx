@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import VerificationPendingNotice from "@/components/VerificationPendingNotice";
 
 interface QuickSignInProps {
   open: boolean;
@@ -39,6 +40,11 @@ export function QuickSignIn({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [verificationPending, setVerificationPending] = useState<{
+    email: string;
+    emailSent?: boolean | null;
+    message?: string;
+  } | null>(null);
   const { toast } = useToast();
   const { login, restoreAuth } = useAuthContext();
 
@@ -67,10 +73,22 @@ export function QuickSignIn({
 
       const data = await res.json();
 
+      if (data.requiresVerification) {
+        setVerificationPending({
+          email: data.email || data.user?.email || email,
+          emailSent: data.emailSent,
+          message: data.message,
+        });
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(
           data.error || data.message || "Erreur d'authentification",
         );
+      }
+      if (!data.success || !data.token || !data.user) {
+        throw new Error(data.message || "Authentication could not be completed.");
       }
 
       toast({
@@ -160,7 +178,21 @@ export function QuickSignIn({
                   </div>
                 </div>
 
-                {/* Form */}
+                {verificationPending ? (
+                  <div className="p-4 sm:p-6">
+                    <VerificationPendingNotice
+                      email={verificationPending.email}
+                      emailSent={verificationPending.emailSent}
+                      message={verificationPending.message}
+                      onContinue={() => {
+                        setEmail(verificationPending.email);
+                        setPassword("");
+                        setMode("signin");
+                        setVerificationPending(null);
+                      }}
+                    />
+                  </div>
+                ) : (
                 <form
                   onSubmit={handleSubmit}
                   className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
@@ -250,6 +282,7 @@ export function QuickSignIn({
                     </div>
                   </div>
                 </form>
+                )}
               </div>
             </motion.div>
           </div>

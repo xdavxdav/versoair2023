@@ -389,6 +389,9 @@ export default function Careers() {
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [authVerificationEmail, setAuthVerificationEmail] = useState("");
+  const [verificationEmailSent, setVerificationEmailSent] = useState<
+    boolean | null
+  >(null);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
 
@@ -457,8 +460,12 @@ export default function Careers() {
       } else if (data.success || data.requiresVerification) {
         // Needs email verification — show in-popup verification view
         setAuthVerificationEmail(data.email || authForm.email);
-        // If this was a LOGIN attempt that bounced, tell the user they're not verified yet
-        if (authMode === "login" && data.requiresVerification) {
+        setVerificationEmailSent(
+          typeof data.emailSent === "boolean" ? data.emailSent : null,
+        );
+        if (data.requiresVerification) {
+          setResendMessage(data.message || "");
+        } else if (authMode === "login") {
           setResendMessage(
             "⚠️ Email not verified yet — check your inbox and click the link first.",
           );
@@ -1968,7 +1975,11 @@ export default function Careers() {
                     Check Your Email
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    We sent a verification link to
+                    {verificationEmailSent === true
+                      ? "Verification email delivery was confirmed for"
+                      : verificationEmailSent === false
+                        ? "We could not confirm verification email delivery to"
+                        : "Email verification is required for"}
                   </p>
                   <p className="text-sm font-semibold text-blue-700 mt-0.5">
                     {authVerificationEmail}
@@ -1995,9 +2006,10 @@ export default function Careers() {
                           }),
                         });
                         const d = await r.json();
-                        setResendMessage(
-                          d.message || "Verification email resent!",
+                        setVerificationEmailSent(
+                          typeof d.emailSent === "boolean" ? d.emailSent : null,
                         );
+                        setResendMessage(d.message || "Verification status updated.");
                       } catch {
                         setResendMessage("Failed to resend. Try again.");
                       } finally {

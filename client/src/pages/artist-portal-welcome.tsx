@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import VerificationPendingNotice from "@/components/VerificationPendingNotice";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import {
   isArtistCodeLoginInput,
@@ -2206,6 +2207,11 @@ export default function ArtistPortalWelcome() {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
+  const [verificationPending, setVerificationPending] = useState<{
+    email: string;
+    emailSent?: boolean | null;
+    message?: string;
+  } | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [transitionArtist, setTransitionArtist] = useState("");
   const [pendingName, setPendingName] = useState<{ token: string; user: any } | null>(null);
@@ -2386,6 +2392,15 @@ export default function ArtistPortalWelcome() {
         }),
       });
       const regData = await regRes.json();
+      if (regData.requiresVerification) {
+        setVerificationPending({
+          email: regData.user?.email || applyForm.email,
+          emailSent: regData.emailSent,
+          message: regData.message,
+        });
+        setIsAuthLoading(false);
+        return;
+      }
       if (!regRes.ok || !regData.success) {
         setApplyError(
           regData.message || "Échec de l'inscription. Veuillez réessayer.",
@@ -2468,6 +2483,21 @@ export default function ArtistPortalWelcome() {
       el.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
+
+  if (verificationPending) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#06020f] px-4 py-12">
+        <div className="w-full max-w-lg">
+          <VerificationPendingNotice
+            email={verificationPending.email}
+            emailSent={verificationPending.emailSent}
+            message={verificationPending.message}
+            onContinue={() => navigate("/auth/signin")}
+          />
+        </div>
+      </main>
+    );
+  }
 
   // Feature cards for the "What Awaits" section
   const features = [

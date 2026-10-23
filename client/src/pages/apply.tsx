@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SuccessCelebration from "@/components/SuccessCelebration";
+import VerificationPendingNotice from "@/components/VerificationPendingNotice";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
@@ -275,7 +276,6 @@ export default function ApplyPage() {
   const [success, setSuccess] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false);
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
-  const [verificationResending, setVerificationResending] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState("");
   const [musicUniverseOpen, setMusicUniverseOpen] = useState(false);
 
@@ -500,97 +500,20 @@ export default function ApplyPage() {
     }
   };
 
-  const handleResendVerification = async () => {
-    setVerificationResending(true);
-    setVerificationMessage("");
-    try {
-      const response = await fetch("/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: formData.email.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Could not request a verification email.");
-      }
-      setVerificationEmailSent(data.emailSent === true);
-      setVerificationMessage(data.message || "");
-    } catch (resendError) {
-      setVerificationEmailSent(false);
-      setVerificationMessage(
-        resendError instanceof Error
-          ? resendError.message
-          : "Could not request a verification email. Please try again.",
-      );
-    } finally {
-      setVerificationResending(false);
-    }
-  };
-
   // ─────────────────────────────────────────────────────
   // 🔐 Authenticated Portal Selector — eligible / ineligible
   // ─────────────────────────────────────────────────────
   if (verificationPending) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-12">
-        <Card className="w-full max-w-lg border-white/10 bg-white/5 text-white">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/10">
-              <CheckCircle2 className="h-9 w-9 text-amber-300" />
-            </div>
-            <CardTitle className="text-2xl">Account created — verify your email</CardTitle>
-            <CardDescription className="text-white/70">
-              Your {selectedPortal?.name || "Verso Air"} account is not ready to
-              sign in until you verify this address:
-            </CardDescription>
-            <p className="font-semibold text-amber-200">{formData.email}</p>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <p
-              role={verificationEmailSent ? "status" : "alert"}
-              className={
-                verificationEmailSent
-                  ? "rounded-lg border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-100"
-                  : "rounded-lg border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100"
-              }
-            >
-              {verificationEmailSent
-                ? verificationMessage ||
-                  "Verification email sent. Check your inbox and spam folder."
-                : verificationMessage ||
-                  "We could not confirm delivery of the verification email. Your account remains unverified, so portal sign-in is blocked until you receive and use a verification link."}
-            </p>
-            {!verificationEmailSent && (
-              <p className="text-sm text-white/70">
-                You can retry after email delivery is available. This page will
-                stay here; you will not be redirected to a dashboard before
-                verification.
-              </p>
-            )}
-            <Button
-              type="button"
-              onClick={handleResendVerification}
-              disabled={verificationResending}
-              className="w-full bg-amber-500 text-slate-950 hover:bg-amber-400"
-            >
-              {verificationResending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              {verificationResending
-                ? "Requesting verification email..."
-                : "Resend verification email"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setLocation("/auth/signin")}
-              className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
-            >
-              Go to sign in after verifying
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="w-full max-w-lg">
+          <VerificationPendingNotice
+            email={formData.email}
+            emailSent={verificationEmailSent}
+            message={verificationMessage}
+            onContinue={() => setLocation("/auth/signin")}
+          />
+        </div>
       </main>
     );
   }
