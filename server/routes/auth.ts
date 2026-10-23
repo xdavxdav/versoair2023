@@ -3093,17 +3093,6 @@ router.post(
       }
       user = foundUser;
 
-      // Check email verification
-      if (!user.isVerified && !isSuperadmin(email)) {
-        res.status(403).json({
-          success: false,
-          requiresVerification: true,
-          message: "Please verify your email before logging in.",
-          email: user.email,
-        });
-        return;
-      }
-
       // Check lockout
       if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
         const remaining = Math.ceil(
@@ -3131,6 +3120,17 @@ router.post(
         res
           .status(401)
           .json({ success: false, message: "Invalid email or password" });
+        return;
+      }
+
+      if (!user.isVerified && !isSuperadmin(email)) {
+        res.status(403).json({
+          success: false,
+          requiresVerification: true,
+          message:
+            "Your password is correct, but this account must verify its email before signing in.",
+          email: user.email,
+        });
         return;
       }
 
@@ -3556,18 +3556,6 @@ router.post(
       return;
     }
 
-    // Check email verification — community members must verify before logging in (superadmin bypasses)
-    if (!user.isVerified && !isSuperadmin(email)) {
-      res.status(403).json({
-        success: false,
-        requiresVerification: true,
-        message:
-          "Please verify your email before logging in. Check your inbox for the verification link.",
-        email: user.email,
-      });
-      return;
-    }
-
     // Check lockout
     if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
       const remaining = Math.ceil(
@@ -3603,6 +3591,18 @@ router.post(
         code: "OWNER_USE_SECURE_SIGN_IN",
         message:
           "Owner accounts must sign in with their email, password, and authenticator code.",
+      });
+      return;
+    }
+
+    // Verify credentials before revealing whether this account needs email verification.
+    if (!user.isVerified && !isSuperadmin(email)) {
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        message:
+          "Your password is correct, but this account must verify its email before signing in. Check your inbox or request a new verification link.",
+        email: user.email,
       });
       return;
     }
