@@ -101,7 +101,6 @@ export function getAccountFamily(
 export function getDashboardAccountOptions(
   user: AuthUser | null | undefined,
   hasBusiness: boolean,
-  cameFromGeoAdmin: boolean,
 ): DashboardAccountOption[] {
   if (!user) return [];
 
@@ -118,8 +117,7 @@ export function getDashboardAccountOptions(
   if (
     isStaff ||
     role === "geo-admin" ||
-    portals.includes("geo-admin") ||
-    cameFromGeoAdmin
+    portals.includes("geo-admin")
   ) {
     available.add("geo-admin");
   }

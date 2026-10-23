@@ -1462,7 +1462,7 @@ const ACCOUNT_THEMES: Record<
 
 export default function UserDashboard() {
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuthContext();
+  const { user: authUser, logout } = useAuthContext();
   const [location, setLocation] = useLocation();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
@@ -1828,7 +1828,6 @@ export default function UserDashboard() {
   const accountOptions = getDashboardAccountOptions(
     authUser,
     hasRealBusiness,
-    cameFromGeoAdmin,
   );
   const selectedAccount = getSelectedDashboardAccount(
     authUser,
@@ -2027,15 +2026,8 @@ export default function UserDashboard() {
     user: "text-slate-400 bg-slate-500/15 border-slate-500/30",
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("geoadmin_session");
-    localStorage.removeItem("geoadmin_username");
-    localStorage.removeItem("geoadmin_login_time");
-    // Stay on the dashboard portal — show the login gate again
-    window.location.href = "/dashboard";
+  const handleLogout = async () => {
+    await logout();
   };
 
   const handleBackToGeoAdmin = () => {

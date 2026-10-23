@@ -5,7 +5,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
-import type { PortalId } from "@/lib/portal-access";
+import { PORTAL_ORDER, type PortalId } from "@/lib/portal-access";
 import MarketLabel from "@/components/MarketLabel";
 
 export const PORTALS: Record<PortalId, { label: string; path: string }> = {
@@ -17,7 +17,7 @@ export const PORTALS: Record<PortalId, { label: string; path: string }> = {
   community: { label: "Community", path: "/blog" },
   contractor: { label: "Contractor", path: "/contractor" },
   careers: { label: "Careers", path: "/services/careers/dashboard" },
-  admin: { label: "Admin", path: "/admin" },
+  admin: { label: "Admin", path: "/geo-admin/dashboard" },
 };
 
 const EXPLORE = [
@@ -101,8 +101,9 @@ export default function TopNav() {
           open={open === "portals"}
           onToggle={() => toggle("portals")}
         >
-          {accessiblePortals
-            .filter((id) => PORTALS[id])
+          {PORTAL_ORDER.filter(
+            (id) => accessiblePortals.includes(id) && PORTALS[id],
+          )
             .map((id) => (
               <Link key={id} href={PORTALS[id].path} className={item}>
                 {PORTALS[id].label}

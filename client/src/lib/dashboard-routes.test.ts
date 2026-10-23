@@ -38,23 +38,24 @@ test("dashboard account choices follow the user's available accounts", () => {
     ["general", "artist", "streamer", "contractor"],
   );
   assert.deepEqual(
-    getDashboardAccountOptions(user, true, true).map((account) => account.id),
+    getDashboardAccountOptions(
+      { ...user, portals: ["general", "streamer", "geo-admin"] },
+      true,
+    ).map((account) => account.id),
     ["general", "business", "geo-admin", "artist", "streamer", "contractor"],
   );
 });
 
-test("dashboard account selection defaults to entry account and rejects unavailable choices", () => {
+test("dashboard account selection follows granted portals, not URL hints", () => {
   const user = {
     id: "42",
     email: "user@example.test",
     role: "user",
+    portals: ["general", "streamer"],
   };
-  const options = getDashboardAccountOptions(user, false, true);
+  const options = getDashboardAccountOptions(user, false);
 
-  assert.equal(
-    getSelectedDashboardAccount(user, options, "geo-admin"),
-    "geo-admin",
-  );
+  assert.equal(getSelectedDashboardAccount(user, options, "geo-admin"), "general");
   assert.equal(getSelectedDashboardAccount(user, options, "artist"), "general");
 });
 

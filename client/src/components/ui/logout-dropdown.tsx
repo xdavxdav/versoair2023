@@ -1,12 +1,13 @@
 /**
  * 🔓 LogoutDropdown — Smart unified disconnect button.
  *
- * Detects active sessions (General, Geo Admin, Admin Dashboard, Artist Portal,
- * Blog Community) via localStorage keys. Shows a single red button that:
+ * Detects active portal markers (shared account, Geo Admin, Admin Dashboard,
+ * Artist Portal, Blog Community) via localStorage keys. Shows a single button:
  *   - If only 1 session → direct disconnect (no dropdown)
  *   - If 2+ sessions → dropdown with per-portal disconnect + "Disconnect All"
  *
- * Individual disconnects remove only localStorage keys.
+ * Individual portal disconnects remove only that portal's localStorage keys.
+ * The shared account sign-in is global and therefore disconnects all portals.
  * "Disconnect All" also POSTs /auth/logout to clear the HttpOnly cookie.
  */
 
@@ -42,7 +43,7 @@ function detectActiveSessions(): ActiveSession[] {
   if (hasToken) {
     sessions.push({
       id: "general",
-      label: "General Account",
+      label: "Account sign-in (all portals)",
       icon: <Globe className="h-3.5 w-3.5" />,
       color: "text-blue-400",
     });
@@ -173,7 +174,11 @@ export function LogoutDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const handleDisconnectOne = (id: SessionId) => {
+  const handleDisconnectOne = async (id: SessionId) => {
+    if (id === "general") {
+      await handleDisconnectAll();
+      return;
+    }
     disconnectSession(id);
     setOpen(false);
     onAfterDisconnect?.();

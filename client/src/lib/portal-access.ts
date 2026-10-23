@@ -31,13 +31,25 @@ export type PortalId =
 /** Map of every portal → boolean access */
 export type PortalAccess = Record<PortalId, boolean>;
 
+export const PORTAL_ORDER: readonly PortalId[] = [
+  "general",
+  "artist",
+  "geo-admin",
+  "community",
+  "streamer",
+  "contractor",
+  "artisan",
+  "careers",
+  "admin",
+];
+
 // ─── Universal base portals (every authenticated user) ─────────────────────
 
 const BASE_PORTALS: PortalId[] = ["general", "streamer"];
 
-// ─── Admin / elevated roles that unlock everything ─────────────────────────
+// ─── Elevated roles granted broad access by computeUserCapabilities ────────
 
-const ADMIN_ROLES = new Set(["admin", "moderator", "superuser"]);
+const ELEVATED_ROLES = new Set(["admin", "moderator", "superuser"]);
 
 // ─── Unlock-reason text for locked portals ─────────────────────────────────
 
@@ -82,21 +94,6 @@ export function getPortalAccess(
 
   const role = capabilities?.role || user.role || "user";
 
-  // Admin override — everything open
-  if (ADMIN_ROLES.has(role)) {
-    return {
-      general: true,
-      streamer: true,
-      artist: true,
-      artisan: true,
-      "geo-admin": true,
-      community: true,
-      contractor: true,
-      careers: true,
-      admin: true,
-    };
-  }
-
   // Start with server portals array if available
   const serverPortals = capabilities?.portals ?? user.portals ?? [];
 
@@ -120,18 +117,28 @@ export function getPortalAccess(
     }
   }
 
-  // Client-side derivation fallback (if server hasn't computed yet)
-  if (capabilities) {
-    if (capabilities.hasArtistProfile) access.artist = true;
-    if (capabilities.isContractor) access.contractor = true;
-    if (capabilities.canAccessBlog) access.community = true;
-    access["geo-admin"] = true;
-  } else {
-    // Derive from AuthUser fields
+  access.admin = role === "admin" || role === "superuser";
+
+  // Server portal grants are authoritative. Derive only while they are not
+  // available, and never infer GeoAdmin from a paid tier without its grant.
+  if (!capabilities) {
+    if (ELEVATED_ROLES.has(role)) {
+      access.artist = true;
+      access["geo-admin"] = true;
+      access.contractor = true;
+      access.careers = true;
+      access.community = true;
+    }
+    if (role === "artist") access.artist = true;
     if (user.hasArtistProfile) access.artist = true;
     if (user.isContractor) access.contractor = true;
     if (user.canAccessBlog) access.community = true;
-    access["geo-admin"] = true;
+    const tier = String(
+      user.subscriptionTier || user.subscription_tier || "free",
+    ).toLowerCase();
+    if (!ELEVATED_ROLES.has(role) && tier === "free") {
+      access["geo-admin"] = true;
+    }
   }
 
   return access;
@@ -156,5 +163,5 @@ export function getAccessiblePortalIds(
   user: AuthUser | null,
 ): PortalId[] {
   const access = getPortalAccess(capabilities, user);
-  return (Object.keys(access) as PortalId[]).filter((id) => access[id]);
+  return PORTAL_ORDER.filter((id) => access[id]);
 }

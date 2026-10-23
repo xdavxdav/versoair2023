@@ -645,7 +645,9 @@ function Router() {
       <Route path="/music/social">{() => <Redirect to="/blog" />}</Route>
       <Route path="/artist-portal/dashboard">{() => <Redirect to="/music/dashboard" />}</Route>
       <Route path="/contractor">{() => <Redirect to="/services/contractors" />}</Route>
-      <Route path="/admin">{() => <Redirect to="/geo-admin" />}</Route>
+      <Route path="/admin">
+        {() => <Redirect to="/geo-admin/dashboard" />}
+      </Route>
       <Route path="/finance">{() => <Redirect to="/finances" />}</Route>
       <Route path="/artist-catalogue">{() => <Redirect to="/artistes" />}</Route>
       <Route path="/streamroyale-admin">{() => <Redirect to="/admin/streamroyale" />}</Route>

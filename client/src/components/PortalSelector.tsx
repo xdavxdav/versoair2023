@@ -10,7 +10,11 @@
 import { useLocation } from "wouter";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
+import {
+  PORTAL_ORDER,
+  UNLOCK_REASONS,
+  type PortalId,
+} from "@/lib/portal-access";
 import {
   Globe,
   Music,
@@ -18,6 +22,7 @@ import {
   MessageSquare,
   Briefcase,
   Headphones,
+  Wrench,
   LayoutDashboard,
   Lock,
   ArrowRight,
@@ -96,6 +101,26 @@ const PORTAL_DEFINITIONS: PortalDefinition[] = [
     borderColor: "border-orange-500/30",
     badge: "Contractor",
   },
+  {
+    id: "artisan",
+    label: "Artisan Portal",
+    description: "Manage your artisan profile and craft services",
+    icon: <Wrench className="w-6 h-6" />,
+    href: "/artisans-portal",
+    gradient: "from-emerald-600 to-teal-500",
+    borderColor: "border-emerald-500/30",
+    badge: "Artisan",
+  },
+  {
+    id: "careers",
+    label: "Careers",
+    description: "Manage job postings and hiring activity",
+    icon: <Briefcase className="w-6 h-6" />,
+    href: "/services/careers/dashboard",
+    gradient: "from-orange-600 to-amber-500",
+    borderColor: "border-orange-500/30",
+    badge: "Business",
+  },
 ];
 
 const ADMIN_PORTAL: PortalDefinition = {
@@ -103,7 +128,7 @@ const ADMIN_PORTAL: PortalDefinition = {
   label: "Admin HQ",
   description: "Platform management & moderation",
   icon: <LayoutDashboard className="w-6 h-6" />,
-  href: "/dashboard",
+  href: "/geo-admin/dashboard",
   gradient: "from-red-600 to-rose-500",
   borderColor: "border-red-500/30",
   badge: "Admin",
@@ -142,9 +167,10 @@ export default function PortalSelector({
   const allPortals = [...PORTAL_DEFINITIONS];
   if (canAccessAdmin) allPortals.push(ADMIN_PORTAL);
 
-  const accessiblePortals = allPortals.filter(
-    (p) => access[p.id as PortalId] === true,
-  );
+  const accessiblePortals = PORTAL_ORDER.flatMap((id) => {
+    const portal = allPortals.find((item) => item.id === id);
+    return portal && access[id] ? [portal] : [];
+  });
   const lockedPortals = PORTAL_DEFINITIONS.filter(
     (p) => access[p.id as PortalId] !== true && p.id !== "general",
   );
