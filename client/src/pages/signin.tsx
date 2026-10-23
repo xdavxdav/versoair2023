@@ -212,6 +212,9 @@ export default function SignIn() {
   const [resetSending, setResetSending] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [verificationNotice, setVerificationNotice] = useState("");
+  const [verificationEmailSent, setVerificationEmailSent] = useState<
+    boolean | null
+  >(null);
   const [accountJustCreated, setAccountJustCreated] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
@@ -556,6 +559,9 @@ export default function SignIn() {
 
       // Handle unverified email
       if (data.requiresVerification) {
+        setVerificationEmailSent(
+          typeof data.emailSent === "boolean" ? data.emailSent : null,
+        );
         setVerificationNotice(
           data.message ||
             "Please verify your email before signing in. Request a new link below if needed.",
@@ -700,6 +706,9 @@ export default function SignIn() {
       }
 
       if (data.requiresVerification) {
+        setVerificationEmailSent(
+          typeof data.emailSent === "boolean" ? data.emailSent : null,
+        );
         setVerificationNotice(
           data.message ||
             "Your account needs email verification. Request a new link below if needed.",
@@ -757,6 +766,9 @@ export default function SignIn() {
         body: JSON.stringify({ email: verificationEmail }),
       });
       const data = await response.json();
+      setVerificationEmailSent(
+        typeof data.emailSent === "boolean" ? data.emailSent : null,
+      );
       if (!response.ok || !data.success) {
         setResendMessage(
           data.message || "We couldn't request a verification email. Please try again.",
@@ -770,6 +782,7 @@ export default function SignIn() {
         );
       }
     } catch {
+      setVerificationEmailSent(false);
       setResendMessage(
         "We couldn't confirm the resend request. Please try again.",
       );
@@ -1047,12 +1060,15 @@ export default function SignIn() {
                   {accountJustCreated ? "You're almost in 🎉" : "One more step to sign in"}
                 </h2>
                 <p className="text-[#9090b0] text-sm mb-2">
-                  {verificationNotice.toLowerCase().includes("could not be sent") ||
+                  {verificationEmailSent === false ||
+                  verificationNotice.toLowerCase().includes("could not be sent") ||
                   verificationNotice.toLowerCase().includes("couldn't send") ||
                   verificationNotice.toLowerCase().includes("delivery could not be confirmed") ||
                   verificationNotice.toLowerCase().includes("couldn't confirm email delivery")
                     ? "We could not confirm delivery of the verification email to:"
-                    : verificationNotice ||
+                    : verificationEmailSent === true
+                      ? "Verification email delivery was confirmed for:"
+                      : verificationNotice ||
                       "Please check your inbox or request a new verification link:"}
                 </p>
                 <p className="text-[#f0b445] font-bold text-base mb-8 bg-[#bf831c]/10 rounded-lg px-4 py-2 inline-block border border-[#bf831c]/20">
@@ -1125,7 +1141,7 @@ export default function SignIn() {
                   {resendLoading ? "Sending..." : "Resend Verification Email"}
                 </Button>
                 {resendMessage && (
-                  <p className="text-sm text-emerald-400 mb-3">
+                  <p className={`text-sm mb-3 ${verificationEmailSent === false ? "text-red-400" : "text-emerald-400"}`}>
                     {resendMessage}
                   </p>
                 )}
@@ -2124,6 +2140,11 @@ export default function SignIn() {
                     const nextData = await submitLoginRequest(account.id);
 
                     if (nextData.requiresVerification) {
+                      setVerificationEmailSent(
+                        typeof nextData.emailSent === "boolean"
+                          ? nextData.emailSent
+                          : null,
+                      );
                       setVerificationNotice(
                         nextData.message ||
                           "Please verify your email before signing in. Request a new link below if needed.",
