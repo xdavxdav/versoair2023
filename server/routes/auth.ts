@@ -3476,7 +3476,7 @@ router.post(
         role: schema.users.role,
       });
 
-    // Send verification email
+    let emailSent = false;
     try {
       const verificationToken = crypto.randomBytes(32).toString("hex");
       await db.insert(schema.verificationTokens).values({
@@ -3485,7 +3485,10 @@ router.post(
         type: "email_verification",
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       });
-      await sendVerificationEmail(email.toLowerCase(), verificationToken);
+      emailSent = await sendVerificationEmail(
+        email.toLowerCase(),
+        verificationToken,
+      );
     } catch (e) {
       console.error("[COMMUNITY AUTH] Failed to send verification email:", e);
     }
@@ -3493,8 +3496,10 @@ router.post(
     res.status(201).json({
       success: true,
       requiresVerification: true,
-      message:
-        "Community account created! Check your email to verify before logging in.",
+      emailSent,
+      message: emailSent
+        ? "Account created. Verify your email before signing in."
+        : "Account created, but the verification email could not be sent. Your account remains unverified. Try resending once email delivery is available.",
       user: {
         id: newUser.id,
         email: newUser.email,
