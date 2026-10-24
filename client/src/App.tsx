@@ -1419,7 +1419,16 @@ function AppContent() {
       )}
       {showAccountBlogNavbar && (
         <Suspense fallback={null}>
-          <BlogNavbar />
+          <BlogNavbar
+            isAuthenticated={isAuthed}
+            userName={
+              user?.name ||
+              user?.displayName ||
+              user?.username ||
+              user?.email?.split("@")[0]
+            }
+            onLogout={logout}
+          />
         </Suspense>
       )}
       {/* ── Music Universe Navbar — sits below the amber bar ── */}
