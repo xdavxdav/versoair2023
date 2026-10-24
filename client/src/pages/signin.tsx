@@ -33,6 +33,14 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import {
+  getEligiblePreferredPortal,
+  getPortalPreferenceStorageKey,
+  getRecommendedPortalId,
+  getRoleAwareRedirectPath,
+  sortPortalChoices,
+  type PortalChoice,
+} from "@/lib/portal-preferences";
+import {
   isValidEmail,
   isPasswordStrong,
   checkPasswordLength,
@@ -70,6 +78,15 @@ const getSafeReturnPath = (target: string | null) => {
 };
 
 type SignInProvider = "google" | "microsoft" | "linkedin";
+type LoginPortalUser = {
+  id?: string | number | null;
+  userId?: string | number | null;
+  email?: string | null;
+  role?: string | null;
+  portals?: string[];
+  hasArtistProfile?: boolean;
+  isContractor?: boolean;
+};
 
 const getLoginDashboardPath = (userData: any) =>
   getDashboardDestination({
@@ -81,31 +98,18 @@ const getLoginDashboardPath = (userData: any) =>
     isContractor: userData?.isContractor,
   }).path;
 
-type PortalChoice = {
-  id: string;
-  name: string;
-  detail: string;
-  path: string;
-};
-
-const getPortalPreferenceStorageKey = (userData: {
-  id?: string | number | null;
-  userId?: string | number | null;
-  email?: string | null;
-}) => {
-  const accountId = userData.id ?? userData.userId;
-  const normalizedEmail = userData.email?.trim().toLowerCase();
-  const identity =
-    accountId !== undefined && accountId !== null
-      ? `id:${accountId}`
-      : normalizedEmail
-        ? `email:${normalizedEmail}`
-        : null;
-
-  return identity
-    ? `versoair:preferred-portal:${encodeURIComponent(identity)}`
-    : null;
-};
+const getRoleAwareLoginPath = (userData: any, requestedPath: string | null) =>
+  getRoleAwareRedirectPath(
+    {
+      id: String(userData?.id || userData?.userId || ""),
+      email: String(userData?.email || ""),
+      role: userData?.role ?? undefined,
+      portals: userData?.portals,
+      hasArtistProfile: userData?.hasArtistProfile,
+      isContractor: userData?.isContractor,
+    },
+    requestedPath,
+  );
 
 const getPortalChoices = (userData: any): PortalChoice[] => {
   const portals = new Set(
@@ -150,6 +154,22 @@ const getPortalChoices = (userData: any): PortalChoice[] => {
           name: "Contractor Portal",
           detail: "Projects, contracts, and client connections",
           path: "/contracts",
+        }
+      : null,
+    portals.has("artisan")
+      ? {
+          id: "artisan",
+          name: "Artisan Portal",
+          detail: "Your artisan profile and craft services",
+          path: "/artisans-portal",
+        }
+      : null,
+    portals.has("careers")
+      ? {
+          id: "careers",
+          name: "Careers",
+          detail: "Business job postings and hiring activity",
+          path: "/services/careers/dashboard",
         }
       : null,
     portals.has("geo-admin") ||
@@ -261,52 +281,65 @@ export default function SignIn() {
   >([]);
   const [portalPreferenceStorageKey, setPortalPreferenceStorageKey] =
     useState<string | null>(null);
+  const [recommendedPortalId, setRecommendedPortalId] = useState<
+    string | null
+  >(null);
+  const [rememberPortalPreference, setRememberPortalPreference] =
+    useState(false);
   const [portalSelectionOpen, setPortalSelectionOpen] = useState(false);
   const [, navigate] = useLocation();
   const { user: authUser, login: authLogin } = useAuthContext();
   useSkipAuthPageWhenSignedIn();
 
   const openPortalSelection = (
-    userData: { id?: string | number; userId?: string | number; email?: string },
+    userData: LoginPortalUser,
     availablePortals: PortalChoice[],
   ) => {
-    const redirectTarget = getQueryParam("redirect");
-    if (redirectTarget?.startsWith("/")) {
-      navigate(redirectTarget);
-      return;
-    }
-
-    // Staff accounts have a fixed operational portal. Do not let the general
-    // portal entry (or the account picker) override that role-based landing.
-    const dashboardDestination = getLoginDashboardPath(userData);
-    if (dashboardDestination === "/geo-admin/workspace") {
-      navigate(dashboardDestination);
-      return;
-    }
-
-    const generalPortal = availablePortals.find(
-      (portal) => portal.id === "general",
+    const target = getRoleAwareLoginPath(
+      userData,
+      getSafeReturnPath(getQueryParam("redirect")),
     );
-    if (generalPortal) {
-      navigate(generalPortal.path);
+    if (target) {
+      navigate(target);
       return;
     }
 
     const preferenceKey = getPortalPreferenceStorageKey(userData);
-    const preferredPortalId = preferenceKey
+    const savedPortalId = preferenceKey
       ? localStorage.getItem(preferenceKey)
       : null;
-    const preferredPortal = availablePortals.find(
-      (portal) => portal.id === preferredPortalId,
+    const preferredPortal = getEligiblePreferredPortal(
+      availablePortals,
+      savedPortalId,
     );
-
     if (preferredPortal) {
       navigate(preferredPortal.path);
       return;
     }
 
+    if (availablePortals.length <= 1) {
+      navigate(
+        availablePortals[0]?.path ?? getLoginDashboardPath(userData),
+      );
+      return;
+    }
+
+    const userForRecommendation = {
+      id: String(userData.id ?? userData.userId ?? ""),
+      email: String(userData.email ?? ""),
+      role: userData.role ?? undefined,
+      portals: userData.portals,
+      hasArtistProfile: userData.hasArtistProfile,
+      isContractor: userData.isContractor,
+    };
+    const recommendedId = getRecommendedPortalId(
+      userForRecommendation,
+      availablePortals,
+    );
+    setRecommendedPortalId(recommendedId);
+    setPortalChoices(sortPortalChoices(availablePortals, recommendedId));
     setPortalPreferenceStorageKey(preferenceKey);
-    setPortalChoices(availablePortals);
+    setRememberPortalPreference(false);
     setPortalSelectionOpen(true);
   };
 
@@ -525,8 +558,11 @@ export default function SignIn() {
         title: "✅ Signed in",
         description: `Welcome back, ${data.user.name || data.user.email}!`,
       });
-      const redirectTarget = getQueryParam("redirect");
-      if (redirectTarget?.startsWith("/")) {
+      const redirectTarget = getRoleAwareLoginPath(
+        data.user,
+        getSafeReturnPath(getQueryParam("redirect")),
+      );
+      if (redirectTarget) {
         navigate(redirectTarget);
         return;
       }
@@ -674,8 +710,11 @@ export default function SignIn() {
             : `Welcome, ${data.user.name || data.user.email}!`,
         });
 
-        const redirectTarget = getQueryParam("redirect");
-        if (redirectTarget && redirectTarget.startsWith("/")) {
+        const redirectTarget = getRoleAwareLoginPath(
+          data.user,
+          getSafeReturnPath(getQueryParam("redirect")),
+        );
+        if (redirectTarget) {
           navigate(redirectTarget);
           return;
         }
@@ -772,8 +811,11 @@ export default function SignIn() {
           title: "✅ Account created",
           description: `Welcome, ${data.user.name || data.user.email}!`,
         });
-        const redirectTarget = getQueryParam("redirect");
-        if (redirectTarget && redirectTarget.startsWith("/")) {
+        const redirectTarget = getRoleAwareLoginPath(
+          data.user,
+          getSafeReturnPath(getQueryParam("redirect")),
+        );
+        if (redirectTarget) {
           navigate(redirectTarget);
         } else {
           const portals = data.user.portals || [];
@@ -2237,8 +2279,11 @@ export default function SignIn() {
                         description: `Welcome, ${nextData.user.name || nextData.user.email}!`,
                       });
 
-                      const redirectTarget = getQueryParam("redirect");
-                      if (redirectTarget && redirectTarget.startsWith("/")) {
+                      const redirectTarget = getRoleAwareLoginPath(
+                        nextData.user,
+                        getSafeReturnPath(getQueryParam("redirect")),
+                      );
+                      if (redirectTarget) {
                         navigate(redirectTarget);
                       } else {
                         const portals = nextData.user.portals || [];
@@ -2292,7 +2337,8 @@ export default function SignIn() {
                 Choose where to go
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                This account has access to more than one Verso Air portal.
+                We recommend the portal that best matches this account. Choose
+                one to continue, and optionally save it as your favorite.
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 space-y-3">
@@ -2301,7 +2347,10 @@ export default function SignIn() {
                   key={portal.id}
                   type="button"
                   onClick={() => {
-                    if (portalPreferenceStorageKey) {
+                    if (
+                      rememberPortalPreference &&
+                      portalPreferenceStorageKey
+                    ) {
                       localStorage.setItem(
                         portalPreferenceStorageKey,
                         portal.id,
@@ -2314,6 +2363,11 @@ export default function SignIn() {
                 >
                   <div className="font-semibold text-gray-900">
                     {portal.name}
+                    {portal.id === recommendedPortalId && (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                        Recommended
+                      </span>
+                    )}
                   </div>
                   <div className="mt-1 text-sm text-gray-600">
                     {portal.detail}
@@ -2321,6 +2375,17 @@ export default function SignIn() {
                 </button>
               ))}
             </div>
+            <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={rememberPortalPreference}
+                onChange={(event) =>
+                  setRememberPortalPreference(event.target.checked)
+                }
+                className="mt-0.5 accent-amber-700"
+              />
+              <span>Make the portal I open my favorite for future sign-ins</span>
+            </label>
           </DialogContent>
         </Dialog>
 
