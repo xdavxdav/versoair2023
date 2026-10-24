@@ -2320,7 +2320,7 @@ export default function SignIn() {
           <button
             type="button"
             onClick={handleBack}
-            className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 text-sm font-medium text-amber-700 hover:text-amber-900 hover:underline"
+            className="fixed left-4 top-4 z-50 inline-flex items-center gap-2 rounded-md bg-white/95 px-3 py-2 text-sm font-medium text-amber-700 shadow-sm hover:text-amber-900 hover:underline"
             aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />

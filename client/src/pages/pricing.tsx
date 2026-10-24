@@ -1,6 +1,7 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { Button } from "@/components/ui/button";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -43,6 +44,13 @@ export default function Pricing() {
       />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-12 sm:py-16">
+        <Link
+          href="/geo-admin"
+          className="mb-5 inline-flex w-fit items-center gap-2 rounded-md text-sm font-semibold text-emerald-800 hover:text-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to GeoAdmin
+        </Link>
         <div className="grid min-w-0 gap-7">
           <GeoAdminPromoCard />
           <section>
