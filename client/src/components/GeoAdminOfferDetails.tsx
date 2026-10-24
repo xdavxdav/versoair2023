@@ -1,4 +1,4 @@
-import { GEOADMIN_PLAN_DETAILS, GEOADMIN_PREMIUM_NOTICE, GEOADMIN_REFERENCE_NOTICE, type GeoAdminOfferKey } from "@/lib/geoadmin-pricing";
+import { GEOADMIN_PLAN_DETAILS, GEOADMIN_PREMIUM_NOTICE, type GeoAdminOfferKey } from "@/lib/geoadmin-pricing";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 export default function GeoAdminOfferDetails({ offer }: { offer: GeoAdminOfferKey }) {
@@ -6,7 +6,6 @@ export default function GeoAdminOfferDetails({ offer }: { offer: GeoAdminOfferKe
   const details = GEOADMIN_PLAN_DETAILS[offer];
   return localize(
     <div className="mt-4 space-y-4 text-sm leading-relaxed">
-      <p className="rounded-lg border border-current/20 p-3 text-xs">{GEOADMIN_REFERENCE_NOTICE}</p>
       {offer === "premium" && <p className="font-semibold">{GEOADMIN_PREMIUM_NOTICE}</p>}
       <div>
         <h4 className="font-semibold">Proposed platform scope</h4>
