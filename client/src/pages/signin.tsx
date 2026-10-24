@@ -49,6 +49,26 @@ const getQueryParam = (param: string) => {
   return url.searchParams.get(param);
 };
 
+const getSafeReturnPath = (target: string | null) => {
+  if (
+    !target?.startsWith("/") ||
+    target.startsWith("//") ||
+    target.includes("\\")
+  ) {
+    return null;
+  }
+
+  try {
+    const url = new URL(target, window.location.origin);
+    if (url.origin !== window.location.origin || url.pathname === "/auth/signin") {
+      return null;
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+};
+
 type SignInProvider = "google" | "microsoft" | "linkedin";
 
 const getLoginDashboardPath = (userData: any) =>
@@ -290,6 +310,21 @@ export default function SignIn() {
       return;
     }
     navigate("/");
+  };
+
+  const registrationReturnPath = getSafeReturnPath(getQueryParam("redirect"));
+  const registrationBackLabel = registrationReturnPath
+    ? registrationReturnPath === "/geo-admin" ||
+      registrationReturnPath.startsWith("/geo-admin/")
+      ? "Back to GeoAdmin"
+      : "Back to previous page"
+    : "Back to Sign In";
+  const handleRegistrationBack = () => {
+    if (registrationReturnPath) {
+      navigate(registrationReturnPath);
+      return;
+    }
+    setStep("login");
   };
 
   // Onboarding: display name prompt after first login
@@ -1754,11 +1789,11 @@ export default function SignIn() {
           <div className="max-w-md mx-auto">
             {/* Back Button */}
             <button
-              onClick={() => setStep("login")}
+              onClick={handleRegistrationBack}
               className="flex items-center space-x-2 text-[#bf831c] hover:text-[#a6701a] mb-6 transition-colors duration-200 group"
             >
               <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
-              <span className="text-sm font-medium">Back to Sign In</span>
+              <span className="text-sm font-medium">{registrationBackLabel}</span>
             </button>
 
             <div className="bg-white rounded-2xl shadow-xl p-8">
