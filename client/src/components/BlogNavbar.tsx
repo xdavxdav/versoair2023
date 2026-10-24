@@ -936,6 +936,29 @@ export default function BlogNavbar({
                 </a>
               </Link>
             </div>
+            {isAuthenticated && (
+              <div className="grid grid-cols-3 gap-1 border-b border-white/10 pb-2 mb-2">
+                <Link href={dashboard.path}>
+                  <a className="rounded-xl px-3 py-2.5 text-center text-xs font-medium text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-200">
+                    Dashboard
+                  </a>
+                </Link>
+                <Link href="/profile">
+                  <a className="rounded-xl px-3 py-2.5 text-center text-xs font-medium text-slate-300 hover:bg-cyan-400/10 hover:text-cyan-200">
+                    Account
+                  </a>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  aria-label="Sign out"
+                  className="flex items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-xs font-semibold text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign Out
+                </button>
+              </div>
+            )}
             {MOBILE_MENU_GROUPS.map((group) => (
               <div
                 key={group.key}
