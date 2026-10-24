@@ -1,12 +1,4 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
-import {
-  GEOADMIN_OFFER_ORDER,
-  GEOADMIN_OFFER_NAMES,
-  GEOADMIN_OFFER_PRICES_XOF,
-  GEOADMIN_PLAN_DETAILS,
-  GEOADMIN_REFERENCE_NOTICE,
-  formatXofPrice,
-} from "@/lib/geoadmin-pricing";
 import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { Link } from "wouter";
 
@@ -39,51 +31,11 @@ export default function GeoAdminPromoCard() {
       <h2 className="mt-4 text-2xl font-bold leading-tight text-white sm:text-3xl">
         Plateforme de Référencement &amp; Visibilité des Entreprises
       </h2>
-      <section aria-label="FCFA reference prices" className="mt-6">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#f5d579]">
-          FCFA reference prices · before local conversion
-        </p>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] items-start gap-3">
-          {GEOADMIN_OFFER_ORDER.filter((tier) => tier !== "free").map(
-            (tier, index) => (
-              <article
-                key={tier}
-                className={`min-w-0 rounded-xl border p-4 ${
-                  index === 1
-                    ? "border-[#ffe394] bg-[#e0b94f]/10"
-                    : "border-[#d7b652]/50 bg-white/5"
-                }`}
-              >
-                <h3 className="text-base font-bold uppercase text-[#f1d47a]">
-                  {GEOADMIN_OFFER_NAMES[tier]}
-                </h3>
-                <p className="mt-3 text-xl font-bold text-white">
-                  {formatXofPrice(
-                    GEOADMIN_OFFER_PRICES_XOF[tier],
-                    "XOF",
-                    null,
-                    "fr-CI",
-                  )}
-                  {GEOADMIN_OFFER_PRICES_XOF[tier] !== null && (
-                    <span className="text-sm font-normal"> / an</span>
-                  )}
-                </p>
-                <p className="mt-1 text-xs text-[#bac7d8]">
-                  {GEOADMIN_OFFER_PRICES_XOF[tier] === null
-                    ? "Custom proposal"
-                    : "Base annual reference price"}
-                </p>
-                <p className="mt-3 text-sm text-[#e8edf4]">
-                  {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
-                </p>
-              </article>
-            ),
-          )}
-        </div>
-        <p className="mt-4 text-sm leading-relaxed text-[#c5d0df]">
-          {GEOADMIN_REFERENCE_NOTICE}
-        </p>
-      </section>
+      <p className="mt-6 max-w-3xl text-sm leading-relaxed text-[#c5d0df]">
+        Explore the available plans, market pricing, and plan details below.
+        Availability and final terms are confirmed directly; no online checkout
+        is offered.
+      </p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#d7b652]/45 bg-[#050e1d]/55 p-4">
         <GeoAdminContacts />
         <Link

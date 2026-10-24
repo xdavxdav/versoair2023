@@ -12,11 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   GEOADMIN_OFFER_NAMES,
-  GEOADMIN_OFFER_PRICES_XOF,
   type GeoAdminOfferKey,
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_OFFER_ORDER,
-  formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
 import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { useCountry } from "@/contexts/CountryContext";
@@ -45,8 +43,7 @@ export default function GeoAdminPlanDetailsDialog({
   const localize = useLocalizedContent();
   const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey>(initialTier);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const { currency, rates, selectedCountry, marketAvailability } =
-    useGeoAdminPricing();
+  const { currency } = useGeoAdminPricing();
   const { selectedCountry: countryCode } = useCountry();
 
   useEffect(() => {
@@ -60,7 +57,6 @@ export default function GeoAdminPlanDetailsDialog({
     ? getCountryMeta(countryCode).name
     : "Not detected";
   const planName = GEOADMIN_OFFER_NAMES[selectedTier];
-  const annualPriceXof = GEOADMIN_OFFER_PRICES_XOF[selectedTier];
   const customRequestHref = (() => {
     const subject = encodeURIComponent(`GeoAdmin ${planName} plan inquiry`);
     const body = encodeURIComponent(
@@ -132,19 +128,6 @@ export default function GeoAdminPlanDetailsDialog({
                 <span className="block text-sm font-semibold">
                   {GEOADMIN_OFFER_NAMES[tier]}
                 </span>
-                <span
-                  className="mt-1 block text-xs text-amber-200"
-                >
-                  {GEOADMIN_OFFER_PRICES_XOF[tier] === null
-                    ? "Custom quote"
-                    : formatMarketXofPrice(
-                        GEOADMIN_OFFER_PRICES_XOF[tier],
-                        selectedCountry ?? "",
-                        currency,
-                        rates,
-                      )}
-                  {GEOADMIN_OFFER_PRICES_XOF[tier] !== null && marketAvailability !== false ? " / year" : ""}
-                </span>
               </button>
             ))}
           </div>
@@ -159,26 +142,6 @@ export default function GeoAdminPlanDetailsDialog({
                 <p className="mt-1 text-sm text-slate-300">
                   {GEOADMIN_PLAN_DETAILS[selectedTier].shortDescription}
                 </p>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-lg font-bold text-amber-200">
-                  {GEOADMIN_OFFER_PRICES_XOF[selectedTier] === null
-                    ? "Custom proposal"
-                    : formatMarketXofPrice(
-                        GEOADMIN_OFFER_PRICES_XOF[selectedTier],
-                        selectedCountry ?? "",
-                        currency,
-                        rates,
-                      )}
-                  {GEOADMIN_OFFER_PRICES_XOF[selectedTier] !== null && marketAvailability !== false ? " / year" : ""}
-                </p>
-                {selectedCountry && (
-                  <p className="text-sm text-slate-300">
-                    {annualPriceXof === null
-                      ? "Tailored written proposal"
-                      : "Annual reference price for your market"}
-                  </p>
-                )}
               </div>
             </div>
             <GeoAdminOfferDetails offer={selectedTier} />
@@ -211,10 +174,8 @@ export default function GeoAdminPlanDetailsDialog({
           </section>
 
           <p className="mt-5 text-xs leading-relaxed text-slate-400">
-            Prices are shown in the selected available market’s currency.
-            Canadian dollar and euro amounts are indicative conversions from
-            the FCFA reference schedule; tax, market eligibility, final
-            deliverables, and terms are confirmed in a written proposal.
+            Final availability, deliverables, taxes, and commercial terms are
+            confirmed in a written proposal before any commitment.
           </p>
           <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
