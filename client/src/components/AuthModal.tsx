@@ -192,7 +192,10 @@ export default function AuthModal({
           />
 
           {/* Modal — scrollable wrapper */}
-          <div className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain touch-pan-y flex items-start justify-center p-3 sm:p-4 pointer-events-none [-webkit-overflow-scrolling:touch]">
+          <div
+            translate="no"
+            className="notranslate fixed inset-0 z-[70] overflow-y-auto overscroll-contain touch-pan-y flex items-start justify-center p-3 sm:p-4 pointer-events-none [-webkit-overflow-scrolling:touch]"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

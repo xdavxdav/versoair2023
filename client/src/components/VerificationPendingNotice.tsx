@@ -54,7 +54,10 @@ export default function VerificationPendingNotice({
   };
 
   return (
-    <div className="w-full space-y-5 rounded-2xl border border-white/10 bg-slate-950 p-6 text-white shadow-2xl">
+    <div
+      translate="no"
+      className="notranslate w-full space-y-5 rounded-2xl border border-white/10 bg-slate-950 p-6 text-white shadow-2xl"
+    >
       <div className="text-center">
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/10">
           <CheckCircle2 className="h-8 w-8 text-amber-300" />
