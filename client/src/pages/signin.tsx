@@ -276,6 +276,14 @@ export default function SignIn() {
       return;
     }
 
+    // Staff accounts have a fixed operational portal. Do not let the general
+    // portal entry (or the account picker) override that role-based landing.
+    const dashboardDestination = getLoginDashboardPath(userData);
+    if (dashboardDestination === "/geo-admin/workspace") {
+      navigate(dashboardDestination);
+      return;
+    }
+
     const generalPortal = availablePortals.find(
       (portal) => portal.id === "general",
     );
