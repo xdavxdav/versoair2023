@@ -196,16 +196,6 @@ export default function SignIn() {
               )}
             </button>
 
-            {/* Admin Credentials */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-blue-900 mb-2">
-                Admin Credentials:
-              </p>
-              <p className="text-sm text-blue-800">Email: admin@versoair.com</p>
-              <p className="text-sm text-blue-800">
-                Password: AdminGeneral@2026!
-              </p>
-            </div>
           </form>
 
           {/* Footer */}
