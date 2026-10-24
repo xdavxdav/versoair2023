@@ -28,21 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  GEOADMIN_OFFER_NAMES,
-  type GeoAdminOfferKey,
-  GEOADMIN_PLAN_DETAILS,
-  GEOADMIN_OFFER_ORDER,
-  GEOADMIN_OFFER_PRICES_XOF,
-} from "@/lib/geoadmin-pricing";
-import { formatMarketXofPrice } from "@/lib/geoadmin-pricing";
-import GeoAdminContacts from "@/components/GeoAdminContacts";
-import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
-import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
-import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
-import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 const GEOADMIN_STAFF_CODE_PATTERN = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i;
@@ -57,8 +44,6 @@ export default function GeoAdminAuthGate({
   const localize = useLocalizedContent();
   const { login: authContextLogin } = useAuthContext();
   const [, navigateTo] = useLocation();
-  const { currency, rates, selectedCountry, marketAvailability } =
-    useGeoAdminPricing();
   const [mode, setMode] = useState<
     "gate" | "signin" | "geoadmin" | "owner-totp"
   >("gate");
@@ -72,8 +57,6 @@ export default function GeoAdminAuthGate({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey | "">("");
-  const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
   // NOTE: Self-service ".test" account creation was removed from this public,
   // unauthenticated gate — it allowed anyone to register a privileged admin
   // account. Creating .test accounts now requires an existing Admin/Superadmin
@@ -336,106 +319,23 @@ export default function GeoAdminAuthGate({
             </p>
           </div>
 
-          <section className="mx-auto mb-8 max-w-5xl">
-            <div className="grid min-w-0 gap-5">
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-2xl">
-                <GeoAdminPromoCard />
-              </div>
-              <div>
-                <div className="mb-4 text-center">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
-                    Annual prices converted for your market
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Converted from the FCFA reference prices above: Canada in
-                    CAD, France in EUR, and Côte d’Ivoire in FCFA. Other
-                    countries are coming soon. No online checkout is offered.
-                  </p>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {GEOADMIN_OFFER_ORDER.map((tier) => {
-                    const plan = { name: GEOADMIN_OFFER_NAMES[tier], popular: tier === 'verified' };
-                    const isActive = selectedTier === tier;
-                    const annualXof = GEOADMIN_OFFER_PRICES_XOF[tier];
-                    return localize(
-                      <button
-                        key={tier}
-                        type="button"
-                        aria-pressed={isActive}
-                        onClick={() => setSelectedTier(tier)}
-                        className={`rounded-xl border p-3 text-left transition ${
-                          isActive
-                            ? "border-amber-300 bg-amber-300/10"
-                            : "border-white/10 bg-white/[0.03] hover:border-white/25"
-                        }`}
-                      >
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-white">
-                            {plan.name}
-                          </span>
-                          {plan.popular && (
-                            <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-200">
-                              Popular
-                            </span>
-                          )}
-                        </span>
-                        <span
-                          className="mt-1 block text-sm font-bold text-amber-200"
-                        >
-                          {formatMarketXofPrice(
-                            annualXof,
-                            selectedCountry ?? "",
-                            currency,
-                            rates,
-                          )}
-                          {annualXof !== null && marketAvailability !== false && (
-                            <span className="font-normal text-slate-400">
-                              {" "}
-                              / year
-                            </span>
-                          )}
-                        </span>
-                        {annualXof !== null && marketAvailability === true && (
-                          <span className="mt-0.5 block text-[10px] text-slate-400">
-                            Converted estimate
-                          </span>
-                        )}
-                        <span className="mt-2 block text-xs leading-relaxed text-slate-400">
-                          {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {selectedTier && (
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-slate-200">
-                    <p className="mb-2 text-sm font-semibold text-white">
-                      {GEOADMIN_OFFER_NAMES[selectedTier]}
-                    </p>
-                    <GeoAdminOfferDetails offer={selectedTier} />
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setIsPlanDetailsOpen(true)}
-                  className="mt-4 inline-flex items-center rounded-lg border border-amber-300/40 px-4 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/10"
-                >
-                  Learn more and customize
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-slate-200">
-              <GeoAdminContacts />
-            </div>
+          <section className="mx-auto mb-8 max-w-5xl rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center shadow-2xl sm:p-8">
+            <h2 className="text-xl font-bold text-white">
+              Explore GeoAdmin plans
+            </h2>
+            <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+              View the current plans, market pricing, and availability on our
+              dedicated pricing page.
+            </p>
+            <Button
+              type="button"
+              onClick={() => navigateTo("/pricing")}
+              className="mt-5 bg-amber-400 text-slate-950 hover:bg-amber-300"
+            >
+              View plans and pricing
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </section>
-
-          <GeoAdminPlanDetailsDialog
-            open={isPlanDetailsOpen}
-            onOpenChange={setIsPlanDetailsOpen}
-            initialTier={selectedTier || "verified"}
-          />
 
           {/* CTA */}
           <div className="text-center space-y-4">
