@@ -107,7 +107,7 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="w-full max-w-md">
           {/* Header */}
@@ -119,7 +119,7 @@ export default function SignIn() {
           {/* Login Form */}
           <form
             onSubmit={handleLogin}
-            className="bg-white rounded-lg shadow-lg p-8 space-y-6"
+            className="bg-white rounded-lg border border-orange-100 shadow-lg p-8 space-y-6"
           >
             {/* Account Locked Warning */}
             {lockoutUntil && (
@@ -156,7 +156,7 @@ export default function SignIn() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@example.com"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
               </div>
@@ -174,7 +174,7 @@ export default function SignIn() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Any password"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
               </div>
@@ -184,7 +184,7 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading || !!lockoutUntil}
-              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full bg-orange-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {loading ? (
                 <>
@@ -196,13 +196,23 @@ export default function SignIn() {
               )}
             </button>
 
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+              <p className="text-sm font-medium text-orange-900">
+                Admin Credentials
+              </p>
+              <p className="mt-1 text-sm text-orange-800">
+                Sign in with the administrator credentials assigned to you.
+                For security, credentials are not displayed on this page.
+              </p>
+            </div>
+
           </form>
 
           {/* Footer */}
           <div className="text-center mt-6 text-gray-600 text-sm">
             <p>
               Back to{" "}
-              <Link href="/" className="text-indigo-600 hover:underline">
+              <Link href="/" className="text-orange-700 hover:underline">
                 Home
               </Link>
             </p>
