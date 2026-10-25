@@ -40,15 +40,24 @@ export function getEligiblePreferredPortal<T extends PortalChoice>(
   );
 }
 
+const STAFF_WORKSPACE_PATH = "/geo-admin/workspace";
+
 export function getRoleAwareRedirectPath(
   user: AuthUser,
   requestedPath: string | null,
 ): string | null {
   const roleHome = getDashboardDestination(user).path;
+  const isStaff = roleHome === STAFF_WORKSPACE_PATH;
+
   if (
-    roleHome === "/geo-admin/workspace" &&
+    isStaff &&
     (!requestedPath || requestedPath === "/" || requestedPath === "/dashboard")
   ) {
+    return roleHome;
+  }
+
+  const requestedPathname = requestedPath?.split(/[?#]/)[0] ?? null;
+  if (!isStaff && requestedPathname === STAFF_WORKSPACE_PATH) {
     return roleHome;
   }
 

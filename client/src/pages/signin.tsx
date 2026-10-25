@@ -2389,11 +2389,11 @@ export default function SignIn() {
           </DialogContent>
         </Dialog>
 
-        <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] py-12">
+        <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-[#fff9e5] via-white to-[#fff9e5] pt-16 pb-12">
           <button
             type="button"
             onClick={handleBack}
-            className="fixed left-4 top-4 z-50 inline-flex items-center gap-2 rounded-md bg-white/95 px-3 py-2 text-sm font-medium text-amber-700 shadow-sm hover:text-amber-900 hover:underline"
+            className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-md bg-white/95 px-3 py-2 text-sm font-medium text-amber-700 shadow-sm hover:text-amber-900 hover:underline"
             aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />

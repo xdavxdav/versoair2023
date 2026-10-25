@@ -382,7 +382,7 @@ export function CountryDropdown() {
         {/* ── Trigger pill: 🇨🇮 Côte d'Ivoire · FR ── */}
         <button
           onClick={() => setOpen((o) => !o)}
-          className="group flex items-center gap-1 text-white hover:text-white/80 transition-colors focus:outline-none"
+          className="mobile-compact-btn group flex items-center gap-1 text-white hover:text-white/80 transition-colors focus:outline-none"
           title="Country & Language"
           aria-label="Change country or language"
           aria-haspopup="true"
@@ -417,7 +417,7 @@ export function CountryDropdown() {
             e.stopPropagation();
             reloadDetection();
           }}
-          className="text-white/70 hover:text-white transition-colors focus:outline-none"
+          className="mobile-compact-btn text-white/70 hover:text-white transition-colors focus:outline-none"
           title="Reload location detection"
           aria-label="Reload location detection"
         >

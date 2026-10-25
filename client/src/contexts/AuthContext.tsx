@@ -6,6 +6,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { setAuthToken, clearCachedUser } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { normalizeAccountRoleFromEmail } from "@/lib/dashboard-routes";
@@ -228,9 +229,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (newToken: string, newUser: AuthUser) => {
     // Token lives in-memory only — httpOnly cookie is the persistent auth mechanism
     setAuthToken(newToken);
-    setToken(newToken);
-    setUser(newUser);
-    setAuthError(null);
+    // Commit synchronously: callers navigate right after login(), and a protected
+    // route must see the user before it renders or it redirects back to signin.
+    flushSync(() => {
+      setToken(newToken);
+      setUser(newUser);
+      setAuthError(null);
+    });
     // Cache non-sensitive display info for fast UI restore on next load
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(newUser));
   };

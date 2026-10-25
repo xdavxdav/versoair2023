@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
+import { getRoleAwareRedirectPath } from "@/lib/portal-preferences";
 
 /**
  * Sends someone who is already signed in away from an auth page (e.g. when
@@ -27,7 +28,10 @@ export function useSkipAuthPageWhenSignedIn() {
       !requested.startsWith("//") &&
       !requested.includes("\\") &&
       !requested.startsWith("/auth/");
-    navigate(safe ? requested : getDashboardDestination(user).path, {
+    const destination =
+      getRoleAwareRedirectPath(user, safe ? requested : null) ??
+      getDashboardDestination(user).path;
+    navigate(destination, {
       replace: true,
     });
   }, [user, loading, navigate]);

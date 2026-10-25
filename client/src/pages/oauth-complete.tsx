@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { getRoleAwareRedirectPath } from "@/lib/portal-preferences";
 import { Loader2, CheckCircle2, AlertCircle, Shield } from "lucide-react";
 
 /**
@@ -93,6 +94,7 @@ export default function OAuthComplete() {
             /* fall back to the general dashboard */
           }
         }
+        target = getRoleAwareRedirectPath(data.user, target) ?? target;
 
         setCredentials({
           email: data.user.email || "",

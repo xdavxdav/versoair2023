@@ -1356,7 +1356,7 @@ function AppContent() {
                     onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
                     aria-label="Open Verso Air Music Portal"
                     title="Verso Air Music Portal"
-                    className="hover:text-amber-200 transition-colors flex items-center gap-1"
+                    className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
                   >
                     <span>🎵</span>
                     <span className="hidden sm:inline">Verso Air</span>
@@ -1365,7 +1365,7 @@ function AppContent() {
                     onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
                     aria-label="Open GPS Services"
                     title="GPS Services"
-                    className="hover:text-amber-200 transition-colors flex items-center gap-1"
+                    className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
                   >
                     <span>📍</span>
                     <span className="hidden sm:inline">GPS Services</span>

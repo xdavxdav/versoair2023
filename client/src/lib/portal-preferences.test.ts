@@ -85,3 +85,22 @@ test("staff go to their workspace instead of the general dashboard fallback", ()
     "/admin/tickets",
   );
 });
+
+test("non-staff users are never redirected into the staff workspace", () => {
+  const artist = {
+    id: "4",
+    email: "artist@example.test",
+    role: "artist",
+    portals: ["artist"],
+  };
+
+  assert.equal(
+    getRoleAwareRedirectPath(artist, "/geo-admin/workspace"),
+    "/artist-portal/dashboard",
+  );
+  assert.equal(
+    getRoleAwareRedirectPath(artist, "/geo-admin/workspace?redirect=%2Fx"),
+    "/artist-portal/dashboard",
+  );
+  assert.equal(getRoleAwareRedirectPath(artist, null), null);
+});
