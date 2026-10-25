@@ -323,6 +323,7 @@ export async function ensureAllTables(
     const INBOX_MESSAGES_ADDITIONS = [
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
+      `ALTER TABLE inbox_attachments ADD COLUMN IF NOT EXISTS uploaded_by INTEGER`,
       `ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS allow_media_download BOOLEAN DEFAULT FALSE`,
       `ALTER TABLE albums ADD COLUMN IF NOT EXISTS pochette TEXT`,
     ];
@@ -627,6 +628,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       id SERIAL PRIMARY KEY,
       data BYTEA NOT NULL,
       mime_type VARCHAR(100) NOT NULL,
+      uploaded_by INTEGER,
       created_at TIMESTAMP DEFAULT NOW() NOT NULL
     )`,
   },

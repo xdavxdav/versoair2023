@@ -50,6 +50,13 @@
       "when": 1792676575973,
       "tag": "0006_geoadmin_staff_code_hashes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792969120000,
+      "tag": "0007_inbox_attachment_uploader",
+      "breakpoints": true
     }
   ]
 }

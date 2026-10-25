@@ -158,6 +158,14 @@ test("repairs user columns required by the Drizzle registration insert", async (
       ),
       "expected startup repair for inbox_messages",
     );
+    assert.ok(
+      queries.some((query) =>
+        query.includes(
+          "ALTER TABLE inbox_attachments ADD COLUMN IF NOT EXISTS uploaded_by INTEGER",
+        ),
+      ),
+      "expected startup repair for inbox_attachments.uploaded_by",
+    );
   } finally {
     restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
     restoreEnv("NODE_ENV", previousNodeEnv);

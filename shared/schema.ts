@@ -3644,6 +3644,9 @@ export const inboxAttachments = pgTable("inbox_attachments", {
   id: serial("id").primaryKey(),
   data: bytea("data").notNull(),
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  // No foreign key, so the startup ALTER never locks users. NULL for uploads
+  // that predate the column.
+  uploadedBy: integer("uploaded_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

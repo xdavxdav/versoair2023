@@ -33,6 +33,14 @@ import {
   getPostgresErrorDetails,
 } from "../utils/postgres-errors";
 import { buildContactsQuery } from "../utils/inbox-contacts-query";
+import {
+  INBOX_ATTACHMENT_URL_PREFIX,
+  attachmentReadableBy,
+  attachmentUploadedBy,
+  inboxAttachmentUrl,
+  legacyFileReadableBy,
+  parseInboxAttachmentUrl,
+} from "../utils/inbox-attachment-access";
 import { receiveInboxAttachment } from "../utils/inbox-upload";
 
 const router = Router();
@@ -568,10 +576,11 @@ router.post(
         .values({
           data: req.file.buffer,
           mimeType: req.file.mimetype,
+          uploadedBy: Number(req.user!.userId),
         })
         .returning({ id: schema.inboxAttachments.id });
 
-      const url = `/api/inbox/attachments/file/${attachment.id}`;
+      const url = inboxAttachmentUrl(attachment.id);
       return res.json({ success: true, url });
     } catch (error) {
       console.error("[Inbox] Attachment persistence error:", error);
@@ -583,44 +592,62 @@ router.post(
 );
 
 // ─── GET /api/inbox/attachments/file/:filename — serve an uploaded chat image ─
-router.get("/attachments/file/:filename", (req: Request, res: Response) => {
-  const { filename } = req.params;
+// Readable by its uploader and by people with a message carrying it in their
+// own conversation. Anyone else gets the same 404 as a file that doesn't exist.
+router.get(
+  "/attachments/file/:filename",
+  async (req: Request, res: Response) => {
+    const { filename } = req.params;
+    const notFound = () =>
+      res.status(404).json({ success: false, error: "File not found" });
 
-  if (/^\d+$/.test(filename)) {
-    db.select({
-      data: schema.inboxAttachments.data,
-      mimeType: schema.inboxAttachments.mimeType,
-    })
-      .from(schema.inboxAttachments)
-      .where(eq(schema.inboxAttachments.id, Number(filename)))
-      .limit(1)
-      .then(([attachment]) => {
-        if (!attachment) {
-          return res
-            .status(404)
-            .json({ success: false, error: "File not found" });
-        }
-        res.set("Cache-Control", "public, max-age=86400");
+    try {
+      const userId = Number(req.user!.userId);
+
+      if (/^\d+$/.test(filename)) {
+        const attachmentId = parseInboxAttachmentUrl(
+          `${INBOX_ATTACHMENT_URL_PREFIX}${filename}`,
+        );
+        if (attachmentId === null) return notFound();
+
+        const [attachment] = await db
+          .select({
+            data: schema.inboxAttachments.data,
+            mimeType: schema.inboxAttachments.mimeType,
+          })
+          .from(schema.inboxAttachments)
+          .where(attachmentReadableBy(userId, attachmentId))
+          .limit(1);
+        if (!attachment) return notFound();
+
+        res.set("Cache-Control", "private, max-age=86400");
         res.type(attachment.mimeType);
         return res.send(attachment.data);
-      })
-      .catch((error) => {
-        console.error("[Inbox] Attachment read error:", error);
-        res.status(500).json({ success: false, error: "File unavailable" });
-      });
-    return;
-  }
+      }
 
-  if (/[^a-zA-Z0-9._-]/.test(filename)) {
-    return res.status(400).json({ success: false, error: "Invalid filename" });
-  }
-  const filePath = path.join(INBOX_UPLOADS_DIR, filename);
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ success: false, error: "File not found" });
-  }
-  res.set("Cache-Control", "public, max-age=86400");
-  res.sendFile(filePath);
-});
+      if (/[^a-zA-Z0-9._-]/.test(filename)) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid filename" });
+      }
+
+      const granted = await db.execute(
+        sql`SELECT 1 AS granted WHERE ${legacyFileReadableBy(userId, filename)}`,
+      );
+      const filePath = path.join(INBOX_UPLOADS_DIR, filename);
+      if (granted.rows.length === 0 || !fs.existsSync(filePath)) {
+        return notFound();
+      }
+      res.set("Cache-Control", "private, max-age=86400");
+      return res.sendFile(filePath);
+    } catch (error) {
+      console.error("[Inbox] Attachment read error:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "File unavailable" });
+    }
+  },
+);
 
 // ─── POST /api/inbox/conversations/:id/messages ──────────────────────────────
 // Send a message. Respects daily message limits per tier for business_network only.
@@ -707,6 +734,27 @@ router.post(
         typeof content === "string" ? content.trim() : "";
       const normalizedAttachmentUrl =
         typeof attachmentUrl === "string" ? attachmentUrl.trim() : null;
+
+      // Only the uploader may put an attachment on a message; otherwise
+      // pointing a message at someone else's upload would let you read it.
+      if (normalizedAttachmentUrl) {
+        const attachmentId = parseInboxAttachmentUrl(normalizedAttachmentUrl);
+        const [ownAttachment] =
+          attachmentId === null
+            ? []
+            : await db
+                .select({ id: schema.inboxAttachments.id })
+                .from(schema.inboxAttachments)
+                .where(attachmentUploadedBy(Number(userId), attachmentId))
+                .limit(1);
+        if (!ownAttachment) {
+          return res.status(400).json({
+            success: false,
+            error:
+              "That image could not be attached. Remove it and attach it again.",
+          });
+        }
+      }
       const recipientUserId = Number(conv.participantId);
       const shouldMirror =
         Number.isFinite(recipientUserId) &&
