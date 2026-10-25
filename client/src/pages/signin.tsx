@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContext, type AuthUser } from "@/contexts/AuthContext";
 import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
@@ -86,7 +86,23 @@ type LoginPortalUser = {
   portals?: string[];
   hasArtistProfile?: boolean;
   isContractor?: boolean;
+  isAdmin?: boolean;
+  subscriptionTier?: string;
+  subscription_tier?: string;
+  subscriptionStatus?: string;
 };
+
+const CAREERS_PORTAL_ALIASES = new Set([
+  "careers",
+  "job-seeker",
+  "job_seeker",
+  "jobseeker",
+  "career-seeker",
+  "career_seeker",
+  "business",
+  "business_owner",
+  "employer",
+]);
 
 const getLoginDashboardPath = (userData: any) =>
   getDashboardDestination({
@@ -96,6 +112,9 @@ const getLoginDashboardPath = (userData: any) =>
     portals: userData?.portals,
     hasArtistProfile: userData?.hasArtistProfile,
     isContractor: userData?.isContractor,
+    isAdmin: userData?.isAdmin,
+    subscriptionTier: userData?.subscriptionTier ?? userData?.subscription_tier,
+    subscriptionStatus: userData?.subscriptionStatus,
   }).path;
 
 const getRoleAwareLoginPath = (userData: any, requestedPath: string | null) =>
@@ -107,16 +126,44 @@ const getRoleAwareLoginPath = (userData: any, requestedPath: string | null) =>
       portals: userData?.portals,
       hasArtistProfile: userData?.hasArtistProfile,
       isContractor: userData?.isContractor,
+      isAdmin: userData?.isAdmin,
+      subscriptionTier: userData?.subscriptionTier ?? userData?.subscription_tier,
+      subscriptionStatus: userData?.subscriptionStatus,
     },
     requestedPath,
   );
 
+const toAuthUser = (
+  userData: any,
+  overrides: Partial<AuthUser> = {},
+): AuthUser => ({
+  id: String(userData?.id || userData?.userId || ""),
+  email: String(userData?.email || ""),
+  name: userData?.name,
+  role: userData?.role ?? undefined,
+  isAdmin: Boolean(userData?.isAdmin),
+  portals: Array.isArray(userData?.portals) ? userData.portals : [],
+  hasArtistProfile: Boolean(userData?.hasArtistProfile),
+  isContractor: Boolean(userData?.isContractor),
+  subscriptionTier: String(
+    userData?.subscriptionTier ?? userData?.subscription_tier ?? "free",
+  ),
+  subscriptionStatus: userData?.subscriptionStatus,
+  ...overrides,
+});
+
 const getPortalChoices = (userData: any): PortalChoice[] => {
-  const portals = new Set(
-    (userData?.portals || []).map((portal: string) => portal.toLowerCase()),
+  const portalValues: unknown[] = Array.isArray(userData?.portals)
+    ? userData.portals
+    : [];
+  const portals = new Set<string>(
+    portalValues.map((portal) => String(portal).toLowerCase()),
   );
+  const hasGeneralAccount =
+    portals.has("general") ||
+    (portals.size === 0 && getLoginDashboardPath(userData) === "/dashboard");
   const choices = [
-    portals.has("general") || portals.size === 0
+    hasGeneralAccount
       ? {
           id: "general",
           name: "General Account",
@@ -156,7 +203,7 @@ const getPortalChoices = (userData: any): PortalChoice[] => {
           path: "/contracts",
         }
       : null,
-    portals.has("artisan")
+    portals.has("artisan") || userData?.role === "artisan"
       ? {
           id: "artisan",
           name: "Artisan Portal",
@@ -164,7 +211,8 @@ const getPortalChoices = (userData: any): PortalChoice[] => {
           path: "/artisans-portal",
         }
       : null,
-    portals.has("careers")
+    [...portals].some((portal) => CAREERS_PORTAL_ALIASES.has(portal)) ||
+    CAREERS_PORTAL_ALIASES.has(String(userData?.role ?? "").toLowerCase())
       ? {
           id: "careers",
           name: "Careers",
@@ -173,13 +221,14 @@ const getPortalChoices = (userData: any): PortalChoice[] => {
         }
       : null,
     portals.has("geo-admin") ||
+    userData?.role === "geo-admin" ||
     userData?.role === "admin" ||
     userData?.role === "superuser"
       ? {
           id: "geo-admin",
           name: "GeoAdmin",
           detail: "Geographic business intelligence tools",
-          path: "/geo-admin",
+          path: getLoginDashboardPath(userData),
         }
       : null,
   ];
@@ -525,34 +574,19 @@ export default function SignIn() {
       }
 
       if (data.needsPasswordChange) {
-        authLogin(data.token, {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.role,
-        });
+        authLogin(data.token, toAuthUser(data.user));
         setPendingLoginData(data);
         setStep("change-password");
         return;
       }
       if (data.needsDisplayName) {
-        authLogin(data.token, {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.role,
-        });
+        authLogin(data.token, toAuthUser(data.user));
         setPendingLoginData(data);
         setStep("set-display-name");
         return;
       }
 
-      authLogin(data.token, {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        role: data.user.role,
-      });
+      authLogin(data.token, toAuthUser(data.user));
       localStorage.setItem("signin_timestamp", new Date().toISOString());
       toast({
         title: "✅ Signed in",
@@ -664,12 +698,7 @@ export default function SignIn() {
       if (data.success && data.token && data.user) {
         // Forced password change takes priority (temporary/shared password)
         if (data.needsPasswordChange) {
-          authLogin(data.token, {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            role: data.user.role,
-          });
+          authLogin(data.token, toAuthUser(data.user));
           setPendingLoginData(data);
           setStep("change-password");
           return;
@@ -678,12 +707,7 @@ export default function SignIn() {
         // If user hasn't set their display name yet, show onboarding prompt
         if (data.needsDisplayName) {
           // Store token so the set-display-name call is authenticated
-          authLogin(data.token, {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.name,
-            role: data.user.role,
-          });
+          authLogin(data.token, toAuthUser(data.user));
           setPendingLoginData(data);
           setStep("set-display-name");
           return;
@@ -696,12 +720,7 @@ export default function SignIn() {
         });
 
         // Normal login — user already has a display name
-        authLogin(data.token, {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.role,
-        });
+        authLogin(data.token, toAuthUser(data.user));
         localStorage.setItem("signin_timestamp", new Date().toISOString());
         toast({
           title: "✅ Signed in",
@@ -800,12 +819,7 @@ export default function SignIn() {
         setStep("verify-sent");
       } else if (data.success && data.token && data.user) {
         // Fallback: if server auto-logged in (shouldn't happen with new flow)
-        authLogin(data.token, {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.role,
-        });
+        authLogin(data.token, toAuthUser(data.user));
         localStorage.setItem("signin_timestamp", new Date().toISOString());
         toast({
           title: "✅ Account created",
@@ -903,12 +917,13 @@ export default function SignIn() {
         .then((r) => r.json())
         .then((data) => {
           if (data.user) {
-            authLogin(data.token || "", {
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.name || verifiedName,
-              role: data.user.role || verifiedRole,
-            });
+            authLogin(
+              data.token || "",
+              toAuthUser(data.user, {
+                name: data.user.name || verifiedName,
+                role: data.user.role || verifiedRole,
+              }),
+            );
           }
         })
         .catch(() => {});
@@ -1288,10 +1303,10 @@ export default function SignIn() {
               localStorage.setItem("auth_user", JSON.stringify(u));
             } catch {}
           }
-          authLogin(pendingLoginData.token, {
-            ...pendingLoginData.user,
-            name: trimmed,
-          });
+          authLogin(
+            pendingLoginData.token,
+            toAuthUser(pendingLoginData.user, { name: trimmed }),
+          );
           localStorage.setItem("signin_timestamp", new Date().toISOString());
           toast({
             title: "🎉 Welcome to Verso Air!",
@@ -2259,12 +2274,7 @@ export default function SignIn() {
                         detail: "Your chosen account is opening now.",
                         visible: true,
                       });
-                      authLogin(nextData.token, {
-                        id: nextData.user.id,
-                        email: nextData.user.email,
-                        name: nextData.user.name,
-                        role: nextData.user.role,
-                      });
+                      authLogin(nextData.token, toAuthUser(nextData.user));
                       localStorage.setItem(
                         "signin_timestamp",
                         new Date().toISOString(),

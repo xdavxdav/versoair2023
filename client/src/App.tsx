@@ -27,6 +27,8 @@ import { MUSIC_ROUTE_PREFIXES } from "@/lib/music-routes";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
 import QuickSignIn from "@/components/QuickSignIn";
 import { MessagesPage } from "@/components/TwitterMessenger";
+import { isBetaRoute } from "@/lib/beta-route-access";
+import { getLegacySignInRedirect } from "@/lib/auth-route-redirect";
 
 // ─────────────────────────────────────────────────────
 // 🏠 Public Pages (lazy-loaded — only fetched when navigated to)
@@ -326,99 +328,7 @@ import {
 import { isLocalPreviewOnlyPath } from "@shared/page-readiness";
 import { authenticatedFetch } from "@/lib/auth";
 
-// Keep beta freeze in place for non-core marketing pages, but allow the
-// live business dashboard, billing, admin, and music ecosystem routes.
 const BETA_SCOPE_FREEZE = true;
-const BETA_ROUTE_PREFIXES = [
-  "/dashboard",
-  "/admin",
-  "/account/billing",
-  "/account/cards",
-  "/account/paypal",
-  "/geo-admin",
-  "/artist-portal",
-  "/music",
-  "/stream",
-  "/track/",
-  "/artist-catalogue/",
-  "/library",
-  "/analytics",
-  "/arena",
-  "/arcade",
-  "/listener-portal",
-  "/streamer-portal",
-  "/auth/",
-  "/profile",
-  "/messages",
-  "/apply",
-  "/marketplace",
-  "/art-and-artisanat",
-  "/profiles/",
-  "/status",
-  "/pricing",
-  "/blog",
-  "/faq",
-  "/id-guide",
-  "/sav",
-  "/versoai",
-  "/ai",
-  "/help",
-  "/privacy",
-  "/terms",
-  "/cookies",
-  "/gdpr",
-  "/information",
-  "/team/",
-  "/sponsor",
-  "/sponsorship",
-  "/about",
-  "/hub",
-  "/contact",
-  "/demo",
-  "/industries",
-  "/partners",
-  "/import-business",
-  "/get-involved",
-  "/ong-culturelle",
-  "/artihuman-foundation",
-  "/vheatrz",
-  "/vheartz",
-  "/impact",
-  "/tickets",
-  "/business/",
-  "/businesses-directory",
-  "/category/",
-  "/annuaire-tv",
-  "/database-results",
-  "/commerce",
-  "/hotellerie",
-  "/batiment",
-  "/automobile",
-  "/finances",
-  "/divertissement",
-  "/sante",
-  "/logement",
-  "/reservations",
-  "/services",
-  "/artisans",
-  "/artistes",
-  "/programs",
-  "/events",
-  "/event/",
-  "/communities",
-  "/community",
-  "/artisan-workshops",
-  "/marketing",
-  "/",
-];
-
-function isBetaRoute(pathname: string) {
-  return BETA_ROUTE_PREFIXES.some((prefix) =>
-    prefix === "/"
-      ? pathname === "/"
-      : pathname === prefix || pathname.startsWith(prefix),
-  );
-}
 
 function getPageTitle(pathname: string) {
   if (pathname.startsWith("/vheartz")) return "vHeartz";
@@ -792,7 +702,11 @@ function Router() {
         <Route path="/auth/password" component={PasswordPage} />
       ) : null}
       {/* Legacy redirects */}
-      <Route path="/signin">{() => <Redirect to="/auth/signin" />}</Route>
+      <Route path="/signin">
+        {() => (
+          <Redirect to={getLegacySignInRedirect(window.location.search, window.location.hash)} />
+        )}
+      </Route>
       <Route path="/signup">
         {() => <Redirect to="/auth/signin?mode=register" />}
       </Route>

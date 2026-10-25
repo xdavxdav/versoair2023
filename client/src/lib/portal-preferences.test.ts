@@ -63,6 +63,7 @@ test("GeoAdmin subscriber recommendation uses the subscriber landing page", () =
     email: "subscriber@example.test",
     role: "user",
     portals: ["general", "geo-admin"],
+    subscriptionTier: "essential",
   };
 
   assert.equal(getRecommendedPortalId(user, choices), "geo-admin");
@@ -103,4 +104,22 @@ test("non-staff users are never redirected into the staff workspace", () => {
     "/artist-portal/dashboard",
   );
   assert.equal(getRoleAwareRedirectPath(artist, null), null);
+});
+
+test("non-staff users are kept out of all GeoAdmin and admin staff routes", () => {
+  const contractor = {
+    id: "5",
+    email: "contractor@example.test",
+    role: "contractor",
+    portals: ["contractor"],
+  };
+
+  assert.equal(
+    getRoleAwareRedirectPath(contractor, "/geo-admin/dashboard"),
+    "/contracts",
+  );
+  assert.equal(
+    getRoleAwareRedirectPath(contractor, "/admin/tickets"),
+    "/contracts",
+  );
 });

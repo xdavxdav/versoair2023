@@ -41,6 +41,17 @@ export function getEligiblePreferredPortal<T extends PortalChoice>(
 }
 
 const STAFF_WORKSPACE_PATH = "/geo-admin/workspace";
+const STAFF_ONLY_PATHS = [
+  "/geo-admin/dashboard",
+  "/geo-admin/workspace",
+  "/admin",
+];
+
+function isStaffOnlyPath(pathname: string | null): boolean {
+  return STAFF_ONLY_PATHS.some(
+    (path) => pathname === path || pathname?.startsWith(`${path}/`),
+  );
+}
 
 export function getRoleAwareRedirectPath(
   user: AuthUser,
@@ -57,7 +68,7 @@ export function getRoleAwareRedirectPath(
   }
 
   const requestedPathname = requestedPath?.split(/[?#]/)[0] ?? null;
-  if (!isStaff && requestedPathname === STAFF_WORKSPACE_PATH) {
+  if (!isStaff && isStaffOnlyPath(requestedPathname)) {
     return roleHome;
   }
 
@@ -73,9 +84,7 @@ export function getRecommendedPortalId(
   const recommendedPath =
     portals.includes("community") && !portals.includes("artist")
       ? "/blog"
-      : destination === "/geo-admin/dashboard"
-        ? "/geo-admin"
-        : destination;
+      : destination;
   const matchingChoice = choices.find(
     (portal) => portal.path === recommendedPath,
   );

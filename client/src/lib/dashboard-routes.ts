@@ -1,4 +1,5 @@
 import type { AuthUser } from "@/contexts/AuthContext";
+import { hasGeoAdminFreeAccess } from "@shared/geoadmin-access-policy";
 
 export interface DashboardDestination {
   path: string;
@@ -66,6 +67,19 @@ const STREAMER_ALIASES = new Set([
   "musical-universe",
   "streaming",
 ]);
+const JOB_SEEKER_ALIASES = new Set([
+  "job-seeker",
+  "job_seeker",
+  "jobseeker",
+  "career-seeker",
+  "career_seeker",
+]);
+const BUSINESS_ALIASES = new Set([
+  "business",
+  "business_owner",
+  "careers",
+  "employer",
+]);
 
 export function getAccountFamily(
   user: AuthUser | null | undefined,
@@ -80,7 +94,7 @@ export function getAccountFamily(
   if (role === "geo-admin" || portals.includes("geo-admin")) return "geo-admin";
   if (role === "artist" || user?.hasArtistProfile || portals.includes("artist"))
     return "artist";
-  if (portals.includes("artisan")) return "artisan";
+  if (role === "artisan" || portals.includes("artisan")) return "artisan";
   if (
     role === "contractor" ||
     user?.isContractor ||
@@ -255,6 +269,15 @@ export function normalizeAccountRoleFromEmail(
       "music",
       "geo-admin",
       "contractor",
+      "artisan",
+      "business",
+      "business_owner",
+      "employer",
+      "job-seeker",
+      "job_seeker",
+      "jobseeker",
+      "career-seeker",
+      "career_seeker",
       "user",
     ].includes(normalizedRole)
   ) {
@@ -267,15 +290,56 @@ export function normalizeAccountRoleFromEmail(
 export function getDashboardDestination(
   user: AuthUser | null | undefined,
 ): DashboardDestination {
+  const role = normalizeAccountRoleFromEmail(
+    user?.email,
+    user?.role,
+  ).toLowerCase();
+  const portals = (user?.portals || []).map((portal) => portal.toLowerCase());
+
+  if (STAFF_ROLES.has(role)) {
+    return { path: "/geo-admin/workspace", label: "Staff Dashboard" };
+  }
+
+  if (
+    role === "geo-admin" ||
+    portals.includes("geo-admin")
+  ) {
+    const tier = String(
+      user?.subscriptionTier ?? user?.subscription_tier ?? "free",
+    ).toLowerCase();
+    return hasGeoAdminFreeAccess({
+      role,
+      isAdmin: user?.isAdmin,
+      tier,
+    })
+      ? {
+          path: "/dashboard?account=geo-admin&from=geoadmin",
+          label: "GeoAdmin Basic Dashboard",
+        }
+      : { path: "/geo-admin", label: "GeoAdmin Dashboard" };
+  }
+
   const family = getAccountFamily(user);
+  if (
+    family === "general" &&
+    (JOB_SEEKER_ALIASES.has(role) ||
+      portals.some((portal) => JOB_SEEKER_ALIASES.has(portal)) ||
+      BUSINESS_ALIASES.has(role) ||
+      portals.some((portal) => BUSINESS_ALIASES.has(portal)))
+  ) {
+    return {
+      path: "/services/careers/dashboard",
+      label: "Careers Dashboard",
+    };
+  }
 
   switch (family) {
     case "staff":
       return { path: "/geo-admin/workspace", label: "Staff Dashboard" };
-    case "geo-admin":
-      return { path: "/geo-admin/dashboard", label: "GeoAdmin Dashboard" };
     case "artist":
       return { path: "/artist-portal/dashboard", label: "Artist Dashboard" };
+    case "artisan":
+      return { path: "/artisans-portal", label: "Artisan Dashboard" };
     case "streamer":
       return { path: "/stream", label: "Musical Universe" };
     case "contractor":
