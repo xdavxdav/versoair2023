@@ -14,7 +14,6 @@
 
 import { Router, Request, Response } from "express";
 import { eq, and, asc, desc, inArray, sql } from "drizzle-orm";
-import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "../db";
@@ -33,6 +32,8 @@ import {
 import {
   getPostgresErrorDetails,
 } from "../utils/postgres-errors";
+import { buildContactsQuery } from "../utils/inbox-contacts-query";
+import { receiveInboxAttachment } from "../utils/inbox-upload";
 
 const router = Router();
 
@@ -49,16 +50,6 @@ try {
 } catch (err: any) {
   console.warn(`⚠️  Could not create inbox uploads dir: ${err.message}`);
 }
-
-const inboxUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 }, // 8 MB
-  fileFilter: (_req, file, cb) => {
-    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (allowed.includes(file.mimetype)) cb(null, true);
-    else cb(new Error("Only image attachments are allowed") as any, false);
-  },
-});
 
 // ─── Tier helpers ─────────────────────────────────────────────────────────────
 
@@ -260,53 +251,9 @@ router.get("/contacts", async (req: Request, res: Response) => {
   const limit = Math.min(Number(req.query.limit) || 40, 100);
 
   try {
-    const contactsQuery = await db.execute(sql`
-      WITH user_following AS (
-        SELECT DISTINCT su_target.user_id AS target_user_id, true AS is_following
-        FROM social_users su_me
-        JOIN social_followers sf ON sf.follower_id = su_me.id
-        JOIN social_users su_target ON su_target.id = sf.following_id
-        WHERE su_me.user_id = ${userId}
-      ),
-      user_conns AS (
-        SELECT DISTINCT
-          CASE WHEN requester_id = ${userId} THEN receiver_id ELSE requester_id END AS target_user_id,
-          true AS is_connection
-        FROM connections
-        WHERE (requester_id = ${userId} OR receiver_id = ${userId})
-          AND status = 'accepted'
-      ),
-      existing_convs AS (
-        SELECT 
-          NULLIF(regexp_replace(participant_id, '[^0-9]', '', 'g'), '')::int AS target_user_id,
-          id AS conversation_id
-        FROM inbox_conversations
-        WHERE user_id = ${userId}
-      )
-      SELECT DISTINCT
-        u.id,
-        COALESCE(u.display_name, su.display_name, u.username) AS name,
-        u.username,
-        u.role,
-        COALESCE(su.avatar_url, null) AS avatar,
-        su.bio,
-        COALESCE(uf.is_following, false) AS "isFollowing",
-        COALESCE(uc.is_connection, false) AS "isConnection",
-        ec.conversation_id AS "conversationId"
-      FROM users u
-      LEFT JOIN social_users su ON su.user_id = u.id
-      LEFT JOIN user_following uf ON uf.target_user_id = u.id
-      LEFT JOIN user_conns uc ON uc.target_user_id = u.id
-      LEFT JOIN existing_convs ec ON ec.target_user_id = u.id
-      WHERE u.id != ${userId}
-        AND (
-          ${search ? sql`(u.username ILIKE ${"%" + search + "%"} OR u.display_name ILIKE ${"%" + search + "%"} OR su.display_name ILIKE ${"%" + search + "%"})` : sql`(uf.is_following = true OR uc.is_connection = true OR ec.conversation_id IS NOT NULL OR u.role IN ('artist', 'business', 'admin'))`}
-        )
-      ORDER BY 
-        (COALESCE(uf.is_following, false) OR COALESCE(uc.is_connection, false)) DESC,
-        u.id DESC
-      LIMIT ${limit}
-    `);
+    const contactsQuery = await db.execute(
+      buildContactsQuery(userId, search, limit),
+    );
 
     const contacts = (contactsQuery.rows || []).map((row: any) => ({
       id: Number(row.id),
@@ -608,7 +555,7 @@ router.post(
 // ─── POST /api/inbox/attachments — upload a chat image, returns its URL ──────
 router.post(
   "/attachments",
-  inboxUpload.single("file"),
+  receiveInboxAttachment,
   async (req: Request, res: Response) => {
     if (!req.file) {
       return res

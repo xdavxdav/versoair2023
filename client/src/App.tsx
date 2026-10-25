@@ -1023,6 +1023,47 @@ function VersoAIErrorFallback({ title }: { title: string }) {
   );
 }
 
+function MessengerErrorFallback() {
+  const [dismissed, setDismissed] = useState(false);
+
+  // The launcher is gone after a crash, so opening Messages again must say so instead of doing nothing.
+  useEffect(() => {
+    const show = () => setDismissed(false);
+    window.addEventListener("messenger:open", show);
+    return () => window.removeEventListener("messenger:open", show);
+  }, []);
+
+  if (dismissed) return null;
+  return (
+    <div
+      role="alert"
+      className="fixed bottom-24 right-4 z-[201] flex max-w-sm flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-slate-900 shadow-lg dark:border-amber-700 dark:bg-slate-900 dark:text-white"
+    >
+      <p className="font-semibold">Messages hit a problem.</p>
+      <p className="text-slate-600 dark:text-slate-300">
+        The rest of Verso Air is still available. Reload the page to open
+        Messages again.
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="rounded-md bg-teal-700 px-3 py-1.5 font-medium text-white"
+        >
+          Reload
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
   const [isMusicPortalOpen, setIsMusicPortalOpen] = useState(false);
@@ -1456,11 +1497,14 @@ function AppContent() {
 
       {/* Messenger panel remains globally mounted so pages can open it via
           `messenger:open`, but the floating purple launcher button is hidden
-          to avoid UI overlap on mobile. */}
+          to avoid UI overlap on mobile. It has its own boundary so a crash in
+          it cannot blank the whole site. */}
       {!isImmersivePage && (
-        <Suspense fallback={null}>
-          <MessengerLauncher hidden />
-        </Suspense>
+        <ErrorBoundary fallback={<MessengerErrorFallback />}>
+          <Suspense fallback={null}>
+            <MessengerLauncher hidden />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* Global VersoAI Assistant (Talk & Chat) */}

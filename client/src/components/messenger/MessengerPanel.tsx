@@ -17,7 +17,6 @@ import {
   Globe2,
   Lock,
   Check,
-  CheckCheck,
   Search,
   Paperclip,
   SquarePen,
@@ -25,15 +24,41 @@ import {
   Users,
   UserCheck,
 } from "lucide-react";
-import { authenticatedFetch, getAuthToken } from "@/lib/auth";
+import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 import FollowButton from "@/components/FollowButton";
+import { toast } from "@/hooks/use-toast";
 import {
   useInboxSocket,
   useInboxTyping,
   emitInboxTyping,
   checkPresence,
 } from "@/hooks/use-inbox-socket";
+import {
+  appendMessageOnce,
+  applyIncomingToConversations,
+  applySentToConversations,
+  confirmPendingMessage,
+  fetchInboxContacts,
+  fetchInboxConversations,
+  fetchInboxThread,
+  isTypingFromParticipant,
+  keepConversationMessages,
+  localFailure,
+  markInboxConversationRead,
+  mergeThreadReload,
+  postInboxMessage,
+  publishInboxMessage,
+  removePendingMessage,
+  restoreDraft,
+  sameId,
+  startInboxConversation,
+  uploadInboxAttachment,
+  validateAttachment,
+  type IdLike,
+  type InboxFailure,
+} from "@/lib/inbox-api";
+import InboxNotice from "./InboxNotice";
 
 interface Conversation {
   id: number;
@@ -70,6 +95,24 @@ interface InboxMessage {
   createdAt: string;
   /** Client-only: true while optimistically shown before the server confirms it. */
   pending?: boolean;
+}
+
+/** A conversation row as the server sends it: ids arrive as numbers. */
+type ApiConversation = Partial<Omit<Conversation, "id">> & { id: IdLike };
+
+/** What the composer notice is reporting; it decides what "Try again" does. */
+type ComposerError =
+  | { source: "send" | "upload"; failure: InboxFailure }
+  | { source: "publish"; failure: InboxFailure; messageId: number };
+
+// Mirrors the preview the server stores on the conversation row.
+function previewText(message: {
+  content?: string | null;
+  attachmentUrl?: string | null;
+}): string {
+  const text = (message.content ?? "").trim();
+  if (text) return text.slice(0, 120);
+  return message.attachmentUrl ? "📷 Photo" : "";
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -109,6 +152,7 @@ export default function MessengerPanel({
   onClose: () => void;
 }) {
   const { user } = useAuthContext();
+  const userId = user?.id != null ? String(user.id) : null;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConvos, setLoadingConvos] = useState(false);
   const [activeConvo, setActiveConvo] = useState<Conversation | null>(null);
@@ -129,10 +173,26 @@ export default function MessengerPanel({
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  // Failures are kept as state so each one can say what went wrong and offer a
+  // retry in place, instead of passing for an empty inbox or a lost message.
+  const [listError, setListError] = useState<InboxFailure | null>(null);
+  const [listLoaded, setListLoaded] = useState(false);
+  const [listReloadKey, setListReloadKey] = useState(0);
+  const [threadError, setThreadError] = useState<InboxFailure | null>(null);
+  const [threadLoaded, setThreadLoaded] = useState(false);
+  const [threadReloadKey, setThreadReloadKey] = useState(0);
+  const [composerError, setComposerError] = useState<ComposerError | null>(
+    null,
+  );
+  const [contactsError, setContactsError] = useState<InboxFailure | null>(null);
+  const [startError, setStartError] = useState<InboxFailure | null>(null);
+
   // Compose / Contact picker states
   const [showCompose, setShowCompose] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  // "No contacts found" is only true once a load has actually finished.
+  const [contactsLoaded, setContactsLoaded] = useState(false);
   const [contactFilter, setContactFilter] = useState<"following" | "all">(
     "following",
   );
@@ -141,89 +201,162 @@ export default function MessengerPanel({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeConvoRef = useRef<Conversation | null>(null);
+  const conversationsRef = useRef<Conversation[]>([]);
+  const sendingRef = useRef(false);
+  const contactsAbortRef = useRef<AbortController | null>(null);
+  const refreshAbortRef = useRef<AbortController | null>(null);
+  const otherTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // The socket handlers read these so they can keep one identity for the whole
+  // session; a new handler would drop and reopen the shared connection.
   activeConvoRef.current = activeConvo;
+  conversationsRef.current = conversations;
 
   const fetchContacts = useCallback(async (q = "") => {
+    // The picker searches on every keystroke; only the latest answer may land.
+    contactsAbortRef.current?.abort();
+    const controller = new AbortController();
+    contactsAbortRef.current = controller;
     setLoadingContacts(true);
-    try {
-      const query = q ? `?q=${encodeURIComponent(q)}` : "";
-      const res = await authenticatedFetch(`/api/inbox/contacts${query}`);
-      const data = await res.json();
-      if (data?.success && Array.isArray(data.contacts)) {
-        setContacts(data.contacts);
-      }
-    } catch {
-      /* non-critical */
-    } finally {
-      setLoadingContacts(false);
+    setContactsError(null);
+    const result = await fetchInboxContacts<Contact>(
+      authenticatedFetch,
+      q,
+      controller.signal,
+    );
+    if (controller.signal.aborted) return;
+    setLoadingContacts(false);
+    if (result.ok) {
+      setContacts(result.data);
+      setContactsLoaded(true);
+    } else {
+      setContacts([]);
+      setContactsLoaded(false);
+      setContactsError(result);
     }
   }, []);
 
+  const openCompose = useCallback(() => {
+    setStartError(null);
+    setShowCompose(true);
+    void fetchContacts();
+  }, [fetchContacts]);
+
   const handleStartConversation = async (contact: Contact) => {
     setStartingConvoId(contact.id);
-    try {
-      const res = await authenticatedFetch("/api/inbox/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: contact.id,
-          participantName: contact.name,
-          participantAvatar: contact.avatar || null,
-          type: "direct",
-        }),
-      });
-      const data = await res.json();
-      if (data?.success && data.conversation) {
-        const conv: Conversation = {
-          id: Number(data.conversation.id),
-          type: data.conversation.type || "direct",
-          participantId: String(data.conversation.participantId || contact.id),
-          participantName: data.conversation.participantName || contact.name,
-          participantAvatar:
-            data.conversation.participantAvatar || contact.avatar || null,
-          lastMessage: data.conversation.lastMessage || null,
-          lastMessageAt:
-            data.conversation.lastMessageAt || new Date().toISOString(),
-          unreadCount: data.conversation.unreadCount || 0,
-        };
-
-        setConversations((prev) => {
-          const idx = prev.findIndex(
-            (c) =>
-              Number(c.id) === Number(conv.id) ||
-              String(c.participantId) === String(contact.id),
-          );
-          if (idx !== -1) {
-            const updated = [...prev];
-            updated[idx] = { ...updated[idx], ...conv };
-            return updated;
-          }
-          return [conv, ...prev];
-        });
-
-        setActiveConvo(conv);
-        setShowCompose(false);
-      }
-    } catch {
-      /* non-critical */
-    } finally {
-      setStartingConvoId(null);
+    setStartError(null);
+    const result = await startInboxConversation<ApiConversation>(
+      authenticatedFetch,
+      {
+        participantId: contact.id,
+        participantName: contact.name,
+        participantAvatar: contact.avatar || null,
+      },
+    );
+    setStartingConvoId(null);
+    if (!result.ok) {
+      setStartError(result);
+      return;
     }
+
+    const created = result.data.conversation;
+    const conv: Conversation = {
+      id: Number(created.id),
+      type: created.type || "direct",
+      participantId: String(created.participantId || contact.id),
+      participantName: created.participantName || contact.name,
+      participantAvatar: created.participantAvatar || contact.avatar || null,
+      lastMessage: created.lastMessage || null,
+      lastMessageAt: created.lastMessageAt || new Date().toISOString(),
+      unreadCount: created.unreadCount || 0,
+    };
+
+    setConversations((prev) => {
+      const idx = prev.findIndex(
+        (c) => sameId(c.id, conv.id) || sameId(c.participantId, contact.id),
+      );
+      if (idx !== -1) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], ...conv };
+        return updated;
+      }
+      return [conv, ...prev];
+    });
+
+    setActiveConvo(conv);
+    setShowCompose(false);
   };
 
+  // A different account must never be shown the previous account's inbox,
+  // thread or draft, even if the user changes without the panel remounting.
   useEffect(() => {
-    if (!open || !user) return;
+    setConversations([]);
+    setActiveConvo(null);
+    setMessages([]);
+    setListError(null);
+    setListLoaded(false);
+    setThreadError(null);
+    setThreadLoaded(false);
+    setComposerError(null);
+    setDraft("");
+    setPendingAttachment(null);
+    setContacts([]);
+    setContactsLoaded(false);
+    setContactsError(null);
+    setStartError(null);
+    setShowCompose(false);
+    setShowProfileDrawer(false);
+    setSearchQuery("");
+    setActiveFilter("all");
+  }, [userId]);
+
+  // Requests that outlive the panel or the account have nowhere to land.
+  useEffect(() => {
+    return () => {
+      contactsAbortRef.current?.abort();
+      refreshAbortRef.current?.abort();
+      setLoadingContacts(false);
+    };
+  }, [open, userId]);
+
+  // The picker stays up while the panel is closed, but a request the close cut
+  // short never landed, so it is asked for again on reopen.
+  useEffect(() => {
+    if (open && userId && showCompose && !activeConvoRef.current) {
+      void fetchContacts(contactSearch);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !userId) {
+      setLoadingConvos(false);
+      return;
+    }
+
+    const controller = new AbortController();
     setLoadingConvos(true);
-    authenticatedFetch("/api/inbox/conversations")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success) setConversations(data.conversations || []);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingConvos(false));
-  }, [open, user]);
+    setListError(null);
+
+    fetchInboxConversations<Conversation>(
+      authenticatedFetch,
+      controller.signal,
+    ).then((result) => {
+      if (controller.signal.aborted) return;
+      setLoadingConvos(false);
+      if (result.ok) {
+        setConversations(result.data);
+        setListLoaded(true);
+      } else {
+        // Whatever is already on screen stays; the notice says it may be stale.
+        setListError(result);
+      }
+    });
+
+    return () => controller.abort();
+  }, [open, userId, listReloadKey]);
 
   useEffect(() => {
     if (!open || !user) {
@@ -248,40 +381,60 @@ export default function MessengerPanel({
     };
   }, [open, user]);
 
+  // Silent refresh for a message that belongs to a conversation we don't have yet.
+  const refreshConversations = useCallback(async () => {
+    refreshAbortRef.current?.abort();
+    const controller = new AbortController();
+    refreshAbortRef.current = controller;
+    const result = await fetchInboxConversations<Conversation>(
+      authenticatedFetch,
+      controller.signal,
+    );
+    if (controller.signal.aborted) return;
+    if (result.ok) {
+      setConversations(result.data);
+      setListLoaded(true);
+      setListError(null);
+    } else {
+      setListError(result);
+    }
+  }, []);
+
   // Live push: new message arrives via socket while the panel is open.
   const handleLiveMessage = useCallback(
-    (evt: { conversationId: number; message: InboxMessage }) => {
-      if (activeConvoRef.current?.id === evt.conversationId) {
-        setMessages((prev) => [...prev, evt.message]);
+    (evt: { conversationId: IdLike; message?: unknown }) => {
+      const incoming = evt.message as InboxMessage | undefined;
+      if (!incoming) return;
+
+      const isActive = sameId(activeConvoRef.current?.id, evt.conversationId);
+      const isKnown = conversationsRef.current.some((c) =>
+        sameId(c.id, evt.conversationId),
+      );
+
+      if (isActive) {
+        setMessages((prev) => appendMessageOnce(prev, incoming));
+        markInboxConversationRead(authenticatedFetch, evt.conversationId);
       }
-      setConversations((prev) => {
-        const idx = prev.findIndex((c) => c.id === evt.conversationId);
-        if (idx === -1) {
-          // New conversation opened by the other side — refresh the list.
-          authenticatedFetch("/api/inbox/conversations")
-            .then((r) => r.json())
-            .then((data) => {
-              if (data?.success) setConversations(data.conversations || []);
-            })
-            .catch(() => {});
-          return prev;
-        }
-        const updated = [...prev];
-        const isActive = activeConvoRef.current?.id === evt.conversationId;
-        updated[idx] = {
-          ...updated[idx],
-          lastMessage: evt.message.content,
-          lastMessageAt: evt.message.createdAt,
-          unreadCount: isActive ? 0 : updated[idx].unreadCount + 1,
-        };
-        // bump to top, newest first
-        const [moved] = updated.splice(idx, 1);
-        return [moved, ...updated];
-      });
+      if (isKnown) {
+        setConversations((prev) =>
+          applyIncomingToConversations(
+            prev,
+            evt.conversationId,
+            {
+              content: previewText(incoming),
+              createdAt: incoming.createdAt,
+            },
+            isActive,
+          ),
+        );
+      } else {
+        // New conversation opened by the other side — refresh the list.
+        void refreshConversations();
+      }
     },
-    [],
+    [refreshConversations],
   );
-  useInboxSocket(open && user ? handleLiveMessage : undefined);
+  useInboxSocket(open && userId ? handleLiveMessage : undefined);
 
   // Typing indicator from the other participant, scoped to the active conversation
   const handleTyping = useCallback(
@@ -290,8 +443,22 @@ export default function MessengerPanel({
       fromUserId: number;
       isTyping: boolean;
     }) => {
-      if (activeConvoRef.current?.id === evt.conversationId) {
-        setOtherTyping(evt.isTyping);
+      // The event carries the sender's own conversation id, which is never the
+      // recipient's, so the person typing is the only reliable match.
+      if (
+        !isTypingFromParticipant(evt, activeConvoRef.current?.participantId)
+      ) {
+        return;
+      }
+      if (otherTypingTimerRef.current)
+        clearTimeout(otherTypingTimerRef.current);
+      setOtherTyping(evt.isTyping);
+      if (evt.isTyping) {
+        // A sender who disconnects mid-sentence never reports that they stopped.
+        otherTypingTimerRef.current = setTimeout(
+          () => setOtherTyping(false),
+          5000,
+        );
       }
     },
     [],
@@ -307,35 +474,96 @@ export default function MessengerPanel({
     checkPresence(Number(activeConvo.participantId), setOtherOnline);
   }, [activeConvo]);
 
+  const activeId = activeConvo ? String(activeConvo.id) : null;
+
+  // Typing state and composer errors belong to one conversation, not the next.
   useEffect(() => {
-    if (!activeConvo) return;
+    if (otherTypingTimerRef.current) clearTimeout(otherTypingTimerRef.current);
+    setOtherTyping(false);
+    setComposerError(null);
+  }, [activeId]);
+
+  useEffect(() => {
+    return () => {
+      if (otherTypingTimerRef.current)
+        clearTimeout(otherTypingTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeId) {
+      setMessages([]);
+      setThreadError(null);
+      setThreadLoaded(false);
+      setLoadingMessages(false);
+      return;
+    }
+    // While the panel is closed the thread is kept, and fetched again on reopen.
+    if (!open) {
+      setLoadingMessages(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    // A failed load must never leave the previous conversation's messages up.
+    setMessages((prev) => keepConversationMessages(prev, activeId));
+    setThreadError(null);
+    setThreadLoaded(false);
     setLoadingMessages(true);
-    authenticatedFetch(`/api/inbox/conversations/${activeConvo.id}/messages`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success) setMessages(data.messages || []);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingMessages(false));
-  }, [activeConvo]);
+
+    fetchInboxThread<InboxMessage, Conversation>(
+      authenticatedFetch,
+      activeId,
+      controller.signal,
+    ).then((result) => {
+      if (controller.signal.aborted) return;
+      setLoadingMessages(false);
+      if (!result.ok) {
+        setThreadError(result);
+        return;
+      }
+
+      setThreadLoaded(true);
+      setMessages((prev) =>
+        mergeThreadReload(result.data.messages, prev, activeId),
+      );
+      // The server marks the thread read while serving it.
+      setConversations((prev) =>
+        prev.some((c) => sameId(c.id, activeId) && c.unreadCount)
+          ? prev.map((c) =>
+              sameId(c.id, activeId) ? { ...c, unreadCount: 0 } : c,
+            )
+          : prev,
+      );
+    });
+
+    return () => controller.abort();
+  }, [activeId, open, threadReloadKey]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
   const sendMessage = async () => {
-    const content = draft.trim();
-    if ((!content && !pendingAttachment) || !activeConvo || sending) return;
-    setSending(true);
-    setDraft("");
+    const draftText = draft;
+    const content = draftText.trim();
     const attachmentUrl = pendingAttachment;
+    const conversation = activeConvo;
+    if ((!content && !attachmentUrl) || !conversation || sendingRef.current) {
+      return;
+    }
+
+    sendingRef.current = true;
+    setSending(true);
+    setComposerError(null);
+    setDraft("");
     setPendingAttachment(null);
-    emitInboxTyping(Number(activeConvo.participantId), activeConvo.id, false);
+    emitInboxTyping(Number(conversation.participantId), conversation.id, false);
     // Optimistic bubble — shows instantly with a pending/SENDING state
     const tempId = -Date.now();
     const optimisticMsg: InboxMessage = {
       id: tempId,
-      conversationId: activeConvo.id,
+      conversationId: conversation.id,
       senderId: String(user?.id),
       senderName: user?.name || "You",
       content,
@@ -345,28 +573,48 @@ export default function MessengerPanel({
       pending: true,
     };
     setMessages((prev) => [...prev, optimisticMsg]);
-    try {
-      const res = await authenticatedFetch(
-        `/api/inbox/conversations/${activeConvo.id}/messages`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content, attachmentUrl }),
-        },
-      );
-      const data = await res.json();
-      if (data?.success && data.message) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? data.message : m)),
-        );
-      } else {
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+
+    const result = await postInboxMessage<InboxMessage>(
+      authenticatedFetch,
+      conversation.id,
+      { content, attachmentUrl },
+    );
+    sendingRef.current = false;
+    setSending(false);
+
+    const stillOpen = sameId(activeConvoRef.current?.id, conversation.id);
+
+    if (result.ok) {
+      if (stillOpen) {
+        setMessages((prev) => confirmPendingMessage(prev, tempId, result.data));
       }
-    } catch {
-      // silent — best-effort UI, existing rate-limiter surfaces its own errors
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
-    } finally {
-      setSending(false);
+      setConversations((prev) =>
+        applySentToConversations(prev, conversation.id, {
+          content: previewText({ content, attachmentUrl }),
+          createdAt: result.data.createdAt || new Date().toISOString(),
+        }),
+      );
+      return;
+    }
+
+    setMessages((prev) => removePendingMessage(prev, tempId));
+    if (stillOpen) {
+      // Nothing the user wrote is lost: it goes back into the composer.
+      setDraft((current) => restoreDraft(current, draftText, " "));
+      if (attachmentUrl) {
+        setPendingAttachment((current) => current ?? attachmentUrl);
+      }
+      setComposerError({ source: "send", failure: result });
+    } else {
+      // They moved to another conversation; restoring there would risk
+      // sending this text to the wrong person.
+      toast({
+        title: `Message to ${conversation.participantName || "your contact"} was not sent`,
+        description: content
+          ? `${result.message} Your text: "${content.slice(0, 200)}"`
+          : result.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -386,45 +634,62 @@ export default function MessengerPanel({
   ) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    const conversation = activeConvoRef.current;
+    if (!file || !conversation) return;
+
+    // Refuse what the server would refuse before spending an upload on it.
+    const refusal = validateAttachment(file);
+    if (refusal) {
+      setComposerError({ source: "upload", failure: localFailure(refusal) });
+      return;
+    }
+
+    setComposerError(null);
     setUploadingAttachment(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/inbox/attachments", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-        credentials: "include",
-        body: formData,
+    const result = await uploadInboxAttachment(authenticatedFetch, file);
+    setUploadingAttachment(false);
+
+    // The composer belongs to whichever conversation is open now. A file that
+    // finishes after the visitor moved on must not turn up in, or fail inside,
+    // someone else's composer where a Send would take it to the wrong person.
+    if (!sameId(activeConvoRef.current?.id, conversation.id)) {
+      toast({
+        title: "Attachment not added",
+        description: result.ok
+          ? `The upload finished after you left your conversation with ${conversation.participantName || "your contact"}. Attach it again there.`
+          : result.message,
+        variant: result.ok ? "default" : "destructive",
       });
-      const data = await res.json();
-      if (data?.success && data.url) setPendingAttachment(data.url);
-    } catch {
-      // silent — user can retry
-    } finally {
-      setUploadingAttachment(false);
+      return;
+    }
+
+    if (result.ok) {
+      setPendingAttachment(result.data);
+    } else {
+      setComposerError({ source: "upload", failure: result });
     }
   };
 
   const publishMessage = async (messageId: number) => {
+    const conversation = activeConvoRef.current;
     setPublishingId(messageId);
-    try {
-      const res = await authenticatedFetch(
-        `/api/inbox/messages/${messageId}/publish`,
-        { method: "POST" },
+    setComposerError(null);
+    const result = await publishInboxMessage(authenticatedFetch, messageId);
+    setPublishingId(null);
+    if (result.ok) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, isPublished: true } : m)),
       );
-      const data = await res.json();
-      if (data?.success) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === messageId ? { ...m, isPublished: true } : m,
-          ),
-        );
-      }
-    } catch {
-      // silent
-    } finally {
-      setPublishingId(null);
+    } else if (sameId(activeConvoRef.current?.id, conversation?.id)) {
+      setComposerError({ source: "publish", failure: result, messageId });
+    } else {
+      // Shown in another conversation, "Try again" would publish a message
+      // that is no longer on screen.
+      toast({
+        title: `Message to ${conversation?.participantName || "your contact"} was not published`,
+        description: result.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -465,6 +730,15 @@ export default function MessengerPanel({
     activeConvo.type !== "support" &&
     String(user?.id) !== String(activeConvo.participantId);
 
+  // "Try again" repeats whatever failed; a refused upload has nothing to repeat.
+  const hasDraft = draft.trim().length > 0 || !!pendingAttachment;
+  const composerRetry =
+    composerError?.source === "publish"
+      ? () => void publishMessage(composerError.messageId)
+      : composerError?.source === "send" && hasDraft
+        ? () => void sendMessage()
+        : undefined;
+
   return (
     <AnimatePresence>
       {open && (
@@ -477,12 +751,14 @@ export default function MessengerPanel({
             onClick={onClose}
             className="fixed inset-0 bg-black/40 z-[200]"
           />
+          {/* Private, live-updating screen: keep Google Translate out. It re-parents the text React manages (which crashes the app) and would send messages to Google. */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.25 }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl text-[15px]"
+            translate="no"
+            className="notranslate fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-[#0f0f17] border-l border-white/10 z-[201] flex flex-col shadow-2xl text-[15px]"
           >
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
@@ -550,10 +826,7 @@ export default function MessengerPanel({
               </h2>
               {!activeConvo && !showCompose && (
                 <button
-                  onClick={() => {
-                    setShowCompose(true);
-                    fetchContacts();
-                  }}
+                  onClick={openCompose}
                   className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
                   aria-label="New message with contacts"
                   title="New message"
@@ -685,36 +958,53 @@ export default function MessengerPanel({
 
                 {/* Contacts list */}
                 <div className="flex-1 overflow-y-auto space-y-1">
-                  {loadingContacts && (
+                  {startError && (
+                    <InboxNotice
+                      failure={startError}
+                      onDismiss={() => setStartError(null)}
+                      className="mb-2"
+                    />
+                  )}
+                  {contactsError && (
+                    <InboxNotice
+                      failure={contactsError}
+                      onRetry={() => void fetchContacts(contactSearch)}
+                      className="mb-2"
+                    />
+                  )}
+                  {(loadingContacts || (!contactsLoaded && !contactsError)) && (
                     <div className="flex items-center justify-center py-10 text-white/40">
                       <Loader2 className="w-5 h-5 animate-spin" />
                     </div>
                   )}
 
-                  {!loadingContacts && filteredContacts.length === 0 && (
-                    <div className="py-12 text-center text-white/40 space-y-2">
-                      <Users className="w-8 h-8 mx-auto opacity-30" />
-                      <p className="text-sm font-medium text-white/70">
-                        No contacts found
-                      </p>
-                      <p className="text-xs text-white/30">
-                        {contactFilter === "following"
-                          ? "You are not following anyone yet, or no matches found."
-                          : "No members matched your query."}
-                      </p>
-                      {contactFilter === "following" && (
-                        <button
-                          onClick={() => {
-                            setContactFilter("all");
-                            fetchContacts();
-                          }}
-                          className="mt-2 text-xs text-purple-400 hover:underline"
-                        >
-                          Browse all members
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  {contactsLoaded &&
+                    !loadingContacts &&
+                    !contactsError &&
+                    filteredContacts.length === 0 && (
+                      <div className="py-12 text-center text-white/40 space-y-2">
+                        <Users className="w-8 h-8 mx-auto opacity-30" />
+                        <p className="text-sm font-medium text-white/70">
+                          No contacts found
+                        </p>
+                        <p className="text-xs text-white/30">
+                          {contactFilter === "following"
+                            ? "You are not following anyone yet, or no matches found."
+                            : "No members matched your query."}
+                        </p>
+                        {contactFilter === "following" && (
+                          <button
+                            onClick={() => {
+                              setContactFilter("all");
+                              fetchContacts();
+                            }}
+                            className="mt-2 text-xs text-purple-400 hover:underline"
+                          >
+                            Browse all members
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                   {filteredContacts.map((contact) => (
                     <button
@@ -807,49 +1097,57 @@ export default function MessengerPanel({
                   ))}
                 </div>
 
+                {listError && (
+                  <div className="px-4 pb-2">
+                    <InboxNotice
+                      failure={listError}
+                      onRetry={() => setListReloadKey((k) => k + 1)}
+                    />
+                  </div>
+                )}
                 {loadingConvos && (
                   <div className="flex items-center justify-center py-10 text-white/40">
                     <Loader2 className="w-5 h-5 animate-spin" />
                   </div>
                 )}
-                {!loadingConvos && conversations.length === 0 && (
-                  <div className="px-4 py-12 text-center space-y-3">
-                    <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center">
-                      <Send className="w-7 h-7 text-amber-400" />
+                {listLoaded &&
+                  !listError &&
+                  !loadingConvos &&
+                  conversations.length === 0 && (
+                    <div className="px-4 py-12 text-center space-y-3">
+                      <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center">
+                        <Send className="w-7 h-7 text-amber-400" />
+                      </div>
+                      <p className="text-white font-semibold">
+                        Start a conversation
+                      </p>
+                      <p className="text-white/40 text-sm max-w-xs mx-auto">
+                        Send direct messages to contacts and people you follow.
+                      </p>
+                      <button
+                        onClick={openCompose}
+                        className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/30 transition-all hover:scale-105"
+                      >
+                        <Plus className="w-4 h-4" />
+                        New Message
+                      </button>
+                      <div className="text-left rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5 text-[11px] leading-relaxed">
+                        <p className="text-white/75 font-medium">Sample flow</p>
+                        <p>
+                          1. Tap New Message to chat directly with people you
+                          follow.
+                        </p>
+                        <p>
+                          2. Or message sellers, artists, or community members
+                          from their profiles.
+                        </p>
+                        <p>
+                          3. Tap Publish on your own sent message to share it in
+                          the public community feed.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-white font-semibold">
-                      Start a conversation
-                    </p>
-                    <p className="text-white/40 text-sm max-w-xs mx-auto">
-                      Send direct messages to contacts and people you follow.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setShowCompose(true);
-                        fetchContacts();
-                      }}
-                      className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/30 transition-all hover:scale-105"
-                    >
-                      <Plus className="w-4 h-4" />
-                      New Message
-                    </button>
-                    <div className="text-left rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-1.5 text-[11px] leading-relaxed">
-                      <p className="text-white/75 font-medium">Sample flow</p>
-                      <p>
-                        1. Tap New Message to chat directly with people you
-                        follow.
-                      </p>
-                      <p>
-                        2. Or message sellers, artists, or community members
-                        from their profiles.
-                      </p>
-                      <p>
-                        3. Tap Publish on your own sent message to share it in
-                        the public community feed.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  )}
                 {!loadingConvos &&
                   conversations.length > 0 &&
                   filteredConversations.length === 0 && (
@@ -921,11 +1219,26 @@ export default function MessengerPanel({
                   ref={scrollRef}
                   className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
                 >
+                  {threadError && (
+                    <InboxNotice
+                      failure={threadError}
+                      onRetry={() => setThreadReloadKey((k) => k + 1)}
+                    />
+                  )}
                   {loadingMessages && (
                     <div className="flex items-center justify-center py-10 text-white/40">
                       <Loader2 className="w-5 h-5 animate-spin" />
                     </div>
                   )}
+                  {threadLoaded &&
+                    !threadError &&
+                    !loadingMessages &&
+                    messages.length === 0 && (
+                      <p className="py-10 text-center text-sm text-white/40">
+                        No messages yet. Say hello to{" "}
+                        {activeConvo?.participantName || "them"}.
+                      </p>
+                    )}
                   {messages.map((m) => {
                     const isMine = m.senderId === String(user?.id);
                     return (
@@ -959,17 +1272,20 @@ export default function MessengerPanel({
                           )}
                           <span className="mt-1 flex items-center gap-1 text-[10px] text-white/30">
                             {formatTimestamp(m.createdAt)}
-                            {isMine && (
-                              <>
-                                {m.pending ? (
-                                  <Loader2 className="w-2.5 h-2.5 animate-spin ml-0.5" />
-                                ) : m.isRead ? (
-                                  <CheckCheck className="w-3 h-3 ml-0.5 text-amber-300" />
-                                ) : (
-                                  <Check className="w-3 h-3 ml-0.5" />
-                                )}
-                              </>
-                            )}
+                            {isMine &&
+                              (m.pending ? (
+                                <Loader2
+                                  role="img"
+                                  aria-label="Sending"
+                                  className="w-2.5 h-2.5 animate-spin ml-0.5"
+                                />
+                              ) : (
+                                <Check
+                                  role="img"
+                                  aria-label="Sent"
+                                  className="w-3 h-3 ml-0.5"
+                                />
+                              ))}
                           </span>
                           {isMine && !m.pending && (
                             <button
@@ -1015,6 +1331,16 @@ export default function MessengerPanel({
                     </div>
                   )}
                 </div>
+
+                {composerError && (
+                  <div className="px-4 pt-2">
+                    <InboxNotice
+                      failure={composerError.failure}
+                      onRetry={composerRetry}
+                      onDismiss={() => setComposerError(null)}
+                    />
+                  </div>
+                )}
 
                 {pendingAttachment && (
                   <div className="px-4 pt-2 flex items-center gap-2">

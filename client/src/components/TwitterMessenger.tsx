@@ -22,7 +22,7 @@ import {
   Loader2,
   Music,
   Users,
-  CheckCheck,
+  Check,
   Phone,
   Video,
   Info,
@@ -39,6 +39,29 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { useInboxSocket } from "@/hooks/use-inbox-socket";
+import { authenticatedFetch } from "@/lib/auth";
+import InboxNotice from "@/components/messenger/InboxNotice";
+import {
+  appendMessageOnce,
+  applyIncomingToConversations,
+  applySentToConversations,
+  buildSignInHref,
+  confirmPendingMessage,
+  fetchInboxContacts,
+  fetchInboxConversations,
+  fetchInboxThread,
+  keepConversationMessages,
+  markInboxConversationRead,
+  mergeThreadReload,
+  postInboxMessage,
+  removePendingMessage,
+  restoreDraft,
+  sameId,
+  sortConversationsNewestFirst,
+  startInboxConversation,
+  type IdLike,
+  type InboxFailure,
+} from "@/lib/inbox-api";
 
 /* -------------------------------------------------------------------------- */
 /* PORTAL THEME TOKENS */
@@ -82,6 +105,11 @@ function resolvePortalKey(value: unknown, type?: string): PortalKey {
   return type === "music_artist" ? "music" : "community";
 }
 
+const withPortal = (conversation: Conversation): Conversation => ({
+  ...conversation,
+  portal: resolvePortalKey(conversation.portal, conversation.type),
+});
+
 /* -------------------------------------------------------------------------- */
 /* 1. HEADER MESSAGES BUTTON (Twitter-style, minimal) */
 /* -------------------------------------------------------------------------- */
@@ -122,7 +150,9 @@ export function HeaderMessagesButton({
 
   const handleClick = () => {
     if (!user) {
-      window.location.href = `/signin?returnTo=${encodeURIComponent(window.location.pathname)}`;
+      window.location.href = buildSignInHref(
+        window.location.pathname + window.location.search,
+      );
       return;
     }
     window.location.assign("/messages");
@@ -157,10 +187,9 @@ export function MessagesPage() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      const returnTo = encodeURIComponent(
-        window.location.pathname + window.location.search,
+      setLocation(
+        buildSignInHref(window.location.pathname + window.location.search),
       );
-      setLocation(`/signin?returnTo=${returnTo}`);
     }
   }, [user, isLoading, setLocation]);
 
@@ -239,18 +268,31 @@ interface Message {
   portal?: PortalKey;
 }
 
+/** A conversation row as the server sends it: ids arrive as numbers. */
+type ApiConversation = Partial<Omit<Conversation, "id" | "portal">> & {
+  id: IdLike;
+  portal?: unknown;
+};
+
 export function TwitterMessenger({
   open,
   onClose,
   inline = false,
 }: TwitterMessengerProps) {
   const { user } = useAuth();
+  const userId = user?.id != null ? String(user.id) : null;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [loadingConvs, setLoadingConvs] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<InboxFailure | null>(null);
+  const [listLoaded, setListLoaded] = useState(false);
+  const [listReloadKey, setListReloadKey] = useState(0);
+  const [threadError, setThreadError] = useState<InboxFailure | null>(null);
+  const [threadLoaded, setThreadLoaded] = useState(false);
+  const [threadReloadKey, setThreadReloadKey] = useState(0);
+  const [composerError, setComposerError] = useState<InboxFailure | null>(null);
   const [search, setSearch] = useState("");
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
@@ -260,7 +302,8 @@ export function TwitterMessenger({
   const [showNewConvoModal, setShowNewConvoModal] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
-  const [contactsError, setContactsError] = useState<string | null>(null);
+  const [contactsError, setContactsError] = useState<InboxFailure | null>(null);
+  const [startError, setStartError] = useState<InboxFailure | null>(null);
   const [contactSearch, setContactSearch] = useState("");
   const [contactTab, setContactTab] = useState<"following" | "all">(
     "following",
@@ -268,223 +311,265 @@ export function TwitterMessenger({
   const [startingConvoId, setStartingConvoId] = useState<number | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
+  const selectedConvRef = useRef<Conversation | null>(null);
+  const conversationsRef = useRef<Conversation[]>([]);
+  const contactsAbortRef = useRef<AbortController | null>(null);
+  const refreshAbortRef = useRef<AbortController | null>(null);
+
+  // The socket handler reads these so it can keep one identity for the whole
+  // session; a new handler would drop and reopen the shared connection.
+  useEffect(() => {
+    selectedConvRef.current = selectedConv;
+  }, [selectedConv]);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   const fetchContacts = useCallback(async (query = "") => {
+    // The picker searches on every keystroke; only the latest answer may land.
+    contactsAbortRef.current?.abort();
+    const controller = new AbortController();
+    contactsAbortRef.current = controller;
     setLoadingContacts(true);
     setContactsError(null);
-    try {
-      const q = query ? `?q=${encodeURIComponent(query)}` : "";
-      const res = await fetch(`/api/inbox/contacts${q}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.success || !Array.isArray(data.contacts)) {
-        const apiError =
-          typeof data?.error === "string"
-            ? data.error
-            : data?.error?.message;
-        setContacts([]);
-        setContactsError(
-          apiError ||
-            "Could not load contacts. Please try again.",
-        );
-        return;
-      }
-      setContacts(data.contacts);
-    } catch (err) {
+    const result = await fetchInboxContacts<Contact>(
+      authenticatedFetch,
+      query,
+      controller.signal,
+    );
+    if (controller.signal.aborted) return;
+    setLoadingContacts(false);
+    if (result.ok) {
+      setContacts(result.data);
+    } else {
       setContacts([]);
-      setContactsError(
-        err instanceof Error
-          ? err.message
-          : "Could not load contacts. Please try again.",
-      );
-    } finally {
-      setLoadingContacts(false);
+      setContactsError(result);
     }
   }, []);
 
+  const openNewConversation = useCallback(() => {
+    setStartError(null);
+    setShowNewConvoModal(true);
+    void fetchContacts();
+  }, [fetchContacts]);
+
   const handleStartConversation = async (contact: Contact) => {
     setStartingConvoId(contact.id);
-    try {
-      const res = await fetch("/api/inbox/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          participantId: contact.id,
-          participantName: contact.name,
-          participantAvatar: contact.avatar || null,
-          type: "direct",
-        }),
-      });
-      const data = await res.json();
-      if (data?.success && data.conversation) {
-        const conv: Conversation = {
-          id: String(data.conversation.id),
-          participantId: String(data.conversation.participantId || contact.id),
-          participantName: data.conversation.participantName || contact.name,
-          participantAvatar:
-            data.conversation.participantAvatar || contact.avatar || undefined,
-          type: (data.conversation.type || "direct") as "direct" | "group",
-          portal: resolvePortalKey(
-            data.conversation.portal,
-            data.conversation.type,
-          ),
-          lastMessage: data.conversation.lastMessage || "",
-          lastMessageAt:
-            data.conversation.lastMessageAt || new Date().toISOString(),
-          unreadCount: data.conversation.unreadCount || 0,
-        };
-
-        setConversations((prev) => {
-          const existingIdx = prev.findIndex(
-            (c) =>
-              String(c.id) === String(conv.id) ||
-              String(c.participantId) === String(contact.id),
-          );
-          if (existingIdx !== -1) {
-            const updated = [...prev];
-            updated[existingIdx] = { ...updated[existingIdx], ...conv };
-            return updated;
-          }
-          return [conv, ...prev];
-        });
-
-        setSelectedConv(conv);
-        setShowNewConvoModal(false);
-      } else {
-        toast({
-          title: "Could not start conversation",
-          description: data?.error || "Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (err: any) {
-      toast({
-        title: "Network error",
-        description: err?.message || "Failed to start conversation.",
-        variant: "destructive",
-      });
-    } finally {
-      setStartingConvoId(null);
+    setStartError(null);
+    const result = await startInboxConversation<ApiConversation>(
+      authenticatedFetch,
+      {
+        participantId: contact.id,
+        participantName: contact.name,
+        participantAvatar: contact.avatar || null,
+      },
+    );
+    setStartingConvoId(null);
+    if (!result.ok) {
+      setStartError(result);
+      return;
     }
+
+    const created = result.data.conversation;
+    const conv: Conversation = {
+      id: String(created.id),
+      participantId: String(created.participantId || contact.id),
+      participantName: created.participantName || contact.name,
+      participantAvatar:
+        created.participantAvatar || contact.avatar || undefined,
+      type: (created.type || "direct") as "direct" | "group",
+      portal: resolvePortalKey(created.portal, created.type),
+      lastMessage: created.lastMessage || "",
+      lastMessageAt: created.lastMessageAt || new Date().toISOString(),
+      unreadCount: created.unreadCount || 0,
+    };
+
+    setConversations((prev) => {
+      const existingIdx = prev.findIndex(
+        (c) => sameId(c.id, conv.id) || sameId(c.participantId, contact.id),
+      );
+      if (existingIdx !== -1) {
+        const updated = [...prev];
+        updated[existingIdx] = { ...updated[existingIdx], ...conv };
+        return updated;
+      }
+      return [conv, ...prev];
+    });
+
+    setSelectedConv(conv);
+    setComposerError(null);
+    setShowNewConvoModal(false);
   };
+
+  /* ── Reset when the account changes or the messenger closes ── */
+  useEffect(() => {
+    setConversations([]);
+    setSelectedConv(null);
+    setMessages([]);
+    setListError(null);
+    setListLoaded(false);
+    setThreadError(null);
+    setThreadLoaded(false);
+    setComposerError(null);
+    setLoadingConvs(false);
+    setLoadingMsgs(false);
+    setContacts([]);
+    setContactsError(null);
+    setStartError(null);
+    setShowNewConvoModal(false);
+    return () => {
+      contactsAbortRef.current?.abort();
+      refreshAbortRef.current?.abort();
+    };
+  }, [open, userId]);
 
   /* ── Load conversations ── */
   useEffect(() => {
-    if (!open || !user) {
-      setConversations([]);
-      setSelectedConv(null);
-      setMessages([]);
-      setError(null);
-      return;
-    }
+    if (!open || !userId) return;
 
+    const controller = new AbortController();
     setLoadingConvs(true);
-    setError(null);
+    setListError(null);
 
-    fetch("/api/inbox/conversations", { credentials: "include" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data?.success) {
-          setError(data?.error?.message || "Could not load conversations.");
-          setConversations([]);
-          return;
-        }
-        setConversations(
-          (data.conversations || []).map((conversation: Conversation) => ({
-            ...conversation,
-            portal: resolvePortalKey(conversation.portal, conversation.type),
-          })),
-        );
-      })
-      .catch((err) => {
-        setError(err?.message || "Network error. Please try again.");
-        setConversations([]);
-      })
-      .finally(() => setLoadingConvs(false));
-  }, [open, user]);
+    fetchInboxConversations<Conversation>(
+      authenticatedFetch,
+      controller.signal,
+    ).then((result) => {
+      if (controller.signal.aborted) return;
+      setLoadingConvs(false);
+      if (result.ok) {
+        setConversations(result.data.map(withPortal));
+        setListLoaded(true);
+      } else {
+        // Whatever is already on screen stays; the notice says it may be stale.
+        setListError(result);
+      }
+    });
+
+    return () => controller.abort();
+  }, [open, userId, listReloadKey]);
+
+  // Silent refresh for a message that belongs to a conversation we don't have yet.
+  const refreshConversations = useCallback(async () => {
+    refreshAbortRef.current?.abort();
+    const controller = new AbortController();
+    refreshAbortRef.current = controller;
+    const result = await fetchInboxConversations<Conversation>(
+      authenticatedFetch,
+      controller.signal,
+    );
+    if (controller.signal.aborted) return;
+    if (result.ok) {
+      setConversations(result.data.map(withPortal));
+      setListLoaded(true);
+      setListError(null);
+    } else {
+      setListError(result);
+    }
+  }, []);
 
   // Real-time incoming messages
   const handleLiveMessage = useCallback(
-    (evt: { conversationId: number; message: any }) => {
-      if (
-        selectedConv?.id &&
-        String(selectedConv.id) === String(evt.conversationId)
-      ) {
-        setMessages((prev) => [...prev, evt.message]);
+    (evt: { conversationId: IdLike; message?: unknown }) => {
+      const incoming = evt.message as Message | undefined;
+      if (!incoming) return;
+
+      const isActive = sameId(selectedConvRef.current?.id, evt.conversationId);
+      const isKnown = conversationsRef.current.some((c) =>
+        sameId(c.id, evt.conversationId),
+      );
+
+      if (isActive) {
+        setMessages((prev) => appendMessageOnce(prev, incoming));
+        markInboxConversationRead(authenticatedFetch, evt.conversationId);
       }
-      setConversations((prev) => {
-        const idx = prev.findIndex(
-          (c) => String(c.id) === String(evt.conversationId),
+      if (isKnown) {
+        setConversations((prev) =>
+          applyIncomingToConversations(
+            prev,
+            evt.conversationId,
+            incoming,
+            isActive,
+          ),
         );
-        if (idx === -1) {
-          fetch("/api/inbox/conversations", { credentials: "include" })
-            .then((r) => r.json())
-            .then((data) => {
-              if (data?.success) setConversations(data.conversations || []);
-            });
-          return prev;
-        }
-        const updated = [...prev];
-        const isCurrent =
-          String(selectedConv?.id) === String(evt.conversationId);
-        updated[idx] = {
-          ...updated[idx],
-          lastMessage: evt.message.content,
-          lastMessageAt: evt.message.createdAt,
-          unreadCount: isCurrent ? 0 : (updated[idx].unreadCount || 0) + 1,
-        };
-        const [moved] = updated.splice(idx, 1);
-        return [moved, ...updated];
-      });
+      } else {
+        void refreshConversations();
+      }
     },
-    [selectedConv],
+    [refreshConversations],
   );
-  useInboxSocket(user ? handleLiveMessage : undefined);
+  useInboxSocket(userId ? handleLiveMessage : undefined);
 
   /* ── Load messages ── */
+  const selectedId = selectedConv ? String(selectedConv.id) : null;
+
   useEffect(() => {
-    if (!selectedConv?.id) {
+    if (!selectedId) {
       setMessages([]);
+      setThreadError(null);
+      setThreadLoaded(false);
+      setLoadingMsgs(false);
       return;
     }
 
+    const controller = new AbortController();
+    // A failed load must never leave the previous conversation's messages up.
+    setMessages((prev) => keepConversationMessages(prev, selectedId));
+    setThreadError(null);
+    setThreadLoaded(false);
     setLoadingMsgs(true);
 
-    fetch(`/api/inbox/conversations/${selectedConv.id}/messages`, {
-      credentials: "include",
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success) {
-          setMessages(data.messages || []);
-          if (data.conversation) {
-            setSelectedConv((current) => {
-              if (!current) return current;
-              const updatedName =
-                data.conversation.participantName || current.participantName;
-              const updatedAvatar =
-                data.conversation.participantAvatar ||
-                current.participantAvatar;
-              if (
-                updatedName === current.participantName &&
-                updatedAvatar === current.participantAvatar
-              ) {
-                return current;
-              }
-              return {
-                ...current,
-                participantName: updatedName,
-                participantAvatar: updatedAvatar,
-              };
-            });
+    fetchInboxThread<Message, Conversation>(
+      authenticatedFetch,
+      selectedId,
+      controller.signal,
+    ).then((result) => {
+      if (controller.signal.aborted) return;
+      setLoadingMsgs(false);
+      if (!result.ok) {
+        setThreadError(result);
+        return;
+      }
+
+      setThreadLoaded(true);
+      setMessages((prev) =>
+        mergeThreadReload(result.data.messages, prev, selectedId),
+      );
+      // The server marks the thread read while serving it.
+      setConversations((prev) =>
+        prev.some((c) => sameId(c.id, selectedId) && c.unreadCount)
+          ? prev.map((c) =>
+              sameId(c.id, selectedId) ? { ...c, unreadCount: 0 } : c,
+            )
+          : prev,
+      );
+
+      const details = result.data.conversation;
+      if (details) {
+        setSelectedConv((current) => {
+          if (!current || !sameId(current.id, selectedId)) return current;
+          const updatedName =
+            details.participantName || current.participantName;
+          const updatedAvatar =
+            details.participantAvatar || current.participantAvatar;
+          if (
+            updatedName === current.participantName &&
+            updatedAvatar === current.participantAvatar
+          ) {
+            return current;
           }
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingMsgs(false));
-  }, [selectedConv]);
+          return {
+            ...current,
+            participantName: updatedName,
+            participantAvatar: updatedAvatar,
+          };
+        });
+      }
+    });
+
+    return () => controller.abort();
+  }, [selectedId, threadReloadKey]);
 
   /* ── Auto-scroll ── */
   useEffect(() => {
@@ -498,15 +583,19 @@ export function TwitterMessenger({
 
   /* ── Send ── */
   const sendMessage = useCallback(async () => {
-    const text = msgText.trim();
-    if (!text || !selectedConv || sending) return;
+    const draft = msgText;
+    const text = draft.trim();
+    const conversation = selectedConv;
+    if (!text || !conversation || sendingRef.current) return;
 
+    sendingRef.current = true;
     setSending(true);
+    setComposerError(null);
 
     const tempId = -Date.now();
     const optimistic: Message = {
       id: tempId,
-      conversationId: selectedConv.id,
+      conversationId: conversation.id,
       senderId: String(user?.id),
       senderName:
         user?.name || user?.username || user?.email?.split("@")[0] || "You",
@@ -514,51 +603,50 @@ export function TwitterMessenger({
       isRead: false,
       createdAt: new Date().toISOString(),
       pending: true,
-      portal: selectedConv.portal,
+      portal: conversation.portal,
     };
 
     setMessages((prev) => [...prev, optimistic]);
     setMsgText("");
 
-    try {
-      const res = await fetch(
-        `/api/inbox/conversations/${selectedConv.id}/messages`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ content: text }),
-        },
-      );
+    const result = await postInboxMessage<Message>(
+      authenticatedFetch,
+      conversation.id,
+      { content: text },
+    );
+    sendingRef.current = false;
+    setSending(false);
 
-      const data = await res.json();
+    const stillOpen = sameId(selectedConvRef.current?.id, conversation.id);
 
-      if (data?.success && data.message) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? data.message : m)),
-        );
-        setConversations((prev) => {
-          const idx = prev.findIndex((c) => c.id === selectedConv.id);
-          if (idx === -1) return prev;
-          const updated = [...prev];
-          updated[idx] = {
-            ...updated[idx],
-            lastMessage: text,
-            lastMessageAt: new Date().toISOString(),
-          };
-          const [item] = updated.splice(idx, 1);
-          return [item, ...updated];
-        });
-      } else {
-        throw new Error(data?.error?.message || "Send failed");
+    if (result.ok) {
+      if (stillOpen) {
+        setMessages((prev) => confirmPendingMessage(prev, tempId, result.data));
       }
-    } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      setError("Message could not be sent.");
-    } finally {
-      setSending(false);
+      setConversations((prev) =>
+        applySentToConversations(prev, conversation.id, {
+          content: text,
+          createdAt: result.data.createdAt || new Date().toISOString(),
+        }),
+      );
+      return;
     }
-  }, [msgText, selectedConv, sending, user]);
+
+    setMessages((prev) => removePendingMessage(prev, tempId));
+    if (stillOpen) {
+      // Nothing the user wrote is lost: it goes back into the composer.
+      setMsgText((current) => restoreDraft(current, draft, "\n"));
+      setComposerError(result);
+    } else {
+      // They moved to another conversation; restoring there would risk
+      // sending this text to the wrong person.
+      toast({
+        title: `Message to ${conversation.participantName || "your contact"} was not sent`,
+        description: `${result.message} Your text: "${text.slice(0, 200)}"`,
+        variant: "destructive",
+      });
+    }
+  }, [msgText, selectedConv, user]);
 
   /* ── Filtered ── */
   const filtered = useMemo(() => {
@@ -572,11 +660,7 @@ export function TwitterMessenger({
         (c.participantName || "").toLowerCase().includes(q),
       );
     }
-    return list.sort(
-      (a, b) =>
-        new Date(b.lastMessageAt || 0).getTime() -
-        new Date(a.lastMessageAt || 0).getTime(),
-    );
+    return sortConversationsNewestFirst(list);
   }, [conversations, portalFilter, search]);
 
   const filteredContacts = useMemo(() => {
@@ -625,7 +709,9 @@ export function TwitterMessenger({
                 Connect with the Musical Universe and Community.
               </p>
               <a
-                href={`/signin?returnTo=${encodeURIComponent(window.location.pathname)}`}
+                href={buildSignInHref(
+                  window.location.pathname + window.location.search,
+                )}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black transition-opacity hover:opacity-80"
               >
                 Sign In
@@ -642,9 +728,11 @@ export function TwitterMessenger({
     : null;
 
   /* ── Panel Body ── */
+  // Private, live-updating screen: keep Google Translate out. It re-parents the text React manages (which crashes the app) and would send messages to Google.
   const panelBody = (
     <div
-      className={`flex ${inline ? "h-full" : "h-[85vh] sm:h-[600px]"} overflow-hidden bg-black relative`}
+      translate="no"
+      className={`notranslate flex ${inline ? "h-full" : "h-[85vh] sm:h-[600px]"} overflow-hidden bg-black relative`}
     >
       {/* LEFT SIDEBAR — Conversation List */}
       <div
@@ -685,10 +773,7 @@ export function TwitterMessenger({
               </p>
             </div>
             <button
-              onClick={() => {
-                setShowNewConvoModal(true);
-                fetchContacts();
-              }}
+              onClick={openNewConversation}
               className="flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-cyan-400"
               title="Start conversation with contacts"
             >
@@ -763,53 +848,64 @@ export function TwitterMessenger({
             </div>
           )}
 
-          {error && !loadingConvs && (
-            <div className="px-4 py-8 text-center">
-              <p className="mb-2 text-sm text-red-400">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="text-xs text-cyan-400 hover:underline"
-              >
-                Retry
-              </button>
-            </div>
+          {listError && !loadingConvs && (
+            <InboxNotice
+              failure={listError}
+              onRetry={() => setListReloadKey((key) => key + 1)}
+              className="m-4"
+            />
           )}
 
-          {!loadingConvs && !error && filtered.length === 0 && (
-            <div className="px-6 py-10 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.03]">
-                <MessageCircle className="h-6 w-6 text-white/20" />
+          {listLoaded &&
+            !listError &&
+            !loadingConvs &&
+            conversations.length > 0 &&
+            filtered.length === 0 && (
+              <div className="px-6 py-10 text-center">
+                <p className="text-sm font-medium text-white/60">
+                  No conversations match
+                </p>
+                <p className="mt-1 text-xs text-white/30">
+                  Try a different name or portal filter.
+                </p>
               </div>
-              <p className="text-sm font-medium text-white/60">
-                No conversations yet
-              </p>
-              <p className="mt-1 text-xs text-white/30">
-                Start messaging with contacts or members you follow.
-              </p>
-              <button
-                onClick={() => {
-                  setShowNewConvoModal(true);
-                  fetchContacts();
-                }}
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all hover:scale-105"
-              >
-                <Plus className="h-4 w-4" />
-                Start a Conversation
-              </button>
-            </div>
-          )}
+            )}
+
+          {listLoaded &&
+            !listError &&
+            !loadingConvs &&
+            conversations.length === 0 && (
+              <div className="px-6 py-10 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.03]">
+                  <MessageCircle className="h-6 w-6 text-white/20" />
+                </div>
+                <p className="text-sm font-medium text-white/60">
+                  No conversations yet
+                </p>
+                <p className="mt-1 text-xs text-white/30">
+                  Start messaging with contacts or members you follow.
+                </p>
+                <button
+                  onClick={openNewConversation}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all hover:scale-105"
+                >
+                  <Plus className="h-4 w-4" />
+                  Start a Conversation
+                </button>
+              </div>
+            )}
 
           {filtered.map((conv) => {
             const portal = PORTALS[resolvePortalKey(conv.portal, conv.type)];
             const isUnread = (conv.unreadCount || 0) > 0;
-            const isSelected = selectedConv?.id === conv.id;
+            const isSelected = sameId(selectedConv?.id, conv.id);
 
             return (
               <button
                 key={conv.id}
                 onClick={() => {
                   setSelectedConv(conv);
-                  setError(null);
+                  setComposerError(null);
                 }}
                 className={`group flex w-full items-start gap-3 border-b border-white/[0.04] px-4 py-3 text-left transition-colors ${
                   isSelected ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"
@@ -931,6 +1027,19 @@ export function TwitterMessenger({
                 </div>
               )}
 
+              {threadError && !loadingMsgs && (
+                <InboxNotice
+                  failure={threadError}
+                  onRetry={() => setThreadReloadKey((key) => key + 1)}
+                />
+              )}
+
+              {threadLoaded && !threadError && messages.length === 0 && (
+                <p className="py-10 text-center text-sm text-white/35">
+                  No messages yet. Say hello to {selectedConv.participantName}.
+                </p>
+              )}
+
               {messages.map((msg, idx) => {
                 const isMe = String(msg.senderId) === String(user?.id);
                 const showDate =
@@ -980,9 +1089,20 @@ export function TwitterMessenger({
                             <span className="text-[10px] opacity-50">
                               {formatTime(msg.createdAt)}
                             </span>
-                            {isMe && !msg.pending && (
-                              <CheckCheck className="h-3 w-3 opacity-50" />
-                            )}
+                            {isMe &&
+                              (msg.pending ? (
+                                <Loader2
+                                  role="img"
+                                  aria-label="Sending"
+                                  className="h-3 w-3 animate-spin opacity-50"
+                                />
+                              ) : (
+                                <Check
+                                  role="img"
+                                  aria-label="Sent"
+                                  className="h-3 w-3 opacity-50"
+                                />
+                              ))}
                           </div>
                         </div>
                       </div>
@@ -994,6 +1114,14 @@ export function TwitterMessenger({
 
             {/* Composer */}
             <div className="border-t border-white/[0.06] bg-black px-4 py-3">
+              {composerError && (
+                <InboxNotice
+                  failure={composerError}
+                  onRetry={msgText.trim() ? sendMessage : undefined}
+                  onDismiss={() => setComposerError(null)}
+                  className="mb-2"
+                />
+              )}
               <div className="flex items-end gap-2">
                 <button className="rounded-full p-2 text-white/30 transition-colors hover:bg-white/5 hover:text-white/60">
                   <Smile className="h-5 w-5" />
@@ -1062,10 +1190,7 @@ export function TwitterMessenger({
                 contacts you follow.
               </p>
               <button
-                onClick={() => {
-                  setShowNewConvoModal(true);
-                  fetchContacts();
-                }}
+                onClick={openNewConversation}
                 className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all hover:scale-105"
               >
                 <Plus className="h-4 w-4" />
@@ -1156,6 +1281,13 @@ export function TwitterMessenger({
 
               {/* Contact List */}
               <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[380px]">
+                {startError && (
+                  <InboxNotice
+                    failure={startError}
+                    onDismiss={() => setStartError(null)}
+                  />
+                )}
+
                 {loadingContacts && (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin text-cyan-400/50" />
@@ -1163,17 +1295,10 @@ export function TwitterMessenger({
                 )}
 
                 {!loadingContacts && contactsError && (
-                  <div className="space-y-3 px-4 py-12 text-center">
-                    <p className="text-sm text-red-300" role="alert">
-                      {contactsError}
-                    </p>
-                    <button
-                      onClick={() => fetchContacts(contactSearch)}
-                      className="text-xs text-cyan-400 hover:underline"
-                    >
-                      Retry
-                    </button>
-                  </div>
+                  <InboxNotice
+                    failure={contactsError}
+                    onRetry={() => fetchContacts(contactSearch)}
+                  />
                 )}
 
                 {!loadingContacts &&
