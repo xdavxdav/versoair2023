@@ -1314,7 +1314,7 @@ function AppContent() {
                     className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
                   >
                     <span>🎵</span>
-                    <span className="hidden sm:inline">Verso Air</span>
+                    <span className="hidden sm:inline notranslate">Verso Air</span>
                   </button>
                   <button
                     onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}

@@ -11,7 +11,7 @@ export const ROUTE_SEO_META: Readonly<Record<string, RouteMeta>> = {
   "/": {
     title: "VersoAir | Business Directory & Advertising Platform",
     description:
-      "Verso Air Inc. is preparing a Toronto-focused platform for business visibility and creative projects. Directory listings and metrics will be published as they become available and verified.",
+      "Verso Air Inc. is launching a digital platform for business visibility and creative projects, starting in Ontario with the ambition to grow worldwide. Directory listings and metrics will be published once verified.",
   },
   "/businesses-directory": {
     title: "Businesses Directory | VersoAir",
@@ -51,7 +51,7 @@ export const ROUTE_SEO_META: Readonly<Record<string, RouteMeta>> = {
   "/about": {
     title: "About Verso Air | Business Directory and Creative Platform",
     description:
-      "Learn about Verso Air Inc., a Toronto-focused platform preparing business visibility tools and creative community projects.",
+      "Learn about Verso Air Inc., an Ontario corporation launching a platform for business visibility and creative projects, with the ambition to grow worldwide.",
   },
   "/contact": {
     title: "Contact Verso Air | Toronto",

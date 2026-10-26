@@ -260,12 +260,12 @@ const COMPANY_COPY = {
       {
         icon: Briefcase,
         q: "¿Qué vende exactamente la empresa?",
-        a: "VERSO AIR INC. está preparando una plataforma digital de visibilidad empresarial. El directorio, los espacios publicitarios y las herramientas de análisis se presentarán a medida que estén disponibles y se verifiquen sus datos.",
+        a: "VERSO AIR INC. lanza una plataforma digital de visibilidad empresarial. El directorio, los espacios publicitarios y las herramientas de análisis se presentarán a medida que estén disponibles y se verifiquen sus datos.",
       },
       {
         icon: MapPin,
         q: "¿A quién se dirige?",
-        a: "El lanzamiento inicial se centra en Toronto. La expansión a otros sectores y ciudades dependerá de la disponibilidad de los servicios y de datos verificados.",
+        a: "Empezamos en Ontario, desde Toronto, con la ambición de crecer a escala mundial. La expansión a otros sectores, ciudades y países dependerá de la disponibilidad de los servicios y de datos verificados.",
       },
       {
         icon: Shield,
@@ -287,12 +287,12 @@ const COMPANY_COPY = {
       {
         icon: Briefcase,
         q: "Que vend exactement l'entreprise ?",
-        a: "VERSO AIR INC. prépare une plateforme numérique de visibilité pour les entreprises. L’annuaire, les espaces publicitaires et les outils d’analytique seront présentés au fur et à mesure de leur disponibilité et de la vérification des données.",
+        a: "VERSO AIR INC. lance une plateforme numérique de visibilité pour les entreprises. L’annuaire, les espaces publicitaires et les outils d’analytique seront présentés au fur et à mesure de leur disponibilité et de la vérification des données.",
       },
       {
         icon: MapPin,
         q: "À qui s'adresse-t-elle ?",
-        a: "Le lancement est axé sur Toronto. L’expansion vers d’autres secteurs et villes dépendra de la disponibilité des services et de données vérifiées.",
+        a: "Nous démarrons en Ontario, à partir de Toronto, avec l’ambition de nous développer à l’échelle mondiale. L’expansion vers d’autres secteurs, villes et pays dépendra de la disponibilité des services et de données vérifiées.",
       },
       {
         icon: Shield,
@@ -314,12 +314,12 @@ const COMPANY_COPY = {
       {
         icon: Briefcase,
         q: "What exactly does the company sell?",
-        a: "VERSO AIR INC. is preparing a digital platform for business visibility. The directory, advertising placements, and analytics tools will be introduced as they become available and their data is verified.",
+        a: "VERSO AIR INC. is launching a digital platform for business visibility. The directory, advertising placements, and analytics tools will be introduced as they become available and their data is verified.",
       },
       {
         icon: MapPin,
         q: "Who is it selling to?",
-        a: "The initial launch focus is Toronto. Expansion to other sectors and cities will depend on service availability and verified data.",
+        a: "We’re starting in Ontario, from Toronto, with the ambition to grow worldwide. Expansion to other sectors, cities, and countries will depend on service availability and verified data.",
       },
       {
         icon: Shield,
@@ -504,7 +504,7 @@ export default function About() {
     <>
       <SeoHead
         title="About Verso Air | Business Directory and Creative Platform"
-        description="Learn about Verso Air Inc., a Toronto-focused platform preparing business visibility tools and creative community projects."
+        description="Learn about Verso Air Inc., an Ontario corporation launching a platform for business visibility and creative projects, with the ambition to grow worldwide."
         canonicalPath="/about"
       />
       {localize((
@@ -562,7 +562,7 @@ export default function About() {
               </Badge>
 
               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
+                <span className="notranslate bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
                   Verso Air
                 </span>
                 <br />
@@ -579,9 +579,10 @@ export default function About() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-xl text-slate-700 max-w-3xl mx-auto mb-12 leading-relaxed"
             >
-              VERSO AIR INC. prépare le lancement à Toronto d’une plateforme
-              numérique dédiée à la visibilité des entreprises et aux projets
-              créatifs.
+              VERSO AIR INC. lance sa plateforme numérique dédiée à la
+              visibilité des entreprises et aux projets créatifs. Nous
+              démarrons en Ontario, avec l’ambition de nous développer à
+              l’échelle mondiale.
             </motion.p>
 
             {/* Keep a future-data container without publishing unverified records. */}
@@ -815,7 +816,7 @@ export default function About() {
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-slate-900 to-slate-900 bg-clip-text text-transparent">
-                  Ce Que VERSO AIR Prépare
+                  Ce Que VERSO AIR Lance
                 </span>
               </h2>
               <p className="text-xl text-slate-700 max-w-3xl mx-auto">
@@ -880,7 +881,7 @@ export default function About() {
             <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/10 mb-8">
               <Star className="h-4 w-4 text-purple-700" />
               <span className="text-slate-900/90">
-                La Plateforme d'Intelligence d'Affaires pour Toronto et le Canada
+                La Plateforme d'Intelligence d'Affaires, de l'Ontario vers le monde
               </span>
             </div>
           </FloatingElement>
@@ -893,8 +894,9 @@ export default function About() {
 
           <FloatingElement delay={0.4}>
             <p className="text-xl text-slate-700 mb-8 max-w-2xl mx-auto leading-relaxed">
-              VERSO AIR INC. prépare ses services numériques pour Toronto.
-              Contactez-nous pour en savoir plus sur les prochaines étapes.
+              VERSO AIR INC. lance ses services numériques, en commençant par
+              l’Ontario. Contactez-nous pour en savoir plus sur les prochaines
+              étapes.
             </p>
           </FloatingElement>
 

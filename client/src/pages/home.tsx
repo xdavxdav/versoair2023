@@ -18,6 +18,7 @@ import AnimatedKeyboardText from "@/components/AnimatedKeyboardText";
 import { AnimatedButton } from "@/components/AnimatedButton";
 import { useCountry } from "@/contexts/CountryContext";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { getCountryMeta } from "@/utils/countryMeta";
 /* webhint-disable hint-no-inline-styles */
 import {
@@ -1148,6 +1149,7 @@ export default function Home() {
   } | null>(null);
   const { selectedCountry } = useCountry();
   const { currentLang } = useLanguage();
+  const localize = useLocalizedContent(false);
   const [aiLanguageFilter, setAiLanguageFilter] = useState("fr");
   const countryMeta = getCountryMeta(selectedCountry || "");
 
@@ -1948,7 +1950,7 @@ export default function Home() {
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f3efe9] text-slate-900">
       <SeoHead
         title="VersoAir | Business Directory & Advertising Platform"
-        description="Verso Air Inc. is preparing a Toronto-focused platform for business visibility and creative projects. Directory listings and metrics will be published as they become available and verified."
+        description="Verso Air Inc. is launching a digital platform for business visibility and creative projects, starting in Ontario with the ambition to grow worldwide. Directory listings and metrics will be published once verified."
         canonicalPath="/"
       />
       {/* Hero Section */}
@@ -2006,7 +2008,7 @@ export default function Home() {
               className="mb-4 md:mb-6"
             >
               <span className="inline-flex rounded-full border border-amber-300/50 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-100 shadow-[0_0_0_1px_rgba(253,224,71,0.12)] md:px-4 md:py-2 md:text-sm">
-                vHeartz • vision culturelle et communautaire à venir
+                {localize("Ontario, Canada • lancement en cours")}
               </span>
             </motion.div>
 
@@ -2016,7 +2018,7 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.2 }}
               className="mb-4 px-2 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-6xl lg:text-7xl notranslate"
             >
-              vHeartz
+              Verso Air
             </motion.h1>
 
             <motion.p
@@ -2025,8 +2027,9 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.4 }}
               className="mx-auto max-w-3xl px-2 text-base text-white/90 sm:text-lg md:text-xl lg:text-2xl"
             >
-              Une organisation à venir, distincte de VERSO AIR INC., avec une
-              vision culturelle et communautaire.
+              {localize(
+                "VERSO AIR INC. lance sa plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs. Nous démarrons en Ontario, avec l’ambition de nous développer à l’échelle mondiale.",
+              )}
             </motion.p>
 
             {!isAuthenticated && (
@@ -2047,7 +2050,7 @@ export default function Home() {
                 >
                   <Link to="/apply">✨ Postuler</Link>
                 </Button>
-                <Link to="/ong-culturelle" className="w-full sm:w-auto">
+                <Link to="/about" className="w-full sm:w-auto">
                   <Button className="w-full rounded-xl border-2 border-white/60 bg-transparent px-6 py-4 text-base font-bold text-white transition-all hover:bg-white/5 sm:w-auto md:px-10 md:py-6 md:text-lg">
                     En savoir plus
                   </Button>

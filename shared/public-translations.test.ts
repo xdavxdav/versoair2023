@@ -66,12 +66,60 @@ test("Spanish critical commercial and legal copy preserves no-payment and no-ent
     /No concede permisos adicionales/);
 });
 
+test("the homepage hero's launch copy is native in English and Spanish and no longer says it is preparing", () => {
+  const badge = "Ontario, Canada • lancement en cours";
+  const tagline =
+    "VERSO AIR INC. lance sa plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs. Nous démarrons en Ontario, avec l’ambition de nous développer à l’échelle mondiale.";
+
+  for (const text of [badge, tagline]) {
+    const id = getPublicCopyId(text);
+    assert.notEqual(id, undefined, `missing catalogue entry for: ${text}`);
+    for (const language of ["en", "es"] as const) {
+      const native = nativeDictionary(language)[id!];
+      assert.notEqual(native, text, `not translated to ${language}: ${text}`);
+      assert.match(native, /Ontario/, `${language} keeps the Ontario start: ${text}`);
+      assert.doesNotMatch(native, /prepar/i, `${language} must not say it is preparing: ${text}`);
+    }
+  }
+
+  const english = nativeDictionary("en");
+  assert.match(english[getPublicCopyId(badge)!], /launching now/);
+  assert.match(english[getPublicCopyId(tagline)!], /launching[\s\S]*Ontario[\s\S]*worldwide/);
+  assert.match(nativeDictionary("es")[getPublicCopyId(tagline)!], /lanza[\s\S]*Ontario[\s\S]*mundial/);
+});
+
+test("the About page's launch copy is native in English and Spanish and no longer says it is preparing", () => {
+  const launchCopy = [
+    "Ce Que VERSO AIR Lance",
+    "VERSO AIR INC. lance ses services numériques, en commençant par l’Ontario. Contactez-nous pour en savoir plus sur les prochaines étapes.",
+    "La Plateforme d'Intelligence d'Affaires, de l'Ontario vers le monde",
+  ];
+
+  for (const text of launchCopy) {
+    const id = getPublicCopyId(text);
+    assert.notEqual(id, undefined, `missing catalogue entry for: ${text}`);
+    for (const language of ["en", "es"] as const) {
+      const native = nativeDictionary(language)[id!];
+      assert.notEqual(native, text, `not translated to ${language}: ${text}`);
+      assert.doesNotMatch(native, /prepar/i, `${language} must not say it is preparing: ${text}`);
+    }
+  }
+
+  const english = nativeDictionary("en");
+  const spanish = nativeDictionary("es");
+  const cta = getPublicCopyId(launchCopy[1])!;
+  assert.match(english[cta], /launching[\s\S]*Ontario/);
+  assert.match(spanish[cta], /lanza[\s\S]*Ontario/);
+  assert.match(english[getPublicCopyId(launchCopy[2])!], /Ontario to the world/);
+  assert.match(spanish[getPublicCopyId(launchCopy[2])!], /Ontario al mundo/);
+});
+
 test("the About page's primary French copy has native English translations", () => {
   const english = nativeDictionary("en");
   const aboutCopy = [
     "Plateforme d'Intelligence Multi-Sectorielle",
     "Écosystème d'Intelligence d'Affaires",
-    "VERSO AIR INC. prépare le lancement à Toronto d’une plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs.",
+    "VERSO AIR INC. lance sa plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs. Nous démarrons en Ontario, avec l’ambition de nous développer à l’échelle mondiale.",
     "Parcourir les Entreprises",
     "Commerce & Détail",
     "Annuaire complet d'entreprises & moteur de recherche multi-secteur",
