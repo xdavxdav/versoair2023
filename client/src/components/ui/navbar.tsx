@@ -35,6 +35,7 @@ import SearchModal from "@/components/SearchModal";
 import NotificationCenter from "@/components/NotificationCenter";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import MarketLabel from "@/components/MarketLabel";
+import { NativeLabel } from "@/components/NativeLabel";
 
 // Portal metadata for the switcher dropdown
 const PORTAL_META: Record<
@@ -277,7 +278,7 @@ export default function Navbar({
               href="/"
               className="text-gray-600 hover:text-primary transition-colors px-2 py-1 text-sm whitespace-nowrap"
             >
-              Accueil
+              <NativeLabel text="Accueil" />
             </Link>
 
             <Link
@@ -427,7 +428,7 @@ export default function Navbar({
                   href="/marketing"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap font-medium"
                 >
-                  Hub Marketing
+                  <NativeLabel text="Hub Marketing" />
                 </Link>
                 <div className="border-t border-gray-200 my-1"></div>
                 <Link
@@ -440,13 +441,13 @@ export default function Navbar({
                   href="/marketing/packs"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Packs Marketing
+                  <NativeLabel text="Packs Marketing" />
                 </Link>
                 <Link
                   href="/marketing/print"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                 >
-                  Services d'impression
+                  <NativeLabel text="Services d'impression" />
                 </Link>
                 <Link
                   href="/marketing/newsletters"
@@ -491,7 +492,7 @@ export default function Navbar({
             {/* Assistance Dropdown */}
             <div className="relative group">
               <button className="text-gray-600 hover:text-primary transition-colors flex items-center px-2 py-1 text-sm whitespace-nowrap">
-                Aide <ChevronDown className="ml-1 h-3 w-3" />
+                <NativeLabel text="Aide" /> <ChevronDown className="ml-1 h-3 w-3" />
               </button>
               <div className="absolute top-full right-0 bg-white shadow-lg rounded-lg mt-1 py-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-max">
                 <Link
@@ -531,7 +532,7 @@ export default function Navbar({
                 href="/"
                 className={`text-purple-600 hover:text-purple-800 hover:bg-purple-50 ${tabletNavItemClass}`}
               >
-                Accueil
+                <NativeLabel text="Accueil" />
               </Link>
 
               {/* Geo Admin — sky */}
@@ -692,7 +693,7 @@ export default function Navbar({
                     href="/marketing"
                     className="block px-4 py-2 text-sm text-pink-700 hover:bg-pink-50 hover:text-pink-800 rounded-lg mx-1 font-medium transition-colors"
                   >
-                    Hub Marketing
+                    <NativeLabel text="Hub Marketing" />
                   </Link>
                   <div className="border-t border-pink-100 my-1 mx-2" />
                   <Link
@@ -705,13 +706,13 @@ export default function Navbar({
                     href="/marketing/packs"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-700 rounded-lg mx-1 transition-colors"
                   >
-                    Packs Marketing
+                    <NativeLabel text="Packs Marketing" />
                   </Link>
                   <Link
                     href="/marketing/print"
                     className="block px-4 py-2 text-sm text-gray-600 hover:bg-pink-50 hover:text-pink-700 rounded-lg mx-1 transition-colors"
                   >
-                    Services d'impression
+                    <NativeLabel text="Services d'impression" />
                   </Link>
                   <Link
                     href="/marketing/newsletters"
@@ -760,7 +761,7 @@ export default function Navbar({
                 <button
                   className={`text-teal-800 hover:text-teal-800 hover:bg-teal-50 gap-1 ${tabletNavIconItemClass}`}
                 >
-                  Aide <ChevronDown className="h-4 w-4" />
+                  <NativeLabel text="Aide" /> <ChevronDown className="h-4 w-4" />
                 </button>
                 <div className="absolute top-full right-0 bg-white shadow-xl rounded-xl mt-2 py-2 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-teal-100">
                   <Link
@@ -841,8 +842,12 @@ export default function Navbar({
             ) : (
               <Link href="/auth/signin" className="flex-shrink-0">
                 <Button className="bg-slate-800 text-slate-200 px-2 md:px-4 py-2 rounded-md hover:bg-slate-700 transition-colors text-xs font-medium whitespace-nowrap border border-slate-600">
-                  <span className="hidden sm:inline">Connexion</span>
-                  <span className="sm:hidden">Connexion</span>
+                  <span className="hidden sm:inline">
+                    <NativeLabel text="Connexion" />
+                  </span>
+                  <span className="sm:hidden">
+                    <NativeLabel text="Connexion" />
+                  </span>
                 </Button>
               </Link>
             )}

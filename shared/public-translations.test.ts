@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
-import { BUNDLED_LANGUAGES, isBundledLanguage, getPublicCopyId, nativeDictionary, PUBLIC_COPY } from "./public-translations";
+import { APPLY_COPY, APPLY_ES } from "./apply-translations";
+import { CHROME_COPY, CHROME_ES } from "./chrome-translations";
+import { GEO_ADMIN_COPY, GEO_ADMIN_ES } from "./geo-admin-translations";
+import { ONBOARDING_COPY, ONBOARDING_ES } from "./onboarding-translations";
+import { RECOVERY_COPY, RECOVERY_ES } from "./recovery-translations";
+import { BUNDLED_LANGUAGES, fillTemplate, isBundledLanguage, getPublicCopyId, nativeDictionary, PUBLIC_COPY } from "./public-translations";
 import { SPANISH_COPY } from "./spanish-translations";
 
 test("legal page static copy has native FR/EN coverage, excluding brands and punctuation", () => {
@@ -133,4 +138,50 @@ test("the About page's primary French copy has native English translations", () 
     assert.notEqual(id, undefined, `missing catalogue entry for: ${text}`);
     assert.notEqual(english[id!], text, `not translated to English: ${text}`);
   }
+});
+
+const AUTHORED_MODULES: Array<{
+  name: string;
+  rows: ReadonlyArray<readonly [string, string]>;
+  es: Record<string, string>;
+}> = [
+  { name: "chrome", rows: CHROME_COPY, es: CHROME_ES },
+  { name: "apply", rows: APPLY_COPY, es: APPLY_ES },
+  { name: "onboarding", rows: ONBOARDING_COPY, es: ONBOARDING_ES },
+  { name: "geo-admin", rows: GEO_ADMIN_COPY, es: GEO_ADMIN_ES },
+  { name: "recovery", rows: RECOVERY_COPY, es: RECOVERY_ES },
+];
+
+test("authored interface modules own their lookups and keep placeholders intact in every language", () => {
+  const tokens = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort().join();
+  for (const { name, rows, es } of AUTHORED_MODULES) {
+    for (const [en, fr] of rows) {
+      const index = PUBLIC_COPY.findIndex(([candidate]) => candidate === en);
+      assert.notEqual(index, -1, `${name}: not in the catalogue: ${en}`);
+      assert.equal(getPublicCopyId(en), String(index), `${name}: English lookup is shadowed by another row: ${en}`);
+      // A French wording shared with an older row (e.g. "Annuler") keeps resolving to the older row.
+      const frRow = PUBLIC_COPY[Number(getPublicCopyId(fr))];
+      assert.ok(frRow && (frRow[0] === fr || frRow[1] === fr), `${name}: French wording is not resolvable: ${fr}`);
+      assert.equal(tokens(fr), tokens(en), `${name}: French placeholders differ: ${en}`);
+      assert.ok(es[en]?.trim(), `${name}: missing Spanish: ${en}`);
+      assert.equal(tokens(es[en]), tokens(en), `${name}: Spanish placeholders differ: ${en}`);
+    }
+  }
+});
+
+test("fillTemplate fills known placeholders and leaves unknown ones visible", () => {
+  assert.equal(fillTemplate("Select country: {name}", { name: "Belgique" }), "Select country: Belgique");
+  assert.equal(fillTemplate("{count} countries", { count: 35 }), "35 countries");
+  assert.equal(fillTemplate("{count} countries", {}), "{count} countries");
+});
+
+test("picker and notice copy reads naturally in each bundled language", () => {
+  const dictionaries = Object.fromEntries(BUNDLED_LANGUAGES.map(l => [l, nativeDictionary(l)]));
+  const text = (language: (typeof BUNDLED_LANGUAGES)[number], source: string) =>
+    dictionaries[language][getPublicCopyId(source)!];
+  assert.equal(text("fr", "Select country: {name}"), "Choisir le pays : {name}");
+  assert.equal(text("en", "Choisir le pays : {name}"), "Select country: {name}");
+  assert.match(text("es", "Google Translate could not load. Check your connection and try again."), /Traductor de Google/);
+  assert.match(text("fr", "Google Translate could not load. Check your connection and try again."), /Google Traduction/);
+  assert.equal(text("fr", "Business Intelligence Platform"), "Plateforme d'intelligence d'affaires");
 });

@@ -30,9 +30,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
+import { fillTemplate } from "@shared/public-translations";
 
 const GEOADMIN_STAFF_CODE_PATTERN = /^[A-Z]{3}-[0-9]{3}-[A-Z]{3}$/i;
+
+// Server messages that carry a count or a provider name; the fixed ones are catalogued as-is.
+const LOCKOUT_MESSAGE =
+  /^Account temporarily locked\. Try again in (\d+) minute\(s\)\.$/;
+const PROVIDER_MESSAGE =
+  /^This account uses (.+) sign-in\. Please sign in with \1 instead\.$/;
 
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
@@ -42,6 +50,26 @@ export default function GeoAdminAuthGate({
   onSignInSuccess,
 }: GeoAdminAuthGateProps) {
   const localize = useLocalizedContent();
+  const { translateText } = useLanguage();
+  const tr = (text: string, values?: Record<string, string | number>) =>
+    values ? fillTemplate(translateText(text), values) : translateText(text);
+  const localizeServerMessage = (message: string) => {
+    const locked = LOCKOUT_MESSAGE.exec(message);
+    if (locked) {
+      return tr(
+        "Account temporarily locked. Try again in {minutes} minute(s).",
+        { minutes: locked[1] },
+      );
+    }
+    const provider = PROVIDER_MESSAGE.exec(message);
+    if (provider) {
+      return tr(
+        "This account uses {provider} sign-in. Please sign in with {provider} instead.",
+        { provider: provider[1] },
+      );
+    }
+    return translateText(message);
+  };
   const { login: authContextLogin } = useAuthContext();
   const [, navigateTo] = useLocation();
   const [mode, setMode] = useState<
@@ -218,8 +246,8 @@ export default function GeoAdminAuthGate({
       localStorage.removeItem("geoadmin_login_time");
       localStorage.removeItem("geoadmin_session_start");
       toast({
-        title: "Successfully logged out",
-        description: "You've been disconnected from GeoAdmin.",
+        title: translateText("Successfully logged out"),
+        description: translateText("You've been disconnected from GeoAdmin."),
       });
       setIsSuccess(false);
       setMode("gate");
@@ -280,7 +308,7 @@ export default function GeoAdminAuthGate({
   // GATE VIEW (unauthenticated landing)
 
   if (mode === "gate") {
-    return (
+    return localize(
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 relative overflow-hidden">
         {/* Subtle grid background */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2dyaWQpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-50" />
@@ -448,7 +476,7 @@ export default function GeoAdminAuthGate({
             {/* Error */}
             {error && (
               <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
-                {error}
+                {localizeServerMessage(error)}
               </div>
             )}
 
@@ -707,7 +735,7 @@ export default function GeoAdminAuthGate({
                 </Button>
 
                 <p className="text-[11px] text-slate-600 text-center">
-                  Admin &amp; CEO accounts only. Regular users sign in via the
+                  Admin & CEO accounts only. Regular users sign in via the
                   Subscriber tab. Staff codes only work for configured GeoAdmin
                   staff accounts.
                 </p>

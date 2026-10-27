@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 interface VerificationPendingNoticeProps {
   email: string;
@@ -20,6 +21,9 @@ export default function VerificationPendingNotice({
   const [resending, setResending] = useState(false);
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(emailSent);
   const [statusMessage, setStatusMessage] = useState(message || "");
+  // The root is translate="no", so every visible string goes through translateText explicitly.
+  // Server messages are English; catalogued ones localize and unknown ones stay as written.
+  const { translateText } = useLanguage();
 
   const resend = async () => {
     setResending(true);
@@ -62,9 +66,13 @@ export default function VerificationPendingNotice({
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/10">
           <CheckCircle2 className="h-8 w-8 text-amber-300" />
         </div>
-        <h2 className="text-xl font-bold">Account created — verify your email</h2>
+        <h2 className="text-xl font-bold">
+          {translateText("Account created — verify your email")}
+        </h2>
         <p className="mt-2 text-sm text-white/70">
-          Your account is not ready to sign in until you verify this address:
+          {translateText(
+            "Your account is not ready to sign in until you verify this address:",
+          )}
         </p>
         <p className="mt-1 break-all font-semibold text-amber-200">{email}</p>
       </div>
@@ -77,12 +85,19 @@ export default function VerificationPendingNotice({
             : "border-amber-400/30 bg-amber-400/10 text-amber-100"
         }`}
       >
-        {statusMessage ||
-          (deliveryConfirmed === true
-            ? "Verification email sent. Check your inbox and spam folder."
+        {statusMessage
+          ? translateText(statusMessage)
+          : deliveryConfirmed === true
+            ? translateText(
+                "Verification email sent. Check your inbox and spam folder.",
+              )
             : deliveryConfirmed === false
-              ? "We could not confirm delivery. Your account remains unverified; retry email delivery before signing in."
-              : "Email verification is required. Check your inbox or request a new verification link.")}
+              ? translateText(
+                  "We could not confirm delivery. Your account remains unverified; retry email delivery before signing in.",
+                )
+              : translateText(
+                  "Email verification is required. Check your inbox or request a new verification link.",
+                )}
       </p>
 
       <Button
@@ -96,7 +111,9 @@ export default function VerificationPendingNotice({
         ) : (
           <RefreshCw className="mr-2 h-4 w-4" />
         )}
-        {resending ? "Requesting verification email..." : "Resend verification email"}
+        {resending
+          ? translateText("Requesting verification email...")
+          : translateText("Resend verification email")}
       </Button>
 
       {onContinue && (
@@ -106,7 +123,7 @@ export default function VerificationPendingNotice({
           onClick={onContinue}
           className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
         >
-          {continueLabel}
+          {translateText(continueLabel)}
         </Button>
       )}
     </div>

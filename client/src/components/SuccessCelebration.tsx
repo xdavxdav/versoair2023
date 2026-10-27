@@ -18,6 +18,7 @@ import {
   Rocket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import Confetti from "react-confetti";
 
 interface PortalConfig {
@@ -47,81 +48,81 @@ const PORTAL_MESSAGES: Record<
   }
 > = {
   general: {
-    headline: "Bienvenue dans l'univers Verso Air!",
-    subheadline: "Votre compte est prêt. Explorez tout ce qui vous attend.",
+    headline: "Welcome to the Verso Air universe!",
+    subheadline: "Your account is ready. Explore everything waiting for you.",
     features: [
-      "Parcourez notre répertoire d'entreprises",
-      "Effectuez des réservations en un clic",
-      "Sauvegardez vos favoris",
-      "Laissez des avis authentiques",
-      "Accédez au Marketplace",
+      "Browse our business directory",
+      "Make reservations in one click",
+      "Save your favorites",
+      "Leave authentic reviews",
+      "Access the Marketplace",
     ],
-    ctaText: "Explorer maintenant",
+    ctaText: "Explore now",
     emoji: "🌍",
   },
   artist: {
-    headline: "Bienvenue chez VERSO AIR™ !",
-    subheadline: "Votre voyage musical commence ici. Le monde vous attend.",
+    headline: "Welcome to VERSO AIR™!",
+    subheadline: "Your musical journey starts here. The world is waiting for you.",
     features: [
-      "Téléversez vos morceaux illimités",
-      "Suivez vos streams en temps réel",
-      "Participez au StreamRoyale",
-      "Recevez vos royalties",
-      "Obtenez votre badge artiste",
+      "Upload unlimited tracks",
+      "Track your streams in real time",
+      "Take part in StreamRoyale",
+      "Receive your royalties",
+      "Earn your artist badge",
     ],
-    ctaText: "Accéder au portail artiste",
+    ctaText: "Go to the artist portal",
     emoji: "🎵",
   },
   subscriber: {
-    headline: "Bienvenue, membre Premium!",
-    subheadline: "Vous avez débloqué des fonctionnalités exclusives.",
+    headline: "Welcome, Premium member!",
+    subheadline: "You've unlocked exclusive features.",
     features: [
-      "Support prioritaire 24/7",
-      "Analytics avancées",
-      "Accès GeoAdmin complet",
-      "Badge Premium visible",
-      "Gestion des litiges prioritaire",
+      "24/7 priority support",
+      "Advanced analytics",
+      "Full GeoAdmin access",
+      "Visible Premium badge",
+      "Priority dispute handling",
     ],
-    ctaText: "Accéder au tableau de bord",
+    ctaText: "Go to the dashboard",
     emoji: "👑",
   },
   community: {
-    headline: "Bienvenue dans la communauté Artisans!",
-    subheadline: "Partagez votre savoir-faire avec le monde entier.",
+    headline: "Welcome to the Artisans community!",
+    subheadline: "Share your craftsmanship with the world.",
     features: [
-      "Créez votre profil artisan",
-      "Publiez votre portfolio",
-      "Connectez-vous avec d'autres créateurs",
-      "Recevez des commandes",
-      "Accédez au blog communautaire",
+      "Create your artisan profile",
+      "Publish your portfolio",
+      "Connect with other creators",
+      "Receive orders",
+      "Access the community blog",
     ],
-    ctaText: "Créer mon profil",
+    ctaText: "Create my profile",
     emoji: "🎨",
   },
   contractor: {
-    headline: "Bienvenue, Professionnel!",
-    subheadline: "Trouvez vos premiers projets dès aujourd'hui.",
+    headline: "Welcome, professional!",
+    subheadline: "Find your first projects today.",
     features: [
-      "Parcourez les offres de projets",
-      "Créez votre portfolio professionnel",
-      "Gérez vos contrats",
-      "Définissez vos tarifs",
-      "Connectez-vous avec des entreprises",
+      "Browse project listings",
+      "Build your professional portfolio",
+      "Manage your contracts",
+      "Set your rates",
+      "Connect with businesses",
     ],
-    ctaText: "Voir les projets",
+    ctaText: "View projects",
     emoji: "🔧",
   },
   business: {
-    headline: "Bienvenue, Propriétaire d'entreprise!",
-    subheadline: "Développez votre visibilité sur Verso Air.",
+    headline: "Welcome, business owner!",
+    subheadline: "Grow your visibility on Verso Air.",
     features: [
-      "Créez votre fiche entreprise",
-      "Répondez aux avis clients",
-      "Accédez à vos analytics",
-      "Gérez vos réservations",
-      "Boostez votre visibilité",
+      "Create your business listing",
+      "Reply to customer reviews",
+      "Access your analytics",
+      "Manage your reservations",
+      "Boost your visibility",
     ],
-    ctaText: "Configurer mon entreprise",
+    ctaText: "Set up my business",
     emoji: "🏢",
   },
 };
@@ -165,9 +166,16 @@ export default function SuccessCelebration({
   const [countdown, setCountdown] = useState(countdownSeconds);
   const [showConfetti, setShowConfetti] = useState(true);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const { translateText } = useLanguage();
 
   const messages = PORTAL_MESSAGES[portal.id] || PORTAL_MESSAGES.general;
   const PortalIcon = portal.icon;
+  // Whole sentences are translated first so word order stays natural; the highlighted
+  // value is then rendered between the two halves.
+  const [greetingStart, greetingEnd = ""] = translateText("Hello, {name}!").split("{name}");
+  const [redirectStart, redirectEnd = ""] = translateText(
+    "Redirecting automatically in {time}",
+  ).split("{time}");
 
   // Window size for confetti
   useEffect(() => {
@@ -309,7 +317,7 @@ export default function SuccessCelebration({
             transition={{ delay: 0.5 }}
             className="text-3xl md:text-4xl font-bold text-white mb-3 notranslate"
           >
-            {messages.headline}
+            {translateText(messages.headline)}
           </motion.h1>
 
           {/* User greeting */}
@@ -319,8 +327,11 @@ export default function SuccessCelebration({
             transition={{ delay: 0.6 }}
             className="text-xl text-white/90 mb-2"
           >
-            Bonjour, <span className="font-semibold">{userName || "ami"}</span>!
-            👋
+            {greetingStart}
+            <span className="font-semibold">
+              {userName || translateText("friend")}
+            </span>
+            {greetingEnd} 👋
           </motion.p>
 
           {/* Subheadline */}
@@ -330,7 +341,7 @@ export default function SuccessCelebration({
             transition={{ delay: 0.7 }}
             className="text-white/70 mb-8"
           >
-            {messages.subheadline}
+            {translateText(messages.subheadline)}
           </motion.p>
 
           {/* Features unlocked */}
@@ -343,7 +354,7 @@ export default function SuccessCelebration({
             <div className="flex items-center justify-center gap-2 mb-4">
               <Gift className="w-5 h-5 text-yellow-300" />
               <span className="text-white font-semibold">
-                Fonctionnalités débloquées
+                {translateText("Features unlocked")}
               </span>
             </div>
             <ul className="space-y-2 text-left">
@@ -358,7 +369,7 @@ export default function SuccessCelebration({
                   <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: feature
+                      __html: translateText(feature)
                         .replace(
                           /StreamRoyale/g,
                           '<span class="notranslate">StreamRoyale</span>',
@@ -393,7 +404,7 @@ export default function SuccessCelebration({
               size="lg"
               className="bg-white text-slate-900 hover:bg-white/90 font-semibold px-8 py-6 text-lg rounded-xl shadow-xl hover:shadow-2xl transition-all"
             >
-              {messages.ctaText}
+              {translateText(messages.ctaText)}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </motion.div>
@@ -405,8 +416,9 @@ export default function SuccessCelebration({
             transition={{ delay: 2 }}
             className="mt-6 text-white/50 text-sm"
           >
-            Redirection automatique dans{" "}
-            <span className="font-mono text-white/70">{countdown}s</span>
+            {redirectStart}
+            <span className="font-mono text-white/70">{`${countdown}s`}</span>
+            {redirectEnd}
           </motion.p>
 
           {/* Skip link */}
@@ -417,7 +429,7 @@ export default function SuccessCelebration({
             onClick={onComplete}
             className="mt-2 text-white/40 hover:text-white/60 text-xs underline transition-colors"
           >
-            Passer cette animation
+            {translateText("Skip this animation")}
           </motion.button>
         </div>
 

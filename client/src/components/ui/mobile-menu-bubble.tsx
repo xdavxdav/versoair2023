@@ -45,6 +45,8 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 import NotificationCenter from "@/components/NotificationCenter";
+import { NativeLabel } from "@/components/NativeLabel";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 // ─── Grouped Navigation ────────────────────────────────────────
 
@@ -53,6 +55,7 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   requiresAuth?: boolean;
+  brand?: boolean;
 };
 
 const mainNav: NavItem[] = [
@@ -62,7 +65,13 @@ const mainNav: NavItem[] = [
 ];
 
 const geoNav: NavItem[] = [
-  { href: "/geo-admin", label: "Geo Admin", icon: Globe, requiresAuth: true },
+  {
+    href: "/geo-admin",
+    label: "Geo Admin",
+    icon: Globe,
+    requiresAuth: true,
+    brand: true,
+  },
   {
     href: "/geo-admin/immobilier",
     label: "Immobilier",
@@ -100,8 +109,20 @@ const moreItems: NavItem[] = [
   { href: "/about", label: "About", icon: Info },
   { href: "/services/news", label: "News", icon: Info },
   { href: "/sav", label: "SAV 24/7", icon: Headphones },
-  { href: "/versoai", label: "VersoAI", icon: Sparkles },
+  { href: "/versoai", label: "VersoAI", icon: Sparkles, brand: true },
 ];
+
+// Brand names are never translated; everything else uses the native catalogue.
+function ItemLabel({ item }: { item: NavItem }) {
+  if (item.brand) {
+    return (
+      <span translate="no" className="notranslate">
+        {item.label}
+      </span>
+    );
+  }
+  return <NativeLabel text={item.label} />;
+}
 
 // ─── Compact Row Renderer ──────────────────────────────────────
 
@@ -139,7 +160,9 @@ function NavRow({
                 : "text-[#bf831c]"
           }`}
         />
-        <span className="text-[13px] font-medium truncate">{item.label}</span>
+        <span className="text-[13px] font-medium truncate">
+          <ItemLabel item={item} />
+        </span>
         {isLocked && (
           <Lock className="ml-auto h-3 w-3 text-amber-500 shrink-0" />
         )}
@@ -180,7 +203,7 @@ function ChipGrid({
               <Icon
                 className={`h-3 w-3 ${isActive ? "text-white" : "text-[#bf831c]"}`}
               />
-              {item.label}
+              <ItemLabel item={item} />
             </button>
           </Link>
         );
@@ -191,10 +214,16 @@ function ChipGrid({
 
 // ─── Section Label ─────────────────────────────────────────────
 
-function SectionLabel({ text }: { text: string }) {
+function SectionLabel({ text, brand }: { text: string; brand?: boolean }) {
   return (
     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1 mb-1.5">
-      {text}
+      {brand ? (
+        <span translate="no" className="notranslate">
+          {text}
+        </span>
+      ) : (
+        <NativeLabel text={text} />
+      )}
     </p>
   );
 }
@@ -206,6 +235,7 @@ export function MobileMenuBubble() {
   const [location, navigate] = useLocation();
   const { isAuthenticated } = useSubscription();
   const { user, loading: authLoading } = useAuthContext();
+  const { translateText: tr } = useLanguage();
   const dashboard = getDashboardDestination(user);
   const isSuperuser = user?.role === "superuser";
   const owner = useOwnerAccess();
@@ -400,7 +430,7 @@ export function MobileMenuBubble() {
                 : "cursor-grab hover:shadow-xl hover:scale-105"
           }`}
           size="icon"
-          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-label={isOpen ? tr("Close menu") : tr("Open menu")}
         >
           {isOpen && !dragging ? (
             <X className="h-5 w-5" />
@@ -428,7 +458,7 @@ export function MobileMenuBubble() {
             {/* Panel header */}
             <div className="bg-gradient-to-r from-[#bf831c] to-[#d4941f] px-4 py-2.5 flex items-center justify-between">
               <span className="text-white text-xs font-bold tracking-wide">
-                Menu
+                <NativeLabel text="Menu" />
               </span>
               <button
                 onClick={close}
@@ -454,7 +484,7 @@ export function MobileMenuBubble() {
               </div>
 
               {/* ── Geo Admin ── */}
-              <SectionLabel text="Geo Admin" />
+              <SectionLabel text="Geo Admin" brand />
               <div className="space-y-0.5 mb-3">
                 {geoNav.map((item) => (
                   <NavRow
@@ -539,12 +569,14 @@ export function MobileMenuBubble() {
                       </p>
                       <p className="text-[10px] text-gray-500 flex items-center gap-1">
                         <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                        Connected
-                        {isSuperuser && " • Superuser"}
-                        {isAdmin && " • Admin"}
-                        {!isSuperuser && !isAdmin && user.role
-                          ? ` • ${user.role}`
-                          : ""}
+                        <span>
+                          <NativeLabel text="Connected" />
+                          {isSuperuser && " • Superuser"}
+                          {isAdmin && " • Admin"}
+                          {!isSuperuser && !isAdmin && user.role
+                            ? ` • ${user.role}`
+                            : ""}
+                        </span>
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -574,7 +606,9 @@ export function MobileMenuBubble() {
                       <Receipt
                         className={`h-4 w-4 shrink-0 ${location === "/account/billing" ? "text-white" : "text-green-600"}`}
                       />
-                      <span className="text-[13px] font-medium">Billing</span>
+                      <span className="text-[13px] font-medium">
+                        <NativeLabel text="Billing" />
+                      </span>
                       <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
                     </button>
                   </Link>
@@ -625,7 +659,7 @@ export function MobileMenuBubble() {
                   >
                     <Settings className="h-4 w-4 shrink-0 text-slate-500" />
                     <span className="text-[13px] font-medium">
-                      Account Settings
+                      <NativeLabel text="Account Settings" />
                     </span>
                     <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
                   </button>
@@ -638,12 +672,17 @@ export function MobileMenuBubble() {
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-gray-700 active:bg-gray-100 transition-colors duration-150 touch-manipulation"
                   >
                     <Bell className="h-4 w-4 shrink-0 text-slate-500" />
-                    <span className="text-[13px] font-medium">Preferences</span>
+                    <span className="text-[13px] font-medium">
+                      <NativeLabel text="Preferences" />
+                    </span>
                     <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
                   </button>
 
                   {/* Logout */}
-                  <LogoutDropdown variant="red-solid" label="Disconnect" />
+                  <LogoutDropdown
+                    variant="red-solid"
+                    label={tr("Disconnect")}
+                  />
                 </div>
               ) : (
                 <Link href="/auth/signin">
@@ -656,7 +695,7 @@ export function MobileMenuBubble() {
                     }`}
                   >
                     <LogIn className="h-4 w-4" />
-                    Sign In
+                    <NativeLabel text="Sign In" />
                   </button>
                 </Link>
               )}

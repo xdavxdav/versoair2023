@@ -9,6 +9,9 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
+import { useLanguage } from "@/components/LanguageSwitcher";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
+import { fillTemplate } from "@shared/public-translations";
 import {
   hasGeoAdminFreeAccess,
   isReadOnlyGeoAdminSubscriber,
@@ -26,6 +29,10 @@ import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 
 export default function GeoAdminPage() {
+  const localize = useLocalizedContent(false);
+  const { translateText } = useLanguage();
+  const tr = (text: string, values?: Record<string, string | number>) =>
+    values ? fillTemplate(translateText(text), values) : translateText(text);
   const { isAuthenticated, loading, tier, tierName, user, refetch } =
     useSubscription();
   const [, setLocation] = useLocation();
@@ -77,9 +84,10 @@ export default function GeoAdminPage() {
       // Show welcome toast
       setTimeout(() => {
         toast({
-          title: "🎉 Bienvenue, membre Premium!",
-          description:
-            "Votre compte est activé. Explorez vos outils exclusifs.",
+          title: `🎉 ${translateText("Welcome, Premium member!")}`,
+          description: translateText(
+            "Your account is activated. Explore your exclusive tools.",
+          ),
         });
       }, 500);
     }
@@ -103,11 +111,13 @@ export default function GeoAdminPage() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("authToken");
     toast({
-      title: "Session disconnected",
-      description: "Your GeoAdmin session has ended. Please sign in again.",
+      title: translateText("Session disconnected"),
+      description: translateText(
+        "Your GeoAdmin session has ended. Please sign in again.",
+      ),
     });
     await refetch();
-  }, [logout, refetch]);
+  }, [logout, refetch, translateText]);
 
   const handleGeoAdminLogout = useCallback(async () => {
     await logout();
@@ -119,11 +129,11 @@ export default function GeoAdminPage() {
     setIsStillConnected(false);
     setUsername(null);
     toast({
-      title: "Session déconnectée",
-      description: "Vous avez été déconnecté de GeoAdmin.",
+      title: translateText("Session disconnected"),
+      description: translateText("You've been disconnected from GeoAdmin."),
     });
     setLocation("/");
-  }, [logout, setLocation]);
+  }, [logout, setLocation, translateText]);
 
   const {
     sessionTimeLeft,
@@ -214,7 +224,7 @@ export default function GeoAdminPage() {
 
   // Show loading spinner while checking auth
   if (loading) {
-    return (
+    return localize(
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-100 via-orange-50 to-rose-50 items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-3" />
@@ -238,7 +248,7 @@ export default function GeoAdminPage() {
   }
 
   if (!isGeoAdmin && !isReadOnlySubscriber) {
-    return (
+    return localize(
       <div className="flex min-h-screen items-center justify-center bg-[#f3efe9] px-4 py-12">
         <Card className="w-full max-w-xl p-7">
           <Lock className="h-8 w-8 text-amber-700" />
@@ -265,11 +275,11 @@ export default function GeoAdminPage() {
   }
 
   if (!isGeoAdmin && isReadOnlySubscriber) {
-    return (
+    return localize(
       <div className="flex flex-col min-h-screen bg-[#f3efe9] pb-20">
         <GeoAdminSubscriberView
           userId={user?.id ?? 0}
-          username={displayName || "Subscriber"}
+          username={displayName || translateText("Subscriber")}
           tierName={tierName}
           isFree={hasFreeBasicAccess}
         />
@@ -278,7 +288,11 @@ export default function GeoAdminPage() {
   }
 
   // Signed in with paid tier → full dashboard
-  return (
+  const roleLabel = isSuperuser ? "SuperAdmin" : "Geo Admin";
+  const [tierSentenceStart, tierSentenceEnd] = translateText(
+    "You're viewing Geo Admin as a {tier} subscriber.",
+  ).split("{tier}");
+  return localize(
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-100 via-orange-50 to-rose-50">
       {/* Connection status dot */}
       {isStillConnected && (
@@ -289,7 +303,7 @@ export default function GeoAdminPage() {
             variant="outline"
             onClick={() => void handleGeoAdminLogout()}
           >
-            Déconnexion
+            Sign Out
           </Button>
         </div>
       )}
@@ -320,8 +334,12 @@ export default function GeoAdminPage() {
               {sessionTimeLeft > 0 ? (
                 <>
                   <CheckCircle className="inline-block h-3.5 w-3.5 mr-1.5" />
-                  Connected as {isSuperuser ? "SuperAdmin" : "Geo Admin"}
-                  {displayName ? ` — ${displayName}` : ""}
+                  {displayName
+                    ? tr("Connected as {role} — {name}", {
+                        role: roleLabel,
+                        name: displayName,
+                      })
+                    : tr("Connected as {role}", { role: roleLabel })}
                 </>
               ) : (
                 <>
@@ -359,14 +377,20 @@ export default function GeoAdminPage() {
               {isSuperuser ? (
                 <>
                   <Shield className="inline-block h-4 w-4 mr-1.5" />
-                  SuperAdmin — unrestricted access
-                  {displayName ? ` (${displayName})` : ""}
+                  {displayName
+                    ? tr("SuperAdmin — unrestricted access ({name})", {
+                        name: displayName,
+                      })
+                    : tr("SuperAdmin — unrestricted access")}
                 </>
               ) : (
                 <>
                   <CheckCircle className="inline-block h-4 w-4 mr-1.5" />
-                  Geo Admin — full access granted
-                  {displayName ? ` (${displayName})` : ""}
+                  {displayName
+                    ? tr("Geo Admin — full access granted ({name})", {
+                        name: displayName,
+                      })
+                    : tr("Geo Admin — full access granted")}
                 </>
               )}
             </p>
@@ -377,8 +401,9 @@ export default function GeoAdminPage() {
           <div className="max-w-[95vw] mx-auto px-4 py-2">
             <p className="text-emerald-300 text-xs sm:text-sm">
               <TrendingUp className="inline-block h-4 w-4 mr-1.5" />
-              You're viewing Geo Admin as a{" "}
-              <span className="font-semibold">{tierName}</span> subscriber.
+              {tierSentenceStart}
+              <span className="font-semibold">{tierName}</span>
+              {tierSentenceEnd}
             </p>
           </div>
         </div>

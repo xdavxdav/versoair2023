@@ -54,6 +54,8 @@ import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { UNLOCK_REASONS, type PortalId } from "@/lib/portal-access";
 import { navigateBackSafely } from "@/lib/safe-navigation";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { useLanguage } from "@/components/LanguageSwitcher";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -251,6 +253,41 @@ const MUSICAL_PORTALS: Portal[] = [
   },
 ];
 
+const GENRES = [
+  "Pop",
+  "Hip-Hop",
+  "R&B",
+  "Rock",
+  "Electronic",
+  "Jazz",
+  "Classical",
+  "Afrobeats",
+  "Reggae",
+  "Latin",
+  "Country",
+  "Other",
+];
+
+const SPECIALIZATIONS = [
+  "General Construction",
+  "Electrical",
+  "Plumbing",
+  "HVAC",
+  "Carpentry",
+  "Painting",
+  "Roofing",
+  "Landscaping",
+  "Web Development",
+  "Graphic Design",
+  "Marketing",
+  "Consulting",
+  "IT Services",
+  "Photography",
+  "Catering",
+  "Cleaning",
+  "Other",
+];
+
 // ─────────────────────────────────────────────────────
 // 🔐 Map apply-page portal IDs → portal-access PortalIds
 // ─────────────────────────────────────────────────────
@@ -267,6 +304,11 @@ const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
 
 export default function ApplyPage() {
   const [location, setLocation] = useLocation();
+  const { translateText } = useLanguage();
+  const localize = useLocalizedContent(false);
+  // "Country" the music genre must not pick up the translation of the "Country" field label.
+  const genreLabel = (genre: string) =>
+    genre === "Country" ? genre : translateText(genre);
   const [selectedPortal, setSelectedPortal] = useState<Portal | null>(null);
   const [targetPortalId, setTargetPortalId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -494,7 +536,14 @@ export default function ApplyPage() {
         setError(data.message || "Registration failed");
       }
     } catch (err: any) {
-      setError(err.message || "Network error. Please try again.");
+      const offline =
+        err instanceof TypeError &&
+        /failed to fetch|load failed|network/i.test(err.message);
+      setError(
+        offline
+          ? "Network error. Please try again."
+          : err.message || "Network error. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -519,7 +568,10 @@ export default function ApplyPage() {
   }
 
   if (user && !selectedPortal) {
-    return (
+    const welcomeParts = translateText(
+      "Welcome back, {name}. Select an eligible portal below, or apply to unlock new ones.",
+    ).split("{name}");
+    return localize(
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="container mx-auto px-4 py-8">
           <Button
@@ -544,11 +596,11 @@ export default function ApplyPage() {
               Your Portals
             </h1>
             <p className="text-xl text-white/60 max-w-2xl mx-auto">
-              Welcome back,{" "}
+              {welcomeParts[0]}
               <span className="text-white font-medium">
                 {user.name || user.username || user.email}
               </span>
-              . Select an eligible portal below, or apply to unlock new ones.
+              {welcomeParts[1]}
             </p>
           </motion.div>
 
@@ -933,7 +985,7 @@ export default function ApplyPage() {
   // 🎨 Portal Selection View (unauthenticated)
   // ─────────────────────────────────────────────────────
   if (!selectedPortal) {
-    return (
+    return localize(
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         {/* Header */}
         <div className="container mx-auto px-4 py-8">
@@ -1028,7 +1080,7 @@ export default function ApplyPage() {
                     <CardDescription className="text-white/60">
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: portal.description
+                          __html: translateText(portal.description)
                             .replace(
                               /StreamRoyale/g,
                               '<span class="notranslate">StreamRoyale</span>',
@@ -1064,7 +1116,7 @@ export default function ApplyPage() {
                           <Check className="h-4 w-4 text-green-400 flex-shrink-0" />
                           <span
                             dangerouslySetInnerHTML={{
-                              __html: feature
+                              __html: translateText(feature)
                                 .replace(
                                   /StreamRoyale/g,
                                   '<span class="notranslate">StreamRoyale</span>',
@@ -1128,7 +1180,8 @@ export default function ApplyPage() {
                       variant="secondary"
                       className="bg-violet-500/15 text-violet-100 border-violet-400/30"
                     >
-                      🎵 2 Portals
+                      🎵{" "}
+                      2 Portals
                     </Badge>
                   </div>
                   <CardTitle className="text-white text-xl flex items-center gap-2">
@@ -1202,7 +1255,7 @@ export default function ApplyPage() {
                               <CardDescription className="text-white/60 text-sm">
                                 <span
                                   dangerouslySetInnerHTML={{
-                                    __html: portal.description
+                                    __html: translateText(portal.description)
                                       .replace(
                                         /StreamRoyale/g,
                                         '<span class="notranslate">StreamRoyale</span>',
@@ -1229,7 +1282,7 @@ export default function ApplyPage() {
                                     <Check className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
                                     <span
                                       dangerouslySetInnerHTML={{
-                                        __html: feature
+                                        __html: translateText(feature)
                                           .replace(
                                             /StreamRoyale/g,
                                             '<span class="notranslate">StreamRoyale</span>',
@@ -1315,7 +1368,7 @@ export default function ApplyPage() {
     );
   }
 
-  return (
+  return localize(
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -1402,30 +1455,19 @@ export default function ApplyPage() {
                         className="bg-white/10 border-white/20 text-white notranslate"
                         translate="no"
                       >
-                        <SelectValue placeholder="Select genre">
-                          {formData.genre || undefined}
+                        <SelectValue placeholder={translateText("Select genre")}>
+                          {formData.genre
+                            ? genreLabel(formData.genre)
+                            : undefined}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent
                         className="notranslate"
                         translate="no"
                       >
-                        {[
-                          "Pop",
-                          "Hip-Hop",
-                          "R&B",
-                          "Rock",
-                          "Electronic",
-                          "Jazz",
-                          "Classical",
-                          "Afrobeats",
-                          "Reggae",
-                          "Latin",
-                          "Country",
-                          "Other",
-                        ].map((g) => (
+                        {GENRES.map((g) => (
                           <SelectItem key={g} value={g}>
-                            {g}
+                            {genreLabel(g)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1461,33 +1503,17 @@ export default function ApplyPage() {
                       className="bg-white/10 border-white/20 text-white"
                       translate="no"
                     >
-                      <SelectValue placeholder="Select your field" />
+                      <SelectValue
+                        placeholder={translateText("Select your field")}
+                      />
                     </SelectTrigger>
                     <SelectContent
                       className="notranslate"
                       translate="no"
                     >
-                      {[
-                        "General Construction",
-                        "Electrical",
-                        "Plumbing",
-                        "HVAC",
-                        "Carpentry",
-                        "Painting",
-                        "Roofing",
-                        "Landscaping",
-                        "Web Development",
-                        "Graphic Design",
-                        "Marketing",
-                        "Consulting",
-                        "IT Services",
-                        "Photography",
-                        "Catering",
-                        "Cleaning",
-                        "Other",
-                      ].map((s) => (
+                      {SPECIALIZATIONS.map((s) => (
                         <SelectItem key={s} value={s}>
-                          {s}
+                          {translateText(s)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1678,11 +1704,15 @@ export default function ApplyPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <span className="notranslate">Creating Account...</span>
+                  <span className="notranslate">
+                    {translateText("Creating Account...")}
+                  </span>
                 </>
               ) : (
                 <>
-                  <span className="notranslate">Create Account</span>
+                  <span className="notranslate">
+                    {translateText("Create Account")}
+                  </span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}

@@ -78,6 +78,7 @@ import type { CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import EmailSubscribeCTA from "@/components/EmailSubscribeCTA";
 import {
   JobApplicationModal,
@@ -450,6 +451,7 @@ function Stat({ icon, value, label, trend, color = "amber" }: any) {
 
 /* ═══════════════════════ MAIN COMPONENT ═══════════════════════ */
 export default function Contractors() {
+  const { translateText } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selCategory, setSelCategory] = useState("all");
@@ -868,7 +870,7 @@ export default function Contractors() {
                   >
                     <Briefcase className="h-3.5 w-3.5" />
                     <span className="notranslate" translate="no">
-                      Switch to Job Seeker View
+                      {translateText("Switch to Job Seeker View")}
                     </span>
                     <ChevronRight className="h-3 w-3" />
                   </Link>
@@ -1295,7 +1297,7 @@ export default function Contractors() {
                         >
                           <Briefcase className="h-4 w-4" />
                           <span className="notranslate" translate="no">
-                            Switch to Job Seeker View
+                            {translateText("Switch to Job Seeker View")}
                           </span>
                         </Button>
                       </Link>

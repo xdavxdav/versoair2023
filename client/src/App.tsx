@@ -949,10 +949,11 @@ function PageReadinessMessage({
   detail?: string;
   onRetry?: () => void;
 }) {
+  const { translateText: tr } = useLanguage();
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 text-center">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-        {title}
+        {tr(title)}
       </h1>
       {detail && (
         <p
@@ -968,7 +969,7 @@ function PageReadinessMessage({
           onClick={onRetry}
           className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white"
         >
-          Retry
+          {tr("Retry")}
         </button>
       )}
     </div>
@@ -976,19 +977,20 @@ function PageReadinessMessage({
 }
 
 function PageUnavailable() {
+  const { translateText: tr } = useLanguage();
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 text-center">
       <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-        This page is not available yet
+        {tr("This page is not available yet")}
       </h1>
       <p className="max-w-xl text-slate-600 dark:text-slate-300">
-        We’re preparing this part of Verso Air. Please check back later.
+        {tr("We’re preparing this part of Verso Air. Please check back later.")}
       </p>
       <Link
         href="/"
         className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white"
       >
-        Return home
+        {tr("Return home")}
       </Link>
     </div>
   );
@@ -1117,7 +1119,7 @@ function AppContent() {
     (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`),
   );
   const { user, logout } = useAuthContext();
-  const { currentLang } = useLanguage();
+  const { currentLang, translateText } = useLanguage();
   const isFr = currentLang === "fr";
   const [isAuthed, setIsAuthed] = useState<boolean>(() => {
     if (typeof window === "undefined") return Boolean(user);
@@ -1268,17 +1270,16 @@ function AppContent() {
                         ? "Verso Air"
                         : "Verso Air"
                       : isFr
-                        ? pageTitle === "Verso Air Business"
-                          ? "Verso Air Business"
+                        ? pageTitle === "Verso Air Business" ||
+                          pageTitle === "Community Hub"
+                          ? pageTitle
                           : `Plateforme ${pageTitle}`
                         : pageTitle}
                     {pageTitle === "Verso Air" && (
                       <>
                         <sup className="ml-0.5 align-super text-[7px]">™</sup>
                         <span className="mx-1">
-                          {isFr
-                            ? "Plateforme d'intelligence d'affaires"
-                            : "Business Intelligence Platform"}
+                          {translateText("Business Intelligence Platform")}
                         </span>
                       </>
                     )}
@@ -1288,9 +1289,7 @@ function AppContent() {
                     translate="no"
                   >
                     {pageTitle === "Verso Air"
-                      ? isFr
-                        ? "Plateforme d'intelligence d'affaires"
-                        : "Business Intelligence Platform"
+                      ? translateText("Business Intelligence Platform")
                       : isFr
                         ? pageTitle.substring(0, 3)
                         : pageTitle.substring(0, 3)}
@@ -1344,21 +1343,25 @@ function AppContent() {
                           className="notranslate flex-shrink-0 px-4 md:px-8"
                           translate="no"
                         >
-                          Welcome to VERSO AIR™ — Business Intelligence
+                          {translateText(
+                            "Welcome to VERSO AIR™ — Business Intelligence",
+                          )}
                         </span>
                         <span
                           className="notranslate flex-shrink-0 px-4 md:px-8"
                           translate="no"
                         >
-                          Analyze • Optimize • Visualize • Grow
+                          {translateText("Analyze • Optimize • Visualize • Grow")}
                         </span>
                         <span className="hidden sm:inline-flex flex-shrink-0 px-4 md:px-8">
-                          8 secteurs prévus • Annonces après vérification •
-                          Toronto
+                          {translateText(
+                            "8 planned sectors • Listings after verification • Toronto",
+                          )}
                         </span>
                         <span className="hidden md:inline-flex flex-shrink-0 px-8">
-                          Commerce • Hôtellerie • Construction • Automobile •
-                          Finance • Divertissement
+                          {translateText(
+                            "Commerce • Hospitality • Construction • Automotive • Finance • Entertainment",
+                          )}
                         </span>
                       </div>
                     ))}

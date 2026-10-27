@@ -20,6 +20,9 @@ import { useCountry } from "@/contexts/CountryContext";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { getCountryMeta } from "@/utils/countryMeta";
+import { localizedCountryName } from "@/utils/country-names";
+import { getMarketLabel } from "@/lib/terminology";
+import { fillTemplate, isBundledLanguage } from "@shared/public-translations";
 /* webhint-disable hint-no-inline-styles */
 import {
   Search,
@@ -1148,7 +1151,7 @@ export default function Home() {
     country: string | undefined;
   } | null>(null);
   const { selectedCountry } = useCountry();
-  const { currentLang } = useLanguage();
+  const { currentLang, translateText } = useLanguage();
   const localize = useLocalizedContent(false);
   const [aiLanguageFilter, setAiLanguageFilter] = useState("fr");
   const countryMeta = getCountryMeta(selectedCountry || "");
@@ -2947,7 +2950,7 @@ export default function Home() {
                 },
                 {
                   icon: ShoppingBag,
-                  text: "Marché",
+                  text: getMarketLabel(currentLang),
                   desc: "Parcourir & acheter",
                   notranslate: true,
                   href: "/marketplace",
@@ -3264,9 +3267,7 @@ export default function Home() {
                       <ShoppingBag className="w-8 h-8 md:w-12 md:h-12 lg:w-16 lg:h-16 mx-auto mb-2 md:mb-4 text-white" />
                     </div>
                     <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-1 sm:mb-2 md:mb-4 text-center max-w-2xl mx-auto px-2">
-                      Découvrez des produits artisanaux uniques qui soutiennent
-                      les communautés et préservent l'artisanat traditionnel{" "}
-                      {countryMeta.demonym}.
+                      {`Découvrez des produits artisanaux uniques qui soutiennent les communautés et préservent l'artisanat traditionnel ${countryMeta.nameIn}.`}
                     </p>
                   </div>
 
@@ -3495,7 +3496,19 @@ export default function Home() {
                           size={14}
                         />
                         <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white">
-                          Aperçu de {countryMeta.name}
+                          {isBundledLanguage(currentLang) ? (
+                            <span translate="no" className="notranslate">
+                              {fillTemplate(translateText("Overview of {country}"), {
+                                country: localizedCountryName(
+                                  selectedCountry || "",
+                                  currentLang,
+                                  countryMeta.name,
+                                ),
+                              })}
+                            </span>
+                          ) : (
+                            `Aperçu de ${countryMeta.name}`
+                          )}
                         </h3>
                       </div>
                       <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2 mb-2 sm:mb-3">
@@ -3643,11 +3656,14 @@ export default function Home() {
                           },
                           { stat: "—", label: "organisations partenaires" },
                           {
-                            stat: "Cultural",
-                            label: "programmes du patrimoine",
+                            stat: "Programmes",
+                            label: "du patrimoine culturel",
                           },
-                          { stat: "Skill", label: "initiatives de formation" },
-                          { stat: "Global", label: "réseau d'impact" },
+                          {
+                            stat: "Initiatives",
+                            label: "de formation aux compétences",
+                          },
+                          { stat: "Réseau", label: "d'impact mondial" },
                         ].map((item, idx) => (
                           <motion.div
                             key={idx}

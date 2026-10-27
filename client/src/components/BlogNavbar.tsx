@@ -25,6 +25,7 @@ import { getDashboardDestination } from "@/lib/dashboard-routes";
 import { HeaderMessagesButton } from "@/components/TwitterMessenger";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import MarketLabel from "@/components/MarketLabel";
+import { NativeLabel } from "@/components/NativeLabel";
 
 interface BlogNavbarProps {
   isAuthenticated?: boolean;
@@ -540,7 +541,9 @@ export default function BlogNavbar({
                 title={isAuthenticated ? "Home · Hold 2s=Logout" : "Home"}
               >
                 <Home className="w-3 sm:w-4 h-3 sm:h-4" />
-                <span className="hidden sm:inline">Accueil</span>
+                <span className="hidden sm:inline">
+                  <NativeLabel text="Accueil" />
+                </span>
               </button>
             </div>
 

@@ -221,7 +221,7 @@ test("country refresh preserves a manually selected language", async () => {
   try {
     await page.waitForSelector(".goog-te-combo");
     const timeOrigin = await page.evaluate(() => performance.timeOrigin);
-    await page.click('[aria-label="Reload location detection"]');
+    await page.click('[data-testid="country-reload"]');
     await page.waitForFunction(() =>
       document.querySelector("#current-country")?.textContent === "CA");
     assert.equal(await page.$eval("#current-language", el => el.textContent), "es");
@@ -241,7 +241,7 @@ test("country refresh updates automatic language suggestions across countries", 
     await page.waitForSelector(".goog-te-combo");
     const timeOrigin = await page.evaluate(() => performance.timeOrigin);
     for (const [country, language] of [["CA", "en"], ["FR", "fr"]]) {
-      await page.click('[aria-label="Reload location detection"]');
+      await page.click('[data-testid="country-reload"]');
       await page.waitForFunction(
         ([code, lang]) =>
           document.querySelector("#current-country")?.textContent === code &&
@@ -261,8 +261,8 @@ test("explicit country selection resets the manual language override", async () 
   const { page, errors } = await openHarness({ cached: "es" });
   try {
     await page.waitForSelector(".goog-te-combo");
-    await page.click('[aria-label="Change country or language"]');
-    await page.click('[aria-label="Select country: Canada"]');
+    await page.click('[data-testid="country-trigger"]');
+    await page.click('[data-country-code="CA"]');
     await page.waitForFunction(() =>
       document.querySelector("#current-language")?.textContent === "en");
     assert.equal(await page.evaluate(() => localStorage.getItem("fsa_language_override")), "false");
@@ -486,19 +486,54 @@ test("a cached translation is applied when the widget initializes", async () => 
   }
 });
 
-test("Google Translate load failures are reported to the user", async () => {
-  const { page, errors, requests } = await openHarness();
+test("Google Translate load failures are reported to the user in the current language", async () => {
+  for (const [cached, expected] of [
+    [null, /Google Traduction n'a pas pu se charger/],
+    ["de", /Google Translate could not load/],
+  ]) {
+    const { page, errors, requests } = await openHarness({ cached });
+    try {
+      await page.waitForSelector(".goog-te-combo");
+      await page.evaluate(() => {
+        window.dispatchEvent(new CustomEvent("google-translate-load-error"));
+      });
+      await page.waitForSelector('[role="status"]');
+      assert.match(
+        await page.$eval('[role="status"]', element => element.textContent),
+        expected,
+      );
+      assert.equal(requests.length, 1);
+      assert.deepEqual(errors, []);
+    } finally {
+      await page.close();
+    }
+  }
+});
+
+test("the country picker is localized, sorted by the active language and searchable by any name", async () => {
+  const { page, errors } = await openHarness({ cached: "fr", country: "DE" });
   try {
-    await page.waitForSelector(".goog-te-combo");
-    await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent("google-translate-load-error"));
-    });
-    await page.waitForSelector('[role="status"]');
+    await page.waitForSelector('[data-testid="country-trigger"]');
     assert.match(
-      await page.$eval('[role="status"]', element => element.textContent),
-      /Google Translate could not load/,
+      await page.$eval('[data-testid="country-trigger"]', el => el.getAttribute("aria-label")),
+      /Changer de pays ou de langue/,
     );
-    assert.equal(requests.length, 1);
+    await page.click('[data-testid="country-trigger"]');
+    await page.waitForSelector("[data-country-code]");
+    const rows = await page.$$eval("[data-country-code]", els =>
+      els.map(el => [el.getAttribute("data-country-code"), el.textContent.trim()]));
+    const names = Object.fromEntries(rows.map(([code, text]) => [code, text]));
+    assert.match(names.DE, /Allemagne/);
+    assert.match(names.CA, /Canada/);
+    assert.deepEqual(
+      rows.map(([code]) => code),
+      ["DE", "CA", "FR"].sort((a, b) =>
+        new Intl.DisplayNames(["fr"], { type: "region" }).of(a)
+          .localeCompare(new Intl.DisplayNames(["fr"], { type: "region" }).of(b), "fr")),
+    );
+    await page.type('[data-testid="country-search"]', "germany");
+    await page.waitForFunction(() => document.querySelectorAll("[data-country-code]").length === 1);
+    assert.equal(await page.$eval("[data-country-code]", el => el.getAttribute("data-country-code")), "DE");
     assert.deepEqual(errors, []);
   } finally {
     await page.close();

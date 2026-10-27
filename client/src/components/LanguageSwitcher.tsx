@@ -10,9 +10,12 @@ import React, {
 import { useCountry } from "@/contexts/CountryContext";
 import { getLanguageForCountry } from "@/utils/country-language";
 import {
+  fillTemplate,
   getPublicCopyId,
   isBundledLanguage,
   nativeDictionary,
+  type BundledLanguage,
+  type TranslationDictionary,
 } from "../../../shared/public-translations";
 
 const LANG_CACHE_KEY = "fsa_selected_language";
@@ -110,6 +113,26 @@ function storePreference(key: string, value: string) {
       error instanceof Error ? error.name : "storage error",
     );
   }
+}
+
+const noticeDictionaries = new Map<BundledLanguage, TranslationDictionary>();
+
+// Notices speak the language the visitor reads; other languages keep English.
+function noticeText(
+  language: string,
+  template: string,
+  values: Record<string, string> = {},
+): string {
+  const id = getPublicCopyId(template);
+  if (id === undefined || !isBundledLanguage(language)) {
+    return fillTemplate(template, values);
+  }
+  let dictionary = noticeDictionaries.get(language);
+  if (!dictionary) {
+    dictionary = nativeDictionary(language);
+    noticeDictionaries.set(language, dictionary);
+  }
+  return fillTemplate(dictionary[id], values);
 }
 
 function getInitialLanguage(): string {
@@ -220,7 +243,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       if (!GT_LANGUAGE_CODES.has(language)) {
         console.error("[Language] Google Translate does not support:", language);
         notify(
-          `Google Translate does not support ${language}. Your language was not changed.`,
+          noticeText(
+            currentRef.current,
+            "Google Translate does not support {language}. Your language was not changed.",
+            { language },
+          ),
         );
         return;
       }
@@ -232,14 +259,32 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       storePreference(LANG_CACHE_KEY, language);
       setGoogleTranslateCookie(language);
 
+      const code = language.toUpperCase();
       if (switchGoogleTranslateLanguage(language)) {
-        notify(`Translating to ${language.toUpperCase()} with Google Translate.`, 3000);
+        notify(
+          noticeText(language, "Translating to {language} with Google Translate.", {
+            language: code,
+          }),
+          3000,
+        );
       } else if (googleTranslateFailed) {
         notify(
-          "Google Translate could not load. Check your connection and try again.",
+          noticeText(
+            language,
+            "Google Translate could not load. Check your connection and try again.",
+          ),
         );
       } else {
-        notify(`Language ${source === "country" ? "suggested" : "selected"}: ${language.toUpperCase()}. Waiting for Google Translate.`, 3000);
+        notify(
+          noticeText(
+            language,
+            source === "country"
+              ? "Language suggested: {language}. Waiting for Google Translate."
+              : "Language selected: {language}. Waiting for Google Translate.",
+            { language: code },
+          ),
+          3000,
+        );
       }
     },
     [googleTranslateFailed, notify],
@@ -262,7 +307,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     };
     const handleGoogleTranslateFailure = () => {
       setGoogleTranslateFailed(true);
-      notify("Google Translate could not load. Check your connection and try again.");
+      notify(
+        noticeText(
+          currentRef.current,
+          "Google Translate could not load. Check your connection and try again.",
+        ),
+      );
     };
 
     window.googleTranslateElementInit = handleGoogleTranslateReady;
@@ -309,7 +359,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       } else if (attempts >= 20) {
         window.clearInterval(timer);
         console.error("[Language] Google Translate language control is unavailable:", currentRef.current);
-        notify("Google Translate's language control could not load. Translation was not applied. Please try again.");
+        notify(
+          noticeText(
+            currentRef.current,
+            "Google Translate's language control could not load. Translation was not applied. Please try again.",
+          ),
+        );
       }
     }, 250);
     return () => window.clearInterval(timer);

@@ -1,7 +1,17 @@
+import { APPLY_ES } from "./apply-translations";
+import { CHROME_ES } from "./chrome-translations";
+import { GEO_ADMIN_ES } from "./geo-admin-translations";
+import { ONBOARDING_ES } from "./onboarding-translations";
 import type { PUBLIC_COPY } from "./public-translations";
+import { RECOVERY_ES } from "./recovery-translations";
 
 // Bundled editorial translation; legal copy still requires professional review.
 export const SPANISH_COPY = {
+  ...CHROME_ES,
+  ...APPLY_ES,
+  ...ONBOARDING_ES,
+  ...GEO_ADMIN_ES,
+  ...RECOVERY_ES,
   "Ask VersoAI": "Preguntar a VersoAI",
   "Notifications": "Notificaciones",
   "Disable browser notifications": "Desactivar las notificaciones del navegador",

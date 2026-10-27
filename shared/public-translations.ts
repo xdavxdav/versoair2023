@@ -1,9 +1,21 @@
+import { APPLY_COPY } from "./apply-translations";
+import { CHROME_COPY } from "./chrome-translations";
+import { GEO_ADMIN_COPY } from "./geo-admin-translations";
 import { LEGAL_COPY } from "./legal-translations";
 import { OFFER_COPY } from "./offer-translations";
+import { ONBOARDING_COPY } from "./onboarding-translations";
+import { RECOVERY_COPY } from "./recovery-translations";
 import { SPANISH_COPY } from "./spanish-translations";
 
 // Only authored public copy belongs here. Never add account or user-generated content.
+// Modules listed first lose lookup collisions to the older rows below them, so
+// a reused French wording never changes how an existing page is translated.
 export const PUBLIC_COPY = [
+  ...CHROME_COPY,
+  ...APPLY_COPY,
+  ...ONBOARDING_COPY,
+  ...GEO_ADMIN_COPY,
+  ...RECOVERY_COPY,
   ["Back to Home", "Retour à l'accueil"],
   ["Contact Us", "Contactez-nous"],
   ["Contact Page", "Page de contact"],
@@ -210,7 +222,7 @@ export const PUBLIC_COPY = [
   ["Clear plan comparison", "Comparaison claire des offres"],
   ["What each plan is designed to include", "Ce que chaque offre prévoit d'inclure"],
   ["Compare the intended listing, visibility, and support benefits before you contact us. Select any plan to build an inquiry around your priorities.", "Comparez les prestations prévues de référencement, de visibilité et d'assistance avant de nous contacter. Sélectionnez une offre pour préparer une demande selon vos priorités."],
-  ["About", "Environ"],
+  ["About", "À propos"],
   ["Access to accounts", "Accès aux comptes"],
   ["Additional products and services will be announced when they are ready.", "Les autres produits et services seront annoncés lorsqu'ils seront prêts."],
   ["Business analytics", "Analytique d'entreprise"],
@@ -464,6 +476,16 @@ PUBLIC_COPY.forEach(([en, fr], index) => {
 
 export function getPublicCopyId(text: string): string | undefined {
   return sourceIds.get(normalizePublicCopy(text));
+}
+
+// Fills {placeholders} after the template was translated; unknown names stay visible.
+export function fillTemplate(
+  text: string,
+  values: Record<string, string | number>,
+): string {
+  return text.replace(/\{(\w+)\}/g, (match, key: string) =>
+    Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : match,
+  );
 }
 
 export function nativeDictionary(lang: BundledLanguage): TranslationDictionary {

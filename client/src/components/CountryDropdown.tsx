@@ -13,7 +13,7 @@
  * them. Dismissing a notice does not cancel a requested language change.
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
   Search,
@@ -33,14 +33,14 @@ import {
   LANG_FLAGS,
   PRIMARY_LANGUAGES,
 } from "@/utils/country-language";
+import {
+  compareCountryNames,
+  localizedCountryName,
+  normalizeSearch,
+} from "@/utils/country-names";
+import { fillTemplate } from "@shared/public-translations";
 
 const API_BASE_URL = "";
-
-const normalize = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
 
 const FLAGS: Record<string, string> = {
   US: "🇺🇸",
@@ -78,44 +78,6 @@ const FLAGS: Record<string, string> = {
   CN: "🇨🇳",
   IN: "🇮🇳",
   AE: "🇦🇪",
-};
-
-const DISPLAY_NAMES: Record<string, string> = {
-  US: "United States",
-  CA: "Canada",
-  MX: "Mexico",
-  BR: "Brazil",
-  HT: "Haïti",
-  FR: "France",
-  DE: "Germany",
-  GB: "United Kingdom",
-  BE: "Belgium",
-  CH: "Switzerland",
-  ES: "Spain",
-  IT: "Italy",
-  PT: "Portugal",
-  CI: "Côte d'Ivoire",
-  SN: "Sénégal",
-  CM: "Cameroun",
-  ML: "Mali",
-  BF: "Burkina Faso",
-  GN: "Guinée",
-  TG: "Togo",
-  BJ: "Bénin",
-  NE: "Niger",
-  MG: "Madagascar",
-  CD: "Congo (RDC)",
-  CG: "Congo (Brazzaville)",
-  GA: "Gabon",
-  MA: "Maroc",
-  DZ: "Algérie",
-  TN: "Tunisie",
-  ZA: "South Africa",
-  NG: "Nigeria",
-  JP: "Japan",
-  CN: "China",
-  IN: "India",
-  AE: "United Arab Emirates",
 };
 
 const ACCENT: Record<string, string> = {
@@ -162,6 +124,20 @@ interface Country {
   name: string;
 }
 
+// Fallback countries if API fails
+const FALLBACK_COUNTRIES: Country[] = [
+  { id: 9, code: "CI", name: "Côte d'Ivoire" },
+  { id: 3, code: "FR", name: "France" },
+  { id: 1, code: "US", name: "United States" },
+  { id: 2, code: "CA", name: "Canada" },
+  { id: 10, code: "SN", name: "Senegal" },
+  { id: 11, code: "CM", name: "Cameroon" },
+  { id: 27, code: "BE", name: "Belgium" },
+  { id: 28, code: "CH", name: "Switzerland" },
+  { id: 4, code: "GB", name: "United Kingdom" },
+  { id: 5, code: "DE", name: "Germany" },
+];
+
 // ── Tabs for the dropdown ──
 type Tab = "country" | "language";
 
@@ -180,25 +156,19 @@ export function CountryDropdown() {
     toggleRomanization,
     isNonLatinLang,
     machineTranslated,
+    translateText,
   } = useLanguage();
+  const tr = useCallback(
+    (text: string, values?: Record<string, string | number>) => {
+      const translated = translateText(text);
+      return values ? fillTemplate(translated, values) : translated;
+    },
+    [translateText],
+  );
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("country");
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Fallback countries if API fails
-  const FALLBACK_COUNTRIES: Country[] = [
-    { id: 9, code: "CI", name: "Côte d'Ivoire" },
-    { id: 3, code: "FR", name: "France" },
-    { id: 1, code: "US", name: "United States" },
-    { id: 2, code: "CA", name: "Canada" },
-    { id: 10, code: "SN", name: "Sénégal" },
-    { id: 11, code: "CM", name: "Cameroun" },
-    { id: 27, code: "BE", name: "Belgium" },
-    { id: 28, code: "CH", name: "Switzerland" },
-    { id: 4, code: "GB", name: "United Kingdom" },
-    { id: 5, code: "DE", name: "Germany" },
-  ];
 
   const { data: countries = FALLBACK_COUNTRIES } = useQuery<Country[]>({
     queryKey: ["countries-list"],
@@ -242,20 +212,28 @@ export function CountryDropdown() {
     }
   }, [open]);
 
-  const allOptions = countries.map((c) => {
-    const code = c.code.trim().toUpperCase();
-    return {
-      code,
-      name: DISPLAY_NAMES[code] ?? c.name,
-      flag: FLAGS[code] ?? "🏳️",
-    };
-  });
+  const allOptions = useMemo(() => {
+    const compare = compareCountryNames(currentLang);
+    return countries
+      .map((c) => {
+        const code = c.code.trim().toUpperCase();
+        return {
+          code,
+          name: localizedCountryName(code, currentLang, c.name),
+          englishName: c.name,
+          flag: FLAGS[code] ?? "🏳️",
+        };
+      })
+      .sort((a, b) => compare(a.name, b.name));
+  }, [countries, currentLang]);
 
   const filtered = search.trim()
     ? allOptions.filter((c) => {
-        const q = normalize(search);
+        const q = normalizeSearch(search.trim());
         return (
-          normalize(c.name).includes(q) || c.code.toLowerCase().includes(q)
+          normalizeSearch(c.name).includes(q) ||
+          normalizeSearch(c.englishName).includes(q) ||
+          c.code.toLowerCase().includes(q)
         );
       })
     : allOptions;
@@ -298,9 +276,9 @@ export function CountryDropdown() {
   // Filter languages too
   const filteredLangs = search.trim()
     ? allLangs.filter((l) => {
-        const q = normalize(search);
+        const q = normalizeSearch(search.trim());
         return (
-          normalize(LANG_NAMES[l] || "").includes(q) ||
+          normalizeSearch(LANG_NAMES[l] || "").includes(q) ||
           l.toLowerCase().includes(q)
         );
       })
@@ -311,7 +289,7 @@ export function CountryDropdown() {
     return (
       <div className="flex items-center gap-1 text-white text-[11px] font-medium opacity-80 notranslate">
         <Globe className="h-3 w-3 animate-spin" />
-        <span>Detecting…</span>
+        <span>{tr("Detecting…")}</span>
       </div>
     );
   }
@@ -350,13 +328,13 @@ export function CountryDropdown() {
               }}
               className="min-h-11 min-w-11 px-2 text-sm text-purple-800 hover:text-purple-950 underline whitespace-nowrap rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
             >
-              Undo
+              {tr("Undo")}
             </button>
           )}
           <button
             type="button"
             onClick={dismissBanner}
-            aria-label="Dismiss translation notification"
+            aria-label={tr("Dismiss translation notification")}
             className="h-11 w-11 shrink-0 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
           >
             <X aria-hidden="true" className="h-4 w-4" />
@@ -383,14 +361,15 @@ export function CountryDropdown() {
         <button
           onClick={() => setOpen((o) => !o)}
           className="mobile-compact-btn group flex items-center gap-1 text-white hover:text-white/80 transition-colors focus:outline-none"
-          title="Country & Language"
-          aria-label="Change country or language"
+          title={tr("Country & Language")}
+          aria-label={tr("Change country or language")}
+          data-testid="country-trigger"
           aria-haspopup="true"
           aria-expanded={open}
         >
           <span className="text-xs leading-none">{current?.flag ?? "🌍"}</span>
           <span className="text-[11px] font-semibold max-w-[5.5rem] truncate">
-            {current?.name ?? "Select"}
+            {current?.name ?? tr("Select")}
           </span>
           {/* Language badge */}
           <span className="text-[9px] font-bold opacity-70">{langShort}</span>
@@ -405,9 +384,9 @@ export function CountryDropdown() {
             target="_blank"
             rel="noopener noreferrer"
             className="text-[10px] text-white underline underline-offset-2"
-            aria-label="Automatic translation by Google Translate"
+            aria-label={tr("Automatic translation by Google Translate")}
           >
-            Auto · Google Translate
+            {tr("Auto · Google Translate")}
           </a>
         )}
 
@@ -418,8 +397,9 @@ export function CountryDropdown() {
             reloadDetection();
           }}
           className="mobile-compact-btn text-white/70 hover:text-white transition-colors focus:outline-none"
-          title="Reload location detection"
-          aria-label="Reload location detection"
+          title={tr("Reload location detection")}
+          aria-label={tr("Reload location detection")}
+          data-testid="country-reload"
         >
           <RefreshCw className="h-3 w-3" />
         </button>
@@ -440,7 +420,7 @@ export function CountryDropdown() {
                   }`}
                 >
                   <Globe className="h-3 w-3" />
-                  Country
+                  {tr("Country")}
                 </button>
                 {/* Language tab */}
                 <button
@@ -452,13 +432,13 @@ export function CountryDropdown() {
                   }`}
                 >
                   <Languages className="h-3 w-3" />
-                  Language
+                  {tr("Language")}
                 </button>
               </div>
               <button
                 onClick={() => setOpen(false)}
                 className="text-white/60 hover:text-white transition-colors"
-                aria-label="Close"
+                aria-label={tr("Close")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -471,11 +451,16 @@ export function CountryDropdown() {
                 <input
                   ref={searchInputRef}
                   type="text"
+                  data-testid="country-search"
                   aria-label={
-                    tab === "country" ? "Search country" : "Search language"
+                    tab === "country"
+                      ? tr("Search country")
+                      : tr("Search language")
                   }
                   placeholder={
-                    tab === "country" ? "Search country…" : "Search language…"
+                    tab === "country"
+                      ? tr("Search country…")
+                      : tr("Search language…")
                   }
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -485,7 +470,7 @@ export function CountryDropdown() {
                   <button
                     onClick={() => setSearch("")}
                     className="text-gray-400 hover:text-gray-600"
-                    aria-label="Clear"
+                    aria-label={tr("Clear")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -505,7 +490,8 @@ export function CountryDropdown() {
                   return (
                     <button
                       key={c.code}
-                      aria-label={`Select country: ${c.name}`}
+                      aria-label={tr("Select country: {name}", { name: c.name })}
+                      data-country-code={c.code}
                       onClick={() => selectCountry(c.code)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all duration-150 border-l-[3px] ${
                         isActive
@@ -537,7 +523,7 @@ export function CountryDropdown() {
                   <div className="text-center py-6 px-4">
                     <Search className="h-5 w-5 text-gray-300 mx-auto mb-2" />
                     <p className="text-xs text-gray-400">
-                      No countries matching &ldquo;{search}&rdquo;
+                      {tr("No countries matching “{query}”", { query: search })}
                     </p>
                   </div>
                 )}
@@ -550,7 +536,9 @@ export function CountryDropdown() {
                 {/* Info note */}
                 <div className="px-3 py-2 mb-1">
                   <p className="text-[10px] text-gray-400 leading-snug">
-                    Choose a language to translate the page with Google Translate.
+                    {tr(
+                      "Choose a language to translate the page with Google Translate.",
+                    )}
                   </p>
                 </div>
 
@@ -590,7 +578,7 @@ export function CountryDropdown() {
                 {filteredLangs.some((l) => !PRIMARY_LANGUAGES.includes(l)) && (
                   <div className="px-3 py-1.5 mt-1">
                     <div className="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">
-                      More languages
+                      {tr("More languages")}
                     </div>
                   </div>
                 )}
@@ -631,7 +619,7 @@ export function CountryDropdown() {
                   <div className="text-center py-6 px-4">
                     <Search className="h-5 w-5 text-gray-300 mx-auto mb-2" />
                     <p className="text-xs text-gray-400">
-                      No languages matching &ldquo;{search}&rdquo;
+                      {tr("No languages matching “{query}”", { query: search })}
                     </p>
                   </div>
                 )}
@@ -650,7 +638,7 @@ export function CountryDropdown() {
                       Aᵃ
                     </span>
                     <span className="text-[11px] text-gray-600 group-hover:text-gray-900 transition-colors">
-                      Latin characters
+                      {tr("Latin characters")}
                     </span>
                   </div>
                   <div
@@ -666,7 +654,7 @@ export function CountryDropdown() {
                   </div>
                 </button>
                 <p className="text-[9px] text-gray-400 mt-1 leading-snug">
-                  Show romanized pronunciation hints below translated text
+                  {tr("Show romanized pronunciation hints below translated text")}
                 </p>
               </div>
             )}
@@ -675,8 +663,8 @@ export function CountryDropdown() {
             <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
               <span className="text-[10px] text-slate-600">
                 {tab === "language"
-                  ? "Powered by Google Translate"
-                  : `${allOptions.length} countries`}
+                  ? tr("Powered by Google Translate")
+                  : tr("{count} countries", { count: allOptions.length })}
               </span>
               {tab === "country" && (
                 <button
@@ -684,7 +672,7 @@ export function CountryDropdown() {
                   className="text-[10px] text-purple-500 hover:text-purple-700 font-semibold flex items-center gap-1"
                 >
                   <Languages className="h-3 w-3" />
-                  Change language
+                  {tr("Change language")}
                 </button>
               )}
             </div>

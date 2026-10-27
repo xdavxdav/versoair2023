@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 export default function AuthRecoveryPage() {
   const [location] = useLocation();
@@ -14,6 +15,7 @@ export default function AuthRecoveryPage() {
   const isForgot = location === "/auth/forgot-password";
   const token = new URLSearchParams(window.location.search).get("token") || "";
   const { user, restoreAuth } = useAuthContext();
+  const localize = useLocalizedContent(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -87,7 +89,7 @@ export default function AuthRecoveryPage() {
     }
   };
 
-  return (
+  return localize((
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12">
       <Card className="w-full max-w-md">
         <CardContent className="space-y-5 p-6">
@@ -241,7 +243,7 @@ export default function AuthRecoveryPage() {
         </CardContent>
       </Card>
     </main>
-  );
+  ));
 }
 
 function PasswordFields({
@@ -255,7 +257,8 @@ function PasswordFields({
   onPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
 }) {
-  return (
+  const localize = useLocalizedContent(false);
+  return localize((
     <>
       <div>
         <Label htmlFor="recovery-password">New password</Label>
@@ -273,5 +276,5 @@ function PasswordFields({
           onChange={(event) => onConfirmPasswordChange(event.target.value)} />
       </div>
     </>
-  );
+  ));
 }

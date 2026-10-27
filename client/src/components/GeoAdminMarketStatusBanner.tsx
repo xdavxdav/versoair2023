@@ -1,15 +1,31 @@
 import { useCountry } from "@/contexts/CountryContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { getMarketAvailability } from "@/lib/geoadmin-pricing";
 import { COUNTRY_CODES, getCountryMeta } from "@/utils/countryMeta";
+import { localizedCountryName } from "@/utils/country-names";
+import { fillTemplate } from "@shared/public-translations";
 
 export default function GeoAdminMarketStatusBanner() {
   const { selectedCountry, setSelectedCountry, detecting } = useCountry();
+  const { currentLang, translateText } = useLanguage();
+  const tr = (text: string, values?: Record<string, string | number>) =>
+    values ? fillTemplate(translateText(text), values) : translateText(text);
+  const nameOf = (code: string) => {
+    const englishName = getCountryMeta(code).name;
+    return currentLang === "fr" || currentLang === "es"
+      ? localizedCountryName(code, currentLang, englishName)
+      : englishName;
+  };
 
   const detectedName = selectedCountry
     ? getCountryMeta(selectedCountry).name
     : "";
   const countryName =
-    detectedName === "Global" ? selectedCountry : detectedName;
+    detectedName === "Global"
+      ? selectedCountry
+      : selectedCountry
+        ? nameOf(selectedCountry)
+        : detectedName;
   const availability = selectedCountry
     ? getMarketAvailability(selectedCountry)
     : null;
@@ -21,10 +37,12 @@ export default function GeoAdminMarketStatusBanner() {
       : "border-sky-300/20 bg-slate-900 text-sky-100";
   const marketLabel =
     availability === false
-      ? `COMING SOON IN ${countryName.toLocaleUpperCase()}`
+      ? tr("COMING SOON IN {country}", {
+          country: countryName.toLocaleUpperCase(),
+        })
       : detecting
-        ? "CHECKING GEOADMIN AVAILABILITY"
-        : "SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY";
+        ? tr("CHECKING GEOADMIN AVAILABILITY")
+        : tr("SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY");
 
   return (
     <aside
@@ -35,13 +53,14 @@ export default function GeoAdminMarketStatusBanner() {
       <span>{marketLabel}</span>
       {availability !== null && (
         <span className="font-normal tracking-normal opacity-80">
-          Available markets: Canada, France, and Côte d’Ivoire. Final scope
-          and terms are confirmed before purchase.
+          {tr(
+            "Available markets: Canada, France, and Côte d’Ivoire. Final scope and terms are confirmed before purchase.",
+          )}
         </span>
       )}
       {!selectedCountry && (
         <label className="sr-only" htmlFor="geoadmin-market-country">
-          Choose your country
+          {tr("Choose your country")}
         </label>
       )}
       {!selectedCountry && (
@@ -52,11 +71,11 @@ export default function GeoAdminMarketStatusBanner() {
           className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] text-white"
         >
           <option value="" disabled>
-            Choose country
+            {tr("Choose country")}
           </option>
           {COUNTRY_CODES.map((code) => (
             <option key={code} value={code} className="text-slate-900">
-              {getCountryMeta(code).name}
+              {nameOf(code)}
             </option>
           ))}
         </select>

@@ -97,6 +97,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
   isValidEmail,
@@ -353,6 +354,7 @@ const getSectorDef = (sector: string) =>
   SECTORS.find((s) => s.value === sector) || SECTORS[SECTORS.length - 1];
 
 export default function Careers() {
+  const { translateText } = useLanguage();
   /* ── Main Platform auth ── */
   const {
     user: platformUser,
@@ -981,12 +983,12 @@ export default function Careers() {
                   <Button
                     variant="outline"
                     size="sm"
-                    aria-label="Switch to Contractor View"
+                    aria-label={translateText("Switch to Contractor View")}
                     className="gap-1 sm:gap-2 border-amber-300 !bg-amber-50 !text-amber-900 hover:border-amber-400 hover:!bg-amber-100 hover:!text-amber-950 px-2 sm:px-3"
                   >
                     <HardHat className="h-4 w-4" />
                     <span className="hidden sm:inline notranslate" translate="no">
-                      Switch to Contractor View
+                      {translateText("Switch to Contractor View")}
                     </span>
                   </Button>
                 </Link>
