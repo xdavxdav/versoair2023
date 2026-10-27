@@ -1,23 +1,10 @@
 import { Router } from "express";
 import { sql } from "drizzle-orm";
-import fs from "node:fs";
-import path from "node:path";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { getAppVersion } from "../utils/app-version";
 
 const router = Router();
-
-function getAppVersion(): string {
-  if (process.env.APP_VERSION) return process.env.APP_VERSION;
-  try {
-    const packageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
-    ) as { version?: string };
-    return packageJson.version || "unknown";
-  } catch {
-    return "unknown";
-  }
-}
 
 router.get(
   "/status",

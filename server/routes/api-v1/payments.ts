@@ -35,6 +35,7 @@ import {
   onlinePaymentsEnabled,
   rejectUnavailablePayment,
 } from "../../utils/commercial-gates";
+import { resolveRequestActingUserId } from "../../utils/acting-user";
 
 const router = Router();
 
@@ -786,17 +787,11 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
  * Body: { userId }
  * Returns: { clientSecret, setupIntentId }
  */
-router.post("/setup-intent", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
-
+router.post("/setup-intent", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "userId is required" });
-    }
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId);
+    if (userId === null) return;
+    if (!requireStripe(res)) return;
 
     const userResult = await pool.query(
       `SELECT id, email, username FROM users WHERE id = $1`,
@@ -844,12 +839,9 @@ router.post("/setup-intent", async (req: Request, res: Response) => {
  * After SetupIntent succeeds, saves the payment method to DB.
  * Body: { userId, paymentMethodId, label?, isDefault?, preauthorized?, maxChargeAmount?, currency? }
  */
-router.post("/save-card", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
-
+router.post("/save-card", requireAuth(), async (req: Request, res: Response) => {
   try {
     const {
-      userId,
       paymentMethodId,
       label,
       isDefault = false,
@@ -858,12 +850,15 @@ router.post("/save-card", async (req: Request, res: Response) => {
       currency = "USD",
     } = req.body;
 
-    if (!userId || !paymentMethodId) {
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId);
+    if (userId === null) return;
+    if (!paymentMethodId) {
       return res.status(400).json({
         success: false,
-        error: "userId and paymentMethodId are required",
+        error: "paymentMethodId is required",
       });
     }
+    if (!requireStripe(res)) return;
 
     // Retrieve payment method details from Stripe
     const pm = await stripe!.paymentMethods.retrieve(paymentMethodId);

@@ -9,6 +9,7 @@ import {
   ROYALTY_RULES,
 } from "../services/royalty-calculation";
 import { isPayingListenerStreamSql } from "../services/royalty-sql";
+import { validateTipRequest } from "../utils/tip-request";
 import {
   onlinePaymentsEnabled,
   rejectUnavailablePayment,
@@ -876,8 +877,7 @@ router.get("/artist/me", optionalAuth, async (req: Request, res: Response) => {
         leagueId: profile.league_id,
         lifetimeStreams: parseInt(profile.lifetime_streams) || 0,
         walletBalance: parseFloat(profile.wallet_balance) || 0,
-        royaltyCarryForward:
-          parseFloat(profile.royalty_carry_forward) || 0,
+        royaltyCarryForward: parseFloat(profile.royalty_carry_forward) || 0,
         payoutsEnabled: onlinePaymentsEnabled(),
         payoutEmail: profile.payout_email,
         payoutMethod: profile.payout_method,
@@ -1015,71 +1015,185 @@ router.post("/boost", optionalAuth, async (req: Request, res: Response) => {
 
 /**
  * POST /api/streamroyale/tip
- * Direct tip to an artist (50% artist, 50% pool)
+ * Wallet-funded tip to an artist (50% artist, 50% pool).
+ * Closed while online payments are off; when open, the tipper's wallet is
+ * debited in the same transaction that credits the artist and the pool.
  */
-router.post("/tip", optionalAuth, async (req: Request, res: Response) => {
-  await ensureStreamRoyaleTables();
-  const userId = req.user ? parseInt(req.user.userId) : null;
-  if (!userId)
-    return res.status(401).json({ success: false, message: "Auth required" });
-
-  const { artistProfileId, amount } = req.body;
-  const tipAmount = parseFloat(amount);
-
-  if (!artistProfileId || !tipAmount || tipAmount < 0.5) {
-    return res.status(400).json({
+function rejectTipsWhilePaymentsOff(
+  _req: Request,
+  res: Response,
+  next: () => void,
+) {
+  if (!onlinePaymentsEnabled()) {
+    return res.status(503).json({
       success: false,
-      message: "Artist ID and amount ≥ $0.50 required",
+      code: "TIPS_UNAVAILABLE",
+      error: "Tips are not available yet.",
     });
   }
+  next();
+}
 
-  const { week, year } = getWeekNumber();
-  const artistShare = tipAmount * 0.5;
-  const poolShare = tipAmount * 0.5;
+router.post(
+  "/tip",
+  rejectTipsWhilePaymentsOff,
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    const userId = Number(req.user?.userId);
+    if (!Number.isInteger(userId) || userId <= 0)
+      return res.status(401).json({ success: false, message: "Auth required" });
 
-  try {
-    // Add to artist wallet
-    await pool.query(
-      `UPDATE artist_profiles SET wallet_balance = wallet_balance + $1 WHERE id = $2`,
-      [artistShare, artistProfileId],
-    );
+    const parsed = validateTipRequest(req.body, req.get("Idempotency-Key"));
+    if (!parsed.ok) {
+      return res.status(400).json({ success: false, message: parsed.message });
+    }
+    const { artistProfileId, amount: tipAmount, idempotencyKey } = parsed.value;
+    const externalReference = `tip:${userId}:${idempotencyKey}`;
 
-    // Add to pool
-    await pool.query(
-      `INSERT INTO weekly_pools (week_number, year_number, total_pool, status) 
+    await ensureStreamRoyaleTables();
+    const { week, year } = getWeekNumber();
+    const artistShare = Math.round(tipAmount * 50) / 100;
+    const poolShare = Math.round((tipAmount - artistShare) * 100) / 100;
+
+    const client = await pool.connect();
+    let artistUserId: number | null = null;
+    try {
+      await client.query("BEGIN");
+
+      const artist = await client.query(
+        `SELECT user_id FROM artist_profiles WHERE id = $1`,
+        [artistProfileId],
+      );
+      if (artist.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res
+          .status(404)
+          .json({ success: false, message: "Artist not found" });
+      }
+      artistUserId = Number(artist.rows[0].user_id);
+      if (artistUserId === userId) {
+        await client.query("ROLLBACK");
+        return res
+          .status(400)
+          .json({ success: false, message: "You cannot tip yourself" });
+      }
+
+      const wallet = await client.query(
+        `SELECT id, balance FROM platform_wallets WHERE user_id = $1 FOR UPDATE`,
+        [userId],
+      );
+      if (wallet.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res
+          .status(402)
+          .json({
+            success: false,
+            code: "INSUFFICIENT_FUNDS",
+            message: "Insufficient wallet balance",
+          });
+      }
+
+      const replay = await client.query(
+        `SELECT amount FROM wallet_transactions
+        WHERE user_id = $1 AND type = 'tip_sent' AND external_reference = $2
+        LIMIT 1`,
+        [userId, externalReference],
+      );
+      if (replay.rows.length > 0) {
+        await client.query("ROLLBACK");
+        if (Number(replay.rows[0].amount) !== tipAmount) {
+          return res.status(409).json({
+            success: false,
+            code: "IDEMPOTENCY_KEY_REUSED",
+            message:
+              "This idempotency key was already used for a different tip",
+          });
+        }
+        return res.json({
+          success: true,
+          replayed: true,
+          artistShare,
+          poolShare,
+        });
+      }
+
+      const walletId = wallet.rows[0].id;
+      const before = Number(wallet.rows[0].balance);
+      if (!(before >= tipAmount)) {
+        await client.query("ROLLBACK");
+        return res
+          .status(402)
+          .json({
+            success: false,
+            code: "INSUFFICIENT_FUNDS",
+            message: "Insufficient wallet balance",
+          });
+      }
+      const after = Math.round((before - tipAmount) * 100) / 100;
+
+      await client.query(
+        `UPDATE platform_wallets
+          SET balance = balance - $1, total_spent = COALESCE(total_spent, 0) + $1
+        WHERE id = $2`,
+        [tipAmount, walletId],
+      );
+      await client.query(
+        `INSERT INTO wallet_transactions
+         (wallet_id, user_id, type, amount, balance_before, balance_after,
+          payment_method, external_reference, description, related_entity_type, related_entity_id, status)
+       VALUES ($1, $2, 'tip_sent', $3, $4, $5, 'wallet', $6, $7, 'tip', $8, 'completed')`,
+        [
+          walletId,
+          userId,
+          tipAmount,
+          before,
+          after,
+          externalReference,
+          `Tip to artist #${artistProfileId}`,
+          String(artistProfileId),
+        ],
+      );
+      await client.query(
+        `UPDATE artist_profiles SET wallet_balance = wallet_balance + $1 WHERE id = $2`,
+        [artistShare, artistProfileId],
+      );
+      await client.query(
+        `INSERT INTO weekly_pools (week_number, year_number, total_pool, status)
        VALUES ($1, $2, $3, 'open')
-       ON CONFLICT (week_number, year_number) 
+       ON CONFLICT (week_number, year_number)
        DO UPDATE SET total_pool = weekly_pools.total_pool + $3`,
-      [week, year, poolShare],
-    );
-
-    // Record tip in artist_royalties as tip_income
-    await pool.query(
-      `INSERT INTO artist_royalties (artist_profile_id, week_number, year_number, tip_income, total_earnings)
+        [week, year, poolShare],
+      );
+      await client.query(
+        `INSERT INTO artist_royalties (artist_profile_id, week_number, year_number, tip_income, total_earnings)
        VALUES ($1, $2, $3, $4, $4)
        ON CONFLICT (artist_profile_id, week_number, year_number)
        DO UPDATE SET tip_income = artist_royalties.tip_income + $4,
                      total_earnings = artist_royalties.total_earnings + $4`,
-      [artistProfileId, week, year, artistShare],
-    );
+        [artistProfileId, week, year, artistShare],
+      );
 
-    // Notify artist
-    const artistResult = await pool.query(
-      `SELECT user_id, stage_name FROM artist_profiles WHERE id = $1`,
-      [artistProfileId],
-    );
-    if (artistResult.rows.length > 0) {
-      const io = getIO();
-      if (io) {
-        io.to(`user_${artistResult.rows[0].user_id}`).emit("notification", {
-          id: `tip-${Date.now()}`,
-          type: "tip_received",
-          title: `💰 You received a $${artistShare.toFixed(2)} tip!`,
-          message: `A listener sent you a tip. 50% goes to your wallet, 50% to the community pool.`,
-          timestamp: new Date().toISOString(),
-          read: false,
-        });
-      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      console.error("[STREAMROYALE] Tip error:", err);
+      return res
+        .status(500)
+        .json({ success: false, error: "Failed to process tip" });
+    } finally {
+      client.release();
+    }
+
+    const io = getIO();
+    if (io && artistUserId) {
+      io.to(`user_${artistUserId}`).emit("notification", {
+        id: `tip-${Date.now()}`,
+        type: "tip_received",
+        title: `💰 You received a $${artistShare.toFixed(2)} tip!`,
+        message: `A listener sent you a tip. 50% goes to your wallet, 50% to the community pool.`,
+        timestamp: new Date().toISOString(),
+        read: false,
+      });
     }
 
     res.json({
@@ -1088,11 +1202,8 @@ router.post("/tip", optionalAuth, async (req: Request, res: Response) => {
       artistShare,
       poolShare,
     });
-  } catch (err) {
-    console.error("[STREAMROYALE] Tip error:", err);
-    res.status(500).json({ success: false, error: "Failed to process tip" });
-  }
-});
+  },
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAYOUT REQUESTS
@@ -1124,12 +1235,10 @@ router.post(
       !payoutAmount ||
       payoutAmount < ROYALTY_RULES.minimumPayoutRequestDollars
     ) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: `Minimum payout is $${ROYALTY_RULES.minimumPayoutRequestDollars.toFixed(2)}`,
-        });
+      return res.status(400).json({
+        success: false,
+        message: `Minimum payout is $${ROYALTY_RULES.minimumPayoutRequestDollars.toFixed(2)}`,
+      });
     }
 
     try {
@@ -1460,10 +1569,8 @@ router.get(
     const current = getWeekNumber();
     const weekValue = req.query.weekNumber;
     const yearValue = req.query.yearNumber;
-    const week =
-      weekValue === undefined ? current.week : Number(weekValue);
-    const year =
-      yearValue === undefined ? current.year : Number(yearValue);
+    const week = weekValue === undefined ? current.week : Number(weekValue);
+    const year = yearValue === undefined ? current.year : Number(yearValue);
     if (
       (weekValue !== undefined &&
         (typeof weekValue !== "string" || !/^\d+$/.test(weekValue))) ||
@@ -1592,8 +1699,7 @@ router.get(
                 guaranteedAmount: Number(stored.guaranteed_amount) || 0,
                 performanceAmount: Number(stored.performance_amount) || 0,
                 badgeBonus: Number(stored.badge_bonus) || 0,
-                totalEarnings:
-                  Number(stored.total_earnings) || 0,
+                totalEarnings: Number(stored.total_earnings) || 0,
                 tipIncome: Number(stored.tip_income) || 0,
                 streamCount: Number(stored.stream_count) || 0,
               }

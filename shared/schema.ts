@@ -11,6 +11,7 @@ import {
   uuid,
   char,
   index,
+  primaryKey,
   unique,
   uniqueIndex,
   date,
@@ -1577,6 +1578,28 @@ export const issuedCards = pgTable(
   (t) => ({
     userIdx: index("issued_cards_user_idx").on(t.userId),
     statusIdx: index("issued_cards_status_idx").on(t.cardStatus),
+  }),
+);
+
+export const issuedCardholders = pgTable(
+  "issued_cardholders",
+  {
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    stripeCardholderId: varchar("stripe_cardholder_id", {
+      length: 255,
+    }).notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => ({
+    userCardholderPk: primaryKey({
+      name: "issued_cardholders_pk",
+      columns: [t.userId, t.stripeCardholderId],
+    }),
+    stripeCardholderUnique: unique("issued_cardholders_stripe_id_unique").on(
+      t.stripeCardholderId,
+    ),
   }),
 );
 

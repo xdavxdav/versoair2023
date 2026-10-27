@@ -10,6 +10,13 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import {
+  optionalAuth,
+  requireAuth,
+  requireAdminPanel,
+  isOwner,
+} from "../middleware/auth";
+import { canUseAdminPanel } from "@shared/admin-panel-access";
+import {
   sendArtistApplicationConfirmation,
   sendArtistApplicationAdminNotification,
 } from "../services/email-service";
@@ -199,7 +206,7 @@ router.get("/grades", async (_req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════
 // PUBLIC: POST /apply — Submit artist contract application
 // ═══════════════════════════════════════════════════════════
-router.post("/apply", async (req: Request, res: Response) => {
+router.post("/apply", optionalAuth, async (req: Request, res: Response) => {
   await ensureTable();
   try {
     const {
@@ -219,8 +226,8 @@ router.post("/apply", async (req: Request, res: Response) => {
       monthlyListeners,
       yearsActive,
       agreedToTerms,
-      userId,
     } = req.body;
+    const userId = req.user ? Number(req.user.userId) : null;
 
     if (!email || !stageName || !legalName) {
       return res
@@ -312,8 +319,7 @@ router.post("/apply", async (req: Request, res: Response) => {
     });
 
     // ── Emails (non-blocking) ──────────────────────────────────────────────────
-    const adminEmail =
-      process.env.SMTP_FROM || process.env.SMTP_USER || "";
+    const adminEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "";
     Promise.allSettled([
       sendArtistApplicationConfirmation({
         toEmail: email,
@@ -351,60 +357,82 @@ router.post("/apply", async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════
 // PUBLIC: GET /status/:email — Check application status
 // ═══════════════════════════════════════════════════════════
-router.get("/status/:email", async (req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    const result = await pool.query(
-      `SELECT id, email, stage_name, grade, status, rejection_reason,
+router.get(
+  "/status/:email",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    const requested = String(req.params.email || "")
+      .trim()
+      .toLowerCase();
+    const own = String(req.user?.email || "")
+      .trim()
+      .toLowerCase();
+    if (
+      requested !== own &&
+      !(
+        req.user?.geoAdminCodeAuthenticated &&
+        canUseAdminPanel(req.user, isOwner(req.user))
+      )
+    ) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+    await ensureTable();
+    try {
+      const result = await pool.query(
+        `SELECT id, email, stage_name, grade, status, rejection_reason,
               revenue_share_artist, revenue_share_platform, audio_quality,
               max_downloads_per_month, can_be_featured, has_analytics_access,
               applied_at, reviewed_at, contract_start_date, contract_end_date
-       FROM artist_contracts WHERE email = $1 ORDER BY applied_at DESC`,
-      [req.params.email],
-    );
-    res.json({ applications: result.rows });
-  } catch (err: any) {
-    console.error("Status check error:", err);
-    res.status(500).json({ error: "Erreur" });
-  }
-});
+       FROM artist_contracts WHERE LOWER(email) = $1 ORDER BY applied_at DESC`,
+        [requested],
+      );
+      res.json({ applications: result.rows });
+    } catch (err: any) {
+      console.error("Status check error:", err);
+      res.status(500).json({ error: "Erreur" });
+    }
+  },
+);
 
 // ═══════════════════════════════════════════════════════════
 // PUBLIC: GET /my-contract — Get current user's active contract
 // ═══════════════════════════════════════════════════════════
-router.get("/my-contract", async (req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    // Try from session/cookie user
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: "Non authentifié" });
-    }
+router.get(
+  "/my-contract",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    await ensureTable();
+    try {
+      const userId = Number(req.user?.userId);
+      if (!userId) {
+        return res.status(401).json({ error: "Non authentifié" });
+      }
 
-    const result = await pool.query(
-      `SELECT ac.*, ma.name as artist_name, ma.image_url as artist_image
+      const result = await pool.query(
+        `SELECT ac.*, ma.name as artist_name, ma.image_url as artist_image
        FROM artist_contracts ac
        LEFT JOIN music_artists ma ON ac.artist_id = ma.id
        WHERE ac.user_id = $1 AND ac.status IN ('approved', 'pending', 'under_review')
        ORDER BY ac.applied_at DESC LIMIT 1`,
-      [userId],
-    );
+        [userId],
+      );
 
-    if (result.rows.length === 0) {
-      return res.json({ contract: null });
+      if (result.rows.length === 0) {
+        return res.json({ contract: null });
+      }
+
+      const contract = result.rows[0];
+      const gradeTier = GRADE_TIERS[contract.grade as string];
+      res.json({
+        contract,
+        gradeTier: gradeTier || null,
+      });
+    } catch (err: any) {
+      console.error("My contract error:", err);
+      res.status(500).json({ error: "Erreur" });
     }
-
-    const contract = result.rows[0];
-    const gradeTier = GRADE_TIERS[contract.grade as string];
-    res.json({
-      contract,
-      gradeTier: gradeTier || null,
-    });
-  } catch (err: any) {
-    console.error("My contract error:", err);
-    res.status(500).json({ error: "Erreur" });
-  }
-});
+  },
+);
 
 // ═══════════════════════════════════════════════════════════
 // PUBLIC: GET /check-artist/:artistId — Check if an artist has an active contract & grade
@@ -450,42 +478,45 @@ router.get("/check-artist/:artistId", async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════
 // ADMIN: GET /admin/applications — List all applications with filters
 // ═══════════════════════════════════════════════════════════
-router.get("/admin/applications", async (req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    const status = (req.query.status as string) || "";
-    const grade = (req.query.grade as string) || "";
-    const search = (req.query.search as string) || "";
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const offset = (page - 1) * limit;
+router.get(
+  "/admin/applications",
+  requireAdminPanel,
+  async (req: Request, res: Response) => {
+    await ensureTable();
+    try {
+      const status = (req.query.status as string) || "";
+      const grade = (req.query.grade as string) || "";
+      const search = (req.query.search as string) || "";
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
 
-    let where = "WHERE 1=1";
-    const params: any[] = [];
-    let paramIdx = 1;
+      let where = "WHERE 1=1";
+      const params: any[] = [];
+      let paramIdx = 1;
 
-    if (status) {
-      where += ` AND ac.status = $${paramIdx++}`;
-      params.push(status);
-    }
-    if (grade && grade !== "all") {
-      where += ` AND ac.grade = $${paramIdx++}`;
-      params.push(grade);
-    }
-    if (search) {
-      where += ` AND (ac.stage_name ILIKE $${paramIdx} OR ac.legal_name ILIKE $${paramIdx} OR ac.email ILIKE $${paramIdx++})`;
-      params.push(`%${search}%`);
-    }
+      if (status) {
+        where += ` AND ac.status = $${paramIdx++}`;
+        params.push(status);
+      }
+      if (grade && grade !== "all") {
+        where += ` AND ac.grade = $${paramIdx++}`;
+        params.push(grade);
+      }
+      if (search) {
+        where += ` AND (ac.stage_name ILIKE $${paramIdx} OR ac.legal_name ILIKE $${paramIdx} OR ac.email ILIKE $${paramIdx++})`;
+        params.push(`%${search}%`);
+      }
 
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM artist_contracts ac ${where}`,
-      params,
-    );
-    const total = parseInt(countResult.rows[0].count);
+      const countResult = await pool.query(
+        `SELECT COUNT(*) FROM artist_contracts ac ${where}`,
+        params,
+      );
+      const total = parseInt(countResult.rows[0].count);
 
-    params.push(limit, offset);
-    const result = await pool.query(
-      `SELECT ac.*, u.username as reviewer_name
+      params.push(limit, offset);
+      const result = await pool.query(
+        `SELECT ac.*, u.username as reviewer_name
        FROM artist_contracts ac
        LEFT JOIN users u ON ac.reviewed_by = u.id
        ${where}
@@ -500,11 +531,11 @@ router.get("/admin/applications", async (req: Request, res: Response) => {
          END,
          ac.applied_at DESC
        LIMIT $${paramIdx++} OFFSET $${paramIdx}`,
-      params,
-    );
+        params,
+      );
 
-    // Stats summary
-    const statsResult = await pool.query(`
+      // Stats summary
+      const statsResult = await pool.query(`
       SELECT
         COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
         COUNT(*) FILTER (WHERE status = 'under_review') as review_count,
@@ -517,168 +548,176 @@ router.get("/admin/applications", async (req: Request, res: Response) => {
       FROM artist_contracts
     `);
 
-    res.json({
-      applications: result.rows,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-      stats: statsResult.rows[0],
-    });
-  } catch (err: any) {
-    console.error("Admin applications error:", err);
-    res.status(500).json({ error: "Erreur" });
-  }
-});
+      res.json({
+        applications: result.rows,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        stats: statsResult.rows[0],
+      });
+    } catch (err: any) {
+      console.error("Admin applications error:", err);
+      res.status(500).json({ error: "Erreur" });
+    }
+  },
+);
 
 // ═══════════════════════════════════════════════════════════
 // ADMIN: GET /admin/applications/:id — Single application detail
 // ═══════════════════════════════════════════════════════════
-router.get("/admin/applications/:id", async (req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    const id = parseInt(req.params.id);
-    const result = await pool.query(
-      `SELECT ac.*, u.username as reviewer_name
+router.get(
+  "/admin/applications/:id",
+  requireAdminPanel,
+  async (req: Request, res: Response) => {
+    await ensureTable();
+    try {
+      const id = parseInt(req.params.id);
+      const result = await pool.query(
+        `SELECT ac.*, u.username as reviewer_name
        FROM artist_contracts ac
        LEFT JOIN users u ON ac.reviewed_by = u.id
        WHERE ac.id = $1`,
-      [id],
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Candidature introuvable" });
+        [id],
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Candidature introuvable" });
+      }
+      res.json({ application: result.rows[0] });
+    } catch (err: any) {
+      res.status(500).json({ error: "Erreur" });
     }
-    res.json({ application: result.rows[0] });
-  } catch (err: any) {
-    res.status(500).json({ error: "Erreur" });
-  }
-});
+  },
+);
 
 // ═══════════════════════════════════════════════════════════
 // ADMIN: PUT /admin/review/:id — Review: approve/reject + assign grade
 // ═══════════════════════════════════════════════════════════
-router.put("/admin/review/:id", async (req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    const id = parseInt(req.params.id);
-    const { action, grade, reviewNotes, rejectionReason, reviewerId } =
-      req.body;
+router.put(
+  "/admin/review/:id",
+  requireAdminPanel,
+  async (req: Request, res: Response) => {
+    await ensureTable();
+    try {
+      const id = parseInt(req.params.id);
+      const { action, grade, reviewNotes, rejectionReason, reviewerId } =
+        req.body;
 
-    if (
-      !action ||
-      !["approve", "reject", "under_review", "suspend"].includes(action)
-    ) {
-      return res.status(400).json({
-        error:
-          "Action invalide. Utilisez: approve, reject, under_review, suspend",
-      });
-    }
-
-    // Fetch current application
-    const current = await pool.query(
-      `SELECT * FROM artist_contracts WHERE id = $1`,
-      [id],
-    );
-    if (current.rows.length === 0) {
-      return res.status(404).json({ error: "Candidature introuvable" });
-    }
-
-    const app = current.rows[0];
-
-    if (action === "approve") {
-      if (!grade || !GRADE_TIERS[grade]) {
-        return res
-          .status(400)
-          .json({ error: "Grade invalide. Utilisez: S, A, B, C" });
+      if (
+        !action ||
+        !["approve", "reject", "under_review", "suspend"].includes(action)
+      ) {
+        return res.status(400).json({
+          error:
+            "Action invalide. Utilisez: approve, reject, under_review, suspend",
+        });
       }
 
-      const tier = GRADE_TIERS[grade];
+      // Fetch current application
+      const current = await pool.query(
+        `SELECT * FROM artist_contracts WHERE id = $1`,
+        [id],
+      );
+      if (current.rows.length === 0) {
+        return res.status(404).json({ error: "Candidature introuvable" });
+      }
 
-      // Create or link music_artists entry
-      let artistId = app.artist_id;
-      if (!artistId) {
-        // Create a new music_artists row for this approved artist
-        const artistResult = await pool.query(
-          `INSERT INTO music_artists (name, genre, biography, country, country_code, label_status,
+      const app = current.rows[0];
+
+      if (action === "approve") {
+        if (!grade || !GRADE_TIERS[grade]) {
+          return res
+            .status(400)
+            .json({ error: "Grade invalide. Utilisez: S, A, B, C" });
+        }
+
+        const tier = GRADE_TIERS[grade];
+
+        // Create or link music_artists entry
+        let artistId = app.artist_id;
+        if (!artistId) {
+          // Create a new music_artists row for this approved artist
+          const artistResult = await pool.query(
+            `INSERT INTO music_artists (name, genre, biography, country, country_code, label_status,
             spotify_url, instagram_url, website_url, verified, monthly_listeners, followers)
            VALUES ($1,$2,$3,$4,$5,'signed',$6,$7,$8,$9,$10,0)
            RETURNING id`,
-          [
-            app.stage_name,
-            app.genre,
-            app.biography,
-            app.country,
-            app.country_code,
-            app.spotify_url,
-            app.instagram_url,
-            app.website_url,
-            grade === "S" || grade === "A", // auto-verify S and A tier
-            app.monthly_listeners || 0,
-          ],
-        );
-        artistId = artistResult.rows[0].id;
-      }
+            [
+              app.stage_name,
+              app.genre,
+              app.biography,
+              app.country,
+              app.country_code,
+              app.spotify_url,
+              app.instagram_url,
+              app.website_url,
+              grade === "S" || grade === "A", // auto-verify S and A tier
+              app.monthly_listeners || 0,
+            ],
+          );
+          artistId = artistResult.rows[0].id;
+        }
 
-      // ── Unified Identity: ensure artist_profiles exists and links to music_artists ──
-      let artistProfileId: number | null = null;
-      const existingProfile = await pool.query(
-        `SELECT id FROM artist_profiles WHERE user_id = $1`,
-        [app.user_id],
-      );
-      if (existingProfile.rows.length > 0) {
-        artistProfileId = existingProfile.rows[0].id;
-        // Update the profile to link to the music_artists entry + set division from grade
-        const divisionMap: Record<string, string> = {
-          S: "elite",
-          A: "pro",
-          B: "indie",
-          C: "discovery",
-        };
-        await pool.query(
-          `UPDATE artist_profiles
+        // ── Unified Identity: ensure artist_profiles exists and links to music_artists ──
+        let artistProfileId: number | null = null;
+        const existingProfile = await pool.query(
+          `SELECT id FROM artist_profiles WHERE user_id = $1`,
+          [app.user_id],
+        );
+        if (existingProfile.rows.length > 0) {
+          artistProfileId = existingProfile.rows[0].id;
+          // Update the profile to link to the music_artists entry + set division from grade
+          const divisionMap: Record<string, string> = {
+            S: "elite",
+            A: "pro",
+            B: "indie",
+            C: "discovery",
+          };
+          await pool.query(
+            `UPDATE artist_profiles
            SET music_artist_id = $1, division = $2, evaluation_status = 'approved',
                contract_access = $3, updated_at = NOW()
            WHERE id = $4`,
-          [
-            artistId,
-            divisionMap[grade] || "discovery",
-            grade === "S" ? "full" : grade === "A" ? "priority" : "standard",
-            artistProfileId,
-          ],
-        );
-      } else {
-        // Create a new artist_profiles row linked to both user and music_artists
-        const divisionMap: Record<string, string> = {
-          S: "elite",
-          A: "pro",
-          B: "indie",
-          C: "discovery",
-        };
-        const profileResult = await pool.query(
-          `INSERT INTO artist_profiles (user_id, stage_name, genre, country, country_code, bio,
+            [
+              artistId,
+              divisionMap[grade] || "discovery",
+              grade === "S" ? "full" : grade === "A" ? "priority" : "standard",
+              artistProfileId,
+            ],
+          );
+        } else {
+          // Create a new artist_profiles row linked to both user and music_artists
+          const divisionMap: Record<string, string> = {
+            S: "elite",
+            A: "pro",
+            B: "indie",
+            C: "discovery",
+          };
+          const profileResult = await pool.query(
+            `INSERT INTO artist_profiles (user_id, stage_name, genre, country, country_code, bio,
             spotify_url, instagram_handle, profile_image_url, music_artist_id, division,
             evaluation_status, contract_access, is_active)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'approved', $12, true)
            RETURNING id`,
-          [
-            app.user_id,
-            app.stage_name,
-            JSON.stringify(app.genre ? [app.genre] : []),
-            app.country,
-            app.country_code,
-            app.biography,
-            app.spotify_url,
-            app.instagram_url,
-            app.profile_image_url || null,
-            artistId,
-            divisionMap[grade] || "discovery",
-            grade === "S" ? "full" : grade === "A" ? "priority" : "standard",
-          ],
-        );
-        artistProfileId = profileResult.rows[0].id;
-      }
+            [
+              app.user_id,
+              app.stage_name,
+              JSON.stringify(app.genre ? [app.genre] : []),
+              app.country,
+              app.country_code,
+              app.biography,
+              app.spotify_url,
+              app.instagram_url,
+              app.profile_image_url || null,
+              artistId,
+              divisionMap[grade] || "discovery",
+              grade === "S" ? "full" : grade === "A" ? "priority" : "standard",
+            ],
+          );
+          artistProfileId = profileResult.rows[0].id;
+        }
 
-      await pool.query(
-        `UPDATE artist_contracts SET
+        await pool.query(
+          `UPDATE artist_contracts SET
           status = 'approved',
           grade = $1,
           artist_id = $2,
@@ -696,41 +735,41 @@ router.put("/admin/review/:id", async (req: Request, res: Response) => {
           contract_start_date = NOW(),
           last_modified = NOW()
          WHERE id = $12`,
-        [
+          [
+            grade,
+            artistId,
+            tier.revenueShareArtist,
+            tier.revenueSharePlatform,
+            tier.maxDownloads,
+            tier.audioQuality,
+            tier.canBeFeatured,
+            tier.hasAnalytics,
+            tier.hasPrioritySupport,
+            reviewerId || null,
+            reviewNotes || null,
+            id,
+          ],
+        );
+
+        // Update the music_artists label_status
+        await pool.query(
+          `UPDATE music_artists SET label_status = 'signed' WHERE id = $1`,
+          [artistId],
+        );
+
+        return res.json({
+          success: true,
+          message: `Artiste approuvé au grade ${grade} (${tier.label})`,
           grade,
+          tier,
           artistId,
-          tier.revenueShareArtist,
-          tier.revenueSharePlatform,
-          tier.maxDownloads,
-          tier.audioQuality,
-          tier.canBeFeatured,
-          tier.hasAnalytics,
-          tier.hasPrioritySupport,
-          reviewerId || null,
-          reviewNotes || null,
-          id,
-        ],
-      );
+          artistProfileId,
+        });
+      }
 
-      // Update the music_artists label_status
-      await pool.query(
-        `UPDATE music_artists SET label_status = 'signed' WHERE id = $1`,
-        [artistId],
-      );
-
-      return res.json({
-        success: true,
-        message: `Artiste approuvé au grade ${grade} (${tier.label})`,
-        grade,
-        tier,
-        artistId,
-        artistProfileId,
-      });
-    }
-
-    if (action === "reject") {
-      await pool.query(
-        `UPDATE artist_contracts SET
+      if (action === "reject") {
+        await pool.query(
+          `UPDATE artist_contracts SET
           status = 'rejected',
           rejection_reason = $1,
           review_notes = $2,
@@ -738,68 +777,72 @@ router.put("/admin/review/:id", async (req: Request, res: Response) => {
           reviewed_at = NOW(),
           last_modified = NOW()
          WHERE id = $4`,
-        [
-          rejectionReason || "Candidature non retenue",
-          reviewNotes || null,
-          reviewerId || null,
-          id,
-        ],
-      );
-
-      return res.json({
-        success: true,
-        message: "Candidature refusée",
-      });
-    }
-
-    if (action === "under_review") {
-      await pool.query(
-        `UPDATE artist_contracts SET status = 'under_review', reviewed_by = $1, review_notes = $2, last_modified = NOW() WHERE id = $3`,
-        [reviewerId || null, reviewNotes || null, id],
-      );
-      return res.json({
-        success: true,
-        message: "Candidature en cours d'examen",
-      });
-    }
-
-    if (action === "suspend") {
-      await pool.query(
-        `UPDATE artist_contracts SET status = 'suspended', review_notes = $1, reviewed_by = $2, last_modified = NOW() WHERE id = $3`,
-        [reviewNotes || "Contrat suspendu", reviewerId || null, id],
-      );
-      // Also mark the artist as unsigned
-      if (app.artist_id) {
-        await pool.query(
-          `UPDATE music_artists SET label_status = 'suspended' WHERE id = $1`,
-          [app.artist_id],
+          [
+            rejectionReason || "Candidature non retenue",
+            reviewNotes || null,
+            reviewerId || null,
+            id,
+          ],
         );
+
+        return res.json({
+          success: true,
+          message: "Candidature refusée",
+        });
       }
-      return res.json({ success: true, message: "Contrat suspendu" });
+
+      if (action === "under_review") {
+        await pool.query(
+          `UPDATE artist_contracts SET status = 'under_review', reviewed_by = $1, review_notes = $2, last_modified = NOW() WHERE id = $3`,
+          [reviewerId || null, reviewNotes || null, id],
+        );
+        return res.json({
+          success: true,
+          message: "Candidature en cours d'examen",
+        });
+      }
+
+      if (action === "suspend") {
+        await pool.query(
+          `UPDATE artist_contracts SET status = 'suspended', review_notes = $1, reviewed_by = $2, last_modified = NOW() WHERE id = $3`,
+          [reviewNotes || "Contrat suspendu", reviewerId || null, id],
+        );
+        // Also mark the artist as unsigned
+        if (app.artist_id) {
+          await pool.query(
+            `UPDATE music_artists SET label_status = 'suspended' WHERE id = $1`,
+            [app.artist_id],
+          );
+        }
+        return res.json({ success: true, message: "Contrat suspendu" });
+      }
+    } catch (err: any) {
+      console.error("Review error:", err);
+      res.status(500).json({ error: "Erreur lors de l'examen" });
     }
-  } catch (err: any) {
-    console.error("Review error:", err);
-    res.status(500).json({ error: "Erreur lors de l'examen" });
-  }
-});
+  },
+);
 
 // ═══════════════════════════════════════════════════════════
 // ADMIN: PUT /admin/upgrade/:id — Change grade for existing contract
 // ═══════════════════════════════════════════════════════════
-router.put("/admin/upgrade/:id", async (req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    const id = parseInt(req.params.id);
-    const { grade, reviewerId, reviewNotes } = req.body;
+router.put(
+  "/admin/upgrade/:id",
+  requireAdminPanel,
+  async (req: Request, res: Response) => {
+    await ensureTable();
+    try {
+      const id = parseInt(req.params.id);
+      const { grade, reviewerId, reviewNotes } = req.body;
 
-    if (!grade || !GRADE_TIERS[grade]) {
-      return res.status(400).json({ error: "Grade invalide" });
-    }
+      if (!grade || !GRADE_TIERS[grade]) {
+        return res.status(400).json({ error: "Grade invalide" });
+      }
 
-    const tier = GRADE_TIERS[grade];
+      const tier = GRADE_TIERS[grade];
 
-    await pool.query(
-      `UPDATE artist_contracts SET
+      await pool.query(
+        `UPDATE artist_contracts SET
         grade = $1,
         revenue_share_artist = $2,
         revenue_share_platform = $3,
@@ -812,38 +855,42 @@ router.put("/admin/upgrade/:id", async (req: Request, res: Response) => {
         review_notes = COALESCE(review_notes || E'\n', '') || $10,
         last_modified = NOW()
        WHERE id = $11 AND status = 'approved'`,
-      [
-        grade,
-        tier.revenueShareArtist,
-        tier.revenueSharePlatform,
-        tier.maxDownloads,
-        tier.audioQuality,
-        tier.canBeFeatured,
-        tier.hasAnalytics,
-        tier.hasPrioritySupport,
-        reviewerId || null,
-        `[${new Date().toISOString()}] Grade changed to ${grade}: ${reviewNotes || "No notes"}`,
-        id,
-      ],
-    );
+        [
+          grade,
+          tier.revenueShareArtist,
+          tier.revenueSharePlatform,
+          tier.maxDownloads,
+          tier.audioQuality,
+          tier.canBeFeatured,
+          tier.hasAnalytics,
+          tier.hasPrioritySupport,
+          reviewerId || null,
+          `[${new Date().toISOString()}] Grade changed to ${grade}: ${reviewNotes || "No notes"}`,
+          id,
+        ],
+      );
 
-    res.json({
-      success: true,
-      message: `Grade mis à jour: ${grade} (${tier.label})`,
-      tier,
-    });
-  } catch (err: any) {
-    res.status(500).json({ error: "Erreur" });
-  }
-});
+      res.json({
+        success: true,
+        message: `Grade mis à jour: ${grade} (${tier.label})`,
+        tier,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: "Erreur" });
+    }
+  },
+);
 
 // ═══════════════════════════════════════════════════════════
 // ADMIN: GET /admin/stats — Overview statistics
 // ═══════════════════════════════════════════════════════════
-router.get("/admin/stats", async (_req: Request, res: Response) => {
-  await ensureTable();
-  try {
-    const result = await pool.query(`
+router.get(
+  "/admin/stats",
+  requireAdminPanel,
+  async (_req: Request, res: Response) => {
+    await ensureTable();
+    try {
+      const result = await pool.query(`
       SELECT
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status = 'pending') as pending,
@@ -858,10 +905,11 @@ router.get("/admin/stats", async (_req: Request, res: Response) => {
         AVG(revenue_share_artist) FILTER (WHERE status = 'approved') as avg_artist_share
       FROM artist_contracts
     `);
-    res.json({ stats: result.rows[0] });
-  } catch (err: any) {
-    res.status(500).json({ error: "Erreur" });
-  }
-});
+      res.json({ stats: result.rows[0] });
+    } catch (err: any) {
+      res.status(500).json({ error: "Erreur" });
+    }
+  },
+);
 
 export default router;

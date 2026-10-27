@@ -33,7 +33,7 @@ async function getUserRole(userId: number): Promise<string | null> {
 
 // ─── GET /queue — List pending_review tracks ────────────────────────────────────
 
-router.get("/queue", requireAuth(), async (req: Request, res: Response) => {
+router.get("/queue", requireAuth(["admin"]), async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.user!.userId);
     const role = await getUserRole(userId);
@@ -98,7 +98,7 @@ router.get("/queue", requireAuth(), async (req: Request, res: Response) => {
 
 // ─── GET /stats — Moderation dashboard stats ────────────────────────────────────
 
-router.get("/stats", requireAuth(), async (req: Request, res: Response) => {
+router.get("/stats", requireAuth(["admin"]), async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.user!.userId);
     const role = await getUserRole(userId);

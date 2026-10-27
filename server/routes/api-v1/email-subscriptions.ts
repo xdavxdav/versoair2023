@@ -17,6 +17,7 @@ import { db, pool } from "../../db";
 import { eq, and, sql } from "drizzle-orm";
 import { emailSubscriptions, emailQueue, users } from "@shared/schema";
 import { requireAuth } from "../../middleware/auth";
+import { resolveSubscriptionOwner } from "../../utils/email-subscription-access";
 import { getGeoAdminEntitlement } from "../../services/geoadmin-entitlement";
 import crypto from "crypto";
 
@@ -108,19 +109,21 @@ async function getUserTier(userId: number): Promise<string> {
  */
 router.post("/subscribe", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId, type, frequency = "daily_digest", filters = {} } = req.body;
-
-    const authenticatedUserId = Number(req.user?.userId);
-    if (!authenticatedUserId) {
+    const owner = resolveSubscriptionOwner(
+      req.user?.userId,
+      req.body?.userId,
+    );
+    if (!owner.ok) {
       return res
-        .status(401)
-        .json({ success: false, error: "Authentication required" });
+        .status(owner.status)
+        .json({ success: false, error: owner.error });
     }
-    if (Number(userId) !== authenticatedUserId) {
-      return res
-        .status(403)
-        .json({ success: false, error: "Cannot change another user's subscriptions" });
-    }
+    const userId = owner.userId;
+    const {
+      type,
+      frequency = "daily_digest",
+      filters = {},
+    } = req.body;
 
     if (!type || !VALID_TYPES.includes(type as SubscriptionType)) {
       return res.status(400).json({
@@ -143,7 +146,7 @@ router.post("/subscribe", requireAuth(), async (req: Request, res: Response) => 
 
     if (
       type === "geoadmin_reports" &&
-      !(await getGeoAdminEntitlement(authenticatedUserId))?.hasAccess
+      !(await getGeoAdminEntitlement(userId))?.hasAccess
     ) {
       return res.status(403).json({
         success: false,
@@ -516,9 +519,8 @@ router.get("/available", async (_req: Request, res: Response) => {
  * Admin endpoint — returns email subscription statistics.
  * Query: ?adminKey=...
  */
-router.get("/stats", async (req: Request, res: Response) => {
+router.get("/stats", requireAuth(["admin"]), async (req: Request, res: Response) => {
   try {
-    // Simple admin check (in production, use proper admin middleware)
     const result = await pool.query(`
       SELECT
         type,

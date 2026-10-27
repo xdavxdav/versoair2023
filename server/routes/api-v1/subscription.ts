@@ -12,6 +12,7 @@ import { db, pool } from "../../db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
 import { requireAuth } from "../../middleware/auth";
+import { resolveRequestActingUserId } from "../../utils/acting-user";
 import { getGeoAdminEntitlement } from "../../services/geoadmin-entitlement";
 import {
   freeTrialsEnabled,
@@ -373,14 +374,18 @@ router.post("/upgrade", requireAuth(), async (req: Request, res: Response) => {
  * Downgrades a user to a lower tier.
  * Body: { userId, targetTier }
  */
-router.post("/downgrade", async (req: Request, res: Response) => {
+router.post("/downgrade", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId, targetTier } = req.body;
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId, {
+      staffRoles: ["admin", "superuser"],
+    });
+    if (userId === null) return;
+    const { targetTier } = req.body;
 
-    if (!userId || !targetTier) {
+    if (!targetTier) {
       return res
         .status(400)
-        .json({ success: false, error: "userId and targetTier are required" });
+        .json({ success: false, error: "targetTier is required" });
     }
 
     if (!isValidTier(targetTier)) {
@@ -435,14 +440,18 @@ router.post("/downgrade", async (req: Request, res: Response) => {
  * Quick check if a specific feature is available for a user.
  * Query: ?userId=X&feature=keywordTracking
  */
-router.get("/feature-check", async (req: Request, res: Response) => {
+router.get("/feature-check", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId, feature } = req.query;
+    const { feature } = req.query;
+    const userId = resolveRequestActingUserId(req, res, req.query.userId, {
+      staffRoles: ["admin", "superuser"],
+    });
+    if (userId === null) return;
 
-    if (!userId || !feature) {
+    if (!feature) {
       return res
         .status(400)
-        .json({ success: false, error: "userId and feature are required" });
+        .json({ success: false, error: "feature is required" });
     }
 
     const result = await pool.query(
@@ -524,15 +533,12 @@ router.get("/tiers", async (_req: Request, res: Response) => {
  * Cancels an active trial and reverts to the base subscription tier.
  * Body: { userId }
  */
-router.post("/cancel-trial", async (req: Request, res: Response) => {
+router.post("/cancel-trial", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "userId is required" });
-    }
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId, {
+      staffRoles: ["admin", "superuser"],
+    });
+    if (userId === null) return;
 
     const result = await pool.query(
       `SELECT id, subscription_tier, trial_tier, trial_expires_at FROM users WHERE id = $1`,

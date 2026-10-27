@@ -755,17 +755,18 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [settings, setSettings] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Fetch current settings
-  const { data: currentSettings } = useQuery({
+  const { data: currentSettings, error: settingsError } = useQuery({
     queryKey: ["settings", sector],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/api/settings/${sector}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token") || localStorage.getItem("authToken")}`,
-        },
+        credentials: "include",
       });
-      if (!response.ok) return {};
+      if (!response.ok) {
+        throw new Error(`Could not load settings (${response.status}).`);
+      }
       const data = await response.json();
       return data.settings || {};
     },
@@ -787,19 +788,32 @@ export function SettingsModal({
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/api/settings/${sector}`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token") || localStorage.getItem("authToken")}`,
         },
         body: JSON.stringify({ settings }),
       });
 
       if (response.ok) {
         onOpenChange(false);
+      } else {
+        const body = await response.json().catch(() => null);
+        throw new Error(
+          typeof body?.error === "string"
+            ? body.error
+            : `Could not save settings (${response.status}).`,
+        );
       }
+    } catch (error) {
+      console.error("Settings save failed:", error);
+      setSaveError(
+        error instanceof Error ? error.message : "Could not save settings.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -914,6 +928,15 @@ export function SettingsModal({
             ),
           )}
         </Tabs>
+
+        {(settingsError || saveError) && (
+          <p role="alert" className="text-sm text-red-600">
+            {saveError ||
+              (settingsError instanceof Error
+                ? settingsError.message
+                : "Could not load settings.")}
+          </p>
+        )}
 
         <div className="flex justify-between gap-2 pt-4">
           <Button variant="outline" onClick={handleReset} className="gap-2">

@@ -23,6 +23,8 @@
 import { Router, Request, Response } from "express";
 import Stripe from "stripe";
 import { pool } from "../../db";
+import { requireAuth } from "../../middleware/auth";
+import { resolveRequestActingUserId } from "../../utils/acting-user";
 
 const router = Router();
 
@@ -94,16 +96,11 @@ const TIER_SPENDING_LIMITS: Record<
  * POST /api/v1/cards/cardholder
  * Create a Stripe Issuing cardholder for the authenticated user.
  */
-router.post("/cardholder", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
-
+router.post("/cardholder", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "userId is required" });
-    }
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId);
+    if (userId === null) return;
+    if (!requireStripe(res)) return;
 
     // Get user details
     const userResult = await pool.query(
@@ -121,7 +118,10 @@ router.post("/cardholder", async (req: Request, res: Response) => {
 
     // Check if cardholder already exists
     const existingCard = await pool.query(
-      `SELECT stripe_cardholder_id FROM issued_cards WHERE user_id = $1 LIMIT 1`,
+      `SELECT stripe_cardholder_id FROM issued_cards WHERE user_id = $1
+       UNION
+       SELECT stripe_cardholder_id FROM issued_cardholders WHERE user_id = $1
+       LIMIT 1`,
       [userId],
     );
 
@@ -149,6 +149,22 @@ router.post("/cardholder", async (req: Request, res: Response) => {
         },
       });
       cardholderId = cardholder.id;
+      await pool.query(
+        `INSERT INTO issued_cardholders (user_id, stripe_cardholder_id)
+         VALUES ($1, $2)
+         ON CONFLICT DO NOTHING`,
+        [userId, cardholderId],
+      );
+      const owner = await pool.query(
+        `SELECT user_id FROM issued_cardholders WHERE stripe_cardholder_id = $1`,
+        [cardholderId],
+      );
+      if (Number(owner.rows[0]?.user_id) !== userId) {
+        return res.status(409).json({
+          success: false,
+          error: "Cardholder ownership could not be verified",
+        });
+      }
     }
 
     res.json({
@@ -165,18 +181,35 @@ router.post("/cardholder", async (req: Request, res: Response) => {
  * POST /api/v1/cards/issue
  * Issue a new virtual card for the authenticated user.
  */
-router.post("/issue", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
-
+router.post("/issue", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId, cardholderId, label } = req.body;
-    if (!userId || !cardholderId) {
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId);
+    if (userId === null) return;
+    const { cardholderId, label } = req.body;
+    if (!cardholderId) {
       return res
         .status(400)
         .json({
           success: false,
-          error: "userId and cardholderId are required",
+          error: "cardholderId is required",
         });
+    }
+    if (!requireStripe(res)) return;
+
+    const cardholderOwner = await pool.query(
+      `SELECT 1 FROM issued_cardholders
+       WHERE user_id = $1 AND stripe_cardholder_id = $2
+       UNION
+       SELECT 1 FROM issued_cards
+       WHERE user_id = $1 AND stripe_cardholder_id = $2
+       LIMIT 1`,
+      [userId, cardholderId],
+    );
+    if (cardholderOwner.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: "Cardholder does not belong to this account",
+      });
     }
 
     // Get user tier
@@ -656,13 +689,15 @@ router.get("/points/rewards", async (req: Request, res: Response) => {
  * POST /api/v1/cards/points/redeem
  * Redeem points for a reward.
  */
-router.post("/points/redeem", async (req: Request, res: Response) => {
+router.post("/points/redeem", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const { userId, rewardId } = req.body;
-    if (!userId || !rewardId) {
+    const userId = resolveRequestActingUserId(req, res, req.body?.userId);
+    if (userId === null) return;
+    const { rewardId } = req.body;
+    if (!rewardId) {
       return res
         .status(400)
-        .json({ success: false, error: "userId and rewardId required" });
+        .json({ success: false, error: "rewardId is required" });
     }
 
     // Get reward

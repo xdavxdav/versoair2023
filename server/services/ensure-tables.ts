@@ -335,6 +335,17 @@ export async function ensureAllTables(
       }
     }
 
+    try {
+      await client.query(`
+        INSERT INTO issued_cardholders (user_id, stripe_cardholder_id)
+        SELECT DISTINCT user_id, stripe_cardholder_id
+        FROM issued_cards
+        ON CONFLICT DO NOTHING
+      `);
+    } catch (err) {
+      recordSchemaFailure("backfill issued cardholder ownership", err);
+    }
+
     // Create indexes after all tables exist (separate pass to avoid FK issues)
     for (const idx of INDEX_STATEMENTS) {
       try {
@@ -1737,6 +1748,16 @@ const TABLE_STATEMENTS: TableDef[] = [
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW(),
       canceled_at TIMESTAMP
+    )`,
+  },
+  {
+    table: "issued_cardholders",
+    sql: `CREATE TABLE IF NOT EXISTS issued_cardholders (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      stripe_cardholder_id VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      PRIMARY KEY (user_id, stripe_cardholder_id),
+      CONSTRAINT issued_cardholders_stripe_id_unique UNIQUE (stripe_cardholder_id)
     )`,
   },
   {
