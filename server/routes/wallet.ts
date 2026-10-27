@@ -12,7 +12,7 @@ const router = Router();
 // ═══════════════════════════════════════════════════════════════════
 // GET /api/wallet/balance — Get user wallet balance
 // ═══════════════════════════════════════════════════════════════════
-router.get("/balance", requireAuth, async (req: Request, res: Response) => {
+router.get("/balance", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -56,7 +56,7 @@ router.get("/balance", requireAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 router.get(
   "/transactions",
-  requireAuth,
+  requireAuth(),
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
@@ -84,7 +84,7 @@ router.get(
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/wallet/deposit — Buy credits with real money (stub for Stripe)
 // ═══════════════════════════════════════════════════════════════════
-router.post("/deposit", requireAuth, async (req: Request, res: Response) => {
+router.post("/deposit", requireAuth(), async (req: Request, res: Response) => {
   try {
     if (!onlinePaymentsEnabled()) {
       return res.status(503).json({
@@ -141,7 +141,7 @@ router.post("/deposit", requireAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 // Arbitrary client-supplied game rewards are disabled. Payouts require a
 // reviewed, idempotent settlement flow before wagering can be enabled.
-router.post("/game-reward", requireAuth, (_req: Request, res: Response) =>
+router.post("/game-reward", requireAuth(), (_req: Request, res: Response) =>
   res.status(403).json({
     success: false,
     error: "Game rewards are disabled during free beta",

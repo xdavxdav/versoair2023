@@ -823,7 +823,7 @@ const PLAY_DEBOUNCE_MS = 30_000; // 30 seconds between increments per IP+track
 // ═════════════════════════════════════════════════════════════════════
 router.post(
   "/tracks/:id/purchase",
-  requireAuth,
+  requireAuth(),
   async (req: Request, res: Response) => {
     if (!onlinePaymentsEnabled()) {
       return res.status(503).json({
@@ -1916,7 +1916,7 @@ router.get("/artists/search", async (req, res) => {
 // ═════════════════════════════════════════════════════════════════════
 // POST /api/music/purchase — Simplified purchase (trackId in body)
 // ═════════════════════════════════════════════════════════════════════
-router.post("/purchase", requireAuth, async (req: any, res: any) => {
+router.post("/purchase", requireAuth(), async (req: any, res: any) => {
   if (!onlinePaymentsEnabled()) {
     return res.status(503).json({
       success: false,
@@ -2038,7 +2038,7 @@ router.post("/purchase", requireAuth, async (req: any, res: any) => {
 // ═════════════════════════════════════════════════════════════════════
 // GET /api/music/my-purchases — User's purchased tracks
 // ═════════════════════════════════════════════════════════════════════
-router.get("/my-purchases", requireAuth, async (req: any, res: any) => {
+router.get("/my-purchases", requireAuth(), async (req: any, res: any) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });

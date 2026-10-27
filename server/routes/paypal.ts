@@ -125,7 +125,7 @@ router.get("/config", (_req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 router.post(
   "/create-order",
-  requireAuth,
+  requireAuth(),
   async (req: Request, res: Response) => {
     if (!onlinePaymentsEnabled()) {
       rejectUnavailablePayment(res);
@@ -246,8 +246,12 @@ router.post(
 // ═══════════════════════════════════════════════════════════════════
 router.post(
   "/capture-order",
-  requireAuth,
+  requireAuth(),
   async (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
+    }
     try {
       const userId = (req as any).user?.id;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -381,7 +385,11 @@ router.post(
 // GET /api/paypal/success — Auto-capture after PayPal approval redirect
 // PayPal redirects here with ?token=ORDER_ID after user approves
 // ═══════════════════════════════════════════════════════════════════
-router.get("/success", requireAuth, async (req: Request, res: Response) => {
+router.get("/success", requireAuth(), async (req: Request, res: Response) => {
+  if (!onlinePaymentsEnabled()) {
+    rejectUnavailablePayment(res);
+    return;
+  }
   try {
     const orderId = req.query.token as string;
     const userId = (req as any).user?.id;

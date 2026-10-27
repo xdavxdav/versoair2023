@@ -10,6 +10,8 @@
  * Returns structured business data ready for DB insert.
  */
 
+import { fetchPublicText } from "../utils/public-url";
+
 interface ScrapedBusiness {
   name: string;
   phone: string;
@@ -164,14 +166,14 @@ export async function scrapeDirectoryUrl(url: string): Promise<ScrapeResult> {
   const source = detectSource(url);
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchPublicText(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml",
         "Accept-Language": "en-US,en;q=0.9,fr;q=0.8",
       },
-      signal: AbortSignal.timeout(15_000),
+      timeoutMs: 15_000,
     });
 
     if (!response.ok) {
@@ -184,7 +186,7 @@ export async function scrapeDirectoryUrl(url: string): Promise<ScrapeResult> {
       };
     }
 
-    const html = await response.text();
+    const html = response.text;
 
     // Try JSON-LD first (highest quality)
     let businesses = extractJsonLdBusinesses(html, url);

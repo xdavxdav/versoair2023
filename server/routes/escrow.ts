@@ -14,13 +14,27 @@
  * GET  /api/escrow/:id           — Single escrow detail
  */
 
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { requireAuth } from "../middleware/auth";
 import { pool } from "../db";
 
+// Escrow moves wallet balances between users and has never been reviewed for
+// launch, so every route stays closed until that review is done.
+const ESCROW_ENABLED: boolean = false;
+
 const router = Router();
-router.use(requireAuth);
+router.use(requireAuth());
+router.use((_req: Request, res: Response, next: NextFunction) => {
+  if (ESCROW_ENABLED) return next();
+  return res.status(503).json({
+    success: false,
+    error: {
+      code: "ESCROW_UNAVAILABLE",
+      message: "Escrow is not available yet.",
+    },
+  });
+});
 
 // ─── Ensure escrow table exists ──────────────────────────────────────────────
 async function ensureEscrowTable() {

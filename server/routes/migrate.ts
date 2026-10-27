@@ -13,11 +13,12 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth";
 import { pool } from "../db";
 import { scrapeDirectoryUrl } from "../services/web-scraper";
+import { assertPublicHttpUrl, UnsafeUrlError } from "../utils/public-url";
 
 const router = Router();
 
 // Only admin/superuser can use migration tools
-router.use(requireAuth);
+router.use(requireAuth(["admin", "superuser"]));
 
 // ─── POST /api/migrate/scrape — Scrape competitor URL ────────────────────────
 
@@ -37,6 +38,21 @@ router.post("/scrape", async (req: Request, res: Response) => {
     return res.status(400).json({
       success: false,
       error: "Invalid URL: " + parsed.error.issues[0]?.message,
+    });
+  }
+
+  try {
+    await assertPublicHttpUrl(parsed.data.url);
+  } catch (err: any) {
+    if (err instanceof UnsafeUrlError) {
+      return res.status(400).json({
+        success: false,
+        error: "This URL cannot be scraped: " + err.message,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: "Scrape failed: " + (err.message || "Unknown error"),
     });
   }
 

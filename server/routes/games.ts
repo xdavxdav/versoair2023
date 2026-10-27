@@ -360,7 +360,7 @@ async function settleMatch(
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/games/challenge — Create a new game match
 // ═══════════════════════════════════════════════════════════════════
-router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
+router.post("/challenge", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -501,7 +501,7 @@ router.post("/challenge", requireAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/games/:id/join — Join an existing match
 // ═══════════════════════════════════════════════════════════════════
-router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
+router.post("/:id/join", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const matchId = parseInt(req.params.id);
@@ -626,7 +626,7 @@ router.post("/:id/join", requireAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/games/:id/answer — Submit an answer for trivia (one round)
 // ═══════════════════════════════════════════════════════════════════
-router.post("/:id/answer", requireAuth, async (req: Request, res: Response) => {
+router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const matchId = parseInt(req.params.id);
@@ -835,7 +835,7 @@ router.get("/open", async (_req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 // GET /api/games/my — List current user's matches
 // ═══════════════════════════════════════════════════════════════════
-router.get("/my", requireAuth, async (req: Request, res: Response) => {
+router.get("/my", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const matches = await pool.query(
@@ -871,7 +871,7 @@ router.get("/my", requireAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/games/verify-age — Simple DOB self-declaration
 // ═══════════════════════════════════════════════════════════════════
-router.post("/verify-age", requireAuth, async (req: Request, res: Response) => {
+router.post("/verify-age", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { dateOfBirth } = req.body;
