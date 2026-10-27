@@ -12,6 +12,7 @@ import {
 import ScrollToTop from "@/components/ScrollToTop";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { FEEDBACK_FORM_URL } from "@/lib/feedback";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function Contact() {
@@ -229,6 +230,21 @@ export default function Contact() {
                     Latest Updates
                   </Button>
                 </Link>
+                {/* The label is translated at runtime and gets long in French; let it wrap instead of widening the column. */}
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="h-auto min-h-10 w-full justify-start whitespace-normal py-2 text-left text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <a
+                    href={FEEDBACK_FORM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="contact-feedback-link"
+                  >
+                    Report a problem or share feedback
+                  </a>
+                </Button>
               </div>
             </div>
           </motion.div>

@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, ArrowLeft, Home, ShoppingBag } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { navigateBackSafely } from "@/lib/safe-navigation";
+import { FEEDBACK_FORM_URL } from "@/lib/feedback";
 
 export default function NotFound() {
   const [, navigate] = useLocation();
@@ -20,8 +21,8 @@ export default function NotFound() {
           </div>
 
           <p className="text-sm text-slate-300 leading-6">
-            Cette page n’existe pas ou n’est plus disponible dans la version
-            beta. Vérifiez l’URL ou revenez à l’accueil.
+            Cette page n’existe pas ou n’est pas encore disponible. Vérifiez
+            l’URL ou revenez à l’accueil.
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -48,6 +49,20 @@ export default function NotFound() {
               Retour
             </button>
           </div>
+
+          <p className="mt-6 text-sm text-slate-300">
+            Un lien ne fonctionne pas ?{" "}
+            <a
+              href={FEEDBACK_FORM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="not-found-feedback-link"
+              className="font-medium text-amber-300 underline underline-offset-4 hover:text-amber-200"
+            >
+              Dites-le-nous
+            </a>
+            .
+          </p>
         </CardContent>
       </Card>
     </div>

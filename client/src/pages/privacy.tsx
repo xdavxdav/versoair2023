@@ -35,7 +35,7 @@ export default function PrivacyPolicy() {
               Privacy Policy
             </h1>
             <p className="text-sm text-slate-700">
-              Last updated: March 13, 2026
+              Last updated: October 26, 2026
             </p>
           </div>
         </div>
@@ -182,6 +182,13 @@ export default function PrivacyPolicy() {
                 translation when you choose another language. Google may process
                 page text, language preferences, and related browser
                 information under its own privacy terms.
+              </li>
+              <li>
+                <strong>Google Forms:</strong> Optional feedback form. Anything
+                you choose to submit, including an email address if you give one
+                for follow-up, is stored by Google and used by us to review your
+                feedback and reply. Google may process it under its own privacy
+                terms.
               </li>
               <li>
                 <strong>Neon / PostgreSQL:</strong> Database hosting (your data

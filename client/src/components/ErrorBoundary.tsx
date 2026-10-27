@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { FEEDBACK_FORM_URL } from "@/lib/feedback";
 
 interface Props {
   children: ReactNode;
@@ -81,7 +82,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               <p className="text-white/50 text-sm">
                 {isChunkError
                   ? "This page is using an outdated version. Reload to get the latest VersoAir release."
-                  : "An unexpected error occurred. This has been logged automatically."}
+                  : "An unexpected error occurred. Reloading usually fixes it. If it keeps happening, please tell us."}
               </p>
             </div>
 
@@ -109,6 +110,16 @@ export default class ErrorBoundary extends Component<Props, State> {
                 Reload Page
               </button>
             </div>
+
+            <a
+              href={FEEDBACK_FORM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="error-feedback-link"
+              className="inline-block text-sm text-amber-300/80 underline underline-offset-4 hover:text-amber-200"
+            >
+              Report this problem
+            </a>
           </div>
         </div>
       );

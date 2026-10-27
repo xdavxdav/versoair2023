@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { FEEDBACK_FORM_URL } from "@/lib/feedback";
 
 const links = [
   { href: "/about", label: "À propos" },
@@ -42,6 +43,17 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <a
+                  href={FEEDBACK_FORM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="footer-feedback-link"
+                  className="underline-offset-4 hover:text-slate-900 hover:underline"
+                >
+                  Signaler un problème
+                </a>
+              </li>
             </ul>
           </nav>
           <nav aria-label="Réseaux sociaux">
