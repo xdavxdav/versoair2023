@@ -171,3 +171,67 @@ test("repairs user columns required by the Drizzle registration insert", async (
     restoreEnv("NODE_ENV", previousNodeEnv);
   }
 });
+
+test("adds the message send key column and its partial unique index idempotently", async () => {
+  const previousDisableFlag = process.env.DISABLE_DB_CHECK;
+  const previousNodeEnv = process.env.NODE_ENV;
+  delete process.env.DISABLE_DB_CHECK;
+  process.env.NODE_ENV = "test";
+  const queries: string[] = [];
+  const client = {
+    async query(query: string) {
+      queries.push(query.replace(/\s+/g, " ").trim());
+      if (query.includes("information_schema.tables")) {
+        return { rows: [{ table_name: "users" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    },
+    release() {},
+  } as unknown as PoolClient;
+
+  try {
+    assert.equal(await ensureAllTables(async () => client), "verified");
+
+    const createTable = queries.find((query) =>
+      query.includes("CREATE TABLE IF NOT EXISTS inbox_messages"),
+    );
+    assert.ok(createTable, "expected the inbox_messages table to be ensured");
+    assert.match(createTable, /client_message_id TEXT(,| \))/);
+    assert.doesNotMatch(createTable, /client_message_id TEXT[^,)]*(NOT NULL|DEFAULT|UNIQUE)/);
+
+    const addColumn = queries.findIndex(
+      (query) =>
+        query ===
+        "ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS client_message_id TEXT",
+    );
+    assert.notEqual(
+      addColumn,
+      -1,
+      "expected a nullable, default-less client_message_id column on older databases",
+    );
+
+    const index = queries.findIndex(
+      (query) =>
+        query ===
+        "CREATE UNIQUE INDEX IF NOT EXISTS inbox_msg_client_key_uidx ON inbox_messages (conversation_id, sender_id, client_message_id) WHERE client_message_id IS NOT NULL",
+    );
+    assert.notEqual(
+      index,
+      -1,
+      "expected a partial unique index so only keyed sends are constrained",
+    );
+    assert.ok(addColumn < index, "the column must exist before its index");
+
+    assert.equal(
+      queries.filter(
+        (query) =>
+          /client_message_id/.test(query) && /^(UPDATE|INSERT|DELETE)\b/i.test(query),
+      ).length,
+      0,
+      "the key column must not be backfilled or rewritten",
+    );
+  } finally {
+    restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
+    restoreEnv("NODE_ENV", previousNodeEnv);
+  }
+});
