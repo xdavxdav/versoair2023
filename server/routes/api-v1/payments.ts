@@ -36,6 +36,12 @@ import {
   rejectUnavailablePayment,
 } from "../../utils/commercial-gates";
 import { resolveRequestActingUserId } from "../../utils/acting-user";
+import { getPublicBaseUrl } from "../../utils/base-url";
+import {
+  getStripeClient,
+  redactStripeSecrets,
+} from "../../utils/stripe-client";
+import { applyCheckoutSessionCompleted } from "../../services/stripe-webhook";
 
 const router = Router();
 
@@ -45,11 +51,11 @@ router.use(optionalAuth);
 // ─── STRIPE INIT ────────────────────────────────────────────────────────────────
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const STRIPE_API_VERSION = "2025-02-24.acacia";
 
 // Stripe is optional — if no key, endpoints return 503
 const stripe = STRIPE_SECRET_KEY
-  ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-02-24.acacia" as any })
+  ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION as any })
   : null;
 
 // ─── PRICING MAP (mirrors client/src/lib/tiers.ts) ─────────────────────────────
@@ -166,8 +172,8 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
         billingCycle,
         type: "subscription_fee",
       },
-      success_url: `${req.headers.origin || "http://localhost:5003"}/pricing?status=success&tier=${targetTier}`,
-      cancel_url: `${req.headers.origin || "http://localhost:5003"}/pricing?status=cancelled`,
+      success_url: `${getPublicBaseUrl()}/pricing?status=success&tier=${targetTier}`,
+      cancel_url: `${getPublicBaseUrl()}/pricing?status=cancelled`,
     });
 
     res.json({
@@ -191,20 +197,19 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
  * Must receive raw body (express.raw middleware applied in route registration).
  */
 router.post("/webhook", async (req: Request, res: Response) => {
+  // Resolved per request so a rotated key or webhook secret applies without a restart
+  const stripe = getStripeClient({ apiVersion: STRIPE_API_VERSION });
   if (!stripe) {
     return res.status(503).json({ error: "Stripe not configured" });
   }
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event: Stripe.Event;
 
   try {
-    if (STRIPE_WEBHOOK_SECRET) {
+    if (webhookSecret) {
       const sig = req.headers["stripe-signature"] as string;
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        STRIPE_WEBHOOK_SECRET,
-      );
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } else if (process.env.NODE_ENV === "production") {
       // SECURITY: Require webhook secret in production to prevent forged events
       console.error(
@@ -219,112 +224,39 @@ router.post("/webhook", async (req: Request, res: Response) => {
       event = req.body as Stripe.Event;
     }
   } catch (err: any) {
-    console.error(
-      "⚠️ Stripe webhook signature verification failed:",
-      err.message,
-    );
-    return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+    const reason = redactStripeSecrets(err?.message);
+    console.error("⚠️ Stripe webhook signature verification failed:", reason);
+    return res.status(400).json({ error: `Webhook Error: ${reason}` });
   }
 
   // Handle the event
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
-      const { userId, targetTier, billingCycle, type } = session.metadata || {};
+      const { userId } = session.metadata || {};
 
-      if (!userId) {
-        console.error("⚠️ Missing userId in checkout session:", session.id);
-        break;
+      // Subscription and marketing-order payments are applied exactly once;
+      // see applyCheckoutSessionCompleted for the replay and concurrency rules.
+      let outcome;
+      try {
+        outcome = await applyCheckoutSessionCompleted(pool, session);
+      } catch (dbError: any) {
+        // Nothing was committed, so a 5xx lets Stripe retry safely.
+        console.error(
+          "❌ DB error processing checkout.session.completed:",
+          redactStripeSecrets(dbError?.message),
+        );
+        return res.status(500).json({ error: "Webhook processing failed" });
       }
 
-      // ── Subscription payment: record transaction + upgrade tier ──
-      if (targetTier) {
-        const client = await pool.connect();
-        try {
-          await client.query("BEGIN");
-
-          // 1. Record transaction
-          await client.query(
-            `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
-             VALUES (NULL, $1, $2, $3, 'completed', $4)`,
-            [
-              userId,
-              ((session.amount_total || 0) / 100).toFixed(2),
-              type || "subscription_fee",
-              session.id,
-            ],
-          );
-
-          // 2. Upgrade user tier
-          const expiresAt = new Date();
-          if (billingCycle === "annual") {
-            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-          } else {
-            expiresAt.setMonth(expiresAt.getMonth() + 1);
-          }
-
-          await client.query(
-            `UPDATE users
-             SET subscription_tier = $1,
-                 subscription_status = 'active',
-                 premium_expires_at = $2
-             WHERE id = $3`,
-            [targetTier, expiresAt.toISOString(), userId],
-          );
-
-          await client.query("COMMIT");
-          console.log(
-            `✅ Payment processed: User ${userId} → ${targetTier} (expires ${expiresAt.toISOString()})`,
-          );
-
-        } catch (dbError) {
-          await client.query("ROLLBACK");
-          console.error("❌ DB error processing payment:", dbError);
-        } finally {
-          client.release();
-        }
+      if (outcome.status === "duplicate") {
+        console.log(
+          `ℹ️ Duplicate checkout.session.completed for ${session.id} ignored`,
+        );
+        return res.json({ received: true, duplicate: true });
       }
+      if (outcome.status === "ignored") break;
 
-      // ── Marketing order payment: mark order as paid + clear cart ──
-      if (type === "marketing_order" && session.metadata?.orderId) {
-        const orderId = session.metadata.orderId;
-        const client2 = await pool.connect();
-        try {
-          await client2.query("BEGIN");
-
-          // 1. Update order status to paid
-          await client2.query(
-            `UPDATE orders SET status = 'paid', stripe_session_id = $1, updated_at = NOW() WHERE id = $2`,
-            [session.id, orderId],
-          );
-
-          // 2. Record transaction
-          await client2.query(
-            `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
-             VALUES (NULL, $1, $2, 'marketing_order', 'completed', $3)`,
-            [
-              userId,
-              ((session.amount_total || 0) / 100).toFixed(2),
-              session.id,
-            ],
-          );
-
-          // 3. Clear user's cart
-          await client2.query(`DELETE FROM cart_items WHERE user_id = $1`, [
-            userId,
-          ]);
-
-          await client2.query("COMMIT");
-          console.log(`✅ Marketing order ${orderId} paid by user ${userId}`);
-        } catch (dbError) {
-          await client2.query("ROLLBACK");
-          console.error("❌ DB error processing marketing order:", dbError);
-        } finally {
-          client2.release();
-        }
-      }
-
-      // ── Auto-save the payment method used in this checkout ──
       try {
         const numericUserId = parseInt(userId);
         if (
@@ -367,7 +299,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
       } catch (autoSaveErr: any) {
         console.error(
           "⚠️ Auto-save card after checkout error:",
-          autoSaveErr.message,
+          redactStripeSecrets(autoSaveErr?.message),
         );
       }
       break;
@@ -555,7 +487,7 @@ router.post("/create-portal", async (req: Request, res: Response) => {
 
     const portalSession = await stripe!.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${req.headers.origin || "http://localhost:5003"}/pricing`,
+      return_url: `${getPublicBaseUrl()}/pricing`,
     });
 
     res.json({
@@ -755,7 +687,7 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
       user.username,
     );
 
-    const origin = req.headers.origin || "http://localhost:5003";
+    const origin = getPublicBaseUrl();
 
     const session = await stripe!.checkout.sessions.create({
       mode: "setup",
