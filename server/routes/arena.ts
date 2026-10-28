@@ -19,6 +19,7 @@
  *
  * Routes:
  *   GET  /api/arena/active              — Current open/in-progress contests
+ *   GET  /api/arena/summary             — Public counts: contests, signed-up artists, launch threshold
  *   GET  /api/arena/:id                 — Contest detail + bracket entries
  *   GET  /api/arena/:id/bracket         — Current round standings
  *   POST /api/arena/create              — Admin: create weekly contest
@@ -117,6 +118,39 @@ router.get("/active", async (_req: Request, res: Response) => {
   } catch (err: any) {
     console.error("[ARENA] Active fetch error:", err);
     res.status(500).json({ success: false, error: "Failed to fetch arenas" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /summary — Public counts for the Arena page (counts only, no personal data)
+// "Signed up" uses the same rule as /eligible-artists and /participation-stats:
+// an active artist profile at badge tier 3 (Silver) or above.
+// ═══════════════════════════════════════════════════════════════════════════════
+const CONTEST_LAUNCH_THRESHOLD = 16; // a contest fills and starts at 16 entrants
+
+router.get("/summary", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM arena_contests WHERE status IN ('open', 'in_progress')) AS active_contests,
+         (SELECT COUNT(*) FROM arena_contests) AS total_contests,
+         (SELECT COUNT(*) FROM artist_profiles WHERE is_active = true AND current_badge_tier >= 3) AS signed_up_artists`,
+    );
+    const row = result.rows[0] ?? {};
+    const signedUpArtists = Number(row.signed_up_artists) || 0;
+    res.json({
+      success: true,
+      activeContests: Number(row.active_contests) || 0,
+      totalContests: Number(row.total_contests) || 0,
+      signedUpArtists,
+      threshold: CONTEST_LAUNCH_THRESHOLD,
+      canLaunch: signedUpArtists >= CONTEST_LAUNCH_THRESHOLD,
+    });
+  } catch (err: any) {
+    console.error("[ARENA] Summary fetch error:", err);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch arena summary" });
   }
 });
 

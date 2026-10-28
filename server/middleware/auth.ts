@@ -229,6 +229,7 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/social/posts",
       "/api/arena/active",
       "/api/arena/history",
+      "/api/arena/summary",
       "/api/revenue-pulse/pool",
       "/api/revenue-pulse/leaderboard",
       "/api/page-readiness",
