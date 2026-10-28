@@ -26,7 +26,7 @@ export default function Footer() {
         className="pointer-events-none absolute -right-12 -top-24 -z-10 h-64 w-64 rounded-full border border-amber-200/10 sm:-right-4 sm:-top-36 sm:h-96 sm:w-96"
       />
 
-      <div className="mx-auto max-w-7xl px-5 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-10 sm:px-8 sm:pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:pt-14">
+      <div className="mx-auto max-w-7xl px-5 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-10 sm:px-8 sm:pt-14 md:pb-[calc(env(safe-area-inset-bottom)+6.5rem)]">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-14">
           <div>
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.32em] text-amber-200/75">
