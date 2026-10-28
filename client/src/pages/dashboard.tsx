@@ -164,6 +164,11 @@ import {
 
 import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  nextSendAttempt,
+  settleSendAttempt,
+  type SendAttempt,
+} from "@/lib/inbox-api";
 
 const API_BASE_URL = "";
 
@@ -689,6 +694,9 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
   const [streamProvider, setStreamProvider] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  // The key of the send that has not been confirmed yet, so sending the same
+  // text again after a lost response cannot store the message twice.
+  const sendAttemptRef = useRef<SendAttempt | null>(null);
 
   const currentTierKey: TierKey =
     userRole === "superuser"
@@ -838,6 +846,11 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
     const isSupport = activeConversation?.type === "support";
 
     // Persist user message to DB
+    const attempt = nextSendAttempt(sendAttemptRef.current, {
+      conversationId: activeConversationId,
+      content: text,
+    });
+    sendAttemptRef.current = attempt;
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/inbox/conversations/${activeConversationId}/messages`,
@@ -849,9 +862,11 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
             content: text,
             senderId: user.id,
             senderName: user.name || "You",
+            clientMessageId: attempt.clientMessageId,
           }),
         },
       );
+      sendAttemptRef.current = settleSendAttempt(attempt, response);
       if (!response.ok) throw new Error("Could not save support message");
       await refetchMessages();
       queryClient.invalidateQueries({ queryKey: ["inbox-conversations"] });

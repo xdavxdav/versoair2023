@@ -224,7 +224,12 @@ export function fetchInboxThread<M, C>(
 export function postInboxMessage<M>(
   fetcher: InboxFetcher,
   conversationId: IdLike,
-  payload: { content: string; attachmentUrl?: string | null },
+  payload: {
+    content: string;
+    attachmentUrl?: string | null;
+    /** From nextSendAttempt: lets the server recognise a retry of this send. */
+    clientMessageId?: string;
+  },
 ) {
   return requestInbox<M>(
     fetcher,
@@ -237,6 +242,92 @@ export function postInboxMessage<M>(
     },
     (body) => (isRecord(body.message) ? (body.message as M) : undefined),
   );
+}
+
+/* ----------------------- send attempts and their keys ---------------------- */
+
+/**
+ * One send attempt: what was sent and the key the server uses to recognise a
+ * repeat of it. A retry that reuses the key cannot store the message twice,
+ * even when the first request was stored and only its response was lost.
+ */
+export interface SendAttempt {
+  conversationId: string;
+  content: string;
+  attachmentUrl: string | null;
+  clientMessageId: string;
+}
+
+type RandomSource = {
+  randomUUID?: () => string;
+  getRandomValues?: <T extends ArrayBufferView>(array: T) => T;
+};
+
+/** A fresh UUID. randomUUID is missing outside secure contexts and in old browsers. */
+export function newClientMessageId(
+  source: RandomSource | null = typeof crypto === "undefined" ? null : crypto,
+): string {
+  if (typeof source?.randomUUID === "function") return source.randomUUID();
+
+  const bytes = new Uint8Array(16);
+  if (typeof source?.getRandomValues === "function") {
+    source.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20),
+  ].join("-");
+}
+
+/**
+ * The attempt to send `draft` with. It keeps the previous attempt's key only
+ * when the conversation, the text and the attachment are all unchanged (the
+ * text is compared trimmed, as the server stores it); a new or edited draft
+ * gets a new key.
+ */
+export function nextSendAttempt(
+  previous: SendAttempt | null | undefined,
+  draft: {
+    conversationId: IdLike;
+    content: string;
+    attachmentUrl?: string | null;
+  },
+  makeId: () => string = newClientMessageId,
+): SendAttempt {
+  const conversationId = String(draft.conversationId);
+  const content = draft.content.trim();
+  const attachmentUrl = draft.attachmentUrl?.trim() || null;
+  if (
+    previous &&
+    previous.conversationId === conversationId &&
+    previous.content === content &&
+    previous.attachmentUrl === attachmentUrl
+  ) {
+    return previous;
+  }
+  return { conversationId, content, attachmentUrl, clientMessageId: makeId() };
+}
+
+/**
+ * What to remember once a send has answered. A success forgets the key, and so
+ * does a reused-key refusal (the next try needs a new one). Anything else may
+ * have been stored without the response arriving, so the key is kept.
+ */
+export function settleSendAttempt(
+  attempt: SendAttempt,
+  result: { ok: boolean; status?: number },
+): SendAttempt | null {
+  return result.ok || result.status === 409 ? null : attempt;
 }
 
 export function fetchInboxContacts<K>(

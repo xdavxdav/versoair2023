@@ -53,14 +53,17 @@ import {
   keepConversationMessages,
   markInboxConversationRead,
   mergeThreadReload,
+  nextSendAttempt,
   postInboxMessage,
   removePendingMessage,
   restoreDraft,
   sameId,
+  settleSendAttempt,
   sortConversationsNewestFirst,
   startInboxConversation,
   type IdLike,
   type InboxFailure,
+  type SendAttempt,
 } from "@/lib/inbox-api";
 
 /* -------------------------------------------------------------------------- */
@@ -312,6 +315,9 @@ export function TwitterMessenger({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sendingRef = useRef(false);
+  // The key of the send that has not been confirmed yet, so "Try again" after a
+  // lost response cannot store the message twice.
+  const sendAttemptRef = useRef<SendAttempt | null>(null);
   const selectedConvRef = useRef<Conversation | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
   const contactsAbortRef = useRef<AbortController | null>(null);
@@ -401,6 +407,12 @@ export function TwitterMessenger({
     setComposerError(null);
     setShowNewConvoModal(false);
   };
+
+  // A send key belongs to the account that made it. A failed draft outlives
+  // closing the messenger, so its key does too.
+  useEffect(() => {
+    sendAttemptRef.current = null;
+  }, [userId]);
 
   /* ── Reset when the account changes or the messenger closes ── */
   useEffect(() => {
@@ -609,11 +621,17 @@ export function TwitterMessenger({
     setMessages((prev) => [...prev, optimistic]);
     setMsgText("");
 
+    const attempt = nextSendAttempt(sendAttemptRef.current, {
+      conversationId: conversation.id,
+      content: text,
+    });
+    sendAttemptRef.current = attempt;
     const result = await postInboxMessage<Message>(
       authenticatedFetch,
       conversation.id,
-      { content: text },
+      { content: text, clientMessageId: attempt.clientMessageId },
     );
+    sendAttemptRef.current = settleSendAttempt(attempt, result);
     sendingRef.current = false;
     setSending(false);
 

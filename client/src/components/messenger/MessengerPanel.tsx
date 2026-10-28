@@ -47,16 +47,19 @@ import {
   localFailure,
   markInboxConversationRead,
   mergeThreadReload,
+  nextSendAttempt,
   postInboxMessage,
   publishInboxMessage,
   removePendingMessage,
   restoreDraft,
   sameId,
+  settleSendAttempt,
   startInboxConversation,
   uploadInboxAttachment,
   validateAttachment,
   type IdLike,
   type InboxFailure,
+  type SendAttempt,
 } from "@/lib/inbox-api";
 import InboxNotice from "./InboxNotice";
 
@@ -203,6 +206,9 @@ export default function MessengerPanel({
   const activeConvoRef = useRef<Conversation | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
   const sendingRef = useRef(false);
+  // The key of the send that has not been confirmed yet, so "Try again" after a
+  // lost response cannot store the message twice.
+  const sendAttemptRef = useRef<SendAttempt | null>(null);
   const contactsAbortRef = useRef<AbortController | null>(null);
   const refreshAbortRef = useRef<AbortController | null>(null);
   const otherTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -303,6 +309,7 @@ export default function MessengerPanel({
     setComposerError(null);
     setDraft("");
     setPendingAttachment(null);
+    sendAttemptRef.current = null;
     setContacts([]);
     setContactsLoaded(false);
     setContactsError(null);
@@ -574,11 +581,18 @@ export default function MessengerPanel({
     };
     setMessages((prev) => [...prev, optimisticMsg]);
 
+    const attempt = nextSendAttempt(sendAttemptRef.current, {
+      conversationId: conversation.id,
+      content,
+      attachmentUrl,
+    });
+    sendAttemptRef.current = attempt;
     const result = await postInboxMessage<InboxMessage>(
       authenticatedFetch,
       conversation.id,
-      { content, attachmentUrl },
+      { content, attachmentUrl, clientMessageId: attempt.clientMessageId },
     );
+    sendAttemptRef.current = settleSendAttempt(attempt, result);
     sendingRef.current = false;
     setSending(false);
 

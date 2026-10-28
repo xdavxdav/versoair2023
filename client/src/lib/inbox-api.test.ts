@@ -14,10 +14,13 @@ import {
   localFailure,
   markInboxConversationRead,
   mergeThreadReload,
+  newClientMessageId,
+  nextSendAttempt,
   postInboxMessage,
   publishInboxMessage,
   removePendingMessage,
   restoreDraft,
+  settleSendAttempt,
   sortConversationsNewestFirst,
   startInboxConversation,
   uploadInboxAttachment,
@@ -292,6 +295,210 @@ test("sending posts JSON to the conversation and returns the stored message", as
     attachmentUrl: null,
   });
   assert.deepEqual(seen?.init?.headers, { "Content-Type": "application/json" });
+});
+
+/* ------------------------- send idempotency (retries) ---------------------- */
+
+const KEY_SHAPE = /^[A-Za-z0-9_-]{16,64}$/;
+
+test("a send carries its client message id in the JSON body", async () => {
+  let seen: RequestInit | undefined;
+  const result = await postInboxMessage<{ id: number }>(
+    async (_url, init) => {
+      seen = init;
+      return json(200, { success: true, message: { id: 5 } });
+    },
+    12,
+    {
+      content: "hello",
+      attachmentUrl: "/api/inbox/attachments/7",
+      clientMessageId: "3f2b8c1e-9a4d-4c57-8e0b-6d1f5a7c9e21",
+    },
+  );
+  assert.deepEqual(result, { ok: true, data: { id: 5 } });
+  assert.deepEqual(JSON.parse(String(seen?.body)), {
+    content: "hello",
+    attachmentUrl: "/api/inbox/attachments/7",
+    clientMessageId: "3f2b8c1e-9a4d-4c57-8e0b-6d1f5a7c9e21",
+  });
+  assert.deepEqual(seen?.headers, { "Content-Type": "application/json" });
+});
+
+test("a send without a key posts the same body it always did", async () => {
+  let body: unknown;
+  await postInboxMessage(
+    async (_url, init) => {
+      body = JSON.parse(String(init?.body));
+      return json(200, { success: true, message: { id: 5 } });
+    },
+    12,
+    { content: "hello" },
+  );
+  assert.deepEqual(body, { content: "hello" });
+});
+
+test("a replayed send resolves to the original message like a fresh one", async () => {
+  const result = await postInboxMessage<{ id: number }>(
+    replying(
+      json(200, { success: true, message: { id: 5 }, replayed: true }),
+    ),
+    12,
+    { content: "hello", clientMessageId: "3f2b8c1e-9a4d-4c57-8e0b-6d1f5a7c9e21" },
+  );
+  assert.deepEqual(result, { ok: true, data: { id: 5 } });
+});
+
+test("a reused key surfaces as a plain, non-retryable failure", async () => {
+  const result = failure(
+    await postInboxMessage(
+      replying(
+        json(409, {
+          success: false,
+          error: "That message key was already used for a different message.",
+          code: "IDEMPOTENCY_KEY_REUSED",
+        }),
+      ),
+      12,
+      { content: "hello", clientMessageId: "3f2b8c1e-9a4d-4c57-8e0b-6d1f5a7c9e21" },
+    ),
+  );
+  assert.equal(result.status, 409);
+  assert.equal(result.retryable, false);
+  assert.equal(
+    result.message,
+    "That message key was already used for a different message.",
+  );
+});
+
+test("message ids are UUIDs, a new one each time", () => {
+  const ids = new Set(Array.from({ length: 50 }, () => newClientMessageId()));
+  assert.equal(ids.size, 50);
+  for (const id of ids) assert.match(id, KEY_SHAPE);
+});
+
+test("message ids fall back to random bytes where randomUUID is missing", () => {
+  let call = 0;
+  const source = {
+    getRandomValues<T extends ArrayBufferView>(array: T): T {
+      const bytes = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
+      for (let i = 0; i < bytes.length; i++) bytes[i] = (call * 37 + i * 11) & 0xff;
+      call += 1;
+      return array;
+    },
+  };
+  const first = newClientMessageId(source);
+  const second = newClientMessageId(source);
+  assert.match(first, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.match(second, KEY_SHAPE);
+  assert.notEqual(first, second);
+});
+
+test("message ids still work with no crypto at all", () => {
+  const id = newClientMessageId(null);
+  assert.match(id, KEY_SHAPE);
+  assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.notEqual(id, newClientMessageId(null));
+});
+
+const idMaker = () => {
+  let n = 0;
+  return () => `attempt-key-${String(++n).padStart(8, "0")}`;
+};
+
+test("a retry of the same draft reuses the key", () => {
+  const makeId = idMaker();
+  const first = nextSendAttempt(null, { conversationId: 12, content: "hello" }, makeId);
+  assert.equal(first.clientMessageId, "attempt-key-00000001");
+  const retry = nextSendAttempt(
+    first,
+    { conversationId: "12", content: "  hello\n", attachmentUrl: null },
+    makeId,
+  );
+  assert.strictEqual(retry, first);
+  assert.equal(makeId(), "attempt-key-00000002");
+});
+
+test("an edited draft gets a new key", () => {
+  const makeId = idMaker();
+  const first = nextSendAttempt(null, { conversationId: 12, content: "hello" }, makeId);
+  for (const content of ["hello!", "Hello", "hello world", "hell"]) {
+    const edited = nextSendAttempt(first, { conversationId: 12, content }, makeId);
+    assert.notEqual(edited.clientMessageId, first.clientMessageId, content);
+    assert.equal(edited.content, content);
+  }
+});
+
+test("another conversation gets a new key even for the same text", () => {
+  const makeId = idMaker();
+  const first = nextSendAttempt(null, { conversationId: 12, content: "hello" }, makeId);
+  const other = nextSendAttempt(first, { conversationId: 13, content: "hello" }, makeId);
+  assert.notEqual(other.clientMessageId, first.clientMessageId);
+  assert.equal(other.conversationId, "13");
+});
+
+test("attaching, removing or swapping an image gets a new key", () => {
+  const makeId = idMaker();
+  const text = nextSendAttempt(null, { conversationId: 12, content: "look" }, makeId);
+  const withImage = nextSendAttempt(
+    text,
+    { conversationId: 12, content: "look", attachmentUrl: "/api/inbox/attachments/7" },
+    makeId,
+  );
+  assert.notEqual(withImage.clientMessageId, text.clientMessageId);
+
+  const sameImage = nextSendAttempt(
+    withImage,
+    { conversationId: 12, content: "look", attachmentUrl: "/api/inbox/attachments/7" },
+    makeId,
+  );
+  assert.strictEqual(sameImage, withImage);
+
+  const swapped = nextSendAttempt(
+    withImage,
+    { conversationId: 12, content: "look", attachmentUrl: "/api/inbox/attachments/8" },
+    makeId,
+  );
+  assert.notEqual(swapped.clientMessageId, withImage.clientMessageId);
+
+  const removed = nextSendAttempt(withImage, { conversationId: 12, content: "look" }, makeId);
+  assert.notEqual(removed.clientMessageId, withImage.clientMessageId);
+});
+
+test("a photo with no text keeps its key across a retry", () => {
+  const makeId = idMaker();
+  const photo = { conversationId: 4, content: "", attachmentUrl: "/api/inbox/attachments/9" };
+  const first = nextSendAttempt(undefined, photo, makeId);
+  assert.strictEqual(nextSendAttempt(first, photo, makeId), first);
+});
+
+test("a send that succeeded or hit a reused key forgets its key", () => {
+  const attempt = nextSendAttempt(null, { conversationId: 12, content: "hello" }, idMaker());
+  assert.equal(settleSendAttempt(attempt, { ok: true }), null);
+  assert.equal(settleSendAttempt(attempt, { ok: false, status: 409 }), null);
+});
+
+test("a send that may not have arrived keeps its key for the retry", () => {
+  const attempt = nextSendAttempt(null, { conversationId: 12, content: "hello" }, idMaker());
+  for (const status of [0, 401, 400, 404, 408, 429, 500, 502, 503, 504]) {
+    assert.strictEqual(settleSendAttempt(attempt, { ok: false, status }), attempt, String(status));
+  }
+});
+
+test("a whole retry cycle: lost response, same key; success, then a new key", () => {
+  const makeId = idMaker();
+  const draft = { conversationId: 12, content: "hello" };
+  let remembered = null as ReturnType<typeof nextSendAttempt> | null;
+
+  const first = nextSendAttempt(remembered, draft, makeId);
+  remembered = settleSendAttempt(first, { ok: false, status: 0 });
+
+  const retry = nextSendAttempt(remembered, draft, makeId);
+  assert.equal(retry.clientMessageId, first.clientMessageId);
+  remembered = settleSendAttempt(retry, { ok: true });
+  assert.equal(remembered, null);
+
+  const next = nextSendAttempt(remembered, draft, makeId);
+  assert.notEqual(next.clientMessageId, first.clientMessageId);
 });
 
 test("the thread loader returns messages and the conversation row", async () => {
