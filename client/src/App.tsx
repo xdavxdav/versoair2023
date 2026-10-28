@@ -24,6 +24,8 @@ import {
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import { isContentNavPath } from "@/components/ContentNav";
 import { MUSIC_ROUTE_PREFIXES } from "@/lib/music-routes";
+import { useRouteScrollRestoration } from "@/hooks/use-route-scroll-restoration";
+import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
 import QuickSignIn from "@/components/QuickSignIn";
 import { MessagesPage } from "@/components/TwitterMessenger";
@@ -441,9 +443,6 @@ function Router() {
     status: "checking" | "allowed" | "denied" | "error";
     message?: string;
   } | null>(null);
-  const [previousLocation, setPreviousLocation] = useState(location);
-  const isInitialRender = useRef(true);
-
   useEffect(() => {
     if (!pageIsBlocked) return;
     if (isLocalPreviewOnlyPath(location)) {
@@ -479,30 +478,6 @@ function Router() {
       });
     return () => controller.abort();
   }, [location, pageIsBlocked]);
-
-  // Scroll to top BEFORE paint (useLayoutEffect) so the user never sees the footer
-  useLayoutEffect(() => {
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
-    }
-
-    if (isInitialRender.current) {
-      // First render: also force top (handles direct-nav / refresh)
-      window.scrollTo(0, 0);
-      isInitialRender.current = false;
-      return;
-    }
-    if (location !== previousLocation) {
-      window.scrollTo(0, 0);
-    }
-  }, [location, previousLocation]);
-
-  // Update previous location for scroll-to-top tracking
-  useEffect(() => {
-    if (location !== previousLocation) {
-      setPreviousLocation(location);
-    }
-  }, [location, previousLocation]);
 
   if (BETA_SCOPE_FREEZE && !isBetaRoute(location)) {
     return <Redirect to="/" />;
@@ -1077,6 +1052,8 @@ function AppContent() {
   // ~68px dead strip at the bottom of every non-music page.
   const { currentTrack } = useAudio();
   const [currentPath] = useLocation();
+  useRouteScrollRestoration(currentPath);
+  const isFooterVisible = useFooterVisibility(currentPath);
   useEffect(() => {
     // Shared pages (profile, marketplace...) must not overwrite the portal we came from
     if (
@@ -1251,9 +1228,12 @@ function AppContent() {
         !currentPath.startsWith("/admin") &&
         !isImmersivePage && (
           <div
-            className="sticky top-0 left-0 right-0 z-[60] flex flex-col"
-            style={{ overflow: "visible" }}
-          >
+          aria-hidden={isFooterVisible}
+          className={`sticky top-0 left-0 right-0 z-[60] flex flex-col ${
+            isFooterVisible ? "invisible pointer-events-none" : ""
+          }`}
+          style={{ overflow: "visible" }}
+        >
             {/* Top Banner */}
             <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white h-7 px-2 flex items-center">
               <div

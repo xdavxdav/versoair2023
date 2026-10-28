@@ -8,7 +8,10 @@ export default function TestimonialsFloating() {
 
   if (isClosed) {
     return (
-      <div className="fixed bottom-2 left-2 z-50 sm:bottom-6 sm:left-6">
+      <div
+        data-cookie-clearance="bottom-left"
+        className="fixed bottom-2 left-2 z-50 sm:bottom-6 sm:left-6"
+      >
         <Button
           onClick={() => {
             setIsClosed(false);
@@ -25,7 +28,10 @@ export default function TestimonialsFloating() {
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-2 left-2 z-50 sm:bottom-6 sm:left-6">
+      <div
+        data-cookie-clearance="bottom-left"
+        className="fixed bottom-2 left-2 z-50 sm:bottom-6 sm:left-6"
+      >
         <Button
           onClick={() => setIsMinimized(false)}
           aria-label="Expand user reviews"
@@ -40,7 +46,10 @@ export default function TestimonialsFloating() {
   }
 
   return (
-    <div className="fixed bottom-2 left-2 z-50 sm:bottom-6 sm:left-6">
+    <div
+      data-cookie-clearance="bottom-left"
+      className="fixed bottom-2 left-2 z-50 sm:bottom-6 sm:left-6"
+    >
       <div
         className="flex max-h-[45svh] w-[min(20rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-xl border bg-white shadow-2xl transition-all duration-300 sm:max-h-[55svh]"
       >

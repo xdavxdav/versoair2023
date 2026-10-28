@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 import { useLocation } from "wouter";
 import { isContentNavPath } from "@/components/ContentNav";
+import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
   const [location] = useLocation();
+  const isFooterVisible = useFooterVisibility(location);
   const isContentNavigationPage = isContentNavPath(location);
   const hasBottomNavigation = isContentNavigationPage;
 
@@ -36,7 +38,7 @@ export default function ScrollToTop() {
 
   return (
     <AnimatePresence>
-      {isVisible && !isContentNavigationPage && (
+      {isVisible && !isContentNavigationPage && !isFooterVisible && (
         <motion.button
           initial={{ opacity: 0, scale: 0, y: 20 }}
           animate={{
@@ -48,7 +50,8 @@ export default function ScrollToTop() {
           whileHover={{ scale: 1.15, y: -8 }}
           whileTap={{ scale: 0.85 }}
           onClick={scrollToTop}
-          className={`fixed right-8 z-[9999] w-16 h-16 bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 text-white rounded-full transition-all duration-300 flex flex-col items-center justify-center group border-2 border-emerald-400/40 backdrop-blur-md hover:backdrop-blur-lg hover:from-emerald-500/40 hover:to-emerald-600/40 hover:border-emerald-300/60 ${hasBottomNavigation ? "bottom-[7.5rem]" : "bottom-8"}`}
+          data-cookie-clearance="bottom-right"
+          className={`fixed right-8 z-[9999] flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 border-emerald-400/40 bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 text-white transition-all duration-300 group backdrop-blur-md hover:border-emerald-300/60 hover:from-emerald-500/40 hover:to-emerald-600/40 hover:backdrop-blur-lg ${hasBottomNavigation ? "bottom-[7.5rem]" : "bottom-8"}`}
           style={{
             boxShadow:
               "0 0 30px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)",

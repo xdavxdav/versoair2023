@@ -3,6 +3,7 @@ import { Flag } from "lucide-react";
 import { NativeLabel } from "@/components/NativeLabel";
 import { getCookieConsent } from "@/lib/cookie-consent";
 import { FEEDBACK_FORM_URL } from "@/lib/feedback";
+import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 import {
   REPORT_NUDGE_DELAY_MS,
   REPORT_NUDGE_MAX_ATTEMPTS,
@@ -55,9 +56,10 @@ function canShowNow(path: string): boolean {
 export function ReportIssueNudge({ path, raised }: ReportIssueNudgeProps) {
   const [visible, setVisible] = useState(false);
   const quiet = isReportNudgeQuietPath(path);
+  const isFooterVisible = useFooterVisibility(path);
 
   useEffect(() => {
-    if (quiet) {
+    if (quiet || isFooterVisible) {
       setVisible(false);
       return;
     }
@@ -78,7 +80,7 @@ export function ReportIssueNudge({ path, raised }: ReportIssueNudgeProps) {
     };
     timer = window.setTimeout(attempt, REPORT_NUDGE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [quiet, path]);
+  }, [quiet, path, isFooterVisible]);
 
   return (
     <div

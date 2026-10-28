@@ -1957,7 +1957,7 @@ export default function Home() {
         canonicalPath="/"
       />
       {/* Hero Section */}
-      <div className="relative flex min-h-[clamp(36rem,78vh,52rem)] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative flex min-h-[clamp(36rem,78svh,52rem)] items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
         {isAuthenticated && (
           <video
             className="absolute inset-0 h-full w-full object-cover"

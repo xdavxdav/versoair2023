@@ -88,6 +88,10 @@
 }
 
 @layer base {
+  :root {
+    --cookie-banner-height: 0px;
+  }
+
   * {
     @apply border-border;
   }
@@ -128,6 +132,28 @@
     overflow-x: clip;
     margin: 0;
     padding: 0;
+  }
+
+  html[data-cookie-consent-visible] body {
+    padding-bottom: var(--cookie-banner-height);
+  }
+
+  html[data-cookie-consent-visible] [data-mobile-menu-bubble] {
+    visibility: hidden;
+  }
+
+  html[data-cookie-consent-visible] [data-cookie-clearance="bottom-left"] {
+    bottom: calc(var(--cookie-banner-height) + env(safe-area-inset-bottom) + 0.5rem) !important;
+  }
+
+  html[data-cookie-consent-visible] [data-cookie-clearance="bottom-right"] {
+    bottom: calc(var(--cookie-banner-height) + env(safe-area-inset-bottom) + 2rem) !important;
+  }
+
+  @media (min-width: 640px) {
+    html[data-cookie-consent-visible] [data-cookie-clearance="bottom-left"] {
+      bottom: calc(var(--cookie-banner-height) + env(safe-area-inset-bottom) + 1.5rem) !important;
+    }
   }
 
   [data-reveal] {
@@ -1993,5 +2019,33 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .report-issue-nudge {
     animation-name: report-issue-nudge-calm;
+  }
+}
+
+@supports (min-height: 100svh) {
+  .min-h-screen {
+    min-height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+  }
+
+  .max-h-screen {
+    max-height: 100dvh;
+  }
+
+  [class~="max-h-[90vh]"] {
+    max-height: 90dvh;
+  }
+
+  [class~="max-h-[85vh]"] {
+    max-height: 85dvh;
+  }
+
+  [class~="max-h-[80vh]"] {
+    max-height: 80dvh;
   }
 }

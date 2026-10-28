@@ -10,11 +10,11 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import {
   useState,
   useEffect,
-  useLayoutEffect,
   useRef,
   Suspense,
   lazy,
 } from "react";
+import { useRouteScrollRestoration } from "@/hooks/use-route-scroll-restoration";
 import QuickSignIn from "@/components/QuickSignIn";
 import { LanguageProvider } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
@@ -86,23 +86,6 @@ const MessengerLauncher = lazy(
 
 function Router() {
   const [location] = useLocation();
-  const [previousLocation, setPreviousLocation] = useState(location);
-  const isInitialRender = useRef(true);
-  useEffect(() => {
-    if ("scrollRestoration" in window.history)
-      window.history.scrollRestoration = "manual";
-  }, []);
-  useLayoutEffect(() => {
-    if (isInitialRender.current) {
-      window.scrollTo(0, 0);
-      isInitialRender.current = false;
-      return;
-    }
-    if (location !== previousLocation) window.scrollTo(0, 0);
-  }, [location, previousLocation]);
-  useEffect(() => {
-    setPreviousLocation(location);
-  }, [location]);
 
   return (
     <Switch>
@@ -273,6 +256,7 @@ function Router() {
 
 function AppContent() {
   const [location] = useLocation();
+  useRouteScrollRestoration(location);
   const [isLocationPanelOpen, setIsLocationPanelOpen] = useState(false);
   const [showQuickSignIn, setShowQuickSignIn] = useState(false);
   const { isLoading, isFadingOut } = useLoading();

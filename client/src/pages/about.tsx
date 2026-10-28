@@ -483,10 +483,6 @@ export default function About() {
   }, [activeSector]);
 
   useEffect(() => {
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
-    }
-
     const handleScroll = () => {
       if (heroRef.current) {
         const scrolled = window.pageYOffset;

@@ -83,7 +83,7 @@ export const CulturalProgramsModal = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -91,7 +91,7 @@ export const CulturalProgramsModal = ({
           style={{ overscrollBehavior: "contain" }}
         >
           <motion.div
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl bg-white shadow-2xl"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}

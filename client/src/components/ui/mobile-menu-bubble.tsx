@@ -47,6 +47,7 @@ import { AccountSettingsModal } from "@/components/AccountSettingsModal";
 import NotificationCenter from "@/components/NotificationCenter";
 import { NativeLabel } from "@/components/NativeLabel";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 
 // ─── Grouped Navigation ────────────────────────────────────────
 
@@ -233,6 +234,7 @@ function SectionLabel({ text, brand }: { text: string; brand?: boolean }) {
 export function MobileMenuBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [location, navigate] = useLocation();
+  const isFooterVisible = useFooterVisibility(location);
   const { isAuthenticated } = useSubscription();
   const { user, loading: authLoading } = useAuthContext();
   const { translateText: tr } = useLanguage();
@@ -402,7 +404,8 @@ export function MobileMenuBubble() {
     <>
       {/* ── Floating draggable bubble — mobile/small-tablet only (md+ uses the full Navbar) ── */}
       <div
-        className="fixed z-[90] md:hidden"
+        data-mobile-menu-bubble
+        className={`fixed z-[90] md:hidden ${isFooterVisible && !isOpen ? "invisible" : ""}`}
         style={{
           left: pos.x,
           top: pos.y,
@@ -452,7 +455,7 @@ export function MobileMenuBubble() {
         {/* ── Menu panel ── */}
         {isOpen && !dragging && (
           <div
-            className="absolute bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] border border-gray-200/60 w-[calc(100vw-1rem)] max-w-[320px] max-h-[calc(100vh-100px)] overflow-hidden"
+            className="absolute w-[calc(100vw-1rem)] max-w-[320px] max-h-[calc(100dvh-100px)] overflow-y-auto overscroll-contain rounded-2xl border border-gray-200/60 bg-white/95 shadow-[0_8px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl"
             style={panelPlacement}
           >
             {/* Panel header */}
