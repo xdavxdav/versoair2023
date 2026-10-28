@@ -100,6 +100,14 @@ interface MyVote {
   streamsUntilLock: number;
 }
 
+interface ArenaSummary {
+  activeContests: number;
+  totalContests: number;
+  signedUpArtists: number;
+  threshold: number;
+  canLaunch: boolean;
+}
+
 const ROUND_NAMES = [
   "Round of 16",
   "Quarter-Finals",
@@ -143,8 +151,25 @@ function getBadgeColor(tier: number): string {
 // ═══════════════════════════════════════════════════════════
 function ArenaList() {
   const [location, navigate] = useLocation();
+  const { user } = useAuthContext();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const fromPage =
     new URLSearchParams(window.location.search).get("from") || "";
+
+  const {
+    data: summary,
+    isLoading: loadingSummary,
+    isError: summaryFailed,
+  } = useQuery<ArenaSummary>({
+    queryKey: ["arena", "summary"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/summary`);
+      if (!res.ok) throw new Error("Arena summary could not be loaded.");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
 
   const { data: activeData, isLoading: loadingActive } = useQuery({
     queryKey: ["arena", "active"],
@@ -160,6 +185,38 @@ function ArenaList() {
     queryFn: async () => {
       const res = await fetch(`${API}/history?limit=5`);
       return res.json();
+    },
+  });
+
+  const createContest = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API}/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ genre: "Open" }),
+      });
+      const body = await res.json();
+      if (!res.ok || body.success !== true) {
+        throw new Error(body.error || "Contest could not be created.");
+      }
+      return body;
+    },
+    onSuccess: async () => {
+      toast({ title: "Arena contest created" });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["arena", "active"] }),
+        queryClient.invalidateQueries({ queryKey: ["arena", "history"] }),
+        queryClient.invalidateQueries({ queryKey: ["arena", "summary"] }),
+      ]);
+    },
+    onError: (error) => {
+      toast({
+        title: "Arena contest could not be created",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -219,7 +276,30 @@ function ArenaList() {
           >
             {activeArenas.length} live
           </Badge>
+          {user && ["admin", "superuser"].includes(user.role ?? "") && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-500/10"
+              disabled={
+                loadingSummary ||
+                summaryFailed ||
+                !summary?.canLaunch ||
+                createContest.isPending
+              }
+              onClick={() => createContest.mutate()}
+            >
+              {createContest.isPending ? "Creating…" : "Create contest"}
+            </Button>
+          )}
         </div>
+        <p className="mb-4 text-sm text-gray-400">
+          {summaryFailed
+            ? "Arena readiness is temporarily unavailable."
+            : loadingSummary || !summary
+              ? "Checking artist eligibility…"
+              : `${summary.signedUpArtists} of ${summary.threshold} qualified artists; ${summary.activeContests} active contests.`}
+        </p>
 
         {loadingActive ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
