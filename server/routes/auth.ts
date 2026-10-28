@@ -38,6 +38,7 @@ import {
   isValidTotpSecret,
   verifyTotpCode,
 } from "../services/totp";
+import { revokeSessionForLogout } from "../utils/logout-session";
 
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ||
   "7d") as jwt.SignOptions["expiresIn"];
@@ -950,17 +951,22 @@ router.post(
 router.post(
   "/logout",
   asyncHandler(async (req: Request, res: Response) => {
-    // Revoke the current session
     const token = getTokenFromRequest(req);
-    if (token) {
-      try {
-        await revokeSessionByHash(hashToken(token), "logout");
-      } catch (e) {
-        console.warn("[SESSION] Failed to revoke session on logout:", e);
-      }
-    }
+    const revocationError = await revokeSessionForLogout(token, (sessionToken) =>
+      revokeSessionByHash(hashToken(sessionToken), "logout"),
+    );
     clearAdminElevation(res);
     res.clearCookie("auth_token", { path: "/" });
+    if (revocationError) {
+      console.error(
+        "[SESSION] Failed to revoke session on logout:",
+        revocationError,
+      );
+      return res.status(503).json({
+        success: false,
+        message: "Could not revoke the server session. Please retry logout.",
+      });
+    }
     res.json({ success: true });
   }),
 );
