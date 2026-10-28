@@ -1,5 +1,6 @@
 import { APPLY_ES } from "./apply-translations";
 import { CHROME_ES } from "./chrome-translations";
+import { FOOTER_ES } from "./footer-translations";
 import { GEO_ADMIN_ES } from "./geo-admin-translations";
 import { ONBOARDING_ES } from "./onboarding-translations";
 import type { PUBLIC_COPY } from "./public-translations";
@@ -7,6 +8,7 @@ import { RECOVERY_ES } from "./recovery-translations";
 
 // Bundled editorial translation; legal copy still requires professional review.
 export const SPANISH_COPY = {
+  ...FOOTER_ES,
   ...CHROME_ES,
   ...APPLY_ES,
   ...ONBOARDING_ES,

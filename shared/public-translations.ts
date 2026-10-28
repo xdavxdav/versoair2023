@@ -1,5 +1,6 @@
 import { APPLY_COPY } from "./apply-translations";
 import { CHROME_COPY } from "./chrome-translations";
+import { FOOTER_COPY } from "./footer-translations";
 import { GEO_ADMIN_COPY } from "./geo-admin-translations";
 import { LEGAL_COPY } from "./legal-translations";
 import { OFFER_COPY } from "./offer-translations";
@@ -11,6 +12,7 @@ import { SPANISH_COPY } from "./spanish-translations";
 // Modules listed first lose lookup collisions to the older rows below them, so
 // a reused French wording never changes how an existing page is translated.
 export const PUBLIC_COPY = [
+  ...FOOTER_COPY,
   ...CHROME_COPY,
   ...APPLY_COPY,
   ...ONBOARDING_COPY,

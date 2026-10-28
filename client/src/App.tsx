@@ -298,6 +298,7 @@ const LocationPanel = lazy(() => import("@/components/ui/location-panel"));
 const MusicPortal = lazy(() => import("@/components/ui/music-portal"));
 import { PageLoader, LoadingOverlay } from "@/components/ui/app-loader";
 import NavigationProgress from "@/components/ui/NavigationProgress";
+import ReportIssueNudge from "@/components/ReportIssueNudge";
 const PullToRefresh = lazy(() => import("@/components/PullToRefresh"));
 const TestimonialsFloating = lazy(
   () => import("@/components/ui/testimonials-floating"),
@@ -1486,6 +1487,19 @@ function AppContent() {
           </p>
         </div>
       )}
+
+      {/* Brief "Report an issue" reminder — once per session, never on focused pages. */}
+      <ErrorBoundary fallback={<></>}>
+        <ReportIssueNudge
+          path={currentPath}
+          raised={
+            showContentNav ||
+            showAccountBlogNavbar ||
+            isBlogOrMarketplace ||
+            Boolean(currentTrack)
+          }
+        />
+      </ErrorBoundary>
 
       {/* Mobile Menu Bubble — hide whenever a dedicated account/content nav is active. */}
       {!isImmersivePage &&

@@ -1932,3 +1932,61 @@ html {
       0 0 30px rgba(245, 158, 11, 0.5);
   }
 }
+
+/* "Report an issue" reminder: fades in, pulses softly (never faster than once a
+   second, never fully off) and fades out within three seconds. Hover, focus or
+   touch pauses it so the visitor can read and tap it. */
+.report-issue-nudge {
+  animation: report-issue-nudge-life 3s ease-in-out forwards;
+}
+
+.report-issue-nudge:hover,
+.report-issue-nudge:focus-within,
+.report-issue-nudge:active {
+  animation-play-state: paused;
+}
+
+@keyframes report-issue-nudge-life {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.55;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes report-issue-nudge-calm {
+  0% {
+    opacity: 0;
+  }
+  10%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-issue-nudge {
+    animation-name: report-issue-nudge-calm;
+  }
+}

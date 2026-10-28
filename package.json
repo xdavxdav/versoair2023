@@ -29,7 +29,7 @@
     "test:tips": "node --import tsx --test scripts/reconcile-tips-core.test.ts server/utils/tip-request.test.ts server/routes/tip-gate.test.ts",
     "test:acting-user": "node --import tsx --test server/utils/acting-user.test.ts server/utils/email-subscription-access.test.ts server/routes/api-v1/acting-user-routes.test.ts",
     "test:app-version": "node --import tsx --test server/utils/app-version.test.ts",
-    "test:translation": "node --import tsx --test shared/public-translations.test.ts shared/apply-translations.test.ts shared/onboarding-translations.test.ts shared/geo-admin-translations.test.ts client/src/utils/country-names.test.ts server/routes/translations.test.ts server/middleware/auth-public.test.ts scripts/tests/language-switcher.test.mjs",
+    "test:translation": "node --import tsx --test shared/public-translations.test.ts shared/apply-translations.test.ts shared/onboarding-translations.test.ts shared/geo-admin-translations.test.ts shared/footer-translations.test.ts client/src/lib/report-issue-nudge.test.ts client/src/utils/country-names.test.ts server/routes/translations.test.ts server/middleware/auth-public.test.ts scripts/tests/language-switcher.test.mjs",
     "prerender:snap": "node --import tsx server/scripts/run-react-snap.ts",
     "build:prerender": "npm run seo:routes && npm run build && npm run prerender:snap && npm run seo:validate-prerender",
     "seed": "node scripts/seed-production.cjs"
