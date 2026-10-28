@@ -42,6 +42,12 @@ import {
   parseInboxAttachmentUrl,
 } from "../utils/inbox-attachment-access";
 import { receiveInboxAttachment } from "../utils/inbox-upload";
+import {
+  normalizeSendPayload,
+  parseClientMessageId,
+  replyForStoredSend,
+  sentReply,
+} from "../utils/inbox-send-idempotency";
 
 const router = Router();
 
@@ -649,9 +655,37 @@ router.get(
   },
 );
 
+// The stored copy for a send key. It is scoped to the caller's own conversation
+// and own sender id, so a key can never return someone else's message, and two
+// users can use the same key independently.
+async function findKeyedMessage(
+  convId: number,
+  senderUserId: number | string,
+  key: string,
+) {
+  const [row] = await db
+    .select()
+    .from(schema.inboxMessages)
+    .where(
+      and(
+        eq(schema.inboxMessages.conversationId, convId),
+        eq(schema.inboxMessages.senderId, String(senderUserId)),
+        eq(schema.inboxMessages.clientMessageId, key),
+      ),
+    )
+    .limit(1);
+  return row;
+}
+
 // ─── POST /api/inbox/conversations/:id/messages ──────────────────────────────
 // Send a message. Respects daily message limits per tier for business_network only.
 // marketplace messages are free/ungated (rate-limited for spam only).
+//
+// A send may carry a `clientMessageId` (one UUID per send attempt). The key is
+// stored on the sender's own copy only, so a retry whose first response was
+// lost gets that copy back and writes nothing else: no second message, no
+// second mirror copy, no second unread bump, notification or socket event.
+// Requests without a key behave exactly as they always have.
 router.post(
   "/conversations/:id/messages",
   marketplaceMessageLimiter,
@@ -659,7 +693,7 @@ router.post(
     const userId = req.user!.userId;
     const tier = getTierFromUser(req.user!);
     const convId = Number(req.params.id);
-    const { content, attachmentUrl } = req.body;
+    const { content, attachmentUrl, clientMessageId } = req.body;
 
     if (
       (typeof content !== "string" || !content.trim()) &&
@@ -682,6 +716,15 @@ router.post(
         .json({ success: false, error: "Invalid conversation ID" });
     }
 
+    const keyCheck = parseClientMessageId(clientMessageId);
+    if (!keyCheck.ok) {
+      return res
+        .status(400)
+        .json({ success: false, error: keyCheck.message });
+    }
+    const messageKey = keyCheck.key;
+    const payload = normalizeSendPayload(content, attachmentUrl);
+
     try {
       // Verify ownership
       const [conv] = await db
@@ -699,6 +742,17 @@ router.post(
         return res
           .status(404)
           .json({ success: false, error: "Conversation not found" });
+      }
+
+      // Replay lookup. It runs before the daily limit on purpose: a retry of a
+      // message that was stored as the last allowed one must get that message
+      // back, not a 429.
+      if (messageKey) {
+        const stored = await findKeyedMessage(convId, userId, messageKey);
+        if (stored) {
+          const reply = replyForStoredSend(stored, payload);
+          return res.status(reply.status).json(reply.body);
+        }
       }
 
       // Daily limit check for business_network (essential tier)
@@ -730,10 +784,8 @@ router.post(
       const trustedSenderName =
         sender?.name || req.user!.email.split("@")[0] || "Member";
       const trustedSenderAvatar = sender?.avatar || null;
-      const normalizedContent =
-        typeof content === "string" ? content.trim() : "";
-      const normalizedAttachmentUrl =
-        typeof attachmentUrl === "string" ? attachmentUrl.trim() : null;
+      const normalizedContent = payload.content;
+      const normalizedAttachmentUrl = payload.attachmentUrl;
 
       // Only the uploader may put an attachment on a message; otherwise
       // pointing a message at someone else's upload would let you read it.
@@ -761,19 +813,39 @@ router.post(
         recipientUserId !== Number(userId);
 
       const { message, mirror } = await db.transaction(async (tx) => {
-        const [createdMessage] = await tx
-          .insert(schema.inboxMessages)
-          .values({
-            conversationId: convId,
-            senderId: String(userId),
-            senderName: trustedSenderName,
-            senderAvatar: trustedSenderAvatar,
-            content: normalizedContent,
-            attachmentUrl: normalizedAttachmentUrl,
-            isRead: true,
-            isAi: false,
-          })
-          .returning();
+        const senderCopy = {
+          conversationId: convId,
+          senderId: String(userId),
+          senderName: trustedSenderName,
+          senderAvatar: trustedSenderAvatar,
+          content: normalizedContent,
+          attachmentUrl: normalizedAttachmentUrl,
+          isRead: true,
+          isAi: false,
+        };
+        // A keyed send loses the insert if a concurrent send with the same key
+        // committed first; then nothing else is written (zero rows returned).
+        const [createdMessage] = messageKey
+          ? await tx
+              .insert(schema.inboxMessages)
+              .values({ ...senderCopy, clientMessageId: messageKey })
+              .onConflictDoNothing({
+                target: [
+                  schema.inboxMessages.conversationId,
+                  schema.inboxMessages.senderId,
+                  schema.inboxMessages.clientMessageId,
+                ],
+                where: sql`client_message_id IS NOT NULL`,
+              })
+              .returning()
+          : await tx
+              .insert(schema.inboxMessages)
+              .values(senderCopy)
+              .returning();
+
+        if (!createdMessage) {
+          return { message: null, mirror: null };
+        }
 
         const preview = normalizedContent
           ? normalizedContent.substring(0, 120)
@@ -851,6 +923,19 @@ router.post(
         };
       });
 
+      if (!message) {
+        // A concurrent send with the same key won the insert and has committed
+        // (the insert waited for it), so answer from its row.
+        const winner = messageKey
+          ? await findKeyedMessage(convId, userId, messageKey)
+          : undefined;
+        if (!winner) {
+          throw new Error("Keyed send lost its insert but no stored row exists");
+        }
+        const reply = replyForStoredSend(winner, payload);
+        return res.status(reply.status).json(reply.body);
+      }
+
       if (mirror) {
         try {
           await notifyMessage({
@@ -876,7 +961,8 @@ router.post(
         });
       }
 
-      return res.json({ success: true, message });
+      const reply = sentReply(message);
+      return res.status(reply.status).json(reply.body);
     } catch (err: any) {
       console.error("[Inbox] POST /messages failed", {
         postgres: getPostgresErrorDetails(err),
