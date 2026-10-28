@@ -236,7 +236,7 @@ function ArenaList() {
               <Shield className="w-12 h-12 text-gray-500 mx-auto mb-3" />
               <p className="text-gray-400">No active arenas right now</p>
               <p className="text-sm text-gray-500 mt-1">
-                Check back soon — new weekly contests launch every Monday
+                No date is set yet. Contests are announced here when they open.
               </p>
             </CardContent>
           </Card>

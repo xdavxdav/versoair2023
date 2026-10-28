@@ -715,14 +715,14 @@ export default function About() {
                         className="mt-8"
                       >
                         <Card className="border-0 bg-gradient-to-br from-white to-slate-50 backdrop-blur-sm">
-                          <CardContent className="p-8">
-                            <div className="flex items-start gap-6">
+                          <CardContent className="p-4 sm:p-8">
+                            <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
                               <div
                                 className={`p-4 rounded-2xl ${sector.gradient} shadow-xl`}
                               >
                                 <sector.icon className="h-8 w-8 text-slate-900" />
                               </div>
-                              <div className="flex-1">
+                              <div className="min-w-0 flex-1">
                                 <h3 className="text-2xl font-bold text-slate-900 mb-4">
                                   {sector.title}
                                 </h3>
@@ -750,7 +750,7 @@ export default function About() {
                                     <Link href={sector.route}>
                                       <Button
                                         variant="outline"
-                                        className="border-slate-700 bg-white/10 text-slate-900 hover:bg-white/15"
+                                        className="h-auto whitespace-normal border-slate-700 bg-white/10 py-2 text-left text-slate-900 hover:bg-white/15"
                                       >
                                         Ouvrir {translateText(sector.title).split(" ")[0]}{" "}
                                         Tableau de Bord

@@ -5,7 +5,6 @@ import {
   Mail,
   Phone,
   BookOpen,
-  Video,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,12 +44,6 @@ export default function HelpCenter() {
       title: "Payments",
       description: "Payment methods and billing issues",
       link: "/help/payments",
-    },
-    {
-      icon: <Video className="h-8 w-8" />,
-      title: "Video Guides",
-      description: "Step-by-step video tutorials",
-      link: "#",
     },
     {
       icon: <Phone className="h-8 w-8" />,
