@@ -323,6 +323,8 @@ export async function ensureAllTables(
     const INBOX_MESSAGES_ADDITIONS = [
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS published_post_id INTEGER`,
+      // Send idempotency key: nullable, no default and no backfill.
+      `ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS client_message_id TEXT`,
       `ALTER TABLE inbox_attachments ADD COLUMN IF NOT EXISTS uploaded_by INTEGER`,
       `ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS allow_media_download BOOLEAN DEFAULT FALSE`,
       `ALTER TABLE albums ADD COLUMN IF NOT EXISTS pochette TEXT`,
@@ -630,6 +632,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       is_ai BOOLEAN NOT NULL DEFAULT FALSE,
       is_published BOOLEAN NOT NULL DEFAULT FALSE,
       published_post_id INTEGER,
+      client_message_id TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     )`,
   },
@@ -2183,6 +2186,7 @@ const INDEX_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS inbox_msg_conv_idx ON inbox_messages (conversation_id)`,
   `CREATE INDEX IF NOT EXISTS inbox_msg_created_idx ON inbox_messages (created_at)`,
   `CREATE INDEX IF NOT EXISTS inbox_msg_read_idx ON inbox_messages (is_read)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS inbox_msg_client_key_uidx ON inbox_messages (conversation_id, sender_id, client_message_id) WHERE client_message_id IS NOT NULL`,
   // verifications
   `CREATE INDEX IF NOT EXISTS verification_property_idx ON verifications (property_id)`,
   // tickets

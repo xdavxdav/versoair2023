@@ -2,7 +2,7 @@
  * Artist Catalogue Page — /artist-catalogue/:id
  * Full artist profile: bio, discography, stats, social
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAudio } from "@/lib/audio-context";
@@ -22,6 +22,11 @@ import {
 } from "@/hooks/use-streaming";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch } from "@/lib/auth";
+import {
+  nextSendAttempt,
+  settleSendAttempt,
+  type SendAttempt,
+} from "@/lib/inbox-api";
 import {
   Play,
   Pause,
@@ -90,6 +95,9 @@ export default function ArtistCataloguePage() {
     "idle" | "sending" | "sent" | "error"
   >("idle");
   const [messageError, setMessageError] = useState<string | null>(null);
+  // The key of the message that has not been confirmed yet, so sending the same
+  // text again after a lost response cannot store it twice.
+  const sendAttemptRef = useRef<SendAttempt | null>(null);
   const [showDiscussions, setShowDiscussions] = useState(false);
 
   const artist = data?.artist;
@@ -182,14 +190,23 @@ export default function ArtistCataloguePage() {
       }
       const convId = convData.conversation.id;
 
+      const attempt = nextSendAttempt(sendAttemptRef.current, {
+        conversationId: convId,
+        content,
+      });
+      sendAttemptRef.current = attempt;
       const msgRes = await authenticatedFetch(
         `/api/inbox/conversations/${convId}/messages`,
         {
           method: "POST",
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({
+            content,
+            clientMessageId: attempt.clientMessageId,
+          }),
         },
       );
       const msgData = await msgRes.json();
+      sendAttemptRef.current = settleSendAttempt(attempt, msgRes);
       if (!msgRes.ok) {
         throw new Error(msgData?.error || "Could not send message");
       }

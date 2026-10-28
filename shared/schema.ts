@@ -3654,12 +3654,19 @@ export const inboxMessages = pgTable(
     // not un-publishable, and not toggleable at send time.
     isPublished: boolean("is_published").notNull().default(false),
     publishedPostId: integer("published_post_id"),
+    // Send idempotency key, set only on the sender's own copy of a keyed send.
+    // NULL for old rows, mirror copies and every other writer.
+    clientMessageId: text("client_message_id"),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => ({
     convIdx: index("inbox_msg_conv_idx").on(t.conversationId),
     createdIdx: index("inbox_msg_created_idx").on(t.createdAt),
     readIdx: index("inbox_msg_read_idx").on(t.isRead),
+    // One stored copy per (conversation, sender, key); key-less rows are exempt.
+    clientKeyUidx: uniqueIndex("inbox_msg_client_key_uidx")
+      .on(t.conversationId, t.senderId, t.clientMessageId)
+      .where(sql`${t.clientMessageId} IS NOT NULL`),
   }),
 );
 

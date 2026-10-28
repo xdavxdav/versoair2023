@@ -8,6 +8,11 @@ import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch, checkAuth } from "@/lib/auth";
 import {
+  nextSendAttempt,
+  settleSendAttempt,
+  type SendAttempt,
+} from "@/lib/inbox-api";
+import {
   Search,
   Heart,
   Share2,
@@ -516,6 +521,9 @@ export default function MarketplacePage() {
 
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // The key of the seller message that has not been confirmed yet, so sending
+  // the same text again after a lost response cannot store it twice.
+  const sendAttemptRef = useRef<SendAttempt | null>(null);
 
   // ═══ LIVE LISTINGS (public browse feed) ═══
   const { data: liveListings = [] } = useQuery<any[]>({
@@ -627,15 +635,28 @@ export default function MarketplacePage() {
       if (!convId) throw new Error("Missing conversation id");
 
       // 2. Send the message
+      const content = messageText.trim();
+      const attempt = nextSendAttempt(sendAttemptRef.current, {
+        conversationId: convId,
+        content,
+      });
+      sendAttemptRef.current = attempt;
       const msgRes = await authenticatedFetch(
         `/api/inbox/conversations/${convId}/messages`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: messageText.trim() }),
+          body: JSON.stringify({
+            content,
+            clientMessageId: attempt.clientMessageId,
+          }),
         },
       );
       const msgJson = await msgRes.json();
+      sendAttemptRef.current = settleSendAttempt(attempt, {
+        ok: msgRes.ok && !!msgJson.success,
+        status: msgRes.status,
+      });
       if (!msgRes.ok || !msgJson.success) {
         throw new Error(msgJson.error || "Could not send message");
       }
