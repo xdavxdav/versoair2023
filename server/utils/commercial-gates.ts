@@ -1,7 +1,19 @@
-import type { Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 export function onlinePaymentsEnabled(): boolean {
   return process.env.ONLINE_PAYMENTS_ENABLED === "true";
+}
+
+/**
+ * Narrow switch for the marketing cart only. Every other payment surface
+ * (wallet, PayPal, music purchases, tips, subscriptions, Issuing) keeps
+ * depending on onlinePaymentsEnabled() alone, so this flag never opens them.
+ */
+export function marketingCheckoutEnabled(): boolean {
+  return (
+    onlinePaymentsEnabled() ||
+    process.env.MARKETING_CHECKOUT_ENABLED === "true"
+  );
 }
 
 export function commercialSubscriptionsEnabled(): boolean {
@@ -19,6 +31,18 @@ export function rejectUnavailablePayment(res: Response): void {
       "Online payments are not available. Contact the team to confirm current options.",
     code: "ONLINE_PAYMENTS_UNAVAILABLE",
   });
+}
+
+export function requireMarketingCheckout(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (!marketingCheckoutEnabled()) {
+    rejectUnavailablePayment(res);
+    return;
+  }
+  next();
 }
 
 export function rejectUnavailableTrial(res: Response): void {

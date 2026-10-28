@@ -5,22 +5,29 @@
  */
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
-import { requireAuth, optionalAuth } from "../middleware/auth";
+import { requireAuth, optionalAuth, requireOwner } from "../middleware/auth";
 import { newsletterLimiter } from "../middleware/rate-limiter";
 import { queueNewsletterCampaign } from "../services/newsletter-delivery";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import Stripe from "stripe";
 import { generateJournalPDF } from "../services/journal-pdf-generator";
 import {
   basicValidation,
   advancedValidation,
 } from "../services/print-validator";
+import { requireMarketingCheckout } from "../utils/commercial-gates";
+import { getPublicBaseUrl } from "../utils/base-url";
+import { getStripeClient } from "../utils/stripe-client";
+import { getPaymentsModeStatus } from "../utils/payments-mode";
 import {
-  onlinePaymentsEnabled,
-  rejectUnavailablePayment,
-} from "../utils/commercial-gates";
+  createMarketingCheckoutHandler,
+  findSellableProduct,
+  isSellableItemType,
+  MAX_LINE_QUANTITY,
+  parseItemId,
+  parseQuantity,
+} from "../services/marketing-checkout";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
@@ -40,13 +47,6 @@ const INTERNAL_MARKETPLACE_ACCOUNT_EXCLUSION = `
         OR LOWER(COALESCE(marketplace_owner.gate_username, '')) IN ('${INTERNAL_MARKETPLACE_USERNAMES.join("', '")}')
       )
   )`;
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Stripe instance (shared with payments module)
-// ──────────────────────────────────────────────────────────────────────────────
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Multer: print file uploads
@@ -960,8 +960,18 @@ router.patch(
 router.get("/cart", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
+    // price_cents is the current catalogue price, i.e. what checkout will
+    // charge. The stored snapshot only backs up products that were removed.
     const result = await pool.query(
-      `SELECT ci.*,
+      `SELECT ci.id, ci.user_id, ci.item_type, ci.item_id, ci.quantity,
+              ci.price_snapshot_cents, ci.created_at,
+              COALESCE(
+                CASE
+                  WHEN ci.item_type = 'pack' THEN (SELECT price_cents FROM marketing_packs WHERE id = ci.item_id)
+                  WHEN ci.item_type = 'print_product' THEN (SELECT price_cents FROM print_products WHERE id = ci.item_id)
+                END,
+                ci.price_snapshot_cents
+              ) as price_cents,
               CASE
                 WHEN ci.item_type = 'pack' THEN (SELECT name FROM marketing_packs WHERE id = ci.item_id)
                 WHEN ci.item_type = 'print_product' THEN (SELECT name FROM print_products WHERE id = ci.item_id)
@@ -969,12 +979,13 @@ router.get("/cart", requireAuth(), async (req: Request, res: Response) => {
               END as item_name
        FROM cart_items ci
        WHERE ci.user_id = $1
-       ORDER BY ci.created_at ASC`,
+       ORDER BY ci.created_at ASC, ci.id ASC`,
       [userId],
     );
 
     const total = result.rows.reduce(
-      (sum: number, item: any) => sum + item.price_cents * item.quantity,
+      (sum: number, item: any) =>
+        sum + Number(item.price_cents) * Number(item.quantity ?? 0),
       0,
     );
 
@@ -998,72 +1009,64 @@ router.get("/cart", requireAuth(), async (req: Request, res: Response) => {
 router.post("/cart", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const { item_type, item_id, quantity = 1, metadata } = req.body;
+    const { item_type, item_id } = req.body;
 
     if (!item_type || !item_id) {
       return res
         .status(400)
         .json({ success: false, error: "item_type and item_id are required" });
     }
-
-    // Look up the current price
-    let priceCents = 0;
-    if (item_type === "pack") {
-      const pack = await pool.query(
-        `SELECT price_cents FROM marketing_packs WHERE id = $1`,
-        [item_id],
-      );
-      if (pack.rows.length === 0)
-        return res
-          .status(404)
-          .json({ success: false, error: "Pack not found" });
-      priceCents = pack.rows[0].price_cents;
-    } else if (item_type === "print_product") {
-      const prod = await pool.query(
-        `SELECT price_cents FROM print_products WHERE id = $1`,
-        [item_id],
-      );
-      if (prod.rows.length === 0)
-        return res
-          .status(404)
-          .json({ success: false, error: "Product not found" });
-      priceCents = prod.rows[0].price_cents;
-    } else {
+    if (!isSellableItemType(item_type)) {
       return res.status(400).json({
         success: false,
         error: "item_type must be 'pack' or 'print_product'",
+      });
+    }
+    const itemId = parseItemId(item_id);
+    const quantity =
+      req.body.quantity === undefined ? 1 : parseQuantity(req.body.quantity);
+    if (itemId === null || quantity === null) {
+      return res.status(400).json({
+        success: false,
+        error: "item_id must be a positive integer and quantity a whole number from 1 to 1000",
+      });
+    }
+
+    // The price always comes from the catalogue; any client-sent price is ignored
+    const product = await findSellableProduct(pool, item_type, itemId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: item_type === "pack" ? "Pack not found" : "Product not found",
       });
     }
 
     // Check if item already in cart — increment quantity
     const existing = await pool.query(
       `SELECT id, quantity FROM cart_items WHERE user_id = $1 AND item_type = $2 AND item_id = $3`,
-      [userId, item_type, item_id],
+      [userId, item_type, itemId],
     );
 
     let result;
     if (existing.rows.length > 0) {
       result = await pool.query(
-        `UPDATE cart_items SET quantity = quantity + $1, price_cents = $2, updated_at = NOW()
-         WHERE id = $3 RETURNING *`,
-        [quantity, priceCents, existing.rows[0].id],
+        `UPDATE cart_items
+            SET quantity = LEAST(COALESCE(quantity, 0) + $1, $2), price_snapshot_cents = $3
+          WHERE id = $4 RETURNING *`,
+        [quantity, MAX_LINE_QUANTITY, product.priceCents, existing.rows[0].id],
       );
     } else {
       result = await pool.query(
-        `INSERT INTO cart_items (user_id, item_type, item_id, quantity, price_cents, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [
-          userId,
-          item_type,
-          item_id,
-          quantity,
-          priceCents,
-          metadata ? JSON.stringify(metadata) : null,
-        ],
+        `INSERT INTO cart_items (user_id, item_type, item_id, quantity, price_snapshot_cents)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [userId, item_type, itemId, quantity, product.priceCents],
       );
     }
 
-    res.status(201).json({ success: true, data: result.rows[0] });
+    res.status(201).json({
+      success: true,
+      data: { ...result.rows[0], price_cents: product.priceCents },
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -1076,16 +1079,17 @@ router.post("/cart", requireAuth(), async (req: Request, res: Response) => {
 router.put("/cart/:id", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const { quantity } = req.body;
+    const quantity = parseQuantity(req.body.quantity);
 
-    if (!quantity || quantity < 1) {
-      return res
-        .status(400)
-        .json({ success: false, error: "quantity must be >= 1" });
+    if (quantity === null) {
+      return res.status(400).json({
+        success: false,
+        error: "quantity must be a whole number from 1 to 1000",
+      });
     }
 
     const result = await pool.query(
-      `UPDATE cart_items SET quantity = $1, updated_at = NOW()
+      `UPDATE cart_items SET quantity = $1
        WHERE id = $2 AND user_id = $3 RETURNING *`,
       [quantity, parseInt(req.params.id), userId],
     );
@@ -1169,63 +1173,44 @@ router.post(
       const reconciled: any[] = [];
 
       for (const item of items) {
-        const { item_type, item_id, quantity = 1 } = item;
-        if (!item_type || !item_id) continue;
+        const { item_type } = item;
+        if (!isSellableItemType(item_type)) continue;
+        const itemId = parseItemId(item.item_id);
+        const quantity =
+          item.quantity === undefined ? 1 : parseQuantity(item.quantity);
+        if (itemId === null || quantity === null) continue;
 
         // Get current server price (price reconciliation)
-        let priceCents = 0;
-        if (item_type === "pack") {
-          const p = await pool.query(
-            `SELECT price_cents FROM marketing_packs WHERE id = $1 AND is_active = true`,
-            [item_id],
-          );
-          if (p.rows.length === 0) {
-            reconciled.push({
-              item_type,
-              item_id,
-              status: "skipped",
-              reason: "product not found or inactive",
-            });
-            continue;
-          }
-          priceCents = p.rows[0].price_cents;
-        } else if (item_type === "print_product") {
-          const p = await pool.query(
-            `SELECT price_cents FROM print_products WHERE id = $1 AND is_active = true`,
-            [item_id],
-          );
-          if (p.rows.length === 0) {
-            reconciled.push({
-              item_type,
-              item_id,
-              status: "skipped",
-              reason: "product not found or inactive",
-            });
-            continue;
-          }
-          priceCents = p.rows[0].price_cents;
-        } else {
+        const product = await findSellableProduct(pool, item_type, itemId);
+        if (!product) {
+          reconciled.push({
+            item_type,
+            item_id: itemId,
+            status: "skipped",
+            reason: "product not found or inactive",
+          });
           continue;
         }
+        const priceCents = product.priceCents;
 
         // Check if already in server cart
         const existing = await pool.query(
           `SELECT id, quantity FROM cart_items WHERE user_id = $1 AND item_type = $2 AND item_id = $3`,
-          [userId, item_type, item_id],
+          [userId, item_type, itemId],
         );
 
         if (existing.rows.length > 0) {
           // Take the higher quantity (don't lose items)
-          const newQty = Math.max(existing.rows[0].quantity, quantity);
+          const newQty = Math.max(existing.rows[0].quantity ?? 0, quantity);
           await pool.query(
-            `UPDATE cart_items SET quantity = $1, price_cents = $2, updated_at = NOW() WHERE id = $3`,
+            `UPDATE cart_items SET quantity = $1, price_snapshot_cents = $2 WHERE id = $3`,
             [newQty, priceCents, existing.rows[0].id],
           );
         } else {
           await pool.query(
-            `INSERT INTO cart_items (user_id, item_type, item_id, quantity, price_cents)
+            `INSERT INTO cart_items (user_id, item_type, item_id, quantity, price_snapshot_cents)
            VALUES ($1, $2, $3, $4, $5)`,
-            [userId, item_type, item_id, quantity, priceCents],
+            [userId, item_type, itemId, quantity, priceCents],
           );
         }
 
@@ -1233,7 +1218,7 @@ router.post(
         if (item.client_price_cents && item.client_price_cents !== priceCents) {
           reconciled.push({
             item_type,
-            item_id,
+            item_id: itemId,
             status: "price_changed",
             old_price_cents: item.client_price_cents,
             new_price_cents: priceCents,
@@ -1252,113 +1237,33 @@ router.post(
 
 /**
  * POST /api/marketing/cart/checkout
- * Auth: Create a Stripe checkout session for cart contents
+ * Auth: Create a Stripe checkout session for cart contents.
+ * The payments gate runs first so a disabled checkout never touches auth,
+ * the database or Stripe. Prices are re-read from the database in the handler.
  */
 router.post(
   "/cart/checkout",
+  requireMarketingCheckout,
   requireAuth(),
-  async (req: Request, res: Response) => {
-    try {
-      if (!onlinePaymentsEnabled()) {
-        rejectUnavailablePayment(res);
-        return;
-      }
-      if (!stripe) {
-        return res
-          .status(503)
-          .json({ success: false, error: "Stripe not configured" });
-      }
+  createMarketingCheckoutHandler({
+    pool,
+    getStripe: () => getStripeClient(),
+    getBaseUrl: () => getPublicBaseUrl(),
+  }),
+);
 
-      const userId = req.user!.userId;
-
-      // Get cart items with current prices
-      const cartResult = await pool.query(
-        `SELECT ci.*,
-              CASE
-                WHEN ci.item_type = 'pack' THEN (SELECT name FROM marketing_packs WHERE id = ci.item_id)
-                WHEN ci.item_type = 'print_product' THEN (SELECT name FROM print_products WHERE id = ci.item_id)
-              END as item_name
-       FROM cart_items ci
-       WHERE ci.user_id = $1`,
-        [userId],
-      );
-
-      if (cartResult.rows.length === 0) {
-        return res.status(400).json({ success: false, error: "Cart is empty" });
-      }
-
-      // Create order record
-      const totalCents = cartResult.rows.reduce(
-        (sum: number, i: any) => sum + i.price_cents * i.quantity,
-        0,
-      );
-      const orderResult = await pool.query(
-        `INSERT INTO orders (user_id, total_cents, status) VALUES ($1, $2, 'pending') RETURNING *`,
-        [userId, totalCents],
-      );
-      const order = orderResult.rows[0];
-
-      // Create order items
-      for (const item of cartResult.rows) {
-        await pool.query(
-          `INSERT INTO order_items (order_id, item_type, item_id, quantity, unit_price_cents)
-         VALUES ($1, $2, $3, $4, $5)`,
-          [
-            order.id,
-            item.item_type,
-            item.item_id,
-            item.quantity,
-            item.price_cents,
-          ],
-        );
-      }
-
-      // Build Stripe line_items
-      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
-        cartResult.rows.map((item: any) => ({
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: item.item_name || `${item.item_type} #${item.item_id}`,
-              description: `Verso Air Marketing — ${item.item_type}`,
-            },
-            unit_amount: item.price_cents,
-          },
-          quantity: item.quantity,
-        }));
-
-      const origin = req.headers.origin || "http://localhost:5003";
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        line_items: lineItems,
-        metadata: {
-          userId: String(userId),
-          orderId: String(order.id),
-          type: "marketing_order",
-        },
-        success_url: `${origin}/marketing/order-tracking?status=success&orderId=${order.id}`,
-        cancel_url: `${origin}/marketing/cart?status=cancelled`,
-      });
-
-      // Store stripe session ID on the order
-      await pool.query(
-        `UPDATE orders SET stripe_session_id = $1 WHERE id = $2`,
-        [session.id, order.id],
-      );
-
-      res.json({
-        success: true,
-        data: {
-          sessionId: session.id,
-          url: session.url,
-          orderId: order.id,
-        },
-      });
-    } catch (error: any) {
-      console.error("[MARKETING] Checkout error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
+/**
+ * GET /api/marketing/admin/payments-status
+ * Owner only: which Stripe key mode and payment switches are active.
+ * Reports the key mode from its prefix only; no key material is returned.
+ */
+router.get(
+  "/admin/payments-status",
+  requireOwner,
+  (_req: Request, res: Response) => {
+    const status = getPaymentsModeStatus();
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ success: true, ...status, data: status });
   },
 );
 
