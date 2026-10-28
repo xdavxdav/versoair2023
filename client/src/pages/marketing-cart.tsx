@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import {
   ShoppingCart,
   Trash2,
@@ -13,6 +13,11 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 
+const cad = new Intl.NumberFormat("en-CA", {
+  style: "currency",
+  currency: "CAD",
+});
+
 export default function CartPage() {
   const {
     items,
@@ -22,19 +27,24 @@ export default function CartPage() {
     updateQuantity,
     removeItem,
     clearCart,
+    checkout,
+    isCheckingOut,
   } = useCart();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
 
-  // TODO(pending-payments): restore checkout() once the Stripe/PayPal payment
-  // lifecycle is operational and tested end-to-end (incl. refunds).
   const handleCheckout = async () => {
-    toast({
-      title: "Online payment coming soon",
-      description:
-        "Send us your order request and our team will confirm it with you.",
-    });
-    setLocation("/contact");
+    try {
+      await checkout();
+    } catch (error) {
+      toast({
+        title: "Checkout unavailable",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Checkout could not be started. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -148,10 +158,7 @@ export default function CartPage() {
 
                         {/* Price */}
                         <span className="text-amber-800 font-semibold w-20 text-right">
-                          $
-                          {((item.price_cents * item.quantity) / 100).toFixed(
-                            2,
-                          )}
+                          {cad.format((item.price_cents * item.quantity) / 100)}
                         </span>
 
                         {/* Remove */}
@@ -194,7 +201,7 @@ export default function CartPage() {
                   <div className="flex justify-between text-slate-700">
                     <span>Subtotal ({itemCount} items)</span>
                     <span className="text-slate-900">
-                      ${(totalCents / 100).toFixed(2)}
+                      {cad.format(totalCents / 100)}
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-700">
@@ -205,22 +212,23 @@ export default function CartPage() {
                   <div className="flex justify-between text-lg font-bold">
                     <span className="text-slate-900">Total</span>
                     <span className="text-amber-800">
-                      ${(totalCents / 100).toFixed(2)}
+                      {cad.format(totalCents / 100)}
                     </span>
                   </div>
 
                   <Button
                     className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold"
                     size="lg"
-                    onClick={handleCheckout}
+                    onClick={() => void handleCheckout()}
+                    disabled={isCheckingOut}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
-                    Request Order
+                    {isCheckingOut ? "Opening secure checkout…" : "Continue to secure checkout"}
                   </Button>
 
                   <p className="text-slate-700 text-xs text-center">
-                    Online payment is being finalized — submit a request and
-                    our team will confirm your order.
+                    Prices are in CAD. Secure checkout is available when online
+                    payments are enabled.
                   </p>
                 </CardContent>
               </Card>

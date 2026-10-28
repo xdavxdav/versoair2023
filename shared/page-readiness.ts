@@ -4,9 +4,10 @@ export interface PageReadinessConfig {
   blockedPaths: string[];
 }
 
-export const PAGE_READINESS_CONFIG_VERSION = 6;
+export const PAGE_READINESS_CONFIG_VERSION = 7;
 
 export const LOCAL_PREVIEW_ONLY_PATHS = [
+  "/arcade",
   "/get-involved",
   "/ong-culturelle",
   "/vheartz",
@@ -25,6 +26,7 @@ export const LOCAL_PREVIEW_ONLY_PATHS = [
 ] as const;
 
 export const PAGE_READINESS_CANDIDATES = [
+  "/arcade",
   "/hub",
   "/about",
   "/contact",

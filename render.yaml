@@ -25,6 +25,8 @@ services:
         value: production
       - key: ONLINE_PAYMENTS_ENABLED
         value: "false"
+      - key: MARKETING_CHECKOUT_ENABLED
+        value: "false"
       - key: FREE_TRIALS_ENABLED
         value: "false"
       - key: VITE_DIRECTORY_COUNTRY_CODE
