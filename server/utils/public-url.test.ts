@@ -103,7 +103,11 @@ test("isPrivateAddress blocks private, reserved and unparseable addresses", () =
 
 test("isPrivateAddress allows ordinary public addresses", () => {
   for (const address of PUBLIC_ADDRESSES) {
-    assert.equal(isPrivateAddress(address), false, `${address} must be allowed`);
+    assert.equal(
+      isPrivateAddress(address),
+      false,
+      `${address} must be allowed`,
+    );
   }
 });
 
@@ -448,5 +452,30 @@ test("scrapeDirectoryUrl never contacts a loopback server", async () => {
   } finally {
     server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("connection-time lookup refuses hosts that resolve to private addresses", async () => {
+  const { publicOnlyLookup } = await import("./public-url");
+  const err = await new Promise<Error | null>((done) =>
+    publicOnlyLookup("localhost", {}, (e) => done(e)),
+  );
+  assert.ok(err, "localhost must be refused at connect time");
+});
+
+test("pinned fetch refuses a loopback server at connect time", async () => {
+  const { publicOnlyFetch } = await import("./public-url");
+  const http = await import("node:http");
+  const { once } = await import("node:events");
+  const server = http.createServer((_q, r) => r.end("secret"));
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as { port: number }).port;
+  try {
+    await assert.rejects(publicOnlyFetch(`http://localhost:${port}/`), {
+      code: "UNSAFE_URL",
+    });
+  } finally {
+    server.close();
   }
 });

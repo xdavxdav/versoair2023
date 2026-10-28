@@ -1084,24 +1084,25 @@ router.post(
       );
       if (wallet.rows.length === 0) {
         await client.query("ROLLBACK");
-        return res
-          .status(402)
-          .json({
-            success: false,
-            code: "INSUFFICIENT_FUNDS",
-            message: "Insufficient wallet balance",
-          });
+        return res.status(402).json({
+          success: false,
+          code: "INSUFFICIENT_FUNDS",
+          message: "Insufficient wallet balance",
+        });
       }
 
       const replay = await client.query(
-        `SELECT amount FROM wallet_transactions
+        `SELECT amount, related_entity_id FROM wallet_transactions
         WHERE user_id = $1 AND type = 'tip_sent' AND external_reference = $2
         LIMIT 1`,
         [userId, externalReference],
       );
       if (replay.rows.length > 0) {
         await client.query("ROLLBACK");
-        if (Number(replay.rows[0].amount) !== tipAmount) {
+        if (
+          Number(replay.rows[0].amount) !== tipAmount ||
+          String(replay.rows[0].related_entity_id) !== String(artistProfileId)
+        ) {
           return res.status(409).json({
             success: false,
             code: "IDEMPOTENCY_KEY_REUSED",
@@ -1121,13 +1122,11 @@ router.post(
       const before = Number(wallet.rows[0].balance);
       if (!(before >= tipAmount)) {
         await client.query("ROLLBACK");
-        return res
-          .status(402)
-          .json({
-            success: false,
-            code: "INSUFFICIENT_FUNDS",
-            message: "Insufficient wallet balance",
-          });
+        return res.status(402).json({
+          success: false,
+          code: "INSUFFICIENT_FUNDS",
+          message: "Insufficient wallet balance",
+        });
       }
       const after = Math.round((before - tipAmount) * 100) / 100;
 

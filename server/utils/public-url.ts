@@ -1,5 +1,9 @@
-import { BlockList, isIP } from "node:net";
+import { BlockList, isIP, type LookupFunction } from "node:net";
 import { lookup } from "node:dns/promises";
+import dns from "node:dns";
+import http from "node:http";
+import https from "node:https";
+import { Readable } from "node:stream";
 
 // Guards server-side fetches of admin-supplied URLs (SSRF): only public
 // http(s) hosts on ports 80/443 are reachable, and every redirect hop is
@@ -115,6 +119,71 @@ export async function assertPublicHttpUrl(
   return url;
 }
 
+// Connection-time lookup: the address that is validated is the address the
+// socket connects to, so DNS rebinding between check and connect cannot reach
+// a private host.
+export const publicOnlyLookup: LookupFunction = (
+  hostname,
+  options,
+  callback,
+) => {
+  dns.lookup(hostname, { all: true, verbatim: true }, (err, records) => {
+    if (err) return callback(err, "", 0);
+    const list = records as dns.LookupAddress[];
+    if (list.length === 0 || list.some((r) => isPrivateAddress(r.address))) {
+      return callback(
+        new UnsafeUrlError("That address is not publicly reachable."),
+        "",
+        0,
+      );
+    }
+    if ((options as dns.LookupOptions)?.all) {
+      return (callback as unknown as (e: null, a: dns.LookupAddress[]) => void)(
+        null,
+        list,
+      );
+    }
+    callback(null, list[0].address, list[0].family);
+  });
+};
+
+const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304]);
+
+export const publicOnlyFetch = ((input: string | URL, init: RequestInit = {}) =>
+  new Promise<Response>((resolve, reject) => {
+    const url = new URL(String(input));
+    const transport = url.protocol === "https:" ? https : http;
+    const req = transport.request(
+      url,
+      {
+        method: init.method ?? "GET",
+        headers: init.headers as Record<string, string> | undefined,
+        lookup: publicOnlyLookup,
+        signal: init.signal ?? undefined,
+      },
+      (res) => {
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (Array.isArray(value))
+            value.forEach((v) => headers.append(key, v));
+          else if (value !== undefined) headers.set(key, value);
+        }
+        const status = res.statusCode ?? 0;
+        if (NULL_BODY_STATUSES.has(status)) res.resume();
+        resolve(
+          new Response(
+            NULL_BODY_STATUSES.has(status)
+              ? null
+              : (Readable.toWeb(res) as unknown as ReadableStream),
+            { status, statusText: res.statusMessage, headers },
+          ),
+        );
+      },
+    );
+    req.on("error", reject);
+    req.end();
+  })) as typeof fetch;
+
 export interface PublicFetchOptions {
   headers?: Record<string, string>;
   timeoutMs?: number;
@@ -175,7 +244,7 @@ export async function fetchPublicText(
     maxBytes = 5 * 1024 * 1024,
     maxRedirects = 3,
     resolve,
-    fetchImpl = fetch,
+    fetchImpl = publicOnlyFetch,
   } = options;
 
   const controller = new AbortController();

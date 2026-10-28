@@ -29,7 +29,7 @@ export function validateTipRequest(
       message: `Tip amount must be between $${TIP_MIN.toFixed(2)} and $${TIP_MAX.toFixed(2)}`,
     };
   }
-  if (Math.round(amount * 100) !== amount * 100) {
+  if (Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-6) {
     return { ok: false, message: "Tip amount must have at most 2 decimals" };
   }
 

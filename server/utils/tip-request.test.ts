@@ -47,3 +47,13 @@ test("requires an idempotency key from header or body", () => {
     true,
   );
 });
+
+test("accepts any whole-cent amount despite float rounding", () => {
+  for (const amount of [0.57, 1.1, 2.3, 499.99]) {
+    assert.equal(
+      validateTipRequest({ artistProfileId: 1, amount }, key).ok,
+      true,
+      String(amount),
+    );
+  }
+});
