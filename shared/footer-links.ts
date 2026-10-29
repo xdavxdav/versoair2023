@@ -35,11 +35,14 @@ export const FOOTER_COLUMNS = [
 ] as const;
 
 // Single source of truth for the company's social profiles: the footer and the
-// Organization JSON-LD (sameAs) both read this list. LinkedIn uses the page's
-// numeric company ID; the /admin/ dashboard URL is private and must not be used.
+// Organization JSON-LD (sameAs) both read this list. Every entry must open for a
+// logged-out stranger: no admin/dashboard URLs and no guessed handles (Verso Air
+// has no X account, so there is no X link). LinkedIn must use the public vanity
+// URL: the numeric company-ID form sends logged-out visitors to a sign-in wall,
+// while /company/verso-air-inc/ (organization 144004640) is public.
+// server/utils/public-links.test.ts rejects the known dead forms.
 export const FOOTER_SOCIAL_LINKS = [
-  { href: "https://www.linkedin.com/company/144004640/", label: "LinkedIn" },
-  { href: "https://twitter.com/versoair", label: "X / Twitter" },
+  { href: "https://www.linkedin.com/company/verso-air-inc/", label: "LinkedIn" },
   {
     href: "https://www.facebook.com/p/Verso_air-100054657030816/",
     label: "Facebook",

@@ -135,7 +135,7 @@ export function TrustBadge({
       <div className="mt-3 pt-3 border-t border-slate-200/50">
         <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
           <Award className="w-3 h-3" />
-          Certifié sur verso-air.com
+          Certifié sur versoair.com
         </div>
       </div>
     </div>
@@ -152,7 +152,7 @@ export function generateEmbedCode(
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://verso-air.com";
+      : "https://www.versoair.com";
   return `<!-- Verso Air Trust Badge -->
 <div id="verso-badge-${businessId}"></div>
 <script>

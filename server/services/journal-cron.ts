@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { pool } from "../db";
+import { getSiteOrigin } from "../utils/site-origin";
 import { generateJournalPDF } from "./journal-pdf-generator";
 
 const JOURNAL_CRON_LOCK_KEYS: Record<JournalEditionType, number> = {
@@ -88,7 +89,7 @@ async function generateAndQueueEdition(
           `<p>Bonjour ${subscriber.name || ""},</p>
            <p>${availability}</p>
            <p><strong>${listingCount} annonces</strong> dans cette édition.</p>
-           <p>Connectez-vous pour télécharger : <a href="${process.env.VITE_API_URL || "https://verso-air.com"}/marketing/journal">Voir le journal</a></p>
+           <p>Connectez-vous pour télécharger : <a href="${getSiteOrigin()}/marketing/journal">Voir le journal</a></p>
            <p>— L'équipe Verso Air</p>`,
         ],
       );

@@ -1,5 +1,5 @@
 // Authored copy for the site footer and the "Report an issue" reminder.
-// Brand names (VERSO AIR INC., LinkedIn, X / Twitter, Facebook) are not translated.
+// Brand names (VERSO AIR INC., LinkedIn, Facebook) are not translated.
 export const FOOTER_COPY = [
   ["Incorporated in Ontario · Toronto, Canada", "Société constituée en Ontario · Toronto, Canada"],
   ["Company", "Entreprise"],

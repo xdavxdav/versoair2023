@@ -15,7 +15,7 @@ import { uncataloguedCopy } from "./test-support/copy-coverage";
 
 // Brand names and words that read the same in every bundled language.
 const NOT_TRANSLATED = new Set([
-  "VERSO AIR INC.", "LinkedIn", "X / Twitter", "Facebook", "Blog",
+  "VERSO AIR INC.", "LinkedIn", "Facebook", "Blog",
 ]);
 
 // Footer rows whose French or Spanish wording is genuinely the same as English.
@@ -136,14 +136,26 @@ test("social links point at the verified company profiles", () => {
   );
   assert.equal(
     hrefByLabel.LinkedIn,
-    "https://www.linkedin.com/company/144004640/",
+    "https://www.linkedin.com/company/verso-air-inc/",
   );
   assert.equal(
     hrefByLabel.Facebook,
     "https://www.facebook.com/p/Verso_air-100054657030816/",
   );
+  assert.deepEqual(
+    FOOTER_SOCIAL_LINKS.map(({ label }) => label),
+    ["LinkedIn", "Facebook"],
+  );
   for (const { href } of FOOTER_SOCIAL_LINKS) {
     assert.ok(!href.includes("/admin"), `${href} is a private admin URL`);
+    assert.ok(
+      !/linkedin\.com\/company\/\d+/.test(href),
+      `${href} is a numeric LinkedIn URL, which logged-out visitors cannot open`,
+    );
+    assert.ok(
+      !/(twitter|x)\.com\/versoair/i.test(href),
+      `${href} is the guessed X handle, which does not exist`,
+    );
   }
 });
 

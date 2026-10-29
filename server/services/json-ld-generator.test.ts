@@ -10,14 +10,16 @@ test("organization sameAs lists exactly the footer's social profiles", () => {
     sameAs,
     FOOTER_SOCIAL_LINKS.map(({ href }) => href),
   );
-  assert.ok(sameAs.includes("https://www.linkedin.com/company/144004640/"));
+  assert.ok(sameAs.includes("https://www.linkedin.com/company/verso-air-inc/"));
 });
 
-test("organization sameAs no longer contains the guessed profile slugs", () => {
+test("organization sameAs drops guessed or sign-in-walled profile URLs", () => {
   const { sameAs } = generateOrganizationJsonLd() as { sameAs: string[] };
   for (const guessed of [
     "linkedin.com/company/versoair",
     "facebook.com/versoair",
+    "twitter.com/versoair",
+    "linkedin.com/company/144004640",
   ]) {
     assert.ok(
       sameAs.every((href) => !href.includes(guessed)),

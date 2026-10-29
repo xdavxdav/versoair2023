@@ -117,7 +117,7 @@ export async function generateJournalPDF(
         .fontSize(12)
         .fill("#888888")
         .text(
-          "Publiez votre annonce sur verso-air.com/marketing/journal",
+          "Publiez votre annonce sur versoair.com/marketing/journal",
           50,
           140,
           { align: "center" },
@@ -240,7 +240,7 @@ export async function generateJournalPDF(
       .fontSize(8)
       .fill(gold)
       .text(
-        "verso-air.com/marketing • contact@verso-air.com",
+        "versoair.com/marketing • support@versoair.com",
         50,
         doc.page.height - 70,
         {

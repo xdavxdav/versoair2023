@@ -2988,7 +2988,7 @@ export default function ArtistPortalWelcome() {
                     <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
                       <div className="w-11 h-11 rounded-lg bg-white flex items-center justify-center border border-white/[0.04] p-0.5">
                         <QRCodeSVG
-                          value="https://versoair.app/artist/nooka"
+                          value="https://www.versoair.com/artistes"
                           size={38}
                           bgColor="#ffffff"
                           fgColor="#1a0533"
