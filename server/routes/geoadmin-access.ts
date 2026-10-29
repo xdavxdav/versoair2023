@@ -32,6 +32,12 @@ import {
   getGeoAdminInvitationExpiry,
 } from "../services/geoadmin-invitations";
 import { isUniqueConstraintViolation } from "../utils/postgres-errors";
+import { createGeoAdminCredentialRouter } from "./geoadmin-credentials";
+import {
+  GEOADMIN_HISTORY_ACTIONS,
+  geoAdminHistoryQuerySchema,
+  toGeoAdminHistoryEntry,
+} from "@shared/geoadmin-access-history";
 
 // Mounted inside the /auth router. Management endpoints are superuser-only
 // (requireAuth re-reads the role from the DB); only the exact accept path is
@@ -85,6 +91,20 @@ async function writeAudit(
     );
 }
 
+router.use(createGeoAdminCredentialRouter({
+  authorizeOwner: superuserOnly,
+  audit: async (req, kind) => {
+    await db.insert(auditLogs).values({
+      userId: Number(req.user!.userId),
+      action: "GEOADMIN_OWNER_CREDENTIAL_DRAFT_GENERATED",
+      entityType: "user",
+      entityId: String(req.user!.userId),
+      changes: { kind, activated: false, email: req.user!.email },
+      ...requestMeta(req),
+    });
+  },
+}));
+
 class GeoAdminAccessChangedError extends Error {
   constructor() {
     super("GeoAdmin access changed during revocation");
@@ -96,16 +116,64 @@ function isInvitableRole(role: unknown): role is GeoAdminInvitableRole {
 }
 
 async function expireStalePendingInvitations() {
-  await db
-    .update(geoAdminInvitations)
-    .set({ status: "expired" })
-    .where(
-      and(
-        eq(geoAdminInvitations.status, "pending"),
-        lte(geoAdminInvitations.expiresAt, new Date()),
-      ),
-    );
+  await db.transaction(async (tx) => {
+    const expired = await tx
+      .update(geoAdminInvitations)
+      .set({ status: "expired" })
+      .where(
+        and(
+          eq(geoAdminInvitations.status, "pending"),
+          lte(geoAdminInvitations.expiresAt, new Date()),
+        ),
+      )
+      .returning({
+        id: geoAdminInvitations.id,
+        email: geoAdminInvitations.email,
+        role: geoAdminInvitations.role,
+        gateUsername: geoAdminInvitations.gateUsername,
+        expiresAt: geoAdminInvitations.expiresAt,
+      });
+    if (expired.length) {
+      await tx.insert(auditLogs).values(expired.map((invitation) => ({
+        userId: null,
+        action: "GEOADMIN_INVITATION_EXPIRED",
+        entityType: "geo_admin_invitation",
+        entityId: String(invitation.id),
+        changes: { email: invitation.email, role: invitation.role, gateUsername: invitation.gateUsername },
+        createdAt: invitation.expiresAt,
+      })));
+    }
+  });
 }
+
+router.get(
+  "/geoadmin-access/history",
+  superuserOnly,
+  asyncHandler(async (req, res) => {
+    res.set("Cache-Control", "no-store");
+    const parsed = geoAdminHistoryQuerySchema.safeParse(req.query);
+    if (!parsed.success) return sendError(res, 400, "VALIDATION_ERROR", "Invalid history page.");
+    await expireStalePendingInvitations();
+    const rows = await db
+      .select({
+        id: auditLogs.id,
+        action: auditLogs.action,
+        changes: auditLogs.changes,
+        createdAt: auditLogs.createdAt,
+        actorEmail: users.email,
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(users.id, auditLogs.userId))
+      .where(inArray(auditLogs.action, [...GEOADMIN_HISTORY_ACTIONS]))
+      .orderBy(desc(auditLogs.createdAt), desc(auditLogs.id))
+      .limit(51)
+      .offset(parsed.data.offset);
+    return res.json({
+      events: rows.slice(0, 50).map(toGeoAdminHistoryEntry),
+      hasMore: rows.length > 50,
+    });
+  }),
+);
 
 // ─── GET /auth/geoadmin-access ───────────────────────────────────────────────
 
@@ -608,6 +676,7 @@ router.delete(
       entityType: "user",
       entityId: String(target.id),
       changes: {
+        email: target.email,
         before: {
           role: target.role,
           previousRole: target.previousRole,
@@ -666,6 +735,7 @@ router.post(
         role: result.invitation.role,
         invitedBy: result.invitation.invitedBy,
         userId: result.userId,
+        accessCodeIssued: true,
       },
     });
     console.log(
@@ -721,6 +791,7 @@ router.post(
         invitedBy: result.invitation.invitedBy,
         userId: result.userId,
         existingAccount: true,
+        accessCodeIssued: true,
       },
     });
     console.log(

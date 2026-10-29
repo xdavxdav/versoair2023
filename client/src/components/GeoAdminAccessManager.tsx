@@ -5,13 +5,20 @@ import { authErrorMessage } from "@/lib/auth-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createGeoAdminInvitationSchema } from "@shared/geoadmin-invitation";
+import {
+  createGeoAdminInvitationSchema,
+  GEOADMIN_INVITABLE_ROLES,
+  geoAdminInvitationRoleSchema,
+  type GeoAdminInvitableRole,
+} from "@shared/geoadmin-invitation";
+import GeoAdminOwnerCredentials from "@/components/GeoAdminOwnerCredentials";
+import GeoAdminAccessHistory from "@/components/GeoAdminAccessHistory";
 
 interface GeoAdminMember {
   id: string;
   email: string;
   gateUsername: string;
-  role: "admin" | "moderator";
+  role: GeoAdminInvitableRole;
   status: "pending" | "active";
 }
 
@@ -19,7 +26,7 @@ export default function GeoAdminAccessManager() {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [gateUsername, setGateUsername] = useState("");
-  const [role, setRole] = useState<"admin" | "moderator">("admin");
+  const [role, setRole] = useState<GeoAdminInvitableRole>("admin");
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -48,6 +55,7 @@ export default function GeoAdminAccessManager() {
     } catch (requestError) {
       setError(authErrorMessage(requestError));
     } finally {
+      await queryClient.invalidateQueries({ queryKey: ["/auth/geoadmin-access/history"] });
       setWorking(false);
     }
   };
@@ -64,6 +72,7 @@ export default function GeoAdminAccessManager() {
     } catch (requestError) {
       setError(authErrorMessage(requestError));
     } finally {
+      await queryClient.invalidateQueries({ queryKey: ["/auth/geoadmin-access/history"] });
       setWorking(false);
     }
   };
@@ -101,10 +110,17 @@ export default function GeoAdminAccessManager() {
         <div>
           <Label htmlFor="geo-invite-role">Staff role</Label>
           <select id="geo-invite-role" value={role}
-            onChange={(event) => setRole(event.target.value === "moderator" ? "moderator" : "admin")}
+            onChange={(event) => {
+              const parsed = geoAdminInvitationRoleSchema.safeParse(event.target.value);
+              if (parsed.success) setRole(parsed.data);
+              else setError("Choose an available staff role.");
+            }}
             className="mt-1 block h-10 w-full rounded-md border border-amber-400 bg-violet-950 px-3 text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
-            <option value="admin">Admin — GeoAdmin Admin Panel</option>
-            <option value="moderator">Moderator — support workspace</option>
+            {GEOADMIN_INVITABLE_ROLES.map((staffRole) => (
+              <option key={staffRole} value={staffRole}>
+                {staffRole === "admin" ? "Admin — GeoAdmin Admin Panel" : "Moderator — support workspace"}
+              </option>
+            ))}
           </select>
         </div>
         <Button type="submit" disabled={working} className="self-end">
@@ -143,6 +159,8 @@ export default function GeoAdminAccessManager() {
           ))}
         </ul>
       )}
+      <GeoAdminOwnerCredentials />
+      <GeoAdminAccessHistory />
     </section>
   );
 }

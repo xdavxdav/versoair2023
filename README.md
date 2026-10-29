@@ -23,11 +23,19 @@ accepted only by the GeoAdmin gate; an owner session is not issued until TOTP
 verification succeeds. Existing owner sessions without a verified TOTP claim
 are rejected.
 
-Generate the owner's code and matching hash together on your own computer
-with `npm run security:generate-geoadmin-code -- owner`. Save the raw code in
-a password manager and copy only its hash into Render's
-`SUPERADMIN_GEOADMIN_CODE_HASH`; the command runs locally and does not upload
-either value. New invited Admins and Moderators receive a separate random code
+Once signed in, the owner can generate replacement drafts in GeoAdmin under
+**Manage Geo Admin access → Owner credential tools**: **Generate owner access
+code** (raw code plus its hash) and **Generate authenticator setup** (QR code
+plus key). Drafts are shown once in that tab, cleared after five minutes, and
+never saved, emailed or activated; only the fact that a draft was generated is
+recorded in the access history. The server cannot change Render variables, so
+activation stays explicit: save the raw value privately, update
+`SUPERADMIN_GEOADMIN_CODE_HASH` (hash only) or `SUPERADMIN_TOTP_SECRET` in
+Render, deploy, and test a sign-in in a separate browser before closing the
+current session. For the very first setup or recovery when nobody can sign in,
+use the local fallbacks `npm run security:generate-geoadmin-code -- owner` and
+`npm run security:generate-owner-totp-secret`; they run on your computer and
+do not upload either value. New invited Admins and Moderators receive a separate random code
 when they accept the invitation. Only its SHA-256 hash is stored on that staff
 account in the database, and the raw code is shown once to the invitee. Each
 staff member saves their own code; it does not grant owner access or share the
@@ -318,7 +326,11 @@ Moderator role. Invitations are one-use links that expire after 72 hours.
 New recipients set a password for their normal account; an existing verified
 account must sign in with the invited email and accept the link, preserving its
 password and other portal access. Neither password signs in to GeoAdmin; each
-staff member needs a separately provisioned code as described above. Invitation
+staff member receives their own GeoAdmin code automatically when accepting, so
+no terminal command is needed for staff. The owner-only **Access history** in
+the same panel records invitations sent, delivery failures, acceptances (with
+code issuance), expiries, cancellations, revocations and owner credential
+drafts, without showing codes, hashes, tokens or secrets. Invitation
 messages use `noreply@versoair.com`; make sure this sender is permitted by the
 configured SMTP provider.
 

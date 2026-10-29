@@ -198,6 +198,7 @@ Policy and invitation tests need no production accounts:
 node --import tsx --test shared/ticket-policy.test.ts \
   shared/geoadmin-invitation.test.ts server/services/geoadmin-invitations.test.ts \
   client/src/lib/dashboard-routes.test.ts
+npm run test:geoadmin  # staff codes, owner credential drafts, access history
 ```
 
 The integration suite **inserts fixtures** and requires an explicitly

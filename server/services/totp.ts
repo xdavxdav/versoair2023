@@ -1,10 +1,39 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 const TOTP_STEP_SECONDS = 30;
 const TOTP_DIGITS = 6;
 const TOTP_WINDOW_STEPS = 1;
 const MIN_SECRET_BYTES = 20;
+
+export function generateTotpSecret(): string {
+  let bits = 0;
+  let value = 0;
+  let secret = "";
+  for (const byte of randomBytes(32)) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      secret += BASE32_ALPHABET[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) secret += BASE32_ALPHABET[(value << (5 - bits)) & 31];
+  return secret;
+}
+
+export function buildTotpUri(secret: string, account: string): string {
+  decodeBase32Secret(secret);
+  const issuer = "Verso Air";
+  const params = new URLSearchParams({
+    secret,
+    issuer,
+    algorithm: "SHA1",
+    digits: String(TOTP_DIGITS),
+    period: String(TOTP_STEP_SECONDS),
+  });
+  return `otpauth://totp/${encodeURIComponent(`${issuer}:${account}`)}?${params}`;
+}
 
 export function decodeBase32Secret(secret: string): Buffer {
   const normalized = secret.trim().toUpperCase().replace(/=+$/, "");

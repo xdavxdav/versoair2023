@@ -25,6 +25,7 @@
     "seo:validate-sitemap": "node --import tsx server/scripts/validate-sitemap.ts",
     "test:route-seo": "node --import tsx --test server/utils/route-seo-meta.test.ts server/services/json-ld-generator.test.ts",
     "test:auth-wiring": "node --import tsx --test server/middleware/auth-wiring.test.ts",
+    "test:geoadmin": "node --import tsx --test server/services/totp.test.ts server/services/geoadmin-staff-codes.test.ts server/services/geoadmin-invitations.test.ts server/routes/geoadmin-credentials.test.ts shared/geoadmin-access-history.test.ts shared/geoadmin-invitation.test.ts shared/geoadmin-access.test.ts shared/geoadmin-access-policy.test.ts",
     "test:public-url": "node --import tsx --test server/utils/public-url.test.ts server/utils/public-links.test.ts",
     "test:tips": "node --import tsx --test scripts/reconcile-tips-core.test.ts server/utils/tip-request.test.ts server/routes/tip-gate.test.ts",
     "test:acting-user": "node --import tsx --test server/utils/acting-user.test.ts server/utils/email-subscription-access.test.ts server/routes/api-v1/acting-user-routes.test.ts",
