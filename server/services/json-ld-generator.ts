@@ -8,6 +8,7 @@
  * for Google, Bing, ChatGPT, Perplexity, and Claude search crawlers.
  */
 
+import { FOOTER_SOCIAL_LINKS } from "@shared/footer-links";
 import { getSiteOrigin } from "../utils/site-origin";
 
 interface BusinessJsonLd {
@@ -112,11 +113,7 @@ export function generateOrganizationJsonLd(): object {
     logo: `${siteOrigin}/Logo-page.png`,
     description:
       "VERSO AIR INC. is an Ontario corporation launching a digital platform for business visibility and directory discovery, starting in Ontario with the ambition to grow worldwide. Services and listings are introduced as they become available and verified.",
-    sameAs: [
-      "https://twitter.com/versoair",
-      "https://linkedin.com/company/versoair",
-      "https://facebook.com/versoair",
-    ],
+    sameAs: FOOTER_SOCIAL_LINKS.map(({ href }) => href),
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",

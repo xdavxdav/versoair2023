@@ -34,8 +34,14 @@ export const FOOTER_COLUMNS = [
   },
 ] as const;
 
+// Single source of truth for the company's social profiles: the footer and the
+// Organization JSON-LD (sameAs) both read this list. LinkedIn uses the page's
+// numeric company ID; the /admin/ dashboard URL is private and must not be used.
 export const FOOTER_SOCIAL_LINKS = [
-  { href: "https://linkedin.com/company/versoair", label: "LinkedIn" },
+  { href: "https://www.linkedin.com/company/144004640/", label: "LinkedIn" },
   { href: "https://twitter.com/versoair", label: "X / Twitter" },
-  { href: "https://facebook.com/versoair", label: "Facebook" },
+  {
+    href: "https://www.facebook.com/p/Verso_air-100054657030816/",
+    label: "Facebook",
+  },
 ] as const;

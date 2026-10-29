@@ -130,6 +130,23 @@ test("footer links lead only to open pages that exist in the app", () => {
   assert.equal(new Set(internal).size, internal.length, "duplicate footer link");
 });
 
+test("social links point at the verified company profiles", () => {
+  const hrefByLabel = Object.fromEntries(
+    FOOTER_SOCIAL_LINKS.map(({ label, href }) => [label, href]),
+  );
+  assert.equal(
+    hrefByLabel.LinkedIn,
+    "https://www.linkedin.com/company/144004640/",
+  );
+  assert.equal(
+    hrefByLabel.Facebook,
+    "https://www.facebook.com/p/Verso_air-100054657030816/",
+  );
+  for (const { href } of FOOTER_SOCIAL_LINKS) {
+    assert.ok(!href.includes("/admin"), `${href} is a private admin URL`);
+  }
+});
+
 test("social links are external and open safely", () => {
   assert.ok(FOOTER_SOCIAL_LINKS.length > 0);
   for (const { href } of FOOTER_SOCIAL_LINKS) {

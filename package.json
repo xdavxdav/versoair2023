@@ -23,7 +23,7 @@
     "seo:routes": "node --import tsx server/scripts/prerender-routes.ts",
     "seo:validate-prerender": "node --import tsx server/scripts/validate-prerender-seo.ts",
     "seo:validate-sitemap": "node --import tsx server/scripts/validate-sitemap.ts",
-    "test:route-seo": "node --import tsx --test server/utils/route-seo-meta.test.ts",
+    "test:route-seo": "node --import tsx --test server/utils/route-seo-meta.test.ts server/services/json-ld-generator.test.ts",
     "test:auth-wiring": "node --import tsx --test server/middleware/auth-wiring.test.ts",
     "test:public-url": "node --import tsx --test server/utils/public-url.test.ts",
     "test:tips": "node --import tsx --test scripts/reconcile-tips-core.test.ts server/utils/tip-request.test.ts server/routes/tip-gate.test.ts",
