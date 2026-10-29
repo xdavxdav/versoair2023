@@ -14,10 +14,18 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { FEEDBACK_FORM_URL } from "@/lib/feedback";
 import { SeoHead } from "@/components/seo/SeoHead";
+import { getTeamMember } from "@/lib/team-members";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 export default function Contact() {
   const search = useSearch();
-  const initialSubject = new URLSearchParams(search).get("subject") ?? "";
+  const searchParams = new URLSearchParams(search);
+  const teamMember = getTeamMember(searchParams.get("member"));
+  const initialSubject =
+    searchParams.get("subject") ??
+    (teamMember ? `Contact request for ${teamMember.name}` : "");
+  const { currentLang } = useLanguage();
+  const isEnglish = currentLang === "en";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
@@ -106,7 +114,11 @@ export default function Contact() {
             animate="visible"
             className="mb-6 text-center text-4xl font-bold text-slate-900 md:text-6xl"
           >
-            Get in Touch
+            {teamMember
+              ? isEnglish
+                ? `Contact ${teamMember.name}`
+                : `Contacter ${teamMember.name}`
+              : "Get in Touch"}
           </motion.h1>
           <motion.p
             variants={fadeInUp}
@@ -115,8 +127,11 @@ export default function Contact() {
             transition={{ delay: 0.15 }}
             className="mx-auto max-w-2xl text-center text-base text-slate-700 md:text-xl"
           >
-            Have questions? We'd love to hear from you. Send us a message and
-            we'll respond as soon as possible.
+            {teamMember
+              ? isEnglish
+                ? `You’re viewing the contact page for ${teamMember.name}. Choose below whether to contact Verso Air or visit their LinkedIn profile.`
+                : `Vous consultez la page de contact de ${teamMember.name}. Choisissez ci-dessous de contacter Verso Air ou de consulter son profil LinkedIn.`
+              : "Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible."}
           </motion.p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href="/sav">
@@ -137,6 +152,53 @@ export default function Contact() {
           </div>
         </div>
       </div>
+
+      {teamMember && (
+        <section
+          aria-labelledby="team-member-contact-heading"
+          data-testid="team-member-contact"
+          className="mx-auto max-w-[1400px] px-4 pb-8"
+        >
+          <div className="rounded-[28px] border border-amber-900/15 bg-white p-6 shadow-[0_18px_35px_rgba(15,23,42,0.06)] md:p-8">
+            <h2
+              id="team-member-contact-heading"
+              className="text-2xl font-bold text-slate-900"
+            >
+              {teamMember.name}
+            </h2>
+            <p className="mt-1 text-slate-700">
+              {isEnglish
+                ? teamMember.group === "founders"
+                  ? "Co-founder of Verso Air"
+                  : "Co-director of Verso Air"
+                : teamMember.group === "founders"
+                  ? "Cofondateur de Verso Air"
+                  : "Co-directeur de Verso Air"}
+            </p>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
+              {isEnglish
+                ? "Personal contact details will be added here. You can contact Verso Air using the form below, or choose to continue to this person’s LinkedIn profile."
+                : "Les coordonnées personnelles seront ajoutées ici. Vous pouvez contacter Verso Air avec le formulaire ci-dessous ou choisir de consulter le profil LinkedIn de cette personne."}
+            </p>
+            <Button
+              asChild
+              variant="outline"
+              className="mt-5 border-amber-900/30 text-amber-950 hover:bg-amber-50"
+            >
+              <a
+                href={teamMember.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="team-member-linkedin"
+              >
+                {isEnglish
+                  ? `Continue to ${teamMember.name}’s LinkedIn`
+                  : `Consulter le profil LinkedIn de ${teamMember.name}`}
+              </a>
+            </Button>
+          </div>
+        </section>
+      )}
 
       {/* Contact Content */}
       <div className="mx-auto max-w-[1400px] px-4 py-12 md:py-16">

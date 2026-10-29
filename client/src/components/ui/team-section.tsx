@@ -1,67 +1,13 @@
 import React from "react";
 import { Link } from "wouter";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import {
+  TEAM_MEMBERS,
+  type TeamGroupId,
+  type TeamLanguage,
+} from "@/lib/team-members";
 
-type Lang = "en" | "fr";
-type GroupId = "founders" | "directors";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  group: GroupId;
-  focus: Record<Lang, readonly string[]>;
-}
-
-const GROUP_ORDER: readonly GroupId[] = ["founders", "directors"];
-
-const teamMembers: readonly TeamMember[] = [
-  {
-    id: "boussou-elvis-jonathan",
-    name: "Boussou Elvis Jonathan",
-    group: "founders",
-    focus: {
-      en: [
-        "Construction",
-        "Business relations",
-        "Field operations",
-        "B2B / B2C commercial actions",
-      ],
-      fr: [
-        "Bâtiment",
-        "Relations d’affaires",
-        "Opérations terrain",
-        "Actions commerciales B2B / B2C",
-      ],
-    },
-  },
-  {
-    id: "joel-vanga",
-    name: "Joel Vanga",
-    group: "founders",
-    focus: {
-      en: ["Digital business", "Technology"],
-      fr: ["Affaires numériques", "Technologie"],
-    },
-  },
-  {
-    id: "kacou-phaully",
-    name: "Kacou Phaully",
-    group: "directors",
-    focus: {
-      en: ["Entertainment"],
-      fr: ["Divertissement"],
-    },
-  },
-  {
-    id: "guillaume-henry-ackah",
-    name: "Guillaume Henry Ackah",
-    group: "directors",
-    focus: {
-      en: ["Construction", "Business relations"],
-      fr: ["Bâtiment", "Relations d’affaires"],
-    },
-  },
-];
+const GROUP_ORDER: readonly TeamGroupId[] = ["founders", "directors"];
 
 function initials(name: string) {
   const parts = name.split(" ").filter(Boolean);
@@ -117,7 +63,7 @@ const copy = {
 
 export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
   const { currentLang } = useLanguage();
-  const lang: Lang = currentLang === "en" ? "en" : "fr";
+  const lang: TeamLanguage = currentLang === "en" ? "en" : "fr";
   const text = copy[lang];
 
   return (
@@ -194,10 +140,14 @@ export function TeamSection({ showHeader = true }: { showHeader?: boolean }) {
               </h3>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
-                {teamMembers
+                {TEAM_MEMBERS
                   .filter((member) => member.group === group)
                   .map((member) => (
-                    <Link key={member.id} href="/contact" className="block h-full">
+                    <Link
+                      key={member.id}
+                      href={`/contact?member=${encodeURIComponent(member.id)}`}
+                      className="block h-full"
+                    >
                       <div
                         data-testid="team-member"
                         data-member-id={member.id}
