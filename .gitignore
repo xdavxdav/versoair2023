@@ -60,10 +60,12 @@ scripts/*
 !scripts/seed-launch-businesses.cjs
 !scripts/check-api-contract.cjs
 !scripts/generate-geoadmin-code.cjs
+!scripts/generate-superadmin-totp-secret.cjs
 !scripts/tests/
 scripts/tests/*
 !scripts/tests/language-switcher.test.mjs
 !scripts/tests/geoadmin-code-generator.test.cjs
+!scripts/tests/superadmin-totp-secret-generator.test.cjs
 
 # Backup & duplicate configs
 client/postcss.config.cjs

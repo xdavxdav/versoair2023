@@ -97,6 +97,7 @@ import { CookieConsentManager } from "@/components/CookieConsentManager";
 import { ArtistCarouselByCountry } from "@/components/home/ArtistCarouselByCountry";
 import LocalizedGoldHeading from "@/components/home/LocalizedGoldHeading";
 import { isBaseLang } from "@/utils/country-language";
+import { SponsorsSection } from "@/components/ui/sponsors-section";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -3057,9 +3058,8 @@ export default function Home() {
             <div
               className="panel h-[100svh] flex-shrink-0 relative overflow-hidden"
               style={{
-                flexBasis: "100%",
-                width: "100%",
-                maxWidth: "100vw",
+                flex: `0 0 ${100 / NUM_PANELS}%`,
+                width: `${100 / NUM_PANELS}%`,
                 touchAction: "pan-y",
               }}
             >
@@ -3246,9 +3246,8 @@ export default function Home() {
             <div
               className="panel h-[100svh] flex-shrink-0 relative overflow-clip"
               style={{
-                flexBasis: "100%",
-                width: "100%",
-                maxWidth: "100vw",
+                flex: `0 0 ${100 / NUM_PANELS}%`,
+                width: `${100 / NUM_PANELS}%`,
                 touchAction: "pan-y",
               }}
             >
@@ -3402,9 +3401,8 @@ export default function Home() {
             <div
               className="panel h-[100svh] flex-shrink-0 relative overflow-clip"
               style={{
-                flexBasis: "100%",
-                width: "100%",
-                maxWidth: "100vw",
+                flex: `0 0 ${100 / NUM_PANELS}%`,
+                width: `${100 / NUM_PANELS}%`,
                 touchAction: "pan-y",
               }}
             >
@@ -3610,9 +3608,8 @@ export default function Home() {
             <div
               className="panel h-[100svh] flex-shrink-0 relative overflow-clip"
               style={{
-                flexBasis: "100%",
-                width: "100%",
-                maxWidth: "100vw",
+                flex: `0 0 ${100 / NUM_PANELS}%`,
+                width: `${100 / NUM_PANELS}%`,
                 touchAction: "pan-y",
               }}
             >
@@ -4225,77 +4222,7 @@ export default function Home() {
         </section>
       </ShowcaseToggle>
 
-      {/* Partners & Sponsors Section */}
-      <section className="py-12 md:py-20 bg-white">
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 md:mb-16">
-            <motion.span
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-emerald-600 font-semibold text-sm md:text-lg mb-2 block"
-            >
-              Nos soutiens
-            </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4"
-            >
-              Partenariats
-            </motion.h2>
-            <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-              Aucun partenaire confirmé n’est affiché pour le moment.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-8">
-            {(
-              [] as { name: string; href: string }[]
-            ).map((partner, i) => (
-              <Link key={i} to={partner.href}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.08, y: -6 }}
-                  className="bg-gradient-to-br from-gray-50 to-emerald-50 rounded-lg md:rounded-2xl p-3 md:p-6 text-center border border-gray-200 hover:border-emerald-500 hover:shadow-lg md:hover:shadow-xl transition-all cursor-pointer"
-                >
-                  <div className="w-10 h-10 md:w-16 md:h-16 mx-auto mb-2 md:mb-4 rounded-lg md:rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-md md:shadow-lg">
-                    <Building2 className="w-5 h-5 md:w-8 md:h-8 text-white" />
-                  </div>
-                  <h4 className="font-bold text-gray-800 text-xs md:text-sm">
-                    {partner.name}
-                  </h4>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mt-8 md:mt-12"
-          >
-            <Link to="/partners">
-              <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl px-6 py-3">
-                Voir tous les partenaires
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-            <Link to="/sponsor">
-              <Button
-                variant="outline"
-                className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-bold rounded-xl px-6 py-3"
-              >
-                Devenir sponsor
-                <Handshake className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+      <SponsorsSection />
       <section className="py-12 md:py-20 bg-gradient-to-br from-emerald-50 to-white">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
