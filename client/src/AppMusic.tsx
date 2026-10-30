@@ -38,7 +38,6 @@ const SignIn = lazy(() => import("@/pages/signin"));
 const TicketWorkspace = lazy(() => import("@/pages/tickets"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
-const PasswordPage = lazy(() => import("@/pages/password"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
 const Profile = lazy(() => import("@/pages/profile"));
 const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
@@ -97,11 +96,7 @@ function Router() {
       <Route path="/auth/login" component={SignInSimple} />
       <Route path="/auth/oauth-complete" component={OAuthComplete} />
       <Route path="/auth/password">
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <PasswordPage />
-          </Suspense>
-        </ProtectedRoute>
+        {() => <Redirect to="/auth/signin" />}
       </Route>
       <Route path="/signin">{() => <Redirect to="/auth/signin" />}</Route>
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>

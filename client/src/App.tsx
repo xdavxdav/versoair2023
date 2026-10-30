@@ -166,7 +166,6 @@ const OngCulturelle = lazy(() => import("@/pages/ong-culturelle"));
 const SignIn = lazy(() => import("@/pages/signin"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
-const PasswordPage = lazy(() => import("@/pages/password"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
 
 // ─────────────────────────────────────────────────────
@@ -673,10 +672,9 @@ function Router() {
       </Route>
       <Route path="/auth/login" component={SignInSimple} />
       <Route path="/auth/oauth-complete" component={OAuthComplete} />
-      {/* Development only: Credentials vault */}
-      {import.meta.env.DEV ? (
-        <Route path="/auth/password" component={PasswordPage} />
-      ) : null}
+      <Route path="/auth/password">
+        {() => <Redirect to="/auth/signin" />}
+      </Route>
       {/* Legacy redirects */}
       <Route path="/signin">
         {() => (

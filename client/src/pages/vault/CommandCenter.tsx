@@ -549,7 +549,7 @@ export default function CommandCenter() {
               </SectionBlock>
 
               <SectionBlock
-                title="AUTH & ADMIN (13)"
+                title="AUTH & ADMIN (11)"
                 icon={<Shield className="w-3.5 h-3.5 text-white" />}
                 color="red"
               >
@@ -563,11 +563,6 @@ export default function CommandCenter() {
                     path="/auth/login"
                     label="Quick Login"
                     emoji="⚡"
-                  />
-                  <RouteLink
-                    path="/auth/password"
-                    label="Credentials (DEV)"
-                    emoji="🗝️"
                   />
                   <RouteLink
                     path="/geo-admin"
