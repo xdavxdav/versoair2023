@@ -1,5 +1,11 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryFunction,
+} from "@tanstack/react-query";
+import { toast } from "../hooks/use-toast";
 import { getCsrfToken, initializeCsrfToken } from "./auth";
+import { failureFromThrown, resolveLang } from "./submit-json";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -60,7 +66,22 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Safety net: a mutation that fails and has no onError of its own still tells the
+// user, instead of looking like nothing happened. Opt out with meta: { silent: true }.
+const mutationCache = new MutationCache({
+  onError: (error, _variables, _context, mutation) => {
+    if (mutation.options.onError || mutation.meta?.silent) return;
+    const failure = failureFromThrown(error);
+    toast({
+      title: resolveLang() === "fr" ? "Action impossible" : "Action failed",
+      description: failure.message,
+      variant: "destructive",
+    });
+  },
+});
+
 export const queryClient = new QueryClient({
+  mutationCache,
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
