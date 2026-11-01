@@ -167,6 +167,7 @@ const SignIn = lazy(() => import("@/pages/signin"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
+const BusinessRequestPage = lazy(() => import("@/pages/business-request"));
 
 // ─────────────────────────────────────────────────────
 // 🌍 Geo Admin Portal (lazy-loaded)
@@ -688,6 +689,9 @@ function Router() {
           🎯 UNIFIED APPLY PAGE — Portal selection & registration
           ═══════════════════════════════════════════════ */}
       <Route path="/apply" component={ApplyPage} />
+      <Route path="/apply/business">
+        {() => <ProtectedRoute component={BusinessRequestPage} />}
+      </Route>
 
       {/* ═══════════════════════════════════════════════
           🌍 GEO ADMIN — Subscriber portal (auth required)

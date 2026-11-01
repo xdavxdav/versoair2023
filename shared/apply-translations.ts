@@ -84,7 +84,7 @@ export const APPLY_COPY = [
   ["Upgrade for paid read-only access", "Passez à une offre payante pour un accès en lecture seule"],
   ["Join the community to unlock", "Rejoignez la communauté pour débloquer"],
   ["Register as a contractor to unlock", "Inscrivez-vous comme entrepreneur pour débloquer"],
-  ["Post a job as a business owner to unlock", "Publiez une offre d'emploi en tant que propriétaire d'entreprise pour débloquer"],
+  ["Register your business and get it approved to unlock", "Enregistrez votre entreprise et faites-la approuver pour débloquer"],
   ["Staff only", "Réservé au personnel"],
 
   // Portal chooser
@@ -159,6 +159,7 @@ export const APPLY_COPY = [
   ["Display name must be at least 2 characters", "Le nom d'affichage doit contenir au moins 2 caractères"],
   ["Stage name is required", "Le nom de scène est obligatoire"],
   ["Next step: once your email is verified and you are signed in, you will finish your contractor application. The details you entered here are kept on this device.", "Prochaine étape : une fois votre e-mail vérifié et votre connexion effectuée, vous finaliserez votre candidature d'entrepreneur. Les informations saisies ici sont conservées sur cet appareil."],
+  ["Next step: once your email is verified and you are signed in, you will send your business registration request. Our team reviews it before anything is published.", "Prochaine étape : une fois votre e-mail vérifié et votre connexion effectuée, vous enverrez votre demande d'enregistrement d'entreprise. Notre équipe l'examine avant toute publication."],
 ] as const;
 
 export const APPLY_ES = {
@@ -242,7 +243,7 @@ export const APPLY_ES = {
   "Upgrade for paid read-only access": "Mejora a un plan de pago para obtener acceso de solo lectura",
   "Join the community to unlock": "Únete a la comunidad para desbloquearlo",
   "Register as a contractor to unlock": "Regístrate como contratista para desbloquearlo",
-  "Post a job as a business owner to unlock": "Publica una oferta de empleo como propietario de un negocio para desbloquearlo",
+  "Register your business and get it approved to unlock": "Registra tu negocio y consigue que lo aprueben para desbloquearlo",
   "Staff only": "Solo para el personal",
 
   "Choose Your Path": "Elige tu camino",
@@ -313,4 +314,5 @@ export const APPLY_ES = {
   "Display name must be at least 2 characters": "El nombre para mostrar debe tener al menos 2 caracteres",
   "Stage name is required": "El nombre artístico es obligatorio",
   "Next step: once your email is verified and you are signed in, you will finish your contractor application. The details you entered here are kept on this device.": "Siguiente paso: cuando hayas verificado tu correo electrónico e iniciado sesión, terminarás tu solicitud de contratista. Los datos que has introducido aquí se guardan en este dispositivo.",
+  "Next step: once your email is verified and you are signed in, you will send your business registration request. Our team reviews it before anything is published.": "Siguiente paso: cuando hayas verificado tu correo electrónico e iniciado sesión, enviarás tu solicitud de registro de negocio. Nuestro equipo la revisa antes de publicar nada.",
 } satisfies Record<(typeof APPLY_COPY)[number][0], string>;

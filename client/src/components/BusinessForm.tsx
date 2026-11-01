@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
-import { getCsrfToken, initializeCsrfToken } from "@/lib/auth";
+import { resolveLang, submitJson } from "@/lib/submit-json";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,13 +36,142 @@ import {
   getAdminLabels,
 } from "@/components/ui/geolocation-fields";
 
+// The dialog sets translate="no", so browser auto-translate cannot help here.
+// English text is unchanged from before; French follows the site style.
+const COPY = {
+  en: {
+    addBusiness: "Add Business",
+    title: "Add New Business",
+    descriptionDirect: "Create a new business entry for your directory",
+    descriptionRequest:
+      "Send this business to our team. It is published once approved.",
+    name: "Business Name *",
+    namePlaceholder: "e.g., Acme Corp, The Coffee House",
+    category: "Category *",
+    selectCategory: "Select a category",
+    loadingCategories: "Loading categories...",
+    categoriesFailed:
+      "Categories could not be loaded. Refresh the page and try again.",
+    businessType: "Business Type",
+    selectBusinessType: "Select a business type",
+    country: "Country *",
+    selectCountry: "Select a country",
+    countriesFailed:
+      "Countries could not be loaded. Refresh the page and try again.",
+    phone: "Phone",
+    phonePlaceholder: "e.g., +1-555-0123",
+    email: "Email",
+    emailPlaceholder: "e.g., contact@business.com",
+    description: "Description",
+    descriptionPlaceholder: "Brief description of the business",
+    cancel: "Cancel",
+    submitting: "Submitting...",
+    submitRequest: "Submit Request",
+    createBusiness: "Create Business",
+    untitled: "Untitled",
+    selectCountryFirst: "Select country first",
+    switchToManual: "Switch to manual input",
+    switchToDropdown: "Switch to dropdown",
+    loadingMany: (what: string) => `Loading ${what}s...`,
+    loadingOne: (what: string) => `Loading ${what}...`,
+    select: (what: string) => `Select ${what}`,
+    selectWhatFirst: (what: string) => `Select ${what} first`,
+    typeName: (what: string) => `Type ${what} name`,
+    summary: (name: string, category: string, country: string) => (
+      <>
+        Creating <strong>{name}</strong> in <strong>{category}</strong> for{" "}
+        <strong>{country}</strong>
+      </>
+    ),
+    validationTitle: "Validation Error",
+    nameRequired: "Business name is required",
+    categoryRequired: "Please select a category",
+    countryRequired: "Please select a country",
+    errorTitle: "Error",
+    createFailed: "Failed to create business",
+    successTitle: "Success",
+    requestSentTitle: "Request Submitted ✉️",
+    created: (name: string) => `Business "${name}" created successfully`,
+    requestSent: (name: string, ref?: string) =>
+      `Your request for "${name}" has been sent to the admin team for review.${ref ? ` Reference: ${ref}.` : ""}`,
+  },
+  fr: {
+    addBusiness: "Ajouter une entreprise",
+    title: "Ajouter une entreprise",
+    descriptionDirect: "Créez une nouvelle fiche d'entreprise pour votre annuaire",
+    descriptionRequest:
+      "Envoyez cette entreprise à notre équipe. Elle est publiée une fois approuvée.",
+    name: "Nom de l'entreprise *",
+    namePlaceholder: "p. ex. Maquis Chez Awa, Boutique Soleil",
+    category: "Catégorie *",
+    selectCategory: "Choisir une catégorie",
+    loadingCategories: "Chargement des catégories...",
+    categoriesFailed:
+      "Impossible de charger les catégories. Actualisez la page et réessayez.",
+    businessType: "Type d'entreprise",
+    selectBusinessType: "Choisir un type d'entreprise",
+    country: "Pays *",
+    selectCountry: "Choisir un pays",
+    countriesFailed:
+      "Impossible de charger les pays. Actualisez la page et réessayez.",
+    phone: "Téléphone",
+    phonePlaceholder: "p. ex. +225 01 02 03 04 05",
+    email: "E-mail",
+    emailPlaceholder: "p. ex. contact@entreprise.com",
+    description: "Description",
+    descriptionPlaceholder: "Brève description de l'entreprise",
+    cancel: "Annuler",
+    submitting: "Envoi en cours...",
+    submitRequest: "Envoyer la demande",
+    createBusiness: "Créer l'entreprise",
+    untitled: "Sans nom",
+    selectCountryFirst: "Choisissez d'abord un pays",
+    switchToManual: "Passer à la saisie manuelle",
+    switchToDropdown: "Passer à la liste déroulante",
+    loadingMany: () => "Chargement...",
+    loadingOne: () => "Chargement...",
+    select: (what: string) => `Sélectionner : ${what}`,
+    selectWhatFirst: (what: string) => `Sélectionnez d'abord : ${what}`,
+    typeName: (what: string) => `Saisir : ${what}`,
+    summary: (name: string, category: string, country: string) => (
+      <>
+        Création de <strong>{name}</strong> dans <strong>{category}</strong>{" "}
+        pour <strong>{country}</strong>
+      </>
+    ),
+    validationTitle: "Erreur de validation",
+    nameRequired: "Le nom de l'entreprise est obligatoire",
+    categoryRequired: "Veuillez choisir une catégorie",
+    countryRequired: "Veuillez choisir un pays",
+    errorTitle: "Erreur",
+    createFailed: "Impossible de créer l'entreprise",
+    successTitle: "Succès",
+    requestSentTitle: "Demande envoyée ✉️",
+    created: (name: string) => `L'entreprise « ${name} » a été créée.`,
+    requestSent: (name: string, ref?: string) =>
+      `Votre demande pour « ${name} » a été transmise à l'équipe pour examen.${ref ? ` Référence : ${ref}.` : ""}`,
+  },
+};
+
+export interface BusinessFormResult {
+  name: string;
+  /** Present for approval requests; quote it when contacting support. */
+  referenceId?: string;
+  /** True when the request was also saved as a ticket the requester can follow. */
+  recorded?: boolean;
+}
+
 interface BusinessFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (result: BusinessFormResult) => void;
   defaultCountryCode?: string;
-  /** When true, submit goes to /api/businesses/submit (pending approval flow) */
+  /** When true, submit goes to /api/request/business (pending approval flow) */
   requireApproval?: boolean;
   /** Username of the submitter — sent along when requireApproval is true */
   username?: string | null;
+  /** Open the dialog as soon as it is shown (used by the business request page). */
+  defaultOpen?: boolean;
+  /** Replaces the label of the button that opens the dialog. */
+  triggerLabel?: string;
 }
 
 export function BusinessForm({
@@ -49,8 +179,13 @@ export function BusinessForm({
   defaultCountryCode,
   requireApproval = false,
   username,
+  defaultOpen = false,
+  triggerLabel,
 }: BusinessFormProps) {
-  const [open, setOpen] = useState(false);
+  const { currentLang } = useLanguage();
+  const lang = resolveLang(currentLang);
+  const copy = COPY[lang];
+  const [open, setOpen] = useState(defaultOpen);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -75,7 +210,7 @@ export function BusinessForm({
   const [autoPopulateCity, setAutoPopulateCity] = useState(true);
 
   // Fetch countries
-  const { data: countriesRaw = [] } = useQuery({
+  const { data: countriesRaw = [], isError: countriesFailed } = useQuery({
     queryKey: ["countries"],
     queryFn: async () => {
       const res = await fetch("/api/countries");
@@ -145,7 +280,10 @@ export function BusinessForm({
   }, [defaultCountryCode, open]);
 
   // Fetch categories
-  const { data: categories = [] } = useQuery({
+  const {
+    data: categories = [],
+    isError: categoriesFailed,
+  } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const res = await fetch("/api/categories");
@@ -160,8 +298,8 @@ export function BusinessForm({
     // Validate required fields
     if (!formData.name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Business name is required",
+        title: copy.validationTitle,
+        description: copy.nameRequired,
         variant: "destructive",
       });
       return;
@@ -169,8 +307,8 @@ export function BusinessForm({
 
     if (!formData.categoryId) {
       toast({
-        title: "Validation Error",
-        description: "Please select a category",
+        title: copy.validationTitle,
+        description: copy.categoryRequired,
         variant: "destructive",
       });
       return;
@@ -178,8 +316,8 @@ export function BusinessForm({
 
     if (!formData.countryCode) {
       toast({
-        title: "Validation Error",
-        description: "Please select a country",
+        title: copy.validationTitle,
+        description: copy.countryRequired,
         variant: "destructive",
       });
       return;
@@ -188,8 +326,8 @@ export function BusinessForm({
     try {
       setIsSubmitting(true);
 
-      // When requireApproval is true, send email notification only (no DB insert)
-      // Otherwise, create the business directly
+      // requireApproval sends the request to the admin team (emailed and saved
+      // as a ticket); otherwise the business is created directly.
       const endpoint = requireApproval
         ? "/api/request/business"
         : "/api/v1/admin/businesses";
@@ -203,21 +341,11 @@ export function BusinessForm({
         categoryName = cat?.name || "";
       }
 
-      // Ensure CSRF token is available
-      let csrf = getCsrfToken();
-      if (!csrf) {
-        await initializeCsrfToken();
-        csrf = getCsrfToken();
-      }
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrf ? { "x-csrf-token": csrf } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify({
+      const result = await submitJson<{
+        referenceId?: string;
+        recorded?: boolean;
+      }>(endpoint, {
+        body: {
           name: formData.name,
           categoryId: parseInt(formData.categoryId),
           categoryName: categoryName || undefined,
@@ -232,22 +360,32 @@ export function BusinessForm({
           description: formData.description || null,
           latitude: formData.latitude ? parseFloat(formData.latitude) : null,
           longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-          ...(requireApproval ? { username: username || "GeoAdmin User" } : {}),
-        }),
+          // The server records who is signed in; this is only an extra hint.
+          ...(requireApproval && username ? { username } : {}),
+        },
+        fallbackMessage: copy.createFailed,
+        lang,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create business");
+      if (!result.ok) {
+        toast({
+          title: copy.errorTitle,
+          description: result.message,
+          variant: "destructive",
+        });
+        return;
       }
 
-      const result = await response.json();
+      const submittedName = formData.name.trim();
+      const referenceId = requireApproval
+        ? result.data?.referenceId
+        : undefined;
 
       toast({
-        title: requireApproval ? "Request Submitted ✉️" : "Success",
+        title: requireApproval ? copy.requestSentTitle : copy.successTitle,
         description: requireApproval
-          ? `Your request for "${formData.name}" has been sent to the admin team for review.`
-          : `Business "${formData.name}" created successfully`,
+          ? copy.requestSent(submittedName, referenceId)
+          : copy.created(submittedName),
       });
 
       // Reset form
@@ -271,13 +409,17 @@ export function BusinessForm({
       });
 
       setOpen(false);
-      onSuccess?.();
+      onSuccess?.({
+        name: submittedName,
+        referenceId,
+        recorded: requireApproval ? Boolean(result.data?.recorded) : undefined,
+      });
     } catch (error) {
       console.error("Error creating business:", error);
       toast({
-        title: "Error",
+        title: copy.errorTitle,
         description:
-          error instanceof Error ? error.message : "Failed to create business",
+          error instanceof Error ? error.message : copy.createFailed,
         variant: "destructive",
       });
     } finally {
@@ -297,7 +439,7 @@ export function BusinessForm({
       <DialogTrigger asChild>
         <Button className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
           <Plus className="h-4 w-4" />
-          Add Business
+          {triggerLabel ?? copy.addBusiness}
         </Button>
       </DialogTrigger>
 
@@ -306,19 +448,21 @@ export function BusinessForm({
         translate="no"
       >
         <DialogHeader>
-          <DialogTitle className="text-slate-100">Add New Business</DialogTitle>
+          <DialogTitle className="text-slate-100">{copy.title}</DialogTitle>
           <DialogDescription className="text-slate-400">
-            Create a new business entry for your directory
+            {requireApproval
+              ? copy.descriptionRequest
+              : copy.descriptionDirect}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Business Name */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Business Name *</Label>
+            <Label className="text-slate-200">{copy.name}</Label>
             <Input
               type="text"
-              placeholder="e.g., Acme Corp, The Coffee House"
+              placeholder={copy.namePlaceholder}
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -329,7 +473,7 @@ export function BusinessForm({
 
           {/* Category */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Category *</Label>
+            <Label className="text-slate-200">{copy.category}</Label>
             <Select
               value={formData.categoryId || undefined}
               onValueChange={(v) => {
@@ -351,7 +495,7 @@ export function BusinessForm({
               }}
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder={copy.selectCategory} />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-white/10 max-h-60">
                 {categories.length === 0 ? (
@@ -360,7 +504,9 @@ export function BusinessForm({
                     disabled
                     className="text-slate-400"
                   >
-                    Loading categories...
+                    {categoriesFailed
+                      ? copy.categoriesFailed
+                      : copy.loadingCategories}
                   </SelectItem>
                 ) : (
                   categories
@@ -381,7 +527,7 @@ export function BusinessForm({
 
           {/* Business Type */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Business Type</Label>
+            <Label className="text-slate-200">{copy.businessType}</Label>
             <Select
               value={formData.businessType || ""}
               onValueChange={(v) =>
@@ -389,7 +535,7 @@ export function BusinessForm({
               }
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
-                <SelectValue placeholder="Select a business type" />
+                <SelectValue placeholder={copy.selectBusinessType} />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-white/10 max-h-60">
                 {getBusinessTypesForCategory(
@@ -411,7 +557,7 @@ export function BusinessForm({
 
           {/* Country */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Country *</Label>
+            <Label className="text-slate-200">{copy.country}</Label>
             <Select
               value={formData.countryCode}
               onValueChange={(v) =>
@@ -424,7 +570,7 @@ export function BusinessForm({
               }
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-slate-100">
-                <SelectValue placeholder="Select a country" />
+                <SelectValue placeholder={copy.selectCountry} />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-white/10 max-h-60">
                 {countries.map((country: any) => (
@@ -438,6 +584,11 @@ export function BusinessForm({
                 ))}
               </SelectContent>
             </Select>
+            {countriesFailed && (
+              <p role="alert" className="text-xs text-red-300">
+                {copy.countriesFailed}
+              </p>
+            )}
           </div>
 
           {/* Region / Province / State / Commune — dynamic label */}
@@ -459,8 +610,8 @@ export function BusinessForm({
                         }`}
                         title={
                           autoPopulateRegion
-                            ? "Switch to manual input"
-                            : "Switch to dropdown"
+                            ? copy.switchToManual
+                            : copy.switchToDropdown
                         }
                       >
                         <span
@@ -487,8 +638,8 @@ export function BusinessForm({
                     >
                       <option value="" className="bg-slate-900">
                         {regionsLoading
-                          ? `Loading ${labels.region.toLowerCase()}s...`
-                          : `Select ${labels.region.toLowerCase()}`}
+                          ? copy.loadingMany(labels.region.toLowerCase())
+                          : copy.select(labels.region.toLowerCase())}
                       </option>
                       {(regionsList as any[])
                         .sort((a: any, b: any) => a.name.localeCompare(b.name))
@@ -508,9 +659,9 @@ export function BusinessForm({
                       placeholder={
                         formData.countryCode
                           ? regionsLoading
-                            ? `Loading ${labels.region.toLowerCase()}s...`
-                            : `Type ${labels.region.toLowerCase()} name`
-                          : "Select country first"
+                            ? copy.loadingMany(labels.region.toLowerCase())
+                            : copy.typeName(labels.region.toLowerCase())
+                          : copy.selectCountryFirst
                       }
                       disabled={!formData.countryCode || regionsLoading}
                       value={formData.regionName || ""}
@@ -535,8 +686,8 @@ export function BusinessForm({
                         }`}
                         title={
                           autoPopulateCity
-                            ? "Switch to manual input"
-                            : "Switch to dropdown"
+                            ? copy.switchToManual
+                            : copy.switchToDropdown
                         }
                       >
                         <span
@@ -559,8 +710,8 @@ export function BusinessForm({
                     >
                       <option value="" className="bg-slate-900">
                         {citiesLoading
-                          ? `Loading ${labels.city.toLowerCase()}...`
-                          : `Select ${labels.city.toLowerCase()}`}
+                          ? copy.loadingOne(labels.city.toLowerCase())
+                          : copy.select(labels.city.toLowerCase())}
                       </option>
                       {(citiesList as any[])
                         .sort((a: any, b: any) => a.name.localeCompare(b.name))
@@ -581,9 +732,9 @@ export function BusinessForm({
                         formData.countryCode
                           ? (regionsList as any[]).length > 0 &&
                             !formData.regionId
-                            ? `Select ${labels.region.toLowerCase()} first`
-                            : `Type ${labels.city.toLowerCase()} name`
-                          : "Select country first"
+                            ? copy.selectWhatFirst(labels.region.toLowerCase())
+                            : copy.typeName(labels.city.toLowerCase())
+                          : copy.selectCountryFirst
                       }
                       value={formData.cityName}
                       onChange={(e) =>
@@ -620,10 +771,10 @@ export function BusinessForm({
 
           {/* Phone */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Phone</Label>
+            <Label className="text-slate-200">{copy.phone}</Label>
             <Input
               type="tel"
-              placeholder="e.g., +1-555-0123"
+              placeholder={copy.phonePlaceholder}
               value={formData.phone}
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
@@ -634,10 +785,10 @@ export function BusinessForm({
 
           {/* Email */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Email</Label>
+            <Label className="text-slate-200">{copy.email}</Label>
             <Input
               type="email"
-              placeholder="e.g., contact@business.com"
+              placeholder={copy.emailPlaceholder}
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -648,10 +799,10 @@ export function BusinessForm({
 
           {/* Description */}
           <div className="space-y-1.5">
-            <Label className="text-slate-200">Description</Label>
+            <Label className="text-slate-200">{copy.description}</Label>
             <Input
               type="text"
-              placeholder="Brief description of the business"
+              placeholder={copy.descriptionPlaceholder}
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -709,9 +860,11 @@ export function BusinessForm({
             <Card className="bg-white/5 border-white/10">
               <CardContent className="pt-4 text-sm text-slate-300">
                 <p>
-                  Creating <strong>{formData.name || "Untitled"}</strong> in{" "}
-                  <strong>{selectedCategory.name}</strong> for{" "}
-                  <strong>{selectedCountry.name}</strong>
+                  {copy.summary(
+                    formData.name || copy.untitled,
+                    selectedCategory.name,
+                    selectedCountry.name,
+                  )}
                 </p>
               </CardContent>
             </Card>
@@ -725,7 +878,7 @@ export function BusinessForm({
               onClick={() => setOpen(false)}
               className="border-white/10 text-slate-300 hover:bg-white/5"
             >
-              Cancel
+              {copy.cancel}
             </Button>
             <Button
               type="submit"
@@ -734,10 +887,10 @@ export function BusinessForm({
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isSubmitting
-                ? "Submitting..."
+                ? copy.submitting
                 : requireApproval
-                  ? "Submit Request"
-                  : "Create Business"}
+                  ? copy.submitRequest
+                  : copy.createBusiness}
             </Button>
           </div>
         </form>

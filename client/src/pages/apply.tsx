@@ -61,6 +61,7 @@ import {
   CONTRACTOR_APPLY_PATH,
   saveContractorDraft,
 } from "@/lib/contractor-draft";
+import { BUSINESS_REQUEST_PATH, saveBusinessIntent } from "@/lib/signup-resume";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -183,7 +184,9 @@ const PORTALS: Portal[] = [
     ],
     registerEndpoint: "/auth/register",
     loginEndpoint: "/auth/login",
-    redirectPath: "/profile",
+    // Creating an account does not make anyone a business owner: the next step
+    // is the registration request that the team reviews.
+    redirectPath: BUSINESS_REQUEST_PATH,
     badgeLabel: "Business",
   },
   {
@@ -296,6 +299,8 @@ const SPECIALIZATIONS = [
 // ─────────────────────────────────────────────────────
 // 🔐 Map apply-page portal IDs → portal-access PortalIds
 // ─────────────────────────────────────────────────────
+// The Business Owner card is only "connected" once the Careers portal is unlocked,
+// which happens when a business request has been approved (see computeUserCapabilities).
 const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
   general: "general",
   artist: "artist",
@@ -303,8 +308,14 @@ const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
   community: "community",
   artisan: "artisan",
   streamer: "streamer",
-  business: "general",
+  business: "careers",
   contractor: "contractor",
+};
+
+// Where "Enter Portal" goes for a portal the member is already connected to,
+// when that is not the page used right after creating the account.
+const CONNECTED_PORTAL_PATHS: Partial<Record<string, string>> = {
+  business: "/services/careers/dashboard",
 };
 
 interface RegisterResponse {
@@ -526,6 +537,8 @@ export default function ApplyPage() {
             hourlyRate: formData.hourlyRate,
           });
         }
+        // Same idea for a business owner: after verifying, send them to the request form.
+        if (selectedPortal.id === "business") saveBusinessIntent();
         setVerificationPending(true);
         setVerificationEmailSent(data.emailSent === true);
         setVerificationMessage(data.message || "");
@@ -572,13 +585,17 @@ export default function ApplyPage() {
             note={
               selectedPortal?.id === "contractor"
                 ? "Next step: once your email is verified and you are signed in, you will finish your contractor application. The details you entered here are kept on this device."
-                : undefined
+                : selectedPortal?.id === "business"
+                  ? "Next step: once your email is verified and you are signed in, you will send your business registration request. Our team reviews it before anything is published."
+                  : undefined
             }
             onContinue={() =>
               setLocation(
                 selectedPortal?.id === "contractor"
                   ? `/auth/signin?redirect=${encodeURIComponent(CONTRACTOR_APPLY_PATH)}`
-                  : "/auth/signin",
+                  : selectedPortal?.id === "business"
+                    ? `/auth/signin?redirect=${encodeURIComponent(BUSINESS_REQUEST_PATH)}`
+                    : "/auth/signin",
               )
             }
           />
@@ -675,7 +692,12 @@ export default function ApplyPage() {
                                 id={`portal-card-${portal.id}`}
                                 tabIndex={0}
                                 className={`relative overflow-hidden bg-white/5 hover:border-white/30 transition-all duration-300 cursor-pointer group h-full ring-1 ${portal.cardRing || "ring-amber-500/30 border-white/10"} border ${targetPortalId === portal.id ? "portal-target-glow" : ""}`}
-                                onClick={() => setLocation(portal.redirectPath)}
+                                onClick={() =>
+                                  setLocation(
+                                    CONNECTED_PORTAL_PATHS[portal.id] ??
+                                      portal.redirectPath,
+                                  )
+                                }
                               >
                                 {/* Gold connected indicator */}
                                 <div className="absolute top-3 right-3 z-10">
@@ -720,7 +742,10 @@ export default function ApplyPage() {
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setLocation(portal.redirectPath);
+                                      setLocation(
+                                        CONNECTED_PORTAL_PATHS[portal.id] ??
+                                          portal.redirectPath,
+                                      );
                                     }}
                                     className={`w-full bg-gradient-to-r ${portal.gradient} hover:opacity-90 text-white`}
                                   >
@@ -967,6 +992,11 @@ export default function ApplyPage() {
                                         // send them to the application, not to account creation.
                                         if (portal.id === "contractor") {
                                           setLocation(CONTRACTOR_APPLY_PATH);
+                                          return;
+                                        }
+                                        // Business ownership is granted after the team reviews a request.
+                                        if (portal.id === "business") {
+                                          setLocation(BUSINESS_REQUEST_PATH);
                                           return;
                                         }
                                         // Allow applying for locked portals

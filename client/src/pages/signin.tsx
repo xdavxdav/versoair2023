@@ -31,7 +31,7 @@ import { useAuthContext, type AuthUser } from "@/contexts/AuthContext";
 import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
-import { getContractorResumePath } from "@/lib/contractor-draft";
+import { getSignupResumePath } from "@/lib/signup-resume";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import {
   getEligiblePreferredPortal,
@@ -944,7 +944,7 @@ export default function SignIn() {
         window.history.replaceState({}, "", "/signin");
       } else {
         navigate(
-          getContractorResumePath() ??
+          getSignupResumePath() ??
             getLoginDashboardPath({ role: verifiedRole }),
         );
       }
@@ -1064,7 +1064,7 @@ export default function SignIn() {
                 window.history.replaceState({}, "", "/signin");
               } else {
                 navigate(
-                  getContractorResumePath() ??
+                  getSignupResumePath() ??
                     getLoginDashboardPath({ role: verifiedRole }),
                 );
               }
@@ -1319,13 +1319,13 @@ export default function SignIn() {
             description: `Great to meet you, ${trimmed}!`,
           });
 
-          const contractorResumePath = getContractorResumePath();
+          const signupResumePath = getSignupResumePath();
 
           if (!pendingLoginData) {
             // The session could not be read back after the email link signed the user in;
             // the name is saved, so carry on rather than failing on a missing session.
             navigate(
-              contractorResumePath ??
+              signupResumePath ??
                 getLoginDashboardPath({ role: verifiedRole }),
             );
             return;
@@ -1345,8 +1345,8 @@ export default function SignIn() {
             navigate(returnPath);
             return;
           }
-          if (contractorResumePath) {
-            navigate(contractorResumePath);
+          if (signupResumePath) {
+            navigate(signupResumePath);
             return;
           }
 

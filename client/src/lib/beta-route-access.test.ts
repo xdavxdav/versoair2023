@@ -17,3 +17,8 @@ test("route prefixes do not accidentally allow similarly named paths", () => {
   assert.equal(isBetaRoute("/contracts-preview"), false);
   assert.equal(isBetaRoute("/jobs-board"), false);
 });
+
+test("the business request page is reachable while the beta scope is frozen", () => {
+  assert.equal(isBetaRoute("/apply/business"), true);
+  assert.equal(isBetaRoute("/apply/business?from=careers"), true);
+});

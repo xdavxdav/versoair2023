@@ -59,7 +59,7 @@ export const UNLOCK_REASONS: Record<string, string> = {
   "geo-admin": "Upgrade for paid read-only access",
   community: "Join the community to unlock",
   contractor: "Register as a contractor to unlock",
-  careers: "Post a job as a business owner to unlock",
+  careers: "Register your business and get it approved to unlock",
   admin: "Staff only",
 };
 
