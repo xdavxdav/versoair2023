@@ -1,9 +1,12 @@
 import { createRoot } from "react-dom/client";
 import React from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { installCsrfFetch } from "./lib/csrf-fetch";
 import "./index.css";
 
 const BOOT_TIMEOUT_MS = 15000;
+
+installCsrfFetch();
 
 function showBootstrapState(title: string, message: string) {
   const root = document.getElementById("root");

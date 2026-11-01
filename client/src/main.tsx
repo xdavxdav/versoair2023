@@ -2,9 +2,12 @@ import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
 import React from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { installCsrfFetch } from "./lib/csrf-fetch";
 import "./index.css";
 
 const BOOT_TIMEOUT_MS = 15000;
+
+installCsrfFetch();
 
 // A deployment can replace hashed lazy-load chunks while a tab is open. Retry
 // once with the current HTML shell instead of surfacing a JavaScript MIME error.
