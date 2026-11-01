@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useSubscription } from "@/hooks/use-subscription";
 import GeoAdminAuthGate from "@/components/GeoAdminAuthGate";
@@ -58,8 +58,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ScrollToTop from "@/components/ScrollToTop";
 import { isReadOnlyGeoAdminSubscriber } from "@shared/geoadmin-access-policy";
+import { authenticatedFetch } from "@/lib/auth";
+import { submitJson } from "@/lib/submit-json";
+import {
+  LISTING_STATUS_LABEL,
+  firstListingError,
+  listingStatus,
+  validateListing,
+  type ListingStatus,
+} from "@/lib/listing-form";
 
 const API_BASE_URL = "";
+
+const LISTING_STATUS_STYLE: Record<ListingStatus, string> = {
+  published: "bg-emerald-50 text-emerald-700 border-emerald-500/30",
+  pending: "bg-amber-50 text-amber-800 border-amber-500/30",
+  rejected: "bg-red-50 text-red-700 border-red-500/30",
+};
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -83,6 +98,7 @@ interface Property {
   guests: number;
   amenities: string[];
   verified: boolean;
+  verificationStatus?: string | null;
   instantBook: boolean;
   freeCancellation: boolean;
   discount: number;
@@ -193,6 +209,20 @@ const emptyListing: NewListing = {
   hostPhone: "",
 };
 
+// ─── Form helpers ───────────────────────────────────────────────────────────────
+
+const fieldBorder = (message?: string) =>
+  message ? "border-red-500" : "border-slate-200";
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="mt-1 text-xs text-red-600">
+      {message}
+    </p>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
 export default function ImmobilierPortal() {
@@ -207,9 +237,13 @@ export default function ImmobilierPortal() {
   const [activeTab, setActiveTab] = useState<PortalTab>("dashboard");
   const [myListings, setMyListings] = useState<Property[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
+  const [listingsError, setListingsError] = useState<string | null>(null);
   const [newListing, setNewListing] = useState<NewListing>(emptyListing);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const listingsRequest = useRef(0);
   const [gateBypass, setGateBypass] = useState(() => {
     const token =
       localStorage.getItem("auth_token") || localStorage.getItem("authToken");
@@ -230,74 +264,115 @@ export default function ImmobilierPortal() {
     refetch();
   };
 
-  // Fetch user's listings
+  // Fetch the listings shown in "Mes Offres". Read-only subscribers browse the
+  // verified marketplace; everyone else sees their own, including those still in review.
   const fetchMyListings = useCallback(async () => {
+    const requestId = ++listingsRequest.current;
     setIsLoadingListings(true);
+    setListingsError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/properties?limit=50`);
-      if (res.ok) {
-        const data = await res.json();
-        setMyListings(data.data || []);
+      const url = readOnlySubscriber
+        ? `${API_BASE_URL}/api/properties?limit=50`
+        : `${API_BASE_URL}/api/properties/mine`;
+      const res = await authenticatedFetch(url);
+      const data = await res.json().catch(() => null);
+      if (requestId !== listingsRequest.current) return;
+      if (res.status === 401 || res.status === 403) {
+        setListingsError(
+          "Votre session a expiré. Reconnectez-vous pour voir vos offres.",
+        );
+      } else if (!res.ok || data?.success === false) {
+        setListingsError(
+          "Impossible de charger vos offres pour le moment. Réessayez dans un instant.",
+        );
+      } else {
+        setMyListings(Array.isArray(data?.data) ? data.data : []);
       }
     } catch (err) {
+      if (requestId !== listingsRequest.current) return;
       console.error("Failed to fetch listings:", err);
+      setListingsError(
+        "Impossible de charger vos offres. Vérifiez votre connexion puis réessayez.",
+      );
+    } finally {
+      if (requestId === listingsRequest.current) setIsLoadingListings(false);
     }
-    setIsLoadingListings(false);
-  }, []);
+  }, [readOnlySubscriber]);
 
   useEffect(() => {
+    if (loading) return;
     if (isAuthenticated || gateBypass) fetchMyListings();
-  }, [isAuthenticated, gateBypass, fetchMyListings]);
+  }, [loading, isAuthenticated, gateBypass, fetchMyListings]);
+
+  const listingErrors = submitAttempted ? validateListing(newListing) : {};
+  const submitMessage =
+    Object.keys(listingErrors).length > 0
+      ? "Complétez les champs signalés en rouge, puis publiez à nouveau."
+      : submitError;
 
   // Handle new listing submission
   const handleSubmitListing = async () => {
-    if (readOnlySubscriber) return;
-    if (
-      !newListing.name ||
-      !newListing.type ||
-      !newListing.city ||
-      !newListing.price
-    )
+    if (readOnlySubscriber || isSubmitting) return;
+
+    const errors = validateListing(newListing);
+    setSubmitAttempted(true);
+    const firstError = firstListingError(errors);
+    if (firstError) {
+      setSubmitError(null);
+      document
+        .getElementById(`listing-field-${firstError}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/properties`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newListing.name,
-          description: newListing.description,
-          type: newListing.type,
-          category: newListing.category || "rent",
-          city: newListing.city,
-          location: newListing.location || newListing.city,
-          address: newListing.address,
-          price: newListing.price,
-          bedrooms: parseInt(newListing.bedrooms) || 0,
-          bathrooms: parseInt(newListing.bathrooms) || 0,
-          area: parseInt(newListing.area) || 0,
-          amenities: newListing.amenities
-            .split(",")
-            .map((a) => a.trim())
-            .filter(Boolean),
-          hostName: user?.name || user?.username || "Owner",
-          hostPhone: newListing.hostPhone,
-          hostEmail: user?.email || "",
-        }),
-      });
-      if (res.ok) {
-        setSubmitSuccess(true);
-        setNewListing(emptyListing);
-        fetchMyListings();
-        setTimeout(() => {
-          setSubmitSuccess(false);
-          setActiveTab("listings");
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Failed to submit listing:", err);
     }
+
+    setSubmitError(null);
+    setIsSubmitting(true);
+    const result = await submitJson(`${API_BASE_URL}/api/properties`, {
+      body: {
+        name: newListing.name.trim(),
+        description: newListing.description,
+        type: newListing.type,
+        category: newListing.category,
+        city: newListing.city,
+        location: newListing.location || newListing.city,
+        address: newListing.address,
+        price: newListing.price,
+        bedrooms: parseInt(newListing.bedrooms) || 0,
+        bathrooms: parseInt(newListing.bathrooms) || 0,
+        area: parseInt(newListing.area) || 0,
+        amenities: newListing.amenities
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean),
+        hostName: user?.name || user?.username || "Owner",
+        hostPhone: newListing.hostPhone,
+      },
+      lang: "fr",
+      fallbackMessage:
+        "Votre offre n'a pas pu être publiée. Vérifiez les champs puis réessayez.",
+    });
     setIsSubmitting(false);
+
+    if (!result.ok) {
+      setSubmitError(result.message);
+      return;
+    }
+    setSubmitSuccess(true);
+    setNewListing(emptyListing);
+    setSubmitAttempted(false);
+    fetchMyListings();
+  };
+
+  const startAnotherListing = () => {
+    setSubmitSuccess(false);
+    setSubmitError(null);
+    setSubmitAttempted(false);
+  };
+
+  const resetListingForm = () => {
+    setNewListing(emptyListing);
+    setSubmitAttempted(false);
+    setSubmitError(null);
   };
 
   // ─── Loading ────────────────────────────────────────────────────────────────
@@ -333,7 +408,12 @@ export default function ImmobilierPortal() {
     (sum, p) => sum + Number(p.price || 0),
     0,
   );
-  const verifiedCount = myListings.filter((p) => p.verified).length;
+  const verifiedCount = myListings.filter(
+    (p) => listingStatus(p) === "published",
+  ).length;
+  const pendingCount = myListings.filter(
+    (p) => listingStatus(p) === "pending",
+  ).length;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd] text-slate-900">
@@ -535,7 +615,13 @@ export default function ImmobilierPortal() {
                         <p className="text-2xl font-bold text-slate-900">
                           {verifiedCount}
                         </p>
-                        <p className="text-xs text-emerald-700">propriétés</p>
+                        <p
+                          className={`text-xs ${pendingCount > 0 ? "text-amber-800" : "text-emerald-700"}`}
+                        >
+                          {pendingCount > 0
+                            ? `${pendingCount} en attente de vérification`
+                            : "propriétés"}
+                        </p>
                       </div>
                       <div className="p-2 rounded-lg bg-emerald-500/20">
                         <Shield className="h-5 w-5 text-emerald-700" />
@@ -656,12 +742,29 @@ export default function ImmobilierPortal() {
                 )}
               </div>
 
+              {listingsError && !isLoadingListings && (
+                <div
+                  role="alert"
+                  className="mb-6 flex flex-col gap-3 rounded-lg border border-red-500/30 bg-red-50 p-4 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span>{listingsError}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={fetchMyListings}
+                    className="border-red-500/40 text-red-700 hover:bg-red-100"
+                  >
+                    Réessayer
+                  </Button>
+                </div>
+              )}
+
               {isLoadingListings ? (
                 <div className="text-center py-16">
                   <Loader2 className="h-10 w-10 text-emerald-700 animate-spin mx-auto mb-3" />
                   <p className="text-slate-700">Chargement de vos offres…</p>
                 </div>
-              ) : myListings.length === 0 ? (
+              ) : myListings.length === 0 && listingsError ? null : myListings.length === 0 ? (
                 <div className="text-center py-16">
                   <Home className="h-16 w-16 text-slate-600 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-slate-700 mb-2">
@@ -698,9 +801,17 @@ export default function ImmobilierPortal() {
                             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-500/30 text-xs capitalize">
                               {property.type || "property"}
                             </Badge>
-                            <div className="flex items-center gap-1">
-                              {property.verified && (
-                                <CheckCircle className="h-4 w-4 text-emerald-700" />
+                            <div className="flex items-center gap-1.5">
+                              {readOnlySubscriber ? (
+                                property.verified && (
+                                  <CheckCircle className="h-4 w-4 text-emerald-700" />
+                                )
+                              ) : (
+                                <Badge
+                                  className={`${LISTING_STATUS_STYLE[listingStatus(property)]} text-xs`}
+                                >
+                                  {LISTING_STATUS_LABEL[listingStatus(property)]}
+                                </Badge>
                               )}
                               {property.featured && (
                                 <Star className="h-4 w-4 text-amber-800 fill-amber-400" />
@@ -777,11 +888,32 @@ export default function ImmobilierPortal() {
                     <CheckCircle className="h-20 w-20 text-emerald-700 mx-auto mb-4" />
                   </motion.div>
                   <h3 className="text-2xl font-bold text-emerald-700 mb-2">
-                    Offre publiée !
+                    Offre envoyée !
                   </h3>
-                  <p className="text-slate-700">
-                    Votre annonce est maintenant visible sur la marketplace
+                  <p className="text-slate-700 max-w-md mx-auto">
+                    Votre annonce est enregistrée. Elle apparaîtra sur la
+                    marketplace dès que notre équipe l'aura vérifiée. Suivez son
+                    statut dans « Mes Offres ».
                   </p>
+                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <Button
+                      onClick={() => {
+                        startAnotherListing();
+                        setActiveTab("listings");
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      Voir mes offres
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={startAnotherListing}
+                      className="border-slate-200 text-slate-700 hover:bg-white/5"
+                    >
+                      Publier une autre offre
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <Card className="text-slate-900 bg-white/5 border-slate-200 max-w-3xl mx-auto">
@@ -797,7 +929,7 @@ export default function ImmobilierPortal() {
                   <CardContent className="space-y-6">
                     {/* Type + Category Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div id="listing-field-type">
                         <Label className="text-sm text-slate-700 mb-2 block">
                           Type de bien *
                         </Label>
@@ -805,7 +937,8 @@ export default function ImmobilierPortal() {
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700"
+                              aria-invalid={!!listingErrors.type}
+                              className={`w-full justify-between bg-white/5 ${fieldBorder(listingErrors.type)} hover:bg-white/10 text-slate-700`}
                             >
                               {propertyTypes.find(
                                 (t) => t.value === newListing.type,
@@ -830,9 +963,10 @@ export default function ImmobilierPortal() {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        <FieldError message={listingErrors.type} />
                       </div>
 
-                      <div>
+                      <div id="listing-field-category">
                         <Label className="text-sm text-slate-700 mb-2 block">
                           Catégorie *
                         </Label>
@@ -840,7 +974,8 @@ export default function ImmobilierPortal() {
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700"
+                              aria-invalid={!!listingErrors.category}
+                              className={`w-full justify-between bg-white/5 ${fieldBorder(listingErrors.category)} hover:bg-white/10 text-slate-700`}
                             >
                               {categoryOptions.find(
                                 (c) => c.value === newListing.category,
@@ -865,11 +1000,12 @@ export default function ImmobilierPortal() {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        <FieldError message={listingErrors.category} />
                       </div>
                     </div>
 
                     {/* Name */}
-                    <div>
+                    <div id="listing-field-name">
                       <Label className="text-sm text-slate-700 mb-2 block">
                         Titre de l'annonce *
                       </Label>
@@ -879,8 +1015,10 @@ export default function ImmobilierPortal() {
                           setNewListing({ ...newListing, name: e.target.value })
                         }
                         placeholder="Ex: Villa 4 chambres à Cocody Riviera"
-                        className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
+                        aria-invalid={!!listingErrors.name}
+                        className={`bg-white/5 ${fieldBorder(listingErrors.name)} text-slate-900 placeholder-slate-700`}
                       />
+                      <FieldError message={listingErrors.name} />
                     </div>
 
                     {/* Description */}
@@ -904,7 +1042,7 @@ export default function ImmobilierPortal() {
 
                     {/* City + Location */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div id="listing-field-city">
                         <Label className="text-sm text-slate-700 mb-2 block">
                           Ville *
                         </Label>
@@ -912,7 +1050,8 @@ export default function ImmobilierPortal() {
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between bg-white/5 border-slate-200 hover:bg-white/10 text-slate-700"
+                              aria-invalid={!!listingErrors.city}
+                              className={`w-full justify-between bg-white/5 ${fieldBorder(listingErrors.city)} hover:bg-white/10 text-slate-700`}
                             >
                               {newListing.city || "Choisir une ville..."}
                               <ChevronDown className="h-4 w-4 opacity-50" />
@@ -932,6 +1071,7 @@ export default function ImmobilierPortal() {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        <FieldError message={listingErrors.city} />
                       </div>
 
                       <div>
@@ -972,12 +1112,14 @@ export default function ImmobilierPortal() {
 
                     {/* Price + Area */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
+                      <div id="listing-field-price">
                         <Label className="text-sm text-slate-700 mb-2 block">
                           Prix (XOF) *
                         </Label>
                         <Input
                           type="number"
+                          min={0}
+                          inputMode="numeric"
                           value={newListing.price}
                           onChange={(e) =>
                             setNewListing({
@@ -986,8 +1128,10 @@ export default function ImmobilierPortal() {
                             })
                           }
                           placeholder="15000000"
-                          className="bg-white/5 border-slate-200 text-slate-900 placeholder-slate-700"
+                          aria-invalid={!!listingErrors.price}
+                          className={`bg-white/5 ${fieldBorder(listingErrors.price)} text-slate-900 placeholder-slate-700`}
                         />
+                        <FieldError message={listingErrors.price} />
                       </div>
                       <div>
                         <Label className="text-sm text-slate-700 mb-2 block">
@@ -1079,37 +1223,47 @@ export default function ImmobilierPortal() {
                     </div>
 
                     {/* Submit */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                      <Button
-                        variant="outline"
-                        onClick={() => setNewListing(emptyListing)}
-                        className="border-slate-200 text-slate-700 hover:bg-white/5"
-                      >
-                        Réinitialiser
-                      </Button>
-                      <Button
-                        onClick={handleSubmitListing}
-                        disabled={
-                          isSubmitting ||
-                          !newListing.name ||
-                          !newListing.type ||
-                          !newListing.city ||
-                          !newListing.price
-                        }
-                        className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 gap-2 px-8"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Publication…
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4" />
-                            Publier l'offre
-                          </>
-                        )}
-                      </Button>
+                    <div className="pt-4 border-t border-slate-200 space-y-3">
+                      {submitMessage && (
+                        <div
+                          role="alert"
+                          className="rounded-lg border border-red-500/30 bg-red-50 p-3 text-sm text-red-700"
+                        >
+                          {submitMessage}
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-700">
+                        * Champs obligatoires : type de bien, catégorie, titre,
+                        ville et prix. Votre annonce sera vérifiée par notre
+                        équipe avant d'apparaître sur la marketplace.
+                      </p>
+                      <div className="flex justify-end gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={resetListingForm}
+                          disabled={isSubmitting}
+                          className="border-slate-200 text-slate-700 hover:bg-white/5"
+                        >
+                          Réinitialiser
+                        </Button>
+                        <Button
+                          onClick={handleSubmitListing}
+                          disabled={isSubmitting}
+                          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 gap-2 px-8"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Publication…
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              Publier l'offre
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

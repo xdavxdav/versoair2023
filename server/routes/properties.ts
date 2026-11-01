@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db, pool } from "../db";
 import { properties } from "@shared/schema";
-import { eq, and, gte, lte, like, desc, asc, or } from "drizzle-orm";
+import { eq, and, gte, lte, like, desc, asc, or, sql } from "drizzle-orm";
 import {
   denyGeoAdminSubscriberMutation,
   optionalAuth,
@@ -12,6 +12,13 @@ import { numericRouteParam } from "../middleware/numeric-route-param";
 
 const router = Router();
 router.param("id", numericRouteParam);
+
+/** Listings have no owner column, so the sign-in e-mail is the owner key. */
+export function normalizeOwnerEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  return email.length > 0 ? email : null;
+}
 
 // ============================================================================
 // PROPERTIES ENDPOINTS
@@ -139,6 +146,43 @@ router.get("/api/properties", async (req: Request, res: Response) => {
   }
 });
 
+// GET the signed-in owner's own listings, including the ones still awaiting review.
+// Registered before "/:id", which would otherwise reject "mine" as a bad id.
+router.get(
+  "/api/properties/mine",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    const ownerEmail = normalizeOwnerEmail(req.user?.email);
+    if (!ownerEmail) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "AUTH_REQUIRED",
+          message: "Please sign in to see your listings.",
+        },
+      });
+    }
+
+    try {
+      const rows = await db
+        .select()
+        .from(properties)
+        .where(sql`lower(${properties.hostEmail}) = ${ownerEmail}`)
+        .orderBy(desc(properties.createdAt))
+        .limit(100);
+
+      res.json({ success: true, data: rows });
+    } catch (error) {
+      console.error("Error fetching owner properties:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch your listings",
+      });
+    }
+  },
+);
+
 // GET single property by ID
 router.get("/api/properties/:id", async (req: Request, res: Response) => {
   try {
@@ -182,6 +226,18 @@ router.post(
   denyGeoAdminSubscriberMutation,
   async (req: Request, res: Response) => {
   try {
+    const ownerEmail = normalizeOwnerEmail(req.user?.email);
+    if (!ownerEmail) {
+      return res.status(401).json({
+        success: false,
+        status: 401,
+        error: {
+          code: "AUTH_REQUIRED",
+          message: "Please sign in to publish a listing.",
+        },
+      });
+    }
+
     const {
       name,
       description,
@@ -197,7 +253,6 @@ router.post(
       amenities,
       hostName,
       hostPhone,
-      hostEmail,
     } = req.body;
 
     // Validate required fields
@@ -227,7 +282,7 @@ router.post(
         amenities: Array.isArray(amenities) ? amenities : [],
         hostName: hostName || "Owner",
         hostPhone: hostPhone || "",
-        hostEmail: hostEmail || "",
+        hostEmail: ownerEmail,
         verified: false,
         featured: false,
         rating: "0.0",
