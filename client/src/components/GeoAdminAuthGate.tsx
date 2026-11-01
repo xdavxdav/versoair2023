@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { setAuthToken, initializeCsrfToken } from "@/lib/auth";
+import { classifySubscriberLogin } from "@/lib/geoadmin-gate-flow";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
@@ -42,12 +43,21 @@ const LOCKOUT_MESSAGE =
 const PROVIDER_MESSAGE =
   /^This account uses (.+) sign-in\. Please sign in with \1 instead\.$/;
 
+type GateMode = "gate" | "signin" | "geoadmin" | "owner-totp";
+type GateNotice = "staff-needs-code" | "signed-in-needs-code";
+
 interface GeoAdminAuthGateProps {
   onSignInSuccess: (username?: string) => void;
+  /** Staff who are already signed in open straight on the access-code form. */
+  initialMode?: Extract<GateMode, "gate" | "signin" | "geoadmin">;
+  /** Display name of the account that is already signed in, if any. */
+  signedInAs?: string | null;
 }
 
 export default function GeoAdminAuthGate({
   onSignInSuccess,
+  initialMode = "gate",
+  signedInAs = null,
 }: GeoAdminAuthGateProps) {
   const localize = useLocalizedContent();
   const { translateText } = useLanguage();
@@ -72,9 +82,10 @@ export default function GeoAdminAuthGate({
   };
   const { login: authContextLogin } = useAuthContext();
   const [, navigateTo] = useLocation();
-  const [mode, setMode] = useState<
-    "gate" | "signin" | "geoadmin" | "owner-totp"
-  >("gate");
+  const [mode, setMode] = useState<GateMode>(initialMode);
+  const [notice, setNotice] = useState<GateNotice | null>(
+    initialMode === "geoadmin" && signedInAs ? "signed-in-needs-code" : null,
+  );
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -94,6 +105,7 @@ export default function GeoAdminAuthGate({
   const handleSubscriberSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNotice(null);
     setLoading(true);
 
     try {
@@ -105,39 +117,43 @@ export default function GeoAdminAuthGate({
       });
 
       const data = await res.json();
+      const outcome = classifySubscriberLogin(data);
 
-      if (data.requiresOtp) {
-        navigateTo("/auth/signin?redirect=%2Fgeo-admin");
+      if (outcome.kind === "staff-needs-code") {
+        // Staff reach GeoAdmin with their personal access code only. Sending
+        // them on to the general sign-in asked for the same credentials twice.
+        if (outcome.hasServerSession) {
+          // Roles without an email code were already signed in by the server;
+          // end that half-finished session so the access code is the way in.
+          await fetch("/auth/logout", {
+            method: "POST",
+            credentials: "include",
+          }).catch(() => undefined);
+        }
+        setPassword("");
+        setShowPassword(false);
+        setUsername("");
+        setMode("geoadmin");
+        setNotice("staff-needs-code");
         return;
       }
 
-      if (data.success && data.token) {
-        if (
-          ["admin", "moderator", "superuser", "tsr"].includes(
-            data.user?.role,
-          ) ||
-          data.user?.isAdmin
-        ) {
-          setError(
-            "GeoAdmin staff must sign in with their personal access code.",
-          );
-          return;
-        }
-        localStorage.setItem("auth_token", data.token);
-        localStorage.setItem("authToken", data.token); // legacy compat
+      if (outcome.kind === "signed-in") {
+        localStorage.setItem("auth_token", outcome.token);
+        localStorage.setItem("authToken", outcome.token); // legacy compat
         localStorage.setItem("geoadmin_session", "true");
         localStorage.setItem("geoadmin_username", email.split("@")[0]);
         localStorage.setItem("geoadmin_login_time", new Date().toISOString());
         setSignedInUsername(email.split("@")[0]);
-        setAuthToken(data.token);
+        setAuthToken(outcome.token);
         if (data.user) {
-          authContextLogin(data.token, data.user);
+          authContextLogin(outcome.token, data.user);
         }
         await initializeCsrfToken();
         setIsSuccess(true);
         onSignInSuccess(email.split("@")[0]);
       } else {
-        setError(data.message || "Invalid credentials. Please try again.");
+        setError(outcome.message || "Invalid credentials. Please try again.");
       }
     } catch {
       setError("Connection error. Please try again.");
@@ -149,6 +165,7 @@ export default function GeoAdminAuthGate({
   const handleGeoAdminSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNotice(null);
     setLoading(true);
 
     try {
@@ -202,6 +219,7 @@ export default function GeoAdminAuthGate({
   const handleOwnerTotpSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNotice(null);
     setLoading(true);
 
     try {
@@ -439,6 +457,7 @@ export default function GeoAdminAuthGate({
                 onClick={() => {
                   setMode("signin");
                   setError("");
+                  setNotice(null);
                   setEmail("");
                   setPassword("");
                   setUsername("");
@@ -457,6 +476,7 @@ export default function GeoAdminAuthGate({
                 onClick={() => {
                   setMode("geoadmin");
                   setError("");
+                  setNotice(null);
                   setEmail("");
                   setPassword("");
                   setUsername("");
@@ -477,6 +497,23 @@ export default function GeoAdminAuthGate({
             {error && (
               <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
                 {localizeServerMessage(error)}
+              </div>
+            )}
+
+            {/* Guidance after a correct password on an account that needs the access code */}
+            {notice && !error && (
+              <div
+                role="status"
+                className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-sm"
+              >
+                {notice === "staff-needs-code"
+                  ? tr(
+                      "Your password is correct. GeoAdmin staff finish signing in with their personal access code.",
+                    )
+                  : tr(
+                      "You are signed in as {name}. Enter your GeoAdmin access code to open the staff tools.",
+                      { name: signedInAs ?? "" },
+                    )}
               </div>
             )}
 

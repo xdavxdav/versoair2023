@@ -240,7 +240,13 @@ export default function GeoAdminPage() {
   }
 
   if (isGeoAdmin && !gateBypass) {
-    return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
+    return (
+      <GeoAdminAuthGate
+        onSignInSuccess={handleSignInSuccess}
+        initialMode="geoadmin"
+        signedInAs={displayName}
+      />
+    );
   }
 
   if (!isGeoAdmin && hasFreeBasicAccess) {

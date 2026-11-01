@@ -43,7 +43,8 @@ export const GEO_ADMIN_COPY = [
   ["You've been disconnected from GeoAdmin.", "Votre session GeoAdmin a été fermée."],
 
   // Sign-in gate: messages written by the page itself
-  ["GeoAdmin staff must sign in with their personal access code.", "Le personnel GeoAdmin doit se connecter avec son code d'accès personnel."],
+  ["Your password is correct. GeoAdmin staff finish signing in with their personal access code.", "Votre mot de passe est correct. Le personnel GeoAdmin termine sa connexion avec son code d'accès personnel."],
+  ["You are signed in as {name}. Enter your GeoAdmin access code to open the staff tools.", "Vous êtes connecté en tant que {name}. Saisissez votre code d'accès GeoAdmin pour ouvrir les outils du personnel."],
   ["Invalid credentials. Please try again.", "Identifiants invalides. Veuillez réessayer."],
   ["Invalid credentials.", "Identifiants invalides."],
   ["Connection error. Please try again.", "Erreur de connexion. Veuillez réessayer."],
@@ -137,7 +138,8 @@ export const GEO_ADMIN_ES = {
   "Successfully logged out": "Sesión cerrada correctamente",
   "You've been disconnected from GeoAdmin.": "Se ha cerrado tu sesión de GeoAdmin.",
 
-  "GeoAdmin staff must sign in with their personal access code.": "El personal de GeoAdmin debe iniciar sesión con su código de acceso personal.",
+  "Your password is correct. GeoAdmin staff finish signing in with their personal access code.": "Tu contraseña es correcta. El personal de GeoAdmin termina de iniciar sesión con su código de acceso personal.",
+  "You are signed in as {name}. Enter your GeoAdmin access code to open the staff tools.": "Has iniciado sesión como {name}. Introduce tu código de acceso de GeoAdmin para abrir las herramientas del personal.",
   "Invalid credentials. Please try again.": "Credenciales no válidas. Inténtalo de nuevo.",
   "Invalid credentials.": "Credenciales no válidas.",
   "Connection error. Please try again.": "Error de conexión. Inténtalo de nuevo.",
