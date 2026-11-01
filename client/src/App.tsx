@@ -665,8 +665,6 @@ function Router() {
       <Route path="/auth/reset-password" component={AuthRecoveryPage} />
       <Route path="/geo-admin/accept-invitation" component={AuthRecoveryPage} />
       <Route path="/auth/signin" component={SignIn} />
-      <Route path="/auth/forgot-password" component={AuthRecoveryPage} />
-      <Route path="/auth/reset-password" component={AuthRecoveryPage} />
       <Route path="/auth/signup">
         {() => <Redirect to="/auth/signin?mode=register" />}
       </Route>
@@ -695,7 +693,6 @@ function Router() {
           🌍 GEO ADMIN — Subscriber portal (auth required)
           ═══════════════════════════════════════════════ */}
       <Route path="/geo-admin" component={GeoAdminPage} />
-      <Route path="/geo-admin/accept-invitation" component={AuthRecoveryPage} />
       <Route path="/geo-insights" component={GeoInsightsPage} />
       <Route path="/geo-admin/business-verification">
         {() => <ProtectedRoute component={BusinessVerification} />}
