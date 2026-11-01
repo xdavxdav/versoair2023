@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  getAccountFamily,
   getDashboardDestination,
   getDashboardAccountOptions,
+  getGeoAdminDestination,
   getSelectedDashboardAccount,
   normalizeAccountRoleFromEmail,
 } from "./dashboard-routes";
@@ -88,15 +90,149 @@ test("GeoAdmin subscribers and free accounts use their correct destinations", ()
     }).path,
     "/geo-admin",
   );
+  // An account that holds the geo-admin role keeps the read-only dashboard.
   assert.equal(
     getDashboardDestination({
       id: "11",
       email: "basic@example.test",
-      role: "user",
+      role: "geo-admin",
       portals: ["geo-admin"],
       subscriptionTier: "free",
     }).path,
     "/dashboard?account=geo-admin&from=geoadmin",
+  );
+});
+
+// What computeUserCapabilities returns: every free account lists "geo-admin"
+// next to general and streamer, whatever else it unlocked.
+const withEveryAccountPortals = (
+  extra: Record<string, unknown> & { portals?: string[] } = {},
+) => ({
+  id: "20",
+  email: "member@example.test",
+  role: "user",
+  subscriptionTier: "free",
+  ...extra,
+  portals: ["general", "geo-admin", "streamer", ...(extra.portals ?? [])],
+});
+
+test("the free GeoAdmin view every account has never outranks the portal it unlocked", () => {
+  const cases: Array<{
+    name: string;
+    user: ReturnType<typeof withEveryAccountPortals>;
+    path: string;
+    family: string;
+    selected: string;
+  }> = [
+    {
+      name: "artist",
+      user: withEveryAccountPortals({
+        role: "artist",
+        hasArtistProfile: true,
+        portals: ["artist"],
+      }),
+      path: "/artist-portal/dashboard",
+      family: "artist",
+      selected: "artist",
+    },
+    {
+      name: "contractor",
+      user: withEveryAccountPortals({
+        isContractor: true,
+        portals: ["contractor"],
+      }),
+      path: "/contracts",
+      family: "contractor",
+      selected: "contractor",
+    },
+    {
+      name: "artisan",
+      user: withEveryAccountPortals({ role: "artisan", portals: ["artisan"] }),
+      path: "/artisans-portal",
+      family: "artisan",
+      selected: "general",
+    },
+    {
+      name: "business owner",
+      user: withEveryAccountPortals({
+        role: "business_owner",
+        portals: ["careers"],
+      }),
+      path: "/services/careers/dashboard",
+      family: "general",
+      selected: "general",
+    },
+    {
+      name: "plain member",
+      user: withEveryAccountPortals(),
+      path: "/dashboard",
+      family: "general",
+      selected: "general",
+    },
+  ];
+
+  for (const { name, user, path, family, selected } of cases) {
+    assert.equal(getDashboardDestination(user).path, path, `${name} lands`);
+    assert.equal(getAccountFamily(user), family, `${name} family`);
+    assert.equal(
+      getSelectedDashboardAccount(
+        user,
+        getDashboardAccountOptions(user, false),
+        null,
+      ),
+      selected,
+      `${name} default dashboard`,
+    );
+  }
+});
+
+test("a member who owns a business opens the business dashboard, and GeoAdmin stays one choice away", () => {
+  const member = withEveryAccountPortals();
+  const options = getDashboardAccountOptions(member, true);
+
+  assert.equal(getSelectedDashboardAccount(member, options, null), "business");
+  assert.ok(options.some((account) => account.id === "geo-admin"));
+  assert.equal(
+    getSelectedDashboardAccount(member, options, "geo-admin"),
+    "geo-admin",
+  );
+});
+
+test("a paid GeoAdmin plan still takes the account to GeoAdmin first", () => {
+  const subscriber = withEveryAccountPortals({
+    subscriptionTier: "essential",
+    role: "artist",
+    hasArtistProfile: true,
+    portals: ["artist"],
+  });
+
+  assert.equal(getAccountFamily(subscriber), "geo-admin");
+  assert.equal(getDashboardDestination(subscriber).path, "/geo-admin");
+  assert.equal(
+    getSelectedDashboardAccount(
+      subscriber,
+      getDashboardAccountOptions(subscriber, false),
+      null,
+    ),
+    "geo-admin",
+  );
+});
+
+test("the GeoAdmin entry depends on the plan and role, not on what else the account unlocked", () => {
+  assert.equal(
+    getGeoAdminDestination(
+      withEveryAccountPortals({ role: "artist", portals: ["artist"] }),
+    ).path,
+    "/dashboard?account=geo-admin&from=geoadmin",
+  );
+  assert.equal(
+    getGeoAdminDestination(withEveryAccountPortals({ subscriptionTier: "max" }))
+      .path,
+    "/geo-admin",
+  );
+  assert.equal(
+    getGeoAdminDestination(withEveryAccountPortals({ role: "admin" })).path,
+    "/geo-admin/workspace",
   );
 });
 

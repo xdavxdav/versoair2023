@@ -32,12 +32,18 @@ import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getSignupResumePath } from "@/lib/signup-resume";
-import { getDashboardDestination } from "@/lib/dashboard-routes";
 import {
+  getDashboardDestination,
+  getGeoAdminDestination,
+} from "@/lib/dashboard-routes";
+import {
+  getDefaultLandingPath,
   getEligiblePreferredPortal,
   getPortalPreferenceStorageKey,
   getRecommendedPortalId,
   getRoleAwareRedirectPath,
+  isAutomaticPortalChoice,
+  shouldOfferPortalChoice,
   sortPortalChoices,
   type PortalChoice,
 } from "@/lib/portal-preferences";
@@ -229,7 +235,7 @@ const getPortalChoices = (userData: any): PortalChoice[] => {
           id: "geo-admin",
           name: "GeoAdmin",
           detail: "Geographic business intelligence tools",
-          path: getLoginDashboardPath(userData),
+          path: getGeoAdminDestination(toAuthUser(userData)).path,
         }
       : null,
   ];
@@ -374,16 +380,16 @@ export default function SignIn() {
       return;
     }
 
-    const userForRecommendation = {
-      id: String(userData.id ?? userData.userId ?? ""),
-      email: String(userData.email ?? ""),
-      role: userData.role ?? undefined,
-      portals: userData.portals,
-      hasArtistProfile: userData.hasArtistProfile,
-      isContractor: userData.isContractor,
-    };
+    // Accounts holding only what everyone gets (General, Musical Universe, the
+    // free GeoAdmin dashboard) have nothing to choose between: open their home.
+    const signedInUser = toAuthUser(userData);
+    if (!shouldOfferPortalChoice(availablePortals)) {
+      navigate(getDefaultLandingPath(signedInUser));
+      return;
+    }
+
     const recommendedId = getRecommendedPortalId(
-      userForRecommendation,
+      signedInUser,
       availablePortals,
     );
     setRecommendedPortalId(recommendedId);
@@ -2413,6 +2419,11 @@ export default function SignIn() {
                     {portal.id === recommendedPortalId && (
                       <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                         Recommended
+                      </span>
+                    )}
+                    {isAutomaticPortalChoice(portal) && (
+                      <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        Included with every account
                       </span>
                     )}
                   </div>

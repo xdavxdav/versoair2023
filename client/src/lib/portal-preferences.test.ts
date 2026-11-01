@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  getDefaultLandingPath,
   getEligiblePreferredPortal,
   getPortalPreferenceStorageKey,
   getRoleAwareRedirectPath,
   getRecommendedPortalId,
+  isAutomaticPortalChoice,
+  shouldOfferPortalChoice,
   sortPortalChoices,
   type PortalChoice,
 } from "./portal-preferences";
@@ -121,5 +124,121 @@ test("non-staff users are kept out of all GeoAdmin and admin staff routes", () =
   assert.equal(
     getRoleAwareRedirectPath(contractor, "/admin/tickets"),
     "/contracts",
+  );
+});
+
+// What every free account is offered after signing in (see computeUserCapabilities).
+const everyoneChoices: PortalChoice[] = [
+  { id: "general", name: "General", detail: "", path: "/dashboard" },
+  { id: "streamer", name: "Musical Universe", detail: "", path: "/stream" },
+  {
+    id: "geo-admin",
+    name: "GeoAdmin",
+    detail: "",
+    path: "/dashboard?account=geo-admin&from=geoadmin",
+  },
+];
+
+test("portals every account already has are not a reason to ask where to go", () => {
+  assert.deepEqual(
+    everyoneChoices.map((portal) => isAutomaticPortalChoice(portal)),
+    [true, true, true],
+  );
+  assert.equal(shouldOfferPortalChoice(everyoneChoices), false);
+  assert.equal(shouldOfferPortalChoice([]), false);
+});
+
+test("an unlocked portal brings the choice back, and the automatic ones stay labelled", () => {
+  const artist: PortalChoice = {
+    id: "artist",
+    name: "Artist",
+    detail: "",
+    path: "/artist-portal/dashboard",
+  };
+  const paidGeoAdmin: PortalChoice = {
+    id: "geo-admin",
+    name: "GeoAdmin",
+    detail: "",
+    path: "/geo-admin",
+  };
+  const community: PortalChoice = {
+    id: "community",
+    name: "Community",
+    detail: "",
+    path: "/blog",
+  };
+
+  assert.equal(isAutomaticPortalChoice(artist), false);
+  assert.equal(isAutomaticPortalChoice(paidGeoAdmin), false);
+  assert.equal(shouldOfferPortalChoice([...everyoneChoices, artist]), true);
+  assert.equal(shouldOfferPortalChoice([...everyoneChoices, community]), true);
+  assert.equal(
+    shouldOfferPortalChoice([everyoneChoices[0], everyoneChoices[1], paidGeoAdmin]),
+    true,
+  );
+});
+
+test("an account with nothing unlocked lands on its own dashboard, never on Stream", () => {
+  const freeAccount = {
+    id: "6",
+    email: "member@example.test",
+    role: "user",
+    portals: ["general", "geo-admin", "streamer"],
+    subscriptionTier: "free",
+  };
+
+  // The read-only GeoAdmin view is every account's perk: offered, not imposed.
+  assert.equal(getDefaultLandingPath(freeAccount), "/dashboard");
+  assert.equal(
+    getDefaultLandingPath({ ...freeAccount, portals: ["general", "streamer"] }),
+    "/dashboard",
+  );
+});
+
+test("a free artist is recommended the artist portal, not the GeoAdmin view every account has", () => {
+  const artist = {
+    id: "9",
+    email: "artist@example.test",
+    role: "artist",
+    hasArtistProfile: true,
+    portals: ["artist", "general", "geo-admin", "streamer"],
+    subscriptionTier: "free",
+  };
+  const choices: PortalChoice[] = [
+    ...everyoneChoices,
+    {
+      id: "artist",
+      name: "Artist",
+      detail: "",
+      path: "/artist-portal/dashboard",
+    },
+  ];
+
+  assert.equal(getDefaultLandingPath(artist), "/artist-portal/dashboard");
+  assert.equal(getRecommendedPortalId(artist, choices), "artist");
+});
+
+test("default landing keeps the community blog and the paid GeoAdmin page", () => {
+  const community = {
+    id: "7",
+    email: "community@example.test",
+    role: "user",
+    portals: ["general", "community", "streamer"],
+  };
+
+  assert.equal(getDefaultLandingPath(community), "/blog");
+  assert.equal(
+    getDefaultLandingPath({ ...community, portals: ["general", "community", "artist"] }),
+    "/artist-portal/dashboard",
+  );
+  assert.equal(
+    getDefaultLandingPath({
+      id: "8",
+      email: "subscriber@example.test",
+      role: "user",
+      portals: ["general", "geo-admin", "streamer"],
+      subscriptionTier: "essential",
+    }),
+    "/geo-admin",
   );
 });

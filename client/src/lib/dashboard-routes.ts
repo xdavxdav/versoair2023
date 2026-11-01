@@ -81,6 +81,16 @@ const BUSINESS_ALIASES = new Set([
   "employer",
 ]);
 
+function isFreeGeoAdminTier(
+  user: AuthUser | null | undefined,
+  role: string,
+): boolean {
+  const tier = String(
+    user?.subscriptionTier ?? user?.subscription_tier ?? "free",
+  ).toLowerCase();
+  return hasGeoAdminFreeAccess({ role, isAdmin: user?.isAdmin, tier });
+}
+
 export function getAccountFamily(
   user: AuthUser | null | undefined,
 ): AccountFamily {
@@ -91,7 +101,15 @@ export function getAccountFamily(
   const portals = (user?.portals || []).map((portal) => portal.toLowerCase());
 
   if (STAFF_ROLES.has(role)) return "staff";
-  if (role === "geo-admin" || portals.includes("geo-admin")) return "geo-admin";
+  // The server lists "geo-admin" for every free account because they all get the
+  // read-only view. That is a perk, not who the account is, so it only decides
+  // the family for a geo-admin role or a paid plan and otherwise yields to the
+  // portal the account actually unlocked (artist, contractor, careers, ...).
+  if (
+    role === "geo-admin" ||
+    (portals.includes("geo-admin") && !isFreeGeoAdminTier(user, role))
+  )
+    return "geo-admin";
   if (role === "artist" || user?.hasArtistProfile || portals.includes("artist"))
     return "artist";
   if (role === "artisan" || portals.includes("artisan")) return "artisan";
@@ -287,6 +305,30 @@ export function normalizeAccountRoleFromEmail(
   return normalizedRole || "user";
 }
 
+/**
+ * Where GeoAdmin opens for this account: the staff workspace, the full
+ * dashboard for paid plans, or the read-only view every free account has.
+ */
+export function getGeoAdminDestination(
+  user: AuthUser | null | undefined,
+): DashboardDestination {
+  const role = normalizeAccountRoleFromEmail(
+    user?.email,
+    user?.role,
+  ).toLowerCase();
+
+  if (STAFF_ROLES.has(role)) {
+    return { path: "/geo-admin/workspace", label: "Staff Dashboard" };
+  }
+
+  return isFreeGeoAdminTier(user, role)
+    ? {
+        path: "/dashboard?account=geo-admin&from=geoadmin",
+        label: "GeoAdmin Basic Dashboard",
+      }
+    : { path: "/geo-admin", label: "GeoAdmin Dashboard" };
+}
+
 export function getDashboardDestination(
   user: AuthUser | null | undefined,
 ): DashboardDestination {
@@ -300,26 +342,11 @@ export function getDashboardDestination(
     return { path: "/geo-admin/workspace", label: "Staff Dashboard" };
   }
 
-  if (
-    role === "geo-admin" ||
-    portals.includes("geo-admin")
-  ) {
-    const tier = String(
-      user?.subscriptionTier ?? user?.subscription_tier ?? "free",
-    ).toLowerCase();
-    return hasGeoAdminFreeAccess({
-      role,
-      isAdmin: user?.isAdmin,
-      tier,
-    })
-      ? {
-          path: "/dashboard?account=geo-admin&from=geoadmin",
-          label: "GeoAdmin Basic Dashboard",
-        }
-      : { path: "/geo-admin", label: "GeoAdmin Dashboard" };
+  const family = getAccountFamily(user);
+  if (family === "geo-admin") {
+    return getGeoAdminDestination(user);
   }
 
-  const family = getAccountFamily(user);
   if (
     family === "general" &&
     (JOB_SEEKER_ALIASES.has(role) ||

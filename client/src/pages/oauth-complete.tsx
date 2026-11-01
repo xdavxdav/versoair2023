@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { getRoleAwareRedirectPath } from "@/lib/portal-preferences";
+import {
+  getDefaultLandingPath,
+  getRoleAwareRedirectPath,
+} from "@/lib/portal-preferences";
 import { Loader2, CheckCircle2, AlertCircle, Shield } from "lucide-react";
 
 /**
@@ -63,36 +66,24 @@ export default function OAuthComplete() {
         await restoreAuth();
         if (cancelled) return;
 
-        // Default landing: send users who own a specialised portal straight to it.
+        // Default landing: the same rule as the password sign-in, so an account
+        // reaches the portal it unlocked rather than a perk every account has.
         let target = checkpoint;
         if (checkpoint === "/dashboard") {
+          let portals: string[] | undefined;
           try {
             const capRes = await fetch("/api/user/capabilities", {
               credentials: "include",
             });
             const caps = capRes.ok ? await capRes.json() : null;
-            const owned: string[] =
-              caps?.capabilities?.portals || caps?.portals || [];
-            const hrefs: Record<string, string> = {
-              admin: "/geo-admin/workspace",
-              artist: "/artist-portal",
-              artisan: "/artisans-portal",
-              contractor: "/services/contractors",
-              "geo-admin": "/geo-admin",
-              careers: "/services/careers/dashboard",
-            };
-            const first = [
-              "admin",
-              "artist",
-              "artisan",
-              "contractor",
-              "geo-admin",
-              "careers",
-            ].find((id) => owned.includes(id));
-            if (first) target = hrefs[first];
+            portals = caps?.capabilities?.portals || caps?.portals;
           } catch {
-            /* fall back to the general dashboard */
+            /* fall back to the portals on the session */
           }
+          target = getDefaultLandingPath({
+            ...data.user,
+            portals: portals ?? data.user.portals,
+          });
         }
         target = getRoleAwareRedirectPath(data.user, target) ?? target;
 

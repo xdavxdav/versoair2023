@@ -75,16 +75,41 @@ export function getRoleAwareRedirectPath(
   return requestedPath;
 }
 
+/** Where an account lands after signing in when it has not asked for anywhere else. */
+export function getDefaultLandingPath(user: AuthUser): string {
+  const portals = (user.portals ?? []).map((portal) => portal.toLowerCase());
+  return portals.includes("community") && !portals.includes("artist")
+    ? "/blog"
+    : getDashboardDestination(user).path;
+}
+
+const AUTOMATIC_PORTAL_IDS = new Set(["general", "streamer"]);
+
+/**
+ * True for portals every account already has without doing anything: General,
+ * Musical Universe, and the read-only GeoAdmin dashboard that free accounts get.
+ */
+export function isAutomaticPortalChoice(portal: PortalChoice): boolean {
+  if (AUTOMATIC_PORTAL_IDS.has(portal.id)) return true;
+  return portal.id === "geo-admin" && portal.path.startsWith("/dashboard");
+}
+
+/**
+ * Asking "where do you want to go?" only makes sense once the account holds a
+ * portal it unlocked. Offering Musical Universe next to the dashboard to
+ * everyone made it look like Stream had been granted on every sign-in.
+ */
+export function shouldOfferPortalChoice(
+  choices: readonly PortalChoice[],
+): boolean {
+  return choices.some((portal) => !isAutomaticPortalChoice(portal));
+}
+
 export function getRecommendedPortalId(
   user: AuthUser,
   choices: readonly PortalChoice[],
 ): string | null {
-  const destination = getDashboardDestination(user).path;
-  const portals = (user.portals ?? []).map((portal) => portal.toLowerCase());
-  const recommendedPath =
-    portals.includes("community") && !portals.includes("artist")
-      ? "/blog"
-      : destination;
+  const recommendedPath = getDefaultLandingPath(user);
   const matchingChoice = choices.find(
     (portal) => portal.path === recommendedPath,
   );
