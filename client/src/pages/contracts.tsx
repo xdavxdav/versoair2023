@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,20 +17,28 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { submitJson } from "@/lib/submit-json";
+import {
+  clearContractorDraft,
+  draftToApplyForm,
+  readContractorDraft,
+} from "@/lib/contractor-draft";
 
 // ─── Contractor Dashboard ──────────────────────────────────────────────────
 
-function ContractorDashboard() {
+function ContractorDashboard({
+  autoOpenApply = false,
+}: {
+  /** Open the application form straight away (someone who just registered as a contractor). */
+  autoOpenApply?: boolean;
+}) {
   const queryClient = useQueryClient();
-  const [showApplyForm, setShowApplyForm] = useState(false);
-  const [applyForm, setApplyForm] = useState({
-    name: "",
-    phone: "",
-    specialization: "",
-    hourlyRate: "",
+  const [showApplyForm, setShowApplyForm] = useState(autoOpenApply);
+  const [applyForm, setApplyForm] = useState(() => ({
+    ...draftToApplyForm(readContractorDraft()),
     portfolioUrl: "",
     coverLetter: "",
-  });
+  }));
 
   // Fetch application status
   const { data: appData } = useQuery({
@@ -54,21 +62,22 @@ function ContractorDashboard() {
     },
   });
 
-  // Apply mutation
+  // Apply mutation: the form stays open and shows the reason when the server says no.
   const applyMutation = useMutation({
     mutationFn: async (formData: typeof applyForm) => {
-      const res = await fetch("/api/contractor-pipeline/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
+      const result = await submitJson("/api/contractor-pipeline/apply", {
+        body: formData,
+        fallbackMessage: "Your application could not be submitted.",
       });
-      return res.json();
+      if (!result.ok) throw new Error(result.message);
+      return result.data;
     },
+    meta: { silent: true },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["/api/contractor-pipeline/my-application"],
       });
+      clearContractorDraft();
       setShowApplyForm(false);
     },
   });
@@ -82,14 +91,12 @@ function ContractorDashboard() {
       id: number;
       action: "accept" | "decline" | "complete";
     }) => {
-      const res = await fetch(
+      const result = await submitJson(
         `/api/contractor-pipeline/contracts/${id}/${action}`,
-        {
-          method: "POST",
-          credentials: "include",
-        },
+        { fallbackMessage: "The contract could not be updated." },
       );
-      return res.json();
+      if (!result.ok) throw new Error(result.message);
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -169,7 +176,7 @@ function ContractorDashboard() {
         )}
 
         {/* Apply Form */}
-        {showApplyForm && (
+        {showApplyForm && !application && (
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
             <h2 className="text-2xl font-bold text-white mb-6">
               Contractor Application
@@ -287,9 +294,9 @@ function ContractorDashboard() {
                 Cancel
               </Button>
             </div>
-            {applyMutation.data && !applyMutation.data.success && (
-              <p className="text-red-400 mt-3 text-sm">
-                {applyMutation.data.message}
+            {applyMutation.isError && (
+              <p role="alert" className="text-red-400 mt-3 text-sm">
+                {applyMutation.error.message}
               </p>
             )}
           </div>
@@ -505,13 +512,18 @@ const contractTypes = [
 
 export default function Contracts() {
   const { user } = useAuthContext();
+  const search = useSearch();
 
   // If the user is a contractor or has contractor role, show contractor dashboard
   const isContractor =
     user?.role === "contractor" || user?.portals?.includes("contractor");
+  // Someone who registered as a contractor is not one until an admin approves the
+  // application, so they reach the application form through ?apply=contractor.
+  const wantsToApply =
+    new URLSearchParams(search).get("apply") === "contractor";
 
-  if (isContractor) {
-    return <ContractorDashboard />;
+  if (isContractor || wantsToApply) {
+    return <ContractorDashboard autoOpenApply={wantsToApply && !isContractor} />;
   }
 
   // Otherwise show the artist contracts page

@@ -158,6 +158,7 @@ export const APPLY_COPY = [
   ["Invalid email format", "Format d'e-mail invalide"],
   ["Display name must be at least 2 characters", "Le nom d'affichage doit contenir au moins 2 caractères"],
   ["Stage name is required", "Le nom de scène est obligatoire"],
+  ["Next step: once your email is verified and you are signed in, you will finish your contractor application. The details you entered here are kept on this device.", "Prochaine étape : une fois votre e-mail vérifié et votre connexion effectuée, vous finaliserez votre candidature d'entrepreneur. Les informations saisies ici sont conservées sur cet appareil."],
 ] as const;
 
 export const APPLY_ES = {
@@ -311,4 +312,5 @@ export const APPLY_ES = {
   "Invalid email format": "Formato de correo electrónico no válido",
   "Display name must be at least 2 characters": "El nombre para mostrar debe tener al menos 2 caracteres",
   "Stage name is required": "El nombre artístico es obligatorio",
+  "Next step: once your email is verified and you are signed in, you will finish your contractor application. The details you entered here are kept on this device.": "Siguiente paso: cuando hayas verificado tu correo electrónico e iniciado sesión, terminarás tu solicitud de contratista. Los datos que has introducido aquí se guardan en este dispositivo.",
 } satisfies Record<(typeof APPLY_COPY)[number][0], string>;

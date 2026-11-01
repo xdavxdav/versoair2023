@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -56,6 +56,11 @@ import { navigateBackSafely } from "@/lib/safe-navigation";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
+import { submitJson } from "@/lib/submit-json";
+import {
+  CONTRACTOR_APPLY_PATH,
+  saveContractorDraft,
+} from "@/lib/contractor-draft";
 
 // ─────────────────────────────────────────────────────
 // 🎯 Portal Definitions
@@ -302,6 +307,13 @@ const PORTAL_ACCESS_MAP: Record<string, PortalId> = {
   contractor: "contractor",
 };
 
+interface RegisterResponse {
+  requiresVerification?: boolean;
+  emailSent?: boolean | null;
+  message?: string;
+  token?: string;
+}
+
 export default function ApplyPage() {
   const [location, setLocation] = useLocation();
   const { translateText } = useLanguage();
@@ -315,6 +327,7 @@ export default function ApplyPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const errorRef = useRef<HTMLDivElement | null>(null);
   const [success, setSuccess] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false);
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
@@ -344,6 +357,14 @@ export default function ApplyPage() {
     const timer = window.setTimeout(() => setTargetPortalId(null), 2400);
     return () => window.clearTimeout(timer);
   }, [targetPortalId, selectedPortal, user]);
+
+  // The submit button sits at the bottom of a long form and the message at the top,
+  // so without this a failed submit looks like nothing happened.
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [error]);
 
   // Track which fields the user has interacted with (for real-time validation)
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -478,71 +499,59 @@ export default function ApplyPage() {
         }
       }
 
-      const response = await fetch(selectedPortal.registerEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
+      const result = await submitJson<RegisterResponse>(
+        selectedPortal.registerEndpoint,
+        { body, fallbackMessage: "Registration failed" },
+      );
 
-      const data = await response.json();
-
-      if (data.success) {
-        if (data.requiresVerification) {
-          setVerificationPending(true);
-          setVerificationEmailSent(data.emailSent === true);
-          setVerificationMessage(data.message || "");
-          return;
-        }
-
-        // Store token if provided
-        if (data.token) {
-          const { setAuthToken } = await import("@/lib/auth");
-          setAuthToken(data.token);
-        }
-
-        // If contractor portal, also create the contractor profile
-        if (selectedPortal.id === "contractor" && data.token) {
-          try {
-            await fetch("/api/manage/contractors", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${data.token}`,
-              },
-              credentials: "include",
-              body: JSON.stringify({
-                name: formData.displayName || formData.email.split("@")[0],
-                email: formData.email,
-                specialization: formData.specialization || "General",
-                hourlyRate: formData.hourlyRate || null,
-                isAvailable: true,
-              }),
-            });
-          } catch {
-            // Non-blocking — account was still created
-          }
-        }
-
-        setSuccess(true);
-        // Redirect after short delay
-        setTimeout(() => {
-          const redirect = new URLSearchParams(
-            location.split("?")[1] || "",
-          ).get("redirect");
-          setLocation(redirect || selectedPortal.redirectPath);
-        }, 1500);
-      } else {
-        setError(data.message || "Registration failed");
+      if (!result.ok) {
+        setError(
+          result.code === "NETWORK_ERROR"
+            ? "Network error. Please try again."
+            : result.message,
+        );
+        return;
       }
-    } catch (err: any) {
-      const offline =
-        err instanceof TypeError &&
-        /failed to fetch|load failed|network/i.test(err.message);
+
+      const data = result.data ?? {};
+
+      if (data.requiresVerification) {
+        // The account cannot sign in until the email is verified, so the contractor profile
+        // typed here is kept and finished on /contracts after the first sign-in.
+        if (selectedPortal.id === "contractor") {
+          saveContractorDraft({
+            name: formData.displayName || formData.email.split("@")[0],
+            phone: formData.phone,
+            specialization: formData.specialization,
+            hourlyRate: formData.hourlyRate,
+          });
+        }
+        setVerificationPending(true);
+        setVerificationEmailSent(data.emailSent === true);
+        setVerificationMessage(data.message || "");
+        return;
+      }
+
+      // Store token if provided
+      if (data.token) {
+        const { setAuthToken } = await import("@/lib/auth");
+        setAuthToken(data.token);
+      }
+
+      setSuccess(true);
+      // Redirect after short delay
+      setTimeout(() => {
+        const redirect = new URLSearchParams(
+          location.split("?")[1] || "",
+        ).get("redirect");
+        setLocation(redirect || selectedPortal.redirectPath);
+      }, 1500);
+    } catch (err: unknown) {
+      // submitJson reports request failures as results, so this is an unexpected error.
       setError(
-        offline
-          ? "Network error. Please try again."
-          : err.message || "Network error. Please try again.",
+        err instanceof Error && err.message
+          ? err.message
+          : "Network error. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -560,7 +569,18 @@ export default function ApplyPage() {
             email={formData.email}
             emailSent={verificationEmailSent}
             message={verificationMessage}
-            onContinue={() => setLocation("/auth/signin")}
+            note={
+              selectedPortal?.id === "contractor"
+                ? "Next step: once your email is verified and you are signed in, you will finish your contractor application. The details you entered here are kept on this device."
+                : undefined
+            }
+            onContinue={() =>
+              setLocation(
+                selectedPortal?.id === "contractor"
+                  ? `/auth/signin?redirect=${encodeURIComponent(CONTRACTOR_APPLY_PATH)}`
+                  : "/auth/signin",
+              )
+            }
           />
         </div>
       </main>
@@ -943,6 +963,12 @@ export default function ApplyPage() {
                                       className="w-full cursor-pointer border-white/10 bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/60"
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        // A signed-in contractor applicant already has an account:
+                                        // send them to the application, not to account creation.
+                                        if (portal.id === "contractor") {
+                                          setLocation(CONTRACTOR_APPLY_PATH);
+                                          return;
+                                        }
                                         // Allow applying for locked portals
                                         setSelectedPortal(portal);
                                       }}
@@ -1406,7 +1432,11 @@ export default function ApplyPage() {
 
           <CardContent className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-sm">
+              <div
+                ref={errorRef}
+                role="alert"
+                className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-sm"
+              >
                 {error}
               </div>
             )}
@@ -1686,19 +1716,12 @@ export default function ApplyPage() {
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit Button: only busy-disabled. A button that is greyed out without a reason
+                looks broken; handleRegister explains whatever is missing. */}
             <Button
               onClick={handleRegister}
               translate="no"
-              disabled={
-                loading ||
-                !formData.email ||
-                !formData.password ||
-                !validations.email ||
-                !validations.passwordStrong ||
-                !validations.passwordsMatch ||
-                formData.confirmPassword.length === 0
-              }
+              disabled={loading}
               className={`w-full bg-gradient-to-r ${selectedPortal.gradient} hover:opacity-90 text-white mt-6 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {loading ? (

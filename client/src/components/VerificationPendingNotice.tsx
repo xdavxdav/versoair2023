@@ -7,6 +7,8 @@ interface VerificationPendingNoticeProps {
   email: string;
   emailSent?: boolean | null;
   message?: string;
+  /** Extra guidance about what happens after verifying (English; localized by catalogue). */
+  note?: string;
   onContinue?: () => void;
   continueLabel?: string;
 }
@@ -15,6 +17,7 @@ export default function VerificationPendingNotice({
   email,
   emailSent,
   message,
+  note,
   onContinue,
   continueLabel = "Continue to sign in after verifying",
 }: VerificationPendingNoticeProps) {
@@ -99,6 +102,12 @@ export default function VerificationPendingNotice({
                   "Email verification is required. Check your inbox or request a new verification link.",
                 )}
       </p>
+
+      {note && (
+        <p className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/80">
+          {translateText(note)}
+        </p>
+      )}
 
       <Button
         type="button"

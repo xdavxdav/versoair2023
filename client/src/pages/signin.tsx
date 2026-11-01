@@ -31,6 +31,7 @@ import { useAuthContext, type AuthUser } from "@/contexts/AuthContext";
 import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
+import { getContractorResumePath } from "@/lib/contractor-draft";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 import {
   getEligiblePreferredPortal,
@@ -924,6 +925,9 @@ export default function SignIn() {
                 role: data.user.role || verifiedRole,
               }),
             );
+            // The "set your name" step finishes from this; without it that step has nothing
+            // to continue with and a new account could never get past it.
+            setPendingLoginData({ token: data.token || "", user: data.user });
           }
         })
         .catch(() => {});
@@ -939,7 +943,10 @@ export default function SignIn() {
         setStep("set-display-name");
         window.history.replaceState({}, "", "/signin");
       } else {
-        navigate(getLoginDashboardPath({ role: verifiedRole }));
+        navigate(
+          getContractorResumePath() ??
+            getLoginDashboardPath({ role: verifiedRole }),
+        );
       }
     }, 5000);
     return () => {
@@ -1056,7 +1063,10 @@ export default function SignIn() {
                 setStep("set-display-name");
                 window.history.replaceState({}, "", "/signin");
               } else {
-                navigate(getLoginDashboardPath({ role: verifiedRole }));
+                navigate(
+                  getContractorResumePath() ??
+                    getLoginDashboardPath({ role: verifiedRole }),
+                );
               }
             }}
             className="mt-4 text-[#d4a037] hover:text-[#bf831c] text-sm font-medium transition-colors"
@@ -1303,15 +1313,42 @@ export default function SignIn() {
               localStorage.setItem("auth_user", JSON.stringify(u));
             } catch {}
           }
-          authLogin(
-            pendingLoginData.token,
-            toAuthUser(pendingLoginData.user, { name: trimmed }),
-          );
           localStorage.setItem("signin_timestamp", new Date().toISOString());
           toast({
             title: "🎉 Welcome to Verso Air!",
             description: `Great to meet you, ${trimmed}!`,
           });
+
+          const contractorResumePath = getContractorResumePath();
+
+          if (!pendingLoginData) {
+            // The session could not be read back after the email link signed the user in;
+            // the name is saved, so carry on rather than failing on a missing session.
+            navigate(
+              contractorResumePath ??
+                getLoginDashboardPath({ role: verifiedRole }),
+            );
+            return;
+          }
+
+          authLogin(
+            pendingLoginData.token,
+            toAuthUser(pendingLoginData.user, { name: trimmed }),
+          );
+
+          // Same priority as every other sign-in path: go back where the user was headed.
+          const returnPath = getRoleAwareLoginPath(
+            pendingLoginData.user,
+            getSafeReturnPath(getQueryParam("redirect")),
+          );
+          if (returnPath) {
+            navigate(returnPath);
+            return;
+          }
+          if (contractorResumePath) {
+            navigate(contractorResumePath);
+            return;
+          }
 
           const availablePortals = getPortalChoices(pendingLoginData.user);
           if (availablePortals.length > 1) {
