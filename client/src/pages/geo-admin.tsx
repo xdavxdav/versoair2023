@@ -9,7 +9,10 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
-import { staffSessionLacksAccessCode } from "@/lib/geoadmin-gate-flow";
+import {
+  getStaffReturnPath,
+  staffSessionLacksAccessCode,
+} from "@/lib/geoadmin-gate-flow";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { fillTemplate } from "@shared/public-translations";
@@ -220,6 +223,14 @@ export default function GeoAdminPage() {
     }
   }, [isAuthenticated, loading]);
 
+  // Staff pages send signed-out visitors here with `?redirect=`; once the access
+  // code is accepted they continue to the page they asked for.
+  useEffect(() => {
+    if (loading || !isGeoAdmin || !accessCodeVerified) return;
+    const returnTo = getStaffReturnPath(window.location.search);
+    if (returnTo) setLocation(returnTo, { replace: true });
+  }, [loading, isGeoAdmin, accessCodeVerified, setLocation]);
+
   const handleSignInSuccess = async (signinUsername?: string) => {
     if (signinUsername) {
       setUsername(signinUsername);
@@ -245,9 +256,17 @@ export default function GeoAdminPage() {
     );
   }
 
-  // Not signed in → show the auth gate
+  // Not signed in → show the auth gate. Arriving from a staff page means the
+  // visitor is staff, so open straight on the access-code form.
   if (!isAuthenticated) {
-    return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
+    return (
+      <GeoAdminAuthGate
+        onSignInSuccess={handleSignInSuccess}
+        initialMode={
+          getStaffReturnPath(window.location.search) ? "geoadmin" : "gate"
+        }
+      />
+    );
   }
 
   if (isGeoAdmin && !accessCodeVerified) {

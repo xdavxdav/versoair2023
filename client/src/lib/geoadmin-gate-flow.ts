@@ -58,3 +58,55 @@ export function staffSessionLacksAccessCode(
 ): boolean {
   return isStaff && serverReportedCodeAuthenticated === false;
 }
+
+interface PageGuard {
+  roles?: readonly string[];
+  ownerOnly?: boolean;
+}
+
+function isStaffOnlyGuard({ roles, ownerOnly }: PageGuard): boolean {
+  if (ownerOnly) return true;
+  return (
+    Boolean(roles?.length) &&
+    (roles ?? []).every((role) => isGeoAdminStaff({ role }))
+  );
+}
+
+/**
+ * Where a guarded page sends a signed-out visitor. Staff-only pages go to the
+ * GeoAdmin gate, which asks for the personal access code in the same step; the
+ * general sign-in opens a session the Admin Panel then refuses, so staff had to
+ * sign in twice.
+ */
+export function getSignedOutGuardPath(
+  returnTo: string,
+  guard: PageGuard,
+): string {
+  const target = encodeURIComponent(returnTo);
+  return isStaffOnlyGuard(guard)
+    ? `/geo-admin?redirect=${target}`
+    : `/auth/signin?redirect=${target}`;
+}
+
+/**
+ * The staff page the GeoAdmin gate should return to once the access code is
+ * accepted. Only same-site staff areas qualify, and never the gate itself.
+ */
+export function getStaffReturnPath(search: string): string | null {
+  const requested = new URLSearchParams(search).get("redirect");
+  if (
+    !requested ||
+    !requested.startsWith("/") ||
+    requested.startsWith("//") ||
+    requested.includes("\\") ||
+    /[\r\n]/.test(requested)
+  ) {
+    return null;
+  }
+  const pathname = requested.split(/[?#]/)[0];
+  const inStaffArea =
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname.startsWith("/geo-admin/");
+  return inStaffArea ? requested : null;
+}

@@ -18,6 +18,7 @@ import { useLocation } from "wouter";
 import { useLayoutEffect, useRef } from "react";
 import { RefreshCw } from "lucide-react";
 import { useOwnerAccess } from "@/hooks/use-owner-access";
+import { getSignedOutGuardPath } from "@/lib/geoadmin-gate-flow";
 
 interface ProtectedRouteProps {
   /** The page component to render when authorized (alternative to children) */
@@ -55,7 +56,10 @@ export default function ProtectedRoute({
       if (redirectingRef.current) return;
       redirectingRef.current = true;
       setLocation(
-        `/auth/signin?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+        getSignedOutGuardPath(
+          window.location.pathname + window.location.search,
+          { roles, ownerOnly },
+        ),
         { replace: true },
       );
       return;
