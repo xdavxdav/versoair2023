@@ -127,7 +127,6 @@ import {
   MapPin as MapPinIcon,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { AdminAccessGate } from "@/components/AdminAccessGate";
 import GeoAdminAccessManager from "@/components/GeoAdminAccessManager";
 import ImplementationTracker from "@/components/ImplementationTracker";
 import { Button } from "@/components/ui/button";
@@ -6587,70 +6586,17 @@ export default function AdminDashboard() {
     canAccessAdminPanelSection(section.id, isPanelOwner),
   );
   const sectionAllowed = canAccessAdminPanelSection(activeSection, isPanelOwner);
-
-  const [isAdminGateAuthenticated, setIsAdminGateAuthenticated] = useState(
-    () => {
-      const savedAccessTime = localStorage.getItem("adminAccessTime");
-      const savedUsername = localStorage.getItem("adminUsername");
-      if (!savedAccessTime || !savedUsername) return false;
-      const accessTime = parseInt(savedAccessTime);
-      const now = new Date().getTime();
-      const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours session duration
-      if (now - accessTime > sessionDuration) {
-        localStorage.removeItem("adminAccessTime");
-        localStorage.removeItem("adminUsername");
-        return false;
-      }
-      return true;
-    },
+  const [isAdminPanelAuthenticated, setIsAdminPanelAuthenticated] =
+    useState(false);
+  const [isCheckingAdminElevation, setIsCheckingAdminElevation] = useState(
+    () => sessionUser?.role === "admin",
   );
-
-  const [authenticatedAdminUsername, setAuthenticatedAdminUsername] = useState(
-    () => localStorage.getItem("adminUsername") || "",
-  );
-
-  // Auto-refresh session on component mount and periodic checks
-  useEffect(() => {
-    if (isAdminGateAuthenticated && authenticatedAdminUsername) {
-      // Refresh the access time to keep session alive
-      localStorage.setItem("adminAccessTime", new Date().getTime().toString());
-
-      // Check session validity every 10 minutes
-      const sessionCheckInterval = setInterval(
-        () => {
-          const savedAccessTime = localStorage.getItem("adminAccessTime");
-          if (savedAccessTime) {
-            const accessTime = parseInt(savedAccessTime);
-            const now = new Date().getTime();
-            const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
-            if (now - accessTime > sessionDuration) {
-              setIsAdminGateAuthenticated(false);
-              localStorage.removeItem("adminAccessTime");
-              localStorage.removeItem("adminUsername");
-              // Stay on admin portal — re-show the auth gate
-              setLocation("/dashboard-admin");
-            } else {
-              // Refresh session time
-              localStorage.setItem(
-                "adminAccessTime",
-                new Date().getTime().toString(),
-              );
-            }
-          }
-        },
-        10 * 60 * 1000,
-      ); // Check every 10 minutes
-
-      return () => clearInterval(sessionCheckInterval);
-    }
-  }, [isAdminGateAuthenticated, authenticatedAdminUsername]);
+  const [adminElevationError, setAdminElevationError] = useState("");
 
   const handleSessionExpired = useCallback(() => {
-    setIsAdminGateAuthenticated(false);
-    setAuthenticatedAdminUsername("");
-    localStorage.removeItem("adminAccessTime");
-    localStorage.removeItem("adminUsername");
-  }, []);
+    setIsAdminPanelAuthenticated(false);
+    setLocation("/geo-admin");
+  }, [setLocation]);
 
   const {
     sessionTimeLeft,
@@ -6659,7 +6605,11 @@ export default function AdminDashboard() {
     isSessionLow,
     handleExtendSession,
     formatTimeLeft,
-  } = useSessionTimer(isAdminGateAuthenticated, true, handleSessionExpired); // enableTimeout=true for admin dashboard
+  } = useSessionTimer(
+    isAdminPanelAuthenticated,
+    true,
+    handleSessionExpired,
+  );
 
   const SQL_SNIPPETS = [
     {
@@ -6726,37 +6676,78 @@ export default function AdminDashboard() {
   const [isSeedingBusinesses, setIsSeedingBusinesses] = useState(false);
   const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null);
 
-  const handleAdminAccessGranted = (username: string) => {
-    setIsAdminGateAuthenticated(true);
+  const [authenticatedAdminUsername, setAuthenticatedAdminUsername] =
+    useState("");
+  const handleAdminAccessGranted = useCallback((username: string) => {
+    setIsAdminPanelAuthenticated(true);
     setAuthenticatedAdminUsername(username);
-    localStorage.setItem("adminAccessTime", new Date().getTime().toString());
-    localStorage.setItem("adminUsername", username);
-  };
+  }, []);
 
-  // The owner is already verified by the server (staff code or account), so skip the on-screen code gate.
-  // Admin staff still go through it. The 15-minute session timer keeps running for everyone.
+  // The owner and invited admins authenticate through GeoAdmin.
   useEffect(() => {
-    if (sessionUser?.role === "superuser" && !isAdminGateAuthenticated) {
+    if (sessionUser?.role === "superuser" && !isAdminPanelAuthenticated) {
       handleAdminAccessGranted(
         sessionUser.username || sessionUser.name || "owner",
       );
     }
-  }, [sessionUser?.role, isAdminGateAuthenticated]);
+  }, [
+    sessionUser?.role,
+    sessionUser?.username,
+    sessionUser?.name,
+    isAdminPanelAuthenticated,
+    handleAdminAccessGranted,
+  ]);
 
-  // The server is the source of truth: if its admin session is gone, drop the local flag and show the gate
+  // The server is the source of truth for invited-admin elevation. If it has
+  // expired, return to GeoAdmin so staff can authenticate with their code.
   useEffect(() => {
-    if (!isAdminGateAuthenticated || sessionUser?.role === "superuser") return;
+    if (sessionUser?.role !== "admin") {
+      setIsCheckingAdminElevation(false);
+      return;
+    }
+
+    let active = true;
+    setIsCheckingAdminElevation(true);
+    setAdminElevationError("");
     fetch("/auth/admin-elevation", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : { elevated: false }))
-      .then((d) => {
-        if (!d.elevated) {
-          localStorage.removeItem("adminAccessTime");
-          localStorage.removeItem("adminUsername");
-          setIsAdminGateAuthenticated(false);
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Could not verify GeoAdmin access.");
+        }
+        return response.json() as Promise<{ elevated: boolean }>;
+      })
+      .then(({ elevated }) => {
+        if (!active) return;
+        if (elevated) {
+          handleAdminAccessGranted(
+            sessionUser.username || sessionUser.name || "administrator",
+          );
+        } else {
+          setIsAdminPanelAuthenticated(false);
+          setLocation("/geo-admin");
         }
       })
-      .catch(() => {});
-  }, [isAdminGateAuthenticated, sessionUser?.role]);
+      .catch((error: unknown) => {
+        if (!active) return;
+        console.error("[ADMIN] Failed to verify GeoAdmin elevation:", error);
+        setAdminElevationError(
+          "Could not verify GeoAdmin access. Return to GeoAdmin and sign in again.",
+        );
+      })
+      .finally(() => {
+        if (active) setIsCheckingAdminElevation(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [
+    sessionUser?.role,
+    sessionUser?.username,
+    sessionUser?.name,
+    setLocation,
+    handleAdminAccessGranted,
+  ]);
 
   // On mount: restore JWT into _authToken if session is alive but token is missing (page refresh)
   useEffect(() => {
@@ -6769,7 +6760,7 @@ export default function AdminDashboard() {
       import("@/lib/auth").then(({ setAuthToken }) =>
         setAuthToken(storedToken),
       );
-    } else if (isAdminGateAuthenticated && authenticatedAdminUsername) {
+    } else if (isAdminPanelAuthenticated && authenticatedAdminUsername) {
       // Session restored from localStorage but no JWT — redirect to sign in
       console.warn(
         "No JWT found on page refresh — re-authentication required.",
@@ -6851,7 +6842,7 @@ export default function AdminDashboard() {
     fetchDatabaseHealth();
     const interval = setInterval(fetchDatabaseHealth, 30000);
     return () => clearInterval(interval);
-  }, [fetchDatabaseHealth, isAdminGateAuthenticated]);
+  }, [fetchDatabaseHealth, isAdminPanelAuthenticated]);
 
   // ─── Performance Data Fetch ────────────────────────────────────────────────
   const fetchPerformanceData = useCallback(async () => {
@@ -7173,8 +7164,35 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAdminGateAuthenticated) {
-    return <AdminAccessGate onAccessGranted={handleAdminAccessGranted} />;
+  if (
+    (sessionUser?.role === "admin" && isCheckingAdminElevation) ||
+    (sessionUser?.role === "superuser" && !isAdminPanelAuthenticated)
+  ) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" aria-label="Verifying GeoAdmin access" />
+      </div>
+    );
+  }
+  if (sessionUser?.role === "admin" && !isAdminPanelAuthenticated) {
+    return (
+      <div role="alert" className="mx-auto mt-12 max-w-lg rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-900">
+        {adminElevationError || "GeoAdmin access is required. Sign in with your personal GeoAdmin access code."}
+        <Button className="mt-4 block" onClick={() => setLocation("/geo-admin")}>
+          Go to GeoAdmin
+        </Button>
+      </div>
+    );
+  }
+  if (!isAdminPanelAuthenticated) {
+    return (
+      <div role="alert" className="mx-auto mt-12 max-w-lg rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-900">
+        Admin Panel access requires GeoAdmin authentication.
+        <Button className="mt-4 block" onClick={() => setLocation("/geo-admin")}>
+          Go to GeoAdmin
+        </Button>
+      </div>
+    );
   }
 
   return (
