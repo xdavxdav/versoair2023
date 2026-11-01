@@ -268,7 +268,10 @@ export async function registerRoutes(app: Express) {
   app.use("/api/data/dispatch", dataDispatchRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/home", homeStatsRouter);
-  app.use("/api/request", submissionRequestLimiter, submissionRequestsRouter);
+  // Limiter and router are mounted separately: check-api-contract.cjs reads the
+  // first identifier after the path as the router.
+  app.use("/api/request", submissionRequestLimiter);
+  app.use("/api/request", submissionRequestsRouter);
   app.use("/api/user", capabilitiesRouter);
   app.use("/api", evaluationsRouter);
 

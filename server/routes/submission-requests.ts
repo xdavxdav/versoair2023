@@ -220,13 +220,14 @@ export function createSubmissionRequestsRouter(
     }
   }
 
-  function register(
-    path: string,
+  // Routes below declare their path inline rather than through a registration
+  // helper, because scripts/check-api-contract.cjs finds server routes by
+  // scanning for that literal form.
+  function handle(
     kind: RequestEmailKind,
-    middleware: RequestHandler[],
     build: (req: Request, body: Body) => Built,
-  ) {
-    router.post(path, ...middleware, async (req: Request, res: Response) => {
+  ): RequestHandler {
+    return async (req: Request, res: Response) => {
       try {
         const built = build(req, bodyOf(req));
         if ("invalid" in built) {
@@ -240,11 +241,11 @@ export function createSubmissionRequestsRouter(
           error: `Failed to submit ${kind} request. Please try again.`,
         });
       }
-    });
+    };
   }
 
   // ── POST /api/request/business ──────────────────────────────────────────────
-  register("/business", "business", [optionalAuth], (req, body) => {
+  router.post("/business", optionalAuth, handle("business", (req, body) => {
     const name = oneLine(body.name);
     if (!name) return { invalid: "Business name is required" };
 
@@ -322,14 +323,14 @@ export function createSubmissionRequestsRouter(
         "Your business registration request has been submitted. The admin team will review it and get back to you.",
       logLabel: `Business request "${name}"`,
     };
-  });
+  }));
 
   // ── POST /api/request/artist ────────────────────────────────────────────────
-  register(
+  router.post(
     "/artist",
-    "artist",
-    [optionalAuth, denyGeoAdminSubscriberMutation],
-    (req, body) => {
+    optionalAuth,
+    denyGeoAdminSubscriberMutation,
+    handle("artist", (req, body) => {
       const stageName = oneLine(body.stageName);
       if (!stageName) return { invalid: "Stage name is required" };
 
@@ -382,15 +383,15 @@ export function createSubmissionRequestsRouter(
           "Your artist registration request has been submitted. The admin team will review it and get back to you.",
         logLabel: `Artist request "${stageName}"`,
       };
-    },
+    }),
   );
 
   // ── POST /api/request/job ───────────────────────────────────────────────────
-  register(
+  router.post(
     "/job",
-    "job",
-    [optionalAuth, denyGeoAdminSubscriberMutation],
-    (req, body) => {
+    optionalAuth,
+    denyGeoAdminSubscriberMutation,
+    handle("job", (req, body) => {
       const title = oneLine(body.title);
       if (!title) return { invalid: "Job title is required" };
       const company = oneLine(body.company);
@@ -456,7 +457,7 @@ export function createSubmissionRequestsRouter(
           "Your job listing request has been submitted. The admin team will review it and get back to you.",
         logLabel: `Job request "${title}" at "${company}"`,
       };
-    },
+    }),
   );
 
   return router;
