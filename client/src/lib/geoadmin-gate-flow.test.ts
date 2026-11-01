@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classifySubscriberLogin } from "./geoadmin-gate-flow";
+import {
+  classifySubscriberLogin,
+  staffSessionLacksAccessCode,
+} from "./geoadmin-gate-flow";
 
 test("an OTP challenge means a staff account and is never sent to the general login", () => {
   assert.deepEqual(
@@ -54,4 +57,14 @@ test("failures keep the server message, or report none so the caller can fall ba
     kind: "error",
     message: null,
   });
+});
+
+test("a stale local marker is overruled only when the server says the access code was not used", () => {
+  assert.equal(staffSessionLacksAccessCode(true, false), true);
+  assert.equal(staffSessionLacksAccessCode(true, true), false);
+  // No server answer yet, or an older server: keep relying on the marker.
+  assert.equal(staffSessionLacksAccessCode(true, undefined), false);
+  // Subscribers never have the access-code claim and are not gated by it.
+  assert.equal(staffSessionLacksAccessCode(false, false), false);
+  assert.equal(staffSessionLacksAccessCode(false, undefined), false);
 });

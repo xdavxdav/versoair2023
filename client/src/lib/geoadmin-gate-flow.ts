@@ -45,3 +45,16 @@ export function classifySubscriberLogin(data: unknown): SubscriberLoginOutcome {
       typeof body.message === "string" && body.message ? body.message : null,
   };
 }
+
+/**
+ * The `geoadmin_session` marker in localStorage outlives the server session, so
+ * it cannot prove that staff entered their access code. `/auth/session` reports
+ * the real answer; only an explicit `false` overrules the marker, and an absent
+ * value (older server, or a response that has not arrived yet) leaves it alone.
+ */
+export function staffSessionLacksAccessCode(
+  isStaff: boolean,
+  serverReportedCodeAuthenticated: boolean | undefined,
+): boolean {
+  return isStaff && serverReportedCodeAuthenticated === false;
+}

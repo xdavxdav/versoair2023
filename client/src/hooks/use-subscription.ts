@@ -11,9 +11,10 @@
  *   4. Expose: isAuthenticated, user, tier, loading, helpers
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { TierKey } from "@/lib/tiers";
 import { TIERS, TIER_ORDER, getTierIndex } from "@/lib/tiers";
+import { useOptionalAuthContext } from "@/contexts/AuthContext";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,8 @@ export interface SubscriptionUser {
   subscriptionExpiresAt?: string | null;
   trialTier?: TierKey | null;
   trialExpiresAt?: string | null;
+  /** Reported by the server: this session was opened with the GeoAdmin access code. */
+  geoAdminCodeAuthenticated?: boolean;
 }
 
 export interface UseSubscriptionReturn {
@@ -70,8 +73,16 @@ function clearStoredTokens(): void {
 export function useSubscription(): UseSubscriptionReturn {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SubscriptionUser | null>(null);
+  const auth = useOptionalAuthContext();
+  const authUserId = auth?.user?.id ?? null;
+  const authLoading = auth?.loading ?? false;
+  const latestRequest = useRef(0);
 
   const fetchUser = useCallback(async () => {
+    // Only the newest request may update state: a slow answer for a previous
+    // account must not overwrite the one for the account signed in now.
+    const requestId = ++latestRequest.current;
+    const isLatest = () => requestId === latestRequest.current;
     try {
       setLoading(true);
       const token = getStoredToken();
@@ -84,6 +95,8 @@ export function useSubscription(): UseSubscriptionReturn {
         },
       });
 
+      if (!isLatest()) return;
+
       if (!res.ok) {
         // Local session markers must never substitute for server authentication.
         setUser(null);
@@ -91,6 +104,7 @@ export function useSubscription(): UseSubscriptionReturn {
       }
 
       const data = await res.json();
+      if (!isLatest()) return;
 
       if (data.success && data.user) {
         const u = data.user;
@@ -110,21 +124,38 @@ export function useSubscription(): UseSubscriptionReturn {
             u.premiumExpiresAt || u.premium_expires_at || null,
           trialTier: (u.trialTier || u.trial_tier || null) as TierKey | null,
           trialExpiresAt: u.trialExpiresAt || u.trial_expires_at || null,
+          geoAdminCodeAuthenticated:
+            typeof u.geoAdminCodeAuthenticated === "boolean"
+              ? u.geoAdminCodeAuthenticated
+              : undefined,
         });
       } else {
         setUser(null);
       }
     } catch {
-      setUser(null);
+      if (isLatest()) setUser(null);
     } finally {
-      setLoading(false);
+      if (isLatest()) setLoading(false);
     }
   }, []);
 
-  // Fetch on mount
+  // Fetch on mount.
   useEffect(() => {
-    fetchUser();
+    void fetchUser();
   }, [fetchUser]);
+
+  // Refetch when the signed-in account changes. Components such as the mobile
+  // menu stay mounted across a sign-in, and without this they kept showing the
+  // signed-out state until a full reload. While the app is still restoring the
+  // saved session the id only appears from the cache, and the fetch above
+  // already covers that, so it is skipped.
+  const syncedAuthId = useRef(authUserId);
+  useEffect(() => {
+    if (syncedAuthId.current === authUserId) return;
+    syncedAuthId.current = authUserId;
+    if (authLoading) return;
+    void fetchUser();
+  }, [authUserId, authLoading, fetchUser]);
 
   // Listen for cross-tab logout
   useEffect(() => {

@@ -310,5 +310,10 @@ export function useAuthContext() {
   return context;
 }
 
+/** Like useAuthContext, but returns null outside an AuthProvider instead of throwing. */
+export function useOptionalAuthContext() {
+  return useContext(AuthContext) ?? null;
+}
+
 /** Alias for useAuthContext — for compatibility with code using useAuth. */
 export const useAuth = useAuthContext;

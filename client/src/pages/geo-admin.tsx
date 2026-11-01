@@ -9,6 +9,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { initializeCsrfToken } from "@/lib/auth";
+import { staffSessionLacksAccessCode } from "@/lib/geoadmin-gate-flow";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { fillTemplate } from "@shared/public-translations";
@@ -101,6 +102,16 @@ export default function GeoAdminPage() {
     return !!geoSession;
   });
 
+  // The marker lives in localStorage and outlives the server session. When the
+  // server reports that this staff session was not opened with the access code,
+  // the marker is stale: show the code form instead of a dashboard whose
+  // requests would all be refused.
+  const staffSessionLacksCode = staffSessionLacksAccessCode(
+    Boolean(isGeoAdmin),
+    user?.geoAdminCodeAuthenticated,
+  );
+  const accessCodeVerified = gateBypass && !staffSessionLacksCode;
+
   const handleGeoSessionExpired = useCallback(async () => {
     await logout();
     setGateBypass(false);
@@ -143,7 +154,7 @@ export default function GeoAdminPage() {
     handleExtendSession,
     formatTimeLeft,
   } = useSessionTimer(
-    gateBypass,
+    accessCodeVerified,
     true,
     handleGeoSessionExpired,
   );
@@ -239,7 +250,7 @@ export default function GeoAdminPage() {
     return <GeoAdminAuthGate onSignInSuccess={handleSignInSuccess} />;
   }
 
-  if (isGeoAdmin && !gateBypass) {
+  if (isGeoAdmin && !accessCodeVerified) {
     return (
       <GeoAdminAuthGate
         onSignInSuccess={handleSignInSuccess}
@@ -315,7 +326,7 @@ export default function GeoAdminPage() {
       )}
 
       {/* Session Timer Bar */}
-      {gateBypass && (
+      {accessCodeVerified && (
         <div className="px-4 py-2 sm:px-6 sm:py-3">
           <SessionTimerBar
             sessionTimeLeft={sessionTimeLeft}

@@ -1292,6 +1292,9 @@ router.get(
           trialTier: dbUser?.trial_tier || null,
           trialStartedAt: dbUser?.trial_started_at || null,
           trialExpiresAt: dbUser?.trial_expires_at || null,
+          // True only for sessions opened with the personal GeoAdmin access code;
+          // the Admin Panel refuses any other session, so the client needs to know.
+          geoAdminCodeAuthenticated: decoded.geoAdminCodeAuthenticated === true,
           // Portal capabilities
           portals: capabilities?.portals || ["general"],
           hasArtistProfile: capabilities?.hasArtistProfile || false,
