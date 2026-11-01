@@ -105,6 +105,25 @@ export const contactFormLimiter = rateLimit({
   },
 });
 
+// Public "request an admin to add this" forms (business, artist, job): every
+// accepted request emails the admin team and creates a ticket.
+export const submissionRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    console.warn(
+      `[RATE_LIMIT] Submission request limit exceeded for: ${req.ip}`,
+    );
+    res.status(429).json({
+      success: false,
+      code: "RATE_LIMIT_EXCEEDED",
+      error: "Too many requests. Please try again in a few minutes.",
+    });
+  },
+});
+
 // Public newsletter limiter: low threshold to prevent spam subscriptions
 export const newsletterLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

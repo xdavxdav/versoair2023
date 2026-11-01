@@ -25,6 +25,7 @@ import settingsRouter from "./routes/settings";
 import homeStatsRouter from "./routes/home-stats";
 import aiChatRouter from "./routes/ai-chat";
 import submissionRequestsRouter from "./routes/submission-requests";
+import { submissionRequestLimiter } from "./middleware/rate-limiter";
 import capabilitiesRouter from "./routes/capabilities";
 import evaluationsRouter from "./routes/evaluations";
 import notificationsRouter from "./routes/notifications";
@@ -267,7 +268,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/data/dispatch", dataDispatchRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/home", homeStatsRouter);
-  app.use("/api/request", submissionRequestsRouter);
+  app.use("/api/request", submissionRequestLimiter, submissionRequestsRouter);
   app.use("/api/user", capabilitiesRouter);
   app.use("/api", evaluationsRouter);
 

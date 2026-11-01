@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   describeFailure,
   failureFromThrown,
+  loadJson,
   readServerError,
   submitJson,
 } from "./submit-json";
@@ -55,6 +56,31 @@ test("known codes replace technical server wording", () => {
     { lang: "fr" },
   );
   assert.match(readOnly.message, /lecture seule/);
+});
+
+test("request-form codes read as plain French or English instead of server wording", () => {
+  // The /api/request routes put a top-level `code` next to the English `error` text.
+  const duplicate = describeFailure(
+    429,
+    { success: false, code: "DUPLICATE_SUBMISSION", error: "Duplicate submission detected." },
+    { lang: "fr" },
+  );
+  assert.equal(duplicate.code, "DUPLICATE_SUBMISSION");
+  assert.match(duplicate.message, /déjà envoyé cette demande/);
+
+  const notSaved = describeFailure(
+    503,
+    { success: false, code: "SUBMISSION_NOT_RECORDED", error: "We could not save your request." },
+    { lang: "en" },
+  );
+  assert.match(notSaved.message, /nothing was sent/);
+
+  const limited = describeFailure(
+    429,
+    { success: false, code: "RATE_LIMIT_EXCEEDED", error: "Too many requests." },
+    { lang: "fr" },
+  );
+  assert.match(limited.message, /Trop de demandes/);
 });
 
 test("falls back from server text to caller text to a status message", () => {
@@ -166,4 +192,60 @@ test("submitJson turns a network failure into a clear message", async () => {
     assert.equal(result.code, "NETWORK_ERROR");
     assert.match(result.message, /request was not sent/);
   }
+});
+
+test("loadJson returns the data and sends a plain GET", async () => {
+  let seen: { url: string; init: RequestInit } | null = null;
+  const result = await loadJson<{ jobs: string[] }>("/api/jobs/mine", {
+    fetcher: async (url, init) => {
+      seen = { url, init };
+      return json(200, { jobs: [] });
+    },
+  });
+  assert.equal(result.ok, true);
+  if (result.ok) assert.deepEqual(result.data.jobs, []);
+  assert.equal(seen!.url, "/api/jobs/mine");
+  assert.equal(seen!.init.method, "GET");
+  assert.equal(seen!.init.body, undefined);
+});
+
+test("loadJson reports a failed load instead of returning an empty result", async () => {
+  const unavailable = await loadJson("/api/jobs/mine", {
+    lang: "en",
+    fetcher: async () => json(500, { error: "db down" }),
+  });
+  assert.equal(unavailable.ok, false);
+  if (!unavailable.ok) {
+    assert.equal(unavailable.status, 500);
+    assert.equal(unavailable.message, "db down");
+  }
+
+  const expired = await loadJson("/api/jobs/mine", {
+    lang: "fr",
+    fetcher: async () => json(401, {}),
+  });
+  assert.equal(expired.ok, false);
+  if (!expired.ok) assert.match(expired.message, /session a expiré/);
+
+  const offline = await loadJson("/api/jobs/mine", {
+    lang: "en",
+    fetcher: async () => {
+      throw new TypeError("Failed to fetch");
+    },
+  });
+  assert.equal(offline.ok, false);
+  if (!offline.ok) assert.equal(offline.code, "NETWORK_ERROR");
+});
+
+test("loadJson treats an HTML page served with 200 as a failure", async () => {
+  const result = await loadJson("/api/does-not-exist", {
+    lang: "en",
+    fetcher: async () =>
+      new Response("<!doctype html><title>app</title>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      }),
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.code, "INVALID_RESPONSE");
 });

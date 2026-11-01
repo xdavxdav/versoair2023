@@ -46,6 +46,18 @@ const CODE_COPY: Record<string, Copy> = {
     en: "Your GeoAdmin Subscriber plan is read-only. You can view data but not publish or edit.",
     fr: "Votre abonnement GeoAdmin est en lecture seule. Vous pouvez consulter les données mais pas publier ni modifier.",
   },
+  DUPLICATE_SUBMISSION: {
+    en: "You already sent this request a moment ago. Please wait 5 minutes before sending it again.",
+    fr: "Vous avez déjà envoyé cette demande à l'instant. Patientez 5 minutes avant de la renvoyer.",
+  },
+  SUBMISSION_NOT_RECORDED: {
+    en: "We could not save your request right now, so nothing was sent. Please try again in a few minutes.",
+    fr: "Nous n'avons pas pu enregistrer votre demande pour le moment, donc rien n'a été envoyé. Veuillez réessayer dans quelques minutes.",
+  },
+  RATE_LIMIT_EXCEEDED: {
+    en: "Too many requests. Please try again in a few minutes.",
+    fr: "Trop de demandes. Veuillez réessayer dans quelques minutes.",
+  },
 };
 
 const STATUS_COPY: Record<number, Copy> = {
@@ -239,6 +251,57 @@ async function parseBody(response: Response): Promise<unknown> {
   } catch {
     return null;
   }
+}
+
+/**
+ * GET counterpart of `submitJson`: a failed load comes back as a readable message
+ * instead of an empty result, so a page can show "could not load" rather than
+ * "nothing here yet". An HTML body on a 200 (an SPA fallback for an unknown
+ * route) also counts as a failure.
+ */
+export async function loadJson<T = unknown>(
+  url: string,
+  options: Pick<
+    SubmitJsonOptions,
+    "fallbackMessage" | "lang" | "fetcher" | "headers"
+  > = {},
+): Promise<SubmitResult<T>> {
+  const fetcher = options.fetcher ?? authenticatedFetch;
+  const lang = resolveLang(options.lang);
+  const failureOptions = { fallbackMessage: options.fallbackMessage, lang };
+
+  let response: Response;
+  let body: unknown;
+  try {
+    response = await fetcher(url, {
+      method: "GET",
+      headers: { Accept: "application/json", ...options.headers },
+    });
+    body = await parseBody(response);
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      code: "NETWORK_ERROR",
+      message: pick(NETWORK_COPY, lang),
+    };
+  }
+
+  const reportsFailure =
+    !!body &&
+    typeof body === "object" &&
+    (body as { success?: unknown }).success === false;
+  if (!response.ok || reportsFailure) {
+    return describeFailure(response.status, body, failureOptions);
+  }
+  if (body === null || typeof body !== "object") {
+    return {
+      ...describeFailure(response.status, null, failureOptions),
+      code: "INVALID_RESPONSE",
+    };
+  }
+
+  return { ok: true, status: response.status, data: body as T };
 }
 
 /**
