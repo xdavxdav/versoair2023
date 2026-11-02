@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAuthContext } from "@/contexts/AuthContext";
+import { followedArtistIds, likedTrackIds } from "@/lib/streaming-ids";
 
 const BASE = "/api/streaming";
 
@@ -225,6 +226,7 @@ export function useUserLikedTrackIds() {
     enabled: !!user,
     queryKey: ["user-liked-tracks"],
     queryFn: () => fetchJson(`${BASE}/user/liked-tracks`),
+    select: likedTrackIds,
     staleTime: 30_000,
   });
 }
@@ -246,6 +248,7 @@ export function useUserFollowing() {
     enabled: !!user,
     queryKey: ["user-following"],
     queryFn: () => fetchJson(`${BASE}/user/following`),
+    select: followedArtistIds,
     staleTime: 30_000,
   });
 }

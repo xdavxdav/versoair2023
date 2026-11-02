@@ -106,7 +106,7 @@ export default function ArtistCataloguePage() {
   const relatedArtists = data?.relatedArtists || [];
   const streamTrend = data?.streamTrend || [];
 
-  const isFollowing = following?.some((f: any) => f.artist_id === artistId);
+  const isFollowing = following?.includes(artistId) ?? false;
 
   if (isLoading) {
     return (
