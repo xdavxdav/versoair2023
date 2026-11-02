@@ -2111,16 +2111,19 @@ async function userOwnsMusicArtist(
   artistId: string,
   userId: number,
 ): Promise<boolean> {
+  // music_artists has no user_id column in the migrated schema, so reading ma.user_id made this
+  // whole query throw and locked every non-admin artist out of their own analytics.
+  // to_jsonb(ma) yields NULL when the column is absent and still matches when a database has it.
   const ownership = await pool.query(
     `SELECT 1
      FROM music_artists ma
-     WHERE ma.id = $1 AND ma.user_id = $2
+     WHERE ma.id = $1 AND to_jsonb(ma)->>'user_id' = $3
      UNION ALL
      SELECT 1
      FROM artist_profiles ap
      WHERE ap.music_artist_id = $1 AND ap.user_id = $2
      LIMIT 1`,
-    [artistId, userId],
+    [artistId, userId, String(userId)],
   );
   return ownership.rows.length > 0;
 }
