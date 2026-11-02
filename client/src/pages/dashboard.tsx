@@ -2748,10 +2748,10 @@ export default function UserDashboard() {
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-sky-50 p-3">
                         <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                          Favorites
+                          Unread messages
                         </p>
                         <p className="mt-2 text-2xl font-bold text-sky-700">
-                          24
+                          {inboxUnread}
                         </p>
                       </div>
                       <div className="rounded-xl bg-amber-50 p-3">
@@ -2759,7 +2759,7 @@ export default function UserDashboard() {
                           Bookings
                         </p>
                         <p className="mt-2 text-2xl font-bold text-amber-700">
-                          8
+                          {Array.isArray(reservations) ? reservations.length : 0}
                         </p>
                       </div>
                       <div className="rounded-xl bg-violet-50 p-3">
@@ -2767,12 +2767,12 @@ export default function UserDashboard() {
                           Communities
                         </p>
                         <p className="mt-2 text-2xl font-bold text-violet-700">
-                          3
+                          {myCommunity?.counts?.joined ?? 0}
                         </p>
                       </div>
                       <div className="rounded-xl bg-emerald-50 p-3">
                         <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                          Member
+                          Last sign-in
                         </p>
                         <p className="mt-2 text-lg font-bold text-emerald-700">
                           {memberSince}

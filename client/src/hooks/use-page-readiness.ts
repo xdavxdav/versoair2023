@@ -52,11 +52,15 @@ interface OriginalAttributes {
 }
 
 const BLOCKED_SELECTOR = 'a[data-page-readiness-blocked="true"]';
+// Card-style links wrap a block element, which would push an inline pill underneath the card.
+const BLOCKED_CARD_SELECTOR = `${BLOCKED_SELECTOR}:has(>div,>section,>article,>figure)`;
 
 // The pill borrows the link's own colour, so it stays as readable as the link on light and dark surfaces.
 const BLOCKED_LINK_CSS =
   `${BLOCKED_SELECTOR}{opacity:.62!important;filter:grayscale(1);cursor:not-allowed!important}` +
-  `${BLOCKED_SELECTOR}::after{content:attr(data-page-readiness-label);display:inline-block;margin-left:.5em;padding:.05em .55em;border:1px solid currentColor;border-radius:9999px;font-size:.68rem;font-style:normal;font-weight:600;letter-spacing:0;line-height:1.5;text-transform:none;white-space:nowrap;vertical-align:middle}`;
+  `${BLOCKED_SELECTOR}::after{content:attr(data-page-readiness-label);display:inline-block;margin-left:.5em;padding:.05em .55em;border:1px solid currentColor;border-radius:9999px;font-size:.68rem;font-style:normal;font-weight:600;letter-spacing:0;line-height:1.5;text-transform:none;white-space:nowrap;vertical-align:middle}` +
+  `${BLOCKED_CARD_SELECTOR}{position:relative}` +
+  `${BLOCKED_CARD_SELECTOR}::after{position:absolute;top:.5rem;right:.5rem;margin:0}`;
 
 function restoreAttribute(
   anchor: HTMLAnchorElement,
