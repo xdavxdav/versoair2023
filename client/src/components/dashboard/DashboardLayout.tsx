@@ -34,7 +34,7 @@ export function DashboardLayout({
   };
 
   return (
-    <div className="flex flex-1 bg-slate-950 text-white min-h-screen overflow-x-hidden">
+    <div className="admin-shell flex flex-1 bg-slate-950 text-white min-h-screen overflow-x-hidden">
       {/* Sidebar — fixed overlay on mobile/tablet, sticky on desktop */}
       <DashboardSidebar
         sections={sections}

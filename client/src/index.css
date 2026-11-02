@@ -96,6 +96,16 @@
     @apply border-border;
   }
 
+  /* The admin panel renders light-styled sections inside a dark shell (text-white). Raw form
+     fields keep the browser's white field background, so they would inherit white text and
+     anything typed would be invisible. Specificity stays at element level, so any explicit
+     text-colour class on a field still wins. */
+  :where(.admin-shell) input:not(:where([type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"])),
+  :where(.admin-shell) textarea,
+  :where(.admin-shell) select {
+    color: #0f172a;
+  }
+
   /* Prevent scroll chaining: inner scrollable areas (modals, dialogs, sidebars,
      dropdowns, pinned sections) must not leak scroll events to the outer page
      when they hit their scroll boundary. The topmost visible scroll always

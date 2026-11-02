@@ -4227,7 +4227,7 @@ const JobManagement = () => {
 
             if (filtered.length === 0) {
               return (
-                <div className="text-center py-12 text-gray-400">
+                <div className="text-center py-12 text-gray-500">
                   <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-40" />
                   <p className="font-medium">No jobs found</p>
                   <p className="text-sm mt-1">

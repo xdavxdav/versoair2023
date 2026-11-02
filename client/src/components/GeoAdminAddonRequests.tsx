@@ -88,7 +88,7 @@ export default function GeoAdminAddonRequests() {
   };
 
   return (
-    <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm">
       <div>
         <h2 className="text-xl font-bold">GeoAdmin add-on requests</h2>
         <p className="mt-1 text-sm text-slate-600">

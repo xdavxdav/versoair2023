@@ -2655,7 +2655,7 @@ export default function SignIn() {
                   hidden={enabledOAuthProviders.length === 0}
                 >
                   <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs text-gray-400 font-medium">
+                  <span className="text-xs text-gray-500 font-medium">
                     or continue with
                   </span>
                   <div className="flex-1 h-px bg-gray-200" />

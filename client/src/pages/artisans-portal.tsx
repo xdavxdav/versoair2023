@@ -910,7 +910,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal">
                   <TabsTrigger
                     value="profile"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profil
@@ -919,7 +919,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=portfolio">
                   <TabsTrigger
                     value="portfolio"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
                   >
                     <Image className="w-4 h-4 mr-2" />
                     Portfolio
@@ -928,7 +928,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=orders">
                   <TabsTrigger
                     value="orders"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
                   >
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     Commandes
@@ -937,7 +937,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=reviews">
                   <TabsTrigger
                     value="reviews"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
                   >
                     <Star className="w-4 h-4 mr-2" />
                     Avis
@@ -946,7 +946,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=settings">
                   <TabsTrigger
                     value="settings"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300"
+                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     Paramètres

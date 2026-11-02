@@ -743,7 +743,7 @@ function ArtistDashboardPanel({
           disabled={!user}
           className={`w-full ${
             dashboard?.isFollowing
-              ? "bg-white text-gray-300 hover:bg-white"
+              ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
               : "bg-purple-600 hover:bg-purple-700 text-white"
           }`}
         >
@@ -977,14 +977,14 @@ export default function StreamerPortal() {
             <TabsList className="bg-transparent border-b border-slate-200 w-full justify-start rounded-none p-0 h-auto">
               <TabsTrigger
                 value="feed"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 data-[state=active]:bg-transparent px-4 py-3"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent px-4 py-3"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Feed
               </TabsTrigger>
               <TabsTrigger
                 value="artists"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 data-[state=active]:bg-transparent px-4 py-3"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent px-4 py-3"
               >
                 <Users className="w-4 h-4 mr-2" />
                 Artists
@@ -992,7 +992,7 @@ export default function StreamerPortal() {
               {user && (
                 <TabsTrigger
                   value="following"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 data-[state=active]:bg-transparent px-4 py-3"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent px-4 py-3"
                 >
                   <Heart className="w-4 h-4 mr-2" />
                   Following
@@ -1001,7 +1001,7 @@ export default function StreamerPortal() {
               {user && (
                 <TabsTrigger
                   value="wallet"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 data-[state=active]:bg-transparent px-4 py-3"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent px-4 py-3"
                 >
                   <Crown className="w-4 h-4 mr-2" />
                   Wallet
