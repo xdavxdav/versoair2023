@@ -1846,9 +1846,11 @@ router.get("/track/:id/thread", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Track not found" });
     }
 
-    // Get comments with user info (top-level first, then replies)
+    // Get comments with user info (top-level first, then replies).
+    // users has no avatar_url column in the schema; to_jsonb(u) reads it where a database has one
+    // and yields NULL elsewhere, instead of failing the whole thread.
     const comments = await pool.query(
-      `SELECT tc.*, u.username, u.display_name, u.avatar_url,
+      `SELECT tc.*, u.username, u.display_name, to_jsonb(u)->>'avatar_url' AS avatar_url,
          (SELECT COUNT(*) FROM track_comments WHERE parent_id = tc.id) as reply_count
        FROM track_comments tc
        JOIN users u ON tc.user_id = u.id
@@ -1867,7 +1869,7 @@ router.get("/track/:id/thread", async (req: Request, res: Response) => {
     if (parentIds.length > 0) {
       const replies = await pool.query(
         `SELECT * FROM (
-           SELECT tc.*, u.username, u.display_name, u.avatar_url,
+           SELECT tc.*, u.username, u.display_name, to_jsonb(u)->>'avatar_url' AS avatar_url,
              ROW_NUMBER() OVER (
                PARTITION BY tc.parent_id ORDER BY tc.created_at ASC
              ) AS rn
@@ -1935,7 +1937,7 @@ router.get("/comment/:id/replies", async (req: Request, res: Response) => {
     const commentId = parseInt(req.params.id);
 
     const replies = await pool.query(
-      `SELECT tc.*, u.username, u.display_name, u.avatar_url
+      `SELECT tc.*, u.username, u.display_name, to_jsonb(u)->>'avatar_url' AS avatar_url
        FROM track_comments tc
        JOIN users u ON tc.user_id = u.id
        WHERE tc.parent_id = $1

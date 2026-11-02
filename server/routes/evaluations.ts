@@ -431,13 +431,25 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const userId = Number(req.user!.userId);
 
-    // Get artist profile with division data
+    // artist_profiles has no monthly_listeners / total_releases column in the schema, so a plain
+    // select 500s. Read them when a database has them, otherwise derive them from the catalogue.
     const profileResult = await db.execute(sql`
       SELECT
         ap.id, ap.stage_name, ap.artist_code, ap.division, ap.evaluation_status,
         ap.evaluation_score, ap.contract_access, ap.promotion_eligible_at,
-        ap.lifetime_streams, ap.monthly_listeners, ap.weekly_streams,
-        ap.total_releases, ap.created_at,
+        ap.lifetime_streams, ap.weekly_streams, ap.created_at,
+        COALESCE(
+          (to_jsonb(ap)->>'monthly_listeners')::numeric,
+          (SELECT ma.monthly_listeners FROM music_artists ma WHERE ma.id = ap.music_artist_id),
+          0
+        ) AS monthly_listeners,
+        COALESCE(
+          (to_jsonb(ap)->>'total_releases')::numeric,
+          (SELECT COUNT(*) FROM music_tracks mt
+             JOIN artists a ON a.id = mt.artist_id
+            WHERE a.user_id = ap.user_id AND mt.status = 'published'),
+          0
+        ) AS total_releases,
         EXTRACT(DAY FROM NOW() - ap.created_at) AS active_days
       FROM artist_profiles ap
       WHERE ap.user_id = ${userId}

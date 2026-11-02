@@ -309,25 +309,24 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
     const search = (req.query.q as string) ?? "";
     const limit = Math.min(Number(req.query.limit) || 20, 50);
 
+    // businesses has city_name / country_code / owner_id (no city, country or user_id). Excluding the
+    // caller's own business with owner_id IS DISTINCT FROM keeps rows for callers who own none.
     const rows = await db.execute(
       sql`
         SELECT
           b.id,
           b.name,
           bc.name   AS category,
-          b.city,
-          b.country,
+          b.city_name AS city,
+          COALESCE(c.name, b.country_code) AS country,
           b.rating,
           b.logo_url
         FROM businesses b
         LEFT JOIN business_categories bc ON b.category_id = bc.id
+        LEFT JOIN countries c ON c.code = b.country_code
         WHERE b.verification_status = 'verified'
           AND b.is_active = true
-          AND b.id != (
-            SELECT id FROM businesses
-            WHERE user_id = ${req.user!.userId}
-            LIMIT 1
-          )
+          AND b.owner_id IS DISTINCT FROM ${Number(req.user!.userId)}
           ${search ? sql`AND b.name ILIKE ${"%" + search + "%"}` : sql``}
         ORDER BY b.rating DESC NULLS LAST
         LIMIT ${limit}
