@@ -15,7 +15,7 @@ export const PORTALS: Record<PortalId, { label: string; path: string }> = {
   artisan: { label: "Artisan", path: "/artisans-portal" },
   "geo-admin": { label: "Geo Admin", path: "/geo-admin" },
   community: { label: "Community", path: "/blog" },
-  contractor: { label: "Contractor", path: "/contractor" },
+  contractor: { label: "Contractor", path: "/services/contractors" },
   careers: { label: "Careers", path: "/services/careers/dashboard" },
   admin: { label: "Admin", path: "/geo-admin/dashboard" },
 };

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
+import { isBetaRoute } from "../client/src/lib/beta-route-access";
 import { FOOTER_COLUMNS, FOOTER_SOCIAL_LINKS } from "./footer-links";
 import { FOOTER_COPY, FOOTER_ES } from "./footer-translations";
 import { isLocalPreviewOnlyPath } from "./page-readiness";
@@ -125,6 +126,7 @@ test("footer links lead only to open pages that exist in the app", () => {
   assert.ok(internal.length >= 10);
   for (const href of internal) {
     assert.equal(isLocalPreviewOnlyPath(href), false, `${href} is blocked in production`);
+    assert.ok(isBetaRoute(href), `${href} is outside the beta scope and would bounce to the home page`);
     assert.ok(app.includes(`path="${href}"`), `${href} has no route in App.tsx`);
   }
   assert.equal(new Set(internal).size, internal.length, "duplicate footer link");

@@ -17,6 +17,7 @@ import {
   useState,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   lazy,
   Suspense,
@@ -29,7 +30,7 @@ import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
 import QuickSignIn from "@/components/QuickSignIn";
 import { MessagesPage } from "@/components/TwitterMessenger";
-import { isBetaRoute } from "@/lib/beta-route-access";
+import { BETA_SCOPE_FREEZE, isBetaRoute } from "@/lib/beta-route-access";
 import { getLegacySignInRedirect } from "@/lib/auth-route-redirect";
 
 // ─────────────────────────────────────────────────────
@@ -331,8 +332,6 @@ import {
 import { isLocalPreviewOnlyPath } from "@shared/page-readiness";
 import { authenticatedFetch } from "@/lib/auth";
 
-const BETA_SCOPE_FREEZE = true;
-
 function getPageTitle(pathname: string) {
   if (pathname.startsWith("/vheartz")) return "vHeartz";
   if (
@@ -432,11 +431,17 @@ function getDocumentTitle(pathname: string) {
 // Main loader — shown while lazy chunks download and on every navigation.
 function Router() {
   const [location] = useLocation();
+  const { translateText: tr } = useLanguage();
   const readinessQuery = usePageReadiness();
-  const blockedPaths = getClientBlockedPaths(
-    readinessQuery.data?.blockedPaths ?? [],
+  const publicBlockedPaths = readinessQuery.data?.blockedPaths;
+  const blockedPaths = useMemo(
+    () => getClientBlockedPaths(publicBlockedPaths ?? []),
+    [publicBlockedPaths],
   );
-  useDisableBlockedPageLinks(blockedPaths);
+  useDisableBlockedPageLinks(blockedPaths, {
+    label: tr("Coming soon"),
+    message: tr("This page is not available yet"),
+  });
   const pageIsBlocked = isPageBlocked(location, blockedPaths);
   const [adminPreview, setAdminPreview] = useState<{
     path: string;

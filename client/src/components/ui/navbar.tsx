@@ -81,7 +81,7 @@ const PORTAL_META: Record<
   contractor: {
     label: "Contractor",
     icon: <Wrench className="w-3.5 h-3.5" />,
-    path: "/contractor",
+    path: "/services/contractors",
     color: "text-cyan-400",
   },
   careers: {

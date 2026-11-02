@@ -25,6 +25,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
+import { isRouteReachable } from "@/lib/beta-route-access";
 import { useAuthContext } from "@/contexts/AuthContext";
 import FollowButton from "@/components/FollowButton";
 import { toast } from "@/hooks/use-toast";
@@ -908,12 +909,14 @@ export default function MessengerPanel({
                         }}
                       />
                     ) : null}
-                    <a
-                      href={`/user/${activeConvo.participantId}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-medium border border-white/10 hover:bg-white/10 transition-colors"
-                    >
-                      View Profile
-                    </a>
+                    {isRouteReachable("/user/") ? (
+                      <a
+                        href={`/user/${activeConvo.participantId}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/70 text-xs font-medium border border-white/10 hover:bg-white/10 transition-colors"
+                      >
+                        View Profile
+                      </a>
+                    ) : null}
                     <button
                       onClick={() => setShowProfileDrawer(false)}
                       className="px-3 py-2 rounded-lg bg-white/5 text-white/50 text-xs border border-white/10 hover:bg-white/10 transition-colors"

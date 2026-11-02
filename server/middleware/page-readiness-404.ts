@@ -1,31 +1,123 @@
 import type { RequestHandler } from "express";
 import { isLocalPreviewOnlyPath } from "@shared/page-readiness";
 
-const PAGE_TITLES: Record<string, string> = {
-  "get-involved": "Get Involved",
-  "ong-culturelle": "ONG Culturelle",
-  vheartz: "vHeartz",
-  vheatrz: "vHeatrz",
-  "artihuman-foundation": "Artihuman Foundation",
-  programs: "Programs",
-  partners: "Partners",
-  sponsorship: "Sponsorship",
-  "businesses-directory": "Businesses Directory",
-  commerce: "Commerce",
-  hotellerie: "Hospitality",
-  batiment: "Construction",
-  automobile: "Automotive",
-  finances: "Finance",
-  divertissement: "Entertainment",
+export type NoticeLanguage = "en" | "fr" | "es";
+
+const PAGE_TITLES: Record<NoticeLanguage, Record<string, string>> = {
+  en: {
+    "get-involved": "Get Involved",
+    "ong-culturelle": "ONG Culturelle",
+    vheartz: "vHeartz",
+    vheatrz: "vHeatrz",
+    "artihuman-foundation": "Artihuman Foundation",
+    programs: "Programs",
+    partners: "Partners",
+    sponsorship: "Sponsorship",
+    "businesses-directory": "Businesses Directory",
+    commerce: "Commerce",
+    hotellerie: "Hospitality",
+    batiment: "Construction",
+    automobile: "Automotive",
+    finances: "Finance",
+    divertissement: "Entertainment",
+  },
+  fr: {
+    "get-involved": "S'impliquer",
+    "ong-culturelle": "ONG culturelle",
+    programs: "Programmes",
+    partners: "Partenaires",
+    sponsorship: "Parrainage",
+    "businesses-directory": "Annuaire des entreprises",
+    hotellerie: "Hôtellerie",
+    batiment: "Bâtiment",
+    finances: "Finances",
+  },
+  es: {
+    "get-involved": "Participa",
+    "ong-culturelle": "ONG cultural",
+    programs: "Programas",
+    partners: "Socios",
+    sponsorship: "Patrocinio",
+    "businesses-directory": "Directorio de empresas",
+    commerce: "Comercio",
+    hotellerie: "Hotelería",
+    batiment: "Construcción",
+    automobile: "Automoción",
+    finances: "Finanzas",
+    divertissement: "Entretenimiento",
+  },
 };
 
-function getPageTitle(pathname: string): string {
+interface NoticeCopy {
+  eyebrow: string;
+  status: string;
+  message: string;
+  home: string;
+  countdownOne: string;
+  countdownOther: string;
+}
+
+const NOTICE_COPY: Record<NoticeLanguage, NoticeCopy> = {
+  en: {
+    eyebrow: "A little more time",
+    status: "Will be ready soon",
+    message: "We're preparing this part of Verso Air. Please check back soon.",
+    home: "Review Verso Air",
+    countdownOne: "Returning to the homepage in {n} second.",
+    countdownOther: "Returning to the homepage in {n} seconds.",
+  },
+  fr: {
+    eyebrow: "Encore un peu de patience",
+    status: "Bientôt disponible",
+    message: "Nous préparons cette partie de Verso Air. Revenez bientôt.",
+    home: "Retour à l'accueil",
+    countdownOne: "Retour à l'accueil dans {n} seconde.",
+    countdownOther: "Retour à l'accueil dans {n} secondes.",
+  },
+  es: {
+    eyebrow: "Un poco más de tiempo",
+    status: "Próximamente",
+    message: "Estamos preparando esta parte de Verso Air. Vuelve pronto.",
+    home: "Volver al inicio",
+    countdownOne: "Volviendo al inicio en {n} segundo.",
+    countdownOther: "Volviendo al inicio en {n} segundos.",
+  },
+};
+
+// First supported language by q-weight; anything else (including "*") stays English.
+export function pickNoticeLanguage(acceptLanguage: string | undefined): NoticeLanguage {
+  if (!acceptLanguage) return "en";
+  const ranked = acceptLanguage
+    .split(",")
+    .map((part, index) => {
+      const [tag, ...params] = part.trim().toLowerCase().split(";");
+      const quality = params.map((param) => param.trim()).find((param) => param.startsWith("q="));
+      const weight = quality ? Number.parseFloat(quality.slice(2)) : 1;
+      return { tag: tag.trim(), weight: Number.isFinite(weight) ? weight : 0, index };
+    })
+    .filter((entry) => entry.tag !== "" && entry.weight > 0)
+    .sort((a, b) => b.weight - a.weight || a.index - b.index);
+  for (const { tag } of ranked) {
+    const base = tag.split("-", 1)[0];
+    if (base === "fr" || base === "es" || base === "en") return base;
+  }
+  return "en";
+}
+
+function lookupPageTitle(language: NoticeLanguage, segment: string): string | undefined {
+  for (const table of [PAGE_TITLES[language], PAGE_TITLES.en]) {
+    if (Object.prototype.hasOwnProperty.call(table, segment)) return table[segment];
+  }
+  return undefined;
+}
+
+function getPageTitle(pathname: string, language: NoticeLanguage): string {
   const path = pathname.split(/[?#]/, 1)[0].replace(/\/+$/, "").toLowerCase();
   const segments = path.split("/").filter(Boolean);
   return segments
     .map(
       (segment) =>
-        PAGE_TITLES[segment] ??
+        lookupPageTitle(language, segment) ??
         segment
           .replace(/[-_]+/g, " ")
           .replace(/\b\w/g, (character) => character.toUpperCase()),
@@ -50,15 +142,21 @@ function escapeHtml(value: string): string {
   });
 }
 
-function renderPageReadinessNotice(pageTitle: string): string {
+function renderPageReadinessNotice(pageTitle: string, language: NoticeLanguage): string {
   const safeTitle = escapeHtml(pageTitle);
+  const copy = NOTICE_COPY[language];
+  // Embedded in a <script>, so "<" is escaped to keep the JSON from closing the tag.
+  const countdownCopy = JSON.stringify({
+    one: copy.countdownOne,
+    other: copy.countdownOther,
+  }).replace(/</g, "\\u003c");
   return `<!doctype html>
-<html lang="en">
+<html lang="${language}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0f766e">
-    <title>${safeTitle} | Will be ready soon | Verso Air</title>
+    <title>${safeTitle} | ${copy.status} | Verso Air</title>
     <style>
       :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       * { box-sizing: border-box; }
@@ -86,24 +184,25 @@ function renderPageReadinessNotice(pageTitle: string): string {
   <body>
     <main>
       <p class="brand">Verso Air</p>
-      <p class="eyebrow">A little more time</p>
+      <p class="eyebrow">${copy.eyebrow}</p>
       <h1>${safeTitle}</h1>
-      <p class="readiness">Will be ready soon</p>
-      <p class="message">We're preparing this part of Verso Air. Please check back soon.</p>
-      <p class="countdown" id="countdown" role="status" aria-live="polite">Returning to the homepage in 5 seconds.</p>
+      <p class="readiness">${copy.status}</p>
+      <p class="message">${copy.message}</p>
+      <p class="countdown" id="countdown" role="status" aria-live="polite">${copy.countdownOther.replace("{n}", "5")}</p>
       <div class="actions">
-        <a class="primary" href="/">Review Verso Air</a>
+        <a class="primary" href="/">${copy.home}</a>
       </div>
     </main>
     <script>
       (() => {
+        const countdownCopy = ${countdownCopy};
         let seconds = 5;
         const countdown = document.getElementById("countdown");
         const returnHome = () => { window.location.replace("/"); };
         window.setTimeout(returnHome, 5000);
         const countdownTimer = window.setInterval(() => {
           seconds -= 1;
-          if (countdown) countdown.textContent = "Returning to the homepage in " + seconds + " second" + (seconds === 1 ? "" : "s.");
+          if (countdown && seconds > 0) countdown.textContent = (seconds === 1 ? countdownCopy.one : countdownCopy.other).replace("{n}", String(seconds));
           if (seconds <= 0) window.clearInterval(countdownTimer);
         }, 1000);
       })();
@@ -121,11 +220,13 @@ export function pageReadinessNotFound(
       ["GET", "HEAD"].includes(req.method) &&
       isLocalPreviewOnlyPath(req.path)
     ) {
+      const language = pickNoticeLanguage(req.get("accept-language"));
       res.set("Cache-Control", "no-store");
+      res.vary("Accept-Language");
       res
         .status(404)
         .type("html")
-        .send(renderPageReadinessNotice(getPageTitle(req.path)));
+        .send(renderPageReadinessNotice(getPageTitle(req.path, language), language));
       return;
     }
     next();
