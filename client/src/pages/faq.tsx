@@ -213,8 +213,7 @@ export default function FaqPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Detail view state
+  const [loadFailed, setLoadFailed] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<FaqDetail | null>(null);
   const [isDetailView, setIsDetailView] = useState(!!initialTopic);
   const [replyContent, setReplyContent] = useState("");
@@ -245,16 +244,17 @@ export default function FaqPage() {
       if (data.success && data.data.length > 0) {
         setPosts(data.data);
         setTotalPages(data.pagination?.totalPages || 1);
+        setLoadFailed(false);
       } else {
-        // No results from API
+        // An empty list is a real answer; an error response is not.
         setPosts([]);
         setTotalPages(1);
+        setLoadFailed(!res.ok || data.success === false);
       }
     } catch {
-      // API error — show empty state
       setPosts([]);
       setTotalPages(1);
-      setTotalPages(1);
+      setLoadFailed(true);
     } finally {
       setIsLoading(false);
     }
@@ -906,13 +906,24 @@ export default function FaqPage() {
               <div className="py-16 text-center">
                 <MessageCircleQuestion className="mx-auto mb-4 h-12 w-12 text-slate-700" />
                 <h3 className="mb-2 text-lg font-medium text-slate-700">
-                  No topics found
+                  {loadFailed ? "We could not load the topics" : "No topics found"}
                 </h3>
                 <p className="text-sm text-slate-700">
-                  {searchQuery
-                    ? `No results for "${searchQuery}". Try a different search.`
-                    : "Be the first to start a discussion!"}
+                  {loadFailed
+                    ? "Please check your connection and try again."
+                    : searchQuery
+                      ? `No results for "${searchQuery}". Try a different search.`
+                      : "Be the first to start a discussion!"}
                 </p>
+                {loadFailed && (
+                  <button
+                    type="button"
+                    onClick={() => fetchPosts()}
+                    className="mt-4 rounded-full bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
+                  >
+                    Try again
+                  </button>
+                )}
               </div>
             ) : (
               /* Topics List */

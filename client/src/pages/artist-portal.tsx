@@ -3809,7 +3809,14 @@ export default function ArtistPortal() {
                                   "active",
                                 );
                                 invalidateTracks();
-                              } catch {}
+                              } catch {
+                                toast({
+                                  title:
+                                    "Impossible d'accepter la collaboration",
+                                  description: "Veuillez réessayer.",
+                                  variant: "destructive",
+                                });
+                              }
                             }}
                           >
                             <Check className="mr-2 h-3 w-3" />
@@ -3826,7 +3833,13 @@ export default function ArtistPortal() {
                                   "declined",
                                 );
                                 invalidateTracks();
-                              } catch {}
+                              } catch {
+                                toast({
+                                  title: "Impossible de refuser la collaboration",
+                                  description: "Veuillez réessayer.",
+                                  variant: "destructive",
+                                });
+                              }
                             }}
                           >
                             <X className="mr-2 h-3 w-3" />

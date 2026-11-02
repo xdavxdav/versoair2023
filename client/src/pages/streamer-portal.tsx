@@ -50,6 +50,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/queryClient";
+import { failureFromThrown } from "@/lib/submit-json";
 import { useAudio } from "@/lib/audio-context";
 import { usePaymentCountry } from "@/hooks/usePaymentCountry";
 import { PaymentTopBanner } from "@/components/PaymentTopBanner";
@@ -129,13 +131,11 @@ function TrackThreadCard({
   // Toggle reaction mutation
   const toggleReaction = useMutation({
     mutationFn: async (reactionType: string) => {
-      const res = await fetch(`/api/streaming/track/${track.id}/react`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reactionType }),
-      });
-      if (!res.ok) throw new Error("Failed to react");
+      const res = await apiRequest(
+        "POST",
+        `/api/streaming/track/${track.id}/react`,
+        { reactionType },
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -143,8 +143,16 @@ function TrackThreadCard({
         queryKey: ["track-reactions", track.id],
       });
     },
-    onError: () => {
-      toast({ title: "Sign in to react", variant: "destructive" });
+    onError: (error) => {
+      const failure = failureFromThrown(error);
+      toast({
+        title:
+          failure.status === 401
+            ? "Sign in to react"
+            : "Could not save your reaction",
+        description: failure.status === 401 ? undefined : failure.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -282,7 +290,12 @@ function ThreadModal({
   const [replyContent, setReplyContent] = useState("");
 
   // Fetch thread data
-  const { data: threadData, isLoading } = useQuery({
+  const {
+    data: threadData,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["track-thread", trackId],
     queryFn: async () => {
       const res = await fetch(`/api/streaming/track/${trackId}/thread`, {
@@ -302,13 +315,11 @@ function ThreadModal({
       content: string;
       parentId?: number;
     }) => {
-      const res = await fetch("/api/streaming/comment", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trackId, content, parentId }),
+      const res = await apiRequest("POST", "/api/streaming/comment", {
+        trackId,
+        content,
+        parentId,
       });
-      if (!res.ok) throw new Error("Failed to comment");
       return res.json();
     },
     onSuccess: () => {
@@ -318,21 +329,23 @@ function ThreadModal({
       setReplyContent("");
       toast({ title: "Comment posted!" });
     },
-    onError: () => {
-      toast({ title: "Failed to post comment", variant: "destructive" });
+    onError: (error) => {
+      toast({
+        title: "Failed to post comment",
+        description: failureFromThrown(error).message,
+        variant: "destructive",
+      });
     },
   });
 
   // Toggle reaction
   const toggleReaction = useMutation({
     mutationFn: async (reactionType: string) => {
-      const res = await fetch(`/api/streaming/track/${trackId}/react`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reactionType }),
-      });
-      if (!res.ok) throw new Error("Failed to react");
+      const res = await apiRequest(
+        "POST",
+        `/api/streaming/track/${trackId}/react`,
+        { reactionType },
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -348,6 +361,32 @@ function ThreadModal({
     return (
       <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Without this a failed load looked like "No comments yet".
+  if (isError) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
+        <div className="max-w-sm text-center">
+          <p className="text-white">We could not load this thread.</p>
+          <div className="mt-4 flex justify-center gap-3">
+            <Button
+              onClick={() => refetch()}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Try again
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -609,7 +648,12 @@ function ArtistDashboardPanel({
   const audio = useAudio();
 
   // Fetch artist dashboard
-  const { data: dashboard, isLoading } = useQuery({
+  const {
+    data: dashboard,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["artist-dashboard", artistId],
     queryFn: async () => {
       const res = await fetch(`/api/streaming/artist/${artistId}/dashboard`, {
@@ -623,13 +667,9 @@ function ArtistDashboardPanel({
   // Toggle follow
   const toggleFollow = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/streaming/follow", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ artistId }),
+      const res = await apiRequest("POST", "/api/streaming/follow", {
+        artistId,
       });
-      if (!res.ok) throw new Error("Failed to toggle follow");
       return res.json();
     },
     onSuccess: () => {
@@ -644,6 +684,32 @@ function ArtistDashboardPanel({
     return (
       <div className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-gray-950 border-l border-slate-200 z-50 flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Without this a failed load showed a blank profile with zero stats.
+  if (isError) {
+    return (
+      <div className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-gray-950 border-l border-slate-200 z-50 flex items-center justify-center p-6">
+        <div className="max-w-xs text-center">
+          <p className="text-white">We could not load this artist.</p>
+          <div className="mt-4 flex justify-center gap-3">
+            <Button
+              onClick={() => refetch()}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Try again
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -864,7 +930,12 @@ export default function StreamerPortal() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch trending tracks with comment/reaction counts
-  const { data: feedData, isLoading: feedLoading } = useQuery({
+  const {
+    data: feedData,
+    isLoading: feedLoading,
+    isError: feedError,
+    refetch: refetchFeed,
+  } = useQuery({
     queryKey: ["streamer-feed", searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: "30" });
@@ -1031,6 +1102,17 @@ export default function StreamerPortal() {
                   </div>
                 </div>
               ))
+            ) : feedError ? (
+              <div className="text-center py-20">
+                <Music className="w-16 h-16 mx-auto text-gray-700 mb-4" />
+                <p className="text-slate-700">We could not load the feed.</p>
+                <Button
+                  onClick={() => refetchFeed()}
+                  className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Try again
+                </Button>
+              </div>
             ) : tracks.length === 0 ? (
               <div className="text-center py-20">
                 <Music className="w-16 h-16 mx-auto text-gray-700 mb-4" />

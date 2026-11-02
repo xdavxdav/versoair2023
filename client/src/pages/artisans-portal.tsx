@@ -984,7 +984,6 @@ export default function ArtisansPortal() {
                       <Button
                         className="bg-emerald-600 hover:bg-emerald-500"
                         onClick={submitProfile}
-                        disabled={!profile.id}
                       >
                         Envoyer pour validation
                       </Button>

@@ -10,11 +10,16 @@ export default function PacksPage() {
   const { addItem, isAdding } = useCart();
   const { toast } = useToast();
 
-  const { data: packs, isLoading } = useQuery({
+  const {
+    data: packs,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["marketing", "packs"],
     queryFn: async () => {
       const res = await fetch("/api/marketing/packs");
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error("Failed to load packs");
       const json = await res.json();
       return json.data || [];
     },
@@ -89,6 +94,20 @@ export default function PacksPage() {
         {isLoading ? (
           <div className="text-gray-400 text-center py-12">
             Loading packs...
+          </div>
+        ) : isError ? (
+          <div className="text-center py-12 text-gray-300">
+            <p>We could not load the marketing packs right now.</p>
+            <Button
+              onClick={() => refetch()}
+              className="mt-4 bg-amber-500 hover:bg-amber-600 text-black"
+            >
+              Try again
+            </Button>
+          </div>
+        ) : (packs || []).length === 0 ? (
+          <div className="text-gray-300 text-center py-12">
+            No marketing packs are available yet.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

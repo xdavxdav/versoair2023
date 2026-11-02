@@ -100,6 +100,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { submitJson } from "@/lib/submit-json";
 
 const PRESET_AVATARS = [
   {
@@ -775,7 +776,12 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
   );
 
   // ── Suggested contacts (verified businesses) ──────────────────────────────
-  const { data: contactsData } = useQuery<{
+  const {
+    data: contactsData,
+    isLoading: contactsLoading,
+    isError: contactsError,
+    refetch: refetchContacts,
+  } = useQuery<{
     contacts: any[];
     locked?: boolean;
   }>({
@@ -941,28 +947,34 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
 
   // ── Start new networking conversation ─────────────────────────────────────
   const handleStartNewConversation = async (biz: any) => {
-    try {
-      const r = await fetch(`${API_BASE_URL}/api/inbox/conversations`, {
-        method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          participantId: String(biz.id),
-          participantName: biz.name,
-          type: "business_network",
-        }),
+    const result = await submitJson<{
+      conversation?: { id?: number | string };
+    }>(`${API_BASE_URL}/api/inbox/conversations`, {
+      body: {
+        participantId: String(biz.id),
+        participantName: biz.name,
+        type: "business_network",
+        businessId: biz.id,
+      },
+      fallbackMessage: "Could not start the conversation. Please try again.",
+    });
+    const conversationId = result.ok
+      ? Number(result.data.conversation?.id)
+      : NaN;
+    if (!result.ok || !Number.isFinite(conversationId)) {
+      // Keep the picker open so they can retry or choose another business.
+      toast({
+        title: "Could not start the conversation",
+        description: result.ok
+          ? "The server did not return the new conversation. Please try again."
+          : result.message,
+        variant: "destructive",
       });
-      const data = await r.json();
-      if (data.success) {
-        await refetchConvs();
-        setActiveConversationId(Number(data.conversation.id));
-        setNetworkEnabled(true);
-      } else if (data.upgradeRequired) {
-        alert(data.error);
-      }
-    } catch {
-      /* silent */
+      return;
     }
+    await refetchConvs();
+    setActiveConversationId(conversationId);
+    setNetworkEnabled(true);
     setShowNewConversationModal(false);
     setSearchBusinessQuery("");
   };
@@ -1342,8 +1354,24 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
                     Requires Essential plan or above
                   </p>
                 </div>
+              ) : contactsLoading ? (
+                <div className="p-6 text-center text-slate-500 text-sm">
+                  Loading businesses…
+                </div>
+              ) : contactsError ? (
+                <div className="p-6 text-center text-sm text-slate-600">
+                  <p>We could not load businesses right now.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => refetchContacts()}
+                  >
+                    Try again
+                  </Button>
+                </div>
               ) : (contactsData?.contacts ?? []).length === 0 ? (
-                <div className="p-6 text-center text-slate-400 text-sm">
+                <div className="p-6 text-center text-slate-500 text-sm">
                   No verified businesses found
                 </div>
               ) : (
