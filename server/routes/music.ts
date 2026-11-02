@@ -308,6 +308,33 @@ router.get("/analytics", requireAuth(), async (_req, res) => {
   }
 });
 
+// GET /api/music/artists/search?q=...&genre=... — search artists by name/genre
+// Declared before /artists/:id, otherwise "search" is read as an artist id.
+router.get("/artists/search", async (req, res) => {
+  try {
+    const { q, genre } = req.query;
+    let query = `SELECT id, stage_name as name, genre, country_code as country 
+                 FROM artists WHERE 1=1`;
+    const params: any[] = [];
+    let idx = 1;
+    if (q) {
+      query += ` AND (stage_name ILIKE $${idx} OR genre ILIKE $${idx})`;
+      params.push(`%${q}%`);
+      idx++;
+    }
+    if (genre && genre !== "all") {
+      query += ` AND genre ILIKE $${idx}`;
+      params.push(`%${genre}%`);
+      idx++;
+    }
+    query += ` ORDER BY stage_name ASC LIMIT 50`;
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/music/artists/:id
 router.get("/artists/:id", async (req, res) => {
   try {
@@ -1882,32 +1909,6 @@ router.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
     if (!result.rows.length)
       return res.status(404).json({ success: false, error: "Not found" });
     res.json({ success: true, data: result.rows[0] });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// GET /api/music/artists/search?q=...&genre=... — search artists by name/genre
-router.get("/artists/search", async (req, res) => {
-  try {
-    const { q, genre } = req.query;
-    let query = `SELECT id, stage_name as name, genre, country_code as country 
-                 FROM artists WHERE 1=1`;
-    const params: any[] = [];
-    let idx = 1;
-    if (q) {
-      query += ` AND (stage_name ILIKE $${idx} OR genre ILIKE $${idx})`;
-      params.push(`%${q}%`);
-      idx++;
-    }
-    if (genre && genre !== "all") {
-      query += ` AND genre ILIKE $${idx}`;
-      params.push(`%${genre}%`);
-      idx++;
-    }
-    query += ` ORDER BY stage_name ASC LIMIT 50`;
-    const result = await pool.query(query, params);
-    res.json({ success: true, data: result.rows });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

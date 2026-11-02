@@ -559,6 +559,35 @@ router.get(
   },
 );
 
+/**
+ * GET pending businesses (for admin dashboard review)
+ * Declared before /api/businesses/:id, otherwise "pending" is read as a business id.
+ */
+router.get(
+  "/api/businesses/pending",
+  requireAuth(["admin", "moderator"]),
+  async (_req: Request, res: Response) => {
+    try {
+      const result = await pool.query(
+        `SELECT b.*, bc.name as category_name, u.username as submitted_by_username
+           FROM businesses b
+           LEFT JOIN business_categories bc ON b.category_id = bc.id
+           LEFT JOIN users u ON b.submitted_by = u.id
+           WHERE b.approval_status = 'pending'
+           ORDER BY b.created_at DESC`,
+      );
+
+      res.json({ success: true, data: result.rows, count: result.rows.length });
+    } catch (error) {
+      console.error("Error fetching pending businesses:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch pending businesses",
+      });
+    }
+  },
+);
+
 // GET single business
 router.get(
   "/api/businesses/:id",
@@ -1295,34 +1324,6 @@ router.post(
     });
   }
 });
-
-/**
- * GET pending businesses (for admin dashboard review)
- */
-router.get(
-  "/api/businesses/pending",
-  requireAuth(["admin", "moderator"]),
-  async (_req: Request, res: Response) => {
-    try {
-      const result = await pool.query(
-        `SELECT b.*, bc.name as category_name, u.username as submitted_by_username
-           FROM businesses b
-           LEFT JOIN business_categories bc ON b.category_id = bc.id
-           LEFT JOIN users u ON b.submitted_by = u.id
-           WHERE b.approval_status = 'pending'
-           ORDER BY b.created_at DESC`,
-      );
-
-      res.json({ success: true, data: result.rows, count: result.rows.length });
-    } catch (error) {
-      console.error("Error fetching pending businesses:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch pending businesses",
-      });
-    }
-  },
-);
 
 /**
  * APPROVE a pending business (SupUser / SuperUser)
