@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
+import { tierName } from "@/lib/tier-name";
 import { useQuery } from "@tanstack/react-query";
 
 export type MusicAccessLevel =
@@ -128,12 +129,13 @@ export function useMusicAccess(): MusicAccessState {
     // Get subscription tier - superusers get god-tier (inferno/patron level)
     const subTier = isSuperuser
       ? "inferno"
-      : subscriptionData?.tier?.toLowerCase() || "free";
+      : tierName(subscriptionData?.tier) || "free";
     const tierRank = isSuperuser ? 4 : getTierRank(subTier); // Superuser = max tier rank
 
     // Get artist tier (from StreamRoyale). division-status responds with
-    // { success, division: { current, ... } } — there is no `current_division`.
-    const artistTier = artistData?.division?.current?.toLowerCase() || null;
+    // { success, division: { current: { key, label, ... }, ... } } — `current`
+    // is an object, and there is no `current_division`.
+    const artistTier = tierName(artistData?.division?.current);
     const isArtist = canAccessArtist || !!artistData?.success || isSuperuser; // Superuser can access artist features
 
     // Premium = Supporter or higher OR admin/superuser (god mode)

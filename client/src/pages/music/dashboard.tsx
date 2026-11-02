@@ -104,7 +104,7 @@ function DashStatCard({
         </div>
         <p className="text-3xl font-bold text-white mb-1">{value}</p>
         <p className="text-sm text-white/50 mb-2">{label}</p>
-        <div className="flex items-center gap-3 text-xs text-white/30">
+        <div className="flex items-center gap-3 text-xs text-white/50">
           <span>{subLeft}</span>
           <span>{subRight}</span>
         </div>
@@ -171,7 +171,7 @@ function AnnouncementItem({
       <div className="flex-1">
         <p className="text-sm font-medium text-white">{title}</p>
         <p className="text-xs text-white/50">{description}</p>
-        <p className="text-xs text-white/30 mt-1">{time}</p>
+        <p className="text-xs text-white/50 mt-1">{time}</p>
       </div>
     </div>
   );
@@ -724,7 +724,7 @@ export default function MusicDashboard() {
             <div className="px-6 pb-6">
               <div className="text-center py-10">
                 <CalendarDays className="w-10 h-10 text-white/10 mx-auto mb-3" />
-                <p className="text-sm text-white/30">
+                <p className="text-sm text-white/50">
                   No upcoming releases scheduled
                 </p>
                 <Link href="/music/dashboard">
@@ -794,7 +794,7 @@ export default function MusicDashboard() {
               ) : (
                 <div className="text-center py-10">
                   <Users className="w-10 h-10 text-white/10 mx-auto mb-3" />
-                  <p className="text-sm text-white/30">No signed artists yet</p>
+                  <p className="text-sm text-white/50">No signed artists yet</p>
                   <Link href="/artistes">
                     <Button
                       variant="ghost"
