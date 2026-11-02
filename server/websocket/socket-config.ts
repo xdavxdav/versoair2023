@@ -6,6 +6,7 @@ import { db } from "../db";
 import * as schema from "@shared/schema";
 import { notificationEmitter } from "../services/notification-service";
 import { sendPushToUser } from "../services/push-service";
+import { participantIsUser } from "../utils/inbox-participants";
 
 let io: SocketIOServer | null = null;
 const userConnections = new Map<number, string[]>(); // userId -> [socketIds]
@@ -172,7 +173,10 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
 
         try {
           const [conversation] = await db
-            .select({ participantId: schema.inboxConversations.participantId })
+            .select({
+              participantId: schema.inboxConversations.participantId,
+              type: schema.inboxConversations.type,
+            })
             .from(schema.inboxConversations)
             .where(
               and(
@@ -185,8 +189,10 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
             )
             .limit(1);
 
+          // business_network threads carry a business id, not a user id.
           if (
             !conversation ||
+            !participantIsUser(conversation.type) ||
             conversation.participantId !== String(toUserId)
           ) {
             return;

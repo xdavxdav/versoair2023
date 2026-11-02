@@ -34,6 +34,10 @@ import {
 } from "../utils/postgres-errors";
 import { buildContactsQuery } from "../utils/inbox-contacts-query";
 import {
+  mirrorRecipientUserId,
+  participantIsUser,
+} from "../utils/inbox-participants";
+import {
   INBOX_ATTACHMENT_URL_PREFIX,
   attachmentReadableBy,
   attachmentUploadedBy,
@@ -233,11 +237,14 @@ router.get("/conversations", async (req: Request, res: Response) => {
       .orderBy(desc(schema.inboxConversations.updatedAt));
 
     const participantIds = rows
+      .filter((conversation) => participantIsUser(conversation.type))
       .map((conversation) => Number(conversation.participantId))
       .filter((id) => Number.isSafeInteger(id) && id > 0);
     const displays = await resolveUserDisplays(participantIds);
     const conversations = rows.map((conversation) => {
-      const display = displays.get(Number(conversation.participantId));
+      const display = participantIsUser(conversation.type)
+        ? displays.get(Number(conversation.participantId))
+        : undefined;
       return {
         ...conversation,
         participantName: display?.name || conversation.participantName,
@@ -394,9 +401,9 @@ router.get(
           senderDisplays.get(Number(message.senderId))?.name ||
           message.senderName,
       }));
-      const participantDisplay = await resolveUserDisplays([
-        Number(conv.participantId),
-      ]);
+      const participantDisplay = await resolveUserDisplays(
+        participantIsUser(conv.type) ? [Number(conv.participantId)] : [],
+      );
       const currentConversation = {
         ...conv,
         participantName:
@@ -536,12 +543,12 @@ router.post(
         .returning();
 
       // Mirror to the recipient's own inbox so they can see and reply —
-      // only when participantId is a real user account (not "support").
-      const recipientUserId = Number(participantId);
-      if (
-        Number.isFinite(recipientUserId) &&
-        recipientUserId !== Number(userId)
-      ) {
+      // only when participantId is a real user account (not "support" or a business).
+      const recipientUserId = mirrorRecipientUserId(
+        { type, participantId },
+        Number(userId),
+      );
+      if (recipientUserId !== null) {
         const sender = await resolveUserDisplay(Number(userId));
         if (sender) {
           await getOrCreateMirrorConversation(
@@ -806,10 +813,7 @@ router.post(
           });
         }
       }
-      const recipientUserId = Number(conv.participantId);
-      const shouldMirror =
-        Number.isFinite(recipientUserId) &&
-        recipientUserId !== Number(userId);
+      const recipientUserId = mirrorRecipientUserId(conv, Number(userId));
 
       const { message, mirror } = await db.transaction(async (tx) => {
         const senderCopy = {
@@ -858,7 +862,7 @@ router.post(
           })
           .where(eq(schema.inboxConversations.id, convId));
 
-        if (!shouldMirror) {
+        if (recipientUserId === null) {
           return { message: createdMessage, mirror: null };
         }
 
@@ -935,7 +939,7 @@ router.post(
         return res.status(reply.status).json(reply.body);
       }
 
-      if (mirror) {
+      if (mirror && recipientUserId !== null) {
         try {
           await notifyMessage({
             senderId: Number(userId),
