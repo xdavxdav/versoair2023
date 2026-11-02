@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { mirrorRecipientUserId, participantIsUser } from "./inbox-participants";
+import {
+  mirrorRecipientUserId,
+  participantIsUser,
+  sameKindOfParticipant,
+} from "./inbox-participants";
 
 test("a business-network thread never resolves to a user", () => {
   assert.equal(participantIsUser("business_network"), false);
@@ -44,4 +48,13 @@ test("ids that are not a real other user are never mirrored", () => {
     5,
     "an untyped thread keeps the previous behaviour",
   );
+});
+
+test("a thread is only reused for the same kind of participant", () => {
+  // User 7 and business 7 are different things even though the numbers match.
+  assert.equal(sameKindOfParticipant("business_network", "direct"), false);
+  assert.equal(sameKindOfParticipant("marketplace", "business_network"), false);
+  assert.equal(sameKindOfParticipant("business_network", "business_network"), true);
+  assert.equal(sameKindOfParticipant("direct", "marketplace"), true);
+  assert.equal(sameKindOfParticipant(undefined, "music_artist"), true);
 });

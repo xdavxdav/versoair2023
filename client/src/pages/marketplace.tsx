@@ -614,6 +614,16 @@ export default function MarketplacePage() {
 
   const sendSellerMessage = async () => {
     if (!messageTarget || !messageText.trim()) return;
+    // A listing id is not a user id: falling back to it would deliver the
+    // message to whichever stranger has that account number.
+    const sellerId = messageTarget.owner_id;
+    if (sellerId === null || sellerId === undefined || sellerId === "") {
+      setMessageState("error");
+      setMessageError(
+        "This seller's account is no longer available, so they can't be messaged.",
+      );
+      return;
+    }
     setMessageState("sending");
     setMessageError(null);
     try {
@@ -622,7 +632,7 @@ export default function MarketplacePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          participantId: String(messageTarget.owner_id ?? messageTarget.id),
+          participantId: String(sellerId),
           participantName: messageTarget.owner_name || "Seller",
           type: "marketplace",
         }),

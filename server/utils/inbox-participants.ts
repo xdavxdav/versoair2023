@@ -9,6 +9,17 @@ export function participantIsUser(type: string | null | undefined): boolean {
 }
 
 /**
+ * A business id and a user id can be the same number, so two threads with the same
+ * `participantId` are only the same conversation when they point at the same kind of thing.
+ */
+export function sameKindOfParticipant(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  return participantIsUser(a) === participantIsUser(b);
+}
+
+/**
  * The user whose own inbox should receive a copy of a message, or null when the thread
  * has no real user on the other side (support, business-only threads, or the sender).
  */

@@ -36,6 +36,7 @@ import { buildContactsQuery } from "../utils/inbox-contacts-query";
 import {
   mirrorRecipientUserId,
   participantIsUser,
+  sameKindOfParticipant,
 } from "../utils/inbox-participants";
 import {
   INBOX_ATTACHMENT_URL_PREFIX,
@@ -507,8 +508,9 @@ router.post(
       }
     }
 
-    // Prevent duplicate conversations with same participant
-    const [existing] = await db
+    // Prevent duplicate conversations with same participant. A business id and a
+    // user id can be the same number, so only reuse a thread of the same kind.
+    const sameParticipant = await db
       .select()
       .from(schema.inboxConversations)
       .where(
@@ -516,8 +518,10 @@ router.post(
           eq(schema.inboxConversations.userId, Number(userId)),
           eq(schema.inboxConversations.participantId, String(participantId)),
         ),
-      )
-      .limit(1);
+      );
+    const existing = sameParticipant.find((row) =>
+      sameKindOfParticipant(row.type, type),
+    );
 
     if (existing) {
       return res.json({
