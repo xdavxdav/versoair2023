@@ -278,6 +278,11 @@ test("claim answers 404 for an unknown event and 400 for bad input", async () =>
       [{ eventId: EVENT_ID, actionKey: "ok", detail: "text" }, "invalid_detail"],
       [{ eventId: EVENT_ID, actionKey: "ok", detail: [1] }, "invalid_detail"],
       [{ eventId: EVENT_ID, actionKey: "ok", detail: { note: "x".repeat(2038) } }, "invalid_detail"],
+      [{ eventId: EVENT_ID, actionKey: "ok", detail: { note: "a\u0000b" } }, "invalid_detail"],
+      [{ eventId: EVENT_ID, actionKey: "ok", detail: { "key\u0000": "v" } }, "invalid_detail"],
+      [{ eventId: EVENT_ID, actionKey: "ok", detail: { note: "lone high \ud800" } }, "invalid_detail"],
+      [{ eventId: EVENT_ID, actionKey: "ok", detail: { note: "\udc00 lone low" } }, "invalid_detail"],
+      [{ eventId: EVENT_ID, actionKey: "ok", detail: { a: { b: ["fine", "bad\udfff"] } } }, "invalid_detail"],
       [[], "invalid_event_id"],
     ];
     for (const [body, code] of bad) {
@@ -305,6 +310,20 @@ test("claim accepts a detail payload up to 2048 bytes and a 60 character key", a
     h.db.events.set(EVENT_ID, { status: "pending" });
     const response = await call(h.origin, "/claim", {
       body: { eventId: EVENT_ID, actionKey: "a".repeat(60), detail: { note: "x".repeat(2037) } },
+    });
+    assert.equal(response.status, 200);
+  });
+});
+
+test("claim accepts detail text that Postgres can store: paired surrogates and a literal backslash-u0000", async () => {
+  await withApp({}, async (h) => {
+    h.db.events.set(EVENT_ID, { status: "pending" });
+    const response = await call(h.origin, "/claim", {
+      body: {
+        eventId: EVENT_ID,
+        actionKey: "emoji.ok",
+        detail: { note: "caf\u00e9 \ud83d\ude00 and a backslash-u0000 written as \\u0000 text" },
+      },
     });
     assert.equal(response.status, 200);
   });

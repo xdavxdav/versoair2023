@@ -2,7 +2,9 @@
 
 Status: **foundation only, disabled by default.** Nothing here configures a Zap,
 a mailbox or a production setting. With `AUTOMATION_OUTBOX_ENABLED` unset the
-app behaves exactly as before.
+app behaves as before, with one difference: a contact message whose subject
+names a pilot is sent as category `pilot_lead` instead of `contact` (see
+"Categories and topics").
 
 Automation supports the manual operation (listening sessions, artisan
 onboarding, the pilot); it never replaces or blocks it. If Zapier or Zoho is
@@ -18,8 +20,8 @@ source event -> notifyZapier() -> automation_outbox -> dispatcher -> Zapier Catc
 
 1. A source route (contact form, artist application, event submission) calls
    `notifyZapier(category, payload)` as it always has.
-2. **Flag off (default):** one fire-and-forget POST to `ZAPIER_WEBHOOK_URL`,
-   identical to the previous behavior.
+2. **Flag off (default):** one fire-and-forget POST to `ZAPIER_WEBHOOK_URL`, in
+   the same format as before (a pilot request carries category `pilot_lead`).
 3. **Flag on:** the event is stored in `automation_outbox`. A background
    dispatcher posts it with a timeout and retries, and dead-letters it if
    Zapier never accepts it. If the database write itself fails, the event is
@@ -107,6 +109,12 @@ prefills the subject, so outreach can link straight to it. It is sent as
 team emails do not change. The subject matches `pilot`, `pilots`, `pilote` or
 `pilotes` as a whole word in any case; "Copilot" and "Pilotage" do not.
 
+**Deploy order.** A pilot request is sent as `pilot_lead` as soon as this code
+is deployed, even with the outbox flag off. Before `ZAPIER_WEBHOOK_URL` is set
+in production, the Zap that receives it must have a `pilot_lead` path or a
+"needs review" catch-all; a Zap that only knows `contact` would otherwise
+treat pilot requests as unknown events.
+
 With the flag off the body has no `automation` object and no `topic`: it is the
 `category`, the flat fields and `sentAt`. A Zap built for that mode routes on
 `category` and treats every flat field as personal data (`pilot_lead` carries
@@ -169,6 +177,11 @@ Zaps, Filter, Tables, and the needed Schedule interval) before building.
 Use a different `actionKey` for each irreversible step (for example
 `task.create`, `email.notify`). Keys are 1 to 60 characters of lowercase
 letters, digits and `_ . : -`, starting with a letter or digit.
+
+`claim` also accepts an optional `detail` object (at most 2 KB, no NUL or
+unpaired surrogate characters; anything else is a `400`). It is stored with the
+claim and kept until that row is deleted. The privacy scrub does not touch it,
+so never put personal data in `detail`.
 
 Responses:
 
@@ -278,6 +291,11 @@ Read these before wiring a new source.
 - **Delivery windows are finite.** Ten attempts cover roughly one to three
   hours (longer if Zapier asks for longer waits with `Retry-After`). After
   that the event is dead-lettered and waits for a requeue.
+- **A failed start at boot is retried only when the next event is queued.** If
+  the database is unreachable while the server boots, the dispatcher is not
+  running. Rows that were already queued wait for the next queued event (which
+  retries the start) or the next restart, and the health check reports them as
+  `oldest_pending_over_15_min`.
 - **Typed text is redacted on a best-effort basis.** Pattern matching removes
   common email and phone formats, not names or addresses. Do not treat
   `automation.data` as anonymous.
@@ -294,7 +312,8 @@ is enabled, and a row that is still pending keeps its payload until it
 finishes, so clear out stale pending rows (see the re-enable note above).
 
 Zapier keeps its own run history, governed by the Zapier account's data
-retention settings. Before enabling in production, have the person responsible
+retention settings. The `automation_actions` claim records (action key, actor,
+optional `detail`, timestamp) are not scrubbed and stay until deleted. Before enabling in production, have the person responsible
 for privacy compliance confirm the retention period, the consent wording and
 any provider agreements for each market (Canada, France, Côte d'Ivoire).
 

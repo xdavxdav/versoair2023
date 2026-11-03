@@ -10,6 +10,7 @@ import {
   varchar,
   uuid,
   char,
+  check,
   index,
   primaryKey,
   unique,
@@ -1123,6 +1124,11 @@ export const automationOutbox = pgTable("automation_outbox", {
     .on(t.nextAttemptAt, t.id)
     .where(sql`${t.status} = 'pending'`),
   statusCreatedIdx: index("automation_outbox_status_created_idx").on(t.status, t.createdAt),
+  // Declared so `drizzle-kit push` does not plan to drop the constraint from the DDL.
+  statusCheck: check(
+    "automation_outbox_status_check",
+    sql`${t.status} in ('pending', 'sent', 'acknowledged', 'dead')`,
+  ),
 }));
 
 export const automationActions = pgTable("automation_actions", {

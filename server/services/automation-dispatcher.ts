@@ -436,8 +436,8 @@ export interface DispatcherSupervisorDeps {
 
 /**
  * Owns the single dispatcher. A failed start is retried the next time an event
- * is queued, so a transient database error at boot cannot leave queued rows
- * without a worker until the next restart.
+ * is queued. Rows that were already queued when the start failed wait for that
+ * retry or the next restart; the health endpoint reports them as stuck.
  */
 export function createDispatcherSupervisor(deps: DispatcherSupervisorDeps) {
   let active: AutomationDispatcher | null = null;

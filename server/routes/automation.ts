@@ -109,6 +109,22 @@ export function getHealthReasons(counts: AutomationHealthCounts): string[] {
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+// Postgres jsonb cannot hold U+0000 or an unpaired surrogate. Rejecting them here
+// keeps a bad `detail` a 400 instead of a 500 from the insert.
+const UNSTORABLE_TEXT =
+  /\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+function isStorableDetail(detail: Record<string, unknown>): boolean {
+  let storable = true;
+  const serialized = JSON.stringify(detail, (key, value) => {
+    if (UNSTORABLE_TEXT.test(key) || (typeof value === "string" && UNSTORABLE_TEXT.test(value))) {
+      storable = false;
+    }
+    return value;
+  });
+  return storable && Buffer.byteLength(serialized) <= MAX_DETAIL_BYTES;
+}
+
 function parseEventId(value: unknown): string | null {
   return typeof value === "string" && EVENT_ID_PATTERN.test(value)
     ? value.toLowerCase()
@@ -174,8 +190,13 @@ export function createAutomationRouter(deps: AutomationRouterDeps): Router {
       }
 
       const detail = body.detail === undefined ? {} : body.detail;
-      if (!isPlainObject(detail) || Buffer.byteLength(JSON.stringify(detail)) > MAX_DETAIL_BYTES) {
-        return fail(res, 400, "invalid_detail", "detail must be an object of at most 2 KB");
+      if (!isPlainObject(detail) || !isStorableDetail(detail)) {
+        return fail(
+          res,
+          400,
+          "invalid_detail",
+          "detail must be an object of at most 2 KB without NUL or unpaired surrogate characters",
+        );
       }
 
       const result = await recordAutomationAction(await deps.getDb(), {

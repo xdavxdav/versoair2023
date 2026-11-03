@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { getTableConfig } from "drizzle-orm/pg-core";
+import { PgDialect, getTableConfig } from "drizzle-orm/pg-core";
 import { automationActions, automationOutbox } from "../../shared/schema";
 import {
   AUTOMATION_SCHEMA_LOCK_KEY,
@@ -116,6 +116,18 @@ test("Drizzle definitions match the DDL column names, types and nullability", ()
       assert.equal(column.notNull, expected.notNull, `${name}.${column.name} nullability`);
     }
   }
+});
+
+test("Drizzle declares the same status check as the DDL, so db:push does not drop it", () => {
+  const ddl = AUTOMATION_SCHEMA_STATEMENTS[0];
+  assert.match(ddl, /CONSTRAINT automation_outbox_status_check/);
+  const literals = (text: string) => text.match(/'[a-z]+'/g);
+
+  const { checks } = getTableConfig(automationOutbox);
+  assert.deepEqual(checks.map((c) => c.name), ["automation_outbox_status_check"]);
+  const drizzleSql = new PgDialect().sqlToQuery(checks[0].value).sql;
+  assert.ok(literals(drizzleSql)?.length);
+  assert.deepEqual(literals(drizzleSql), literals(ddl.slice(ddl.indexOf("status_check"))));
 });
 
 test("ensureAutomationSchema runs all DDL in one locked transaction", async () => {
