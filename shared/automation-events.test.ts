@@ -8,6 +8,7 @@ import {
   buildWebhookBody,
   getAutomationMarket,
   isAutomationTopic,
+  isPilotLeadSubject,
   resolveMarket,
   sanitizeSummary,
 } from "./automation-events";
@@ -347,4 +348,30 @@ test("topics are a closed set", () => {
   assert.equal(isAutomationTopic("finance"), true);
   assert.equal(isAutomationTopic("billing"), false);
   assert.equal(isAutomationTopic(undefined), false);
+});
+
+test("isPilotLeadSubject matches pilot wording in English and French only", () => {
+  assert.equal(isPilotLeadSubject("Pilot program"), true);
+  assert.equal(isPilotLeadSubject("I want to join the PILOT"), true);
+  assert.equal(isPilotLeadSubject("Programme pilote"), true);
+  assert.equal(isPilotLeadSubject("Pilots wanted?"), true);
+  assert.equal(isPilotLeadSubject("Pilotage de projet"), false);
+  assert.equal(isPilotLeadSubject("Copilot question"), false);
+  assert.equal(isPilotLeadSubject("General question"), false);
+  assert.equal(isPilotLeadSubject(""), false);
+  assert.equal(isPilotLeadSubject(undefined), false);
+  assert.equal(isPilotLeadSubject(42), false);
+});
+
+test("pilot_lead maps to the pilot topic and redacts contact details in the subject", () => {
+  const event = buildAutomationEvent(
+    "pilot_lead",
+    { subject: "Pilot: call +1 416 555 0199 or a@b.co", email: "owner@example.com", name: "Owner" },
+    { now: FIXED_NOW, eventId: FIXED_ID },
+  );
+  assert.equal(event.eventType, "pilot.lead_received");
+  assert.equal(event.entityType, "pilot_lead");
+  assert.equal(event.topic, "pilot");
+  assert.equal(event.safeSummary, "Pilot lead: Pilot: call [number] or [email]");
+  assert.deepEqual(Object.keys(event.data), ["subject"]);
 });

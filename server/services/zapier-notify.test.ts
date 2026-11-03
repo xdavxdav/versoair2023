@@ -184,9 +184,16 @@ describe("notifyZapier with the outbox enabled", () => {
     notify("ticket", { ticketId: 7, market: "paris" });
     notify("artist_application", { applicationId: 3 });
     notify("event_submission", { eventId: 9, status: "pending" });
+    notify("pilot_lead", { subject: "Pilot program" });
     await settle();
 
-    assert.deepEqual(enqueued.map((item) => item.category), ["ticket", "artist_application", "event_submission"]);
+    assert.deepEqual(enqueued.map((item) => item.category), [
+      "ticket",
+      "artist_application",
+      "event_submission",
+      "pilot_lead",
+    ]);
+    assert.equal((enqueued[3].envelope as { topic: string }).topic, "pilot");
     assert.equal(enqueued[2].body.eventId, 9, "legacy eventId is not overwritten by the envelope id");
     assert.notEqual((enqueued[2].body.automation as { eventId: string }).eventId, 9);
   });

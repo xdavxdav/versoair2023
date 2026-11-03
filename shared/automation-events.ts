@@ -24,7 +24,8 @@ export type AutomationCategory =
   | "contact"
   | "ticket"
   | "artist_application"
-  | "event_submission";
+  | "event_submission"
+  | "pilot_lead";
 
 export type AutomationScalar = string | number | boolean | null;
 
@@ -119,7 +120,27 @@ const CATEGORY_CONFIG: Record<AutomationCategory, CategoryConfig> = {
         data.status ? ` (${data.status})` : ""
       }`.replace(/\s+/g, " "),
   },
+  pilot_lead: {
+    eventType: "pilot.lead_received",
+    entityType: "pilot_lead",
+    topic: "pilot",
+    priority: "normal",
+    entityIdKey: null,
+    dataKeys: ["subject"],
+    freeTextKeys: ["subject"],
+    summary: (data) => `Pilot lead: ${data.subject ?? "(no subject)"}`,
+  },
 };
+
+/** The contact form has no topic field, so a pilot request is recognised by its subject (English and French). */
+const PILOT_SUBJECT_PATTERN = /\bpilote?s?\b/i;
+
+export function isPilotLeadSubject(subject: unknown): boolean {
+  return (
+    typeof subject === "string" &&
+    PILOT_SUBJECT_PATTERN.test(clip(subject, MAX_SCAN_CHARS))
+  );
+}
 
 const MARKET_ALIASES: Record<AutomationMarketId, readonly string[]> = {
   toronto: ["ca", "can", "canada", "toronto"],
