@@ -277,9 +277,11 @@ Do not enable anything until the owner has confirmed:
 
 - [ ] Zapier plan and the features listed above, and the expected monthly task
       volume against the plan's allowance.
-- [ ] Zoho Mail region, the sending identity, and the **six real mailbox
-      addresses** (music and events, artisans, pilot, finance, support,
-      management). Placeholders are not valid destinations.
+- [ ] Zoho Mail region, the sending identity, and the **real destination
+      address for each of the six topics** (music and events, artisans, pilot,
+      finance, support, management). Topics may share an address, and the
+      sending identity is not a topic destination. Placeholders are not valid
+      destinations.
 - [ ] Market owners and approvers, and the privacy review above.
 
 Then, one market and topic first:
