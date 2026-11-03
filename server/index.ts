@@ -102,6 +102,7 @@ import { initializeSocket } from "./websocket/socket-config";
 import { initializeEmailTransporter } from "./services/email-service";
 import { ensureAllTables } from "./services/ensure-tables";
 import { startTicketMonitor } from "./services/ticket-monitor";
+import { startAutomationDispatcher } from "./services/automation-dispatcher";
 import { syncLegacyProfiles } from "./services/profile-migration";
 import { createLogger } from "./utils/logger";
 import { getPostgresErrorDetails } from "./utils/postgres-errors";
@@ -420,6 +421,14 @@ app.use((req, res, next) => {
         setupSessionCleanup();
         startTicketMonitor();
         serverLog.info("Session cleanup job scheduled (every 30 minutes)");
+
+        // No-op unless AUTOMATION_OUTBOX_ENABLED=true and ZAPIER_WEBHOOK_URL is valid
+        startAutomationDispatcher().catch((err) =>
+          serverLog.error(
+            "Automation dispatcher failed to start (non-fatal):",
+            err?.message ?? err,
+          ),
+        );
 
         if (process.env.NODE_ENV === "production") {
           startStatsReporter(5); // Report every 5 minutes
