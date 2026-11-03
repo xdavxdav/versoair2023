@@ -91,6 +91,33 @@ working. The versioned envelope is nested under `automation`:
   and keep personal details out of task titles and mailbox subjects.
 - Delivery is **at-least-once**. Dedupe on `automation.eventId` (see below).
 
+### Categories and topics
+
+| `category` | Sent by | `automation.topic` | Does the app already email the team? |
+|---|---|---|---|
+| `contact` | Contact form | `support` | Yes, to `CONTACT_EMAIL` (then `ADMIN_EMAIL`, then `SMTP_USER`). |
+| `pilot_lead` | Contact form, when the subject contains the word "pilot" or "pilote" | `pilot` | Yes, the same email as `contact`. |
+| `artist_application` | Artist application | `music_events` | Only to the sender address (`SMTP_FROM`, then `SMTP_USER`); `ADMIN_EMAIL` is not used. |
+| `event_submission` | Event submission | `music_events` | No. |
+| `ticket` | Declared in the contract, not sent by any route yet | `support` | Not applicable. |
+
+A pilot request uses the ordinary contact form: `/contact?subject=Pilot%20program`
+prefills the subject, so outreach can link straight to it. It is sent as
+`pilot_lead` **instead of** `contact` (never both), and the confirmation and
+team emails do not change. The subject matches `pilot`, `pilots`, `pilote` or
+`pilotes` as a whole word in any case; "Copilot" and "Pilotage" do not.
+
+With the flag off the body has no `automation` object and no `topic`: it is the
+`category`, the flat fields and `sentAt`. A Zap built for that mode routes on
+`category` and treats every flat field as personal data (`pilot_lead` carries
+the name, email, phone, subject and message exactly as `contact` does). Send a
+category it does not recognise to a visible "needs review" path, never to a
+default inbox.
+
+To avoid two alerts for one event, a Zap notifies the team only where the last
+column says the app does not already do so. For `contact` and `pilot_lead` it
+records the task and does not email again.
+
 Mailbox addresses never live in this repository; they belong in Zapier.
 
 ## Delivery rules
@@ -300,7 +327,7 @@ Then, one market and topic first:
 ## Not built yet
 
 Wiring the remaining sources (listening sessions, artisan onboarding, pilot
-recruitment and fulfillment, payment follow-up, support tickets), the daily and
+fulfillment, payment follow-up, support tickets), the daily and
 weekly local-time reports, and human-approval flows. They build on the contract
 and callbacks above and wait on the confirmations in the checklist. Any new
 source must be added behind the outbox flag so a default deployment does not
