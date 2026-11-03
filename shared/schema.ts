@@ -10,6 +10,7 @@ import {
   varchar,
   uuid,
   char,
+  check,
   index,
   primaryKey,
   unique,
@@ -1089,6 +1090,59 @@ export const implementationTracking = pgTable("implementation_tracking", {
   updatedBy: integer("updated_by").references(() => users.id),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ── ZAPIER AUTOMATION OUTBOX ──────────────────────────────────────────────────
+// Created lazily by server/services/automation-schema.ts (only when
+// AUTOMATION_OUTBOX_ENABLED=true); migrations/0008 carries the same DDL.
+export const automationOutbox = pgTable("automation_outbox", {
+  id: serial("id").primaryKey(),
+  eventId: uuid("event_id").notNull().unique(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  category: varchar("category", { length: 40 }).notNull(),
+  eventType: varchar("event_type", { length: 80 }).notNull(),
+  topic: varchar("topic", { length: 40 }).notNull(),
+  marketId: varchar("market_id", { length: 20 }),
+  countryCode: varchar("country_code", { length: 2 }),
+  timezone: varchar("timezone", { length: 64 }),
+  priority: varchar("priority", { length: 10 }).notNull().default("normal"),
+  entityType: varchar("entity_type", { length: 60 }),
+  entityId: varchar("entity_id", { length: 120 }),
+  payload: jsonb("payload").notNull(),
+  status: varchar("status", { length: 16 }).notNull().default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  leaseUntil: timestamp("lease_until", { withTimezone: true }),
+  lastError: text("last_error"),
+  lastHttpStatus: integer("last_http_status"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+  deadAt: timestamp("dead_at", { withTimezone: true }),
+  payloadScrubbedAt: timestamp("payload_scrubbed_at", { withTimezone: true }),
+}, (t) => ({
+  dueIdx: index("automation_outbox_due_idx")
+    .on(t.nextAttemptAt, t.id)
+    .where(sql`${t.status} = 'pending'`),
+  statusCreatedIdx: index("automation_outbox_status_created_idx").on(t.status, t.createdAt),
+  // Declared so `drizzle-kit push` does not plan to drop the constraint from the DDL.
+  statusCheck: check(
+    "automation_outbox_status_check",
+    sql`${t.status} in ('pending', 'sent', 'acknowledged', 'dead')`,
+  ),
+}));
+
+export const automationActions = pgTable("automation_actions", {
+  id: serial("id").primaryKey(),
+  eventId: uuid("event_id")
+    .notNull()
+    .references(() => automationOutbox.eventId, { onDelete: "cascade" }),
+  actionKey: varchar("action_key", { length: 60 }).notNull(),
+  actor: varchar("actor", { length: 60 }).notNull().default("zapier"),
+  detail: jsonb("detail").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  eventActionUnique: unique("automation_actions_event_action_key").on(t.eventId, t.actionKey),
+}));
 
 // ── UNIFIED PROFILE (master source of truth for all partner types) ────────────
 // Recycles existing business/artisan/foundation data via a migration backfill.

@@ -35,6 +35,7 @@ const CSRF_EXEMPT_PATHS = [
   "/api/users/heartbeat", // public presence-tracking ping — no CSRF needed
   "/api/v1/payments/webhook", // Stripe webhook — authenticated by signature, not cookies
   "/api/v1/cards/webhook/issuing", // Stripe Issuing webhook — signature-verified
+  "/api/automation/", // Zapier callbacks — bearer-token authenticated, no cookies involved
   "/api/v1/admin/gtm-events", // GTM analytics — fire-and-forget tracking, no CSRF needed
   "/auth/verify-email", // email verification link from inbox — GET, no CSRF needed
   "/auth/resend-verification", // resend verification email — must be exempt for unverified users
@@ -83,8 +84,8 @@ function cleanExpiredTokens(): void {
   }
 }
 
-// Run cleanup every 30 minutes
-setInterval(cleanExpiredTokens, 30 * 60 * 1000);
+// Run cleanup every 30 minutes (unref'd so it never keeps a process alive)
+setInterval(cleanExpiredTokens, 30 * 60 * 1000).unref();
 
 /** Attach a CSRF token cookie if one doesn't exist yet, and store in server-side map */
 export function csrfSetCookie(

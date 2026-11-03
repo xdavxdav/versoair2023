@@ -3,6 +3,7 @@ import * as schema from "@shared/schema";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { contactFormLimiter } from "../middleware/rate-limiter";
+import { isPilotLeadSubject } from "@shared/automation-events";
 import { notifyZapier } from "../services/zapier-notify";
 import { sendEmail } from "../services/email-service";
 
@@ -98,7 +99,7 @@ router.post(
       });
     }
 
-    notifyZapier("contact", {
+    notifyZapier(isPilotLeadSubject(subject) ? "pilot_lead" : "contact", {
       name: name.trim(),
       email: email.trim(),
       phone: phone?.trim() || null,
