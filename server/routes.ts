@@ -108,6 +108,7 @@ const TABLE_NAME_MAP: Record<string, string> = {
 
 import adCampaignsRouter from "./routes/ad-campaigns";
 import adminRouter from "./routes/admin";
+import automationRouter from "./routes/automation";
 import profilesRouter from "./routes/profiles";
 import artisanCommunitiesRouter from "./routes/artisan-communities";
 import eventsRouter from "./routes/events";
@@ -130,6 +131,8 @@ export async function registerRoutes(app: Express) {
     });
   });
   app.use("/api/translations", translationsRouter);
+  // Zapier callbacks: mounted early so no later catch-all can intercept them
+  app.use("/api/automation", automationRouter);
   app.get("/auth/signup", (_req, res) => {
     res.redirect(302, "/auth/signin?mode=register");
   });

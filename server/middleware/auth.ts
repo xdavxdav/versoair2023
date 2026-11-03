@@ -138,6 +138,11 @@ const PUBLIC_PATHS: string[] = [
   // Stripe webhooks: no session; authenticated by signature in the handler
   "/api/v1/payments/webhook",
   "/api/v1/cards/webhook/issuing",
+  // Zapier callbacks: no session; the router requires a bearer token and stays
+  // invisible (404) unless AUTOMATION_OUTBOX_ENABLED=true
+  "/api/automation/claim",
+  "/api/automation/ack",
+  "/api/automation/health",
   // Geolocation — needed before login for country auto-detection
   "/api/location/country",
   "/api/location/ip-data",
