@@ -85,6 +85,8 @@ const BETA_ROUTE_PREFIXES = [
   "/signin",
   "/jobs",
   "/contracts",
+  "/ad-campaigns",
+  "/inventory",
   "/",
 ] as const;
 

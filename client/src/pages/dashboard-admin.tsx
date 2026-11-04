@@ -229,6 +229,8 @@ import { CommunityOperationsSection } from "@/components/sections/CommunityOpera
 import { ArtisanProfilesSection } from "@/components/sections/ArtisanProfilesSection";
 import { EventsModerationSection } from "@/components/sections/EventsModerationSection";
 import { useCountry } from "@/contexts/CountryContext";
+import { useOpenRequest } from "@/hooks/use-open-request";
+import { slugify } from "@/lib/admin-forms";
 
 const API_BASE_URL = "";
 
@@ -545,30 +547,48 @@ const DATABASE_OPERATIONS = [
   },
 ];
 
-const QUICK_ACTIONS = [
+type QuickAddTarget = "business" | "category" | "job" | "campaign";
+
+const QUICK_ACTIONS: {
+  id: string;
+  label: string;
+  icon: typeof Plus;
+  color: string;
+  // The admin section that owns the flow, and which of its Add dialogs to open.
+  section: string;
+  add: QuickAddTarget;
+}[] = [
   {
     id: "add-business",
     label: "Add Business",
     icon: Plus,
     color: "bg-gradient-to-r from-blue-500 to-cyan-500",
+    section: "businesses",
+    add: "business",
   },
   {
     id: "add-category",
     label: "Add Category",
     icon: Tag,
     color: "bg-gradient-to-r from-emerald-500 to-green-500",
+    section: "categories",
+    add: "category",
   },
   {
     id: "add-job",
     label: "Post Job",
     icon: Briefcase,
     color: "bg-gradient-to-r from-amber-500 to-orange-500",
+    section: "jobs",
+    add: "job",
   },
   {
     id: "add-ad",
     label: "Create Ad",
     icon: Megaphone,
     color: "bg-gradient-to-r from-purple-500 to-pink-500",
+    section: "advertising",
+    add: "campaign",
   },
 ];
 
@@ -867,7 +887,13 @@ const PendingApprovals = () => {
 // Business Management Component
 const BusinessManagement = ({
   sharedCategories,
-}: { sharedCategories?: any[] } = {}) => {
+  openAdd,
+  onOpenAddHandled,
+}: {
+  sharedCategories?: any[];
+  openAdd?: boolean;
+  onOpenAddHandled?: () => void;
+} = {}) => {
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -878,6 +904,7 @@ const BusinessManagement = ({
   const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  useOpenRequest(openAdd, () => setShowAddDialog(true), onOpenAddHandled);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [currentBusiness, setCurrentBusiness] = useState<any>(null);
@@ -3044,13 +3071,18 @@ const BusinessManagement = ({
 // Category Management Component
 const CategoryManagement = ({
   sharedCategories,
+  openAdd,
+  onOpenAddHandled,
 }: {
   sharedCategories?: any[];
+  openAdd?: boolean;
+  onOpenAddHandled?: () => void;
 }) => {
   const [categories, setCategories] = useState<any[]>([]);
   const [expandedCats, setExpandedCats] = useState<Set<number>>(new Set());
   const [catSearch, setCatSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  useOpenRequest(openAdd, () => setShowAddDialog(true), onOpenAddHandled);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -3059,6 +3091,7 @@ const CategoryManagement = ({
     name: "",
     slug: "",
     description: "",
+    parentId: "",
   });
 
   useEffect(() => {
@@ -3115,14 +3148,17 @@ const CategoryManagement = ({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newCategory),
+          body: JSON.stringify({
+            ...newCategory,
+            parentId: newCategory.parentId ? Number(newCategory.parentId) : null,
+          }),
         },
       );
       const data = await response.json();
       if (data.success) {
         setCategories([...categories, data.data]);
         setShowAddDialog(false);
-        setNewCategory({ name: "", slug: "", description: "" });
+        setNewCategory({ name: "", slug: "", description: "", parentId: "" });
         toast({
           title: "Success",
           description: "Category added successfully",
@@ -3502,9 +3538,18 @@ const CategoryManagement = ({
                 id="cat-name"
                 placeholder="e.g., Healthcare"
                 value={newCategory.name}
-                onChange={(e) =>
-                  setNewCategory({ ...newCategory, name: e.target.value })
-                }
+                onChange={(e) => {
+                  const name = e.target.value;
+                  // Keep the slug in step with the name until the admin edits the slug by hand.
+                  setNewCategory((prev) => ({
+                    ...prev,
+                    name,
+                    slug:
+                      !prev.slug || prev.slug === slugify(prev.name)
+                        ? slugify(name)
+                        : prev.slug,
+                  }));
+                }}
               />
             </div>
             <div>
@@ -3517,6 +3562,26 @@ const CategoryManagement = ({
                   setNewCategory({ ...newCategory, slug: e.target.value })
                 }
               />
+            </div>
+            <div>
+              <Label htmlFor="cat-parent">Parent category (optional)</Label>
+              <select
+                id="cat-parent"
+                value={newCategory.parentId}
+                onChange={(e) =>
+                  setNewCategory({ ...newCategory, parentId: e.target.value })
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">None — top-level category</option>
+                {categories
+                  .filter((c: any) => !c.parentId)
+                  .map((c: any) => (
+                    <option key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
             </div>
             <div>
               <Label htmlFor="cat-desc">Description</Label>
@@ -3795,9 +3860,16 @@ const SECTOR_META: Record<
 
 const getSectorMeta = (s: string) => SECTOR_META[s] || SECTOR_META.general;
 
-const JobManagement = () => {
+const JobManagement = ({
+  openAdd,
+  onOpenAddHandled,
+}: {
+  openAdd?: boolean;
+  onOpenAddHandled?: () => void;
+} = {}) => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  useOpenRequest(openAdd, () => setShowAddDialog(true), onOpenAddHandled);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -6566,6 +6638,9 @@ const SmtpSection = () => {
 // Main Dashboard Component
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
+  // Set by a Quick Action; the target section opens its Add dialog and then clears it.
+  const [pendingAdd, setPendingAdd] = useState<QuickAddTarget | null>(null);
+  const clearPendingAdd = useCallback(() => setPendingAdd(null), []);
   const [dbConnected, setDbConnected] = useState<boolean | null>(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(
@@ -7060,37 +7135,20 @@ export default function AdminDashboard() {
     setTimeout(() => setIsRefreshing(false), 400);
   };
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case "add-business":
-        setActiveSection("businesses");
-        toast({
-          title: "Ready to Add Business",
-          description: "Navigate to the business section.",
-        });
-        break;
-      case "add-category":
-        setActiveSection("categories");
-        toast({
-          title: "Ready to Add Category",
-          description: "Navigate to the categories section.",
-        });
-        break;
-      case "add-job":
-        setActiveSection("jobs");
-        toast({
-          title: "Ready to Post Job",
-          description: "Navigate to the jobs section.",
-        });
-        break;
-      case "add-ad":
-        setActiveSection("advertising");
-        toast({
-          title: "Ready to Create Ad",
-          description: "Navigate to the advertising section.",
-        });
-        break;
+  // A Quick Action opens its section and asks it to show the real Add dialog.
+  const handleQuickAction = (actionId: string) => {
+    const action = QUICK_ACTIONS.find((candidate) => candidate.id === actionId);
+    if (!action) return;
+    if (!canAccessAdminPanelSection(action.section, isPanelOwner)) {
+      toast({
+        title: "Not available",
+        description: `${action.label} is not available for your account.`,
+        variant: "destructive",
+      });
+      return;
     }
+    setActiveSection(action.section);
+    setPendingAdd(action.add);
   };
 
   const handleExecuteQuery = async () => {
@@ -7316,12 +7374,30 @@ export default function AdminDashboard() {
             {sectionAllowed && activeSection === "businesses" && (
               <>
                 <PendingApprovals />
-                <BusinessManagement />
+                <BusinessManagement
+                  openAdd={pendingAdd === "business"}
+                  onOpenAddHandled={clearPendingAdd}
+                />
               </>
             )}
-            {sectionAllowed && activeSection === "categories" && <CategoryManagement />}
-            {sectionAllowed && activeSection === "jobs" && <JobManagement />}
-            {sectionAllowed && activeSection === "advertising" && <AdvertisingSection />}
+            {sectionAllowed && activeSection === "categories" && (
+              <CategoryManagement
+                openAdd={pendingAdd === "category"}
+                onOpenAddHandled={clearPendingAdd}
+              />
+            )}
+            {sectionAllowed && activeSection === "jobs" && (
+              <JobManagement
+                openAdd={pendingAdd === "job"}
+                onOpenAddHandled={clearPendingAdd}
+              />
+            )}
+            {sectionAllowed && activeSection === "advertising" && (
+              <AdvertisingSection
+                openAdd={pendingAdd === "campaign"}
+                onOpenAddHandled={clearPendingAdd}
+              />
+            )}
             {sectionAllowed && activeSection === "marketplace" && <MarketplaceModeration />}
             {sectionAllowed && activeSection === "artists" && <ArtistsSection />}
             {sectionAllowed && activeSection === "users" && <UsersSection />}

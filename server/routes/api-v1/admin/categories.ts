@@ -12,6 +12,79 @@ import { CATEGORY_SEED_DATA } from "../../../services/category-seed-data";
 
 const router = Router();
 
+type Parsed<T> = { ok: true; value: T } | { ok: false; message: string };
+
+interface CategoryInput {
+  name: string;
+  slug: string;
+  // undefined = not sent (keep stored value), null = cleared
+  description?: string | null;
+  parentId?: number | null;
+  mainCategory?: boolean;
+}
+
+function parseCategoryBody(body: any): Parsed<CategoryInput> {
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  const slug = typeof body?.slug === "string" ? body.slug.trim() : "";
+  if (!name || !slug) {
+    return { ok: false, message: "Name and slug are required" };
+  }
+
+  const value: CategoryInput = { name, slug };
+
+  if (body.description !== undefined) {
+    if (body.description !== null && typeof body.description !== "string") {
+      return { ok: false, message: "description must be a string" };
+    }
+    value.description = body.description?.trim() || null;
+  }
+
+  if (body.parentId !== undefined) {
+    if (body.parentId === null || body.parentId === "") {
+      value.parentId = null;
+    } else {
+      const parentId = Number(body.parentId);
+      if (!Number.isInteger(parentId) || parentId <= 0) {
+        return { ok: false, message: "parentId must be a positive integer" };
+      }
+      value.parentId = parentId;
+    }
+  }
+
+  if (typeof body.mainCategory === "boolean") {
+    value.mainCategory = body.mainCategory;
+  }
+
+  return { ok: true, value };
+}
+
+async function categoryExists(categoryId: number): Promise<boolean> {
+  const [row] = await db
+    .select({ id: businessCategories.id })
+    .from(businessCategories)
+    .where(eq(businessCategories.id, categoryId))
+    .limit(1);
+  return Boolean(row);
+}
+
+// True when making `parentId` the parent of `categoryId` would create a loop.
+async function wouldCreateCycle(
+  categoryId: number,
+  parentId: number,
+): Promise<boolean> {
+  let cursor: number | null = parentId;
+  for (let hops = 0; cursor !== null && hops < 50; hops++) {
+    if (cursor === categoryId) return true;
+    const [row] = await db
+      .select({ parentId: businessCategories.parentId })
+      .from(businessCategories)
+      .where(eq(businessCategories.id, cursor))
+      .limit(1);
+    cursor = row?.parentId ?? null;
+  }
+  return false;
+}
+
 /**
  * GET /api/v1/admin/categories
  * List all categories with pagination and filtering
@@ -74,19 +147,18 @@ router.post(
   "/",
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
-    const { name, slug, description } = req.body;
-
-    // Validate required fields
-    if (!name || !slug) {
+    const parsed = parseCategoryBody(req.body);
+    if (!parsed.ok) {
       return res.status(400).json({
         success: false,
         status: 400,
         error: {
           code: "VALIDATION_ERROR",
-          message: "Name and slug are required",
+          message: parsed.message,
         },
       });
     }
+    const { name, slug, description, parentId, mainCategory } = parsed.value;
 
     // Check if slug already exists
     const existing = await db
@@ -110,11 +182,25 @@ router.post(
       });
     }
 
+    if (parentId && !(await categoryExists(parentId))) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        error: {
+          code: "PARENT_NOT_FOUND",
+          message: "Parent category not found",
+        },
+      });
+    }
+
     const [category] = await db
       .insert(businessCategories)
       .values({
         name,
         slug,
+        description: description ?? null,
+        parentId: parentId ?? null,
+        mainCategory: mainCategory ?? false,
       })
       .returning();
 
@@ -123,7 +209,7 @@ router.post(
       action: "CREATE",
       entityType: "category",
       entityId: String(category.id),
-      changes: JSON.stringify({ name, slug }),
+      changes: JSON.stringify({ name, slug, description, parentId, mainCategory }),
     });
 
     res.status(201).json({
@@ -147,11 +233,7 @@ router.get(
     const categoryId = parseInt(id);
 
     const [category] = await db
-      .select({
-        id: businessCategories.id,
-        name: businessCategories.name,
-        slug: businessCategories.slug,
-      })
+      .select()
       .from(businessCategories)
       .where(eq(businessCategories.id, categoryId))
       .limit(1);
@@ -185,20 +267,20 @@ router.put(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, slug, description } = req.body;
     const categoryId = parseInt(id);
 
-    // Validate required fields
-    if (!name || !slug) {
+    const parsed = parseCategoryBody(req.body);
+    if (!parsed.ok) {
       return res.status(400).json({
         success: false,
         status: 400,
         error: {
           code: "VALIDATION_ERROR",
-          message: "Name and slug are required",
+          message: parsed.message,
         },
       });
     }
+    const { name, slug, description, parentId, mainCategory } = parsed.value;
 
     // Check if category exists
     const existing = await db
@@ -261,11 +343,37 @@ router.put(
       }
     }
 
+    if (parentId) {
+      if (parentId === categoryId || (await wouldCreateCycle(categoryId, parentId))) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          error: {
+            code: "INVALID_PARENT",
+            message: "A category cannot be its own ancestor",
+          },
+        });
+      }
+      if (!(await categoryExists(parentId))) {
+        return res.status(404).json({
+          success: false,
+          status: 404,
+          error: {
+            code: "PARENT_NOT_FOUND",
+            message: "Parent category not found",
+          },
+        });
+      }
+    }
+
     const [updatedCategory] = await db
       .update(businessCategories)
       .set({
         name,
         slug,
+        ...(description !== undefined ? { description } : {}),
+        ...(parentId !== undefined ? { parentId } : {}),
+        ...(mainCategory !== undefined ? { mainCategory } : {}),
       })
       .where(eq(businessCategories.id, categoryId))
       .returning();

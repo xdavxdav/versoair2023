@@ -31,6 +31,15 @@ test("protected contractor routes reach their route-level auth guard", () => {
 test("route prefixes do not accidentally allow similarly named paths", () => {
   assert.equal(isBetaRoute("/contracts-preview"), false);
   assert.equal(isBetaRoute("/jobs-board"), false);
+  assert.equal(isBetaRoute("/ad-campaigns-old"), false);
+  assert.equal(isBetaRoute("/inventory-export"), false);
+});
+
+test("the campaign and inventory management pages are reachable while the beta scope is frozen", () => {
+  for (const path of ["/ad-campaigns", "/ad-campaigns/", "/ad-campaigns?new=1", "/inventory", "/inventory/"]) {
+    assert.equal(isBetaRoute(path), true, path);
+    assert.equal(isRouteReachable(path), true, path);
+  }
 });
 
 test("the business request page is reachable while the beta scope is frozen", () => {
