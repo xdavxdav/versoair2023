@@ -52,6 +52,7 @@ const { default: submissionRequests } = await import("../../server/routes/submis
 const { default: inventoryRouter } = await import("../../server/routes/inventory.ts");
 const { default: businessesRouter } = await import("../../server/routes/businesses.ts");
 const { default: artistContractsRouter } = await import("../../server/routes/artist-contracts.ts");
+const { default: dataDispatchRouter } = await import("../../server/routes/data-dispatch.ts");
 intervalMock.mock.restore();
 
 // ensureAllTables() does not create this table (production has it from migration 0000), so mirror it here.
@@ -280,6 +281,7 @@ before(async () => {
   app.use("/api/v1/admin", adminRouter);
   app.use("/api/inventory", inventoryRouter);
   app.use("/api/contracts", artistContractsRouter);
+  app.use("/api/data/dispatch", dataDispatchRouter);
   app.use("/", businessesRouter);
   server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
@@ -882,4 +884,136 @@ test("artist review queue: an invited Admin sees pending applications and can gr
   const rejected = await call("admin", "PUT", `/api/contracts/admin/review/${rejectId}`, { action: "reject", rejectionReason: "queue test" });
   assert.equal(rejected.status, 200, JSON.stringify(rejected.body));
   assert.equal((await contract(rejectId)).status, "rejected");
+});
+
+async function applyForContract(label) {
+  const tag = tagFor(label);
+  const applied = await call("applicant", "POST", "/api/contracts/apply", {
+    email: `${tag}@example.test`,
+    stageName: tag,
+    legalName: "Reviewer Test",
+    genre: "Afrobeats",
+    country: "Cote d'Ivoire",
+    countryCode: "CI",
+    agreedToTerms: true,
+  });
+  assert.equal(applied.status, 201, JSON.stringify(applied.body));
+  return applied.body.contract.id;
+}
+
+test("artist review: the reviewer on record is the signed-in reviewer, whatever reviewerId the request body claims", async () => {
+  const claims = [
+    { action: "under_review", extra: {}, claimed: users.user },
+    { action: "reject", extra: { rejectionReason: "identity test" }, claimed: 2147483000 },
+    { action: "suspend", extra: {}, claimed: users.listener },
+    { action: "approve", extra: { grade: "C" }, claimed: users.moderator },
+  ];
+  for (const principal of ALLOWED) {
+    for (const { action, extra, claimed } of claims) {
+      const id = await applyForContract(`reviewer_${principal}_${action}`);
+      const reviewed = await call(principal, "PUT", `/api/contracts/admin/review/${id}`, {
+        action,
+        reviewNotes: "identity test",
+        reviewerId: claimed,
+        ...extra,
+      });
+      assert.equal(reviewed.status, 200, `${principal} ${action}: ${JSON.stringify(reviewed.body)}`);
+      const row = (await pool.query("SELECT reviewed_by FROM artist_contracts WHERE id = $1", [id])).rows[0];
+      assert.equal(row.reviewed_by, users[principal], `${principal} ${action} is recorded as the reviewer`);
+    }
+  }
+});
+
+test("artist grade upgrade: the reviewer on record is the signed-in reviewer, whatever reviewerId the request body claims", async () => {
+  for (const principal of ALLOWED) {
+    const id = await applyForContract(`upgrade_${principal}`);
+    const approved = await call(principal, "PUT", `/api/contracts/admin/review/${id}`, { action: "approve", grade: "C" });
+    assert.equal(approved.status, 200, `${principal} approve: ${JSON.stringify(approved.body)}`);
+
+    const upgraded = await call(principal, "PUT", `/api/contracts/admin/upgrade/${id}`, {
+      grade: "B",
+      reviewNotes: "identity test",
+      reviewerId: users.user,
+    });
+    assert.equal(upgraded.status, 200, `${principal} upgrade: ${JSON.stringify(upgraded.body)}`);
+    const row = (await pool.query("SELECT grade, reviewed_by FROM artist_contracts WHERE id = $1", [id])).rows[0];
+    assert.equal(row.grade, "B");
+    assert.equal(row.reviewed_by, users[principal], `${principal} upgrade is recorded as the reviewer`);
+  }
+});
+
+const DISPATCH_PATH = "/api/data/dispatch";
+const DISPATCH_ROUTES = [
+  ["POST", "/categories", {}],
+  ["GET", "/status", undefined],
+  ["POST", "/all", {}],
+];
+
+test("data dispatch: only the owner and invited Admins may call it; every other caller is rejected and no category is written", async () => {
+  await pool.query("DELETE FROM business_categories WHERE slug = 'communication'");
+  const knownIds = (await pool.query("SELECT id FROM business_categories")).rows.map((row) => row.id);
+  const seeded = await pool.query(
+    "INSERT INTO business_categories(name, slug, description) VALUES ($1, 'communication', 'seeded by test') RETURNING id",
+    [`Dispatch seed ${runId}`],
+  );
+  const categoryCount = async () =>
+    (await pool.query("SELECT COUNT(*)::int AS n FROM business_categories")).rows[0].n;
+  const seededRow = async () =>
+    (await pool.query("SELECT name, slug, description FROM business_categories WHERE id = $1", [seeded.rows[0].id])).rows[0];
+  const before = { count: await categoryCount(), row: await seededRow() };
+  try {
+    for (const [principal, expected] of Object.entries(DENIED)) {
+      for (const [method, route, body] of DISPATCH_ROUTES) {
+        const result = await call(principal, method, `${DISPATCH_PATH}${route}`, body);
+        assert.equal(result.status, expected, `${principal} ${method} ${route}: ${JSON.stringify(result.body)}`);
+      }
+    }
+    assert.equal(await categoryCount(), before.count, "denied calls wrote no category");
+    assert.deepEqual(await seededRow(), before.row, "denied calls changed no category");
+
+    for (const principal of ALLOWED) {
+      for (const [method, route, body] of DISPATCH_ROUTES) {
+        const result = await call(principal, method, `${DISPATCH_PATH}${route}`, body);
+        assert.equal(result.status, 200, `${principal} ${method} ${route}: ${JSON.stringify(result.body)}`);
+        assert.equal(result.body?.success, true, `${principal} ${method} ${route}`);
+      }
+    }
+  } finally {
+    await pool.query("DELETE FROM business_categories WHERE id <> ALL($1::int[])", [knownIds]);
+  }
+});
+
+test("business PUT: reassigning the category validates it without reading a column that does not exist", async () => {
+  const target = (
+    await pool.query("INSERT INTO business_categories(name, slug) VALUES ($1, $2) RETURNING id", [
+      `Reassign target ${runId}`,
+      `reassign-target-${runId}`,
+    ])
+  ).rows[0].id;
+  const described = await createBulkFixture("catput_described");
+  const undescribed = (
+    await pool.query("INSERT INTO businesses(name, category_id, country_code) VALUES ($1, $2, 'CI') RETURNING id", [
+      tagFor("catput_undescribed"),
+      fixture.categoryId,
+    ])
+  ).rows[0].id;
+
+  for (const principal of ALLOWED) {
+    for (const id of [described.id, undescribed]) {
+      await pool.query("UPDATE businesses SET category_id = $1 WHERE id = $2", [fixture.categoryId, id]);
+      const name = tagFor(`catput_${principal}`);
+      const changed = await call(principal, "PUT", `/api/businesses/${id}`, { name, categoryId: target });
+      assert.equal(changed.status, 200, `${principal} business ${id}: ${JSON.stringify(changed.body)}`);
+      const row = await businessRow(id);
+      assert.equal(row.category_id, target);
+      assert.equal(row.name, name);
+    }
+  }
+
+  const unknown = await call("admin", "PUT", `/api/businesses/${described.id}`, { name: "must_not_stick", categoryId: 2147483000 });
+  assert.equal(unknown.status, 400, JSON.stringify(unknown.body));
+  assert.match(String(unknown.body?.error), /Category validation failed.*does not exist/);
+  const after = await businessRow(described.id);
+  assert.equal(after.category_id, target, "an unknown category changes nothing");
+  assert.notEqual(after.name, "must_not_stick");
 });

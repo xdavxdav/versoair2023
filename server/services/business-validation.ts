@@ -15,7 +15,7 @@ export interface CategoryValidationResult {
 export async function validateBusinessCategory(businessData: {
   id?: number;
   name: string;
-  description: string;
+  description: string | null | undefined;
   category_id: number;
 }): Promise<CategoryValidationResult> {
   const result: CategoryValidationResult = {
@@ -28,7 +28,7 @@ export async function validateBusinessCategory(businessData: {
 
   // 1. Check category exists
   const categoryResult = await pool.query(
-    "SELECT id, name, slug, is_active FROM business_categories WHERE id = $1 LIMIT 1",
+    "SELECT id, name, slug FROM business_categories WHERE id = $1 LIMIT 1",
     [businessData.category_id],
   );
 
@@ -43,14 +43,7 @@ export async function validateBusinessCategory(businessData: {
   const category = categoryResult.rows[0];
   result.categoryName = category.name;
 
-  // 2. Validate category is active
-  if (category.is_active === false) {
-    result.isValid = false;
-    result.errors.push(`Category "${result.categoryName}" is inactive`);
-    return result;
-  }
-
-  // 3. Check for description-category mismatch
+  // 2. Check for description-category mismatch
   const mismatchCheck = checkDescriptionCategoryMatch(
     businessData.description,
     result.categoryName,
@@ -65,7 +58,7 @@ export async function validateBusinessCategory(businessData: {
     );
   }
 
-  // 4. Check for duplicate names in same category
+  // 3. Check for duplicate names in same category
   const duplicateResult = await pool.query(
     `SELECT id FROM businesses 
      WHERE category_id = $1 
@@ -89,10 +82,10 @@ export async function validateBusinessCategory(businessData: {
  * Check if business description matches its category
  */
 export function checkDescriptionCategoryMatch(
-  description: string,
+  description: string | null | undefined,
   categoryName: string,
 ): { isSuspicious: boolean; expectedKeywords: string[] } {
-  const desc = description.toLowerCase();
+  const desc = (description ?? "").toLowerCase();
   const cat = categoryName.toLowerCase();
 
   // Define category-to-keywords mapping
@@ -146,7 +139,7 @@ export async function suggestCategoriesForBusiness(
 > {
   try {
     const categories = await pool.query(
-      "SELECT id, name, slug FROM business_categories WHERE is_active = true ORDER BY name",
+      "SELECT id, name, slug FROM business_categories ORDER BY name",
     );
 
     const withScores = categories.rows.map((cat) => {
