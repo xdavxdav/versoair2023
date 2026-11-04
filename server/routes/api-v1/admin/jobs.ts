@@ -7,6 +7,10 @@ import { eq, ilike, and, count, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { notifyNewJobPosted } from "../../../services/notification-service";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
+import {
+  parseCountryCode,
+  INVALID_COUNTRY_CODE_RESPONSE,
+} from "../../../utils/country-code";
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
@@ -116,6 +120,7 @@ router.post(
         benefits,
         isRemote,
         isFeatured,
+        countryCode,
       } = req.body;
 
       // Validate required fields — accept either company or businessId
@@ -128,6 +133,11 @@ router.post(
             message: "Title and company (or businessId) are required",
           },
         });
+      }
+
+      const parsedCountry = parseCountryCode(countryCode);
+      if (!parsedCountry.ok) {
+        return res.status(400).json(INVALID_COUNTRY_CODE_RESPONSE);
       }
 
       console.log("📝 Creating job with data:", req.body);
@@ -150,6 +160,7 @@ router.post(
           businessId: businessId || null,
           type: type || "full-time",
           location: location || null,
+          countryCode: parsedCountry.value ?? null,
           sector: sector || "general",
           salaryMin: salaryMin ? parseInt(salaryMin, 10) : null,
           salaryMax: salaryMax ? parseInt(salaryMax, 10) : null,
@@ -292,6 +303,7 @@ router.put(
         benefits,
         isRemote,
         isFeatured,
+        countryCode,
       } = req.body;
 
       // Validate required fields
@@ -304,6 +316,11 @@ router.put(
             message: "Title is required",
           },
         });
+      }
+
+      const parsedCountry = parseCountryCode(countryCode);
+      if (!parsedCountry.ok) {
+        return res.status(400).json(INVALID_COUNTRY_CODE_RESPONSE);
       }
 
       // Check if job exists
@@ -342,6 +359,10 @@ router.put(
           businessId: businessId ?? existing.businessId,
           type: type || existing.type || "full-time",
           location: location ?? existing.location,
+          countryCode:
+            parsedCountry.value === undefined
+              ? existing.countryCode
+              : parsedCountry.value,
           sector: sector || existing.sector || "general",
           salaryMin: salaryMin ? parseInt(salaryMin, 10) : existing.salaryMin,
           salaryMax: salaryMax ? parseInt(salaryMax, 10) : existing.salaryMax,

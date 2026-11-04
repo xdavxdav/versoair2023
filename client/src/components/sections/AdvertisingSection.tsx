@@ -2,15 +2,24 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, AlertCircle, Check, TrendingUp } from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
+import { BusinessPicker } from "@/components/BusinessPicker";
 import { authenticatedFetch } from "@/lib/auth";
+import {
+  ADMIN_ACCESS_MESSAGES,
+  adminAccessIssue,
+  readApiFailure,
+  toDateInputValue,
+} from "@/lib/admin-forms";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useOpenRequest } from "@/hooks/use-open-request";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Campaign {
-  id: number;
+  id: string;
   name: string;
   businessId: number;
+  businessName?: string | null;
   objective?: string | null;
   dailyBudget?: string | number | null;
   startDate?: string | Date | null;
@@ -23,25 +32,55 @@ interface Campaign {
   createdAt?: string;
 }
 
-export function AdvertisingSection() {
+interface CampaignPayload {
+  id?: string;
+  name: string;
+  businessId: number;
+  objective: string;
+  dailyBudget: number;
+  startDate: string | null;
+  endDate: string | null;
+  status: string;
+}
+
+const emptyForm = () => ({
+  name: "",
+  businessId: null as number | null,
+  objective: "",
+  dailyBudget: "",
+  startDate: "",
+  endDate: "",
+  status: "draft",
+});
+
+// Turns a failed response into a message; 401/403 get a plain "who may do this" explanation.
+async function failureMessage(res: Response, fallback: string) {
+  const failure = await readApiFailure(res, fallback);
+  const issue = adminAccessIssue(failure);
+  return issue ? ADMIN_ACCESS_MESSAGES[issue] : failure.message;
+}
+
+export function AdvertisingSection({
+  openAdd,
+  onOpenAddHandled,
+}: {
+  openAdd?: boolean;
+  onOpenAddHandled?: () => void;
+} = {}) {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   useScrollLock(isModalOpen);
-  const [formData, setFormData] = useState({
-    name: "",
-    businessId: 1,
-    objective: "",
-    dailyBudget: "",
-    startDate: "",
-    endDate: "",
-    status: "draft",
-  });
+  const [formData, setFormData] = useState(emptyForm);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   // Fetch campaigns
-  const { data: campaigns = [], isLoading } = useQuery({
+  const {
+    data: campaigns = [],
+    isLoading,
+    error: loadError,
+  } = useQuery({
     queryKey: ["campaigns"],
     queryFn: async () => {
       const res = await authenticatedFetch(
@@ -52,7 +91,9 @@ export function AdvertisingSection() {
           },
         },
       );
-      if (!res.ok) throw new Error("Failed to fetch campaigns");
+      if (!res.ok) {
+        throw new Error(await failureMessage(res, "Failed to fetch campaigns"));
+      }
       const json = await res.json();
       return json.data || [];
     },
@@ -61,7 +102,7 @@ export function AdvertisingSection() {
 
   // Create/Update campaign
   const mutation = useMutation({
-    mutationFn: async (data: typeof formData & { id?: number }) => {
+    mutationFn: async (data: CampaignPayload) => {
       const url = data.id
         ? `${API_BASE_URL}/api/v1/admin/campaigns/${data.id}`
         : `${API_BASE_URL}/api/v1/admin/campaigns`;
@@ -76,16 +117,15 @@ export function AdvertisingSection() {
           name: data.name,
           businessId: data.businessId,
           objective: data.objective,
-          dailyBudget: parseFloat(data.dailyBudget) || 0,
-          startDate: data.startDate || null,
-          endDate: data.endDate || null,
+          dailyBudget: data.dailyBudget,
+          startDate: data.startDate,
+          endDate: data.endDate,
           status: data.status,
         }),
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error?.message || "Failed to save campaign");
+        throw new Error(await failureMessage(res, "Failed to save campaign"));
       }
 
       return res.json();
@@ -102,13 +142,13 @@ export function AdvertisingSection() {
     },
     onError: (err: Error) => {
       setError(err.message);
-      setTimeout(() => setError(""), 3000);
+      setTimeout(() => setError(""), 6000);
     },
   });
 
   // Delete campaign
   const deleteMutation = useMutation({
-    mutationFn: async (campaignId: number) => {
+    mutationFn: async (campaignId: string) => {
       const res = await authenticatedFetch(
         `${API_BASE_URL}/api/v1/admin/campaigns/${campaignId}`,
         {
@@ -119,7 +159,9 @@ export function AdvertisingSection() {
         },
       );
 
-      if (!res.ok) throw new Error("Failed to delete campaign");
+      if (!res.ok) {
+        throw new Error(await failureMessage(res, "Failed to delete campaign"));
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -129,24 +171,25 @@ export function AdvertisingSection() {
     },
     onError: (err: Error) => {
       setError(err.message);
-      setTimeout(() => setError(""), 3000);
+      setTimeout(() => setError(""), 6000);
     },
   });
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      businessId: 1,
-      objective: "",
-      dailyBudget: "",
-      startDate: "",
-      endDate: "",
-      status: "draft",
-    });
+    setFormData(emptyForm());
     setEditingCampaign(null);
     setIsModalOpen(false);
     setError("");
   };
+
+  useOpenRequest(
+    openAdd,
+    () => {
+      resetForm();
+      setIsModalOpen(true);
+    },
+    onOpenAddHandled,
+  );
 
   const handleEdit = (campaign: Campaign) => {
     setEditingCampaign(campaign);
@@ -155,18 +198,9 @@ export function AdvertisingSection() {
       businessId: campaign.businessId,
       objective: campaign.objective || "",
       dailyBudget: campaign.dailyBudget?.toString() || "",
-      startDate:
-        typeof campaign.startDate === "string"
-          ? campaign.startDate
-          : campaign.startDate instanceof Date
-            ? campaign.startDate.toISOString().split("T")[0]
-            : "",
-      endDate:
-        typeof campaign.endDate === "string"
-          ? campaign.endDate
-          : campaign.endDate instanceof Date
-            ? campaign.endDate.toISOString().split("T")[0]
-            : "",
+      // <input type="date"> needs YYYY-MM-DD; a full timestamp renders blank and saving would clear the end date.
+      startDate: toDateInputValue(campaign.startDate),
+      endDate: toDateInputValue(campaign.endDate),
       status: campaign.status,
     });
     setIsModalOpen(true);
@@ -180,6 +214,10 @@ export function AdvertisingSection() {
       setError("Campaign name is required");
       return;
     }
+    if (formData.businessId === null) {
+      setError("Choose the business this campaign is for");
+      return;
+    }
 
     mutation.mutate({
       name: formData.name,
@@ -190,7 +228,7 @@ export function AdvertisingSection() {
       endDate: formData.endDate || null,
       status: formData.status,
       id: editingCampaign?.id ?? undefined,
-    } as unknown as typeof formData & { id?: number });
+    });
   };
 
   const columns: DataTableColumn<Campaign>[] = [
@@ -199,6 +237,13 @@ export function AdvertisingSection() {
       label: "Campaign Name",
       sortable: true,
       width: "200px",
+    },
+    {
+      key: "businessName",
+      label: "Business",
+      render: (value, row) => value || `Business #${row.businessId}`,
+      sortable: true,
+      width: "160px",
     },
     {
       key: "objective",
@@ -326,6 +371,17 @@ export function AdvertisingSection() {
       </div>
 
       {/* Alerts */}
+      {loadError && (
+        <div className="flex items-center gap-3 bg-red-600/10 border border-red-600/50 text-red-400 px-4 py-3 rounded-lg">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p>
+            {loadError instanceof Error
+              ? loadError.message
+              : "Failed to fetch campaigns"}
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="flex items-center justify-between gap-3 bg-red-600/10 border border-red-600/50 text-red-400 px-4 py-3 rounded-lg">
           <div className="flex items-center gap-3">
@@ -373,7 +429,7 @@ export function AdvertisingSection() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-md w-full">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-700">
               <h4 className="text-lg font-bold">
@@ -389,6 +445,26 @@ export function AdvertisingSection() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label
+                  htmlFor="campaign-business"
+                  className="block text-sm font-medium text-slate-200 mb-2"
+                >
+                  Business
+                </label>
+                <BusinessPicker
+                  id="campaign-business"
+                  tone="dark"
+                  value={formData.businessId}
+                  onChange={(business) =>
+                    setFormData({
+                      ...formData,
+                      businessId: business?.id ?? null,
+                    })
+                  }
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">
                   Campaign Name

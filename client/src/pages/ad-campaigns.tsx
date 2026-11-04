@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BusinessPicker } from "@/components/BusinessPicker";
+import {
+  ADMIN_ACCESS_MESSAGES,
+  adminAccessIssue,
+  readApiFailure,
+} from "@/lib/admin-forms";
 import {
   Megaphone,
   Plus,
@@ -24,6 +30,7 @@ import { Link } from "wouter";
 interface Campaign {
   id: string;
   businessId: number;
+  businessName: string | null;
   name: string;
   description: string | null;
   budget: string;
@@ -37,21 +44,32 @@ interface Campaign {
   updatedAt: string;
 }
 
+const emptyForm = () => ({
+  name: "",
+  businessId: null as number | null,
+  budget: "",
+  startDate: new Date().toISOString().split("T")[0],
+  endDate: "",
+  description: "",
+});
+
 export default function AdCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [pageError, setPageError] = useState("");
 
   // Form state
-  const [form, setForm] = useState({
-    name: "",
-    budget: "",
-    startDate: new Date().toISOString().split("T")[0],
-    endDate: "",
-    description: "",
-  });
+  const [form, setForm] = useState(emptyForm);
+
+  // Turns a failed response into a message; 401/403 get a plain "who may do this" explanation.
+  const failureMessage = async (res: Response, fallback: string) => {
+    const failure = await readApiFailure(res, fallback);
+    const issue = adminAccessIssue(failure);
+    return issue ? ADMIN_ACCESS_MESSAGES[issue] : failure.message;
+  };
 
   const fetchCampaigns = useCallback(async () => {
     try {
@@ -60,9 +78,15 @@ export default function AdCampaignsPage() {
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data.data || []);
+        setPageError("");
+      } else {
+        const failure = await readApiFailure(res, "Could not load campaigns");
+        const issue = adminAccessIssue(failure);
+        setPageError(issue ? ADMIN_ACCESS_MESSAGES[issue] : failure.message);
       }
     } catch (err) {
       console.error("Failed to fetch campaigns:", err);
+      setPageError("Network error — could not load campaigns");
     } finally {
       setLoading(false);
     }
@@ -78,6 +102,10 @@ export default function AdCampaignsPage() {
       setError("Campaign name and budget are required");
       return;
     }
+    if (form.businessId === null) {
+      setError("Choose the business this campaign is for");
+      return;
+    }
 
     setSubmitting(true);
     setError("");
@@ -88,7 +116,7 @@ export default function AdCampaignsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name.trim(),
-          businessId: 1, // Will be set from user's business context
+          businessId: form.businessId,
           budget: form.budget,
           startDate: form.startDate,
           endDate: form.endDate || undefined,
@@ -99,17 +127,10 @@ export default function AdCampaignsPage() {
 
       if (res.ok) {
         setShowForm(false);
-        setForm({
-          name: "",
-          budget: "",
-          startDate: new Date().toISOString().split("T")[0],
-          endDate: "",
-          description: "",
-        });
+        setForm(emptyForm());
         fetchCampaigns();
       } else {
-        const data = await res.json();
-        setError(data.error?.message || "Failed to create campaign");
+        setError(await failureMessage(res, "Failed to create campaign"));
       }
     } catch (err) {
       setError("Network error — please try again");
@@ -121,33 +142,48 @@ export default function AdCampaignsPage() {
   const toggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status === "active" ? "paused" : "active";
     try {
-      await authenticatedFetch(`/api/v1/admin/campaigns/${campaign.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: campaign.name,
-          businessId: campaign.businessId,
-          budget: campaign.budget,
-          startDate: campaign.startDate,
-          endDate: campaign.endDate,
-          status: newStatus,
-        }),
-      });
+      const res = await authenticatedFetch(
+        `/api/v1/admin/campaigns/${campaign.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: campaign.name,
+            businessId: campaign.businessId,
+            budget: campaign.budget,
+            startDate: campaign.startDate,
+            endDate: campaign.endDate,
+            status: newStatus,
+          }),
+        },
+      );
+      if (!res.ok) {
+        setPageError(await failureMessage(res, "Failed to update campaign"));
+        return;
+      }
+      setPageError("");
       fetchCampaigns();
     } catch (err) {
       console.error("Failed to update campaign:", err);
+      setPageError("Network error — the campaign was not updated");
     }
   };
 
   const deleteCampaign = async (id: string) => {
     if (!confirm("Are you sure you want to delete this campaign?")) return;
     try {
-      await authenticatedFetch(`/api/v1/admin/campaigns/${id}`, {
+      const res = await authenticatedFetch(`/api/v1/admin/campaigns/${id}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        setPageError(await failureMessage(res, "Failed to delete campaign"));
+        return;
+      }
+      setPageError("");
       fetchCampaigns();
     } catch (err) {
       console.error("Failed to delete campaign:", err);
+      setPageError("Network error — the campaign was not deleted");
     }
   };
 
@@ -264,6 +300,16 @@ export default function AdCampaignsPage() {
             <CardContent>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="businessSearch">Business *</Label>
+                    <BusinessPicker
+                      id="businessSearch"
+                      value={form.businessId}
+                      onChange={(business) =>
+                        setForm({ ...form, businessId: business?.id ?? null })
+                      }
+                    />
+                  </div>
                   <div>
                     <Label htmlFor="name">Campaign Name *</Label>
                     <Input
@@ -353,6 +399,14 @@ export default function AdCampaignsPage() {
         )}
 
         {/* Campaigns Table */}
+        {pageError && (
+          <p
+            role="alert"
+            className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {pageError}
+          </p>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -397,6 +451,10 @@ export default function AdCampaignsPage() {
                         <td className="py-3">
                           <div>
                             <p className="font-medium">{campaign.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {campaign.businessName ||
+                                `Business #${campaign.businessId}`}
+                            </p>
                             <p className="text-xs text-gray-400">
                               {new Date(
                                 campaign.startDate,

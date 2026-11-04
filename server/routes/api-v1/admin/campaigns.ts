@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { db, pool } from "../../../db";
 import { requireAuth } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
@@ -6,21 +6,30 @@ import { auditLogs } from "../../../../shared/schema";
 
 const router = Router();
 
-const campaignSelect = `
-  SELECT id, business_id, name, objective, daily_budget, status,
+// Mirrors the real `ad_campaigns` table (shared/schema.ts, ensure-tables.ts):
+// uuid id, `description` + `budget` columns, real `updated_at`. The API keeps
+// returning `objective` / `dailyBudget` aliases for the existing admin UIs.
+const CAMPAIGN_COLUMNS = `id, business_id, name, description, budget, status,
          start_date, end_date, impressions, clicks, conversions,
-         created_at, created_at AS updated_at
-  FROM ad_campaigns`;
+         created_at, updated_at`;
+
+// A scalar subquery (not a JOIN) so `id`, `name`, `status` ... stay unambiguous in the shared filters.
+const CAMPAIGN_RESULT_COLUMNS = `${CAMPAIGN_COLUMNS},
+         (SELECT b.name FROM businesses b WHERE b.id = ad_campaigns.business_id LIMIT 1) AS business_name`;
+
+const campaignSelect = `SELECT ${CAMPAIGN_RESULT_COLUMNS} FROM ad_campaigns`;
 
 function toCampaign(row: any) {
+  const budget = String(row.budget ?? "0");
   return {
     id: String(row.id),
     businessId: row.business_id,
+    businessName: row.business_name ?? null,
     name: row.name,
-    description: row.objective || null,
-    objective: row.objective || null,
-    budget: String(row.daily_budget ?? "0"),
-    dailyBudget: String(row.daily_budget ?? "0"),
+    description: row.description || null,
+    objective: row.description || null,
+    budget,
+    dailyBudget: budget,
     status: row.status || "active",
     startDate: row.start_date,
     endDate: row.end_date,
@@ -32,14 +41,131 @@ function toCampaign(row: any) {
   };
 }
 
-function parseCampaignId(value: string): number | null {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function parseCampaignId(value: string): string | null {
+  return UUID_PATTERN.test(value) ? value.toLowerCase() : null;
 }
 
 function parseBusinessId(value: unknown): number | null {
   const parsed = Number.parseInt(String(value), 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function sendError(
+  res: Response,
+  status: number,
+  code: string,
+  message: string,
+  details?: string,
+) {
+  return res.status(status).json({
+    success: false,
+    status,
+    error: { code, message, ...(details ? { details } : {}) },
+  });
+}
+
+type Parsed<T> = { ok: true; value: T } | { ok: false; message: string };
+
+// numeric(12,2) holds at most 9,999,999,999.99
+const MAX_BUDGET = 9_999_999_999.99;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}([T ][\d:.]+(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+function parseBudget(raw: unknown): Parsed<number | undefined> {
+  if (raw === undefined || raw === null || raw === "") {
+    return { ok: true, value: undefined };
+  }
+  const value = typeof raw === "number" ? raw : Number(String(raw).trim());
+  if (!Number.isFinite(value) || value < 0 || value > MAX_BUDGET) {
+    return {
+      ok: false,
+      message: "budget must be a number between 0 and 9999999999.99",
+    };
+  }
+  return { ok: true, value };
+}
+
+// undefined = not provided, null = explicitly cleared.
+function parseDate(raw: unknown, field: string): Parsed<string | null | undefined> {
+  if (raw === undefined) return { ok: true, value: undefined };
+  if (raw === null || raw === "") return { ok: true, value: null };
+  const text = String(raw).trim();
+  if (!ISO_DATE_PATTERN.test(text) || Number.isNaN(Date.parse(text))) {
+    return { ok: false, message: `${field} must be a valid date` };
+  }
+  return { ok: true, value: text };
+}
+
+interface CampaignInput {
+  name: string;
+  businessId: number;
+  description: string | null | undefined;
+  budget: number | undefined;
+  status: string | undefined;
+  startDate: string | null | undefined;
+  endDate: string | null | undefined;
+}
+
+function parseCampaignBody(body: any): Parsed<CampaignInput> {
+  const { name, businessId, objective, description, budget, dailyBudget, status } =
+    body ?? {};
+  const trimmedName = typeof name === "string" ? name.trim() : "";
+  if (!trimmedName || !businessId) {
+    return { ok: false, message: "Name and businessId are required" };
+  }
+  const parsedBusinessId = parseBusinessId(businessId);
+  if (!parsedBusinessId) {
+    return { ok: false, message: "businessId must be a positive integer" };
+  }
+
+  const parsedBudget = parseBudget(budget ?? dailyBudget);
+  if (!parsedBudget.ok) return parsedBudget;
+  const startDate = parseDate(body?.startDate, "startDate");
+  if (!startDate.ok) return startDate;
+  const endDate = parseDate(body?.endDate, "endDate");
+  if (!endDate.ok) return endDate;
+
+  const rawDescription = description ?? objective;
+  const parsedDescription =
+    rawDescription === undefined
+      ? undefined
+      : typeof rawDescription === "string" && rawDescription.trim()
+        ? rawDescription.trim()
+        : null;
+
+  const trimmedStatus = typeof status === "string" ? status.trim() : "";
+  if (status !== undefined && status !== null && (!trimmedStatus || trimmedStatus.length > 32)) {
+    return { ok: false, message: "status must be a non-empty string of at most 32 characters" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      name: trimmedName,
+      businessId: parsedBusinessId,
+      description: parsedDescription,
+      budget: parsedBudget.value,
+      status: trimmedStatus || undefined,
+      startDate: startDate.value,
+      endDate: endDate.value,
+    },
+  };
+}
+
+function toMillis(value: string | Date | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const millis = value instanceof Date ? value.getTime() : Date.parse(value);
+  return Number.isNaN(millis) ? null : millis;
+}
+
+async function businessExists(businessId: number): Promise<boolean> {
+  const result = await pool.query(
+    "SELECT 1 FROM businesses WHERE id = $1 LIMIT 1",
+    [businessId],
+  );
+  return result.rows.length > 0;
 }
 
 async function writeAudit(action: string, campaignId: string, changes: any) {
@@ -128,59 +254,42 @@ router.post(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     try {
-      const {
-        name,
-        businessId,
-        objective,
-        budget,
-        dailyBudget,
-        startDate,
-        endDate,
-        status,
-      } = req.body;
+      const parsed = parseCampaignBody(req.body);
+      if (!parsed.ok) {
+        return sendError(res, 400, "VALIDATION_ERROR", parsed.message);
+      }
+      const input = parsed.value;
 
-      // Validate required fields
-      if (!name || !businessId) {
-        return res.status(400).json({
-          success: false,
-          status: 400,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Name and businessId are required",
-          },
-        });
+      const startDate = input.startDate ?? new Date().toISOString();
+      if (
+        input.endDate &&
+        (toMillis(input.endDate) ?? 0) < (toMillis(startDate) ?? 0)
+      ) {
+        return sendError(
+          res,
+          400,
+          "VALIDATION_ERROR",
+          "endDate must not be before startDate",
+        );
       }
 
-      const parsedBusinessId = parseBusinessId(businessId);
-      if (!parsedBusinessId) {
-        return res.status(400).json({
-          success: false,
-          status: 400,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "businessId must be a positive integer",
-          },
-        });
+      if (!(await businessExists(input.businessId))) {
+        return sendError(res, 404, "BUSINESS_NOT_FOUND", "Business not found");
       }
 
-      const budgetValue = Number.parseFloat(
-        String(budget ?? dailyBudget ?? "0"),
-      );
       const result = await pool.query(
         `INSERT INTO ad_campaigns
-           (business_id, name, objective, daily_budget, status, start_date, end_date)
+           (business_id, name, description, budget, status, start_date, end_date)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, business_id, name, objective, daily_budget, status,
-                   start_date, end_date, impressions, clicks, conversions,
-                   created_at, created_at AS updated_at`,
+         RETURNING ${CAMPAIGN_RESULT_COLUMNS}`,
         [
-          parsedBusinessId,
-          name.trim(),
-          objective || null,
-          Number.isFinite(budgetValue) && budgetValue >= 0 ? budgetValue : 0,
-          status || "active",
-          startDate || new Date().toISOString().slice(0, 10),
-          endDate || null,
+          input.businessId,
+          input.name,
+          input.description ?? null,
+          input.budget ?? 0,
+          input.status || "active",
+          startDate,
+          input.endDate ?? null,
         ],
       );
       const campaign = result.rows[0];
@@ -195,7 +304,7 @@ router.post(
       await writeAudit("CREATE", String(campaign.id), {
         name: campaign.name,
         businessId: campaign.business_id,
-        budget: campaign.daily_budget,
+        budget: campaign.budget,
       });
 
       res.status(201).json({
@@ -272,44 +381,16 @@ router.put(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     try {
-      const { id } = req.params;
-      const {
-        name,
-        businessId,
-        objective,
-        budget,
-        dailyBudget,
-        startDate,
-        endDate,
-        status,
-      } = req.body;
-      const campaignId = parseCampaignId(id);
-
-      // Validate required fields
-      if (!name || !businessId) {
-        return res.status(400).json({
-          success: false,
-          status: 400,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Name and businessId are required",
-          },
-        });
+      const campaignId = parseCampaignId(req.params.id);
+      if (!campaignId) {
+        return sendError(res, 400, "INVALID_ID", "Invalid campaign ID");
       }
 
-      const parsedBusinessId = parseBusinessId(businessId);
-      if (!campaignId || !parsedBusinessId) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            status: 400,
-            error: {
-              code: "VALIDATION_ERROR",
-              message: "Invalid campaign or business ID",
-            },
-          });
+      const parsed = parseCampaignBody(req.body);
+      if (!parsed.ok) {
+        return sendError(res, 400, "VALIDATION_ERROR", parsed.message);
       }
+      const input = parsed.value;
 
       const existingResult = await pool.query(
         `${campaignSelect} WHERE id = $1 LIMIT 1`,
@@ -318,37 +399,54 @@ router.put(
       const existing = existingResult.rows[0];
 
       if (!existing) {
-        return res.status(404).json({
-          success: false,
-          status: 404,
-          error: {
-            code: "NOT_FOUND",
-            message: `Campaign with ID ${campaignId} not found`,
-          },
-        });
+        return sendError(
+          res,
+          404,
+          "NOT_FOUND",
+          `Campaign with ID ${campaignId} not found`,
+        );
+      }
+
+      // Fields that are not sent keep their stored value; endDate/description
+      // sent as null/"" are cleared. start_date is NOT NULL so it is never cleared.
+      const startDate = input.startDate ?? existing.start_date;
+      const endDate =
+        input.endDate === undefined ? existing.end_date : input.endDate;
+      if (
+        endDate &&
+        startDate &&
+        (toMillis(endDate) ?? 0) < (toMillis(startDate) ?? 0)
+      ) {
+        return sendError(
+          res,
+          400,
+          "VALIDATION_ERROR",
+          "endDate must not be before startDate",
+        );
+      }
+
+      if (!(await businessExists(input.businessId))) {
+        return sendError(res, 404, "BUSINESS_NOT_FOUND", "Business not found");
       }
 
       console.log("📝 Updating campaign ID:", campaignId);
 
-      const budgetValue = Number.parseFloat(
-        String(budget ?? dailyBudget ?? "0"),
-      );
       const updatedResult = await pool.query(
         `UPDATE ad_campaigns
-         SET business_id = $1, name = $2, objective = $3, daily_budget = $4,
-             status = $5, start_date = $6, end_date = $7
+         SET business_id = $1, name = $2, description = $3, budget = $4,
+             status = $5, start_date = $6, end_date = $7, updated_at = NOW()
          WHERE id = $8
-         RETURNING id, business_id, name, objective, daily_budget, status,
-                   start_date, end_date, impressions, clicks, conversions,
-                   created_at, created_at AS updated_at`,
+         RETURNING ${CAMPAIGN_RESULT_COLUMNS}`,
         [
-          parsedBusinessId,
-          name.trim(),
-          objective || null,
-          Number.isFinite(budgetValue) && budgetValue >= 0 ? budgetValue : 0,
-          status || "active",
-          startDate || existing.start_date,
-          endDate || null,
+          input.businessId,
+          input.name,
+          input.description === undefined
+            ? existing.description
+            : input.description,
+          input.budget ?? existing.budget,
+          input.status || existing.status || "active",
+          startDate,
+          endDate,
           campaignId,
         ],
       );

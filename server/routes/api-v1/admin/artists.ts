@@ -5,6 +5,10 @@ import { asyncHandler } from "../../../middleware/asyncHandler";
 import { artists, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, or, count, desc, sql, isNotNull } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
+import {
+  parseCountryCode,
+  INVALID_COUNTRY_CODE_RESPONSE,
+} from "../../../utils/country-code";
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
@@ -113,11 +117,18 @@ router.post(
   "/",
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
-    const { stageName, genre, labelStatus, spotifyUrl, businessId, userId } =
-      req.body;
+    const {
+      stageName,
+      genre,
+      labelStatus,
+      spotifyUrl,
+      businessId,
+      userId,
+      countryCode,
+    } = req.body;
 
     // Validate required fields
-    if (!stageName) {
+    if (!stageName || typeof stageName !== "string" || !stageName.trim()) {
       return res.status(400).json({
         success: false,
         status: 400,
@@ -128,15 +139,21 @@ router.post(
       });
     }
 
+    const parsedCountry = parseCountryCode(countryCode);
+    if (!parsedCountry.ok) {
+      return res.status(400).json(INVALID_COUNTRY_CODE_RESPONSE);
+    }
+
     const [artist] = await db
       .insert(artists)
       .values({
-        stageName,
+        stageName: stageName.trim(),
         genre,
         labelStatus,
         spotifyUrl,
         businessId,
         userId,
+        countryCode: parsedCountry.value ?? null,
       })
       .returning();
 
@@ -211,8 +228,15 @@ router.put(
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { stageName, genre, labelStatus, spotifyUrl, businessId, userId } =
-      req.body;
+    const {
+      stageName,
+      genre,
+      labelStatus,
+      spotifyUrl,
+      businessId,
+      userId,
+      countryCode,
+    } = req.body;
     const artistId = parseInt(id);
 
     // Validate required fields
@@ -225,6 +249,11 @@ router.put(
           message: "Stage name is required",
         },
       });
+    }
+
+    const parsedCountry = parseCountryCode(countryCode);
+    if (!parsedCountry.ok) {
+      return res.status(400).json(INVALID_COUNTRY_CODE_RESPONSE);
     }
 
     // Check if artist exists
@@ -254,6 +283,9 @@ router.put(
         spotifyUrl,
         businessId,
         userId,
+        ...(parsedCountry.value !== undefined
+          ? { countryCode: parsedCountry.value }
+          : {}),
       })
       .where(eq(artists.id, artistId))
       .returning();
