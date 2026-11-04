@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Router, type Request, type RequestHandler, type Response } from "express";
 import { sendEmail } from "../services/email-service";
+import { notifyZapier, type ZapierEventCategory } from "../services/zapier-notify";
 import { pool } from "../db";
 import {
   denyGeoAdminSubscriberMutation,
@@ -45,6 +46,8 @@ export interface SubmissionRequestDeps {
   adminEmail: string;
   appUrl: string;
   now: () => number;
+  /** Tells Zapier about an accepted request; a no-op until ZAPIER_WEBHOOK_URL is set. */
+  notify?: (category: ZapierEventCategory, payload: Record<string, unknown>) => void;
 }
 
 const defaultDeps: SubmissionRequestDeps = {
@@ -67,6 +70,7 @@ const defaultDeps: SubmissionRequestDeps = {
   adminEmail: ADMIN_EMAIL,
   appUrl: APP_URL,
   now: () => Date.now(),
+  notify: notifyZapier,
 };
 
 type Body = Record<string, unknown>;
@@ -80,6 +84,11 @@ interface Submission {
   ticket: TicketRecord;
   successMessage: string;
   logLabel: string;
+  /** Labels only: no email, phone or description ever goes to Zapier from here. */
+  automation: {
+    category: ZapierEventCategory;
+    payload: Record<string, unknown>;
+  };
 }
 
 type Built = Submission | { invalid: string };
@@ -203,6 +212,12 @@ export function createSubmissionRequestsRouter(
         `[REQUEST] ${submission.logLabel}. Ref: ${submission.refId}. Email sent: ${emailSent}. Saved: ${recorded}`,
       );
 
+      try {
+        deps.notify?.(submission.automation.category, submission.automation.payload);
+      } catch (error) {
+        console.warn(`[REQUEST] Zapier notice for ${submission.refId} failed:`, error);
+      }
+
       return res.status(200).json({
         success: true,
         message: submission.successMessage,
@@ -322,6 +337,16 @@ export function createSubmissionRequestsRouter(
       successMessage:
         "Your business registration request has been submitted. The admin team will review it and get back to you.",
       logLabel: `Business request "${name}"`,
+      automation: {
+        category: "business_request",
+        payload: {
+          referenceId: refId,
+          businessName: name,
+          category: category || null,
+          countryCode: countryCode || null,
+          city: cityName || null,
+        },
+      },
     };
   }));
 
@@ -382,6 +407,15 @@ export function createSubmissionRequestsRouter(
         successMessage:
           "Your artist registration request has been submitted. The admin team will review it and get back to you.",
         logLabel: `Artist request "${stageName}"`,
+        automation: {
+          category: "artist_request",
+          payload: {
+            referenceId: refId,
+            stageName,
+            genre: genre || null,
+            countryCode: countryCode || null,
+          },
+        },
       };
     }),
   );
@@ -456,6 +490,15 @@ export function createSubmissionRequestsRouter(
         successMessage:
           "Your job listing request has been submitted. The admin team will review it and get back to you.",
         logLabel: `Job request "${title}" at "${company}"`,
+        automation: {
+          category: "job_request",
+          payload: {
+            referenceId: refId,
+            jobTitle: title,
+            company,
+            countryCode: countryCode || null,
+          },
+        },
       };
     }),
   );
