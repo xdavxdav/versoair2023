@@ -99,7 +99,7 @@ working. The versioned envelope is nested under `automation`:
 |---|---|---|---|
 | `contact` | Contact form | `support` | Yes, to `CONTACT_EMAIL` (then `ADMIN_EMAIL`, then `SMTP_USER`). |
 | `pilot_lead` | Contact form, when the subject contains the word "pilot" or "pilote" | `pilot` | Yes, the same email as `contact`. |
-| `artist_application` | Artist application | `music_events` | Only to the sender address (`SMTP_FROM`, then `SMTP_USER`); `ADMIN_EMAIL` is not used. |
+| `artist_application` | Artist application | `music_events` | Yes, to the shared Admin inbox (`ADMIN_EMAIL`, then `SMTP_FROM`, then `SMTP_USER`). |
 | `event_submission` | Event submission | `music_events` | No. |
 | `ticket` | Declared in the contract, not sent by any route yet | `support` | Not applicable. |
 

@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
+import type { PoolClient } from "pg";
 import { db, pool } from "../db";
 import { validateBusinessCategory } from "../services/business-validation";
 import { eq } from "drizzle-orm";
 import { businesses, auditLogs, users } from "@shared/schema";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, requireAdminPanel } from "../middleware/auth";
 import { generateBusinessPDF } from "../services/pdf-generator";
 import {
   sendBusinessApprovalRequestEmail,
@@ -11,6 +12,10 @@ import {
   sendBusinessRejectedEmail,
 } from "../services/email-service";
 import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  buildBulkUpdateStatement,
+  parseBulkBusinessUpdates,
+} from "../utils/business-bulk-update";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
@@ -1040,47 +1045,49 @@ router.get(
   },
 );
 
-// BULK UPDATE businesses (transaction-wrapped)
+// BULK UPDATE businesses (transaction-wrapped). Admin Panel members only
+// (owner or invited Admin with the GeoAdmin code); columns come from an
+// allowlist and every value is a bound parameter.
 router.post(
   "/api/businesses/bulk/update",
+  requireAdminPanel,
   async (req: Request, res: Response) => {
-    const client = await pool.connect();
-    try {
-      const { updates } = req.body; // Array of {id, ...updates}
+    const parsed = parseBulkBusinessUpdates(req.body?.updates);
+    if (!parsed.ok) {
+      return res.status(400).json({ success: false, error: parsed.message });
+    }
 
-      if (!Array.isArray(updates) || updates.length === 0) {
-        client.release();
-        return res.status(400).json({
-          success: false,
-          error: "Invalid bulk update format",
-        });
+    let client: PoolClient | undefined;
+    try {
+      const categoryIds = [
+        ...new Set(
+          parsed.updates.flatMap((update) =>
+            update.categoryId === undefined ? [] : [update.categoryId],
+          ),
+        ),
+      ];
+      if (categoryIds.length > 0) {
+        const found = await pool.query(
+          "SELECT id FROM business_categories WHERE id = ANY($1::int[])",
+          [categoryIds],
+        );
+        const known = new Set(found.rows.map((row) => row.id));
+        const unknown = categoryIds.filter((id) => !known.has(id));
+        if (unknown.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: `Category validation failed: unknown category ${unknown.join(", ")}`,
+          });
+        }
       }
 
+      client = await pool.connect();
       await client.query("BEGIN");
 
       let updatedCount = 0;
-      for (const update of updates) {
-        const { id, ...data } = update;
-        const setClauses: string[] = [];
-        const values: any[] = [];
-        let paramIndex = 1;
-
-        for (const [key, value] of Object.entries(data)) {
-          setClauses.push(`${key} = $${paramIndex}`);
-          values.push(value);
-          paramIndex++;
-        }
-
-        setClauses.push(`updated_at = NOW()`);
-        values.push(id);
-
-        const result = await client.query(
-          `UPDATE businesses
-           SET ${setClauses.join(", ")}
-           WHERE id = $${paramIndex}
-           RETURNING id`,
-          values,
-        );
+      for (const update of parsed.updates) {
+        const statement = buildBulkUpdateStatement(update);
+        const result = await client.query(statement.text, statement.values);
         if (result.rows.length > 0) updatedCount++;
       }
 
@@ -1092,15 +1099,14 @@ router.post(
         message: `${updatedCount} businesses updated`,
       });
     } catch (error) {
-      await client.query("ROLLBACK");
+      await client?.query("ROLLBACK").catch(() => undefined);
       console.error("Error bulk updating businesses:", error);
       res.status(500).json({
         success: false,
         error: "Failed to bulk update businesses",
-        details: (error as Error).message,
       });
     } finally {
-      client.release();
+      client?.release();
     }
   },
 );
