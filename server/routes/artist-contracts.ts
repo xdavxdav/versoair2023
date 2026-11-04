@@ -21,6 +21,7 @@ import {
   sendArtistApplicationAdminNotification,
 } from "../services/email-service";
 import { notifyZapier } from "../services/zapier-notify";
+import { resolveAdminNotificationEmail } from "../utils/admin-notification-email";
 
 const router = Router();
 
@@ -319,7 +320,7 @@ router.post("/apply", optionalAuth, async (req: Request, res: Response) => {
     });
 
     // ── Emails (non-blocking) ──────────────────────────────────────────────────
-    const adminEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "";
+    const adminEmail = resolveAdminNotificationEmail();
     Promise.allSettled([
       sendArtistApplicationConfirmation({
         toEmail: email,

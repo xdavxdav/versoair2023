@@ -50,6 +50,8 @@ const intervalMock = mock.method(globalThis, "setInterval", (...args) => {
 const { default: adminRouter } = await import("../../server/routes/api-v1/admin/index.ts");
 const { default: submissionRequests } = await import("../../server/routes/submission-requests.ts");
 const { default: inventoryRouter } = await import("../../server/routes/inventory.ts");
+const { default: businessesRouter } = await import("../../server/routes/businesses.ts");
+const { default: artistContractsRouter } = await import("../../server/routes/artist-contracts.ts");
 intervalMock.mock.restore();
 
 // ensureAllTables() does not create this table (production has it from migration 0000), so mirror it here.
@@ -79,6 +81,14 @@ let server, origin;
 const users = {};
 const tokens = {};
 const fixture = {};
+
+// ensureAllTables() creates a reduced artist_profiles; production has these columns from migration 0000.
+const ARTIST_PROFILE_COLUMNS_DDL = [
+  "ALTER TABLE artist_profiles ADD COLUMN IF NOT EXISTS music_artist_id INTEGER",
+  "ALTER TABLE artist_profiles ADD COLUMN IF NOT EXISTS division VARCHAR(20) DEFAULT 'discovery'",
+  "ALTER TABLE artist_profiles ADD COLUMN IF NOT EXISTS evaluation_status VARCHAR(20) DEFAULT 'pending'",
+  "ALTER TABLE artist_profiles ADD COLUMN IF NOT EXISTS contract_access VARCHAR(20) DEFAULT 'none'",
+];
 
 async function call(principal, method, path, body) {
   const token = tokens[principal];
@@ -219,6 +229,7 @@ before(async () => {
   }
   await ensureAllTables();
   await pool.query(INVENTORY_TABLE_DDL);
+  for (const statement of ARTIST_PROFILE_COLUMNS_DDL) await pool.query(statement);
   const roles = {
     owner: "superuser",
     otherSuperuser: "superuser",
@@ -228,6 +239,7 @@ before(async () => {
     listener: "listener",
     artist: "artist",
     businessOwner: "business_owner",
+    applicant: "user",
   };
   for (const [key, role] of Object.entries(roles)) {
     const email = `${key}_${runId}@example.test`;
@@ -267,6 +279,8 @@ before(async () => {
   app.use("/api/request", submissionRequests);
   app.use("/api/v1/admin", adminRouter);
   app.use("/api/inventory", inventoryRouter);
+  app.use("/api/contracts", artistContractsRouter);
+  app.use("/", businessesRouter);
   server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   origin = `http://127.0.0.1:${server.address().port}`;
@@ -691,4 +705,181 @@ test("inventory: any signed-in role adds products, but only to its own stock; no
     (await pool.query("SELECT COUNT(*)::int AS n FROM inventory_products WHERE id = $1", [id])).rows[0].n,
     0,
   );
+});
+
+const BULK_PATH = "/api/businesses/bulk/update";
+
+async function createBulkFixture(label) {
+  const name = tagFor(label);
+  const result = await pool.query(
+    "INSERT INTO businesses(name, category_id, country_code, description) VALUES ($1, $2, 'CI', 'bulk fixture') RETURNING id",
+    [name, fixture.categoryId],
+  );
+  return { id: result.rows[0].id, name };
+}
+
+async function businessRow(id) {
+  return (await pool.query("SELECT * FROM businesses WHERE id = $1", [id])).rows[0];
+}
+
+test("bulk business update: only the owner and invited Admins may call it; every other caller is rejected and nothing changes", async () => {
+  const target = await createBulkFixture("bulk_denied");
+  for (const [principal, expected] of Object.entries(DENIED)) {
+    const result = await call(principal, "POST", BULK_PATH, {
+      updates: [{ id: target.id, name: `pwned_${principal}`, isActive: false }],
+    });
+    assert.equal(result.status, expected, `${principal} POST ${BULK_PATH}: ${JSON.stringify(result.body)}`);
+  }
+  const row = await businessRow(target.id);
+  assert.equal(row.name, target.name);
+  assert.equal(row.is_active, true);
+});
+
+test("bulk business update: an invited Admin and the owner persist allowlisted columns across rows", async () => {
+  for (const principal of ALLOWED) {
+    const a = await createBulkFixture(`bulk_${principal}_a`);
+    const b = await createBulkFixture(`bulk_${principal}_b`);
+    const beforeUpdate = await businessRow(a.id);
+    const result = await call(principal, "POST", BULK_PATH, {
+      updates: [
+        {
+          id: a.id,
+          name: `${a.name}_v2`,
+          isActive: false,
+          rating: 4.5,
+          countryCode: "ci",
+          tags: ["x", "y"],
+          attributes: { delivery: true },
+        },
+        { id: String(b.id), is_verified: true, approval_status: "pending", description: null, categoryId: fixture.categoryId },
+        { id: 2147483647, isActive: false },
+      ],
+    });
+    assert.equal(result.status, 200, `${principal}: ${JSON.stringify(result.body)}`);
+    assert.equal(result.body.updated, 2, "an id that does not exist is skipped, not an error");
+
+    const rowA = await businessRow(a.id);
+    assert.equal(rowA.name, `${a.name}_v2`);
+    assert.equal(rowA.is_active, false);
+    assert.equal(Number(rowA.rating), 4.5);
+    assert.equal(rowA.country_code, "CI");
+    assert.deepEqual(rowA.tags, ["x", "y"]);
+    assert.deepEqual(rowA.attributes, { delivery: true });
+    assert.ok(rowA.updated_at > beforeUpdate.updated_at, "updated_at is bumped");
+
+    const rowB = await businessRow(b.id);
+    assert.equal(rowB.is_verified, true);
+    assert.equal(rowB.approval_status, "pending");
+    assert.equal(rowB.description, null);
+    assert.equal(rowB.name, b.name, "fields that were not sent are untouched");
+  }
+});
+
+test("bulk business update: validation happens before the database, so one bad row rejects the whole batch", async () => {
+  const good = await createBulkFixture("bulk_atomic");
+  const oversize = Array.from({ length: 101 }, (_, i) => ({ id: i + 1, isActive: true }));
+  const first = { id: good.id, name: "must_not_stick" };
+  const cases = [
+    [{ updates: [] }, /non-empty array/],
+    [{ updates: "x" }, /non-empty array/],
+    [{}, /non-empty array/],
+    [{ updates: oversize }, /limited to 100/],
+    [{ updates: [first, { id: good.id, ad_balance: "999999" }] }, /cannot be bulk-updated/],
+    [{ updates: [first, { id: good.id, adBalance: 5 }] }, /cannot be bulk-updated/],
+    [{ updates: [first, { id: good.id, owner_id: users.admin }] }, /cannot be bulk-updated/],
+    [{ updates: [first, { id: good.id, "name = 'pwned', description": "x" }] }, /cannot be bulk-updated/],
+    [{ updates: [first, { id: good.id, "is_active = true WHERE 1=1 --": true }] }, /cannot be bulk-updated/],
+    [{ updates: [first, { id: "1 OR 1=1", isActive: false }] }, /id must be a positive integer/],
+    [{ updates: [first, { id: good.id, isActive: "false" }] }, /isActive must be true or false/],
+    [{ updates: [first, { id: good.id, rating: 99 }] }, /rating must be a number between 0 and 5/],
+    [{ updates: [first, { id: good.id, categoryId: 2147483000 }] }, /Category validation failed.*unknown category/],
+  ];
+  for (const [body, message] of cases) {
+    const result = await call("admin", "POST", BULK_PATH, body);
+    assert.equal(result.status, 400, JSON.stringify([body, result.body]).slice(0, 300));
+    assert.match(String(result.body?.error), message);
+  }
+  const row = await businessRow(good.id);
+  assert.equal(row.name, good.name, "no rejected batch changed any row");
+  assert.equal(row.category_id, fixture.categoryId);
+});
+
+test("bulk business update: values are bound parameters, and a database error rolls the batch back without leaking details", async () => {
+  const a = await createBulkFixture("bulk_param_a");
+  const b = await createBulkFixture("bulk_param_b");
+  const hostile = "x'); DROP TABLE businesses; --";
+  const stored = await call("admin", "POST", BULK_PATH, { updates: [{ id: a.id, name: hostile, description: hostile }] });
+  assert.equal(stored.status, 200, JSON.stringify(stored.body));
+  const row = await businessRow(a.id);
+  assert.equal(row.name, hostile, "a hostile value is stored literally");
+  assert.equal(row.description, hostile);
+
+  // jsonb cannot hold \u0000: the payload passes validation and fails inside the transaction.
+  const failed = await call("admin", "POST", BULK_PATH, {
+    updates: [{ id: b.id, name: `${b.name}_changed` }, { id: a.id, attributes: { note: "\u0000" } }],
+  });
+  assert.equal(failed.status, 500, JSON.stringify(failed.body));
+  assert.deepEqual(failed.body, { success: false, error: "Failed to bulk update businesses" });
+  assert.equal((await businessRow(b.id)).name, b.name, "the earlier row in the failed batch was rolled back");
+});
+
+test("artist review queue: an invited Admin sees pending applications and can grade, approve and reject; every other caller is rejected", async () => {
+  const approveTag = tagFor("applicant_approve");
+  const rejectTag = tagFor("applicant_reject");
+  const apply = async (tag) => {
+    const applied = await call("applicant", "POST", "/api/contracts/apply", {
+      email: `${tag}@example.test`,
+      stageName: tag,
+      legalName: "Queue Test",
+      genre: "Afrobeats",
+      country: "Cote d'Ivoire",
+      countryCode: "CI",
+      agreedToTerms: true,
+    });
+    assert.equal(applied.status, 201, JSON.stringify(applied.body));
+    return applied.body.contract.id;
+  };
+  const approveId = await apply(approveTag);
+  const rejectId = await apply(rejectTag);
+  const contract = async (id) =>
+    (await pool.query("SELECT status, grade, artist_id FROM artist_contracts WHERE id = $1", [id])).rows[0];
+  const queue = (tag) => `/api/contracts/admin/applications?status=pending&search=${encodeURIComponent(tag)}`;
+
+  for (const [principal, expected] of Object.entries(DENIED)) {
+    const listed = await call(principal, "GET", queue(approveTag));
+    assert.equal(listed.status, expected, `${principal} GET queue: ${JSON.stringify(listed.body)}`);
+    for (const review of [{ action: "approve", grade: "A" }, { action: "reject" }]) {
+      const reviewed = await call(principal, "PUT", `/api/contracts/admin/review/${approveId}`, review);
+      assert.equal(reviewed.status, expected, `${principal} PUT review ${review.action}: ${JSON.stringify(reviewed.body)}`);
+    }
+  }
+  assert.equal((await contract(approveId)).status, "pending", "denied reviews changed nothing");
+
+  for (const principal of ALLOWED) {
+    const listed = await call(principal, "GET", queue(approveTag));
+    assert.equal(listed.status, 200, `${principal}: ${JSON.stringify(listed.body)}`);
+    const found = listed.body.applications.find((application) => application.id === approveId);
+    assert.ok(found, `${principal} sees the pending application`);
+    assert.equal(found.status, "pending");
+    assert.ok(Number(listed.body.stats.pending_count) >= 2, "the queue stats count pending applications");
+  }
+  const detail = await call("admin", "GET", `/api/contracts/admin/applications/${approveId}`);
+  assert.equal(detail.status, 200, JSON.stringify(detail.body));
+
+  const ungraded = await call("admin", "PUT", `/api/contracts/admin/review/${approveId}`, { action: "approve" });
+  assert.equal(ungraded.status, 400, "approving requires a grade");
+  const approved = await call("admin", "PUT", `/api/contracts/admin/review/${approveId}`, {
+    action: "approve",
+    grade: "B",
+    reviewNotes: "queue test",
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  const approvedRow = await contract(approveId);
+  assert.equal(approvedRow.status, "approved");
+  assert.equal(approvedRow.grade, "B");
+  assert.ok(approvedRow.artist_id, "approval links a music artist");
+
+  const rejected = await call("admin", "PUT", `/api/contracts/admin/review/${rejectId}`, { action: "reject", rejectionReason: "queue test" });
+  assert.equal(rejected.status, 200, JSON.stringify(rejected.body));
+  assert.equal((await contract(rejectId)).status, "rejected");
 });
