@@ -375,3 +375,64 @@ test("pilot_lead maps to the pilot topic and redacts contact details in the subj
   assert.equal(event.safeSummary, "Pilot lead: Pilot: call [number] or [email]");
   assert.deepEqual(Object.keys(event.data), ["subject"]);
 });
+
+test("request categories carry a reference and labels, route to the admin topics and redact typed text", () => {
+  const business = buildAutomationEvent(
+    "business_request",
+    {
+      referenceId: "REQ-BIZ-ABC1",
+      businessName: "Café du Port a@b.co",
+      category: "Restaurants",
+      countryCode: "CI",
+      city: "Abidjan",
+      email: "owner@example.com",
+      phone: "+225 01 02 03 04",
+      description: "Maquis",
+    },
+    { now: FIXED_NOW, eventId: FIXED_ID },
+  );
+  assert.equal(business.eventType, "business.request_submitted");
+  assert.equal(business.topic, "artisans");
+  assert.equal(business.entityId, "REQ-BIZ-ABC1");
+  assert.equal(business.marketId, "abidjan");
+  assert.equal(business.safeSummary, "Business request: Café du Port [email] (Abidjan)");
+  assert.deepEqual(Object.keys(business.data), [
+    "referenceId",
+    "businessName",
+    "category",
+    "countryCode",
+    "city",
+  ]);
+  assert.ok(!JSON.stringify(business).includes("owner@example.com"));
+  assert.ok(!JSON.stringify(business).includes("+225"));
+
+  const job = buildAutomationEvent(
+    "job_request",
+    { referenceId: "REQ-JOB-X", jobTitle: "Chef", company: "Le Port", countryCode: "FR" },
+    { now: FIXED_NOW, eventId: FIXED_ID },
+  );
+  assert.equal(job.eventType, "job.request_submitted");
+  assert.equal(job.topic, "artisans");
+  assert.equal(job.marketId, "paris");
+  assert.equal(job.safeSummary, "Job request: Chef at Le Port");
+
+  const artist = buildAutomationEvent(
+    "artist_request",
+    { referenceId: "REQ-ART-Y", stageName: "DJ Nova", genre: "Afrobeats", countryCode: "CA" },
+    { now: FIXED_NOW, eventId: FIXED_ID },
+  );
+  assert.equal(artist.eventType, "artist.request_submitted");
+  assert.equal(artist.topic, "music_events");
+  assert.equal(artist.marketId, "toronto");
+  assert.equal(artist.safeSummary, "Artist request: DJ Nova (Afrobeats)");
+});
+
+test("a request with no known country has no market, never a default one", () => {
+  const event = buildAutomationEvent(
+    "job_request",
+    { referenceId: "REQ-JOB-Z", jobTitle: "Cook", company: "X", countryCode: "DE" },
+    { now: FIXED_NOW, eventId: FIXED_ID },
+  );
+  assert.equal(event.marketId, null);
+  assert.equal(event.timezone, null);
+});

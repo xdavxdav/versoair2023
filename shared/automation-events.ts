@@ -25,7 +25,10 @@ export type AutomationCategory =
   | "ticket"
   | "artist_application"
   | "event_submission"
-  | "pilot_lead";
+  | "pilot_lead"
+  | "business_request"
+  | "artist_request"
+  | "job_request";
 
 export type AutomationScalar = string | number | boolean | null;
 
@@ -129,6 +132,47 @@ const CATEGORY_CONFIG: Record<AutomationCategory, CategoryConfig> = {
     dataKeys: ["subject"],
     freeTextKeys: ["subject"],
     summary: (data) => `Pilot lead: ${data.subject ?? "(no subject)"}`,
+  },
+  // The three public request forms already email the admin team and save a ticket,
+  // so these events carry a reference and a few labels, never contact details.
+  business_request: {
+    eventType: "business.request_submitted",
+    entityType: "business_request",
+    topic: "artisans",
+    priority: "normal",
+    entityIdKey: "referenceId",
+    dataKeys: ["referenceId", "businessName", "category", "countryCode", "city"],
+    freeTextKeys: ["businessName", "category", "countryCode", "city"],
+    summary: (data) =>
+      `Business request: ${data.businessName ?? "(unnamed)"}${
+        data.city ? ` (${data.city})` : ""
+      }`,
+  },
+  artist_request: {
+    eventType: "artist.request_submitted",
+    entityType: "artist_request",
+    topic: "music_events",
+    priority: "normal",
+    entityIdKey: "referenceId",
+    dataKeys: ["referenceId", "stageName", "genre", "countryCode"],
+    freeTextKeys: ["stageName", "genre", "countryCode"],
+    summary: (data) =>
+      `Artist request: ${data.stageName ?? "(unnamed)"}${
+        data.genre ? ` (${data.genre})` : ""
+      }`,
+  },
+  job_request: {
+    eventType: "job.request_submitted",
+    entityType: "job_request",
+    topic: "artisans",
+    priority: "normal",
+    entityIdKey: "referenceId",
+    dataKeys: ["referenceId", "jobTitle", "company", "countryCode"],
+    freeTextKeys: ["jobTitle", "company", "countryCode"],
+    summary: (data) =>
+      `Job request: ${data.jobTitle ?? "(untitled)"}${
+        data.company ? ` at ${data.company}` : ""
+      }`,
   },
 };
 

@@ -318,3 +318,77 @@ test("an empty, array or non-JSON body is a clean 400, not a crash", async () =>
     assert.equal((await post("/artist", {})).status, 400);
   });
 });
+
+type Notice = { category: string; payload: Record<string, unknown> };
+
+function noticeHarness(overrides: Partial<NonNullable<Deps>> = {}) {
+  const notices: Notice[] = [];
+  const base = harness({
+    notify: (category, payload) => notices.push({ category, payload }),
+    ...overrides,
+  });
+  return { ...base, notices };
+}
+
+test("each accepted request tells Zapier once, with labels only and no contact details", async () => {
+  const { deps, notices } = noticeHarness();
+  await withServer(deps, async (post) => {
+    const biz = await post("/business", business, member);
+    const art = await post(
+      "/artist",
+      { stageName: "DJ Nova", genre: "Afrobeats", countryCode: "CA", spotifyUrl: "https://example.com/a" },
+      staff,
+    );
+    const job = await post(
+      "/job",
+      { title: "Chef", company: "Le Port", countryCode: "FR", description: "Call +33 1 02 03 04 05" },
+      staff,
+    );
+    assert.equal(biz.status, 200);
+    assert.equal(art.status, 200);
+    assert.equal(job.status, 200);
+  });
+
+  assert.deepEqual(
+    notices.map((notice) => notice.category),
+    ["business_request", "artist_request", "job_request"],
+  );
+  assert.equal(notices[0].payload.businessName, "Café du Port");
+  assert.equal(notices[0].payload.city, "Abidjan");
+  assert.match(String(notices[0].payload.referenceId), /^REQ-BIZ-/);
+  assert.equal(notices[2].payload.jobTitle, "Chef");
+
+  const text = JSON.stringify(notices);
+  for (const secret of ["contact@cafe.example", "+225", "+33", "Maquis", "owner@example.com", "spotify", "example.com/a"]) {
+    assert.ok(!text.toLowerCase().includes(secret.toLowerCase()), `${secret} must not reach Zapier`);
+  }
+});
+
+test("a duplicate, an invalid or an unrecorded request does not tell Zapier", async () => {
+  const { deps, state, notices } = noticeHarness();
+  await withServer(deps, async (post) => {
+    assert.equal((await post("/business", business, member)).status, 200);
+    assert.equal((await post("/business", business, member)).status, 429);
+    assert.equal((await post("/business", {})).status, 400);
+
+    state.emailOk = false;
+    state.ticketOk = false;
+    assert.equal((await post("/job", { title: "Cook", company: "X" }, staff)).status, 503);
+  });
+  assert.equal(notices.length, 1);
+});
+
+test("a Zapier failure never fails the request", async () => {
+  const { deps, sent, tickets } = noticeHarness({
+    notify: () => {
+      throw new Error("zapier down");
+    },
+  });
+  await withServer(deps, async (post) => {
+    const { status, json } = await post("/business", business, member);
+    assert.equal(status, 200);
+    assert.equal(json.success, true);
+  });
+  assert.equal(sent.length, 1);
+  assert.equal(tickets.length, 1);
+});

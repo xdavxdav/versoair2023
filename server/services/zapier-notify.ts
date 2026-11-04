@@ -25,7 +25,10 @@ export type ZapierEventCategory =
   | "ticket"
   | "artist_application"
   | "event_submission"
-  | "pilot_lead";
+  | "pilot_lead"
+  | "business_request"
+  | "artist_request"
+  | "job_request";
 
 export interface ZapierNotifierDeps {
   legacyUrl(): string | undefined;

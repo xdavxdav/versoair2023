@@ -101,6 +101,9 @@ working. The versioned envelope is nested under `automation`:
 | `pilot_lead` | Contact form, when the subject contains the word "pilot" or "pilote" | `pilot` | Yes, the same email as `contact`. |
 | `artist_application` | Artist application | `music_events` | Yes, to the shared Admin inbox (`ADMIN_EMAIL`, then `SMTP_FROM`, then `SMTP_USER`). |
 | `event_submission` | Event submission | `music_events` | No. |
+| `business_request` | Public "add your business" request form | `artisans` | Yes, `ADMIN_EMAIL`, plus a ticket. |
+| `artist_request` | Public artist request form | `music_events` | Yes, `ADMIN_EMAIL`, plus a ticket. |
+| `job_request` | Public job request form | `artisans` | Yes, `ADMIN_EMAIL`, plus a ticket. |
 | `ticket` | Declared in the contract, not sent by any route yet | `support` | Not applicable. |
 
 A pilot request uses the ordinary contact form: `/contact?subject=Pilot%20program`
@@ -123,8 +126,17 @@ category it does not recognise to a visible "needs review" path, never to a
 default inbox.
 
 To avoid two alerts for one event, a Zap notifies the team only where the last
-column says the app does not already do so. For `contact` and `pilot_lead` it
-records the task and does not email again.
+column says the app does not already do so. For `contact`, `pilot_lead`,
+`artist_application` and the three `*_request` categories it records the task
+and does not email again; only `event_submission` needs a team notification.
+
+The three `*_request` events are sent only after the request was emailed or
+saved as a ticket (never for a duplicate or a rejected form). Their payload is
+deliberately small: `referenceId` (`REQ-BIZ-…`, `REQ-ART-…`, `REQ-JOB-…`), the
+name or title, a category or genre, `countryCode` and `city`. No email, phone
+or description is sent; the full detail stays in the admin email and the ticket.
+As with `pilot_lead`, a Zap needs a path (or the "needs review" catch-all) for
+each new category before `ZAPIER_WEBHOOK_URL` is set in production.
 
 Mailbox addresses never live in this repository; they belong in Zapier.
 
