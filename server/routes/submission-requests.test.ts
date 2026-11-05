@@ -356,7 +356,12 @@ test("each accepted request tells Zapier once, with labels only and no contact d
   assert.equal(notices[0].payload.businessName, "Café du Port");
   assert.equal(notices[0].payload.city, "Abidjan");
   assert.match(String(notices[0].payload.referenceId), /^REQ-BIZ-/);
+  assert.equal(notices[0].payload.businessCategory, "Restaurants");
   assert.equal(notices[2].payload.jobTitle, "Chef");
+  // A payload "category" would replace the event category in the webhook body.
+  for (const notice of notices) {
+    assert.equal("category" in notice.payload, false, `${notice.category} payload must not carry a category key`);
+  }
 
   const text = JSON.stringify(notices);
   for (const secret of ["contact@cafe.example", "+225", "+33", "Maquis", "owner@example.com", "spotify", "example.com/a"]) {

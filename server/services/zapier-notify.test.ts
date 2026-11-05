@@ -66,6 +66,18 @@ describe("notifyZapier with the outbox disabled (legacy path)", () => {
     }
   });
 
+  it("keeps the event category and send time when the payload has keys with the same names", async () => {
+    const { notify, posts } = setup();
+    notify("contact", { ...contact, category: "Restaurant", sentAt: "1999-01-01T00:00:00.000Z" });
+    await settle();
+
+    assert.equal(posts.length, 1);
+    assert.equal(
+      posts[0].raw,
+      '{"category":"contact","name":"Awa","email":"awa@example.com","phone":"+1 514 555 0100","subject":"Hello","message":"Hi","sentAt":"2026-11-03T15:00:00.000Z"}',
+    );
+  });
+
   it("logs failures with the legacy message and never throws", async () => {
     const rejected = setup({ post: async () => Promise.reject(new Error("network down")) });
     assert.doesNotThrow(() => rejected.notify("ticket", { ticketId: 1 }));
@@ -111,6 +123,18 @@ describe("notifyZapier with the outbox enabled", () => {
     notify("contact", contact);
     await settle();
     assert.equal(wakes(), 0);
+  });
+
+  it("keeps the event category in the queued body when the payload has a key named category", async () => {
+    const { notify, enqueued } = setup(enabled);
+    notify("contact", { ...contact, category: "Restaurant" });
+    await settle();
+
+    assert.equal(enqueued.length, 1);
+    assert.equal(enqueued[0].body.category, "contact");
+    assert.deepEqual(Object.keys(enqueued[0].body), [
+      "category", "name", "email", "phone", "subject", "message", "sentAt", "automation",
+    ]);
   });
 
   it("queues nothing and posts nothing without a valid webhook URL", async () => {

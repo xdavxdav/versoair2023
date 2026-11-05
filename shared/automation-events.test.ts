@@ -336,6 +336,36 @@ test("a payload key named 'automation' cannot override the envelope", () => {
   assert.deepEqual(body.automation, envelope);
 });
 
+test("a payload key named 'category' or 'sentAt' cannot override the event's own fields", () => {
+  const payload = { subject: "s", category: "Restaurant", sentAt: "1999-01-01T00:00:00.000Z" };
+  const envelope = buildAutomationEvent("contact", payload, { eventId: FIXED_ID, now: FIXED_NOW });
+  const body = buildWebhookBody("contact", payload, envelope, "2026-11-03T15:04:06.000Z");
+
+  assert.equal(body.category, "contact");
+  assert.equal(body.sentAt, "2026-11-03T15:04:06.000Z");
+  assert.equal(body.subject, "s");
+  assert.deepEqual(Object.keys(body), ["category", "subject", "sentAt", "automation"]);
+});
+
+test("no event reads a payload key named like a field the webhook body sets itself", () => {
+  const categories = [
+    "contact",
+    "ticket",
+    "artist_application",
+    "event_submission",
+    "pilot_lead",
+    "business_request",
+    "artist_request",
+    "job_request",
+  ] as const;
+  for (const category of categories) {
+    const { data } = buildAutomationEvent(category, {}, { eventId: FIXED_ID, now: FIXED_NOW });
+    for (const reserved of ["category", "sentAt", "automation"]) {
+      assert.equal(reserved in data, false, `${category} must not read a payload key named "${reserved}"`);
+    }
+  }
+});
+
 test("topics are a closed set", () => {
   assert.deepEqual([...AUTOMATION_TOPICS], [
     "music_events",
@@ -382,7 +412,7 @@ test("request categories carry a reference and labels, route to the admin topics
     {
       referenceId: "REQ-BIZ-ABC1",
       businessName: "Café du Port a@b.co",
-      category: "Restaurants",
+      businessCategory: "Restaurants",
       countryCode: "CI",
       city: "Abidjan",
       email: "owner@example.com",
@@ -399,10 +429,11 @@ test("request categories carry a reference and labels, route to the admin topics
   assert.deepEqual(Object.keys(business.data), [
     "referenceId",
     "businessName",
-    "category",
+    "businessCategory",
     "countryCode",
     "city",
   ]);
+  assert.equal(business.data.businessCategory, "Restaurants");
   assert.ok(!JSON.stringify(business).includes("owner@example.com"));
   assert.ok(!JSON.stringify(business).includes("+225"));
 
@@ -425,6 +456,15 @@ test("request categories carry a reference and labels, route to the admin topics
   assert.equal(artist.topic, "music_events");
   assert.equal(artist.marketId, "toronto");
   assert.equal(artist.safeSummary, "Artist request: DJ Nova (Afrobeats)");
+});
+
+test("the business category label is typed text, so it is redacted like the business name", () => {
+  const event = buildAutomationEvent(
+    "business_request",
+    { referenceId: "REQ-BIZ-ABC1", businessCategory: "Cafés a@b.co" },
+    { now: FIXED_NOW, eventId: FIXED_ID },
+  );
+  assert.equal(event.data.businessCategory, "Cafés [email]");
 });
 
 test("a request with no known country has no market, never a default one", () => {

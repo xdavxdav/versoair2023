@@ -4,7 +4,7 @@ import type { Server } from "node:http";
 import test, { after } from "node:test";
 import cookieParser from "cookie-parser";
 import express, { type Express } from "express";
-import type { AutomationDb } from "../services/automation-outbox";
+import type { AutomationDb, EnqueueInput } from "../services/automation-outbox";
 
 const TOKEN = "w".repeat(48);
 const EVENT_ID = "3f2b8c1e-5d4a-4b6f-9a7e-1c2d3e4f5a6b";
@@ -243,4 +243,96 @@ test("the shipped router is invisible by default and never opens a database conn
       await close(server);
     }
   });
+});
+
+/** Posts a business request through the real route and the real notifier, and returns what Zapier would receive. */
+async function submitBusinessRequest(outboxEnabled: boolean) {
+  const { createSubmissionRequestsRouter } = await import("./submission-requests");
+  const { createZapierNotifier } = await import("../services/zapier-notify");
+
+  const hook = "https://zap.example.test/catch";
+  const posted: Array<Record<string, unknown>> = [];
+  const queued: EnqueueInput[] = [];
+  const warnings: unknown[][] = [];
+  const notify = createZapierNotifier({
+    legacyUrl: () => hook,
+    outboxEnabled: () => outboxEnabled,
+    outboxUrl: () => hook,
+    post: async (_url, body) => {
+      posted.push(body);
+    },
+    enqueue: async (input) => {
+      queued.push(input);
+      return true;
+    },
+    wake: () => {},
+    now: () => new Date("2026-11-04T15:00:00.000Z"),
+    warn: (...args) => warnings.push(args),
+  });
+
+  const app = express();
+  app.use(express.json());
+  app.use(
+    "/api/request",
+    createSubmissionRequestsRouter({
+      sendEmail: async () => true,
+      insertTicket: async () => {},
+      adminEmail: "admin@example.com",
+      appUrl: "https://app.example.com",
+      now: () => 1_700_000_000_000,
+      notify,
+    }),
+  );
+  const { origin, server } = await listen(app);
+  try {
+    const response = await fetch(`${origin}/api/request/business`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Café du Port",
+        categoryName: "Restaurant",
+        countryCode: "CI",
+        cityName: "Abidjan",
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+    assert.equal(response.status, 200);
+    const { referenceId } = (await response.json()) as { referenceId: string };
+    return { referenceId, posted, queued, warnings };
+  } finally {
+    await close(server);
+  }
+}
+
+test("a business request reaches the legacy webhook as business_request, with the business category kept apart", async () => {
+  const { referenceId, posted, queued, warnings } = await submitBusinessRequest(false);
+
+  assert.deepEqual(warnings, []);
+  assert.equal(queued.length, 0);
+  assert.equal(posted.length, 1);
+  assert.equal(posted[0].category, "business_request");
+  assert.equal(posted[0].businessCategory, "Restaurant");
+  assert.equal(posted[0].referenceId, referenceId);
+  assert.deepEqual(Object.keys(posted[0]), [
+    "category",
+    "referenceId",
+    "businessName",
+    "businessCategory",
+    "countryCode",
+    "city",
+    "sentAt",
+  ]);
+});
+
+test("a business request keeps its event category in the queued body and envelope when the outbox is on", async () => {
+  const { referenceId, posted, queued, warnings } = await submitBusinessRequest(true);
+
+  assert.deepEqual(warnings, []);
+  assert.equal(posted.length, 0);
+  assert.equal(queued.length, 1);
+  assert.equal(queued[0].category, "business_request");
+  assert.equal(queued[0].body.category, "business_request");
+  assert.equal(queued[0].body.businessCategory, "Restaurant");
+  assert.equal(queued[0].envelope.data.businessCategory, "Restaurant");
+  assert.equal(queued[0].envelope.entityId, referenceId);
 });
