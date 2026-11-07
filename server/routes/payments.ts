@@ -28,6 +28,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, requireSuperuser } from "../middleware/auth";
+import { parsePositiveInt } from "../utils/positive-int";
 import {
   commercialSubscriptionsEnabled,
   onlinePaymentsEnabled,
@@ -398,14 +399,21 @@ router.post(
       }
 
       const balanceBefore = balance.toFixed(2);
-      const balanceAfter = (balance - totalDebit).toFixed(2);
 
-      // Debit wallet
-      await pool.query(
-        `UPDATE platform_wallets SET balance = $1, total_withdrawn = total_withdrawn + $2, last_transaction_at = NOW(), updated_at = NOW()
-       WHERE id = $3`,
-        [balanceAfter, withdrawAmount, walletId],
+      // Debit wallet. The balance check is part of the UPDATE, so two parallel
+      // requests cannot both spend the same balance.
+      const debit = await pool.query(
+        `UPDATE platform_wallets SET balance = balance - $1, total_withdrawn = total_withdrawn + $2, last_transaction_at = NOW(), updated_at = NOW()
+       WHERE id = $3 AND balance >= $1
+       RETURNING balance`,
+        [totalDebit.toFixed(2), withdrawAmount, walletId],
       );
+      if (debit.rows.length === 0) {
+        return res
+          .status(402)
+          .json({ success: false, error: "Insufficient balance" });
+      }
+      const balanceAfter = debit.rows[0].balance;
 
       // Record transaction
       const txn = await pool.query(
@@ -462,11 +470,26 @@ router.post(
         relatedEntityId,
       } = req.body;
 
-      const txnAmount = parseFloat(amount);
-      if (!txnAmount || txnAmount <= 0 || !recipientId) {
+      // Balances are NUMERIC(14,2), so amounts are whole cents
+      const txnAmount = Math.round(parseFloat(amount) * 100) / 100;
+      const recipient = parsePositiveInt(recipientId);
+      if (
+        !Number.isFinite(txnAmount) ||
+        txnAmount < 0.01 ||
+        recipient === null
+      ) {
         return res.status(400).json({
           success: false,
           error: "Valid amount and recipientId required",
+        });
+      }
+
+      // Sender and recipient would be the same wallet: the sender's old balance
+      // would be credited on top of the debit, minting credits
+      if (recipient === senderId) {
+        return res.status(400).json({
+          success: false,
+          error: "You cannot transfer credits to yourself",
         });
       }
 
@@ -481,80 +504,106 @@ router.post(
           .json({ success: false, error: "Invalid transaction type" });
       }
 
-      // Get sender wallet
-      const senderWallet = await pool.query(
-        `SELECT id, balance FROM platform_wallets WHERE user_id = $1 AND status = 'active'`,
-        [senderId],
-      );
-      if (
-        senderWallet.rows.length === 0 ||
-        parseFloat(senderWallet.rows[0].balance) < txnAmount
-      ) {
-        return res
-          .status(402)
-          .json({ success: false, error: "Insufficient wallet balance" });
-      }
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
 
-      // Get or create recipient wallet
-      let recipientWallet = await pool.query(
-        `SELECT id, balance FROM platform_wallets WHERE user_id = $1`,
-        [recipientId],
-      );
-      if (recipientWallet.rows.length === 0) {
-        recipientWallet = await pool.query(
-          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active') RETURNING id, balance`,
-          [recipientId],
+        const recipientUser = await client.query(
+          `SELECT 1 FROM users WHERE id = $1`,
+          [recipient],
         );
+        if (recipientUser.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return res
+            .status(404)
+            .json({ success: false, error: "Recipient not found" });
+        }
+
+        // The recipient's wallet is created on first receipt
+        await client.query(
+          `INSERT INTO platform_wallets (user_id, status) VALUES ($1, 'active')
+           ON CONFLICT (user_id) DO NOTHING`,
+          [recipient],
+        );
+
+        // Lock both wallets in a fixed order: concurrent transfers can neither
+        // deadlock nor spend the same balance twice
+        const locked = await client.query(
+          `SELECT id, user_id, balance, status FROM platform_wallets
+           WHERE user_id = ANY($1::int[]) ORDER BY id FOR UPDATE`,
+          [[senderId, recipient]],
+        );
+        const sWallet = locked.rows.find((w) => Number(w.user_id) === senderId);
+        const rWallet = locked.rows.find(
+          (w) => Number(w.user_id) === recipient,
+        );
+        if (
+          !sWallet ||
+          !rWallet ||
+          sWallet.status !== "active" ||
+          parseFloat(sWallet.balance) < txnAmount
+        ) {
+          await client.query("ROLLBACK");
+          return res
+            .status(402)
+            .json({ success: false, error: "Insufficient wallet balance" });
+        }
+
+        const sBalanceBefore = sWallet.balance;
+        const rBalanceBefore = rWallet.balance;
+
+        const debited = await client.query(
+          `UPDATE platform_wallets
+           SET balance = COALESCE(balance, 0) - $1, total_spent = COALESCE(total_spent, 0) + $1, last_transaction_at = NOW()
+           WHERE id = $2 RETURNING balance`,
+          [txnAmount, sWallet.id],
+        );
+        const credited = await client.query(
+          `UPDATE platform_wallets
+           SET balance = COALESCE(balance, 0) + $1, total_earned = COALESCE(total_earned, 0) + $1, last_transaction_at = NOW()
+           WHERE id = $2 RETURNING balance`,
+          [txnAmount, rWallet.id],
+        );
+        const sBalanceAfter = debited.rows[0].balance;
+        const rBalanceAfter = credited.rows[0].balance;
+
+        // Record both sides
+        await client.query(
+          `INSERT INTO wallet_transactions (wallet_id, user_id, type, amount, balance_before, balance_after, payment_method, description, related_entity_type, related_entity_id, status)
+           VALUES ($1, $2, $3, $4, $5, $6, 'wallet', $7, $8, $9, 'completed'),
+                  ($10, $11, $12, $4, $13, $14, 'wallet', $15, $8, $9, 'completed')`,
+          [
+            sWallet.id,
+            senderId,
+            txnType,
+            txnAmount,
+            sBalanceBefore,
+            sBalanceAfter,
+            description || `Sent $${txnAmount.toFixed(2)}`,
+            relatedEntityType || null,
+            relatedEntityId || null,
+            rWallet.id,
+            recipient,
+            txnType === "tip_sent" ? "tip_received" : "transfer",
+            rBalanceBefore,
+            rBalanceAfter,
+            description || `Received $${txnAmount.toFixed(2)}`,
+          ],
+        );
+
+        await client.query("COMMIT");
+
+        return res.json({
+          success: true,
+          message: `$${txnAmount.toFixed(2)} transferred`,
+          senderBalance: sBalanceAfter,
+        });
+      } catch (txError) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw txError;
+      } finally {
+        client.release();
       }
-
-      const sWallet = senderWallet.rows[0];
-      const rWallet = recipientWallet.rows[0];
-
-      const sBalanceBefore = sWallet.balance;
-      const sBalanceAfter = (parseFloat(sBalanceBefore) - txnAmount).toFixed(2);
-      const rBalanceBefore = rWallet.balance;
-      const rBalanceAfter = (parseFloat(rBalanceBefore) + txnAmount).toFixed(2);
-
-      // Debit sender
-      await pool.query(
-        `UPDATE platform_wallets SET balance = $1, total_spent = total_spent + $2, last_transaction_at = NOW() WHERE id = $3`,
-        [sBalanceAfter, txnAmount, sWallet.id],
-      );
-      // Credit recipient
-      await pool.query(
-        `UPDATE platform_wallets SET balance = $1, total_earned = total_earned + $2, last_transaction_at = NOW() WHERE id = $3`,
-        [rBalanceAfter, txnAmount, rWallet.id],
-      );
-
-      // Record both sides
-      await pool.query(
-        `INSERT INTO wallet_transactions (wallet_id, user_id, type, amount, balance_before, balance_after, payment_method, description, related_entity_type, related_entity_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'wallet', $7, $8, $9, 'completed'),
-              ($10, $11, $12, $4, $13, $14, 'wallet', $15, $8, $9, 'completed')`,
-        [
-          sWallet.id,
-          senderId,
-          txnType,
-          txnAmount,
-          sBalanceBefore,
-          sBalanceAfter,
-          description || `Sent $${txnAmount.toFixed(2)}`,
-          relatedEntityType || null,
-          relatedEntityId || null,
-          rWallet.id,
-          recipientId,
-          txnType === "tip_sent" ? "tip_received" : "transfer",
-          rBalanceBefore,
-          rBalanceAfter,
-          description || `Received $${txnAmount.toFixed(2)}`,
-        ],
-      );
-
-      res.json({
-        success: true,
-        message: `$${txnAmount.toFixed(2)} transferred`,
-        senderBalance: sBalanceAfter,
-      });
     } catch (err: any) {
       console.error("[PAYMENTS] Transfer error:", err);
       res.status(500).json({ success: false, error: "Failed to transfer" });

@@ -17,7 +17,7 @@
  *   POST /api/v1/cards/points/redeem     → Redeem points for rewards
  *   GET  /api/v1/cards/points/rewards    → Available redemption options
  *
- *   POST /api/v1/cards/webhook/issuing   → Stripe Issuing webhook (authorization, transactions)
+ *   POST /api/v1/cards/webhook/issuing   → Stripe Issuing webhook (signature-verified; needs STRIPE_ISSUING_WEBHOOK_SECRET)
  */
 
 import { Router, Request, Response } from "express";
@@ -25,6 +25,7 @@ import Stripe from "stripe";
 import { pool } from "../../db";
 import { requireAuth } from "../../middleware/auth";
 import { resolveRequestActingUserId } from "../../utils/acting-user";
+import { redactStripeSecrets } from "../../utils/stripe-client";
 
 const router = Router();
 
@@ -764,9 +765,41 @@ router.post("/points/redeem", requireAuth(), async (req: Request, res: Response)
  * Handle Stripe Issuing events (authorization approved → earn points).
  */
 router.post("/webhook/issuing", async (req: Request, res: Response) => {
-  try {
-    const event = req.body;
+  // Stripe calls this without a session, so the signature is the only proof an
+  // event is real. It fails closed when the signing secret is not configured.
+  const webhookSecret = process.env.STRIPE_ISSUING_WEBHOOK_SECRET;
+  const stripeClient = initStripe();
+  if (!webhookSecret || !stripeClient) {
+    return res
+      .status(503)
+      .json({ received: false, error: "Issuing webhook is not configured" });
+  }
 
+  const signature = req.headers["stripe-signature"];
+  if (typeof signature !== "string" || !Buffer.isBuffer(req.body)) {
+    return res
+      .status(400)
+      .json({ received: false, error: "Invalid webhook request" });
+  }
+
+  let event: any;
+  try {
+    event = stripeClient.webhooks.constructEvent(
+      req.body,
+      signature,
+      webhookSecret,
+    );
+  } catch (err: any) {
+    console.error(
+      "⚠️ Issuing webhook signature verification failed:",
+      redactStripeSecrets(err?.message),
+    );
+    return res
+      .status(400)
+      .json({ received: false, error: "Invalid signature" });
+  }
+
+  try {
     switch (event.type) {
       case "issuing_transaction.created": {
         const transaction = event.data.object;
@@ -799,43 +832,70 @@ router.post("/webhook/issuing", async (req: Request, res: Response) => {
         const totalMultiplier = tierMultiplier + categoryBonus;
         const earnedPoints = Math.round(basePoints * totalMultiplier);
 
-        // Get current balance
-        const balanceResult = await pool.query(
-          `SELECT COALESCE(SUM(points), 0) as balance FROM points_ledger WHERE user_id = $1 AND expired_at IS NULL`,
-          [card.user_id],
-        );
-        const currentBalance = parseInt(balanceResult.rows[0]?.balance) || 0;
-        const newBalance = currentBalance + earnedPoints;
+        // Stripe redelivers events, sometimes while the first delivery is still
+        // running. The lock makes check-then-award atomic per transaction, so
+        // one purchase can never earn points twice.
+        const client = await pool.connect();
+        let awarded = false;
+        try {
+          await client.query("BEGIN");
+          await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+            `issuing-txn:${transaction.id}`,
+          ]);
+          const alreadyAwarded = await client.query(
+            `SELECT 1 FROM points_ledger WHERE type = 'earn' AND stripe_transaction_id = $1 LIMIT 1`,
+            [transaction.id],
+          );
 
-        // Record points earning
-        await pool.query(
-          `INSERT INTO points_ledger
-           (user_id, issued_card_id, type, points, balance, description,
-            stripe_transaction_id, transaction_amount, transaction_currency,
-            merchant_name, merchant_category,
-            base_points, multiplier, category_bonus, tier_at_earning, expires_at)
-           VALUES ($1, $2, 'earn', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW() + INTERVAL '12 months')`,
-          [
-            card.user_id,
-            card.id,
-            earnedPoints,
-            newBalance,
-            `💳 ${transaction.merchant_data?.name || "Purchase"} — ${tierMultiplier}x${categoryBonus > 0 ? ` + ${categoryBonus}x bonus` : ""}`,
-            transaction.id,
-            amountDollars,
-            transaction.currency?.toUpperCase() || "USD",
-            transaction.merchant_data?.name || null,
-            merchantCategory || null,
-            basePoints,
-            tierMultiplier,
-            categoryBonus || null,
-            tier,
-          ],
-        );
+          if (alreadyAwarded.rows.length === 0) {
+            // Get current balance
+            const balanceResult = await client.query(
+              `SELECT COALESCE(SUM(points), 0) as balance FROM points_ledger WHERE user_id = $1 AND expired_at IS NULL`,
+              [card.user_id],
+            );
+            const currentBalance = parseInt(balanceResult.rows[0]?.balance) || 0;
+            const newBalance = currentBalance + earnedPoints;
 
-        console.log(
-          `⭐ Points earned: User ${card.user_id} +${earnedPoints} pts ($${amountDollars} × ${totalMultiplier}x) at ${transaction.merchant_data?.name}`,
-        );
+            // Record points earning
+            await client.query(
+              `INSERT INTO points_ledger
+               (user_id, issued_card_id, type, points, balance, description,
+                stripe_transaction_id, transaction_amount, transaction_currency,
+                merchant_name, merchant_category,
+                base_points, multiplier, category_bonus, tier_at_earning, expires_at)
+               VALUES ($1, $2, 'earn', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW() + INTERVAL '12 months')`,
+              [
+                card.user_id,
+                card.id,
+                earnedPoints,
+                newBalance,
+                `💳 ${transaction.merchant_data?.name || "Purchase"} — ${tierMultiplier}x${categoryBonus > 0 ? ` + ${categoryBonus}x bonus` : ""}`,
+                transaction.id,
+                amountDollars,
+                transaction.currency?.toUpperCase() || "USD",
+                transaction.merchant_data?.name || null,
+                merchantCategory || null,
+                basePoints,
+                tierMultiplier,
+                categoryBonus || null,
+                tier,
+              ],
+            );
+            awarded = true;
+          }
+          await client.query("COMMIT");
+        } catch (txError) {
+          await client.query("ROLLBACK").catch(() => undefined);
+          throw txError;
+        } finally {
+          client.release();
+        }
+
+        if (awarded) {
+          console.log(
+            `⭐ Points earned: User ${card.user_id} +${earnedPoints} pts ($${amountDollars} × ${totalMultiplier}x) at ${transaction.merchant_data?.name}`,
+          );
+        }
         break;
       }
 
