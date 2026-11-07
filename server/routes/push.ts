@@ -43,7 +43,7 @@ router.post(
         .status(400)
         .json({ success: false, message: "Missing endpoint" });
     }
-    await removeSubscription(endpoint);
+    await removeSubscription(parseInt(req.user!.userId), endpoint);
     res.json({ success: true });
   }),
 );
