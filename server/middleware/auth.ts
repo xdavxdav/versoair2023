@@ -242,6 +242,7 @@ function isPublicPath(path: string, method: string): boolean {
     if (/^\/api\/translations\/[^/]+\/?$/.test(path)) return true;
     if (new RegExp("^/api/social/posts/[^/]+/comments$").test(path) ||
         new RegExp("^/api/arena/[0-9]+(?:/bracket)?$").test(path) ||
+        new RegExp("^/api/listening-sessions(?:/[0-9]+(?:/(?:now-playing|chat))?)?/?$").test(path) ||
         new RegExp("^/api/marketing/packs/[^/]+$").test(path) ||
         new RegExp("^/api/marketing/journal/pdf/[^/]+$").test(path)) return true;
     for (const prefix of PUBLIC_PATH_PREFIXES) {

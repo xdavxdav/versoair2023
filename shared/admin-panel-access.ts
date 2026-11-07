@@ -30,6 +30,7 @@ export const OWNER_ONLY_ADMIN_PANEL_SECTIONS = [
   "smtp",
   "tsr-whitelist",
   "artisan-profiles",
+  "listening-sessions",
 ] as const;
 
 /** Audit entities an invited Admin manages and may therefore see in the activity log. */
