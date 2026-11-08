@@ -72,9 +72,15 @@ const mutationCache = new MutationCache({
   onError: (error, _variables, _context, mutation) => {
     if (mutation.options.onError || mutation.meta?.silent) return;
     const failure = failureFromThrown(error);
+    const fr = resolveLang() === "fr";
+    const signedOut = /^401\b/.test(String((error as Error)?.message ?? ""));
     toast({
-      title: resolveLang() === "fr" ? "Action impossible" : "Action failed",
-      description: failure.message,
+      title: fr ? "Action impossible" : "Action failed",
+      description: signedOut
+        ? fr
+          ? "Connectez-vous pour continuer."
+          : "Please sign in to do that."
+        : failure.message,
       variant: "destructive",
     });
   },
