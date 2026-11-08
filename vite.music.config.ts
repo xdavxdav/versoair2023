@@ -32,6 +32,22 @@ export default defineConfig({
             "@tiptap/extension-color",
             "@tiptap/extension-text-style",
           ],
+          // Same vendor split as vite.config.ts so these stay cacheable
+          // and the entry chunk only carries app code.
+          "vendor-ui": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-alert-dialog",
+          ],
+          "vendor-motion": ["framer-motion"],
+          "vendor-charts": ["recharts"],
+          "vendor-react": ["react", "react-dom"],
+          "vendor-query": ["@tanstack/react-query"],
         },
       },
     },
