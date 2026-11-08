@@ -1017,7 +1017,7 @@ router.post(
 
         // Log artist transaction
         await pool.query(
-          `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
+          `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
          VALUES ($1, $2, 'sale', $3, $4, $5, $6, 'track', $7, 'completed')`,
           [
             track.artist_id,
@@ -1033,7 +1033,7 @@ router.post(
 
       // Log buyer transaction
       await pool.query(
-        `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
+        `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
        VALUES ($1, $2, 'purchase', $3, $4, $5, $6, 'track', $7, 'completed')`,
         [
           userId,

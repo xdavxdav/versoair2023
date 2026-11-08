@@ -208,8 +208,9 @@ router.post(
 
       // Store pending order in DB for capture verification
       await pool.query(
-        `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, description, external_reference, payment_method, status)
-         VALUES ($1, (SELECT id FROM platform_wallets WHERE user_id = $1), 'deposit', $2, $3, $4, 'paypal', 'pending')`,
+        `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, external_reference, payment_method, status)
+         SELECT $1, w.id, 'deposit', $2, w.balance, w.balance, $3, $4, 'paypal', 'pending'
+         FROM platform_wallets w WHERE w.user_id = $1`,
         [
           userId,
           depositAmount.toFixed(2),
@@ -293,7 +294,7 @@ router.post(
 
         // Mark transaction as failed
         await pool.query(
-          `UPDATE wallet_transactions SET status = 'failed', updated_at = NOW() WHERE id = $1`,
+          `UPDATE wallet_transactions SET status = 'failed' WHERE id = $1`,
           [pendingTxn.rows[0].id],
         );
 
@@ -305,7 +306,7 @@ router.post(
       // Verify capture is COMPLETED
       if (capture.status !== "COMPLETED") {
         await pool.query(
-          `UPDATE wallet_transactions SET status = 'failed', description = $1, updated_at = NOW() WHERE id = $2`,
+          `UPDATE wallet_transactions SET status = 'failed', description = $1 WHERE id = $2`,
           [`PayPal capture status: ${capture.status}`, pendingTxn.rows[0].id],
         );
         return res.status(400).json({
@@ -347,8 +348,7 @@ router.post(
              amount = $1,
              balance_before = $2,
              balance_after = $3,
-             description = $4,
-             updated_at = NOW()
+             description = $4
          WHERE id = $5`,
         [
           creditAmount.toFixed(2),
@@ -426,7 +426,7 @@ router.get("/success", requireAuth(), async (req: Request, res: Response) => {
 
     if (!captureRes.ok) {
       await pool.query(
-        `UPDATE wallet_transactions SET status = 'failed', updated_at = NOW() WHERE id = $1`,
+        `UPDATE wallet_transactions SET status = 'failed' WHERE id = $1`,
         [pendingTxn.rows[0].id],
       );
       return res.redirect("/account/paypal?paypal=error");
@@ -435,7 +435,7 @@ router.get("/success", requireAuth(), async (req: Request, res: Response) => {
     const capture = await captureRes.json();
     if (capture.status !== "COMPLETED") {
       await pool.query(
-        `UPDATE wallet_transactions SET status = 'failed', updated_at = NOW() WHERE id = $1`,
+        `UPDATE wallet_transactions SET status = 'failed' WHERE id = $1`,
         [pendingTxn.rows[0].id],
       );
       return res.redirect("/account/paypal?paypal=error");
@@ -462,7 +462,7 @@ router.get("/success", requireAuth(), async (req: Request, res: Response) => {
     await pool.query(
       `UPDATE wallet_transactions
        SET status = 'completed', amount = $1, balance_before = $2, balance_after = $3,
-           description = $4, updated_at = NOW()
+           description = $4
        WHERE id = $5`,
       [
         creditAmount.toFixed(2),
