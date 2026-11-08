@@ -11,6 +11,7 @@ const BETA_ROUTE_PREFIXES = [
   "/artist-portal",
   "/music",
   "/stream",
+  "/sessions",
   "/track/",
   "/artist-catalogue/",
   "/library",

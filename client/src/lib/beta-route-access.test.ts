@@ -47,6 +47,15 @@ test("the business request page is reachable while the beta scope is frozen", ()
   assert.equal(isBetaRoute("/apply/business?from=careers"), true);
 });
 
+test("listening session pages are reachable while the beta scope is frozen", () => {
+  for (const path of ["/sessions", "/sessions/", "/sessions/12", "/sessions/12?from=whatsapp"]) {
+    assert.equal(isBetaRoute(path), true, path);
+    assert.equal(isRouteReachable(path), true, path);
+  }
+  assert.equal(isBetaRoute("/sessionsx"), false);
+  assert.equal(isBetaRoute("/sessions-archive"), false);
+});
+
 test("short and legacy URLs reach their redirect instead of bouncing to the home page", () => {
   for (const alias of ["/support", "/careers", "/contractor", "/signup", "/artisan", "/billing"]) {
     assert.equal(isBetaRoute(alias), true, alias);
