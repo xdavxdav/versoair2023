@@ -6,7 +6,7 @@
 import webpush from "web-push";
 import { db } from "../db";
 import { pushSubscriptions } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createLogger } from "../utils/logger";
 
 const log = createLogger("push");
@@ -56,10 +56,18 @@ export async function saveSubscription(
     });
 }
 
-export async function removeSubscription(endpoint: string): Promise<void> {
+export async function removeSubscription(
+  userId: number,
+  endpoint: string,
+): Promise<void> {
   await db
     .delete(pushSubscriptions)
-    .where(eq(pushSubscriptions.endpoint, endpoint));
+    .where(
+      and(
+        eq(pushSubscriptions.endpoint, endpoint),
+        eq(pushSubscriptions.userId, userId),
+      ),
+    );
 }
 
 /**
@@ -93,7 +101,7 @@ export async function sendPushToUser(
         );
       } catch (err: any) {
         if (err?.statusCode === 404 || err?.statusCode === 410) {
-          await removeSubscription(sub.endpoint).catch(() => {});
+          await removeSubscription(userId, sub.endpoint).catch(() => {});
         } else {
           log.error(
             `Push send failed for user ${userId}:`,

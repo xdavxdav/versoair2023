@@ -581,8 +581,11 @@ export default function Careers() {
           `${API_BASE_URL}/api/jobs/${jobId}/${action}`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: "current-user-id" }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({}),
           },
         );
 
@@ -599,7 +602,9 @@ export default function Careers() {
       const { jobId, action } = variables;
       setSavedJobs((prev) =>
         action === "save"
-          ? [...prev, jobId]
+          ? prev.includes(jobId)
+            ? prev
+            : [...prev, jobId]
           : prev.filter((id) => id !== jobId),
       );
 
@@ -619,6 +624,28 @@ export default function Careers() {
       });
     },
   });
+
+  // Saved jobs belong to the signed-in account, so they come from the server
+  useEffect(() => {
+    if (!authToken) {
+      setSavedJobs([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`${API_BASE_URL}/api/jobs/saved`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.jobIds)) {
+          setSavedJobs(data.jobIds);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken]);
 
   // Refresh the published job list.
   const refreshJobs = () => {
@@ -736,6 +763,25 @@ export default function Careers() {
 
   // TRACE: Handle save/unsave job
   const handleSaveJob = (jobId: string) => {
+    if (!platformUser || !authToken) {
+      toast({
+        title: "Authentication Required",
+        description: (
+          <span>
+            You need to sign in to save jobs to your account.{" "}
+            <a
+              href="/signin?redirect=/services/careers"
+              className="underline font-semibold hover:text-white"
+            >
+              Sign in
+            </a>{" "}
+            to get started.
+          </span>
+        ),
+        variant: "destructive",
+      });
+      return;
+    }
     const action = savedJobs.includes(jobId) ? "unsave" : "save";
     saveJobMutation.mutate({ jobId, action });
   };
@@ -1595,7 +1641,8 @@ export default function Careers() {
                       value: "saved",
                       icon: <Bookmark className="h-4 w-4" />,
                       label: "Saved",
-                      count: savedJobs.length,
+                      count: jobs.filter((job) => savedJobs.includes(job.id))
+                        .length,
                     },
                     {
                       value: "applied",

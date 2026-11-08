@@ -503,7 +503,8 @@ router.post("/challenge", requireAuth(), async (req: Request, res: Response) => 
 // ═══════════════════════════════════════════════════════════════════
 router.post("/:id/join", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    // req.user.id is a string; player ids are integers, so compare as numbers
+    const userId = Number((req as any).user?.id);
     const matchId = parseInt(req.params.id);
 
     const match = await pool.query(
@@ -523,7 +524,7 @@ router.post("/:id/join", requireAuth(), async (req: Request, res: Response) => {
         requiresAdminReview: true,
       });
     }
-    if (m.player1_id === userId) {
+    if (Number(m.player1_id) === userId) {
       return res.status(400).json({ error: "Cannot join your own match" });
     }
 
@@ -628,7 +629,8 @@ router.post("/:id/join", requireAuth(), async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════
 router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    // req.user.id is a string; player ids are integers, so compare as numbers
+    const userId = Number((req as any).user?.id);
     const matchId = parseInt(req.params.id);
     const { answerIndex, responseTimeMs } = req.body;
 
@@ -646,7 +648,7 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
         requiresAdminReview: true,
       });
     }
-    if (m.player1_id !== userId && m.player2_id !== userId) {
+    if (Number(m.player1_id) !== userId && Number(m.player2_id) !== userId) {
       return res.status(403).json({ error: "Not a participant" });
     }
 
@@ -661,6 +663,14 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
     const question = gameState.questions?.[currentRound];
     if (!question) {
       return res.status(400).json({ error: "No question for this round" });
+    }
+
+    const alreadyAnswered = await pool.query(
+      "SELECT 1 FROM game_moves WHERE match_id = $1 AND round = $2 AND user_id = $3 LIMIT 1",
+      [matchId, currentRound, userId],
+    );
+    if (alreadyAnswered.rows.length > 0) {
+      return res.status(409).json({ error: "Already answered this round" });
     }
 
     const isCorrect = answerIndex === question._answer;
@@ -683,7 +693,7 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
     );
 
     // Update score
-    const isPlayer1 = m.player1_id === userId;
+    const isPlayer1 = Number(m.player1_id) === userId;
     const scoreField = isPlayer1 ? "player1_score" : "player2_score";
     const newScore = (isPlayer1 ? m.player1_score : m.player2_score) + points;
 

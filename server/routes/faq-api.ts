@@ -453,11 +453,46 @@ router.post("/:id/reply", async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/faq/:id/resolve - Mark FAQ as resolved
+// POST /api/faq/:id/resolve - Mark FAQ as resolved (topic author or staff only)
 router.post("/:id/resolve", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const postId = parseInt(id);
+    const userId = Number(req.user?.userId);
+
+    if (!Number.isSafeInteger(userId)) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required to resolve a FAQ topic",
+      });
+    }
+    if (!Number.isSafeInteger(postId) || postId <= 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "FAQ topic not found" });
+    }
+
+    const [post] = await db
+      .select({ authorId: socialPosts.authorId })
+      .from(socialPosts)
+      .where(and(eq(socialPosts.id, postId), eq(socialPosts.postType, "faq")))
+      .limit(1);
+
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, error: "FAQ topic not found" });
+    }
+
+    const isStaff = ["admin", "moderator", "superuser"].includes(
+      String(req.user?.role),
+    );
+    if (!isStaff && Number(post.authorId) !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: "Only the topic author or staff can resolve this topic",
+      });
+    }
 
     const updated = await db
       .update(socialPosts)

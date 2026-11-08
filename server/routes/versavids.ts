@@ -7,6 +7,12 @@ import { Router, Request, Response } from "express";
 import { db } from "../db";
 import { sql } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
+import { parsePositiveInt } from "../utils/positive-int";
+import {
+  DELIVERABLE_DECISIONS,
+  PROJECT_STATUS_UPDATES,
+  projectAccess,
+} from "../utils/versavids-access";
 
 const router = Router();
 
@@ -160,7 +166,12 @@ router.get("/projects", requireAuth(), async (req: Request, res: Response) => {
       `);
     }
 
-    res.json({ success: true, projects: result.rows });
+    const projects = (result.rows as any[]).map((p) =>
+      Number(p.claimed_by) === Number(userId)
+        ? p
+        : { ...p, client_email: undefined },
+    );
+    res.json({ success: true, projects });
   } catch (error: any) {
     console.error("[VersaVids] Error fetching projects:", error);
     res.json({ success: true, projects: [] });
@@ -236,9 +247,13 @@ router.patch(
   requireAuth(),
   async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.userId;
-      const projectId = parseInt(req.params.id);
+      const userId = Number((req as any).user?.userId);
+      const projectId = parsePositiveInt(req.params.id);
       const { status, claimed_by } = req.body;
+
+      if (!projectId) {
+        return res.status(404).json({ error: "Project not found" });
+      }
 
       // Verify ownership or claim eligibility
       const [project] = (
@@ -253,19 +268,23 @@ router.patch(
 
       // Claim: only open projects can be claimed
       if (claimed_by !== undefined && project.status === "open") {
-        await db.execute(sql`
+        const claimed = await db.execute(sql`
         UPDATE video_projects SET claimed_by = ${userId}, claimed_at = NOW(), status = 'claimed', updated_at = NOW()
-        WHERE id = ${projectId}
+        WHERE id = ${projectId} AND status = 'open'
+        RETURNING id
       `);
+        if (!claimed.rows.length) {
+          return res.status(409).json({ error: "Project is no longer open" });
+        }
         return res.json({ success: true, message: "Project claimed" });
       }
 
-      // Status update: only owner or assigned videaste
-      if (
-        status &&
-        (project.client_id === userId || project.claimed_by === userId)
-      ) {
-        const updates: any = { status };
+      // Status update: only the client, the assigned videaste or staff
+      const access = projectAccess(project, (req as any).user);
+      if (status && (access.isClient || access.isVideaste || access.isStaff)) {
+        if (!PROJECT_STATUS_UPDATES.includes(status)) {
+          return res.status(400).json({ error: "Invalid status" });
+        }
         if (status === "completed") {
           await db.execute(
             sql`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${projectId}`,
@@ -330,6 +349,15 @@ router.get("/projects/:id", async (req: Request, res: Response) => {
       SELECT * FROM video_licenses WHERE project_id = ${projectId} LIMIT 1
     `);
 
+    const viewerId = Number((req as any).user?.userId);
+    const viewerRole = (req as any).user?.role;
+    const maySeeEmail =
+      viewerId > 0 &&
+      (Number(project.client_id) === viewerId ||
+        Number(project.claimed_by) === viewerId ||
+        ["admin", "superuser", "moderator"].includes(viewerRole));
+    if (!maySeeEmail) delete project.client_email;
+
     res.json({
       success: true,
       project,
@@ -374,13 +402,30 @@ router.post("/briefs", requireAuth(), async (req: Request, res: Response) => {
       additional_notes,
     } = req.body;
 
-    if (!project_id) {
+    const projectId = parsePositiveInt(project_id);
+    if (projectId === null) {
       return res.status(400).json({ error: "project_id is required" });
+    }
+
+    // Only the project's client (or staff) writes its brief
+    const [project] = (
+      await db.execute(
+        sql`SELECT client_id, claimed_by FROM video_projects WHERE id = ${projectId}`,
+      )
+    ).rows as any[];
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    const access = projectAccess(project, (req as any).user);
+    if (!access.isClient && !access.isStaff) {
+      return res
+        .status(403)
+        .json({ error: "Only the project client can edit its brief" });
     }
 
     // Upsert — one brief per project
     const existing = await db.execute(
-      sql`SELECT id FROM video_briefs WHERE project_id = ${project_id} LIMIT 1`,
+      sql`SELECT id FROM video_briefs WHERE project_id = ${projectId} LIMIT 1`,
     );
 
     if (existing.rows.length > 0) {
@@ -397,14 +442,14 @@ router.post("/briefs", requireAuth(), async (req: Request, res: Response) => {
           moodboard_url = ${moodboard_url || null}, storyboard_url = ${storyboard_url || null},
           script_text = ${script_text || null}, additional_notes = ${additional_notes || null},
           updated_at = NOW()
-        WHERE project_id = ${project_id}
+        WHERE project_id = ${projectId}
       `);
       return res.json({ success: true, message: "Brief updated" });
     }
 
     const result = await db.execute(sql`
       INSERT INTO video_briefs (project_id, visual_style, color_palette, editing_pace, duration, aspect_ratio, resolution, has_music_track, music_track_url, needs_sound_design, needs_voiceover, deliverable_formats, includes_raw_footage, includes_project_files, reference_links, moodboard_url, storyboard_url, script_text, additional_notes)
-      VALUES (${project_id}, ${visual_style || null}, ${color_palette || null}, ${editing_pace || null}, ${duration || null}, ${aspect_ratio || "16:9"}, ${resolution || "4K"}, ${has_music_track || false}, ${music_track_url || null}, ${needs_sound_design || false}, ${needs_voiceover || false}, ${JSON.stringify(deliverable_formats || ["mp4"])}, ${includes_raw_footage || false}, ${includes_project_files || false}, ${JSON.stringify(reference_links || [])}, ${moodboard_url || null}, ${storyboard_url || null}, ${script_text || null}, ${additional_notes || null})
+      VALUES (${projectId}, ${visual_style || null}, ${color_palette || null}, ${editing_pace || null}, ${duration || null}, ${aspect_ratio || "16:9"}, ${resolution || "4K"}, ${has_music_track || false}, ${music_track_url || null}, ${needs_sound_design || false}, ${needs_voiceover || false}, ${JSON.stringify(deliverable_formats || ["mp4"])}, ${includes_raw_footage || false}, ${includes_project_files || false}, ${JSON.stringify(reference_links || [])}, ${moodboard_url || null}, ${storyboard_url || null}, ${script_text || null}, ${additional_notes || null})
       RETURNING *
     `);
 
@@ -441,21 +486,38 @@ router.post(
         version,
       } = req.body;
 
-      if (!project_id || !title || !file_url) {
+      const projectId = parsePositiveInt(project_id);
+      if (projectId === null || !title || !file_url) {
         return res
           .status(400)
           .json({ error: "project_id, title, and file_url are required" });
       }
 
+      // Only the videaste assigned to the project (or staff) uploads work to it
+      const [project] = (
+        await db.execute(
+          sql`SELECT client_id, claimed_by FROM video_projects WHERE id = ${projectId}`,
+        )
+      ).rows as any[];
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      const access = projectAccess(project, (req as any).user);
+      if (!access.isVideaste && !access.isStaff) {
+        return res.status(403).json({
+          error: "Only the assigned videaste can upload deliverables",
+        });
+      }
+
       const result = await db.execute(sql`
       INSERT INTO video_deliverables (project_id, videaste_id, title, description, file_url, thumbnail_url, file_size, duration, format, resolution, version)
-      VALUES (${project_id}, ${videasteId}, ${title}, ${description || null}, ${file_url}, ${thumbnail_url || null}, ${file_size || null}, ${duration || null}, ${format || "mp4"}, ${resolution || null}, ${version || 1})
+      VALUES (${projectId}, ${videasteId}, ${title}, ${description || null}, ${file_url}, ${thumbnail_url || null}, ${file_size || null}, ${duration || null}, ${format || "mp4"}, ${resolution || null}, ${version || 1})
       RETURNING *
     `);
 
       // Update project status to 'review'
       await db.execute(
-        sql`UPDATE video_projects SET status = 'review', updated_at = NOW() WHERE id = ${project_id}`,
+        sql`UPDATE video_projects SET status = 'review', updated_at = NOW() WHERE id = ${projectId}`,
       );
 
       res.status(201).json({ success: true, deliverable: result.rows[0] });
@@ -475,7 +537,35 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const { status, client_feedback } = req.body;
-      const deliverableId = parseInt(req.params.id);
+      const deliverableId = parsePositiveInt(req.params.id);
+      if (deliverableId === null) {
+        return res.status(404).json({ error: "Deliverable not found" });
+      }
+
+      // Only the project's client (or staff) can approve or ask for changes
+      const [deliv] = (
+        await db.execute(sql`
+        SELECT vd.project_id, vp.client_id, vp.claimed_by
+        FROM video_deliverables vd
+        JOIN video_projects vp ON vp.id = vd.project_id
+        WHERE vd.id = ${deliverableId}
+      `)
+      ).rows as any[];
+      if (!deliv) {
+        return res.status(404).json({ error: "Deliverable not found" });
+      }
+      const access = projectAccess(deliv, (req as any).user);
+      if (!access.isClient && !access.isStaff) {
+        return res.status(403).json({
+          error: "Only the project client can review deliverables",
+        });
+      }
+
+      if (!DELIVERABLE_DECISIONS.includes(status)) {
+        return res.status(400).json({
+          error: "status must be approved or revision_requested",
+        });
+      }
 
       if (status === "approved") {
         await db.execute(sql`
@@ -484,17 +574,10 @@ router.patch(
       `);
 
         // Also update project status
-        const [deliv] = (
-          await db.execute(
-            sql`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`,
-          )
-        ).rows as any[];
-        if (deliv) {
-          await db.execute(
-            sql`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${deliv.project_id}`,
-          );
-        }
-      } else if (status === "revision_requested") {
+        await db.execute(
+          sql`UPDATE video_projects SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = ${deliv.project_id}`,
+        );
+      } else {
         await db.execute(sql`
         UPDATE video_deliverables SET status = 'revision_requested', client_feedback = ${client_feedback || null}
         WHERE id = ${deliverableId}
@@ -508,16 +591,9 @@ router.patch(
       `);
 
         // Update project status
-        const [deliv] = (
-          await db.execute(
-            sql`SELECT project_id FROM video_deliverables WHERE id = ${deliverableId}`,
-          )
-        ).rows as any[];
-        if (deliv) {
-          await db.execute(
-            sql`UPDATE video_projects SET status = 'revision', updated_at = NOW() WHERE id = ${deliv.project_id}`,
-          );
-        }
+        await db.execute(
+          sql`UPDATE video_projects SET status = 'revision', updated_at = NOW() WHERE id = ${deliv.project_id}`,
+        );
       }
 
       res.json({ success: true, message: `Deliverable ${status}` });

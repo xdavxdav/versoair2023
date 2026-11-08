@@ -2,8 +2,12 @@ import { Router } from "express";
 import { db } from "../db";
 import * as schema from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
+
+// Seeding and statistics endpoints are staff tooling, not a user feature.
+router.use(requireAuth(["admin"]));
 
 // =====================================================================
 // BUSINESSES DATA DISPATCH ENDPOINTS

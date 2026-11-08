@@ -167,59 +167,71 @@ router.post("/ad-reward", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing userId or amount" });
     }
 
-    const creditAmount = parseFloat(amount);
-    if (creditAmount <= 0 || creditAmount > 5) {
-      return res.status(400).json({ error: "Invalid reward amount" });
+    const creditAmount = Math.round(parseFloat(amount) * 100) / 100;
+    const targetUserId = Number(userId);
+    if (
+      !Number.isInteger(targetUserId) ||
+      targetUserId <= 0 ||
+      !transactionId ||
+      !(creditAmount > 0 && creditAmount <= 5)
+    ) {
+      return res.status(400).json({ error: "Invalid reward" });
     }
 
-    // Check for duplicate postback
-    const existing = await pool.query(
-      "SELECT id FROM wallet_transactions WHERE external_reference = $1",
-      [transactionId],
-    );
-    if (existing.rows.length > 0) {
-      return res.json({ success: true, message: "Already credited" });
-    }
-
-    // Get or create wallet
-    let wallet = await pool.query(
-      "SELECT * FROM platform_wallets WHERE user_id = $1",
-      [userId],
-    );
-    if (wallet.rows.length === 0) {
-      wallet = await pool.query(
-        `INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked)
-         VALUES ($1, '0.00', 'USD', true) RETURNING *`,
-        [userId],
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      // Serialise postbacks for one transaction id so a retry cannot double-credit
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `ad-reward:${transactionId}`,
+      ]);
+      const existing = await client.query(
+        "SELECT id FROM wallet_transactions WHERE external_reference = $1",
+        [String(transactionId)],
       );
+      if (existing.rows.length > 0) {
+        await client.query("ROLLBACK");
+        return res.json({ success: true, message: "Already credited" });
+      }
+
+      await client.query(
+        `INSERT INTO platform_wallets (user_id, balance, currency, withdrawal_locked)
+         VALUES ($1, '0.00', 'USD', true) ON CONFLICT (user_id) DO NOTHING`,
+        [targetUserId],
+      );
+      const wallet = await client.query(
+        "SELECT id, balance FROM platform_wallets WHERE user_id = $1 FOR UPDATE",
+        [targetUserId],
+      );
+      const w = wallet.rows[0];
+      const balanceBefore = parseFloat(w.balance || "0");
+      const balanceAfter = Math.round((balanceBefore + creditAmount) * 100) / 100;
+
+      await client.query(
+        "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE id = $3",
+        [balanceAfter.toFixed(2), creditAmount.toFixed(2), w.id],
+      );
+      await client.query(
+        `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, external_reference, related_entity_type, status)
+         VALUES ($1, $2, 'arena_reward', $3, $4, $5, 'Ad reward', $6, 'ad', 'completed')`,
+        [
+          targetUserId,
+          w.id,
+          creditAmount.toFixed(2),
+          balanceBefore.toFixed(2),
+          balanceAfter.toFixed(2),
+          String(transactionId),
+        ],
+      );
+      await client.query("COMMIT");
+      res.json({ success: true, credited: creditAmount });
+    } catch (txError) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw txError;
+    } finally {
+      client.release();
     }
-
-    const w = wallet.rows[0];
-    const balanceBefore = parseFloat(w.balance || "0");
-    const balanceAfter = balanceBefore + creditAmount;
-
-    await pool.query("BEGIN");
-    await pool.query(
-      "UPDATE platform_wallets SET balance = $1, total_earned = CAST(total_earned AS NUMERIC) + $2, updated_at = NOW() WHERE user_id = $3",
-      [balanceAfter.toFixed(2), creditAmount.toFixed(2), userId],
-    );
-    await pool.query(
-      `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, external_reference, related_entity_type, status)
-       VALUES ($1, $2, 'arena_reward', $3, $4, $5, 'Ad reward', $6, 'ad', 'completed')`,
-      [
-        userId,
-        w.id,
-        creditAmount.toFixed(2),
-        balanceBefore.toFixed(2),
-        balanceAfter.toFixed(2),
-        transactionId,
-      ],
-    );
-    await pool.query("COMMIT");
-
-    res.json({ success: true, credited: creditAmount });
   } catch (err: any) {
-    await pool.query("ROLLBACK").catch(() => {});
     console.error("[WALLET] Ad reward error:", err);
     res.status(500).json({ error: "Failed to credit ad reward" });
   }

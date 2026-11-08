@@ -10,24 +10,32 @@ import {
   getUserConnections,
 } from "../../services/notification-service";
 import { connectionRequestLimiter } from "../../middleware/rate-limiter";
+import { resolveRequestActingUserId } from "../../utils/acting-user";
 
 const router = Router();
 
 /**
  * POST /api/v1/connections/request
- * Send a connection request
+ * Send a connection request (always from the signed-in user)
  */
 router.post(
   "/request",
   connectionRequestLimiter,
   async (req: Request, res: Response) => {
     try {
-      const { fromUserId, toUserId } = req.body;
+      // fromUserId is optional; when sent it must be the signed-in user
+      const fromUserId = resolveRequestActingUserId(
+        req,
+        res,
+        req.body?.fromUserId,
+      );
+      if (fromUserId === null) return;
 
-      if (!fromUserId || !toUserId) {
+      const toUserId = Number(req.body?.toUserId);
+      if (!Number.isSafeInteger(toUserId) || toUserId <= 0) {
         return res.status(400).json({
           success: false,
-          error: "fromUserId and toUserId are required",
+          error: "A valid toUserId is required",
         });
       }
 
@@ -175,9 +183,12 @@ router.post("/:id/decline", async (req: Request, res: Response) => {
  */
 router.get("/pending/:userId", async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = resolveRequestActingUserId(req, res, req.params.userId, {
+      staffRoles: ["admin", "superuser"],
+    });
+    if (userId === null) return;
 
-    const pending = await getPendingConnections(parseInt(userId));
+    const pending = await getPendingConnections(userId);
 
     res.json({
       success: true,
