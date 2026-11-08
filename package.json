@@ -31,7 +31,7 @@
     "test:community": "DATABASE_URL=postgres://test:test@127.0.0.1:1/test JWT_SECRET=local-test-only-secret-0123456789abcdef node --import tsx --test server/utils/public-author-name.test.ts server/routes/community.test.ts",
     "test:wallet-ledger": "node --import tsx --test server/routes/wallet-ledger-columns.test.ts server/routes/stream-count.test.ts",
     "test:geoadmin": "node --import tsx --test server/services/totp.test.ts server/services/geoadmin-staff-codes.test.ts server/services/geoadmin-invitations.test.ts server/routes/geoadmin-credentials.test.ts shared/geoadmin-access-history.test.ts shared/geoadmin-invitation.test.ts shared/geoadmin-access.test.ts shared/geoadmin-access-policy.test.ts",
-    "test:ui-regressions": "node --import tsx --test client/src/lib/audio-file.test.ts client/src/lib/contrast.test.ts",
+    "test:ui-regressions": "node --import tsx --test client/src/lib/audio-file.test.ts client/src/lib/contrast.test.ts client/src/lib/spa-navigation.test.ts",
     "test:public-url": "node --import tsx --test server/utils/public-url.test.ts server/utils/public-links.test.ts",
     "test:tips": "node --import tsx --test scripts/reconcile-tips-core.test.ts server/utils/tip-request.test.ts server/routes/tip-gate.test.ts",
     "test:acting-user": "node --import tsx --test server/utils/acting-user.test.ts server/utils/email-subscription-access.test.ts server/routes/api-v1/acting-user-routes.test.ts",

@@ -786,8 +786,7 @@ export default function Navbar({
             {/* Music Portal Toggle → same-origin /artist-portal, never cross-domain */}
             <Button
               onClick={() => {
-                window.location.href =
-                  window.location.origin + "/artist-portal";
+                navigate("/artist-portal");
               }}
               className="portal-toggle bg-gradient-to-r from-purple-700 to-pink-700 text-white px-2 lg:px-3 py-2 rounded-md text-xs font-medium hover:from-purple-800 hover:to-pink-800 transition-colors whitespace-nowrap flex-shrink-0"
             >
