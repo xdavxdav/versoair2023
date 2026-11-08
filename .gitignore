@@ -61,6 +61,8 @@ scripts/*
 !scripts/check-api-contract.cjs
 !scripts/generate-geoadmin-code.cjs
 !scripts/generate-superadmin-totp-secret.cjs
+!scripts/seed-country-regions.cjs
+!scripts/seed-country-regions.test.ts
 !scripts/tests/
 scripts/tests/*
 !scripts/tests/language-switcher.test.mjs
