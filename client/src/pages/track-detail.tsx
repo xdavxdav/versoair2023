@@ -35,6 +35,7 @@ import {
   ExternalLink,
   Shuffle,
   MoreHorizontal,
+  Check,
 } from "lucide-react";
 
 function formatDuration(seconds: number): string {
@@ -318,13 +319,31 @@ export default function TrackDetailPage() {
                 {isLiked ? "Aimé" : "J'aime"}
               </button>
 
-              <button
-                onClick={() => audio.addToQueue(track)}
-                className="px-4 py-2.5 bg-gray-800/50 text-gray-400 border border-gray-700 rounded-xl hover:text-white hover:border-gray-600 flex items-center gap-1.5 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                File d'attente
-              </button>
+              {(() => {
+                const queuedAt = audio.queue.findIndex((t) => t.id === track.id);
+                const queued = queuedAt >= 0;
+                return (
+                  <button
+                    onClick={() =>
+                      queued
+                        ? audio.removeFromQueue(queuedAt)
+                        : audio.addToQueue(track)
+                    }
+                    className={`px-4 py-2.5 border rounded-xl flex items-center gap-1.5 transition-all ${
+                      queued
+                        ? "bg-amber-500/15 text-amber-400 border-amber-500/40"
+                        : "bg-gray-800/50 text-gray-400 border-gray-700 hover:text-white hover:border-gray-600"
+                    }`}
+                  >
+                    {queued ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    <span>{queued ? "Ajouté · Annuler" : "File d'attente"}</span>
+                  </button>
+                );
+              })()}
 
               <button
                 onClick={() =>
