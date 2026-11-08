@@ -348,11 +348,11 @@ export default function TrackDetailPage() {
                 {isDownloading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />{" "}
-                    Téléchargement…
+                    <span>Téléchargement…</span>
                   </>
                 ) : (
                   <>
-                    <MoreHorizontal className="w-4 h-4" /> Télécharger
+                    <MoreHorizontal className="w-4 h-4" /> <span>Télécharger</span>
                   </>
                 )}
               </button>

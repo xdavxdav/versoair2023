@@ -616,7 +616,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addToQueue = useCallback((track: AudioTrack) => {
-    setQueue((prev) => [...prev, track]);
+    setQueue((prev) =>
+      prev.some((t) => t.id === track.id) ? prev : [...prev, track],
+    );
   }, []);
 
   const removeFromQueue = useCallback((index: number) => {
@@ -704,8 +706,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Persist queue to localStorage
   useEffect(() => {
-    if (queue.length > 0) {
-      localStorage.setItem("verso_queue", JSON.stringify(queue.slice(0, 50)));
+    if (queue.length === 0) return;
+    // Inline data: images can be megabytes each and overflow the storage quota.
+    const slim = queue.slice(0, 50).map((t) => {
+      const copy: Record<string, unknown> = { ...t };
+      for (const k of Object.keys(copy)) {
+        const v = copy[k];
+        if (typeof v === "string" && (v.startsWith("data:") || v.length > 2000)) {
+          copy[k] = null;
+        }
+      }
+      return copy;
+    });
+    try {
+      localStorage.setItem("verso_queue", JSON.stringify(slim));
+    } catch {
+      // storage full: the queue still works in memory
     }
   }, [queue]);
 
