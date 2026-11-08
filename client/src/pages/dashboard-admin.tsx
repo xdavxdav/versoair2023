@@ -93,6 +93,7 @@ import {
   LineChart,
   ShoppingBag,
   Music,
+  Headphones,
   Coffee,
   Car,
   Banknote,
@@ -228,6 +229,7 @@ import { ContractorAssignmentSection } from "@/components/sections/ContractorAss
 import { CommunityOperationsSection } from "@/components/sections/CommunityOperationsSection";
 import { ArtisanProfilesSection } from "@/components/sections/ArtisanProfilesSection";
 import { EventsModerationSection } from "@/components/sections/EventsModerationSection";
+import { ListeningSessionsSection } from "@/components/sections/ListeningSessionsSection";
 import { useCountry } from "@/contexts/CountryContext";
 import { useOpenRequest } from "@/hooks/use-open-request";
 import { slugify } from "@/lib/admin-forms";
@@ -499,6 +501,12 @@ const MAIN_SECTIONS = [
     label: "Page Readiness",
     icon: Globe,
     description: "Gate unfinished public pages",
+  },
+  {
+    id: "listening-sessions",
+    label: "Listening Sessions",
+    icon: Headphones,
+    description: "Schedule live listening sessions",
   },
 ];
 
@@ -7421,6 +7429,9 @@ export default function AdminDashboard() {
             )}
             {sectionAllowed && activeSection === "page-readiness" && (
               <PageReadinessSection />
+            )}
+            {sectionAllowed && activeSection === "listening-sessions" && (
+              <ListeningSessionsSection />
             )}
 
             {/* Dashboard Stats - shown at the bottom for reference */}

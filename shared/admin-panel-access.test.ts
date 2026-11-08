@@ -29,3 +29,10 @@ test("invited Admins see delegated sections but never owner configuration", () =
   assert.equal(canAccessAdminPanelSection("page-readiness", false), true);
   assert.equal(canAccessAdminPanelSection("unknown", true), false);
 });
+
+test("listening sessions are scheduled by the owner only, never by an invited Admin", () => {
+  assert.equal(canAccessAdminPanelSection("listening-sessions", true), true);
+  assert.equal(canAccessAdminPanelSection("listening-sessions", false), false);
+  assert.ok((OWNER_ONLY_ADMIN_PANEL_SECTIONS as readonly string[]).includes("listening-sessions"));
+  assert.ok(!(DELEGATED_ADMIN_PANEL_SECTIONS as readonly string[]).includes("listening-sessions"));
+});

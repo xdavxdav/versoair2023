@@ -256,6 +256,8 @@ const Sponsorship = lazy(() => import("@/pages/sponsorship"));
 const StreamPage = lazy(() => import("@/pages/stream"));
 const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
 const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
+const SessionsPage = lazy(() => import("@/pages/sessions"));
+const SessionDetailPage = lazy(() => import("@/pages/session-detail"));
 const LibraryPage = lazy(() => import("@/pages/library"));
 const AnalyticsStreamingPage = lazy(
   () => import("@/pages/analytics-streaming"),
@@ -391,6 +393,7 @@ function getDocumentTitle(pathname: string) {
     "/logement": "Property Listings",
     "/reservations": "Property Reservations",
     "/stream": "Music Streaming",
+    "/sessions": "Listening Sessions",
     "/artist-portal": "Artist Portal",
     "/geo-admin": "Geo Admin",
     "/messages": "Messages",
@@ -404,6 +407,7 @@ function getDocumentTitle(pathname: string) {
   if (path.startsWith("/business/")) return "Business Profile";
   if (path.startsWith("/profiles/")) return "Community Profile";
   if (path.startsWith("/user/")) return "Member Profile";
+  if (path.startsWith("/sessions/")) return "Listening Session";
 
   const sectionTitle = getPageTitle(path);
   const segments = path.split("/").filter(Boolean);
@@ -867,6 +871,8 @@ function Router() {
       <Route path="/stream" component={StreamPage} />
       <Route path="/track/:id" component={TrackDetailPage} />
       <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
+      <Route path="/sessions/:id" component={SessionDetailPage} />
+      <Route path="/sessions" component={SessionsPage} />
       <Route path="/library">
         {() => <ProtectedRoute component={LibraryPage} />}
       </Route>

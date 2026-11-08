@@ -3,6 +3,7 @@ import {
   text,
   serial,
   integer,
+  smallint,
   boolean,
   timestamp,
   decimal,
@@ -1142,6 +1143,39 @@ export const automationActions = pgTable("automation_actions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   eventActionUnique: unique("automation_actions_event_action_key").on(t.eventId, t.actionKey),
+}));
+
+// ── LISTENING SESSIONS ────────────────────────────────────────────────────────
+// Scheduled, host-led sets that everyone hears together. Created lazily by
+// server/services/listening-sessions-schema.ts; migrations/0009 carries the same DDL.
+// `status` is derived from the server clock on read; the stored value is a best-effort copy.
+export const listeningSessions = pgTable("listening_sessions", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 160 }).notNull(),
+  description: text("description"),
+  hostUserId: integer("host_user_id").references(() => users.id, { onDelete: "set null" }),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  playlistId: integer("playlist_id").references(() => playlists.id, { onDelete: "set null" }),
+  status: varchar("status", { length: 16 }).notNull().default("scheduled"),
+  // Ordered [{ trackId, durationSec }]; the schedule is computed from these lengths.
+  setTracks: jsonb("set_tracks").notNull().default(sql`'[]'::jsonb`),
+  gapSeconds: smallint("gap_seconds").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  startsAtIdx: index("listening_sessions_starts_at_idx").on(t.startsAt),
+  // Declared so `drizzle-kit push` does not plan to drop the constraints from the DDL.
+  // Plain SQL, identical to the DDL, so the two can be compared exactly.
+  statusCheck: check(
+    "listening_sessions_status_check",
+    sql`status IN ('scheduled', 'live', 'ended', 'cancelled')`,
+  ),
+  windowCheck: check("listening_sessions_window_check", sql`ends_at > starts_at`),
+  gapCheck: check(
+    "listening_sessions_gap_check",
+    sql`gap_seconds >= 0 AND gap_seconds <= 300`,
+  ),
 }));
 
 // ── UNIFIED PROFILE (master source of truth for all partner types) ────────────

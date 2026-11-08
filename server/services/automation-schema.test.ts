@@ -76,11 +76,13 @@ test("journal registers 0008 after 0007 with a later timestamp", () => {
   const journal = JSON.parse(readFileSync(JOURNAL_PATH, "utf8")) as {
     entries: Array<{ idx: number; when: number; tag: string }>;
   };
-  const last = journal.entries.at(-1)!;
-  const previous = journal.entries.at(-2)!;
-  assert.equal(last.tag, "0008_automation_outbox");
-  assert.equal(last.idx, previous.idx + 1);
-  assert.ok(last.when > previous.when);
+  const position = journal.entries.findIndex((entry) => entry.tag === "0008_automation_outbox");
+  assert.ok(position > 0, "0008 is registered in the journal");
+  const entry = journal.entries[position];
+  const previous = journal.entries[position - 1];
+  assert.equal(previous.tag, "0007_inbox_attachment_uploader");
+  assert.equal(entry.idx, previous.idx + 1);
+  assert.ok(entry.when > previous.when);
 });
 
 test("Drizzle definitions match the DDL column names, types and nullability", () => {
