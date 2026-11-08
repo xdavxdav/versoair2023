@@ -49,6 +49,8 @@ const AdminDashboard = lazy(() => import("@/pages/dashboard-admin"));
 import StreamPage from "@/pages/stream";
 const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
 const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
+const SessionsPage = lazy(() => import("@/pages/sessions"));
+const SessionDetailPage = lazy(() => import("@/pages/session-detail"));
 const LibraryPage = lazy(() => import("@/pages/library"));
 const AnalyticsStreamingPage = lazy(
   () => import("@/pages/analytics-streaming"),
@@ -134,6 +136,8 @@ function Router() {
       <Route path="/stream" component={StreamPage} />
       <Route path="/track/:id" component={TrackDetailPage} />
       <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
+      <Route path="/sessions/:id" component={SessionDetailPage} />
+      <Route path="/sessions" component={SessionsPage} />
       <Route path="/library">
         {() => <ProtectedRoute component={LibraryPage} />}
       </Route>

@@ -26,6 +26,8 @@ export interface SessionCopy {
   notFoundTitle: string;
   notFoundBody: string;
   loadingSession: string;
+  sessionLoadError: string;
+  reconnecting: string;
   startsIn: (countdown: string) => string;
   pillLive: string;
   pillEnded: string;
@@ -39,6 +41,9 @@ export interface SessionCopy {
   joinSession: string;
   joinedWaiting: string;
   leaveSession: string;
+  mute: string;
+  unmute: string;
+  listeningLive: string;
   liveInvite: string;
   tapToListen: string;
   tapHint: string;
@@ -78,6 +83,8 @@ export interface SessionCopy {
   chatFailed: string;
   chatTooLong: (max: number) => string;
   chatRefreshFailed: string;
+  chatLoading: string;
+  chatLoadEarlier: string;
 }
 
 const en: SessionCopy = {
@@ -101,6 +108,8 @@ const en: SessionCopy = {
   notFoundTitle: "Session not found",
   notFoundBody: "This session doesn't exist or is no longer available.",
   loadingSession: "Loading the session…",
+  sessionLoadError: "We couldn't load this session.",
+  reconnecting: "Connection lost. Reconnecting…",
   startsIn: (countdown) => `Starts in ${countdown}`,
   pillLive: "LIVE NOW",
   pillEnded: "Ended",
@@ -113,6 +122,9 @@ const en: SessionCopy = {
   joinSession: "Join the session",
   joinedWaiting: "You're in. The music starts by itself when the session goes live.",
   leaveSession: "Leave",
+  mute: "Mute",
+  unmute: "Unmute",
+  listeningLive: "You're listening live",
   liveInvite: "It's live. Join to hear it with everyone, in sync.",
   tapToListen: "Tap to start the sound",
   tapHint: "Your browser needs a tap before it can play sound.",
@@ -151,6 +163,8 @@ const en: SessionCopy = {
   chatFailed: "Your message couldn't be sent. Try again.",
   chatTooLong: (max) => `Messages are limited to ${max} characters.`,
   chatRefreshFailed: "We couldn't refresh the chat.",
+  chatLoading: "Loading the chat…",
+  chatLoadEarlier: "Show earlier messages",
 };
 
 const fr: SessionCopy = {
@@ -174,6 +188,8 @@ const fr: SessionCopy = {
   notFoundTitle: "Session introuvable",
   notFoundBody: "Cette session n'existe pas ou n'est plus disponible.",
   loadingSession: "Chargement de la session…",
+  sessionLoadError: "Impossible de charger cette session.",
+  reconnecting: "Connexion perdue. Reconnexion…",
   startsIn: (countdown) => `Commence dans ${countdown}`,
   pillLive: "EN DIRECT",
   pillEnded: "Terminée",
@@ -186,6 +202,9 @@ const fr: SessionCopy = {
   joinSession: "Rejoindre la session",
   joinedWaiting: "Vous y êtes. La musique démarre toute seule quand la session commence.",
   leaveSession: "Quitter",
+  mute: "Couper le son",
+  unmute: "Réactiver le son",
+  listeningLive: "Vous écoutez en direct",
   liveInvite: "C'est en direct. Rejoignez pour écouter avec tout le monde, en même temps.",
   tapToListen: "Touchez pour lancer le son",
   tapHint: "Votre navigateur exige un geste avant de pouvoir jouer du son.",
@@ -224,6 +243,8 @@ const fr: SessionCopy = {
   chatFailed: "Votre message n'a pas pu être envoyé. Réessayez.",
   chatTooLong: (max) => `Les messages sont limités à ${max} caractères.`,
   chatRefreshFailed: "Impossible d'actualiser le chat.",
+  chatLoading: "Chargement du chat…",
+  chatLoadEarlier: "Afficher les messages précédents",
 };
 
 export const SESSION_COPY: Record<SessionLang, SessionCopy> = { en, fr };
