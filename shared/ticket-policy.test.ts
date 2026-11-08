@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { isConfiguredOwner, isReservedOwnerRole, ownerRoleMutationError } from "./owner-access";
 import {
-  approvalError, canReadTicket, canWorkTicket, createTicketSchema, isTicketManager, isTicketStaff,
-  slaPauseMs, transitionError, updateTicketSchema, TICKET_STATUSES, type TicketActor,
+  activeSlaState, approvalError, canReadTicket, canWorkTicket, commentSchema, createTicketSchema, formatMinutes, isSlaPaused,
+  isTicketManager, isTicketStaff, linkProblemSchema, problemLinkError, slaComplianceRate, slaPauseMs,
+  summarizeActiveSla, transitionError, updateTicketSchema, TICKET_STATUSES, type SlaTicketRow, type TicketActor,
 } from "./ticket-policy";
 
 const owner: TicketActor = { id: 1, role: "superuser", owner: true };
@@ -105,4 +106,124 @@ test("the SLA clock pauses only while waiting on the customer or a third party",
   assert.equal(slaPauseMs(pending("approval"), now), 0);
   assert.equal(slaPauseMs({ status: "open", pending_reason: "customer", pending_since: since }, now), 0);
   assert.equal(slaPauseMs({ status: "pending", pending_reason: "customer", pending_since: null }, now), 0);
+});
+
+const slaNow = new Date("2026-11-08T12:00:00Z");
+const inHours = (hours: number) => new Date(slaNow.getTime() + hours * 3600000).toISOString();
+const slaRow = (over: Partial<SlaTicketRow> = {}): SlaTicketRow => ({
+  id: 1, title: "t", priority: "medium", status: "in-progress", ticket_type: "incident",
+  pending_reason: null, sla_due_at: inHours(24), sla_target_hours: 24, ...over,
+});
+
+test("isSlaPaused matches only pending tickets waiting on the customer or a third party", () => {
+  assert.equal(isSlaPaused({ status: "pending", pending_reason: "customer" }), true);
+  assert.equal(isSlaPaused({ status: "pending", pending_reason: "third-party" }), true);
+  assert.equal(isSlaPaused({ status: "pending", pending_reason: "internal" }), false);
+  assert.equal(isSlaPaused({ status: "pending", pending_reason: "approval" }), false);
+  assert.equal(isSlaPaused({ status: "pending", pending_reason: null }), false);
+  assert.equal(isSlaPaused({ status: "open", pending_reason: "customer" }), false);
+});
+test("an active ticket is breached, at risk, paused or on track, and a finished one has no SLA state", () => {
+  assert.equal(activeSlaState(slaRow(), slaNow), "on-track");
+  assert.equal(activeSlaState(slaRow({ sla_due_at: inHours(6.01) }), slaNow), "on-track");
+  assert.equal(activeSlaState(slaRow({ sla_due_at: inHours(6) }), slaNow), "at-risk");
+  assert.equal(activeSlaState(slaRow({ sla_due_at: inHours(0.001) }), slaNow), "at-risk");
+  assert.equal(activeSlaState(slaRow({ sla_due_at: inHours(0) }), slaNow), "breached");
+  assert.equal(activeSlaState(slaRow({ sla_due_at: inHours(-5) }), slaNow), "breached");
+  assert.equal(activeSlaState(slaRow({ sla_due_at: new Date(inHours(-5)) }), slaNow), "breached");
+  assert.equal(activeSlaState(slaRow({ status: "pending", pending_reason: "customer", sla_due_at: inHours(-5) }), slaNow), "paused");
+  assert.equal(activeSlaState(slaRow({ status: "pending", pending_reason: "internal", sla_due_at: inHours(-5) }), slaNow), "breached");
+  for (const status of ["resolved", "closed", "withdrawn", "abandoned", "voided"]) {
+    assert.equal(activeSlaState(slaRow({ status, sla_due_at: inHours(-5) }), slaNow), null);
+  }
+  assert.equal(activeSlaState(slaRow({ sla_due_at: null }), slaNow), null);
+});
+test("the at-risk window follows the ticket's own SLA target, falling back to its priority", () => {
+  assert.equal(activeSlaState(slaRow({ priority: "critical", sla_target_hours: 2, sla_due_at: inHours(0.5) }), slaNow), "at-risk");
+  assert.equal(activeSlaState(slaRow({ priority: "critical", sla_target_hours: 2, sla_due_at: inHours(0.51) }), slaNow), "on-track");
+  assert.equal(activeSlaState(slaRow({ priority: "low", sla_target_hours: null, sla_due_at: inHours(18) }), slaNow), "at-risk");
+  assert.equal(activeSlaState(slaRow({ priority: "low", sla_target_hours: null, sla_due_at: inHours(18.5) }), slaNow), "on-track");
+});
+test("the active SLA summary counts every state and lists only breached and at-risk tickets, worst first", () => {
+  const rows = [
+    slaRow({ id: 1, sla_due_at: inHours(40) }),
+    slaRow({ id: 2, sla_due_at: inHours(3) }),
+    slaRow({ id: 3, sla_due_at: inHours(-1) }),
+    slaRow({ id: 4, sla_due_at: inHours(-9) }),
+    slaRow({ id: 5, sla_due_at: inHours(-9) }),
+    slaRow({ id: 6, sla_due_at: inHours(1) }),
+    slaRow({ id: 7, status: "pending", pending_reason: "third-party", sla_due_at: inHours(-30) }),
+    slaRow({ id: 8, status: "resolved", sla_due_at: inHours(-30) }),
+    slaRow({ id: 9, sla_due_at: null }),
+  ];
+  const { active, attention } = summarizeActiveSla(rows, slaNow);
+  assert.deepEqual(active, { total: 7, breached: 3, atRisk: 2, paused: 1, onTrack: 1 });
+  assert.deepEqual(attention.map((item) => [item.id, item.state]), [
+    [4, "breached"], [5, "breached"], [3, "breached"], [6, "at-risk"], [2, "at-risk"],
+  ]);
+  assert.equal(attention[0].sla_due_at, inHours(-9));
+  assert.deepEqual(summarizeActiveSla(rows, slaNow, 2).attention.map((item) => item.id), [4, 5]);
+  assert.deepEqual(summarizeActiveSla([], slaNow), {
+    active: { total: 0, breached: 0, atRisk: 0, paused: 0, onTrack: 0 }, attention: [],
+  });
+});
+test("the compliance rate is empty without a decided ticket and exact otherwise", () => {
+  assert.equal(slaComplianceRate(0, 0), null);
+  assert.equal(slaComplianceRate(3, 1), 0.75);
+  assert.equal(slaComplianceRate(4, 0), 1);
+  assert.equal(slaComplianceRate(0, 2), 0);
+});
+test("logged time reads as minutes, whole hours, or hours and minutes", () => {
+  assert.equal(formatMinutes(0), "0 min");
+  assert.equal(formatMinutes(45), "45 min");
+  assert.equal(formatMinutes(60), "1 h");
+  assert.equal(formatMinutes(75), "1 h 15 min");
+  assert.equal(formatMinutes(125), "2 h 5 min");
+  assert.equal(formatMinutes(1440), "24 h");
+  assert.equal(formatMinutes(59.6), "1 h");
+  assert.equal(formatMinutes(-10), "0 min");
+  assert.equal(formatMinutes(Number.NaN), "0 min");
+});
+
+const incident = { ...ticket, id: 10, ticket_type: "incident", status: "in-progress" };
+const openProblem = { id: 20, ticket_type: "problem", status: "open" };
+test("only the worker or a manager can change a problem link", () => {
+  assert.equal(problemLinkError(moderator, incident, openProblem), null);
+  assert.equal(problemLinkError(admin, incident, openProblem), null);
+  assert.equal(problemLinkError(owner, incident, openProblem), null);
+  assert.equal(problemLinkError(moderator, incident, null), null);
+  assert.equal(problemLinkError(customer, incident, openProblem)?.status, 403);
+  assert.equal(problemLinkError({ ...moderator, id: 30 }, incident, openProblem)?.status, 403);
+  assert.equal(problemLinkError(moderator, { ...incident, assignee_id: null }, openProblem)?.status, 403);
+  assert.equal(problemLinkError(otherSuperuser, incident, openProblem)?.status, 403);
+});
+test("a ticket can only be linked to an open problem, and only while the ticket itself is open", () => {
+  assert.match(problemLinkError(moderator, { ...incident, ticket_type: "problem" }, openProblem)!.message, /another problem/);
+  for (const ticket_type of ["incident", "request", "change"]) {
+    assert.equal(problemLinkError(moderator, incident, { ...openProblem, ticket_type })?.status, 409);
+  }
+  assert.match(problemLinkError(moderator, incident, { ...openProblem, ticket_type: "incident" })!.message, /Only a problem/);
+  for (const status of ["resolved", "closed", "withdrawn", "abandoned", "voided"]) {
+    assert.match(problemLinkError(moderator, incident, { ...openProblem, status })!.message, /Reopen the problem/);
+    assert.match(problemLinkError(moderator, { ...incident, status }, openProblem)!.message, /Reopen the ticket/);
+    assert.match(problemLinkError(moderator, { ...incident, status }, null)!.message, /Reopen the ticket/);
+  }
+  for (const status of ["open", "in-progress", "pending"]) {
+    assert.equal(problemLinkError(moderator, incident, { ...openProblem, status }), null);
+  }
+});
+test("time entries are whole minutes between 1 and a full day, and only valid problem ids can be linked", () => {
+  const comment = (extra: object) => commentSchema.safeParse({ body: "Worked on it", ...extra }).success;
+  assert.equal(comment({}), true);
+  assert.equal(comment({ timeSpentMinutes: 1 }), true);
+  assert.equal(comment({ timeSpentMinutes: 1440 }), true);
+  for (const bad of [0, -5, 1441, 1.5, "30", null, Number.NaN]) assert.equal(comment({ timeSpentMinutes: bad }), false);
+  assert.equal(comment({ minutes: 30 }), false);
+  assert.equal(linkProblemSchema.safeParse({ problemId: 5 }).success, true);
+  assert.equal(linkProblemSchema.safeParse({ problemId: null }).success, true);
+  for (const bad of [0, -1, 1.5, "5", 2147483648, undefined]) {
+    assert.equal(linkProblemSchema.safeParse({ problemId: bad }).success, false);
+  }
+  assert.equal(linkProblemSchema.safeParse({}).success, false);
+  assert.equal(linkProblemSchema.safeParse({ problemId: 5, extra: true }).success, false);
 });

@@ -54,8 +54,8 @@ const defaultDeps: SubmissionRequestDeps = {
   sendEmail: (to, subject, html) => sendEmail(to, subject, html),
   insertTicket: async (ticket) => {
     await pool.query(
-      `INSERT INTO tickets (title, description, status, priority, category, reporter, reporter_id, requester_email, source, sla_target_hours, sla_breached, created_at, updated_at)
-       VALUES ($1, $2, 'open', 'medium', $3, $4, $5, $6, $7, 24, false, NOW(), NOW())`,
+      `INSERT INTO tickets (title, description, status, priority, category, reporter, reporter_id, requester_email, source, sla_target_hours, sla_due_at, sla_breached, created_at, updated_at)
+       VALUES ($1, $2, 'open', 'medium', $3, $4, $5, $6, $7, 24, NOW() + INTERVAL '24 hours', false, NOW(), NOW())`,
       [
         ticket.title,
         ticket.description,

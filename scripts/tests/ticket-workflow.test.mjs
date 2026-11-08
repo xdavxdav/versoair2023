@@ -59,11 +59,26 @@ async function create(user = "customer") {
   assert.equal(result.status, 201, JSON.stringify(result.body));
   return result.body;
 }
-async function assign(ticket, assignee = "moderator") {
-  const result = await request("admin", `/api/tickets/${ticket.id}/assign`, "PUT", {
+async function assign(ticket, assignee = "moderator", manager = "admin") {
+  const result = await request(manager, `/api/tickets/${ticket.id}/assign`, "PUT", {
     assigneeId: users[assignee], reason: "Test assignment",
   });
   assert.equal(result.status, 200, JSON.stringify(result.body));
+}
+async function createWith(user, fields) {
+  const result = await request(user, "/api/tickets", "POST", { title: "Integration support", ...fields });
+  assert.equal(result.status, 201, JSON.stringify(result.body));
+  return result.body;
+}
+// Works an assigned ticket through in-progress to resolved as its assignee.
+async function resolve(ticket, user = "moderator") {
+  for (const body of [
+    { status: "in-progress", reason: "Working on it" },
+    { status: "resolved", reason: "Done", resolutionCode: "fixed", resolutionNotes: "Restarted the worker" },
+  ]) {
+    const result = await request(user, `/api/tickets/${ticket.id}`, "PUT", body);
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+  }
 }
 before(async () => {
   // Arena base tables are normally bootstrapped by the separate music schema.
@@ -82,7 +97,9 @@ before(async () => {
       [`ticket_test_${key}_${crypto.randomUUID().slice(0, 8)}`, email, role],
     );
     users[key] = result.rows[0].id;
-    tokens[key] = jwt.sign({ userId: String(users[key]), email, role }, process.env.JWT_SECRET, { expiresIn: "10m" });
+    const claims = { userId: String(users[key]), email, role, geoAdminCodeAuthenticated: true };
+    if (key === "owner") claims.ownerMfa = true;
+    tokens[key] = jwt.sign(claims, process.env.JWT_SECRET, { expiresIn: "10m" });
   }
   const app = express();
   app.use(express.json());
@@ -386,11 +403,12 @@ test("follow-up alerts survive reruns, deduplicate and never automatically aband
   await promisify(execFile)(process.execPath, ["--import", "tsx", "--input-type=module", "-e",
     "const {runTicketMonitor}=await import('./server/services/ticket-monitor.ts'); const {pool}=await import('./server/db.ts'); await runTicketMonitor(); await pool.end();"],
   { cwd: new URL("../../", import.meta.url), env: process.env, timeout: 15000 });
-  const alerts = await pool.query("SELECT kind FROM ticket_alerts WHERE ticket_id=$1", [ticket.id]);
-  assert.equal(alerts.rows.length, 5);
+  const alerts = await pool.query("SELECT kind FROM ticket_alerts WHERE ticket_id=$1 ORDER BY kind", [ticket.id]);
+  // The customer wait pauses the SLA clock, so no breach alert is expected here.
+  assert.deepEqual(alerts.rows.map((row) => row.kind), ["abandonment-proposed", "customer-reminder-3", "customer-reminder-7", "follow-up"]);
   const current = await request("admin", `/api/tickets/${ticket.id}`);
   assert.equal(current.body.status, "pending");
-  assert.ok(current.body.sla_breached);
+  assert.equal(current.body.sla_breached, false);
   assert.ok(current.body.abandonment_proposed_at);
   assert.equal((await request("moderator", `/api/tickets/${ticket.id}`, "PUT", { status: "abandoned", reason: "No answer" })).status, 403);
   assert.equal((await request("admin", `/api/tickets/${ticket.id}`, "PUT", { status: "abandoned", reason: "Reviewed reminders and no answer" })).status, 200);
@@ -398,6 +416,302 @@ test("follow-up alerts survive reruns, deduplicate and never automatically aband
   assert.equal(comments.rows.length, 2);
   const internalWait = dueTicketAlerts({ id: 999, status: "pending", pending_reason: "internal", pending_since: "2020-01-01", follow_up_at: null, sla_due_at: null });
   assert.equal(internalWait.length, 0);
+});
+test("breach alerts fire only while the SLA clock runs and never duplicate", async () => {
+  const wait = (ticket, pendingReason) => request("moderator", `/api/tickets/${ticket.id}`, "PUT", {
+    status: "pending", reason: "Waiting", pendingReason, followUpAt: new Date(Date.now() + 86400000).toISOString(),
+  });
+  const running = await create();
+  const internal = await create();
+  const vendor = await create();
+  for (const ticket of [running, internal, vendor]) await assign(ticket);
+  assert.equal((await wait(internal, "internal")).status, 200);
+  assert.equal((await wait(vendor, "third-party")).status, 200);
+  await pool.query("UPDATE tickets SET sla_due_at=NOW()-INTERVAL '1 hour' WHERE id = ANY($1::int[])", [[running.id, internal.id, vendor.id]]);
+  await runTicketMonitor();
+  await runTicketMonitor();
+  const breaches = async (ticket) => (await pool.query(
+    "SELECT 1 FROM ticket_alerts WHERE ticket_id=$1 AND kind='sla-breach'", [ticket.id],
+  )).rows.length;
+  assert.equal(await breaches(running), 1);
+  assert.equal(await breaches(internal), 1);
+  assert.equal(await breaches(vendor), 0);
+  assert.equal((await request("admin", `/api/tickets/${running.id}`)).body.sla_breached, true);
+  assert.equal((await request("admin", `/api/tickets/${vendor.id}`)).body.sla_breached, false);
+});
+test("only support staff log time, the total adds up and requesters never see it", async () => {
+  const ticket = await create();
+  await assign(ticket);
+  const comment = (user, body) => request(user, `/api/tickets/${ticket.id}/comments`, "POST", body);
+  const total = async () => (await request("admin", `/api/tickets/${ticket.id}`)).body.time_spent_minutes;
+  const denied = await comment("customer", { body: "I spent an hour", timeSpentMinutes: 60 });
+  assert.equal(denied.status, 403);
+  assert.match(denied.body.error, /support staff/);
+  for (const timeSpentMinutes of [0, -5, 1441, 1.5, "30", null]) {
+    assert.equal((await comment("moderator", { body: "Bad entry", timeSpentMinutes })).status, 400, String(timeSpentMinutes));
+  }
+  assert.equal(await total(), 0);
+  const logged = await comment("moderator", { body: "Restarted the worker", timeSpentMinutes: 45 });
+  assert.equal(logged.status, 201, JSON.stringify(logged.body));
+  assert.equal(logged.body.time_spent_minutes, 45);
+  assert.equal((await comment("moderator", { body: "Private check", internal: true, timeSpentMinutes: 30 })).status, 201);
+  assert.equal((await comment("moderator", { body: "Plain update" })).body.time_spent_minutes, null);
+  assert.equal(await total(), 75);
+  const parallel = await Promise.all(Array.from({ length: 5 }, (_, index) => comment("moderator", { body: `Parallel ${index}`, timeSpentMinutes: 10 })));
+  assert.ok(parallel.every((result) => result.status === 201), JSON.stringify(parallel));
+  assert.equal(await total(), 125);
+
+  const mine = await request("customer", `/api/tickets/${ticket.id}`);
+  assert.equal(mine.status, 200);
+  assert.ok(!("time_spent_minutes" in mine.body) && !("problem_id" in mine.body));
+  const reply = await comment("customer", { body: "Thanks" });
+  assert.equal(reply.status, 201);
+  assert.ok(!("time_spent_minutes" in reply.body));
+  const visible = (await request("customer", `/api/tickets/${ticket.id}/comments`)).body;
+  assert.equal(visible.length, 8);
+  assert.ok(visible.every((entry) => !("time_spent_minutes" in entry)));
+  const staffView = (await request("moderator", `/api/tickets/${ticket.id}/comments`)).body;
+  assert.equal(staffView.reduce((sum, entry) => sum + (entry.time_spent_minutes ?? 0), 0), 125);
+
+  const timeEvents = (await request("moderator", `/api/tickets/${ticket.id}/events`)).body.filter((entry) => entry.kind === "time-logged");
+  assert.deepEqual(timeEvents.map((entry) => entry.details.minutes).sort((a, b) => a - b), [10, 10, 10, 10, 10, 30, 45]);
+  assert.ok(timeEvents.every((entry) => entry.internal));
+  assert.equal((await request("customer", `/api/tickets/${ticket.id}/events`)).body.filter((entry) => entry.kind === "time-logged").length, 0);
+  await assert.rejects(
+    pool.query("INSERT INTO ticket_comments(ticket_id,author_id,body,time_spent_minutes) VALUES ($1,$2,'x',1441)", [ticket.id, users.moderator]),
+    /check constraint/,
+  );
+
+  await resolve(ticket);
+  assert.equal((await comment("moderator", { body: "Late entry", timeSpentMinutes: 20 })).status, 409);
+  assert.equal(await total(), 125);
+});
+test("a ticket links only to an open problem, and only its worker or a manager changes the link", async () => {
+  const link = (user, ticket, problemId) => request(user, `/api/tickets/${ticket.id}/problem`, "PUT", { problemId });
+  const incident = await create();
+  const sibling = await create();
+  const unclaimed = await create();
+  const problem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  const secondProblem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  const hiddenProblem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  const ownProblem = await createWith("customer", { title: "Integration problem", type: "problem" });
+  for (const ticket of [incident, sibling, problem, secondProblem]) await assign(ticket);
+  await assign(hiddenProblem, "otherModerator");
+
+  assert.equal((await link("customer", incident, ownProblem.id)).status, 403);
+  const foreign = await link("customer", incident, problem.id);
+  assert.equal(foreign.status, 404);
+  assert.equal(foreign.body.error, "Problem not found");
+  assert.equal((await link("otherModerator", incident, problem.id)).status, 404);
+  assert.equal((await link("moderator", unclaimed, problem.id)).status, 403);
+  assert.equal((await link("moderator", incident, 2000000000)).body.error, "Problem not found");
+  assert.equal((await link("moderator", incident, hiddenProblem.id)).status, 404);
+  assert.match((await link("moderator", incident, sibling.id)).body.error, /Only a problem/);
+  assert.match((await link("moderator", incident, incident.id)).body.error, /Only a problem/);
+  assert.match((await link("moderator", problem, secondProblem.id)).body.error, /another problem/);
+  assert.match((await link("moderator", incident, null)).body.error, /No problem is linked/);
+  for (const body of [{ problemId: "7" }, { problemId: 0 }, {}, { problemId: 1, extra: true }]) {
+    assert.equal((await request("moderator", `/api/tickets/${incident.id}/problem`, "PUT", body)).status, 400, JSON.stringify(body));
+  }
+  assert.equal((await request("moderator", `/api/tickets/${incident.id}`)).body.problem_id, null);
+
+  const linked = await link("moderator", incident, problem.id);
+  assert.equal(linked.status, 200, JSON.stringify(linked.body));
+  assert.equal(linked.body.problem_id, problem.id);
+  assert.match((await link("moderator", incident, problem.id)).body.error, /already linked/);
+
+  // Unlinking stays possible after the problem itself is resolved; linking to it does not.
+  assert.equal((await link("moderator", sibling, problem.id)).status, 200);
+  await resolve(problem);
+  const unlinked = await link("moderator", sibling, null);
+  assert.equal(unlinked.status, 200, JSON.stringify(unlinked.body));
+  assert.equal(unlinked.body.problem_id, null);
+  const lateLink = await link("moderator", sibling, problem.id);
+  assert.equal(lateLink.status, 409);
+  assert.match(lateLink.body.error, /Reopen the problem/);
+
+  await resolve(incident);
+  const closed = await link("moderator", incident, secondProblem.id);
+  assert.equal(closed.status, 409);
+  assert.match(closed.body.error, /Reopen the ticket/);
+  assert.match((await link("moderator", incident, null)).body.error, /Reopen the ticket/);
+});
+test("problem links keep history on both sides and stay inside each viewer's ticket scope", async () => {
+  const link = (user, ticket, problemId) => request(user, `/api/tickets/${ticket.id}/problem`, "PUT", { problemId });
+  const events = async (ticket, user = "admin") => (await request(user, `/api/tickets/${ticket.id}/events`)).body;
+  const incident = await create();
+  const elsewhere = await create();
+  const problem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  const secondProblem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  const hiddenProblem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  for (const ticket of [incident, problem, secondProblem]) await assign(ticket);
+  for (const ticket of [elsewhere, hiddenProblem]) await assign(ticket, "otherModerator");
+
+  assert.equal((await link("moderator", incident, problem.id)).status, 200);
+  const replaced = await link("admin", incident, secondProblem.id);
+  assert.equal(replaced.status, 200, JSON.stringify(replaced.body));
+  assert.equal(replaced.body.problem_id, secondProblem.id);
+  const own = await events(incident);
+  assert.deepEqual(own.filter((entry) => entry.kind === "problem-linked").map((entry) => entry.details),
+    [{ from: null, to: problem.id }, { from: problem.id, to: secondProblem.id }]);
+  assert.deepEqual((await events(problem)).filter((entry) => entry.kind.startsWith("incident-")).map((entry) => [entry.kind, entry.details.ticketId]),
+    [["incident-linked", incident.id], ["incident-unlinked", incident.id]]);
+  assert.deepEqual((await events(secondProblem)).filter((entry) => entry.kind.startsWith("incident-")).map((entry) => [entry.kind, entry.details.ticketId]),
+    [["incident-linked", incident.id]]);
+  assert.ok(own.filter((entry) => entry.kind.startsWith("problem-")).every((entry) => entry.internal));
+
+  const customerKinds = (await events(incident, "customer")).map((entry) => entry.kind);
+  assert.ok(customerKinds.every((kind) => !kind.includes("problem")), customerKinds.join());
+  assert.ok(!("problem_id" in (await request("customer", `/api/tickets/${incident.id}`)).body));
+  assert.equal((await request("customer", `/api/tickets/${incident.id}/links`)).status, 403);
+  assert.equal((await request("otherModerator", `/api/tickets/${incident.id}/links`)).status, 404);
+
+  const fromIncident = (await request("moderator", `/api/tickets/${incident.id}/links`)).body;
+  assert.equal(fromIncident.problem.id, secondProblem.id);
+  assert.equal(fromIncident.problem.ticket_type, "problem");
+  assert.deepEqual(fromIncident.related, []);
+  assert.equal((await link("admin", elsewhere, secondProblem.id)).status, 200);
+  const fromProblem = async (user) => (await request(user, `/api/tickets/${secondProblem.id}/links`)).body;
+  assert.equal((await fromProblem("moderator")).problem, null);
+  assert.deepEqual((await fromProblem("moderator")).related.map((item) => item.id), [incident.id]);
+  assert.deepEqual((await fromProblem("admin")).related.map((item) => item.id), [incident.id, elsewhere.id]);
+
+  // A problem outside the viewer's scope is reported by id on the ticket but never described.
+  assert.equal((await link("admin", incident, hiddenProblem.id)).status, 200);
+  assert.equal((await request("moderator", `/api/tickets/${incident.id}`)).body.problem_id, hiddenProblem.id);
+  assert.equal((await request("moderator", `/api/tickets/${incident.id}/links`)).body.problem, null);
+  assert.equal((await request("admin", `/api/tickets/${incident.id}/links`)).body.problem.id, hiddenProblem.id);
+
+  const cleared = await link("admin", incident, null);
+  assert.equal(cleared.body.problem_id, null);
+  assert.deepEqual((await events(incident)).filter((entry) => entry.kind === "problem-unlinked").map((entry) => entry.details),
+    [{ from: hiddenProblem.id, to: null }]);
+  assert.deepEqual((await events(hiddenProblem)).filter((entry) => entry.kind.startsWith("incident-")).map((entry) => entry.kind),
+    ["incident-linked", "incident-unlinked"]);
+});
+test("a link that races the problem's resolution waits for it and is then refused", async () => {
+  const incident = await create();
+  const problem = await createWith("admin", { title: "Integration problem", type: "problem" });
+  for (const ticket of [incident, problem]) await assign(ticket);
+  // Resolves the problem in a transaction that stays open, the way a concurrent PUT /api/tickets/:id does: lock first, commit later.
+  const resolver = await pool.connect();
+  let linking;
+  try {
+    await resolver.query("BEGIN");
+    await resolver.query("SELECT id FROM tickets WHERE id=$1 FOR UPDATE", [problem.id]);
+    await resolver.query("UPDATE tickets SET status='resolved', resolved_at=NOW() WHERE id=$1", [problem.id]);
+    linking = request("moderator", `/api/tickets/${incident.id}/problem`, "PUT", { problemId: problem.id });
+    let waiting = false;
+    for (let attempt = 0; attempt < 200 && !waiting; attempt += 1) {
+      waiting = (await pool.query("SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock'")).rowCount > 0;
+      if (!waiting) await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    assert.equal(waiting, true, "the link request never waited on the problem being resolved");
+    await resolver.query("COMMIT");
+  } catch (error) {
+    await resolver.query("ROLLBACK").catch(() => {});
+    await linking?.catch(() => {});
+    throw error;
+  } finally {
+    resolver.release();
+  }
+  const result = await linking;
+  assert.equal(result.status, 409, JSON.stringify(result.body));
+  assert.match(result.body.error, /Reopen the problem/);
+  assert.equal((await pool.query("SELECT problem_id FROM tickets WHERE id=$1", [incident.id])).rows[0].problem_id, null);
+  const linkedEvents = (await request("admin", `/api/tickets/${problem.id}/events`)).body.filter((entry) => entry.kind === "incident-linked");
+  assert.deepEqual(linkedEvents, []);
+});
+test("the SLA report counts met, breached, paused and at-risk work inside the caller's scope", async () => {
+  const report = async (user = "admin", days = 30) => {
+    const result = await request(user, `/api/tickets/reports/sla?days=${days}`);
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    return result.body;
+  };
+  assert.equal((await request(null, "/api/tickets/reports/sla")).status, 401);
+  for (const user of ["customer", "otherOwner"]) assert.equal((await request(user, "/api/tickets/reports/sla")).status, 403, user);
+  for (const days of ["0", "366", "abc", "1.5", "-3"]) {
+    assert.equal((await request("admin", `/api/tickets/reports/sla?days=${days}`)).status, 400, days);
+  }
+  const before = { admin30: await report(), admin90: await report("admin", 90), moderator30: await report("moderator") };
+  assert.equal(before.admin30.windowDays, 30);
+  assert.deepEqual(before.admin30.byPriority.map((entry) => entry.key).slice(0, 4), ["critical", "high", "medium", "low"]);
+  assert.deepEqual(before.admin30.byType.map((entry) => entry.key).slice(0, 4), ["incident", "request", "problem", "change"]);
+
+  const met = await createWith("customer", { title: "Report met", priority: "medium" });
+  const late = await createWith("customer", { title: "Report breached", priority: "high", type: "request" });
+  const rejected = await createWith("customer", { title: "Report rejected", priority: "low", type: "change" });
+  const onTrack = await createWith("customer", { title: "Report on track", priority: "medium" });
+  const atRisk = await createWith("customer", { title: "Report at risk", priority: "high" });
+  const overdue = await createWith("customer", { title: "Report overdue", priority: "critical" });
+  const paused = await createWith("customer", { title: "Report paused", priority: "low" });
+  const old = await createWith("customer", { title: "Report old", priority: "medium", type: "problem" });
+  const elsewhere = await createWith("customer", { title: "Report elsewhere", priority: "critical" });
+  const activeFixtures = [onTrack, atRisk, overdue, paused, elsewhere].map((ticket) => ticket.id);
+  try {
+    for (const ticket of [met, late, paused, old]) await assign(ticket);
+    await assign(elsewhere, "otherModerator");
+    const log = (ticket, minutes) => request("moderator", `/api/tickets/${ticket.id}/comments`, "POST", { body: "Worked on it", timeSpentMinutes: minutes });
+    assert.equal((await log(met, 60)).status, 201);
+    assert.equal((await log(late, 30)).status, 201);
+    await pool.query("UPDATE tickets SET sla_due_at=NOW()-INTERVAL '2 hours' WHERE id=$1", [late.id]);
+    await resolve(met);
+    await resolve(late);
+    assert.equal((await request("admin", `/api/tickets/${rejected.id}/approval`, "POST", { decision: "rejected", reason: "Out of scope" })).status, 200);
+    assert.equal((await request("moderator", `/api/tickets/${paused.id}`, "PUT", {
+      status: "pending", reason: "Waiting for the customer", pendingReason: "customer",
+      followUpAt: new Date(Date.now() + 86400000).toISOString(),
+    })).status, 200);
+    await pool.query("UPDATE tickets SET sla_due_at=NOW()-INTERVAL '1 hour' WHERE id=$1", [paused.id]);
+    await pool.query("UPDATE tickets SET sla_due_at=NOW()+INTERVAL '1 hour' WHERE id=$1", [atRisk.id]);
+    await pool.query("UPDATE tickets SET sla_due_at=NOW()-INTERVAL '2 years' WHERE id = ANY($1::int[])", [[overdue.id, elsewhere.id]]);
+    await pool.query(
+      `UPDATE tickets SET status='closed', created_at=NOW()-INTERVAL '60 days', resolved_at=NOW()-INTERVAL '45 days',
+        sla_due_at=NOW()-INTERVAL '44 days', time_spent_minutes=15 WHERE id=$1`, [old.id],
+    );
+
+    const after = { admin30: await report(), admin90: await report("admin", 90), moderator30: await report("moderator") };
+    const change = (now, then, fields) => Object.fromEntries(fields.map((field) => [field, now[field] - then[field]]));
+    const totals = ["created", "resolved", "met", "breached", "timeSpentMinutes"];
+    const states = ["total", "breached", "atRisk", "paused", "onTrack"];
+    const row = (list, key) => list.find((entry) => entry.key === key);
+    // The rejected change and the ticket resolved 45 days ago stay out of a 30-day resolved cohort.
+    assert.deepEqual(change(after.admin30, before.admin30, totals), { created: 8, resolved: 2, met: 1, breached: 1, timeSpentMinutes: 90 });
+    assert.deepEqual(change(after.admin90, before.admin90, totals), { created: 9, resolved: 3, met: 2, breached: 1, timeSpentMinutes: 105 });
+    assert.deepEqual(change(after.admin30.active, before.admin30.active, states), { total: 5, breached: 2, atRisk: 1, paused: 1, onTrack: 1 });
+    const priorities = (key) => change(row(after.admin30.byPriority, key), row(before.admin30.byPriority, key), totals);
+    assert.deepEqual(priorities("medium"), { created: 2, resolved: 1, met: 1, breached: 0, timeSpentMinutes: 60 });
+    assert.deepEqual(priorities("high"), { created: 2, resolved: 1, met: 0, breached: 1, timeSpentMinutes: 30 });
+    assert.deepEqual(priorities("critical"), { created: 2, resolved: 0, met: 0, breached: 0, timeSpentMinutes: 0 });
+    assert.deepEqual(priorities("low"), { created: 2, resolved: 0, met: 0, breached: 0, timeSpentMinutes: 0 });
+    const types = (now, then, key) => change(row(now.byType, key), row(then.byType, key), totals);
+    assert.deepEqual(types(after.admin30, before.admin30, "incident"), { created: 6, resolved: 1, met: 1, breached: 0, timeSpentMinutes: 60 });
+    assert.deepEqual(types(after.admin30, before.admin30, "request"), { created: 1, resolved: 1, met: 0, breached: 1, timeSpentMinutes: 30 });
+    assert.deepEqual(types(after.admin30, before.admin30, "change"), { created: 1, resolved: 0, met: 0, breached: 0, timeSpentMinutes: 0 });
+    assert.deepEqual(types(after.admin30, before.admin30, "problem"), { created: 0, resolved: 0, met: 0, breached: 0, timeSpentMinutes: 0 });
+    assert.deepEqual(types(after.admin90, before.admin90, "problem"), { created: 1, resolved: 1, met: 1, breached: 0, timeSpentMinutes: 15 });
+    assert.equal(after.admin30.complianceRate, after.admin30.met / (after.admin30.met + after.admin30.breached));
+    assert.equal(typeof after.admin30.avgResolutionHours, "number");
+    assert.equal(typeof after.admin30.medianResolutionHours, "number");
+
+    const listed = (report, ticket) => report.attention.find((entry) => entry.id === ticket.id);
+    assert.deepEqual(
+      { ...listed(after.admin30, overdue), sla_due_at: undefined },
+      { id: overdue.id, title: "Report overdue", priority: "critical", status: "open", ticket_type: "incident", sla_due_at: undefined, state: "breached" },
+    );
+    assert.ok(listed(after.admin30, elsewhere));
+    assert.equal(listed(after.admin30, paused), undefined);
+    assert.equal(listed(after.admin30, onTrack), undefined);
+
+    // A moderator sees unassigned tickets and their own, so the ticket held by another moderator drops out.
+    assert.deepEqual(change(after.moderator30, before.moderator30, totals), { created: 7, resolved: 2, met: 1, breached: 1, timeSpentMinutes: 90 });
+    assert.deepEqual(change(after.moderator30.active, before.moderator30.active, states), { total: 4, breached: 1, atRisk: 1, paused: 1, onTrack: 1 });
+    assert.ok(listed(after.moderator30, overdue));
+    assert.equal(listed(after.moderator30, elsewhere), undefined);
+  } finally {
+    // Leave no active fixtures behind, so repeated runs against one database stay comparable.
+    await pool.query("UPDATE tickets SET status='withdrawn' WHERE id = ANY($1::int[])", [activeFixtures]);
+  }
 });
 test("tracking requires evidence and deployed prerequisites, and persists updates", async () => {
   assert.equal((await request("owner", "/api/implementation-tracking/A1", "PUT", { status: "tested", evidence: "", blocker: "" })).status, 400);
@@ -426,7 +740,8 @@ test("browser: responsive staff queue, eight states, localization and owner trac
   const { mkdtemp, rm } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
-  const root = new URL("../../", import.meta.url).pathname;
+  const { fileURLToPath } = await import("node:url");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
   const cacheDir = await mkdtemp(join(tmpdir(), "versoair-ticket-ui-"));
   const harness = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div>
   <script type="module">
@@ -466,6 +781,7 @@ test("browser: responsive staff queue, eight states, localization and owner trac
     } }],
   });
   let browser;
+  const uiFixtures = [];
   try {
     await vite.listen();
     const browserOrigin = `http://127.0.0.1:${vite.httpServer.address().port}`;
@@ -493,6 +809,61 @@ test("browser: responsive staff queue, eight states, localization and owner trac
       assert.equal(await page.$eval("body", (body) => body.scrollWidth <= innerWidth), true);
       assert.equal(await page.$('a[href="/geo-admin/dashboard"]'), null);
     }
+    // Part 4 UI as the moderator who works the ticket: SLA report, time logging and problem links.
+    const uiProblem = await createWith("customer", { type: "problem", title: `UI problem ${runId}`, description: "Shared root cause" });
+    const uiIncident = await createWith("customer", { title: `UI incident ${runId}`, description: "Reported by a customer" });
+    uiFixtures.push(uiProblem.id, uiIncident.id);
+    // The admin session is revoked by the previous test, so this one uses its own manager account.
+    await assign(uiIncident, "moderator", "browserAdmin");
+    const reportToggle = 'button[aria-controls="sla-report-body"]';
+    for (const width of [375, 1440]) {
+      await page.setViewport({ width, height: 900 });
+      await page.goto(`${browserOrigin}/__ticket-ui`);
+      await page.waitForSelector("[data-testid=ticket-workspace]");
+      assert.equal(await page.$("#sla-report-body table"), null);
+      await page.click(reportToggle);
+      await page.waitForSelector("#sla-report-body table");
+      assert.equal(await page.$eval(reportToggle, (button) => button.getAttribute("aria-expanded")), "true");
+      assert.equal(await page.$$eval("#sla-report-body table", (tables) => tables.length), 2);
+      assert.equal(await page.$eval("body", (body) => body.scrollWidth <= innerWidth), true);
+    }
+    const inDialog = (text) => page.waitForFunction((expected) => document.querySelector("[role=dialog]")?.textContent.includes(expected), {}, text);
+    // Waits for an enabled button with this exact label, so a click never races a refetch that has not rendered it yet.
+    const dialogButton = (label) => page.waitForFunction((text) =>
+      [...document.querySelectorAll("[role=dialog] button")].find((button) => button.textContent.trim() === text && !button.disabled), {}, label);
+    const clickInDialog = async (label) => (await dialogButton(label)).evaluate((button) => button.click());
+    const answered = (path, method) => page.waitForResponse((response) =>
+      response.url().endsWith(path) && response.request().method() === method);
+    await page.setViewport({ width: 375, height: 900 });
+    await page.goto(`${browserOrigin}/__ticket-ui?ticket=${uiIncident.id}`);
+    const commentForm = "[role=dialog] form:has(input[type=number])";
+    await page.waitForSelector(`${commentForm} textarea`);
+    await page.type(`${commentForm} textarea`, "Restarted the worker");
+    await page.type(`${commentForm} input[type=number]`, "45");
+    const commentSaved = answered(`/api/tickets/${uiIncident.id}/comments`, "POST");
+    await page.click(`${commentForm} button[type=submit]`);
+    assert.equal((await commentSaved).status(), 201);
+    await inDialog("Time logged: 45 min");
+    assert.equal(await page.$eval("[role=dialog] article", (item) => item.textContent.includes("· 45 min")), true);
+    const chooser = '[role=dialog] select[aria-label="Choose an open problem"]';
+    await page.waitForSelector(`${chooser} option[value="${uiProblem.id}"]`);
+    await page.select(chooser, String(uiProblem.id));
+    const linked = answered(`/api/tickets/${uiIncident.id}/problem`, "PUT");
+    await clickInDialog("Link problem");
+    assert.equal((await linked).status(), 200);
+    // The chooser option already reads "#id · title", so only the clickable link proves the link was saved and rendered.
+    const problemButton = await dialogButton(`#${uiProblem.id}`);
+    assert.equal(await problemButton.evaluate((button, title) => button.parentElement.textContent.includes(title), ` · UI problem ${runId}`), true);
+    await problemButton.evaluate((button) => button.click());
+    await inDialog(`#${uiProblem.id} UI problem ${runId}`);
+    await inDialog(`#${uiIncident.id} · UI incident ${runId}`);
+    await clickInDialog(`#${uiIncident.id}`);
+    await inDialog(`#${uiIncident.id} UI incident ${runId}`);
+    const unlinked = answered(`/api/tickets/${uiIncident.id}/problem`, "PUT");
+    await clickInDialog("Unlink");
+    assert.equal((await unlinked).status(), 200);
+    await inDialog("Not linked to a problem.");
+    assert.equal(await page.$eval("[role=dialog]", (dialog) => dialog.scrollWidth <= dialog.clientWidth), true);
     await page.goto(`${browserOrigin}/__ticket-ui?tracker=1`);
     await page.waitForFunction(() => !location.search.includes("tracker"));
     assert.equal(await page.$("[data-testid=implementation-tracker]"), null);
@@ -545,5 +916,6 @@ test("browser: responsive staff queue, eight states, localization and owner trac
     await browser?.close();
     await vite.close();
     await rm(cacheDir, { recursive: true, force: true });
+    if (uiFixtures.length) await pool.query("UPDATE tickets SET status='withdrawn' WHERE id = ANY($1::int[])", [uiFixtures]);
   }
 });

@@ -124,6 +124,18 @@ unavailable for the policy form, not a claim of externally approved TSR rules:
   with approval pending; a manager other than the requester approves or rejects
   it, and work cannot start before approval. A rejected change is closed.
 - Escalating a ticket raises its escalation level and writes an internal note.
+- Staff who work a ticket can log time on a reply or internal note: whole
+  minutes, 1 to 1440 per entry. The ticket keeps a running total and the audit
+  log records an internal `time-logged` event. Requesters never see time spent,
+  on the ticket or on its comments.
+- A ticket that is not a problem can be linked to one open problem ticket by
+  the staff member who works it (the assignee, or a manager). A problem cannot
+  link to another problem, a finished ticket cannot change its link, and a
+  finished problem cannot be linked, even if it was resolved at the same moment:
+  a link waits for a concurrent resolution and is then refused. Unlinking works
+  while the ticket is open.
+  Both tickets get an internal audit event, and a problem lists the linked
+  tickets its viewer may read. Customers cannot see or change links.
 - Priority changes preserve the current SLA cycle start; reopening starts
   a new cycle. Historical breach events remain in the audit log.
 - Pending/customer receives in-app reminders at day 3 and day 7.
@@ -132,6 +144,32 @@ unavailable for the policy form, not a claim of externally approved TSR rules:
   do not generate customer-abandonment proposals.
 - A customer reply to a pending/customer ticket resumes work and clears
   its old follow-up cycle.
+
+## SLA report
+
+Staff see a collapsed **SLA report** under the workspace header
+(`GET /api/tickets/reports/sla?days=`, 1 to 365 days, default 30; the page
+offers 7, 30 and 90). It is read-only and covers only the tickets the viewer may
+read, so a moderator's figures cover unassigned tickets and their own. Customers
+receive a refusal. The definitions are fixed so the numbers can be audited:
+
+- **Created** counts tickets opened in the period. **Resolved** counts tickets
+  resolved in the period, including ones since closed. A rejected change closes
+  without work, so it is excluded.
+- A resolved ticket **met** its SLA when it was resolved on or before its due
+  time, which already includes paused time, and **breached** it otherwise.
+  Compliance is met divided by met plus breached, and shows "—" when nothing was
+  resolved.
+- Average and median resolution are calendar time from creation to resolution.
+  Paused time is not subtracted, so these can exceed the SLA target for a ticket
+  that met its due time.
+- **Time logged** is the full logged total of the tickets resolved in the
+  period, not the entries made during it.
+- **Active tickets** are open, in-progress and pending tickets: breached, at
+  risk (25% or less of the ticket's own target left), paused (waiting on the
+  customer or a third party) or on track. **Needs attention** lists up to 25
+  breached or at-risk tickets, breached first and then the earliest due time.
+- The breakdowns by priority and by type use the same definitions.
 
 ## VersoAI handoff and notifications
 
@@ -188,8 +226,10 @@ successful production acceptance.
 Startup applies the idempotent, additive
 [ticket schema upgrades](../server/services/ticket-schema.ts) after creating
 base tables. It retains old tickets/comments, normalizes legacy `in_progress`,
-backfills deadlines and creates event, alert and tracking tables. It also
-ensures the session-revocation table exists. A schema error prevents startup.
+backfills deadlines and creates event, alert and tracking tables. It also adds
+the time-spent columns (defaulting to 0, with a per-entry range check) and the
+nullable problem link. It also ensures the session-revocation table exists. A
+schema error prevents startup.
 
 Before production rollout, retain the provider's database backup/restore
 point. Do not drop new columns or tables to roll back. An old ticket writer
@@ -222,7 +262,10 @@ npm run build
 
 The suite covers actual privileged router refusals, role changes, revocation,
 ticket scopes, private notes, transitions, atomic batches, concurrent handoff,
-durable reminders, tracking evidence and browser responsiveness/localization.
+durable reminders, tracking evidence, time logging, problem links (including a
+link that races its problem's resolution), the SLA
+report and browser responsiveness/localization. The browser test also drives
+the SLA report, time entry and problem linking as a moderator at 375 px.
 It provisions minimal Arena base tables solely to satisfy the application's
 existing separate music bootstrap dependencies.
 

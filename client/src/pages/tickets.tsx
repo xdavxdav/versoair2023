@@ -2,20 +2,21 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { ticketRequest } from "@/lib/support-api";
+import { errorText, ticketRequest } from "@/lib/support-api";
 import { useOwnerAccess } from "@/hooks/use-owner-access";
 import { useSupportCopy } from "@/hooks/use-support-copy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { TicketSlaReport } from "@/components/TicketSlaReport";
 import {
-  canWorkTicket, isTicketManager, isTicketStaff, PENDING_REASONS, RESOLUTION_CODES, TERMINAL_STATUSES, TICKET_TYPES,
-  TICKET_PRIORITIES, TICKET_STATUSES, transitionError, type SupportTicket, type TicketActor, type TicketStatus,
+  canWorkTicket, formatMinutes, isTicketManager, isTicketStaff, MAX_TIME_ENTRY_MINUTES, PENDING_REASONS, RESOLUTION_CODES,
+  TERMINAL_STATUSES, TICKET_TYPES, TICKET_PRIORITIES, TICKET_STATUSES, transitionError,
+  type SupportTicket, type TicketActor, type TicketLink, type TicketLinks, type TicketStatus,
 } from "@shared/ticket-policy";
 
 const selectClass = "min-h-11 rounded-md border border-slate-400 bg-white px-3 text-slate-900 max-w-full";
-const errorText = (error: unknown) => error instanceof Error ? error.message : "Support request failed";
 
 export function Tickets() {
   const { user } = useAuthContext();
@@ -51,6 +52,8 @@ export function Tickets() {
     void client.invalidateQueries({ queryKey: ["support-tickets"] });
     void client.invalidateQueries({ queryKey: ["support-alerts"] });
     void client.invalidateQueries({ queryKey: ["support-detail"] });
+    void client.invalidateQueries({ queryKey: ["support-links"] });
+    void client.invalidateQueries({ queryKey: ["support-sla-report"] });
   };
   const create = useMutation({
     mutationFn: () => ticketRequest<SupportTicket>("/api/tickets", "POST", { title, description, type: ticketType }),
@@ -62,6 +65,10 @@ export function Tickets() {
     (priorityFilter === "all" || ticket.priority === priorityFilter) &&
     `${ticket.id} ${ticket.title} ${ticket.description || ""}`.toLowerCase().includes(search.toLowerCase()),
   ) || [];
+  // Staff can only link to problems they can read, which is exactly what their own list contains.
+  const openProblems = staff
+    ? (tickets.data ?? []).filter((ticket) => ticket.ticket_type === "problem" && !TERMINAL_STATUSES.includes(ticket.status))
+    : [];
 
   return <main className="min-h-screen bg-slate-50 px-4 pb-24 pt-24 text-slate-900" data-testid="ticket-workspace">
     <div className="mx-auto max-w-6xl space-y-6">
@@ -74,6 +81,7 @@ export function Tickets() {
           <Button className="bg-amber-400 text-slate-950 hover:bg-amber-300" onClick={() => setCreating(true)}>{t("create")}</Button>
         </div>
       </header>
+      {staff && <TicketSlaReport userId={actor.id} onOpen={setSelectedId} />}
       <div className="flex flex-wrap gap-3">
         <Input aria-label={t("search")} placeholder={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-0 flex-1 bg-white" />
         <select className={selectClass} aria-label={t("status")} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -119,15 +127,17 @@ export function Tickets() {
         </form>
       </DialogContent>
     </Dialog>
-    {selectedId !== null && <TicketDetails key={selectedId} id={selectedId} initial={selected} actor={actor} onClose={() => setSelectedId(null)} refresh={refresh} />}
+    {selectedId !== null && <TicketDetails key={selectedId} id={selectedId} initial={selected} actor={actor} problems={openProblems}
+      onOpen={setSelectedId} onClose={() => setSelectedId(null)} refresh={refresh} />}
   </main>;
 }
 
-interface Comment { id: number; author_name: string; body: string; internal: boolean; created_at: string }
+interface Comment { id: number; author_name: string; body: string; internal: boolean; created_at: string; time_spent_minutes?: number | null }
 interface TicketEvent { id: number; kind: string; details: Record<string, unknown>; created_at: string; internal: boolean }
 
-function TicketDetails({ id, initial, actor, onClose, refresh }: {
-  id: number; initial?: SupportTicket; actor: TicketActor; onClose: () => void; refresh: () => void;
+function TicketDetails({ id, initial, actor, problems, onOpen, onClose, refresh }: {
+  id: number; initial?: SupportTicket; actor: TicketActor; problems: SupportTicket[]; onOpen: (id: number) => void;
+  onClose: () => void; refresh: () => void;
 }) {
   const t = useSupportCopy();
   const queryClient = useQueryClient();
@@ -150,6 +160,13 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
     enabled: isTicketManager(actor),
     queryFn: () => ticketRequest("/api/tickets/staff"),
   });
+  const staff = isTicketStaff(actor);
+  const links = useQuery<TicketLinks>({
+    queryKey: ["support-links", id, actor.id],
+    enabled: staff,
+    queryFn: () => ticketRequest(`/api/tickets/${id}/links`),
+    refetchInterval: 15000,
+  });
   const [status, setStatus] = useState<TicketStatus | "">("");
   const [reason, setReason] = useState("");
   const [pendingReason, setPendingReason] = useState<(typeof PENDING_REASONS)[number]>("customer");
@@ -160,10 +177,12 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [body, setBody] = useState("");
   const [internal, setInternal] = useState(false);
+  const [minutes, setMinutes] = useState("");
+  const [problemChoice, setProblemChoice] = useState("");
   const mutation = useMutation({
     mutationFn: ({ path, method, input }: { path: string; method: string; input: object }) => ticketRequest(path, method, input),
     onSuccess: () => {
-      setReason(""); setResolutionNotes(""); setBody(""); setStatus(""); setPriority("");
+      setReason(""); setResolutionNotes(""); setBody(""); setStatus(""); setPriority(""); setMinutes(""); setProblemChoice("");
       refresh();
       void queryClient.invalidateQueries({ queryKey: ["support-comments", id] });
       void queryClient.invalidateQueries({ queryKey: ["support-history", id] });
@@ -176,13 +195,14 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
   return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
     <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto bg-white text-slate-900">
       <DialogTitle>#{id} {current?.title}</DialogTitle><DialogDescription>{t("policy")}</DialogDescription>
-      {[ticket.error, comments.error, history.error, staffList.error, mutation.error].filter(Boolean).map((error, index) =>
+      {[ticket.error, comments.error, history.error, staffList.error, links.error, mutation.error].filter(Boolean).map((error, index) =>
         <p role="alert" key={index}>{errorText(error)}</p>)}
       {current && <>
         <p className="whitespace-pre-wrap break-words">{current.description}</p>
         <p>{t("status")}: {t(current.status)} · {t(current.priority)} · {t(current.ticket_type ?? "incident")}</p>
         {current.ticket_type === "change" && <p>{t("approval")}: {t(current.approval_status === "not-required" ? "pending" : current.approval_status)}</p>}
         {isTicketStaff(actor) && current.escalation_level > 0 && <p>{t("escalationLevel")}: {current.escalation_level}</p>}
+        {staff && current.time_spent_minutes > 0 && <p>{t("timeLogged")}: {formatMinutes(current.time_spent_minutes)}</p>}
         {current.resolution_code && <p>{t("resolutionCode")}: {t(current.resolution_code as (typeof RESOLUTION_CODES)[number])} — {current.resolution_notes}</p>}
         {current.follow_up_at && <p>{t("followUp")}: {new Date(current.follow_up_at).toLocaleString()}</p>}
         {current.abandonment_proposed_at && <p className="text-amber-800">{t("abandonment")}</p>}
@@ -236,14 +256,28 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
           </div>}
         {work && !TERMINAL_STATUSES.includes(current.status) && <Button variant="outline" disabled={mutation.isPending || !reason.trim()}
           onClick={() => submit("/escalate", "POST", { reason })}>{t("escalate")}</Button>}
+        {staff && current.ticket_type !== "problem" && <ProblemLink ticket={current} link={links.data?.problem ?? null} problems={problems}
+          canEdit={work && !TERMINAL_STATUSES.includes(current.status)} busy={mutation.isPending} choice={problemChoice}
+          onChoice={setProblemChoice} onOpen={onOpen} onChange={(problemId) => submit("/problem", "PUT", { problemId })} />}
+        {staff && current.ticket_type === "problem" && <section className="space-y-2 rounded-lg border p-4">
+          <h2 className="font-bold">{t("linkedTickets")}</h2>
+          {links.data && (links.data.related.length === 0 ? <p className="text-sm">{t("noLinkedTickets")}</p> :
+            <ul className="space-y-1 text-sm">{links.data.related.map((item) => <li key={item.id} className="break-words">
+              <button className="underline" onClick={() => onOpen(item.id)}>#{item.id}</button> · {item.title} · {t(item.status)} · {t(item.priority)}
+            </li>)}</ul>)}
+        </section>}
         <section><h2 className="font-bold">{t("comments")}</h2>
           {comments.data?.map((comment) => <article key={comment.id} className={`my-3 rounded-lg border p-3 ${comment.internal ? "border-amber-400 bg-amber-50" : "bg-slate-50"}`}>
-            <p className="text-xs">{comment.author_name} · {new Date(comment.created_at).toLocaleString()} · {t(comment.internal ? "note" : "reply")}</p>
+            <p className="text-xs">{comment.author_name} · {new Date(comment.created_at).toLocaleString()} · {t(comment.internal ? "note" : "reply")}
+              {staff && comment.time_spent_minutes ? ` · ${formatMinutes(comment.time_spent_minutes)}` : ""}</p>
             <p className="mt-2 whitespace-pre-wrap break-words">{comment.body}</p>
           </article>)}
-          {(!isTicketStaff(actor) || work) && (!TERMINAL_STATUSES.includes(current.status) || (current.status === "resolved" && !isTicketStaff(actor))) && <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); submit("/comments", "POST", { body, internal }); }}>
+          {(!isTicketStaff(actor) || work) && (!TERMINAL_STATUSES.includes(current.status) || (current.status === "resolved" && !isTicketStaff(actor))) && <form className="space-y-3"
+            onSubmit={(e) => { e.preventDefault(); submit("/comments", "POST", { body, internal, ...(staff && minutes ? { timeSpentMinutes: Number(minutes) } : {}) }); }}>
             <label className="block">{t(internal ? "note" : "reply")}<Textarea required maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             {isTicketStaff(actor) && <label className="flex items-center gap-2"><input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />{t("note")}</label>}
+            {staff && <label className="block">{t("timeSpent")}
+              <Input type="number" inputMode="numeric" min={1} max={MAX_TIME_ENTRY_MINUTES} step={1} value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>}
             <Button disabled={mutation.isPending} type="submit">{t("send")}</Button>
           </form>}
         </section>
@@ -256,6 +290,33 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
       </>}
     </DialogContent>
   </Dialog>;
+}
+
+function ProblemLink({ ticket, link, problems, canEdit, busy, choice, onChoice, onOpen, onChange }: {
+  ticket: SupportTicket; link: TicketLink | null; problems: SupportTicket[]; canEdit: boolean; busy: boolean; choice: string;
+  onChoice: (value: string) => void; onOpen: (id: number) => void; onChange: (problemId: number | null) => void;
+}) {
+  const t = useSupportCopy();
+  const linkedId = ticket.problem_id || null;
+  // The links query can trail a re-link by one refetch, so a title is shown only while it matches the current problem.
+  const linked = link && link.id === linkedId ? link : null;
+  const choices = problems.filter((problem) => problem.id !== linkedId);
+  const chosen = choices.some((problem) => String(problem.id) === choice);
+  return <section className="space-y-3 rounded-lg border p-4">
+    <h2 className="font-bold">{t("linkedProblem")}</h2>
+    {linked
+      ? <p className="break-words"><button className="underline" onClick={() => onOpen(linked.id)}>#{linked.id}</button> · {linked.title} · {t(linked.status)}</p>
+      : linkedId ? <p>#{linkedId}</p> : <p>{t("noLinkedProblem")}</p>}
+    {canEdit && (choices.length === 0 ? <p className="text-sm">{t("noOpenProblems")}</p> :
+      <div className="flex flex-wrap items-center gap-3">
+        <select aria-label={t("chooseProblem")} className={selectClass} value={chosen ? choice : ""} onChange={(e) => onChoice(e.target.value)}>
+          <option value="">{t("chooseProblem")}</option>
+          {choices.map((problem) => <option key={problem.id} value={problem.id}>#{problem.id} · {problem.title}</option>)}
+        </select>
+        <Button disabled={busy || !chosen} onClick={() => onChange(Number(choice))}>{t("linkProblem")}</Button>
+      </div>)}
+    {canEdit && linkedId && <Button variant="outline" disabled={busy} onClick={() => onChange(null)}>{t("unlinkProblem")}</Button>}
+  </section>;
 }
 
 export default Tickets;

@@ -1038,6 +1038,8 @@ export const tickets = pgTable(
     abandonmentProposedAt: timestamp("abandonment_proposed_at", { withTimezone: true }),
     conversationId: integer("conversation_id"),
     duplicateOf: integer("duplicate_of"),
+    problemId: integer("problem_id"),
+    timeSpentMinutes: integer("time_spent_minutes").notNull().default(0),
   },
   (t) => ({
     statusIdx: index("tickets_status_idx").on(t.status),
@@ -1486,6 +1488,7 @@ export const ticketComments = pgTable(
     authorName: varchar("author_name"),
     body: text("body").notNull(),
     internal: boolean("internal").notNull().default(false),
+    timeSpentMinutes: integer("time_spent_minutes"),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => ({

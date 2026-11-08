@@ -14,8 +14,13 @@ export const TICKET_SCHEMA_UPGRADES = [
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS abandonment_proposed_at TIMESTAMPTZ`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS conversation_id INTEGER REFERENCES inbox_conversations(id)`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS duplicate_of INTEGER REFERENCES tickets(id)`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS problem_id INTEGER REFERENCES tickets(id)`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS time_spent_minutes INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE ticket_comments ADD COLUMN IF NOT EXISTS internal BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE ticket_comments ADD COLUMN IF NOT EXISTS time_spent_minutes INTEGER
+    CHECK (time_spent_minutes IS NULL OR time_spent_minutes BETWEEN 1 AND 1440)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS tickets_conversation_unique ON tickets (conversation_id) WHERE conversation_id IS NOT NULL`,
+  `CREATE INDEX IF NOT EXISTS tickets_problem_idx ON tickets (problem_id) WHERE problem_id IS NOT NULL`,
   `UPDATE tickets SET sla_due_at = created_at + COALESCE(sla_target_hours, 24) * INTERVAL '1 hour' WHERE sla_due_at IS NULL`,
   `CREATE TABLE IF NOT EXISTS ticket_events (
     id SERIAL PRIMARY KEY,
