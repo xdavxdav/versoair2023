@@ -468,10 +468,12 @@ export function buildUpdatePayload(
 
   if (!isScheduleLocked(original.status)) {
     const originalMinute = Math.floor(Date.parse(original.startsAt) / 60_000);
-    const start = zonedTimeToUtc(draft.localStart, draft.timeZone);
-    if (!start.ok) {
+    // An untouched start is not re-read: inside a repeated hour its wall-clock text names two instants.
+    const startTouched = draft.localStart !== utcToZonedInput(original.startsAt, draft.timeZone);
+    const start = startTouched ? zonedTimeToUtc(draft.localStart, draft.timeZone) : null;
+    if (start && !start.ok) {
       issues.push({ field: "start", message: ZONED_TIME_MESSAGES[start.reason] });
-    } else if (Math.floor(start.ms / 60_000) !== originalMinute) {
+    } else if (start && Math.floor(start.ms / 60_000) !== originalMinute) {
       if (start.ms < options.nowMs - START_GRACE_MS) {
         issues.push({ field: "start", message: "That start time is already in the past." });
       } else if (start.ms > options.nowMs + MAX_START_AHEAD_MS) {

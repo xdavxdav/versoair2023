@@ -594,6 +594,23 @@ test("a start that differs only by seconds from the stored one is not a change",
   assert.deepEqual(result, { ok: true, payload: {} });
 });
 
+test("an untouched start inside the repeated hour does not block other edits", () => {
+  const repeated = { ...original, startsAt: "2026-11-01T05:30:00.000Z" };
+  const wall = utcToZonedInput(repeated.startsAt, TORONTO);
+  assert.deepEqual(zonedTimeToUtc(wall, TORONTO), { ok: false, reason: "ambiguous" });
+
+  const run = (draft: SessionDraft) => buildUpdatePayload(repeated, draft, { nowMs: NOW, setEdited: false });
+  assert.deepEqual(run(unchanged({ localStart: wall })), { ok: true, payload: {} });
+  assert.deepEqual(run(unchanged({ localStart: wall, title: "New title" })), {
+    ok: true,
+    payload: { title: "New title" },
+  });
+  // Typing a time inside that hour is still refused.
+  assert.deepEqual(issuesOf(run(unchanged({ localStart: "2026-11-01T01:45" }))), [
+    { field: "start", message: ZONED_TIME_MESSAGES.ambiguous },
+  ]);
+});
+
 test("the set is sent only when the set itself was edited", () => {
   const rows = [row(1, { durationSec: 200 }), row(2, { durationSec: 100 })];
   assert.deepEqual(patchFor(unchanged({ rows }), { setEdited: false }), { ok: true, payload: {} });
