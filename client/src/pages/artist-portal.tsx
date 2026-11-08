@@ -258,6 +258,7 @@ import {
   logout as authLogout,
 } from "@/lib/auth";
 import { useAudio } from "@/lib/audio-context";
+import { audioFileProblem, audioInputAccept } from "@/lib/audio-file";
 import { toast } from "@/hooks/use-toast";
 import {
   useArtistStats,
@@ -3872,7 +3873,7 @@ export default function ArtistPortal() {
       <input
         ref={reuploadInputRef}
         type="file"
-        accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/*"
+        accept={audioInputAccept()}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -5111,7 +5112,7 @@ export default function ArtistPortal() {
                 id="artist-portal-audio-file-input"
                 ref={fileInputRef}
                 type="file"
-                accept="audio/*"
+                accept={audioInputAccept()}
                 style={{
                   position: "absolute",
                   width: 1,
@@ -5121,7 +5122,14 @@ export default function ArtistPortal() {
                 }}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) setUploadFile(f);
+                  if (!f) return;
+                  const problem = audioFileProblem(f);
+                  if (problem) {
+                    alert(problem);
+                    e.target.value = "";
+                    return;
+                  }
+                  setUploadFile(f);
                 }}
               />
               <label

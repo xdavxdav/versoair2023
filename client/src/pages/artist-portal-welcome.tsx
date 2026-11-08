@@ -50,6 +50,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { validateRegistrationForm } from "@/lib/auth-validation";
+import { audioInputAccept } from "@/lib/audio-file";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
 // ─── Types ───────────────────────────────────────────
@@ -1416,7 +1417,7 @@ function MiniStudio({
                             </span>
                             <input
                               type="file"
-                              accept=".mp3,.wav,.flac,.aiff,.ogg,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/flac,audio/aiff,audio/x-aiff,audio/ogg,audio/mp4,audio/x-m4a"
+                              accept={audioInputAccept()}
                               className="hidden"
                               onChange={handleInstrumentalUpload}
                             />

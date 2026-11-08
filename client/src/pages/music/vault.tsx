@@ -97,6 +97,11 @@ import {
   useInvalidateTracks,
 } from "@/hooks/use-music";
 import { useAudio } from "@/lib/audio-context";
+import {
+  audioFileProblem,
+  audioInputAccept,
+  MAX_AUDIO_UPLOAD_LABEL,
+} from "@/lib/audio-file";
 
 /* ─── Track type ─── */
 interface Track {
@@ -397,14 +402,14 @@ export default function MusicVault() {
       formData.append("title", uploadForm.title);
       // If we don't have an artist profile yet, the server auto-creates one
       // from the authenticated user, so only send artist_id when known.
-      if (myArtist?.id) formData.append("artist_id", String(myArtist.id));
+      if (myArtist?.id) formData.append("artistId", String(myArtist.id));
       if (uploadForm.genre) formData.append("genre", uploadForm.genre);
       if (uploadForm.price) formData.append("price", uploadForm.price);
       if (uploadForm.description)
         formData.append("description", uploadForm.description);
       if (uploadForm.bpm) formData.append("bpm", uploadForm.bpm);
       if (uploadForm.musical_key)
-        formData.append("musical_key", uploadForm.musical_key);
+        formData.append("musicalKey", uploadForm.musical_key);
       if (uploadForm.mood) formData.append("mood", uploadForm.mood);
       if (coverFile) formData.append("pochette", coverFile);
 
@@ -932,7 +937,7 @@ export default function MusicVault() {
                         Click to select audio file
                       </p>
                       <p className="text-xs text-white/30 mt-1">
-                        MP3, WAV, FLAC • Max 50MB
+                        MP3, WAV, FLAC, M4A • Max {MAX_AUDIO_UPLOAD_LABEL}
                       </p>
                     </>
                   )}
@@ -941,9 +946,18 @@ export default function MusicVault() {
                   id="vault-audio-file-input"
                   ref={fileInputRef}
                   type="file"
-                  accept="audio/*"
+                  accept={audioInputAccept()}
                   className="hidden"
-                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const picked = e.target.files?.[0] || null;
+                    const problem = picked ? audioFileProblem(picked) : null;
+                    if (problem) {
+                      alert(problem);
+                      e.target.value = "";
+                      return;
+                    }
+                    setUploadFile(picked);
+                  }}
                 />
               </div>
 
