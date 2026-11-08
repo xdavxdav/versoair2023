@@ -905,8 +905,6 @@ router.get("/tracks/:id/download", async (req, res) => {
 });
 
 // ── Play-count debounce: track → last-increment timestamp ─────────────
-const playCountDebounce = new Map<string, number>();
-const PLAY_DEBOUNCE_MS = 30_000; // 30 seconds between increments per IP+track
 
 // ═════════════════════════════════════════════════════════════════════
 // 💳 TRACK PURCHASE — POST /api/music/tracks/:id/purchase
@@ -1162,23 +1160,9 @@ router.get("/tracks/:id/stream", async (req, res) => {
       return res.status(404).json({ success: false, error: "Track not found" });
     }
 
-    // Only increment play count for real listeners (not artist previewing own track)
-    // Debounce: same IP + track only increments once per 30s
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
-    const debounceKey = `${clientIp}:${id}`;
-    const lastPlayed = playCountDebounce.get(debounceKey) || 0;
-    const isRange = !!req.headers.range;
-    if (
-      !isSelfStream &&
-      !isRange &&
-      Date.now() - lastPlayed > PLAY_DEBOUNCE_MS
-    ) {
-      playCountDebounce.set(debounceKey, Date.now());
-      await pool.query(
-        "UPDATE music_tracks SET play_count = COALESCE(play_count, 0) + 1, streams = COALESCE(streams, 0) + 1 WHERE id = $1",
-        [parseInt(id)],
-      );
-    }
+    // Streams are counted ONLY by POST /api/streaming/record-play (30 s rule,
+    // dedup, self-stream exclusion). Counting here too tripled every listen,
+    // and also counted page reloads and downloads.
 
     if (fileOnDisk) {
       // ── Serve from filesystem (fast, for fresh uploads on this dyno) ──
