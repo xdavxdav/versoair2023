@@ -750,7 +750,7 @@ export default function AudioPlayer() {
           </div>
         </motion.div>
       ) : (
-        <div className="fixed bottom-0 left-0 right-0 z-[80] bg-gray-950/98 backdrop-blur-xl border-t border-amber-500/20">
+        <div className="audio-dock fixed bottom-0 left-0 right-0 z-[80] bg-gray-950/98 backdrop-blur-xl border-t border-amber-500/20">
           {/* Progress bar (draggable scrubber) */}
           <div
             className="w-full h-3 bg-transparent cursor-pointer group relative flex items-center"
