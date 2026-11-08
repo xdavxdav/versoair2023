@@ -114,8 +114,16 @@ These are conservative operational defaults selected because the owner was
 unavailable for the policy form, not a claim of externally approved TSR rules:
 
 - Existing targets remain low 72 h, medium 24 h, high 8 h, critical 2 h.
-- Targets use calendar time, without automatic SLA pauses.
-- Resolution and closure are distinct; closure is manual.
+- Targets use calendar time. The SLA clock pauses while a ticket is pending on
+  the customer or a third party, and the due time moves out by the paused time
+  when work resumes. Internal and approval waits do not pause it.
+- Resolution and closure are distinct. Resolving needs a resolution code and
+  notes; a resolved ticket closes automatically after 3 days. Abandonment stays
+  manual.
+- Tickets have a type (incident, request, problem, change). A change starts
+  with approval pending; a manager other than the requester approves or rejects
+  it, and work cannot start before approval. A rejected change is closed.
+- Escalating a ticket raises its escalation level and writes an internal note.
 - Priority changes preserve the current SLA cycle start; reopening starts
   a new cycle. Historical breach events remain in the audit log.
 - Pending/customer receives in-app reminders at day 3 and day 7.

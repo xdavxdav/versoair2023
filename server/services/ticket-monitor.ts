@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { pool } from "../db";
-import { AUTO_CLOSE_DAYS, TERMINAL_STATUSES } from "@shared/ticket-policy";
+import { AUTO_CLOSE_DAYS, SLA_PAUSING_REASONS, TERMINAL_STATUSES } from "@shared/ticket-policy";
 
 export interface MonitoredTicket {
   id: number;
@@ -13,7 +13,8 @@ export interface MonitoredTicket {
 export function dueTicketAlerts(ticket: MonitoredTicket, now = new Date()) {
   if (TERMINAL_STATUSES.includes(ticket.status)) return [];
   const alerts: { kind: string; cycle: string; message: string; public: boolean }[] = [];
-  if (ticket.sla_due_at && new Date(ticket.sla_due_at) <= now) {
+  const slaPaused = ticket.status === "pending" && SLA_PAUSING_REASONS.includes(ticket.pending_reason ?? "");
+  if (!slaPaused && ticket.sla_due_at && new Date(ticket.sla_due_at) <= now) {
     alerts.push({
       kind: "sla-breach", cycle: new Date(ticket.sla_due_at).toISOString(),
       message: "The support target has been exceeded. Manager review is required.", public: false,

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  canWorkTicket, isTicketManager, isTicketStaff, PENDING_REASONS, RESOLUTION_CODES, TERMINAL_STATUSES,
+  canWorkTicket, isTicketManager, isTicketStaff, PENDING_REASONS, RESOLUTION_CODES, TERMINAL_STATUSES, TICKET_TYPES,
   TICKET_PRIORITIES, TICKET_STATUSES, transitionError, type SupportTicket, type TicketActor, type TicketStatus,
 } from "@shared/ticket-policy";
 
@@ -34,6 +34,7 @@ export function Tickets() {
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [ticketType, setTicketType] = useState<(typeof TICKET_TYPES)[number]>("incident");
   const tickets = useQuery<SupportTicket[]>({
     queryKey: ["support-tickets", user?.id],
     enabled: Boolean(user),
@@ -52,8 +53,8 @@ export function Tickets() {
     void client.invalidateQueries({ queryKey: ["support-detail"] });
   };
   const create = useMutation({
-    mutationFn: () => ticketRequest<SupportTicket>("/api/tickets", "POST", { title, description }),
-    onSuccess: (ticket) => { setCreating(false); setTitle(""); setDescription(""); setSelectedId(ticket.id); refresh(); },
+    mutationFn: () => ticketRequest<SupportTicket>("/api/tickets", "POST", { title, description, type: ticketType }),
+    onSuccess: (ticket) => { setCreating(false); setTitle(""); setDescription(""); setTicketType("incident"); setSelectedId(ticket.id); refresh(); },
   });
   const selected = tickets.data?.find((ticket) => ticket.id === selectedId);
   const visible = tickets.data?.filter((ticket) =>
@@ -89,7 +90,7 @@ export function Tickets() {
         {visible.map((ticket) => <button key={ticket.id} onClick={() => setSelectedId(ticket.id)}
           className="min-w-0 rounded-xl border border-slate-300 bg-white p-5 text-left shadow-sm hover:border-amber-500">
           <div className="flex flex-wrap justify-between gap-2 text-sm">
-            <span>#{ticket.id} · {t(ticket.status)}</span><span>{t(ticket.priority)}</span>
+            <span>#{ticket.id} · {t(ticket.ticket_type ?? "incident")} · {t(ticket.status)}</span><span>{t(ticket.priority)}</span>
           </div>
           <h2 className="mt-2 break-words font-bold">{ticket.title}</h2>
           <p className="mt-2 break-words text-sm text-slate-600">{ticket.description?.slice(0, 180)}</p>
@@ -109,6 +110,9 @@ export function Tickets() {
         <DialogTitle>{t("create")}</DialogTitle><DialogDescription>{t("policy")}</DialogDescription>
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
           <label className="block">{t("title")}<Input required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+          <label className="block">{t("ticketType")}<select className={`${selectClass} ml-2`} value={ticketType}
+            onChange={(e) => setTicketType(e.target.value as (typeof TICKET_TYPES)[number])}>
+            {TICKET_TYPES.map((value) => <option key={value} value={value}>{t(value)}</option>)}</select></label>
           <label className="block">{t("description")}<Textarea maxLength={5000} value={description} onChange={(e) => setDescription(e.target.value)} /></label>
           {create.isError && <p role="alert">{errorText(create.error)}</p>}
           <Button disabled={create.isPending} type="submit">{t("create")}</Button>
@@ -176,7 +180,9 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
         <p role="alert" key={index}>{errorText(error)}</p>)}
       {current && <>
         <p className="whitespace-pre-wrap break-words">{current.description}</p>
-        <p>{t("status")}: {t(current.status)} · {t(current.priority)}</p>
+        <p>{t("status")}: {t(current.status)} · {t(current.priority)} · {t(current.ticket_type ?? "incident")}</p>
+        {current.ticket_type === "change" && <p>{t("approval")}: {t(current.approval_status === "not-required" ? "pending" : current.approval_status)}</p>}
+        {isTicketStaff(actor) && current.escalation_level > 0 && <p>{t("escalationLevel")}: {current.escalation_level}</p>}
         {current.resolution_code && <p>{t("resolutionCode")}: {t(current.resolution_code as (typeof RESOLUTION_CODES)[number])} — {current.resolution_notes}</p>}
         {current.follow_up_at && <p>{t("followUp")}: {new Date(current.follow_up_at).toLocaleString()}</p>}
         {current.abandonment_proposed_at && <p className="text-amber-800">{t("abandonment")}</p>}
@@ -222,7 +228,13 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
           <label className="block">{t("reason")}<Input required value={reason} onChange={(e) => setReason(e.target.value)} /></label>
           <Button disabled={mutation.isPending} type="submit">{t("assign")}</Button>
         </form>}
-        {work && <Button variant="outline" disabled={mutation.isPending || !reason.trim()}
+        {isTicketManager(actor) && current.ticket_type === "change" && current.approval_status === "pending" && !TERMINAL_STATUSES.includes(current.status) &&
+          <div className="flex flex-wrap gap-3 rounded-lg border p-4">
+            <label className="block w-full">{t("reason")}<Input required value={reason} onChange={(e) => setReason(e.target.value)} /></label>
+            <Button disabled={mutation.isPending || !reason.trim()} onClick={() => submit("/approval", "POST", { decision: "approved", reason })}>{t("approve")}</Button>
+            <Button variant="outline" disabled={mutation.isPending || !reason.trim()} onClick={() => submit("/approval", "POST", { decision: "rejected", reason })}>{t("reject")}</Button>
+          </div>}
+        {work && !TERMINAL_STATUSES.includes(current.status) && <Button variant="outline" disabled={mutation.isPending || !reason.trim()}
           onClick={() => submit("/escalate", "POST", { reason })}>{t("escalate")}</Button>}
         <section><h2 className="font-bold">{t("comments")}</h2>
           {comments.data?.map((comment) => <article key={comment.id} className={`my-3 rounded-lg border p-3 ${comment.internal ? "border-amber-400 bg-amber-50" : "bg-slate-50"}`}>

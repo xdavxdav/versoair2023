@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { isConfiguredOwner, isReservedOwnerRole, ownerRoleMutationError } from "./owner-access";
 import {
-  canReadTicket, canWorkTicket, createTicketSchema, isTicketManager, isTicketStaff,
-  transitionError, updateTicketSchema, TICKET_STATUSES, type TicketActor,
+  approvalError, canReadTicket, canWorkTicket, createTicketSchema, isTicketManager, isTicketStaff,
+  slaPauseMs, transitionError, updateTicketSchema, TICKET_STATUSES, type TicketActor,
 } from "./ticket-policy";
 
 const owner: TicketActor = { id: 1, role: "superuser", owner: true };
@@ -72,4 +72,37 @@ test("updates require reasons and pending metadata; reject arbitrary fields", ()
   assert.equal(createTicketSchema.safeParse({ title: "Test", status: "closed" }).success, false);
   assert.equal(createTicketSchema.safeParse({ title: "Test", assigneeId: 99 }).success, false);
   assert.equal(createTicketSchema.parse({ title: "Test" }).priority, "medium");
+});
+
+test("a change cannot start or resolve before it is approved", () => {
+  const change = { ...ticket, status: "open", ticket_type: "change", approval_status: "pending" };
+  assert.match(transitionError(moderator, change, "in-progress")!, /approved/);
+  assert.equal(transitionError(moderator, { ...change, approval_status: "approved" }, "in-progress"), null);
+  assert.equal(transitionError(moderator, { ...ticket, status: "open", ticket_type: "incident" }, "in-progress"), null);
+});
+test("approval is manager-only, once, and never self-approved", () => {
+  const change = { ...ticket, status: "open", ticket_type: "change", approval_status: "pending", reporter_id: 4 };
+  assert.match(approvalError(moderator, change, "approved")!, /manager/);
+  assert.equal(approvalError(admin, change, "approved"), null);
+  assert.match(approvalError(admin, { ...change, reporter_id: admin.id }, "approved")!, /requested/);
+  assert.equal(approvalError(owner, { ...change, reporter_id: owner.id }, "approved"), null);
+  assert.match(approvalError(admin, { ...change, approval_status: "approved" }, "rejected")!, /already/);
+  assert.match(approvalError(admin, { ...change, ticket_type: "incident" }, "approved")!, /change/);
+  assert.match(approvalError(admin, { ...change, status: "closed" }, "approved")!, /Reopen/);
+});
+test("ticket types default to incident and reject unknown values", () => {
+  assert.equal(createTicketSchema.parse({ title: "x" }).type, "incident");
+  assert.equal(createTicketSchema.parse({ title: "x", type: "change" }).type, "change");
+  assert.equal(createTicketSchema.safeParse({ title: "x", type: "bogus" }).success, false);
+});
+test("the SLA clock pauses only while waiting on the customer or a third party", () => {
+  const now = new Date("2026-11-08T12:00:00Z");
+  const since = "2026-11-08T10:00:00Z";
+  const pending = (reason: string | null) => ({ status: "pending", pending_reason: reason, pending_since: since });
+  assert.equal(slaPauseMs(pending("customer"), now), 2 * 3600000);
+  assert.equal(slaPauseMs(pending("third-party"), now), 2 * 3600000);
+  assert.equal(slaPauseMs(pending("internal"), now), 0);
+  assert.equal(slaPauseMs(pending("approval"), now), 0);
+  assert.equal(slaPauseMs({ status: "open", pending_reason: "customer", pending_since: since }, now), 0);
+  assert.equal(slaPauseMs({ status: "pending", pending_reason: "customer", pending_since: null }, now), 0);
 });

@@ -4,6 +4,7 @@ import type { PoolClient } from "pg";
 import { pool } from "../db";
 import { requireAuth, isOwner } from "../middleware/auth";
 import {
+  approvalError, approvalSchema, slaPauseMs,
   assignTicketSchema, canReadTicket, canWorkTicket, commentSchema, createTicketSchema,
   isTicketManager, isTicketStaff, SLA_HOURS, TERMINAL_STATUSES, TICKET_STATUSES,
   transitionError, updateTicketSchema, type SupportTicket, type TicketActor,
@@ -91,11 +92,13 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
   const enteringPending = input.status === "pending";
   const leavingPending = Boolean(input.status && input.status !== "pending");
   const reopening = (input.status === "in-progress" || input.status === "open") && TERMINAL_STATUSES.includes(before.status);
-  const dueAt = reopening ? new Date(now.getTime() + SLA_HOURS[priority] * 3600000)
+  const pausedMs = leavingPending ? slaPauseMs(before, now) : 0;
+  const baseDue = reopening ? new Date(now.getTime() + SLA_HOURS[priority] * 3600000)
     : input.priority ? new Date(
       (before.sla_due_at ? new Date(before.sla_due_at).getTime() - SLA_HOURS[before.priority] * 3600000 : new Date(before.created_at).getTime())
       + SLA_HOURS[priority] * 3600000)
     : before.sla_due_at;
+  const dueAt = baseDue && pausedMs ? new Date(new Date(baseDue).getTime() + pausedMs) : baseDue;
   const { rows } = await client.query<SupportTicket>(
     `UPDATE tickets SET status=$2::text, priority=$3, sla_target_hours=$4, sla_due_at=$5,
       pending_reason=$6, pending_since=$7, follow_up_at=$8,
@@ -105,6 +108,9 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
       duplicate_of=COALESCE($10,duplicate_of),
       resolution_code=CASE WHEN $2='resolved' THEN $12::text WHEN $2='closed' THEN resolution_code ELSE NULL END,
       resolution_notes=CASE WHEN $2='resolved' THEN $13::text WHEN $2='closed' THEN resolution_notes ELSE NULL END,
+      approval_status=CASE WHEN $11 AND ticket_type='change' THEN 'pending' ELSE approval_status END,
+      approved_by=CASE WHEN $11 AND ticket_type='change' THEN NULL ELSE approved_by END,
+      approved_at=CASE WHEN $11 AND ticket_type='change' THEN NULL ELSE approved_at END,
       sla_breached=CASE WHEN $11 THEN false ELSE sla_breached END, updated_at=NOW()
      WHERE id=$1 RETURNING *`,
     [id, nextStatus, priority, SLA_HOURS[priority], dueAt,
@@ -118,7 +124,7 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
   await event(client, id, actor, "updated", {
     from: before.status, to: nextStatus, previousPriority: before.priority, priority,
   });
-  await event(client, id, actor, "update-details", { ...input }, true);
+  await event(client, id, actor, "update-details", { ...input, ...(pausedMs ? { slaPausedMinutes: Math.round(pausedMs / 60000) } : {}) }, true);
   return rows[0];
 }
 
@@ -206,8 +212,10 @@ router.post("/", route(async (req, res) => {
       ["low", "medium"].includes(input.priority) ? "high" : input.priority;
     const { rows } = await client.query<SupportTicket>(
       `INSERT INTO tickets(title,description,priority,category,reporter,reporter_id,requester_email,
-        sla_target_hours,sla_due_at) VALUES ($1,$2,$3,$4,$5::text,$6,$5::text,$7::integer,NOW()+$7::integer*INTERVAL '1 hour') RETURNING *`,
-      [input.title, input.description, priority, input.category, req.user!.email, actor.id, SLA_HOURS[priority]],
+        sla_target_hours,sla_due_at,ticket_type,approval_status)
+       VALUES ($1,$2,$3,$4,$5::text,$6,$5::text,$7::integer,NOW()+$7::integer*INTERVAL '1 hour',$8::varchar,
+        CASE WHEN $8::text='change' THEN 'pending' ELSE 'not-required' END) RETURNING *`,
+      [input.title, input.description, priority, input.category, req.user!.email, actor.id, SLA_HOURS[priority], input.type],
     );
     await event(client, rows[0].id, actor, "created", { source: "portal" });
     return rows[0];
@@ -330,19 +338,61 @@ router.put("/:id/assign", route(async (req, res) => {
   res.json(ticket);
 }));
 router.post("/:id/escalate", route(async (req, res) => {
-  const input = parse(z.object({ reason: z.string().trim().min(1).max(2000) }).strict(), req.body);
+  const input = parse(z.object({
+    reason: z.string().trim().min(1).max(2000),
+    team: z.string().trim().min(1).max(80).optional(),
+  }).strict(), req.body);
   const actor = actorFor(req);
-  await transaction(async (client) => {
+  const level = await transaction(async (client) => {
     const id = parse(idSchema, req.params.id);
     const ticket = await readTicket(client, id, actor, true);
     if (!canWorkTicket(actor, ticket)) throw new TicketError(403, "Assigned staff access required");
+    if (TERMINAL_STATUSES.includes(ticket.status)) throw new TicketError(409, "Reopen the ticket before escalating");
+    const { rows } = await client.query<{ escalation_level: number }>(
+      "UPDATE tickets SET escalation_level=escalation_level+1, team=COALESCE($2,team), updated_at=NOW() WHERE id=$1 RETURNING escalation_level",
+      [id, input.team ?? null],
+    );
+    const next = rows[0].escalation_level;
+    // The worklog entry is an internal note so the escalation trail reads in the conversation.
+    await client.query(
+      "INSERT INTO ticket_comments(ticket_id,author_id,author_name,body,internal) VALUES ($1,$2,$3,$4,true)",
+      [id, actor.id, req.user!.email, `Escalated to level ${next}${input.team ? ` (${input.team})` : ""}: ${input.reason}`],
+    );
     await client.query(
       "INSERT INTO ticket_alerts(ticket_id,kind,cycle_key,message) VALUES ($1,'staff-escalation',$2,$3)",
       [id, crypto.randomUUID(), input.reason],
     );
-    await event(client, id, actor, "escalated", input, true);
+    await event(client, id, actor, "escalated", { ...input, level: next }, true);
+    return next;
   });
-  res.json({ success: true });
+  res.json({ success: true, escalationLevel: level });
+}));
+router.post("/:id/approval", route(async (req, res) => {
+  const input = parse(approvalSchema, req.body);
+  const actor = actorFor(req);
+  const ticket = await transaction(async (client) => {
+    const id = parse(idSchema, req.params.id);
+    const before = await readTicket(client, id, actor, true);
+    const denial = approvalError(actor, before, input.decision);
+    if (denial) throw new TicketError(denial === "Only a manager can approve a change" ? 403 : 409, denial);
+    const rejected = input.decision === "rejected";
+    const { rows } = await client.query<SupportTicket>(
+      `UPDATE tickets SET approval_status=$2::text, approved_by=$3, approved_at=NOW(),
+        status=CASE WHEN $4 THEN 'closed' ELSE status END,
+        resolved_at=CASE WHEN $4 THEN NOW() ELSE resolved_at END, updated_at=NOW()
+       WHERE id=$1 RETURNING *`,
+      [id, input.decision, actor.id, rejected],
+    );
+    if (rejected) {
+      await client.query(
+        "INSERT INTO ticket_comments(ticket_id,author_id,author_name,body,internal) VALUES ($1,$2,'Change approval',$3,false)",
+        [id, actor.id, `Change rejected: ${input.reason}`],
+      );
+    }
+    await event(client, id, actor, rejected ? "change-rejected" : "change-approved", { reason: input.reason });
+    return rows[0];
+  });
+  res.json(publicTicket(ticket, actor));
 }));
 router.get("/:id/comments", route(async (req, res) => {
   const actor = actorFor(req);
