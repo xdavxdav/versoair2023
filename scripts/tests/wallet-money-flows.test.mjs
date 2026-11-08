@@ -438,60 +438,50 @@ test("ad-reward: rejects a wrong secret and malformed rewards", async () => {
 });
 
 test("ad-reward: a wallet is never credited without its ledger row", async () => {
-  // Whatever the ledger table looks like, the credit and its record commit together or not at all
-  const caller = await makeUser("ad1");
-  const target = await makeUser("ad1t");
-  const res = await postAdReward(caller, target.id, `ad-inv-${runId}`);
-  const w = await wallet(target.id);
-  const ledger = (await txns(target.id)).length;
-  if (res.status === 200) {
-    assert.equal(w.balance, "1.50");
-    assert.equal(ledger, 1);
-  } else {
-    assert.equal(w, undefined, `a failed credit must leave no wallet behind: ${res.text}`);
-    assert.equal(ledger, 0);
+  // Force the ledger insert to fail: the credit and its record must commit together or not at all
+  await pool.query("ALTER TABLE wallet_transactions ADD CONSTRAINT reject_ad_reward CHECK (type <> 'arena_reward')");
+  try {
+    const caller = await makeUser("ad1");
+    const target = await makeUser("ad1t");
+    const res = await postAdReward(caller, target.id, `ad-inv-${runId}`);
+    assert.equal(res.status, 500, res.text);
+    assert.equal(await wallet(target.id), undefined, "a failed credit must leave no wallet behind");
+    assert.equal((await txns(target.id)).length, 0);
+  } finally {
+    await pool.query("ALTER TABLE wallet_transactions DROP CONSTRAINT IF EXISTS reject_ad_reward");
   }
 });
 
 test("ad-reward: credits once per transactionId, even for parallel retries, and serialises distinct credits", async () => {
-  // The handler writes a legacy transaction_type column; emulate a database that has it
-  await pool.query("ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS transaction_type varchar(30)");
-  await pool.query("ALTER TABLE wallet_transactions ALTER COLUMN type DROP NOT NULL");
-  try {
-    const caller = await makeUser("ad2");
-    const target = await makeUser("ad2t");
+  const caller = await makeUser("ad2");
+  const target = await makeUser("ad2t");
 
-    const first = await postAdReward(caller, target.id, "ad-ok-1");
-    assert.equal(first.status, 200, first.text);
-    assert.equal(first.body.credited, 1.5);
-    let w = await wallet(target.id);
-    assert.equal(w.balance, "1.50");
-    assert.equal(w.earned, "1.50");
+  const first = await postAdReward(caller, target.id, "ad-ok-1");
+  assert.equal(first.status, 200, first.text);
+  assert.equal(first.body.credited, 1.5);
+  let w = await wallet(target.id);
+  assert.equal(w.balance, "1.50");
+  assert.equal(w.earned, "1.50");
 
-    const replay = await postAdReward(caller, target.id, "ad-ok-1");
-    assert.equal(replay.status, 200, replay.text);
-    assert.equal(replay.body.message, "Already credited");
-    assert.equal((await wallet(target.id)).balance, "1.50");
+  const replay = await postAdReward(caller, target.id, "ad-ok-1");
+  assert.equal(replay.status, 200, replay.text);
+  assert.equal(replay.body.message, "Already credited");
+  assert.equal((await wallet(target.id)).balance, "1.50");
 
-    const sameId = await Promise.all(Array.from({ length: 12 }, () => postAdReward(caller, target.id, "ad-ok-2")));
-    assert.equal(count(sameId, 200), 12, statuses(sameId));
-    assert.equal((await wallet(target.id)).balance, "3.00");
+  const sameId = await Promise.all(Array.from({ length: 12 }, () => postAdReward(caller, target.id, "ad-ok-2")));
+  assert.equal(count(sameId, 200), 12, statuses(sameId));
+  assert.equal((await wallet(target.id)).balance, "3.00");
 
-    const distinct = await Promise.all(Array.from({ length: 10 }, (_, i) => postAdReward(caller, target.id, `ad-d-${i}`, 0.5)));
-    assert.equal(count(distinct, 200), 10, statuses(distinct));
-    w = await wallet(target.id);
-    assert.equal(w.balance, "8.00");
-    assert.equal(w.earned, "8.00");
-    const rows = await pool.query(
-      "SELECT count(*)::int AS n FROM wallet_transactions WHERE user_id = $1 AND external_reference LIKE 'ad-%'",
-      [target.id],
-    );
-    assert.equal(rows.rows[0].n, 12);
-  } finally {
-    await pool.query("DELETE FROM wallet_transactions WHERE type IS NULL");
-    await pool.query("ALTER TABLE wallet_transactions DROP COLUMN IF EXISTS transaction_type");
-    await pool.query("ALTER TABLE wallet_transactions ALTER COLUMN type SET NOT NULL");
-  }
+  const distinct = await Promise.all(Array.from({ length: 10 }, (_, i) => postAdReward(caller, target.id, `ad-d-${i}`, 0.5)));
+  assert.equal(count(distinct, 200), 10, statuses(distinct));
+  w = await wallet(target.id);
+  assert.equal(w.balance, "8.00");
+  assert.equal(w.earned, "8.00");
+  const rows = await pool.query(
+    "SELECT count(*)::int AS n FROM wallet_transactions WHERE user_id = $1 AND external_reference LIKE 'ad-%' AND type = 'arena_reward'",
+    [target.id],
+  );
+  assert.equal(rows.rows[0].n, 12);
 });
 
 // ─────────────────────────── issuing webhook ───────────────────────────

@@ -212,7 +212,7 @@ router.post("/ad-reward", async (req: Request, res: Response) => {
         [balanceAfter.toFixed(2), creditAmount.toFixed(2), w.id],
       );
       await client.query(
-        `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, external_reference, related_entity_type, status)
+        `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, external_reference, related_entity_type, status)
          VALUES ($1, $2, 'arena_reward', $3, $4, $5, 'Ad reward', $6, 'ad', 'completed')`,
         [
           targetUserId,
