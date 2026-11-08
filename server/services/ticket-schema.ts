@@ -1,6 +1,11 @@
 export const TICKET_SCHEMA_UPGRADES = [
   `UPDATE tickets SET status='in-progress' WHERE status='in_progress'`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS pending_reason VARCHAR`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS ticket_type VARCHAR NOT NULL DEFAULT 'incident'`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS approval_status VARCHAR NOT NULL DEFAULT 'not-required'`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS approved_by INTEGER REFERENCES users(id)`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS escalation_level INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_code VARCHAR`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_notes TEXT`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS pending_since TIMESTAMPTZ`,
