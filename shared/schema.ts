@@ -1024,6 +1024,8 @@ export const tickets = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
     resolvedAt: timestamp("resolved_at"),
+    resolutionCode: varchar("resolution_code"),
+    resolutionNotes: text("resolution_notes"),
     pendingReason: varchar("pending_reason"),
     pendingSince: timestamp("pending_since", { withTimezone: true }),
     followUpAt: timestamp("follow_up_at", { withTimezone: true }),

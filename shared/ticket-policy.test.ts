@@ -65,6 +65,10 @@ test("updates require reasons and pending metadata; reject arbitrary fields", ()
     status: "pending", reason: "Waiting", pendingReason: "customer", followUpAt: "2026-11-01T12:00:00Z",
   }).success, true);
   assert.equal(updateTicketSchema.safeParse({ status: "resolved", reason: "Done", reporter_id: 99 }).success, false);
+  assert.equal(updateTicketSchema.safeParse({ status: "resolved", reason: "Done" }).success, false);
+  assert.equal(updateTicketSchema.safeParse({
+    status: "resolved", reason: "Done", resolutionCode: "fixed", resolutionNotes: "Restarted the worker",
+  }).success, true);
   assert.equal(createTicketSchema.safeParse({ title: "Test", status: "closed" }).success, false);
   assert.equal(createTicketSchema.safeParse({ title: "Test", assigneeId: 99 }).success, false);
   assert.equal(createTicketSchema.parse({ title: "Test" }).priority, "medium");

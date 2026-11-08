@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { pool } from "../db";
-import { TERMINAL_STATUSES } from "@shared/ticket-policy";
+import { AUTO_CLOSE_DAYS, TERMINAL_STATUSES } from "@shared/ticket-policy";
 
 export interface MonitoredTicket {
   id: number;
@@ -85,6 +85,22 @@ export async function runTicketMonitor() {
           [ticket.id, alert.kind, JSON.stringify({ message: alert.message }), !alert.public, `alert:${inserted.rows[0].id}`],
         );
       }
+    }
+    const closed = await client.query<{ id: number }>(
+      `UPDATE tickets SET status='closed', updated_at=NOW()
+       WHERE status='resolved' AND resolved_at<=NOW()-($1::int * INTERVAL '1 day') RETURNING id`,
+      [AUTO_CLOSE_DAYS],
+    );
+    for (const { id } of closed.rows) {
+      const message = `Closed automatically ${AUTO_CLOSE_DAYS} days after resolution. Open a new ticket if the problem returns.`;
+      await client.query(
+        `INSERT INTO ticket_comments(ticket_id,author_name,body,internal) VALUES ($1,'Support',$2,false)`,
+        [id, message],
+      );
+      await client.query(
+        `INSERT INTO ticket_events(ticket_id,kind,details,internal,dedupe_key) VALUES ($1,'auto-closed',$2,false,$3)`,
+        [id, JSON.stringify({ from: "resolved", to: "closed" }), `auto-close:${id}:${Date.now()}`],
+      );
     }
     await client.query("COMMIT");
   } catch (error) {

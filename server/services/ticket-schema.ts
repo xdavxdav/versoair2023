@@ -1,6 +1,8 @@
 export const TICKET_SCHEMA_UPGRADES = [
   `UPDATE tickets SET status='in-progress' WHERE status='in_progress'`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS pending_reason VARCHAR`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_code VARCHAR`,
+  `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS resolution_notes TEXT`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS pending_since TIMESTAMPTZ`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS follow_up_at TIMESTAMPTZ`,
   `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS sla_due_at TIMESTAMPTZ`,
