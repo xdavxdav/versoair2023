@@ -42,9 +42,7 @@ export const BUSINESS_TYPE_OPTIONS = [
 ] as const;
 
 /**
- * Maps each main category slug to the business types that are logically compatible.
- * When a category is selected, only matching types are enabled; the rest are greyed out.
- * Uses category slugs from the seed data (category-seed-data.ts).
+ * Category-to-type relationships retained for category normalization.
  */
 export const CATEGORY_TO_TYPES: Record<string, string[]> = {
   // 1. Commerce — shops, malls, supermarkets, commercial activity
@@ -456,9 +454,7 @@ function resolveCategoryKey(
 }
 
 /**
- * Get the allowed business types for a given category.
- * Pass the categories array and the selected categoryId.
- * Returns the full BUSINESS_TYPE_OPTIONS array with a `disabled` flag on each item.
+ * Returns all business types as selectable options for every category.
  */
 export function getBusinessTypesForCategory(
   categories: any[],
@@ -504,11 +500,9 @@ export function getBusinessTypesForCategory(
     return BUSINESS_TYPE_OPTIONS.map((opt) => ({ ...opt, disabled: false }));
   }
 
-  const allowedTypes = CATEGORY_TO_TYPES[resolvedKey];
-
   return BUSINESS_TYPE_OPTIONS.map((opt) => ({
     ...opt,
-    disabled: !allowedTypes.includes(opt.value),
+    disabled: false,
   }));
 }
 

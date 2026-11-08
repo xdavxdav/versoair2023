@@ -131,6 +131,16 @@ export function getMarketAvailability(countryCode: string): boolean | null {
   return GEOADMIN_AVAILABLE_MARKETS.has(code);
 }
 
+export function isGeoAdminComingSoonCountry(countryCode: string): boolean {
+  return countryCode.trim().toUpperCase() === "CI";
+}
+
+export function unavailableMarketLabel(countryCode: string): string {
+  return isGeoAdminComingSoonCountry(countryCode)
+    ? "Coming soon"
+    : "Availability not confirmed";
+}
+
 export function formatXofPrice(
   amountXof: number | null,
   currency: string,
@@ -169,7 +179,9 @@ export function formatMarketXofPrice(
   currency: string,
   rates: ExchangeRates | null,
 ): string {
-  if (getMarketAvailability(countryCode) === false) return "Coming soon";
+  if (getMarketAvailability(countryCode) === false) {
+    return unavailableMarketLabel(countryCode);
+  }
   if (amountXof === null) return "Custom quote";
   const market = getGeoAdminMarket(countryCode);
   if (

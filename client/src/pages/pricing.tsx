@@ -17,6 +17,7 @@ import {
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_OFFER_ORDER,
   formatMarketXofPrice,
+  isGeoAdminComingSoonCountry,
 } from "@/lib/geoadmin-pricing";
 
 export default function Pricing() {
@@ -62,8 +63,8 @@ export default function Pricing() {
             </h1>
             <p className="mb-6 max-w-2xl text-lg leading-relaxed text-slate-600">
               Prices are shown in Canadian dollars in Canada, euros in France,
-              and FCFA in Côte d’Ivoire. Other countries are marked as coming
-              soon.
+              and FCFA in Côte d’Ivoire. Availability in other markets is
+              confirmed individually.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_OFFER_ORDER.map((tier) => (
@@ -99,7 +100,9 @@ export default function Pricing() {
                       : tier === "enterprise"
                         ? "Discuss a package tailored to your needs."
                         : marketAvailability === false
-                          ? `GeoAdmin is coming soon in your selected country.`
+                          ? isGeoAdminComingSoonCountry(selectedCountry ?? "")
+                            ? "GeoAdmin is coming soon in Côte d’Ivoire."
+                            : "GeoAdmin availability is not confirmed in your selected country."
                           : GEOADMIN_PLAN_DETAILS[tier].shortDescription}
                   </span>
                 </button>

@@ -412,7 +412,8 @@ export default function GeoInsightsPage() {
 
         <p className="mt-6 text-sm leading-6 text-slate-400">
           Available study markets: Canada (CAD), France (EUR), and Côte
-          d’Ivoire (FCFA). Other markets are coming soon. Display conversions
+          d’Ivoire (FCFA). Availability in other markets is confirmed
+          individually. Display conversions
           are indicative; the written quote defines the final price and scope.
           No online payment is taken, and customer access is activated only
           after explicit staff approval.
