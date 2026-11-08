@@ -1,3 +1,4 @@
+import { navigate as spaNavigate } from "wouter/use-browser-location";
 /**
  * Music Vault — Complete track library with upload, management, and organization
  * Shows all user's tracks, albums, and allows uploading new music
@@ -473,7 +474,7 @@ export default function MusicVault() {
           : null,
       }),
     );
-    window.location.href = "/music/social";
+    spaNavigate("/music/social");
   };
 
   // Format duration

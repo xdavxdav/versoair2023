@@ -454,7 +454,7 @@ export default function UserProfilePage() {
                     whileHover={{ scale: 1.02 }}
                     className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-colors cursor-pointer"
                     onClick={() =>
-                      (window.location.href = `/streaming/${tracks[0].id}`)
+                      navigate(`/streaming/${tracks[0].id}`)
                     }
                   >
                     <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500/20 to-violet-600/20 flex items-center justify-center overflow-hidden shrink-0">
@@ -504,7 +504,7 @@ export default function UserProfilePage() {
                     whileHover={{ scale: 1.01, x: 4 }}
                     className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-all group cursor-pointer"
                     onClick={() =>
-                      (window.location.href = `/streaming/${track.id}`)
+                      navigate(`/streaming/${track.id}`)
                     }
                   >
                     <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-500/20 to-violet-600/20 flex items-center justify-center shrink-0 overflow-hidden">

@@ -1,3 +1,4 @@
+import { navigate as spaNavigate } from "wouter/use-browser-location";
 import { X, Music } from "lucide-react";
 import { Button } from "./button";
 import { useQuery } from "@tanstack/react-query";
@@ -237,8 +238,7 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
               onClick={() => {
                 onClose();
                 // Unified domain: same-origin navigation, never cross-domain
-                window.location.href =
-                  window.location.origin + "/artist-portal";
+                spaNavigate("/artist-portal");
               }}
             >
               <Music className="mr-2 h-4 w-4" />
