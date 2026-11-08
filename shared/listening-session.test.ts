@@ -281,6 +281,9 @@ test("set validation rejects the cases that would break playback", () => {
   assert.equal(code([{ trackId: 0, durationSec: 60 }]), "track_id_invalid");
   assert.equal(code([{ trackId: "7", durationSec: 60 }]), "track_id_invalid");
   assert.equal(code([{ trackId: 1.5, durationSec: 60 }]), "track_id_invalid");
+  assert.equal(code([{ trackId: 2_147_483_647, durationSec: 60 }]), "ok", "the largest integer id is fine");
+  assert.equal(code([{ trackId: 2_147_483_648, durationSec: 60 }]), "track_id_invalid");
+  assert.equal(code([{ trackId: Number.MAX_SAFE_INTEGER, durationSec: 60 }]), "track_id_invalid");
   assert.equal(code([{ trackId: 1, durationSec: 0 }]), "track_duration_invalid");
   assert.equal(code([{ trackId: 1, durationSec: 3601 }]), "track_duration_invalid");
   assert.equal(code([{ trackId: 1, durationSec: 90.5 }]), "track_duration_invalid");

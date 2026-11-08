@@ -187,6 +187,9 @@ const invalidSet = (code: string, message: string): SetValidation => ({
   message,
 });
 
+/** music_tracks.id is a Postgres integer: a larger id can never exist and would fail in SQL. */
+const MAX_TRACK_ID = 2_147_483_647;
+
 /** Checks a set before it is stored: sizes, ids, lengths, no repeats, a sane total. */
 export function validateSetTracks(input: unknown): SetValidation {
   if (!Array.isArray(input) || input.length === 0) {
@@ -205,7 +208,12 @@ export function validateSetTracks(input: unknown): SetValidation {
   for (const item of input) {
     const trackId = (item as { trackId?: unknown } | null)?.trackId;
     const durationSec = (item as { durationSec?: unknown } | null)?.durationSec;
-    if (typeof trackId !== "number" || !Number.isSafeInteger(trackId) || trackId <= 0) {
+    if (
+      typeof trackId !== "number" ||
+      !Number.isSafeInteger(trackId) ||
+      trackId <= 0 ||
+      trackId > MAX_TRACK_ID
+    ) {
       return invalidSet("track_id_invalid", "Every track needs a valid id.");
     }
     if (

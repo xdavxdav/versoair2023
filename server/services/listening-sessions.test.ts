@@ -17,6 +17,7 @@ import {
   toPublicSummary,
   updateSession,
   type SessionRow,
+  type SessionsDb,
   type SessionsPool,
 } from "./listening-sessions";
 
@@ -548,6 +549,23 @@ test("cancelSession: allowed until the end, idempotent, and guarded against a lo
   ]);
   const racedResult = await cancelSession(raced.pool, 1, { now: at(60) });
   assert.deepEqual(racedResult.ok === false && [racedResult.status, racedResult.code], [409, "session_changed"]);
+
+  // Two cancels at once: the loser's update touches nothing, but the session IS cancelled.
+  let reads = 0;
+  const doubleClick: SessionsDb = {
+    query: async (text) => {
+      if (/^\s*SELECT id, starts_at/.test(text)) {
+        reads++;
+        return { rows: [reads === 1 ? live : { ...live, status: "cancelled" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    },
+  };
+  assert.deepEqual(await cancelSession(doubleClick, 1, { now: at(60) }), {
+    ok: true,
+    value: { id: 1, alreadyCancelled: true },
+  });
+  assert.equal(reads, 2, "it re-reads the row after a lost update");
 });
 
 test("syncStoredStatuses passes the clock it was given and reports how many rows moved", async () => {

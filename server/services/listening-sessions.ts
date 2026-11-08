@@ -762,16 +762,15 @@ export async function updateSession(
   });
 }
 
-/** Allowed until the session has ended; cancelling twice is a no-op. */
+/** Allowed until the session has ended; cancelling twice is a no-op, even when two requests race. */
 export async function cancelSession(
   db: SessionsDb,
   id: number,
   ctx: { now: Date },
 ): Promise<WriteResult<{ id: number; alreadyCancelled: boolean }>> {
-  const found = await db.query(
-    `SELECT id, starts_at, ends_at, status FROM listening_sessions WHERE id = $1`,
-    [id],
-  );
+  const readRow = () =>
+    db.query(`SELECT id, starts_at, ends_at, status FROM listening_sessions WHERE id = $1`, [id]);
+  const found = await readRow();
   if (found.rows.length === 0) return fail(404, "not_found", "Session not found.");
   const row = found.rows[0];
   if (row.status === "cancelled") return { ok: true, value: { id, alreadyCancelled: true } };
@@ -793,6 +792,9 @@ export async function cancelSession(
     [id, ctx.now.toISOString()],
   );
   if (updated.rows.length === 0) {
+    // Another request got there first (a double click, or two admins): report what is true now.
+    const after = (await readRow()).rows[0];
+    if (after?.status === "cancelled") return { ok: true, value: { id, alreadyCancelled: true } };
     return fail(409, "session_changed", "The session changed while cancelling. Refresh and retry.");
   }
   return { ok: true, value: { id, alreadyCancelled: false } };
