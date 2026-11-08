@@ -26,11 +26,14 @@ const DESKTOP_MAC = {
   maxTouchPoints: 0,
 };
 
-test("iOS devices get no accept attribute so mp3 files are not greyed out", () => {
+test("iOS devices get an extension-only accept (no audio/*, so no camera or photo options)", () => {
   assert.equal(isIosLike(IPHONE), true);
   assert.equal(isIosLike(IPADOS), true);
-  assert.equal(audioInputAccept(IPHONE), undefined);
-  assert.equal(audioInputAccept(IPADOS), undefined);
+  for (const p of [IPHONE, IPADOS]) {
+    const accept = audioInputAccept(p) ?? "";
+    assert.ok(accept.includes(".mp3"));
+    assert.ok(!accept.includes("/"), "must not contain a mime type");
+  }
 });
 
 test("desktop keeps an explicit extension list plus audio/*", () => {

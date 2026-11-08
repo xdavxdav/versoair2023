@@ -1,11 +1,9 @@
 // Shared rules for picking audio files in the browser.
 //
-// iOS (Safari and the home-screen PWA) greys out valid files such as .mp3 when
-// an <input type="file"> carries accept="audio/*" or a mime list, because it
-// filters by the file's UTI and drops files whose type it cannot resolve. On
-// those devices the input must have NO accept attribute and the file is
-// validated after it is picked. The server (server/routes/music.ts) validates
-// again, so this is only about a clear message and a working picker.
+// iOS shows "Photo Library / Take Photo or Video" whenever accept is missing or
+// includes a media type such as audio/*, and greys out files it cannot resolve.
+// An extension-only list keeps the picker on the Files browser. The server
+// (server/routes/music.ts) validates again.
 
 export const AUDIO_EXTENSIONS = [
   "mp3",
@@ -21,7 +19,10 @@ export const AUDIO_EXTENSIONS = [
 export const MAX_AUDIO_UPLOAD_BYTES = 100 * 1024 * 1024;
 export const MAX_AUDIO_UPLOAD_LABEL = "100 MB";
 
-export const AUDIO_ACCEPT = `${AUDIO_EXTENSIONS.map((e) => `.${e}`).join(",")},audio/*`;
+export const AUDIO_EXTENSIONS_ACCEPT = AUDIO_EXTENSIONS.map(
+  (e) => `.${e}`,
+).join(",");
+export const AUDIO_ACCEPT = `${AUDIO_EXTENSIONS_ACCEPT},audio/*`;
 
 const AUDIO_EXT_RE = new RegExp(`\\.(${AUDIO_EXTENSIONS.join("|")})$`, "i");
 
@@ -43,7 +44,7 @@ export function isIosLike(info?: PlatformInfo): boolean {
 
 // Value for the `accept` attribute, or undefined when it must be omitted.
 export function audioInputAccept(info?: PlatformInfo): string | undefined {
-  return isIosLike(info) ? undefined : AUDIO_ACCEPT;
+  return isIosLike(info) ? AUDIO_EXTENSIONS_ACCEPT : AUDIO_ACCEPT;
 }
 
 export function isAcceptedAudioFile(file: {
