@@ -577,7 +577,7 @@ export const COUNTRY_ADMIN_LABELS: Record<
 
   // ── Europe ──
   FR: { region: "Région", city: "Ville", address: "Adresse" },
-  BE: { region: "Province", city: "Commune / Ville", address: "Adresse" },
+  BE: { region: "Région", city: "Commune / Ville", address: "Adresse" },
   CH: { region: "Canton", city: "Ville", address: "Adresse" },
   DE: { region: "Bundesland", city: "Stadt", address: "Adresse" },
   GB: {
@@ -598,7 +598,7 @@ export const COUNTRY_ADMIN_LABELS: Record<
 
   // ── Asia ──
   IN: { region: "State", city: "City", address: "Street Address" },
-  JP: { region: "Region", city: "City", address: "Address" },
+  JP: { region: "Prefecture", city: "City", address: "Address" },
   CN: { region: "Province", city: "City", address: "Address" },
 };
 

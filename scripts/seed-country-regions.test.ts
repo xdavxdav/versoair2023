@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
 const { DIVISIONS, norm, parse } = require("./seed-country-regions.cjs");
@@ -30,6 +31,24 @@ test("known counts", () => {
   assert.equal(d.JP.length, 47);
   assert.equal(d.NG.length, 37);
   assert.equal(d.DE.length, 16);
+});
+
+const labelsSource = readFileSync(
+  new URL("../client/src/components/ui/geolocation-fields.tsx", import.meta.url),
+  "utf8",
+);
+const labelsBlock = labelsSource.match(/COUNTRY_ADMIN_LABELS[^=]*=\s*\{([\s\S]*?)\n\};/)?.[1] ?? "";
+
+test("every seeded country has a region label in the business forms", () => {
+  const labelled = new Set([...labelsBlock.matchAll(/^\s*([A-Z]{2}):/gm)].map((m) => m[1]));
+  assert.deepEqual(COUNTRY_CODES.filter((c) => !labelled.has(c)), []);
+});
+
+test("region labels match the kind of division we seed", () => {
+  const regionLabel = (code: string) =>
+    labelsBlock.match(new RegExp(`\\b${code}:\\s*\\{\\s*region:\\s*"([^"]+)"`))?.[1];
+  assert.equal(regionLabel("BE"), "Région"); // 3 regions, not provinces
+  assert.equal(regionLabel("JP"), "Prefecture"); // 47 prefectures
 });
 
 test("existing seed names still match (no duplicates of Ouest-CM style names)", () => {
