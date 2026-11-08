@@ -2059,3 +2059,10 @@ html {
     max-height: 80dvh;
   }
 }
+
+/* Musical Universe phones: keep the docked player above the bottom tab bar (h-16 + safe area) */
+@media (max-width: 767px) {
+  body.has-music-dock .audio-dock {
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}

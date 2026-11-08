@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
 import { MUSIC_MOBILE_NAV_ITEMS, getActiveNavItem } from "@/lib/music-routes";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -36,6 +36,11 @@ interface MusicMobileDockProps {
 }
 
 export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
+  useEffect(() => {
+    document.body.classList.add("has-music-dock");
+    return () => document.body.classList.remove("has-music-dock");
+  }, []);
+
   const [pathname, navigate] = useLocation();
   const { user } = useAuthContext();
   const { isArtist } = useMusicAccess();
