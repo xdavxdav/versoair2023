@@ -1,5 +1,7 @@
 import { authenticatedFetch } from "@/lib/auth";
 
+export const errorText = (error: unknown) => error instanceof Error ? error.message : "Support request failed";
+
 export async function ticketRequest<T>(path: string, method = "GET", body?: object): Promise<T> {
   const response = await authenticatedFetch(path, {
     method, ...(body ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}),

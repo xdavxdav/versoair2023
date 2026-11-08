@@ -3,10 +3,11 @@ import { z } from "zod";
 import type { PoolClient } from "pg";
 import { pool } from "../db";
 import { requireAuth, isOwner } from "../middleware/auth";
+import { buildSlaReport } from "../services/ticket-report";
 import {
   approvalError, approvalSchema, slaPauseMs,
   assignTicketSchema, canReadTicket, canWorkTicket, commentSchema, createTicketSchema,
-  isTicketManager, isTicketStaff, SLA_HOURS, TERMINAL_STATUSES, TICKET_STATUSES,
+  isTicketManager, isTicketStaff, linkProblemSchema, problemLinkError, SLA_HOURS, TERMINAL_STATUSES, TICKET_STATUSES,
   transitionError, updateTicketSchema, type SupportTicket, type TicketActor,
 } from "@shared/ticket-policy";
 
@@ -47,9 +48,9 @@ async function transaction<T>(work: (client: PoolClient) => Promise<T>): Promise
     throw error;
   } finally { client.release(); }
 }
-async function readTicket(client: Pick<PoolClient, "query">, id: number, actor: TicketActor, lock = false) {
+async function readTicket(client: Pick<PoolClient, "query">, id: number, actor: TicketActor, lock: boolean | "key-share" = false) {
   const { rows } = await client.query<SupportTicket>(
-    `SELECT * FROM tickets WHERE id = $1${lock ? " FOR UPDATE" : ""}`, [id],
+    `SELECT * FROM tickets WHERE id = $1${lock === "key-share" ? " FOR KEY SHARE" : lock ? " FOR UPDATE" : ""}`, [id],
   );
   if (!rows[0] || !canReadTicket(actor, rows[0])) throw new TicketError(404, "Ticket not found");
   return rows[0];
@@ -138,7 +139,16 @@ router.get("/", route(async (req, res) => {
 
 function publicTicket(ticket: SupportTicket, actor: TicketActor) {
   if (isTicketStaff(actor)) return ticket;
-  const { pending_reason: _pending, abandonment_proposed_at: _abandonment, ...publicFields } = ticket;
+  const {
+    pending_reason: _pending, abandonment_proposed_at: _abandonment,
+    problem_id: _problem, time_spent_minutes: _time, ...publicFields
+  } = ticket;
+  return publicFields;
+}
+// Logged effort is internal bookkeeping; requesters never see it.
+function publicComment<T extends { time_spent_minutes?: number | null }>(comment: T, actor: TicketActor) {
+  if (isTicketStaff(actor)) return comment;
+  const { time_spent_minutes: _time, ...publicFields } = comment;
   return publicFields;
 }
 
@@ -171,6 +181,14 @@ router.get("/stats/summary", route(async (req, res) => {
      FROM tickets WHERE ${filter.sql}`, filter.values,
   );
   res.json(rows[0]);
+}));
+
+const slaReportQuery = z.object({ days: z.coerce.number().int().min(1).max(365).default(30) });
+router.get("/reports/sla", route(async (req, res) => {
+  const actor = actorFor(req);
+  if (!isTicketStaff(actor)) throw new TicketError(403, "Staff access required");
+  const { days } = parse(slaReportQuery, req.query);
+  res.json(await buildSlaReport(pool, scope(actor), days));
 }));
 
 router.get("/alerts", route(async (req, res) => {
@@ -394,6 +412,53 @@ router.post("/:id/approval", route(async (req, res) => {
   });
   res.json(publicTicket(ticket, actor));
 }));
+router.put("/:id/problem", route(async (req, res) => {
+  const input = parse(linkProblemSchema, req.body);
+  const actor = actorFor(req);
+  const ticket = await transaction(async (client) => {
+    const id = parse(idSchema, req.params.id);
+    const before = await readTicket(client, id, actor, true);
+    const readProblem = (lock: false | "key-share") => readTicket(client, input.problemId!, actor, lock).catch((error) => {
+      throw error instanceof TicketError && error.status === 404 ? new TicketError(404, "Problem not found") : error;
+    });
+    const problem = input.problemId === null ? null : await readProblem(false);
+    const denial = problemLinkError(actor, before, problem);
+    if (denial) throw new TicketError(denial.status, denial.message);
+    if (input.problemId === before.problem_id) {
+      throw new TicketError(409, input.problemId === null ? "No problem is linked to this ticket" : "This problem is already linked");
+    }
+    if (problem) {
+      // Only now is the ticket known not to be a problem, so this lock cannot cross another request's locks. A key-share lock waits
+      // for a concurrent resolution of the problem (every writer locks FOR UPDATE first) and re-reads it, yet linkers never wait on each other.
+      const settled = problemLinkError(actor, before, await readProblem("key-share"));
+      if (settled) throw new TicketError(settled.status, settled.message);
+    }
+    const { rows } = await client.query<SupportTicket>(
+      "UPDATE tickets SET problem_id=$2, updated_at=NOW() WHERE id=$1 RETURNING *", [id, input.problemId],
+    );
+    await event(client, id, actor, input.problemId === null ? "problem-unlinked" : "problem-linked",
+      { from: before.problem_id, to: input.problemId }, true);
+    if (before.problem_id) await event(client, before.problem_id, actor, "incident-unlinked", { ticketId: id }, true);
+    if (input.problemId) await event(client, input.problemId, actor, "incident-linked", { ticketId: id }, true);
+    return rows[0];
+  });
+  res.json(ticket);
+}));
+router.get("/:id/links", route(async (req, res) => {
+  const actor = actorFor(req);
+  if (!isTicketStaff(actor)) throw new TicketError(403, "Staff access required");
+  const id = parse(idSchema, req.params.id);
+  const ticket = await readTicket(pool, id, actor);
+  const filter = scope(actor, 2);
+  const columns = "id, title, status, priority, ticket_type";
+  const [problem, related] = await Promise.all([
+    ticket.problem_id
+      ? pool.query(`SELECT ${columns} FROM tickets WHERE id=$1 AND ${filter.sql}`, [ticket.problem_id, ...filter.values])
+      : null,
+    pool.query(`SELECT ${columns} FROM tickets WHERE problem_id=$1 AND ${filter.sql} ORDER BY id`, [id, ...filter.values]),
+  ]);
+  res.json({ problem: problem?.rows[0] ?? null, related: related.rows });
+}));
 router.get("/:id/comments", route(async (req, res) => {
   const actor = actorFor(req);
   const id = parse(idSchema, req.params.id);
@@ -402,7 +467,7 @@ router.get("/:id/comments", route(async (req, res) => {
     "SELECT * FROM ticket_comments WHERE ticket_id=$1 AND (NOT internal OR $2) ORDER BY id",
     [id, isTicketStaff(actor)],
   );
-  res.json(rows);
+  res.json(rows.map((comment) => publicComment(comment, actor)));
 }));
 router.post("/:id/comments", route(async (req, res) => {
   const actor = actorFor(req);
@@ -415,11 +480,19 @@ router.post("/:id/comments", route(async (req, res) => {
     }
     if (isTicketStaff(actor) && !canWorkTicket(actor, ticket)) throw new TicketError(403, "Claim the ticket first");
     if (input.internal && !isTicketStaff(actor)) throw new TicketError(403, "Internal notes are staff only");
+    if (input.timeSpentMinutes && !isTicketStaff(actor)) throw new TicketError(403, "Only support staff can log time");
     const { rows } = await client.query(
-      `INSERT INTO ticket_comments(ticket_id,author_id,author_name,body,internal)
-       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [id, actor.id, req.user!.email, input.body, input.internal],
+      `INSERT INTO ticket_comments(ticket_id,author_id,author_name,body,internal,time_spent_minutes)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [id, actor.id, req.user!.email, input.body, input.internal, input.timeSpentMinutes ?? null],
     );
+    if (input.timeSpentMinutes) {
+      // The ticket row is already locked, so the running total cannot lose a concurrent entry.
+      await client.query(
+        "UPDATE tickets SET time_spent_minutes=time_spent_minutes+$2 WHERE id=$1", [id, input.timeSpentMinutes],
+      );
+      await event(client, id, actor, "time-logged", { commentId: rows[0].id, minutes: input.timeSpentMinutes }, true);
+    }
     // A requester response ends the customer-wait cycle, preventing stale reminders.
     if (!input.internal && ticket.reporter_id === actor.id && ticket.status === "pending" && ticket.pending_reason === "customer") {
       await client.query(
@@ -432,7 +505,7 @@ router.post("/:id/comments", route(async (req, res) => {
     await event(client, id, actor, "comment-added", { commentId: rows[0].id }, input.internal);
     return rows[0];
   });
-  res.status(201).json(result);
+  res.status(201).json(publicComment(result, actor));
 }));
 router.get("/:id/events", route(async (req, res) => {
   const actor = actorFor(req);
