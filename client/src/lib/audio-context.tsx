@@ -114,6 +114,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressRef = useRef<number>(0);
+  const pendingSeekRef = useRef<number>(0);
 
   // State
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null);
@@ -371,6 +372,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       audio.src = url;
       audio.load();
+      if (pendingSeekRef.current > 0) {
+        const seekTo = pendingSeekRef.current;
+        pendingSeekRef.current = 0;
+        audio.addEventListener(
+          "loadedmetadata",
+          () => {
+            audio.currentTime = Math.min(seekTo, audio.duration || seekTo);
+          },
+          { once: true },
+        );
+      }
       audio.muted = isMuted;
       audio.volume = isMuted ? 0 : volume;
       // Sync GainNode volume if the (opt-in) Web Audio graph is active
@@ -649,6 +661,46 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       new CustomEvent("audio-player-state", { detail: { visible: false } }),
     );
   }, []);
+
+  // Survive page reloads: remember the track and position, and restore it
+  // paused (browsers block autoplay without a user gesture).
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("verso_resume") || "null");
+      if (saved?.track?.id) {
+        pendingSeekRef.current = Number(saved.time) || 0;
+        loadAndPlay(saved.track);
+      }
+    } catch {
+      // ignore corrupt state
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!currentTrack) {
+      localStorage.removeItem("verso_resume");
+      return;
+    }
+    const save = () => {
+      const audio = audioRef.current;
+      if (!audio || audio.currentTime <= 0) return;
+      try {
+        localStorage.setItem(
+          "verso_resume",
+          JSON.stringify({ track: currentTrack, time: audio.currentTime }),
+        );
+      } catch {
+        // storage full
+      }
+    };
+    const id = setInterval(save, 2000);
+    window.addEventListener("pagehide", save);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("pagehide", save);
+    };
+  }, [currentTrack]);
 
   // Persist queue to localStorage
   useEffect(() => {
