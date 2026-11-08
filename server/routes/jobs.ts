@@ -8,10 +8,13 @@ import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
-import { numericRouteParam } from "../middleware/numeric-route-param";
+import { uuidRouteParam } from "../middleware/uuid-route-param";
+import { withSavedJobsTable } from "../utils/saved-jobs";
 
 const router = Router();
-router.param("id", numericRouteParam);
+// jobs.id is a UUID column, so the serial-integer guard used elsewhere would
+// turn every real job id into a 404
+router.param("id", uuidRouteParam);
 
 // GET /api/jobs — list all jobs
 router.get("/", async (req, res) => {
@@ -439,23 +442,75 @@ router.post("/:id/apply", async (req, res) => {
   }
 });
 
-// POST /api/jobs/:id/save
-router.post("/:id/save", (req, res) => {
-  res.json({
-    success: true,
-    message: "Job saved successfully",
-    jobId: req.params.id,
-  });
+// GET /api/jobs/saved — ids of the jobs the signed-in user saved
+router.get("/saved", requireAuth(), withSavedJobsTable, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT job_id FROM saved_jobs WHERE user_id = $1
+        ORDER BY saved_date DESC LIMIT 500`,
+      [Number(req.user!.id)],
+    );
+    res.json({ success: true, jobIds: rows.map((row) => String(row.job_id)) });
+  } catch (error) {
+    console.error("[jobs] saved:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to load saved jobs" });
+  }
 });
 
-// POST /api/jobs/:id/unsave
-router.post("/:id/unsave", (req, res) => {
-  res.json({
-    success: true,
-    message: "Job removed from saved list",
-    jobId: req.params.id,
-  });
-});
+// POST /api/jobs/:id/save — save a job for the signed-in user (idempotent)
+router.post(
+  "/:id/save",
+  requireAuth(),
+  withSavedJobsTable,
+  async (req, res) => {
+    try {
+      const job = await pool.query(`SELECT 1 FROM jobs WHERE id = $1`, [
+        req.params.id,
+      ]);
+      if (job.rows.length === 0) {
+        return res.status(404).json({ success: false, error: "Job not found" });
+      }
+      await pool.query(
+        `INSERT INTO saved_jobs (user_id, job_id) VALUES ($1, $2)
+         ON CONFLICT (user_id, job_id) DO NOTHING`,
+        [Number(req.user!.id), req.params.id],
+      );
+      res.json({
+        success: true,
+        message: "Job saved successfully",
+        jobId: req.params.id,
+      });
+    } catch (error) {
+      console.error("[jobs] save:", error);
+      res.status(500).json({ success: false, error: "Failed to save job" });
+    }
+  },
+);
+
+// POST /api/jobs/:id/unsave — remove a job from the signed-in user's saved list
+router.post(
+  "/:id/unsave",
+  requireAuth(),
+  withSavedJobsTable,
+  async (req, res) => {
+    try {
+      await pool.query(
+        `DELETE FROM saved_jobs WHERE user_id = $1 AND job_id = $2`,
+        [Number(req.user!.id), req.params.id],
+      );
+      res.json({
+        success: true,
+        message: "Job removed from saved list",
+        jobId: req.params.id,
+      });
+    } catch (error) {
+      console.error("[jobs] unsave:", error);
+      res.status(500).json({ success: false, error: "Failed to unsave job" });
+    }
+  },
+);
 
 // POST /api/jobs — create a new job listing
 router.post("/", requireAuth(["admin", "superuser"]), async (req, res) => {

@@ -2,7 +2,7 @@
  * Verso Air Streaming Platform — API Routes
  * Full-featured streaming backend: tracks, playlists, social, analytics, subscriptions
  */
-import { Router, Request, Response } from "express";
+import { Router, Request, RequestHandler, Response } from "express";
 import { pool } from "../db";
 import { fanChatSlowMode } from "../middleware/rate-limiter";
 import { requireAuth } from "../middleware/auth";
@@ -1230,6 +1230,33 @@ router.get("/albums/:id", async (req: Request, res: Response) => {
 // PLAYLISTS
 // ═══════════════════════════════════════════════════════════
 
+// Changing what is inside a playlist is limited to the user who owns it.
+const requirePlaylistOwner: RequestHandler = async (req, res, next) => {
+  try {
+    const playlistId = Number(req.params.id ?? req.params.playlistId);
+    if (!Number.isSafeInteger(playlistId) || playlistId <= 0) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+    const found = await pool.query(
+      "SELECT user_id FROM playlists WHERE id = $1",
+      [playlistId],
+    );
+    if (!found.rows.length) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+    const userId = Number(req.user?.userId);
+    if (
+      !Number.isSafeInteger(userId) ||
+      Number(found.rows[0].user_id) !== userId
+    ) {
+      return res.status(403).json({ error: "Not your playlist" });
+    }
+    next();
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to verify playlist access" });
+  }
+};
+
 // GET /api/streaming/playlists — User's playlists
 router.get("/playlists", async (req: Request, res: Response) => {
   try {
@@ -1292,7 +1319,7 @@ router.post("/playlists", async (req: Request, res: Response) => {
 });
 
 // PUT /api/streaming/playlists/:id — Update playlist
-router.put("/playlists/:id", async (req: Request, res: Response) => {
+router.put("/playlists/:id", requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { name, description, isPublic } = req.body;
@@ -1304,7 +1331,7 @@ router.put("/playlists/:id", async (req: Request, res: Response) => {
         description = COALESCE($2, description),
         is_public = COALESCE($3, is_public),
         updated_at = NOW()
-      WHERE id = $4 AND (user_id = $5 OR $5 IS NULL)
+      WHERE id = $4 AND user_id = $5
       RETURNING *
     `,
       [name, description, isPublic, req.params.id, userId],
@@ -1333,7 +1360,7 @@ router.delete("/playlists/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/streaming/playlists/:id/tracks — Add track to playlist
-router.post("/playlists/:id/tracks", async (req: Request, res: Response) => {
+router.post("/playlists/:id/tracks", requireAuth(), requirePlaylistOwner, async (req: Request, res: Response) => {
   try {
     const { trackId } = req.body;
     if (!trackId) return res.status(400).json({ error: "trackId required" });
@@ -1376,6 +1403,8 @@ router.post("/playlists/:id/tracks", async (req: Request, res: Response) => {
 // DELETE /api/streaming/playlists/:playlistId/tracks/:trackId
 router.delete(
   "/playlists/:playlistId/tracks/:trackId",
+  requireAuth(),
+  requirePlaylistOwner,
   async (req: Request, res: Response) => {
     try {
       await pool.query(
@@ -1405,7 +1434,7 @@ router.delete(
 );
 
 // PUT /api/streaming/playlists/:id/reorder — Reorder tracks
-router.put("/playlists/:id/reorder", async (req: Request, res: Response) => {
+router.put("/playlists/:id/reorder", requireAuth(), requirePlaylistOwner, async (req: Request, res: Response) => {
   try {
     const { trackIds } = req.body; // Array of track IDs in desired order
     if (!Array.isArray(trackIds))
@@ -1443,6 +1472,15 @@ router.get("/playlists/:id", async (req: Request, res: Response) => {
     if (playlist.rows.length === 0)
       return res.status(404).json({ error: "Playlist not found" });
 
+    // Private playlists are only visible to their owner
+    const viewerId = Number(req.user?.userId);
+    if (
+      playlist.rows[0].is_public !== true &&
+      Number(playlist.rows[0].user_id) !== viewerId
+    ) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+
     const tracks = await pool.query(`
       SELECT ${await trackColumns()}, COALESCE(ma.name, art.stage_name) as artist_name, ma.image_url as artist_image,
         a.title as album_title, a.cover_art as album_cover, pt.position,
@@ -1452,8 +1490,9 @@ router.get("/playlists/:id", async (req: Request, res: Response) => {
       LEFT JOIN music_artists ma ON mt.artist_id = ma.id
       LEFT JOIN artists art ON mt.artist_id = art.id
       LEFT JOIN albums a ON mt.album_id = a.id
+      WHERE pt.playlist_id = $1
       ORDER BY pt.position ASC
-    `);
+    `, [req.params.id]);
 
     res.json({ playlist: playlist.rows[0], tracks: tracks.rows });
   } catch (err: any) {

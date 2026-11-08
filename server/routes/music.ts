@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, RequestHandler, Response } from "express";
 import { db, pool } from "../db";
 import { and, eq } from "drizzle-orm";
 import * as schema from "@shared/schema";
@@ -11,12 +11,67 @@ import {
   notifyTrackDownload,
 } from "../services/notification-service";
 import { onlinePaymentsEnabled } from "../utils/commercial-gates";
+import {
+  canManageArtist,
+  collaborationParty,
+  isMusicStaff,
+  mayChangeCollaborationStatus,
+} from "../utils/music-access";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
 const router = Router();
 router.param("id", numericRouteParam);
 // Mounted at /api/music
+
+// Writes to a track are limited to the artist who owns it and to staff.
+const requireTrackAccess: RequestHandler = async (req, res, next) => {
+  try {
+    const found = await pool.query(
+      "SELECT id, title, artist_id, file_path FROM music_tracks WHERE id = $1",
+      [parseInt(req.params.id)],
+    );
+    const track = found.rows[0];
+    if (!track) {
+      return res.status(404).json({ success: false, error: "Track not found" });
+    }
+    if (!(await canManageArtist(pool, req.user, track.artist_id))) {
+      return res.status(403).json({ success: false, error: "Not your track" });
+    }
+    res.locals.track = track;
+    next();
+  } catch (error) {
+    console.error("[MUSIC] Track access check failed:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to verify track access" });
+  }
+};
+
+// Same rule for albums: owner (via albums.artist_id) or staff.
+const requireAlbumAccess: RequestHandler = async (req, res, next) => {
+  try {
+    await ensureAlbumsTable();
+    const found = await pool.query(
+      "SELECT id, artist_id FROM albums WHERE id = $1",
+      [parseInt(req.params.id)],
+    );
+    const album = found.rows[0];
+    if (!album) {
+      return res.status(404).json({ success: false, error: "Album not found" });
+    }
+    if (!(await canManageArtist(pool, req.user, album.artist_id))) {
+      return res.status(403).json({ success: false, error: "Not your album" });
+    }
+    res.locals.album = album;
+    next();
+  } catch (error) {
+    console.error("[MUSIC] Album access check failed:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to verify album access" });
+  }
+};
 
 // ── Multer config ────────────────────────────────────────────────────
 // MEMORY storage: uploads are streamed into RAM then persisted straight into
@@ -476,6 +531,15 @@ router.post(
       } = req.body;
 
       // Resolve artistId: use provided value, or auto-resolve from authenticated user
+      if (
+        rawArtistId &&
+        !(await canManageArtist(pool, req.user, rawArtistId))
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only upload to your own artist profile",
+        });
+      }
       let artistId = rawArtistId;
       if (!artistId && req.user?.userId) {
         const artistRow = await pool.query(
@@ -1232,11 +1296,22 @@ router.get("/tracks/:id/monetization", async (req, res) => {
   }
 });
 
-router.put("/tracks/:id/monetization", requireAuth(), async (req, res) => {
+router.put("/tracks/:id/monetization", requireAuth(), requireTrackAccess, async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
     const { price, revenue, downloads } = req.body;
+
+    // Artists set their own price; revenue and download counters are platform figures.
+    if (
+      (revenue !== undefined || downloads !== undefined) &&
+      !isMusicStaff(req.user)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Only staff can change revenue or download counters",
+      });
+    }
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -1340,6 +1415,7 @@ router.get("/earnings", requireAuth(), async (req, res) => {
 router.put(
   "/tracks/:id/reupload",
   requireAuth(),
+  requireTrackAccess,
   upload.single("audio"),
   async (req, res) => {
     try {
@@ -1394,32 +1470,11 @@ router.put(
 // EDIT TRACK METADATA — PUT /api/music/tracks/:id/edit
 // Update title, genre, description, BTS, FLOP, credits, pochette, etc.
 // ═════════════════════════════════════════════════════════════════════
-router.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
+router.put("/tracks/:id/edit", requireAuth(), requireTrackAccess, async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
     const trackId = parseInt(id);
-
-    const existing = await pool.query(
-      "SELECT id, title, artist_id FROM music_tracks WHERE id = $1",
-      [trackId],
-    );
-    if (!existing.rows.length) {
-      return res.status(404).json({ success: false, error: "Track not found" });
-    }
-
-    const track = existing.rows[0];
-    if (track.artist_id && req.user?.userId) {
-      const ownerCheck = await pool.query(
-        "SELECT id FROM artists WHERE id = $1 AND user_id = $2",
-        [track.artist_id, parseInt(req.user.userId)],
-      );
-      if (!ownerCheck.rows.length) {
-        return res
-          .status(403)
-          .json({ success: false, error: "Not your track" });
-      }
-    }
 
     const allowedFields: Record<string, string> = {
       title: "title",
@@ -1440,6 +1495,15 @@ router.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
       credits: "credits",
       recordingLocation: "recording_location",
     };
+
+    if (
+      req.body.status !== undefined &&
+      !["published", "draft", "scheduled", "archived"].includes(req.body.status)
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid track status" });
+    }
 
     const setClauses: string[] = [];
     const values: any[] = [];
@@ -1477,7 +1541,7 @@ router.put("/tracks/:id/edit", requireAuth(), async (req, res) => {
 });
 
 // PATCH /api/music/tracks/:id/status — dedicated publish/unpublish shortcut
-router.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
+router.patch("/tracks/:id/status", requireAuth(), requireTrackAccess, async (req, res) => {
   try {
     const trackId = parseInt(req.params.id);
     const { status } = req.body;
@@ -1524,7 +1588,7 @@ router.patch("/tracks/:id/status", requireAuth(), async (req, res) => {
 // ═════════════════════════════════════════════════════════════════════
 // DELETE TRACK — DELETE /api/music/tracks/:id
 // ═════════════════════════════════════════════════════════════════════
-router.delete("/tracks/:id", requireAuth(), async (req, res) => {
+router.delete("/tracks/:id", requireAuth(), requireTrackAccess, async (req, res) => {
   try {
     await ensureTrackColumns();
     const { id } = req.params;
@@ -1680,12 +1744,12 @@ router.post("/albums", requireAuth(), async (req, res) => {
 
     const album = result.rows[0];
 
-    // Assign tracks to this album
-    if (trackIds && trackIds.length > 0) {
+    // Only the album artist's own tracks can be attached to it
+    if (artistId && Array.isArray(trackIds)) {
       for (const trackId of trackIds) {
         await pool.query(
-          `UPDATE music_tracks SET album_id = $1 WHERE id = $2`,
-          [album.id, trackId],
+          `UPDATE music_tracks SET album_id = $1 WHERE id = $2 AND artist_id = $3`,
+          [album.id, trackId, artistId],
         );
       }
     }
@@ -1701,7 +1765,7 @@ router.post("/albums", requireAuth(), async (req, res) => {
 });
 
 // PUT /api/music/albums/:id — update album with pochette & tracks
-router.put("/albums/:id", requireAuth(), async (req, res) => {
+router.put("/albums/:id", requireAuth(), requireAlbumAccess, async (req, res) => {
   try {
     await ensureAlbumsTable();
     const { id } = req.params;
@@ -1749,12 +1813,14 @@ router.put("/albums/:id", requireAuth(), async (req, res) => {
         `UPDATE music_tracks SET album_id = NULL WHERE album_id = $1`,
         [parseInt(id)],
       );
-      // Re-link new tracks
-      for (const trackId of trackIds) {
-        await pool.query(
-          `UPDATE music_tracks SET album_id = $1 WHERE id = $2`,
-          [parseInt(id), trackId],
-        );
+      // Re-link new tracks (only ones that belong to the album's artist)
+      if (res.locals.album.artist_id) {
+        for (const trackId of trackIds) {
+          await pool.query(
+            `UPDATE music_tracks SET album_id = $1 WHERE id = $2 AND artist_id = $3`,
+            [parseInt(id), trackId, res.locals.album.artist_id],
+          );
+        }
       }
     }
 
@@ -1766,7 +1832,7 @@ router.put("/albums/:id", requireAuth(), async (req, res) => {
 });
 
 // DELETE /api/music/albums/:id
-router.delete("/albums/:id", requireAuth(), async (req, res) => {
+router.delete("/albums/:id", requireAuth(), requireAlbumAccess, async (req, res) => {
   try {
     const { id } = req.params;
     // Unlink tracks first
@@ -1902,6 +1968,22 @@ router.put("/collaborations/:id/status", requireAuth(), async (req, res) => {
     if (!["active", "declined", "completed"].includes(status)) {
       return res.status(400).json({ success: false, error: "Invalid status" });
     }
+
+    const existing = await pool.query(
+      `SELECT requester_id, target_id, status FROM artist_collaborations WHERE id = $1`,
+      [parseInt(id)],
+    );
+    if (!existing.rows.length)
+      return res.status(404).json({ success: false, error: "Not found" });
+
+    const party = await collaborationParty(pool, req.user, existing.rows[0]);
+    if (!mayChangeCollaborationStatus(party, status, existing.rows[0].status)) {
+      return res.status(403).json({
+        success: false,
+        error: "You cannot change this collaboration",
+      });
+    }
+
     const result = await pool.query(
       `UPDATE artist_collaborations SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
       [status, parseInt(id)],
