@@ -133,8 +133,11 @@ and does not email again; only `event_submission` needs a team notification.
 The three `*_request` events are sent only after the request was emailed or
 saved as a ticket (never for a duplicate or a rejected form). Their payload is
 deliberately small: `referenceId` (`REQ-BIZ-…`, `REQ-ART-…`, `REQ-JOB-…`), the
-name or title, a category or genre, `countryCode` and `city`. No email, phone
-or description is sent; the full detail stays in the admin email and the ticket.
+name or title, a category label or genre, `countryCode` and `city`. A business
+request sends its category label as `businessCategory`: `category` is always
+the event's own category (`business_request`), and a payload field with the
+same name can never replace it. No email, phone or description is sent; the
+full detail stays in the admin email and the ticket.
 As with `pilot_lead`, a Zap needs a path (or the "needs review" catch-all) for
 each new category before `ZAPIER_WEBHOOK_URL` is set in production.
 

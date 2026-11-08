@@ -342,7 +342,8 @@ export function createSubmissionRequestsRouter(
         payload: {
           referenceId: refId,
           businessName: name,
-          category: category || null,
+          // Not "category": the webhook body already uses that key for the event category.
+          businessCategory: category || null,
           countryCode: countryCode || null,
           city: cityName || null,
         },

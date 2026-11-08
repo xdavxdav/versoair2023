@@ -141,8 +141,8 @@ const CATEGORY_CONFIG: Record<AutomationCategory, CategoryConfig> = {
     topic: "artisans",
     priority: "normal",
     entityIdKey: "referenceId",
-    dataKeys: ["referenceId", "businessName", "category", "countryCode", "city"],
-    freeTextKeys: ["businessName", "category", "countryCode", "city"],
+    dataKeys: ["referenceId", "businessName", "businessCategory", "countryCode", "city"],
+    freeTextKeys: ["businessName", "businessCategory", "countryCode", "city"],
     summary: (data) =>
       `Business request: ${data.businessName ?? "(unnamed)"}${
         data.city ? ` (${data.city})` : ""
@@ -316,6 +316,8 @@ export function buildAutomationEvent(
  * Legacy flat fields stay first and untouched so existing Zaps keep working;
  * the versioned envelope is nested under `automation` to avoid key collisions
  * (the legacy event_submission payload already uses `eventId`).
+ * `category` is the event's own: a payload key of the same name is dropped so
+ * it can never replace it (`sentAt` and `automation` already come last).
  */
 export function buildWebhookBody(
   category: AutomationCategory,
@@ -323,5 +325,6 @@ export function buildWebhookBody(
   envelope: AutomationEnvelope,
   sentAt: string,
 ): Record<string, unknown> {
-  return { category, ...payload, sentAt, automation: envelope };
+  const { category: _payloadCategory, ...fields } = payload;
+  return { category, ...fields, sentAt, automation: envelope };
 }

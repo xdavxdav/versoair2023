@@ -68,9 +68,11 @@ export function createZapierNotifier(deps: ZapierNotifierDeps) {
       if (!deps.outboxEnabled()) {
         const url = deps.legacyUrl();
         if (!url) return;
+        // The event category is authoritative: a payload key named category must not replace it.
+        const { category: _payloadCategory, ...fields } = payload;
         sendDirect(url, category, {
           category,
-          ...payload,
+          ...fields,
           sentAt: deps.now().toISOString(),
         });
         return;
