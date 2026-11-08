@@ -66,6 +66,7 @@ import {
   ArrowLeft,
   Hand,
   Send,
+  Check,
 } from "lucide-react";
 
 // ====================================================================
@@ -1865,12 +1866,28 @@ export default function StreamPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              audio.addToQueue(track);
+                              const at = audio.queue.findIndex(
+                                (t) => t.id === track.id,
+                              );
+                              if (at >= 0) audio.removeFromQueue(at);
+                              else audio.addToQueue(track);
                             }}
-                            className="text-slate-700 hover:text-amber-800 transition-colors p-1"
-                            title="Ajouter à la file"
+                            className={`transition-colors p-1 ${
+                              audio.queue.some((t) => t.id === track.id)
+                                ? "text-amber-700"
+                                : "text-slate-700 hover:text-amber-800"
+                            }`}
+                            title={
+                              audio.queue.some((t) => t.id === track.id)
+                                ? "Retirer de la file"
+                                : "Ajouter à la file"
+                            }
                           >
-                            <Plus className="w-4 h-4" />
+                            {audio.queue.some((t) => t.id === track.id) ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Plus className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </motion.div>
