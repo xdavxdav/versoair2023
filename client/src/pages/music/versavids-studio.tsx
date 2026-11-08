@@ -7,6 +7,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Send,
   ChevronDown,
@@ -33,6 +34,14 @@ import { MusicLayout } from "@/layouts/MusicLayout";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import VersaVidsWorkflow from "@/components/versavids-workflow";
+import { authenticatedFetch } from "@/lib/auth";
+import {
+  parseBudgetInput,
+  resolutionCode,
+  viewerIdOf,
+} from "@/lib/versavids-workflow";
+import { apiErrorMessage } from "@shared/api-error";
 
 // ═══════════════════════════════════════════════════
 // ROLE CONFIGURATION — each role has its own universe
@@ -312,7 +321,9 @@ export default function VersaVidsStudio() {
   const { user } = useAuthContext();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isAuthed = !!(user && user.id);
+  const viewerId = viewerIdOf(user?.id);
 
   // ─── Role & Form state ───
   const [selectedRole, setSelectedRole] = useState<RoleId>("director");
@@ -362,24 +373,28 @@ export default function VersaVidsStudio() {
       return;
     }
 
+    const parsedBudget = parseBudgetInput(budget);
+    if (!parsedBudget.ok) {
+      setShowAdvanced(true);
+      toast({
+        title: "Check the budget",
+        description: parsedBudget.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-      const csrfToken = csrfMeta?.getAttribute("content") || "";
-
-      const res = await fetch("/api/versavids/projects", {
+      const res = await authenticatedFetch("/api/versavids/projects", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-csrf-token": csrfToken,
-        },
-        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: `${role.label} — ${requestCategory || "Custom Project"}`,
           description: prompt,
           project_type: requestCategory || "custom",
           genre: genre || null,
-          budget: budget ? parseFloat(budget) : null,
+          budget: parsedBudget.value,
           deadline: deadline || null,
           priority,
           tags: selectedFormats,
@@ -389,11 +404,50 @@ export default function VersaVidsStudio() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to create project");
+      const created: unknown = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast({
+          title: "Error",
+          description: apiErrorMessage(
+            created,
+            "Failed to submit project. Please try again.",
+          ),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // The project row has no room for the specs the form collects: they go
+      // in the brief. The project is already posted, so a failure here only
+      // changes the message.
+      const projectId = Number(
+        (created as { project?: { id?: unknown } } | null)?.project?.id,
+      );
+      let briefSaved = false;
+      if (Number.isSafeInteger(projectId) && projectId > 0) {
+        try {
+          const briefRes = await authenticatedFetch("/api/versavids/briefs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              project_id: projectId,
+              visual_style: genre || null,
+              aspect_ratio: aspectRatio,
+              resolution: resolutionCode(resolution),
+              deliverable_formats: selectedFormats,
+            }),
+          });
+          briefSaved = briefRes.ok;
+        } catch {
+          briefSaved = false;
+        }
+      }
 
       toast({
         title: "🎬 Project Submitted!",
-        description: `Your ${role.label} project has been posted. A verified videaste will review your brief shortly.`,
+        description: briefSaved
+          ? `Your ${role.label} project has been posted. A verified videaste will review your brief shortly.`
+          : `Your ${role.label} project has been posted, but its format details could not be saved.`,
       });
 
       // Reset form
@@ -402,6 +456,16 @@ export default function VersaVidsStudio() {
       setGenre("");
       setBudget("");
       setDeadline("");
+
+      // Show the new project in "My VersaVids projects" below.
+      void queryClient.invalidateQueries({ queryKey: ["versavids"] });
+      const reduceMotion = window.matchMedia?.(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      document.getElementById("versavids-projects")?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
     } catch (err) {
       toast({
         title: "Error",
@@ -420,6 +484,9 @@ export default function VersaVidsStudio() {
     deadline,
     priority,
     selectedFormats,
+    aspectRatio,
+    resolution,
+    queryClient,
     toast,
     role.label,
   ]);
@@ -760,19 +827,34 @@ export default function VersaVidsStudio() {
               >
                 {/* Budget */}
                 <div>
-                  <label className="text-xs text-white/40 uppercase tracking-wide mb-1 block">
+                  <label
+                    htmlFor="versavids-budget"
+                    className="text-xs text-white/70 uppercase tracking-wide mb-1 block"
+                  >
                     Budget (USD)
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                     <input
+                      id="versavids-budget"
                       type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                       placeholder="e.g. 500"
-                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-4 py-3 text-white placeholder:text-white/20 text-sm focus:outline-none focus:border-amber-500/40"
+                      aria-describedby="versavids-budget-help"
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-4 py-3 text-white placeholder:text-white/50 text-base focus:outline-none focus:border-amber-500/40"
                     />
                   </div>
+                  <p
+                    id="versavids-budget-help"
+                    className="text-sm text-white/70 mt-1"
+                  >
+                    Optional. VersaVids does not handle payments: you agree on
+                    the final price with the artist.
+                  </p>
                 </div>
                 {/* Deadline */}
                 <div>
@@ -886,6 +968,14 @@ export default function VersaVidsStudio() {
             Sur-Mesure • Crafted by Verified {role.label}s • Gods Tier Exclusive
           </p>
         </motion.div>
+
+        {/* ─── My projects: take, deliver, review ─── */}
+        {isAuthed && viewerId !== null && (
+          <VersaVidsWorkflow
+            viewerId={viewerId}
+            isArtist={!!user?.hasArtistProfile}
+          />
+        )}
       </div>
     </MusicLayout>
   );

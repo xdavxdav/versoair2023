@@ -24,6 +24,7 @@
  *   GET  /api/arena/:id/bracket         — Current round standings
  *   POST /api/arena/create              — Admin: create weekly contest
  *   POST /api/arena/:id/enter           — Artist enters contest
+ *   GET  /api/arena/:id/my-entry        — Is my artist profile already in this contest?
  *   POST /api/arena/:id/vote            — Listener streams/votes for artist (with lock policy)
  *   GET  /api/arena/:id/my-votes        — My vote allocations + lock status
  *   POST /api/arena/:id/advance-round   — Admin: eliminate bottom half, advance winners
@@ -449,6 +450,47 @@ router.post(
       res
         .status(500)
         .json({ success: false, error: "Failed to enter contest" });
+    }
+  },
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /:id/my-entry — Is the signed-in user's artist profile already in this contest?
+// Lets the contest page offer "Enter" only to artists it can still work for.
+// Badge tier, capacity and the registration window stay with POST /:id/enter.
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get(
+  "/:id/my-entry",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.user!.userId);
+      const contestId = parseInt(req.params.id);
+
+      // Same profile and "already entered" rules as POST /:id/enter
+      const result = await pool.query(
+        `SELECT ap.id, ab.id AS bracket_id, ab.seed_position
+         FROM artist_profiles ap
+         LEFT JOIN arena_brackets ab
+           ON ab.artist_profile_id = ap.id AND ab.contest_id = $2
+         WHERE ap.user_id = $1 AND ap.is_active = true
+         ORDER BY ab.round ASC NULLS LAST
+         LIMIT 1`,
+        [userId, contestId],
+      );
+
+      const row = result.rows[0];
+      res.json({
+        success: true,
+        hasArtistProfile: Boolean(row),
+        entered: Boolean(row?.bracket_id),
+        seedPosition: row?.seed_position ?? null,
+      });
+    } catch (err: any) {
+      console.error("[ARENA] My-entry error:", err);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch your entry" });
     }
   },
 );

@@ -101,6 +101,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { submitJson } from "@/lib/submit-json";
+import { authenticatedFetch } from "@/lib/auth";
 
 const PRESET_AVATARS = [
   {
@@ -1900,9 +1901,8 @@ export default function UserDashboard() {
   // Logo Upload
   const [logoUploading, setLogoUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
-  const canUploadLogo = PAID_TIERS.includes(currentTier);
 
+  // The server decides who may upload and explains a refusal in `message`.
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !hasRealBusiness) return;
@@ -1947,6 +1947,7 @@ export default function UserDashboard() {
       const data = await res.json();
       if (data.success)
         queryClient.invalidateQueries({ queryKey: ["my-businesses"] });
+      else alert(data.message || "Failed to remove logo.");
     } catch {
       alert("Failed to remove logo.");
     }
@@ -1957,6 +1958,8 @@ export default function UserDashboard() {
   const [dossierMsg, setDossierMsg] = useState("");
   const [sendingMsg, setSendingMsg] = useState(false);
   const [dossierTab, setDossierTab] = useState<"info" | "chat">("info");
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   const { data: dossierData, isLoading: dossierLoading } = useQuery<any>({
     queryKey: ["business-dossier", business.id],
@@ -2038,6 +2041,33 @@ export default function UserDashboard() {
     userRole,
     refetchMessages,
   ]);
+
+  const handlePdfDownload = async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    setPdfError("");
+    try {
+      const res = await authenticatedFetch(
+        `${API_BASE_URL}/api/businesses/${business.id}/pdf`,
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const url = URL.createObjectURL(await res.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      const safeName = business.name
+        .replace(/[^\p{L}\p{N}]+/gu, "-")
+        .replace(/^-+|-+$/g, "");
+      link.download = `business-registration-${safeName || business.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setPdfError("Could not download the PDF. Please try again.");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
 
   const DossierRow = ({
     label,
@@ -2130,16 +2160,24 @@ export default function UserDashboard() {
                   )}
                 </button>
               </div>
-              {d?.pdf_path && (
-                <a
-                  href={`${API_BASE_URL}/api/businesses/${business.id}/pdf`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all"
-                >
-                  <Download className="h-3 w-3" /> PDF
-                </a>
+              {pdfError && (
+                <span role="alert" className="text-[11px] text-red-400">
+                  {pdfError}
+                </span>
               )}
+              <button
+                type="button"
+                onClick={() => void handlePdfDownload()}
+                disabled={pdfBusy}
+                title="Download the registration form as a PDF"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 disabled:opacity-60 transition-all"
+              >
+                <Download
+                  className={`h-3 w-3 ${pdfBusy ? "animate-pulse" : ""}`}
+                  aria-hidden="true"
+                />{" "}
+                PDF
+              </button>
               <button
                 onClick={() => setShowDossier(false)}
                 className="h-8 w-8 rounded-lg bg-slate-700/50 hover:bg-red-500/30 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all"
@@ -2932,19 +2970,31 @@ export default function UserDashboard() {
                         {business.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    {canUploadLogo && (
-                      <button
-                        onClick={() => logoInputRef.current?.click()}
-                        disabled={logoUploading}
-                        className="absolute inset-0 rounded-xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                      >
-                        {logoUploading ? (
-                          <Upload className="h-4 w-4 text-white animate-pulse" />
-                        ) : (
-                          <Camera className="h-4 w-4 text-white" />
-                        )}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={logoUploading}
+                      aria-label={business.logo_url ? "Change logo" : "Add logo"}
+                      title={business.logo_url ? "Change logo" : "Add logo"}
+                      className="absolute inset-0 rounded-xl bg-black/60 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    >
+                      {logoUploading ? (
+                        <Upload className="h-4 w-4 text-white animate-pulse" />
+                      ) : (
+                        <Camera className="h-4 w-4 text-white" />
+                      )}
+                    </button>
+                    {/* Always visible, so touch screens (no hover) can find the control. */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow ring-2 ring-white"
+                    >
+                      {logoUploading ? (
+                        <Upload className="h-3 w-3 animate-pulse" />
+                      ) : (
+                        <Camera className="h-3 w-3" />
+                      )}
+                    </span>
                     <input
                       ref={logoInputRef}
                       type="file"
@@ -2962,13 +3012,15 @@ export default function UserDashboard() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {business.logo_url && canUploadLogo && (
+                    {business.logo_url && (
                       <button
+                        type="button"
                         onClick={handleLogoRemove}
-                        className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-all"
+                        className="inline-flex h-11 w-11 items-center justify-center text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50 transition-all"
                         title="Remove logo"
+                        aria-label="Remove logo"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     )}
                     {business.verification_status === "verified" ? (

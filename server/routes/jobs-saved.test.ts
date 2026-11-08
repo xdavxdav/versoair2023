@@ -30,6 +30,11 @@ function scriptedJobsDb(existingJobs: string[] = [JOB]) {
     if (sql.startsWith("SELECT 1 FROM jobs WHERE id = $1")) {
       return { rows: existingJobs.includes(String(params[0])) ? [{ one: 1 }] : [] };
     }
+    if (sql.startsWith("SELECT status FROM jobs WHERE id = $1")) {
+      return {
+        rows: existingJobs.includes(String(params[0])) ? [{ status: "active" }] : [],
+      };
+    }
     if (sql.startsWith("SELECT job_id FROM saved_jobs WHERE user_id = $1")) {
       return {
         rows:
@@ -39,7 +44,9 @@ function scriptedJobsDb(existingJobs: string[] = [JOB]) {
       };
     }
     if (sql.startsWith("INSERT INTO job_applications")) {
-      return { rows: [{ id: 5, status: "submitted", applied_date: "now" }] };
+      return {
+        rows: [{ id: "5d1c9e0a-7b3f-4c2d-9a8e-1f2b3c4d5e6f", status: "submitted" }],
+      };
     }
     return undefined;
   });
@@ -151,6 +158,7 @@ test("apply and applicants work with real (UUID) job ids", async () => {
   const db = scriptedJobsDb();
   await withRouter(jobsRouter, async (origin) => {
     const applied = await call(origin, "POST", `/${JOB}/apply`, {
+      headers: signIn(user),
       body: { applicant_email: "candidate@example.com" },
     });
     assert.equal(applied.status, 200, JSON.stringify(applied.body));

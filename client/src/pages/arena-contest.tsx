@@ -29,6 +29,9 @@ import {
   Award,
   Target,
   Radio,
+  CheckCircle2,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import {
   Card,
@@ -43,6 +46,11 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import {
+  arenaEntryPanel,
+  arenaErrorMessage,
+  parseArenaMyEntry,
+} from "@/lib/arena-entry";
 import {
   fadeInUp,
   staggerContainer,
@@ -477,6 +485,48 @@ function ArenaDetail({ contestId }: { contestId: number }) {
     refetchInterval: 15000,
   });
 
+  const registrationOpen = data?.contest?.status === "open";
+
+  const {
+    data: myEntry,
+    isLoading: myEntryLoading,
+    refetch: refetchMyEntry,
+  } = useQuery({
+    queryKey: ["arena", contestId, "my-entry", user?.id],
+    enabled: !!user && registrationOpen,
+    queryFn: async () => {
+      const res = await fetch(`${API}/${contestId}/my-entry`, {
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      return parseArenaMyEntry(await res.json().catch(() => null));
+    },
+  });
+
+  const enterMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API}/${contestId}/enter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || body?.success !== true) {
+        throw new Error(arenaErrorMessage(body));
+      }
+      return body;
+    },
+    onSuccess: (body) => {
+      toast({ title: "You're in!", description: body.message });
+    },
+    // Whatever the outcome, re-read both: "already entered" or "full" mean the
+    // card should change, not just show an error.
+    onSettled: () => {
+      refetch();
+      refetchMyEntry();
+    },
+  });
+
   const voteMutation = useMutation({
     mutationFn: async (artistProfileId: number) => {
       const res = await fetch(`${API}/${contestId}/vote`, {
@@ -498,7 +548,7 @@ function ArenaDetail({ contestId }: { contestId: number }) {
       } else {
         toast({
           title: "Vote Failed",
-          description: data.error,
+          description: arenaErrorMessage(data),
           variant: "destructive",
         });
       }
@@ -543,6 +593,13 @@ function ArenaDetail({ contestId }: { contestId: number }) {
   const currentRound = contest.current_round || 1;
   const isActive = contest.status === "in_progress";
   const isCompleted = contest.status === "completed";
+
+  const entryPanel = arenaEntryPanel({
+    contestStatus: contest.status,
+    signedIn: !!user,
+    myEntry,
+    loading: myEntryLoading,
+  });
 
   // Build vote lookup: artistProfileId → MyVote
   const voteMap = new Map<number, MyVote>();
@@ -671,6 +728,70 @@ function ArenaDetail({ contestId }: { contestId: number }) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Artist entry — shown only while the contest is taking entries */}
+      {entryPanel !== "hidden" && (
+        <Card className="bg-white/5 border-fuchsia-500/20">
+          <CardContent className="py-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1 min-w-0">
+              <p className="text-white font-semibold flex items-center gap-2">
+                {entryPanel === "entered" ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                ) : (
+                  <Swords className="w-4 h-4 text-fuchsia-400" />
+                )}
+                {entryPanel === "entered"
+                  ? "You are in this contest"
+                  : "Artists: enter this contest"}
+              </p>
+              <p className="text-sm text-gray-300">
+                {entryPanel === "entered"
+                  ? `You hold seed #${myEntry?.seedPosition ?? "?"}. Voting opens once all 16 places are filled.`
+                  : entryPanel === "needs-artist-profile"
+                    ? "Only artists with an active artist profile can enter. Create yours first, then come back."
+                    : entryPanel === "loading"
+                      ? "Checking your artist profile…"
+                      : "Open to artists with a Silver badge or higher. The battle starts as soon as all 16 places are taken."}
+              </p>
+              {entryPanel === "can-enter" && enterMutation.isError && (
+                <p role="alert" className="text-sm text-red-300">
+                  {enterMutation.error.message}
+                </p>
+              )}
+            </div>
+            {entryPanel === "sign-in" && (
+              <Button
+                className="w-full sm:w-auto bg-fuchsia-600 hover:bg-fuchsia-500 text-white"
+                onClick={() =>
+                  navigate(`/auth/signin?redirect=/arena/${contestId}`)
+                }
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign in to enter
+              </Button>
+            )}
+            {entryPanel === "needs-artist-profile" && (
+              <Button
+                className="w-full sm:w-auto bg-fuchsia-600 hover:bg-fuchsia-500 text-white"
+                onClick={() => navigate("/artist-portal?from=arena")}
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Create artist profile
+              </Button>
+            )}
+            {entryPanel === "can-enter" && (
+              <Button
+                className="w-full sm:w-auto bg-fuchsia-600 hover:bg-fuchsia-500 text-white"
+                disabled={enterMutation.isPending}
+                onClick={() => enterMutation.mutate()}
+              >
+                <Swords className="w-4 h-4 mr-2" />
+                {enterMutation.isPending ? "Entering…" : "Enter contest"}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Bracket Rounds */}
       <Tabs defaultValue={String(currentRound)} className="w-full">

@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { BUSINESS_REQUEST_PATH } from "@/lib/signup-resume";
+import { authenticatedFetch } from "@/lib/auth";
 import { loadJson, resolveLang } from "@/lib/submit-json";
 
 type Lang = "en" | "fr";
@@ -31,9 +32,13 @@ interface Application {
   id: number | string;
   job_id?: string;
   applicant_id?: string;
+  applicant_name?: string | null;
+  applicant_email?: string | null;
   status: string | null;
   cover_letter?: string | null;
   resume_url?: string | null;
+  resume_name?: string | null;
+  has_resume?: boolean;
   notes?: string | null;
   applied_date: string | null;
   title?: string | null;
@@ -62,6 +67,7 @@ const COPY = {
       `${count} applicant${count === 1 ? "" : "s"}`,
     noApplicantsYet: "No applications yet.",
     resume: "Resume",
+    resumeFailed: "The resume could not be downloaded. Please try again.",
     jobUnlisted: "Job no longer listed",
   },
   fr: {
@@ -85,6 +91,7 @@ const COPY = {
       `${count} candidat${count === 1 ? "" : "s"}`,
     noApplicantsYet: "Aucune candidature pour le moment.",
     resume: "CV",
+    resumeFailed: "Le CV n'a pas pu être téléchargé. Veuillez réessayer.",
     jobUnlisted: "Offre retirée",
   },
 } as const;
@@ -149,6 +156,70 @@ type ApplicantsState =
   | { status: "loading" }
   | { status: "ready"; items: Application[] }
   | { status: "failed"; message: string };
+
+// The CV is private, so it is fetched with the member's session and saved
+// from memory instead of being linked to directly.
+function ResumeDownload({
+  jobId,
+  application,
+  label,
+  failedText,
+}: {
+  jobId: string;
+  application: Application;
+  label: string;
+  failedText: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const download = async () => {
+    setBusy(true);
+    setFailed(false);
+    try {
+      const response = await authenticatedFetch(
+        `/api/jobs/${encodeURIComponent(jobId)}/applications/${encodeURIComponent(String(application.id))}/resume`,
+      );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = application.resume_name || "resume";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => void download()}
+        disabled={busy}
+        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline disabled:opacity-60"
+      >
+        {busy ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+        ) : (
+          <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+        )}
+        {label}
+        {application.resume_name ? ` · ${application.resume_name}` : ""}
+      </button>
+      {failed && (
+        <p role="alert" className="mt-1 text-xs text-destructive">
+          {failedText}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default function CareersPortal() {
   const { currentLang } = useLanguage();
@@ -323,13 +394,20 @@ export default function CareersPortal() {
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <span className="font-medium">
-                                {a.applicant_id}
+                                {a.applicant_name ||
+                                  a.applicant_email ||
+                                  a.applicant_id}
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {statusLabel(a.status, lang)} ·{" "}
                                 {fmt(a.applied_date, lang)}
                               </span>
                             </div>
+                            {a.applicant_name && a.applicant_email && (
+                              <p className="text-xs text-muted-foreground">
+                                {a.applicant_email}
+                              </p>
+                            )}
                             {a.cover_letter && (
                               <p className="mt-2 whitespace-pre-line text-muted-foreground">
                                 {a.cover_letter}
@@ -339,6 +417,14 @@ export default function CareersPortal() {
                               <p className="mt-2 whitespace-pre-line text-xs text-muted-foreground">
                                 {a.notes}
                               </p>
+                            )}
+                            {a.has_resume && (
+                              <ResumeDownload
+                                jobId={job.id}
+                                application={a}
+                                label={copy.resume}
+                                failedText={copy.resumeFailed}
+                              />
                             )}
                             {a.resume_url && /^https?:\/\//.test(a.resume_url) && (
                               <a

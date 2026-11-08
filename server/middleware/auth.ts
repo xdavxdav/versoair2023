@@ -242,6 +242,8 @@ function isPublicPath(path: string, method: string): boolean {
     if (/^\/api\/translations\/[^/]+\/?$/.test(path)) return true;
     if (new RegExp("^/api/social/posts/[^/]+/comments$").test(path) ||
         new RegExp("^/api/arena/[0-9]+(?:/bracket)?$").test(path) ||
+        // Stored business logos; the route itself hides non-public businesses.
+        new RegExp("^/api/business-logo/file/[0-9]+$").test(path) ||
         new RegExp("^/api/listening-sessions(?:/[0-9]+(?:/(?:now-playing|chat))?)?/?$").test(path) ||
         new RegExp("^/api/marketing/packs/[^/]+$").test(path) ||
         new RegExp("^/api/marketing/journal/pdf/[^/]+$").test(path)) return true;

@@ -72,7 +72,9 @@ export function createCsrfFetch(
     }
 
     const headers = new Headers(init?.headers ?? asRequest(input)?.headers);
-    if (headers.has(CSRF_HEADER)) return nativeFetch(input, init);
+    // A blank value (e.g. read from a missing meta tag) always fails the
+    // server check, so it counts as unset.
+    if (headers.get(CSRF_HEADER)?.trim()) return nativeFetch(input, init);
 
     const token = await resolveToken();
     if (!token) return nativeFetch(input, init);

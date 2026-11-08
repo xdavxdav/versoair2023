@@ -13,6 +13,10 @@ import {
   PROJECT_STATUS_UPDATES,
   projectAccess,
 } from "../utils/versavids-access";
+import {
+  DELIVERY_ACCEPTING_STATUSES,
+  parseDeliveryUrl,
+} from "../../shared/versavids-rules";
 
 const router = Router();
 
@@ -266,8 +270,26 @@ router.patch(
         return res.status(404).json({ error: "Project not found" });
       }
 
-      // Claim: only open projects can be claimed
-      if (claimed_by !== undefined && project.status === "open") {
+      const access = projectAccess(project, (req as any).user);
+
+      // Claim: only open projects can be claimed, by an artist, not by the client
+      if (claimed_by !== undefined) {
+        if (project.status !== "open") {
+          return res.status(409).json({ error: "Project is no longer open" });
+        }
+        if (access.isClient) {
+          return res
+            .status(403)
+            .json({ error: "You cannot take your own project" });
+        }
+        const artist = await db.execute(sql`
+        SELECT id FROM artist_profiles WHERE user_id = ${userId} AND is_active = true LIMIT 1
+      `);
+        if (!artist.rows.length) {
+          return res.status(403).json({
+            error: "Only artists with an active profile can take a project",
+          });
+        }
         const claimed = await db.execute(sql`
         UPDATE video_projects SET claimed_by = ${userId}, claimed_at = NOW(), status = 'claimed', updated_at = NOW()
         WHERE id = ${projectId} AND status = 'open'
@@ -280,7 +302,6 @@ router.patch(
       }
 
       // Status update: only the client, the assigned videaste or staff
-      const access = projectAccess(project, (req as any).user);
       if (status && (access.isClient || access.isVideaste || access.isStaff)) {
         if (!PROJECT_STATUS_UPDATES.includes(status)) {
           return res.status(400).json({ error: "Invalid status" });
@@ -311,12 +332,18 @@ router.patch(
 /**
  * GET /api/versavids/projects/:id — Get project details with brief & deliverables
  */
-router.get("/projects/:id", async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(req.params.id);
+router.get(
+  "/projects/:id",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const projectId = parsePositiveInt(req.params.id);
+      if (!projectId) {
+        return res.status(404).json({ error: "Project not found" });
+      }
 
-    const [project] = (
-      await db.execute(sql`
+      const [project] = (
+        await db.execute(sql`
       SELECT vp.*, u.display_name as client_name, u.email as client_email,
              v.display_name as videaste_name
       FROM video_projects vp
@@ -324,52 +351,52 @@ router.get("/projects/:id", async (req: Request, res: Response) => {
       LEFT JOIN users v ON vp.claimed_by = v.id
       WHERE vp.id = ${projectId}
     `)
-    ).rows as any[];
+      ).rows as any[];
 
-    if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
 
-    // Get brief
-    const briefResult = await db.execute(sql`
+      // The client, the artist who took the project and staff see the delivered
+      // work and the client's email; everyone else only sees the open request.
+      const access = projectAccess(project, (req as any).user);
+      const isParty = access.isClient || access.isVideaste || access.isStaff;
+      if (!isParty) delete project.client_email;
+
+      // Get brief
+      const briefResult = await db.execute(sql`
       SELECT * FROM video_briefs WHERE project_id = ${projectId} LIMIT 1
     `);
 
-    // Get deliverables
-    const deliverableResult = await db.execute(sql`
+      // Get deliverables
+      const deliverableResult = isParty
+        ? await db.execute(sql`
       SELECT vd.*, u.display_name as videaste_name
       FROM video_deliverables vd
       LEFT JOIN users u ON vd.videaste_id = u.id
       WHERE vd.project_id = ${projectId}
       ORDER BY vd.version DESC
-    `);
+    `)
+        : { rows: [] };
 
-    // Get license
-    const licenseResult = await db.execute(sql`
+      // Get license
+      const licenseResult = await db.execute(sql`
       SELECT * FROM video_licenses WHERE project_id = ${projectId} LIMIT 1
     `);
 
-    const viewerId = Number((req as any).user?.userId);
-    const viewerRole = (req as any).user?.role;
-    const maySeeEmail =
-      viewerId > 0 &&
-      (Number(project.client_id) === viewerId ||
-        Number(project.claimed_by) === viewerId ||
-        ["admin", "superuser", "moderator"].includes(viewerRole));
-    if (!maySeeEmail) delete project.client_email;
-
-    res.json({
-      success: true,
-      project,
-      brief: briefResult.rows[0] || null,
-      deliverables: deliverableResult.rows,
-      license: licenseResult.rows[0] || null,
-    });
-  } catch (error: any) {
-    console.error("[VersaVids] Error fetching project:", error);
-    res.status(500).json({ error: "Failed to fetch project" });
-  }
-});
+      res.json({
+        success: true,
+        project,
+        brief: briefResult.rows[0] || null,
+        deliverables: deliverableResult.rows,
+        license: licenseResult.rows[0] || null,
+      });
+    } catch (error: any) {
+      console.error("[VersaVids] Error fetching project:", error);
+      res.status(500).json({ error: "Failed to fetch project" });
+    }
+  },
+);
 
 // ─────────────────────────────────────────────────────────────────────────
 // BRIEFS — Detailed creative specs for a project
@@ -493,10 +520,21 @@ router.post(
           .json({ error: "project_id, title, and file_url are required" });
       }
 
+      // Links are clicked by the client: plain http(s) only
+      const fileUrl = parseDeliveryUrl(file_url);
+      const thumbnailUrl = thumbnail_url
+        ? parseDeliveryUrl(thumbnail_url)
+        : null;
+      if (!fileUrl || (thumbnail_url && !thumbnailUrl)) {
+        return res.status(400).json({
+          error: "file_url and thumbnail_url must be http(s) links",
+        });
+      }
+
       // Only the videaste assigned to the project (or staff) uploads work to it
       const [project] = (
         await db.execute(
-          sql`SELECT client_id, claimed_by FROM video_projects WHERE id = ${projectId}`,
+          sql`SELECT client_id, status, claimed_by FROM video_projects WHERE id = ${projectId}`,
         )
       ).rows as any[];
       if (!project) {
@@ -509,9 +547,16 @@ router.post(
         });
       }
 
+      // A finished or cancelled project must not be pulled back into review
+      if (!DELIVERY_ACCEPTING_STATUSES.includes(project.status)) {
+        return res
+          .status(409)
+          .json({ error: "This project is not accepting deliveries" });
+      }
+
       const result = await db.execute(sql`
       INSERT INTO video_deliverables (project_id, videaste_id, title, description, file_url, thumbnail_url, file_size, duration, format, resolution, version)
-      VALUES (${projectId}, ${videasteId}, ${title}, ${description || null}, ${file_url}, ${thumbnail_url || null}, ${file_size || null}, ${duration || null}, ${format || "mp4"}, ${resolution || null}, ${version || 1})
+      VALUES (${projectId}, ${videasteId}, ${title}, ${description || null}, ${fileUrl}, ${thumbnailUrl}, ${file_size || null}, ${duration || null}, ${format || "mp4"}, ${resolution || null}, ${version || 1})
       RETURNING *
     `);
 

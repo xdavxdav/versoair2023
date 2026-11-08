@@ -48,6 +48,8 @@ import {
   X,
 } from "lucide-react";
 import type { AuthUser } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
+import { describeFailure, failureFromThrown } from "@/lib/submit-json";
 
 /* ── Types ── */
 
@@ -124,6 +126,23 @@ function formatJobType(t?: string): string {
     .join(" ");
 }
 
+// Multipart, so the CV file itself travels with the application. The browser
+// sets the Content-Type (with its boundary) when the body is a FormData.
+function buildApplicationForm(data: ApplicationData): FormData {
+  const form = new FormData();
+  form.append("applicant_name", data.fullName);
+  form.append("applicant_email", data.email);
+  form.append("applicant_phone", data.phone);
+  form.append("linkedin", data.linkedin);
+  form.append("portfolio", data.portfolio);
+  form.append("cover_letter", data.coverLetter);
+  form.append("notes", data.additionalNotes);
+  if (data.resumeFile) {
+    form.append("resume", data.resumeFile, data.resumeFile.name);
+  }
+  return form;
+}
+
 /* ── Component ── */
 
 export function JobApplicationModal({
@@ -138,6 +157,8 @@ export function JobApplicationModal({
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
   const [appData, setAppData] = useState<ApplicationData>({
     fullName: user.name || "",
     email: user.email || "",
@@ -178,6 +199,8 @@ export function JobApplicationModal({
   const handleClose = () => {
     setStep(1);
     setSubmitted(false);
+    setSubmitError(null);
+    setApplicationId(null);
     setAppData({
       fullName: user.name || "",
       email: user.email || "",
@@ -206,37 +229,35 @@ export function JobApplicationModal({
   const handleSubmit = async () => {
     if (!job) return;
     setSubmitting(true);
+    setSubmitError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/jobs/${job.id}/apply`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await authenticatedFetch(
+        `${API_BASE}/api/jobs/${job.id}/apply`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: buildApplicationForm(appData),
         },
-        body: JSON.stringify({
-          applicant_name: appData.fullName,
-          applicant_email: appData.email,
-          applicant_phone: appData.phone,
-          linkedin: appData.linkedin,
-          portfolio: appData.portfolio,
-          cover_letter: appData.coverLetter,
-          resume_url: appData.resumeFileName || null,
-          notes: appData.additionalNotes,
-        }),
-      });
+      );
 
+      const result = await res.json().catch(() => null);
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || "Application failed");
+        setSubmitError(describeFailure(res.status, result).message);
+        return;
       }
 
+      setApplicationId(
+        typeof result?.applicationId === "string" ? result.applicationId : null,
+      );
       setSubmitted(true);
       setStep(4);
       onSubmitSuccess?.();
-    } catch (err: any) {
-      // bubble error to caller via toast pattern
-      throw err;
+    } catch (err) {
+      // The request never reached the server: the form stays filled in.
+      setSubmitError(failureFromThrown(err).message);
     } finally {
       setSubmitting(false);
     }
@@ -736,12 +757,14 @@ export function JobApplicationModal({
                 The hiring team will review your application and get back to
                 you.
               </p>
-              <div
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${accentBg} ${accent} text-sm font-medium`}
-              >
-                <Star className="h-4 w-4" />
-                Application ID: {job.id.slice(0, 8).toUpperCase()}
-              </div>
+              {applicationId && (
+                <div
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${accentBg} ${accent} text-sm font-medium`}
+                >
+                  <Star className="h-4 w-4" />
+                  Application ID: {applicationId.slice(0, 8).toUpperCase()}
+                </div>
+              )}
               <div className="pt-4">
                 <Button
                   onClick={handleClose}
@@ -755,6 +778,14 @@ export function JobApplicationModal({
         </div>
 
         {/* ── Footer navigation ── */}
+        {!submitted && step === 3 && submitError && (
+          <p
+            role="alert"
+            className="border-t border-red-200 bg-red-50 px-6 py-3 text-sm font-medium text-red-700"
+          >
+            {submitError}
+          </p>
+        )}
         {!submitted && (
           <div className="border-t bg-gray-50 px-6 py-4 flex items-center justify-between rounded-b-lg">
             <Button

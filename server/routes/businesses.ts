@@ -5,7 +5,7 @@ import { validateBusinessCategory } from "../services/business-validation";
 import { eq } from "drizzle-orm";
 import { businesses, auditLogs, users } from "@shared/schema";
 import { requireAuth, requireAdminPanel } from "../middleware/auth";
-import { generateBusinessPDF } from "../services/pdf-generator";
+import { generateBusinessPDF, renderBusinessPDF } from "../services/pdf-generator";
 import {
   sendBusinessApprovalRequestEmail,
   sendBusinessApprovedEmail,
@@ -1349,10 +1349,14 @@ router.put(
         });
       }
 
+      // The team's review is the verification: the public directory lists only
+      // active AND verified businesses (publicBusinessVisibilitySql), and the
+      // approval email tells the owner the business is now live there.
       const result = await pool.query(
         `UPDATE businesses
          SET approval_status = 'approved',
              is_active = true,
+             is_verified = true,
              approved_by = $1,
              approval_notes = $2,
              updated_at = NOW()
@@ -1517,6 +1521,9 @@ router.put(
 
 /**
  * DOWNLOAD business registration PDF
+ * Rendered from the database on request: the host's disk is wiped on every
+ * deploy, so a stored file cannot be relied on, and the document always shows
+ * the current approval status.
  */
 router.get(
   "/api/businesses/:id/pdf",
@@ -1526,27 +1533,52 @@ router.get(
     const { id } = req.params;
     if (!(await requireBusinessOwnerOrStaff(req, res, id))) return;
     const result = await pool.query(
-      "SELECT pdf_path, name FROM businesses WHERE id = $1",
+      `SELECT b.id, b.name, b.description, b.address, b.phone, b.email,
+              b.website, b.country_code, b.city_name, b.approval_status,
+              b.created_at,
+              bc.name AS category_name,
+              COALESCE(sub.username, own.username, own.email) AS submitted_by_name,
+              appr.username AS approved_by_name
+         FROM businesses b
+         LEFT JOIN business_categories bc ON b.category_id = bc.id
+         LEFT JOIN users own ON b.owner_id = own.id
+         LEFT JOIN users sub ON b.submitted_by = sub.id
+         LEFT JOIN users appr ON b.approved_by = appr.id
+        WHERE b.id = $1`,
       [id],
     );
 
-    if (result.rows.length === 0 || !result.rows[0].pdf_path) {
+    const business = result.rows[0];
+    if (!business) {
       return res.status(404).json({
         success: false,
-        error: "PDF not found for this business",
+        error: "Business not found",
       });
     }
 
-    const { pdf_path, name } = result.rows[0];
-    const fs = await import("fs");
-    if (!fs.existsSync(pdf_path)) {
-      return res.status(404).json({
-        success: false,
-        error: "PDF file not found on server",
-      });
-    }
+    const pdf = await renderBusinessPDF({
+      id: business.id,
+      name: business.name,
+      categoryName: business.category_name || undefined,
+      description: business.description || undefined,
+      address: business.address || undefined,
+      cityName: business.city_name || undefined,
+      countryCode: business.country_code || undefined,
+      phone: business.phone || undefined,
+      email: business.email || undefined,
+      website: business.website || undefined,
+      submittedBy: business.submitted_by_name || undefined,
+      submittedAt: business.created_at
+        ? new Date(business.created_at).toISOString()
+        : undefined,
+      approvalStatus: business.approval_status || undefined,
+      approvedBy: business.approved_by_name || undefined,
+    });
 
-    res.download(pdf_path, `business-registration-${name}.pdf`);
+    res.set("Cache-Control", "private, no-store");
+    // attachment() encodes the business name, so no name can break the header.
+    res.attachment(`business-registration-${business.name}.pdf`);
+    res.send(pdf);
   } catch (error) {
     console.error("Error downloading PDF:", error);
     res.status(500).json({
