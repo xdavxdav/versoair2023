@@ -6,6 +6,8 @@ export const TICKET_STATUSES = [
 export type TicketStatus = (typeof TICKET_STATUSES)[number];
 export const TICKET_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 export const PENDING_REASONS = ["customer", "internal", "third-party", "approval"] as const;
+export const RESOLUTION_CODES = ["fixed", "workaround", "no-fault-found", "duplicate", "user-error", "cannot-reproduce"] as const;
+export const AUTO_CLOSE_DAYS = 3;
 export const SLA_HOURS = { low: 72, medium: 24, high: 8, critical: 2 } as const;
 export const TERMINAL_STATUSES: readonly string[] = ["resolved", "closed", "withdrawn", "abandoned", "voided"];
 
@@ -77,9 +79,13 @@ export const updateTicketSchema = z.object({
   pendingReason: z.enum(PENDING_REASONS).optional(),
   followUpAt: z.string().datetime({ offset: true }).optional(),
   duplicateOf: z.number().int().positive().optional(),
+  resolutionCode: z.enum(RESOLUTION_CODES).optional(),
+  resolutionNotes: z.string().trim().min(1).max(2000).optional(),
 }).strict().refine((value) => value.status !== undefined || value.priority !== undefined, "No change specified")
   .refine((value) => value.status !== "pending" || Boolean(value.pendingReason && value.followUpAt),
-    "Pending requires a reason and follow-up date");
+    "Pending requires a reason and follow-up date")
+  .refine((value) => value.status !== "resolved" || Boolean(value.resolutionCode && value.resolutionNotes),
+    "Resolving requires a resolution code and notes");
 export const commentSchema = z.object({
   body: z.string().trim().min(1).max(5000),
   internal: z.boolean().default(false),
@@ -102,6 +108,8 @@ export interface SupportTicket extends TicketAccessRecord {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+  resolution_code: string | null;
+  resolution_notes: string | null;
   pending_reason: string | null;
   pending_since: string | null;
   follow_up_at: string | null;

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  canWorkTicket, isTicketManager, isTicketStaff, PENDING_REASONS, TERMINAL_STATUSES,
+  canWorkTicket, isTicketManager, isTicketStaff, PENDING_REASONS, RESOLUTION_CODES, TERMINAL_STATUSES,
   TICKET_PRIORITIES, TICKET_STATUSES, transitionError, type SupportTicket, type TicketActor, type TicketStatus,
 } from "@shared/ticket-policy";
 
@@ -152,12 +152,14 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
   const [followUpAt, setFollowUpAt] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
   const [priority, setPriority] = useState("");
+  const [resolutionCode, setResolutionCode] = useState<(typeof RESOLUTION_CODES)[number]>("fixed");
+  const [resolutionNotes, setResolutionNotes] = useState("");
   const [body, setBody] = useState("");
   const [internal, setInternal] = useState(false);
   const mutation = useMutation({
     mutationFn: ({ path, method, input }: { path: string; method: string; input: object }) => ticketRequest(path, method, input),
     onSuccess: () => {
-      setReason(""); setBody(""); setStatus(""); setPriority("");
+      setReason(""); setResolutionNotes(""); setBody(""); setStatus(""); setPriority("");
       refresh();
       void queryClient.invalidateQueries({ queryKey: ["support-comments", id] });
       void queryClient.invalidateQueries({ queryKey: ["support-history", id] });
@@ -175,6 +177,7 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
       {current && <>
         <p className="whitespace-pre-wrap break-words">{current.description}</p>
         <p>{t("status")}: {t(current.status)} · {t(current.priority)}</p>
+        {current.resolution_code && <p>{t("resolutionCode")}: {t(current.resolution_code as (typeof RESOLUTION_CODES)[number])} — {current.resolution_notes}</p>}
         {current.follow_up_at && <p>{t("followUp")}: {new Date(current.follow_up_at).toLocaleString()}</p>}
         {current.abandonment_proposed_at && <p className="text-amber-800">{t("abandonment")}</p>}
         {isTicketStaff(actor) && current.assignee_id === null && !TERMINAL_STATUSES.includes(current.status) &&
@@ -184,6 +187,7 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
             e.preventDefault();
             submit("", "PUT", {
               ...(status ? { status } : {}), ...(priority ? { priority } : {}), reason,
+              ...(status === "resolved" ? { resolutionCode, resolutionNotes } : {}),
               ...(status === "pending" ? { pendingReason, followUpAt: new Date(followUpAt).toISOString() } : {}),
             });
           }}>
@@ -195,6 +199,12 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
               <option value="">{t(current.priority)}</option>{TICKET_PRIORITIES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
             </select></label>}
           </div>
+          {status === "resolved" && <>
+            <label className="block">{t("resolutionCode")}<select className={`${selectClass} ml-2`} value={resolutionCode}
+              onChange={(e) => setResolutionCode(e.target.value as (typeof RESOLUTION_CODES)[number])}>
+              {RESOLUTION_CODES.map((value) => <option key={value} value={value}>{t(value)}</option>)}</select></label>
+            <label className="block">{t("resolutionNotes")}<Textarea required maxLength={2000} value={resolutionNotes} onChange={(e) => setResolutionNotes(e.target.value)} /></label>
+          </>}
           {status === "pending" && <>
             <label className="block">{t("pendingReason")}<select className={`${selectClass} ml-2`} value={pendingReason}
               onChange={(e) => setPendingReason(e.target.value as (typeof PENDING_REASONS)[number])}>

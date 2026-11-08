@@ -75,6 +75,9 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
     }
   }
   if (input.priority && !isTicketManager(actor)) throw new TicketError(403, "Only a manager can change priority");
+  if (input.priority && before.reporter_id === actor.id && !actor.owner) {
+    throw new TicketError(403, "You cannot change the priority of a ticket you requested");
+  }
   if (input.priority && TERMINAL_STATUSES.includes(before.status)) {
     throw new TicketError(409, "Reopen the ticket before changing its priority");
   }
@@ -100,13 +103,16 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
       resolved_at=CASE WHEN $2='resolved' THEN COALESCE(resolved_at,NOW())
         WHEN $2='closed' THEN resolved_at ELSE NULL END,
       duplicate_of=COALESCE($10,duplicate_of),
+      resolution_code=CASE WHEN $2='resolved' THEN $12::text WHEN $2='closed' THEN resolution_code ELSE NULL END,
+      resolution_notes=CASE WHEN $2='resolved' THEN $13::text WHEN $2='closed' THEN resolution_notes ELSE NULL END,
       sla_breached=CASE WHEN $11 THEN false ELSE sla_breached END, updated_at=NOW()
      WHERE id=$1 RETURNING *`,
     [id, nextStatus, priority, SLA_HOURS[priority], dueAt,
       enteringPending ? input.pendingReason : leavingPending ? null : before.pending_reason,
       enteringPending ? now : leavingPending ? null : before.pending_since,
       enteringPending ? input.followUpAt : leavingPending ? null : before.follow_up_at,
-      input.status ? null : before.abandonment_proposed_at, input.duplicateOf || null, reopening],
+      input.status ? null : before.abandonment_proposed_at, input.duplicateOf || null, reopening,
+      input.resolutionCode || null, input.resolutionNotes || null],
   );
   // Public history never contains staff-only reasons or pending metadata.
   await event(client, id, actor, "updated", {
