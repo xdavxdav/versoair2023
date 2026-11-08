@@ -191,7 +191,7 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
             <label>{t("status")}<select className={`${selectClass} ml-2`} value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | "")}>
               <option value="">{t(current.status)}</option>{changes.map((value) => <option key={value} value={value}>{t(value)}</option>)}
             </select></label>
-            {isTicketManager(actor) && <label>{t("priority")}<select className={`${selectClass} ml-2`} value={priority} onChange={(e) => setPriority(e.target.value)}>
+            {isTicketManager(actor) && !TERMINAL_STATUSES.includes(current.status) && <label>{t("priority")}<select className={`${selectClass} ml-2`} value={priority} onChange={(e) => setPriority(e.target.value)}>
               <option value="">{t(current.priority)}</option>{TICKET_PRIORITIES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
             </select></label>}
           </div>
@@ -219,7 +219,7 @@ function TicketDetails({ id, initial, actor, onClose, refresh }: {
             <p className="text-xs">{comment.author_name} · {new Date(comment.created_at).toLocaleString()} · {t(comment.internal ? "note" : "reply")}</p>
             <p className="mt-2 whitespace-pre-wrap break-words">{comment.body}</p>
           </article>)}
-          {(!isTicketStaff(actor) || work) && <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); submit("/comments", "POST", { body, internal }); }}>
+          {(!isTicketStaff(actor) || work) && (!TERMINAL_STATUSES.includes(current.status) || (current.status === "resolved" && !isTicketStaff(actor))) && <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); submit("/comments", "POST", { body, internal }); }}>
             <label className="block">{t(internal ? "note" : "reply")}<Textarea required maxLength={5000} value={body} onChange={(e) => setBody(e.target.value)} /></label>
             {isTicketStaff(actor) && <label className="flex items-center gap-2"><input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />{t("note")}</label>}
             <Button disabled={mutation.isPending} type="submit">{t("send")}</Button>

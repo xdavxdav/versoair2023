@@ -75,6 +75,9 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
     }
   }
   if (input.priority && !isTicketManager(actor)) throw new TicketError(403, "Only a manager can change priority");
+  if (input.priority && TERMINAL_STATUSES.includes(before.status)) {
+    throw new TicketError(409, "Reopen the ticket before changing its priority");
+  }
   if (input.duplicateOf) {
     if (input.status !== "voided" || input.duplicateOf === id) throw new TicketError(400, "Invalid duplicate reference");
     await readTicket(client, input.duplicateOf, actor);
@@ -351,6 +354,9 @@ router.post("/:id/comments", route(async (req, res) => {
   const result = await transaction(async (client) => {
     const id = parse(idSchema, req.params.id);
     const ticket = await readTicket(client, id, actor, true);
+    if (TERMINAL_STATUSES.includes(ticket.status) && !(ticket.status === "resolved" && ticket.reporter_id === actor.id && !isTicketStaff(actor))) {
+      throw new TicketError(409, "This ticket is " + ticket.status + " and read-only. Reopen it to add comments");
+    }
     if (isTicketStaff(actor) && !canWorkTicket(actor, ticket)) throw new TicketError(403, "Claim the ticket first");
     if (input.internal && !isTicketStaff(actor)) throw new TicketError(403, "Internal notes are staff only");
     const { rows } = await client.query(
