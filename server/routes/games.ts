@@ -267,7 +267,7 @@ async function holdWager(
   );
 
   const txn = await pool.query(
-    `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, status)
+    `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, status)
      VALUES ($1, $2, 'purchase', $3, $4, $5, 'Game wager hold', 'pending')
      RETURNING id`,
     [
@@ -335,7 +335,7 @@ async function settleMatch(
 
   // Log winner transaction
   await pool.query(
-    `INSERT INTO wallet_transactions (user_id, wallet_id, transaction_type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
+    `INSERT INTO wallet_transactions (user_id, wallet_id, type, amount, balance_before, balance_after, description, related_entity_type, related_entity_id, status)
      VALUES ($1, $2, 'arena_reward', $3, $4, $5, 'Game win', 'game', $6, 'completed')`,
     [
       winnerId,
