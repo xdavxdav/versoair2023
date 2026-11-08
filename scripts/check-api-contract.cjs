@@ -135,6 +135,29 @@ function joinPrefix(base, sub) {
 }
 
 /**
+ * Record the routes declared on one router variable.
+ *
+ * NOTE: this codebase overwhelmingly writes multi-line declarations, e.g.
+ *   router.post(\n     "/login",\n     handler)
+ * so the path must be allowed to appear after arbitrary whitespace/newlines.
+ *
+ * A path may also be a template literal whose `${...}` hole follows a route
+ * param (`/:id${ID_PATTERN}`). That hole is a regex constraint on the param,
+ * not path text, so it is dropped.
+ */
+function addDeclaredRoutes(src, routerVar, prefix) {
+  for (const m of src.matchAll(
+    new RegExp(
+      `${routerVar}\\.(?:${METHODS})\\(\\s*["'\`]([^"'\`]+)["'\`]`,
+      "gs",
+    ),
+  )) {
+    const declared = m[1].replace(/(:[A-Za-z0-9_]+)\$\{[^}]*\}/g, "$1");
+    serverPaths.add(normalize(joinPrefix(prefix, declared)));
+  }
+}
+
+/**
  * Walk a router file, recording its routes and recursing into any sub-routers
  * it mounts. Routers are frequently directories with an index.ts that only
  * does `router.use("/x", subRouter)` (see server/routes/api-v1), so this must
@@ -147,14 +170,7 @@ function collectRoutes(file, prefix, visited = new Set()) {
 
   const src = fs.readFileSync(file, "utf8");
 
-  // NOTE: this codebase overwhelmingly writes multi-line declarations, e.g.
-  //   router.post(\n     "/login",\n     handler)
-  // so the path must be allowed to appear after arbitrary whitespace/newlines.
-  for (const m of src.matchAll(
-    new RegExp(`router\\.(?:${METHODS})\\(\\s*["']([^"']+)["']`, "gs"),
-  )) {
-    serverPaths.add(normalize(joinPrefix(prefix, m[1])));
-  }
+  addDeclaredRoutes(src, "router", prefix);
 
   // Sub-routers: router.use("/x", subRouter)
   for (const nested of src.matchAll(
@@ -164,7 +180,13 @@ function collectRoutes(file, prefix, visited = new Set()) {
     const imp = src.match(
       new RegExp(`import\\s+${subVar}\\s+from\\s+["']([^"']+)["']`),
     );
-    if (!imp) continue;
+    if (!imp) {
+      // A sub-router built in this same file: const admin = Router();
+      if (new RegExp(`\\b(?:const|let)\\s+${subVar}\\s*=\\s*Router\\(`).test(src)) {
+        addDeclaredRoutes(src, subVar, joinPrefix(prefix, subPrefix));
+      }
+      continue;
+    }
     const subFile = resolveRouter(imp[1], path.dirname(file));
     if (subFile) collectRoutes(subFile, joinPrefix(prefix, subPrefix), visited);
   }
