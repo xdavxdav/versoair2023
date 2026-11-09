@@ -1,135 +1,88 @@
 import type { ReactNode } from "react";
+import { Link } from "wouter";
+import {
+  Clock,
+  ExternalLink,
+  Globe,
+  Lock,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Printer,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import {
   FicheSectionId,
-  Sector,
   SECTION_LABELS,
-  Tier,
+  SECTOR_LABELS,
+  getLockedSections,
   getVisibleSections,
+  inferSector,
+  normalizeTier,
 } from "@/lib/fiche-technique-config";
-
-type AnyRecord = Record<string, any>;
+import {
+  WEEKDAYS,
+  openNow,
+  readFiche,
+  weekdayIn,
+  type Fiche,
+  type Weekday,
+} from "@shared/fiche-technique";
 
 type BusinessInput = {
   id: number | string;
   name: string;
-  description?: string | null;
   address?: string | null;
   location?: string | null;
   phone?: string | null;
   email?: string | null;
+  website?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   rating?: number | string | null;
-  employee_count?: number | null;
-  annual_revenue?: number | null;
-  opening_hours?: Record<string, string> | string | null;
-  social_links?: Record<string, string> | string | null;
-  tags?: string[] | string | null;
   category_name?: string | null;
   categoryName?: string | null;
   tier?: string | null;
-  subscription_tier?: string | null;
-  sector_data?: AnyRecord | string | null;
-  sectorData?: AnyRecord | string | null;
-  attributes?: AnyRecord;
+  sector_data?: unknown;
+  opening_hours?: unknown;
+  social_links?: unknown;
   [key: string]: any;
 };
 
-function parseMaybeJsonObject(value: unknown): AnyRecord {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value as AnyRecord;
-  }
-  if (typeof value === "string") {
-    try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as AnyRecord;
-      }
-    } catch {
-      return {};
-    }
-  }
-  return {};
+interface FicheTechniqueProps {
+  business: BusinessInput;
+  // Present only for the owner or staff: shows the editor entry points.
+  onEdit?: () => void;
 }
 
-function parseStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map((v) => String(v));
-  if (typeof value === "string") {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.map((v) => String(v));
-    } catch {
-      if (value.includes(",")) {
-        return value
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean);
-      }
-      if (value.trim()) return [value.trim()];
-    }
-  }
-  return [];
-}
+const DAY_LABELS: Record<Weekday, { en: string; fr: string }> = {
+  monday: { en: "Monday", fr: "Lundi" },
+  tuesday: { en: "Tuesday", fr: "Mardi" },
+  wednesday: { en: "Wednesday", fr: "Mercredi" },
+  thursday: { en: "Thursday", fr: "Jeudi" },
+  friday: { en: "Friday", fr: "Vendredi" },
+  saturday: { en: "Saturday", fr: "Samedi" },
+  sunday: { en: "Sunday", fr: "Dimanche" },
+};
 
-function parseHours(value: unknown): Record<string, string> {
-  const obj = parseMaybeJsonObject(value);
-  return Object.entries(obj).reduce<Record<string, string>>((acc, [k, v]) => {
-    acc[k] = String(v);
-    return acc;
-  }, {});
-}
+const NETWORK_LABELS: Record<string, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  x: "X",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+};
 
-function normalizeTier(value: string | null | undefined): Tier {
-  const t = (value || "").toLowerCase();
-  if (t === "enterprise" || t === "max") return "enterprise";
-  if (t === "premium" || t === "verified" || t === "essential") {
-    return "premium";
-  }
-  return "free";
-}
-
-function inferSector(categoryName: string, sectorData: AnyRecord): Sector {
-  const explicit = String(
-    sectorData.sector || sectorData.business_type || sectorData.type || "",
-  ).toLowerCase();
-
-  if (
-    explicit === "convenience_store" ||
-    explicit === "ad_agency" ||
-    explicit === "finance" ||
-    explicit === "restaurant" ||
-    explicit === "ecommerce" ||
-    explicit === "commerce" ||
-    explicit === "hotellerie" ||
-    explicit === "batiment" ||
-    explicit === "automobile" ||
-    explicit === "divertissement"
-  ) {
-    return explicit as Sector;
-  }
-
-  const c = categoryName.toLowerCase();
-  if (c.includes("finance")) return "finance";
-  if (c.includes("hôtel") || c.includes("hotel") || c.includes("hotellerie")) {
-    return "hotellerie";
-  }
-  if (c.includes("batiment") || c.includes("construction")) return "batiment";
-  if (c.includes("auto")) return "automobile";
-  if (c.includes("divert") || c.includes("entertain")) return "divertissement";
-  if (
-    c.includes("commerce") ||
-    c.includes("retail") ||
-    c.includes("boutique")
-  ) {
-    return "commerce";
-  }
-  return "other";
-}
-
-function getLabel(section: FicheSectionId, isFr: boolean): string {
-  return isFr ? SECTION_LABELS[section].fr : SECTION_LABELS[section].en;
-}
+const TIER_LABELS = {
+  free: { en: "Free", fr: "Gratuit" },
+  premium: { en: "Premium", fr: "Premium" },
+  enterprise: { en: "Enterprise", fr: "Entreprise" },
+};
 
 function SectionBlock({
   title,
@@ -139,304 +92,459 @@ function SectionBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="fiche-section rounded-xl border border-white/10 bg-white/5 p-4 print:border-slate-300 print:bg-white">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-amber-300 print:text-slate-900">
+    <section className="fiche-section rounded-xl border border-slate-200 bg-white p-4 print:break-inside-avoid">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-800 print:text-slate-900">
         {title}
       </h3>
-      <div className="mt-2 text-sm text-slate-200 print:text-slate-800 space-y-2">
-        {children}
-      </div>
+      <div className="mt-2 space-y-2 text-sm text-slate-800">{children}</div>
     </section>
   );
 }
 
-export function FicheTechnique({ business }: { business: BusinessInput }) {
+function Chips({ items }: { items: string[] }) {
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <li
+          key={item}
+          className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-800"
+        >
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Paragraph({ label, text }: { label?: string; text: string }) {
+  if (!text) return null;
+  return (
+    <p className="whitespace-pre-line">
+      {label && <strong>{label}: </strong>}
+      {text}
+    </p>
+  );
+}
+
+function formatHours(value: string, isFr: boolean): string {
+  if (value === "closed") return isFr ? "Fermé" : "Closed";
+  return value.replace(/-/g, " – ");
+}
+
+function mapsLink(business: BusinessInput): string | null {
+  const lat = Number(business.latitude);
+  const lng = Number(business.longitude);
+  const query =
+    Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0)
+      ? `${lat},${lng}`
+      : business.address
+        ? [business.address, business.location].filter(Boolean).join(", ")
+        : "";
+  return query
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+    : null;
+}
+
+function safeWebsite(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value.includes("://") ? value : `https://${value}`);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function OpenNowBadge({ fiche, isFr }: { fiche: Fiche; isFr: boolean }) {
+  const status = openNow(fiche.opening_hours, fiche.timezone, new Date());
+  if (status.state === "unknown") return null;
+  const open = status.state === "open";
+  const label = open
+    ? status.at
+      ? isFr
+        ? `Ouvert • ferme à ${status.at}`
+        : `Open now • closes ${status.at}`
+      : isFr
+        ? "Ouvert"
+        : "Open now"
+    : status.at
+      ? isFr
+        ? `Fermé • ouvre à ${status.at}`
+        : `Closed • opens ${status.at}`
+      : isFr
+        ? "Fermé"
+        : "Closed";
+  return (
+    <Badge
+      className={
+        open
+          ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+          : "border-rose-300 bg-rose-50 text-rose-800"
+      }
+    >
+      <Clock className="mr-1 h-3 w-3" aria-hidden="true" />
+      {label}
+    </Badge>
+  );
+}
+
+export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
   const { currentLang } = useLanguage();
   const isFr = currentLang === "fr";
+  const label = (section: FicheSectionId) =>
+    isFr ? SECTION_LABELS[section].fr : SECTION_LABELS[section].en;
 
-  const categoryName = business.category_name || business.categoryName || "";
-  const sectorData =
-    parseMaybeJsonObject(business.sectorData) ||
-    parseMaybeJsonObject(business.sector_data) ||
-    parseMaybeJsonObject(business.attributes?.sectorData) ||
-    parseMaybeJsonObject(business.attributes?.sector_data);
+  const fiche = readFiche({
+    ...(business.sector_data && typeof business.sector_data === "object"
+      ? (business.sector_data as object)
+      : {}),
+    opening_hours: business.opening_hours,
+    social_links: business.social_links,
+  }).value;
 
-  const socialLinks = parseMaybeJsonObject(business.social_links);
-  const openingHours = parseHours(business.opening_hours);
-  const tags = parseStringArray(business.tags);
-
-  const services = parseStringArray(
-    sectorData.services ??
-      sectorData.offerings ??
-      business.attributes?.services,
+  const tier = normalizeTier(business.tier);
+  const sector = inferSector(
+    business.category_name || business.categoryName || "",
+    fiche.sector,
   );
-  const products = parseStringArray(sectorData.products ?? sectorData.brands);
-  const kpis = Array.isArray(sectorData.kpis) ? sectorData.kpis : [];
-  const techStack = parseStringArray(sectorData.tech_stack ?? sectorData.tools);
-  const caseStudies = Array.isArray(sectorData.case_studies)
-    ? sectorData.case_studies
-    : [];
-  const analytics = Array.isArray(sectorData.analytics)
-    ? sectorData.analytics
-    : [];
-
-  const tier = normalizeTier(
-    (business.tier as string) || (business.subscription_tier as string),
-  );
-  const sector = inferSector(categoryName, sectorData);
   const sections = getVisibleSections(tier, sector);
+  const locked = getLockedSections(tier, sector);
+  const has = (id: FicheSectionId) => sections.includes(id);
 
-  const formattedRevenue =
-    typeof business.annual_revenue === "number"
-      ? new Intl.NumberFormat(isFr ? "fr-FR" : "en-US", {
-          style: "currency",
-          currency: "EUR",
-          maximumFractionDigits: 0,
-        }).format(business.annual_revenue)
-      : null;
+  const website = safeWebsite(business.website);
+  const directions = mapsLink(business);
+  const hoursEntries = WEEKDAYS.filter((day) => fiche.opening_hours[day]);
+  const today = weekdayIn(fiche.timezone, new Date());
+  const socialEntries = Object.entries(fiche.social_links);
+
+  const showServices =
+    has("services") && (fiche.services.length > 0 || fiche.products.length > 0);
+  const showTeam = has("team") && Boolean(fiche.team);
+  const showKpis = has("kpis") && fiche.kpis.length > 0;
+  const showLegal =
+    has("legal") && Boolean(fiche.legal || fiche.rgpd || fiche.terms);
+  const showSocial = has("social") && socialEntries.length > 0;
+  const showStrategy =
+    has("strategy") &&
+    Boolean(
+      fiche.strategy || fiche.mission || fiche.vision || fiche.proposition_valeur,
+    );
+  const showTech = has("techStack") && fiche.tech_stack.length > 0;
+  const showCases = has("caseStudies") && fiche.case_studies.length > 0;
+  const hasExtra =
+    showServices ||
+    showTeam ||
+    showKpis ||
+    showLegal ||
+    showStrategy ||
+    showTech ||
+    showCases;
+  const hasAnyContent = hasExtra || hoursEntries.length > 0 || showSocial;
+
+  const tierLabel = TIER_LABELS[tier][isFr ? "fr" : "en"];
+  const sectorLabel = SECTOR_LABELS[sector][isFr ? "fr" : "en"];
 
   return (
-    <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl print:shadow-none print:border-slate-300 fiche-technique">
+    <Card
+      id="fiche-technique"
+      className="fiche-technique border border-slate-200 bg-white text-slate-900 shadow-md print:border-slate-300 print:shadow-none"
+    >
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <CardTitle className="text-slate-100 print:text-slate-900">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-2">
+            <CardTitle className="text-xl text-slate-900">
               {isFr ? "Fiche technique" : "Technical Profile"}
             </CardTitle>
-            <p className="text-xs text-slate-400 print:text-slate-600 mt-1">
-              {isFr
-                ? `Niveau: ${tier} • Secteur: ${sector}`
-                : `Tier: ${tier} • Sector: ${sector}`}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className="border-slate-300 bg-slate-50 text-slate-800"
+              >
+                {sectorLabel}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="border-amber-300 bg-amber-50 text-amber-900"
+              >
+                {tierLabel}
+              </Badge>
+              <OpenNowBadge fiche={fiche} isFr={isFr} />
+            </div>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="print:hidden border-white/20 bg-white/5 text-slate-200 hover:bg-white/10"
-            onClick={() => window.print()}
-          >
-            {isFr ? "Imprimer / PDF" : "Print / PDF"}
-          </Button>
+          <div className="flex gap-2 print:hidden">
+            {onEdit && (
+              <Button type="button" size="sm" onClick={onEdit}>
+                <Pencil className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                {isFr ? "Modifier la fiche" : "Edit fiche"}
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-slate-300 text-slate-800"
+              onClick={() => window.print()}
+            >
+              <Printer className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              {isFr ? "Imprimer / PDF" : "Print / PDF"}
+            </Button>
+          </div>
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
-        {sections.includes("basic") && (
-          <SectionBlock title={getLabel("basic", isFr)}>
-            {business.description && <p>{business.description}</p>}
-            <ul className="space-y-1">
-              {business.address && (
-                <li>
-                  <strong>{isFr ? "Adresse" : "Address"}:</strong>{" "}
-                  {business.address}
-                </li>
-              )}
-              {business.location && (
-                <li>
-                  <strong>{isFr ? "Localisation" : "Location"}:</strong>{" "}
-                  {business.location}
-                </li>
-              )}
-              {business.phone && (
-                <li>
-                  <strong>{isFr ? "Téléphone" : "Phone"}:</strong>{" "}
-                  {business.phone}
-                </li>
-              )}
-              {business.email && (
-                <li>
-                  <strong>Email:</strong> {business.email}
-                </li>
-              )}
-              {typeof business.employee_count === "number" && (
-                <li>
-                  <strong>{isFr ? "Employés" : "Employees"}:</strong>{" "}
-                  {business.employee_count}
-                </li>
-              )}
-              {formattedRevenue && (
-                <li>
-                  <strong>{isFr ? "CA annuel" : "Annual revenue"}:</strong>{" "}
-                  {formattedRevenue}
-                </li>
-              )}
-              {business.rating != null && (
-                <li>
-                  <strong>{isFr ? "Note" : "Rating"}:</strong>{" "}
-                  {String(business.rating)}/5
-                </li>
-              )}
-            </ul>
-          </SectionBlock>
+        {onEdit && !hasAnyContent && (
+          <div className="rounded-xl border border-dashed border-amber-400 bg-amber-50 p-4 text-sm text-amber-950 print:hidden">
+            <p className="font-medium">
+              {isFr
+                ? "Votre fiche technique est vide."
+                : "Your technical profile is empty."}
+            </p>
+            <p className="mt-1">
+              {isFr
+                ? "Ajoutez vos horaires, services et liens pour que les clients vous trouvent et vous contactent plus vite."
+                : "Add your hours, services and links so customers can find and reach you faster."}
+            </p>
+            <Button type="button" size="sm" className="mt-3" onClick={onEdit}>
+              <Pencil className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              {isFr ? "Remplir la fiche" : "Fill in the fiche"}
+            </Button>
+          </div>
         )}
 
-        {sections.includes("services") &&
-          (services.length > 0 || products.length > 0) && (
-            <SectionBlock title={getLabel("services", isFr)}>
-              {services.length > 0 && (
-                <div>
-                  <p className="font-medium">
-                    {isFr ? "Services" : "Services"}
-                  </p>
-                  <ul className="list-disc ml-5 mt-1 space-y-0.5">
-                    {services.map((s) => (
-                      <li key={`svc-${s}`}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {products.length > 0 && (
-                <div>
-                  <p className="font-medium">
-                    {isFr ? "Produits" : "Products"}
-                  </p>
-                  <ul className="list-disc ml-5 mt-1 space-y-0.5">
-                    {products.map((p) => (
-                      <li key={`prd-${p}`}>{p}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </SectionBlock>
-          )}
+        <div className="grid gap-4 md:grid-cols-5">
+          <div className="space-y-4 md:col-span-3">
+            {showServices && (
+              <SectionBlock title={label("services")}>
+                {fiche.services.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="font-medium">Services</p>
+                    <Chips items={fiche.services} />
+                  </div>
+                )}
+                {fiche.products.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="font-medium">{isFr ? "Produits" : "Products"}</p>
+                    <Chips items={fiche.products} />
+                  </div>
+                )}
+              </SectionBlock>
+            )}
 
-        {sections.includes("team") &&
-          (sectorData.team || sectorData.equipe) && (
-            <SectionBlock title={getLabel("team", isFr)}>
-              <p>{String(sectorData.team || sectorData.equipe)}</p>
-            </SectionBlock>
-          )}
+            {showStrategy && (
+              <SectionBlock title={label("strategy")}>
+                <Paragraph label="Mission" text={fiche.mission} />
+                <Paragraph label="Vision" text={fiche.vision} />
+                <Paragraph
+                  label={isFr ? "Proposition de valeur" : "Value proposition"}
+                  text={fiche.proposition_valeur}
+                />
+                <Paragraph text={fiche.strategy} />
+              </SectionBlock>
+            )}
 
-        {sections.includes("kpis") && kpis.length > 0 && (
-          <SectionBlock title={getLabel("kpis", isFr)}>
-            <ul className="space-y-1">
-              {kpis.map((k: AnyRecord, idx: number) => (
-                <li key={`kpi-${idx}`}>
-                  <strong>
-                    {String(k.label || k.metric || `KPI ${idx + 1}`)}:
-                  </strong>{" "}
-                  {String(k.value ?? "—")}
-                </li>
-              ))}
-            </ul>
-          </SectionBlock>
-        )}
+            {showTeam && (
+              <SectionBlock title={label("team")}>
+                <Paragraph text={fiche.team} />
+              </SectionBlock>
+            )}
 
-        {sections.includes("legal") &&
-          (sectorData.legal || sectorData.rgpd || sectorData.terms) && (
-            <SectionBlock title={getLabel("legal", isFr)}>
-              {sectorData.legal && <p>{String(sectorData.legal)}</p>}
-              {sectorData.rgpd && (
-                <p>
-                  <strong>RGPD:</strong> {String(sectorData.rgpd)}
-                </p>
-              )}
-              {sectorData.terms && (
-                <p>
-                  <strong>{isFr ? "CGV" : "Terms"}:</strong>{" "}
-                  {String(sectorData.terms)}
-                </p>
-              )}
-            </SectionBlock>
-          )}
+            {showKpis && (
+              <SectionBlock title={label("kpis")}>
+                <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {fiche.kpis.map((kpi) => (
+                    <div
+                      key={kpi.label}
+                      className="rounded-lg border border-slate-200 bg-slate-50 p-2"
+                    >
+                      <dt className="text-xs text-slate-700">{kpi.label}</dt>
+                      <dd className="text-base font-semibold text-slate-900">
+                        {kpi.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </SectionBlock>
+            )}
 
-        {sections.includes("social") &&
-          (Object.keys(socialLinks).length > 0 ||
-            Object.keys(openingHours).length > 0 ||
-            tags.length > 0) && (
-            <SectionBlock title={getLabel("social", isFr)}>
-              {Object.keys(socialLinks).length > 0 && (
-                <ul className="space-y-1">
-                  {Object.entries(socialLinks).map(([network, url]) => (
-                    <li key={network}>
-                      <strong>{network}:</strong> {String(url)}
+            {showTech && (
+              <SectionBlock title={label("techStack")}>
+                <Chips items={fiche.tech_stack} />
+              </SectionBlock>
+            )}
+
+            {showCases && (
+              <SectionBlock title={label("caseStudies")}>
+                <ul className="space-y-2">
+                  {fiche.case_studies.map((study) => (
+                    <li key={study.title}>
+                      <strong>{study.title}</strong>
+                      {study.summary && (
+                        <p className="text-slate-700">{study.summary}</p>
+                      )}
                     </li>
                   ))}
                 </ul>
-              )}
-              {Object.keys(openingHours).length > 0 && (
-                <p>
-                  <strong>{isFr ? "Horaires" : "Opening hours"}:</strong>{" "}
-                  {Object.entries(openingHours)
-                    .map(([day, hours]) => `${day}: ${hours}`)
-                    .join(" · ")}
-                </p>
-              )}
-              {tags.length > 0 && (
-                <p>
-                  <strong>{isFr ? "Tags" : "Tags"}:</strong> {tags.join(", ")}
-                </p>
-              )}
-            </SectionBlock>
-          )}
+              </SectionBlock>
+            )}
 
-        {sections.includes("strategy") &&
-          (sectorData.strategy ||
-            sectorData.mission ||
-            sectorData.vision ||
-            sectorData.proposition_valeur) && (
-            <SectionBlock title={getLabel("strategy", isFr)}>
-              {sectorData.mission && (
-                <p>
-                  <strong>{isFr ? "Mission" : "Mission"}:</strong>{" "}
-                  {String(sectorData.mission)}
-                </p>
-              )}
-              {sectorData.vision && (
-                <p>
-                  <strong>{isFr ? "Vision" : "Vision"}:</strong>{" "}
-                  {String(sectorData.vision)}
-                </p>
-              )}
-              {sectorData.proposition_valeur && (
-                <p>
-                  <strong>
-                    {isFr ? "Proposition de valeur" : "Value proposition"}:
-                  </strong>{" "}
-                  {String(sectorData.proposition_valeur)}
-                </p>
-              )}
-              {sectorData.strategy && <p>{String(sectorData.strategy)}</p>}
-            </SectionBlock>
-          )}
+            {showLegal && (
+              <SectionBlock title={label("legal")}>
+                <Paragraph text={fiche.legal} />
+                <Paragraph label="RGPD" text={fiche.rgpd} />
+                <Paragraph label={isFr ? "CGV" : "Terms"} text={fiche.terms} />
+              </SectionBlock>
+            )}
+          </div>
 
-        {sections.includes("techStack") && techStack.length > 0 && (
-          <SectionBlock title={getLabel("techStack", isFr)}>
-            <p>{techStack.join(" • ")}</p>
-          </SectionBlock>
-        )}
-
-        {sections.includes("caseStudies") && caseStudies.length > 0 && (
-          <SectionBlock title={getLabel("caseStudies", isFr)}>
-            <ul className="space-y-2">
-              {caseStudies.map((c: AnyRecord, idx: number) => (
-                <li key={`case-${idx}`}>
-                  <strong>
-                    {String(c.title || c.nom || `Case ${idx + 1}`)}
-                  </strong>
-                  {(c.summary || c.result) && (
-                    <p className="text-slate-300 print:text-slate-700">
-                      {String(c.summary || c.result)}
-                    </p>
+          <aside className="space-y-4 md:col-span-2">
+            {(business.phone ||
+              business.email ||
+              website ||
+              business.address ||
+              directions) && (
+              <SectionBlock title={isFr ? "Coordonnées" : "Contact"}>
+                <ul className="space-y-2">
+                  {business.address && (
+                    <li className="flex items-start gap-2">
+                      <MapPin
+                        className="mt-0.5 h-4 w-4 shrink-0 text-slate-600"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        {business.address}
+                        {business.location ? `, ${business.location}` : ""}
+                      </span>
+                    </li>
                   )}
-                </li>
-              ))}
-            </ul>
-          </SectionBlock>
-        )}
+                  {business.phone && (
+                    <li className="flex items-center gap-2">
+                      <Phone
+                        className="h-4 w-4 shrink-0 text-slate-600"
+                        aria-hidden="true"
+                      />
+                      <a
+                        className="text-blue-800 underline-offset-2 hover:underline"
+                        href={`tel:${business.phone}`}
+                      >
+                        {business.phone}
+                      </a>
+                    </li>
+                  )}
+                  {business.email && (
+                    <li className="flex items-center gap-2">
+                      <Mail
+                        className="h-4 w-4 shrink-0 text-slate-600"
+                        aria-hidden="true"
+                      />
+                      <a
+                        className="break-all text-blue-800 underline-offset-2 hover:underline"
+                        href={`mailto:${business.email}`}
+                      >
+                        {business.email}
+                      </a>
+                    </li>
+                  )}
+                  {website && (
+                    <li className="flex items-center gap-2">
+                      <Globe
+                        className="h-4 w-4 shrink-0 text-slate-600"
+                        aria-hidden="true"
+                      />
+                      <a
+                        className="break-all text-blue-800 underline-offset-2 hover:underline"
+                        href={website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </a>
+                    </li>
+                  )}
+                </ul>
+                {directions && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="mt-1 border-slate-300 text-slate-800 print:hidden"
+                  >
+                    <a href={directions} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                      {isFr ? "Itinéraire" : "Directions"}
+                    </a>
+                  </Button>
+                )}
+              </SectionBlock>
+            )}
 
-        {sections.includes("analytics") && analytics.length > 0 && (
-          <SectionBlock title={getLabel("analytics", isFr)}>
-            <ul className="space-y-1">
-              {analytics.map((a: AnyRecord, idx: number) => (
-                <li key={`analytics-${idx}`}>
-                  <strong>
-                    {String(a.metric || a.label || `Metric ${idx + 1}`)}:
-                  </strong>{" "}
-                  {String(a.value ?? "—")}
-                </li>
-              ))}
-            </ul>
-          </SectionBlock>
+            {hoursEntries.length > 0 && (
+              <SectionBlock title={isFr ? "Horaires" : "Opening hours"}>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {hoursEntries.map((day) => (
+                      <tr
+                        key={day}
+                        className={
+                          day === today
+                            ? "bg-amber-50 font-semibold text-slate-900"
+                            : ""
+                        }
+                        aria-current={day === today ? "date" : undefined}
+                      >
+                        <th
+                          scope="row"
+                          className="py-1 pl-1 pr-3 text-left font-medium"
+                        >
+                          {isFr ? DAY_LABELS[day].fr : DAY_LABELS[day].en}
+                        </th>
+                        <td className="py-1 pr-1 text-right tabular-nums">
+                          {formatHours(fiche.opening_hours[day]!, isFr)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </SectionBlock>
+            )}
+
+            {showSocial && (
+              <SectionBlock title={label("social")}>
+                <ul className="space-y-1.5">
+                  {socialEntries.map(([network, url]) => (
+                    <li key={network}>
+                      <a
+                        className="inline-flex items-center gap-1.5 text-blue-800 underline-offset-2 hover:underline"
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                      >
+                        {NETWORK_LABELS[network] ?? network}
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </SectionBlock>
+            )}
+          </aside>
+        </div>
+
+        {onEdit && locked.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm print:hidden">
+            <div className="flex items-start gap-2 text-slate-800">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <p>
+                {isFr ? "Disponible avec un forfait supérieur : " : "Unlocked with a higher plan: "}
+                <strong>{locked.map(label).join(", ")}</strong>
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="border-slate-300 text-slate-800">
+              <Link href="/pricing">{isFr ? "Voir les forfaits" : "View plans"}</Link>
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useRoute, useLocation, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Star,
   MapPin,
@@ -49,6 +49,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { FicheTechnique } from "@/components/FicheTechnique";
+import { FicheEditor } from "@/components/FicheEditor";
+import { useOptionalAuthContext } from "@/contexts/AuthContext";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
@@ -270,6 +272,24 @@ export default function BusinessDetailPage() {
   useScrollLock(showProfitModal);
 
   const businessId = params?.id;
+  const queryClient = useQueryClient();
+  const auth = useOptionalAuthContext();
+  const [ficheEditorOpen, setFicheEditorOpen] = useState(false);
+
+  // Only owners and staff get a successful answer; everyone else sees no edit button.
+  const { data: ficheAccess } = useQuery<{ canEdit: boolean }>({
+    queryKey: ["business-fiche-access", businessId, auth?.user?.id ?? null],
+    enabled: Boolean(businessId && auth?.user),
+    retry: false,
+    queryFn: async () => {
+      const res = await fetch(`/api/businesses/${businessId}/fiche/access`, {
+        credentials: "include",
+      });
+      if (!res.ok) return { canEdit: false };
+      return res.json();
+    },
+  });
+  const canEditFiche = ficheAccess?.canEdit === true;
 
   /* ── Queries ─────────────────────────────────────────────────── */
 
@@ -762,7 +782,23 @@ export default function BusinessDetailPage() {
             )}
 
             {/* Fiche Technique (tier + sector gated) */}
-            <FicheTechnique business={biz} />
+            <FicheTechnique
+              business={biz}
+              onEdit={canEditFiche ? () => setFicheEditorOpen(true) : undefined}
+            />
+            {canEditFiche && (
+              <FicheEditor
+                open={ficheEditorOpen}
+                onOpenChange={setFicheEditorOpen}
+                business={biz}
+                onSaved={() => {
+                  void queryClient.invalidateQueries({
+                    queryKey: ["business", businessId],
+                  });
+                  toast({ title: "Fiche saved" });
+                }}
+              />
+            )}
 
             {/* Contact & Location cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

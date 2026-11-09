@@ -18,6 +18,12 @@ import {
 } from "../utils/business-bulk-update";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
+import {
+  canEditFiche,
+  ficheFromRow,
+  ficheStorage,
+  readFiche,
+} from "@shared/fiche-technique";
 
 const router = Router();
 router.param("id", numericRouteParam);
@@ -613,9 +619,10 @@ router.get(
     // tables have not been provisioned in an older production database.
     const result = await pool.query(
       `
-      SELECT b.*, bc.name as category_name
+      SELECT b.*, bc.name as category_name, u.subscription_tier as owner_tier
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
+      LEFT JOIN users u ON b.owner_id = u.id
       WHERE b.id = $1
         AND ($2::boolean OR (${publicBusinessVisibilitySql("b")}))
     `,
@@ -672,11 +679,24 @@ router.get(
 
     await ensureBusinessDetailTables();
 
+    // The fiche is content the owner chose to publish; it is re-validated on the
+    // way out so legacy or hand-edited rows cannot leak unexpected shapes.
+    const { opening_hours, social_links, ...sector_data } = ficheFromRow(
+      result.rows[0],
+    );
     const business: {
       [key: string]: any;
       services: any[];
       reviews: any[];
-    } = { ...publicBusiness, services: [], reviews: [] };
+    } = {
+      ...publicBusiness,
+      tier: result.rows[0].owner_tier || "free",
+      sector_data,
+      opening_hours,
+      social_links,
+      services: [],
+      reviews: [],
+    };
 
     try {
       const services = await pool.query(
@@ -723,6 +743,164 @@ router.get(
     });
   }
 });
+
+// Whether the signed-in user may edit this business's fiche. Kept apart from the
+// public GET so a stale session cookie can never break a public page.
+router.get(
+  "/api/businesses/:id/fiche/access",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const { rows } = await pool.query(
+        "SELECT owner_id FROM businesses WHERE id = $1",
+        [req.params.id],
+      );
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Business not found" });
+      }
+      res.json({
+        success: true,
+        canEdit: canEditFiche(
+          { id: req.user?.userId ?? req.user?.id, role: req.user?.role },
+          rows[0],
+        ),
+      });
+    } catch (error) {
+      console.error("Error checking fiche access:", error);
+      res.status(500).json({ success: false, error: "Failed to check access" });
+    }
+  },
+);
+
+// The editor's starting point: includes unapproved businesses, so it needs the same right.
+router.get(
+  "/api/businesses/:id/fiche",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    try {
+      const { rows } = await pool.query(
+        "SELECT owner_id, attributes, opening_hours, social_links FROM businesses WHERE id = $1",
+        [req.params.id],
+      );
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Business not found" });
+      }
+      const actor = {
+        id: req.user?.userId ?? req.user?.id,
+        role: req.user?.role,
+      };
+      if (!canEditFiche(actor, rows[0])) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only edit the fiche of your own business",
+        });
+      }
+      res.json({ success: true, data: ficheFromRow(rows[0]) });
+    } catch (error) {
+      console.error("Error loading fiche:", error);
+      res.status(500).json({ success: false, error: "Failed to load fiche" });
+    }
+  },
+);
+
+// Replace a business's fiche. The owner or staff only; invalid input is refused
+// whole rather than silently trimmed, and the change is audited.
+router.put(
+  "/api/businesses/:id/fiche",
+  requireAuth(),
+  async (req: Request, res: Response) => {
+    const businessId = Number(req.params.id);
+    const actorId = Number(req.user?.userId ?? req.user?.id);
+    if (!Number.isInteger(actorId) || actorId <= 0) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authenticated user required" });
+    }
+    const { value, errors } = readFiche(req.body);
+    try {
+      const saved = await db.transaction(async (tx) => {
+        const [current] = await tx
+          .select({
+            ownerId: businesses.ownerId,
+            attributes: businesses.attributes,
+            openingHours: businesses.openingHours,
+            socialLinks: businesses.socialLinks,
+          })
+          .from(businesses)
+          .where(eq(businesses.id, businessId))
+          .for("update");
+        if (!current) return { status: 404 as const };
+        if (
+          !canEditFiche(
+            { id: actorId, role: req.user?.role },
+            { owner_id: current.ownerId },
+          )
+        ) {
+          return { status: 403 as const };
+        }
+        if (errors.length > 0) return { status: 400 as const };
+
+        const stored = ficheStorage(value);
+        const attributes = {
+          ...((current.attributes as Record<string, unknown> | null) ?? {}),
+          sectorData: stored.sectorData,
+        };
+        await tx
+          .update(businesses)
+          .set({
+            attributes: attributes as any,
+            openingHours: stored.openingHours,
+            socialLinks: stored.socialLinks,
+            updatedAt: new Date(),
+          })
+          .where(eq(businesses.id, businessId));
+        await tx.insert(auditLogs).values({
+          userId: actorId,
+          action: "UPDATE_BUSINESS_FICHE",
+          entityType: "business",
+          entityId: String(businessId),
+          changes: {
+            before: ficheFromRow({
+              attributes: current.attributes,
+              opening_hours: current.openingHours,
+              social_links: current.socialLinks,
+            }),
+            after: value,
+          },
+          ipAddress: String(req.headers["x-forwarded-for"] || req.ip || "unknown"),
+        });
+        return { status: 200 as const };
+      });
+
+      if (saved.status === 404) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Business not found" });
+      }
+      if (saved.status === 403) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only edit the fiche of your own business",
+        });
+      }
+      if (saved.status === 400) {
+        return res.status(400).json({
+          success: false,
+          error: errors[0],
+          details: errors,
+        });
+      }
+      res.json({ success: true, data: value });
+    } catch (error) {
+      console.error("Error saving fiche:", error);
+      res.status(500).json({ success: false, error: "Failed to save fiche" });
+    }
+  },
+);
 
 // CREATE business
 router.post(

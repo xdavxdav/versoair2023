@@ -1,3 +1,5 @@
+import { FICHE_SECTORS, type FicheSector } from "@shared/fiche-technique";
+
 export type Tier = "free" | "premium" | "enterprise";
 
 export type FicheSectionId =
@@ -12,18 +14,7 @@ export type FicheSectionId =
   | "caseStudies"
   | "analytics";
 
-export type Sector =
-  | "convenience_store"
-  | "ad_agency"
-  | "finance"
-  | "restaurant"
-  | "ecommerce"
-  | "commerce"
-  | "hotellerie"
-  | "batiment"
-  | "automobile"
-  | "divertissement"
-  | "other";
+export type Sector = FicheSector;
 
 export const TIER_SECTIONS: Record<Tier, FicheSectionId[]> = {
   free: ["basic"],
@@ -108,3 +99,64 @@ export function getVisibleSections(
   const sectorSections = SECTOR_SECTIONS[sector] ?? SECTOR_SECTIONS.other;
   return tierSections.filter((section) => sectorSections.includes(section));
 }
+
+// Sections this sector offers that the current plan does not unlock yet.
+export function getLockedSections(
+  tier: Tier,
+  sector: Sector,
+): FicheSectionId[] {
+  const visible = getVisibleSections(tier, sector);
+  return (SECTOR_SECTIONS[sector] ?? SECTOR_SECTIONS.other).filter(
+    (section) => !visible.includes(section),
+  );
+}
+
+export function normalizeTier(value: string | null | undefined): Tier {
+  const t = (value || "").toLowerCase();
+  if (t === "enterprise" || t === "max") return "enterprise";
+  if (t === "premium" || t === "verified" || t === "essential") {
+    return "premium";
+  }
+  return "free";
+}
+
+export function inferSector(
+  categoryName: string,
+  explicitSector?: string | null,
+): Sector {
+  const explicit = (explicitSector || "").toLowerCase();
+  if ((FICHE_SECTORS as readonly string[]).includes(explicit)) {
+    return explicit as Sector;
+  }
+
+  const c = categoryName.toLowerCase();
+  if (c.includes("finance")) return "finance";
+  if (c.includes("hôtel") || c.includes("hotel") || c.includes("hotellerie")) {
+    return "hotellerie";
+  }
+  if (c.includes("batiment") || c.includes("construction")) return "batiment";
+  if (c.includes("auto")) return "automobile";
+  if (c.includes("divert") || c.includes("entertain")) return "divertissement";
+  if (
+    c.includes("commerce") ||
+    c.includes("retail") ||
+    c.includes("boutique")
+  ) {
+    return "commerce";
+  }
+  return "other";
+}
+
+export const SECTOR_LABELS: Record<Sector, { en: string; fr: string }> = {
+  convenience_store: { en: "Convenience store", fr: "Dépanneur" },
+  ad_agency: { en: "Advertising agency", fr: "Agence de publicité" },
+  finance: { en: "Finance", fr: "Finance" },
+  restaurant: { en: "Restaurant", fr: "Restaurant" },
+  ecommerce: { en: "E-commerce", fr: "Commerce en ligne" },
+  commerce: { en: "Retail", fr: "Commerce" },
+  hotellerie: { en: "Hospitality", fr: "Hôtellerie" },
+  batiment: { en: "Construction", fr: "Bâtiment" },
+  automobile: { en: "Automotive", fr: "Automobile" },
+  divertissement: { en: "Entertainment", fr: "Divertissement" },
+  other: { en: "Other", fr: "Autre" },
+};
