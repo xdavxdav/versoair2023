@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import express from "express";
 import test from "node:test";
-import { LOCAL_PREVIEW_ONLY_PATHS } from "@shared/page-readiness";
+import { LOCAL_PREVIEW_ONLY_PATHS, RELEASED_PAGE_PATHS } from "@shared/page-readiness";
 import { pageReadinessNotFound, pickNoticeLanguage } from "./page-readiness-404";
 
 async function withServer(
@@ -49,19 +49,15 @@ test("production shows a readiness notice and redirects to home after five secon
       }
     }
 
-    const getInvolvedPage = await fetch(`${origin}/get-involved`);
-    const getInvolvedHtml = await getInvolvedPage.text();
-    assert.match(getInvolvedHtml, /<title>Get Involved \| Will be ready soon \| Verso Air<\/title>/);
-    assert.match(getInvolvedHtml, /<h1>Get Involved<\/h1>/);
+    const sponsorshipPage = await fetch(`${origin}/sponsorship`);
+    const sponsorshipHtml = await sponsorshipPage.text();
+    assert.match(sponsorshipHtml, /<title>Sponsorship \| Will be ready soon \| Verso Air<\/title>/);
+    assert.match(sponsorshipHtml, /<h1>Sponsorship<\/h1>/);
 
-    const nestedPage = await fetch(`${origin}/get-involved/opportunities`);
+    const nestedPage = await fetch(`${origin}/programs/opportunities`);
     const nestedHtml = await nestedPage.text();
-    assert.match(nestedHtml, /<title>Get Involved \/ Opportunities \| Will be ready soon \| Verso Air<\/title>/);
-    assert.match(nestedHtml, /<h1>Get Involved \/ Opportunities<\/h1>/);
-
-    const brandedPage = await fetch(`${origin}/vheartz`);
-    const brandedHtml = await brandedPage.text();
-    assert.match(brandedHtml, /<h1>vHeartz<\/h1>/);
+    assert.match(nestedHtml, /<title>Programs \/ Opportunities \| Will be ready soon \| Verso Air<\/title>/);
+    assert.match(nestedHtml, /<h1>Programs \/ Opportunities<\/h1>/);
 
     const openResponse = await fetch(`${origin}/about`);
     assert.equal(openResponse.status, 200);
@@ -70,7 +66,7 @@ test("production shows a readiness notice and redirects to home after five secon
 
 test("development leaves local-preview-only routes available", async () => {
   await withServer(false, async (origin) => {
-    const response = await fetch(`${origin}/vheartz`);
+    const response = await fetch(`${origin}/programs`);
     assert.equal(response.status, 200);
     assert.equal(await response.text(), "SPA");
   });
@@ -88,10 +84,10 @@ test("the notice speaks the visitor's language and defaults to English", async (
       return { response, html: await response.text() };
     };
 
-    const french = await load("/hotellerie", "fr-CI,fr;q=0.9,en;q=0.5");
+    const french = await load("/programs", "fr-CI,fr;q=0.9,en;q=0.5");
     assert.equal(french.response.status, 404);
     assert.match(french.html, /<html lang="fr">/);
-    assert.match(french.html, /<title>Hôtellerie \| Bientôt disponible \| Verso Air<\/title>/);
+    assert.match(french.html, /<title>Programmes \| Bientôt disponible \| Verso Air<\/title>/);
     assert.match(french.html, /Nous préparons cette partie de Verso Air/);
     assert.match(french.html, /Retour à l'accueil dans 5 secondes\./);
     assert.match(french.html, /href="\/">Retour à l'accueil<\/a>/);
@@ -103,15 +99,15 @@ test("the notice speaks the visitor's language and defaults to English", async (
     assert.match(french.response.headers.get("vary") ?? "", /Accept-Language/i);
     assert.equal(french.response.headers.get("cache-control"), "no-store");
 
-    const spanish = await load("/commerce", "es-ES,es;q=0.9");
+    const spanish = await load("/programs", "es-ES,es;q=0.9");
     assert.match(spanish.html, /<html lang="es">/);
-    assert.match(spanish.html, /<title>Comercio \| Próximamente \| Verso Air<\/title>/);
+    assert.match(spanish.html, /<title>Programas \| Próximamente \| Verso Air<\/title>/);
 
-    const weighted = await load("/commerce", "en;q=0.4, fr;q=0.8");
+    const weighted = await load("/programs", "en;q=0.4, fr;q=0.8");
     assert.match(weighted.html, /<html lang="fr">/);
 
     for (const header of [undefined, "*", "de-DE,de;q=0.9", "fr;q=0"]) {
-      const fallback = await load("/commerce", header);
+      const fallback = await load("/programs", header);
       assert.match(fallback.html, /<html lang="en">/, `Accept-Language ${header} stays English`);
       assert.match(fallback.html, /Will be ready soon/);
     }
@@ -120,11 +116,21 @@ test("the notice speaks the visitor's language and defaults to English", async (
 
 test("page names come from the table, never from object prototypes", async () => {
   await withServer(true, async (origin) => {
-    const html = await (await fetch(`${origin}/commerce/constructor`)).text();
+    const html = await (await fetch(`${origin}/programs/constructor`)).text();
     assert.match(
       html,
-      /<title>Commerce \/ Constructor \| Will be ready soon \| Verso Air<\/title>/,
+      /<title>Programs \/ Constructor \| Will be ready soon \| Verso Air<\/title>/,
     );
+  });
+});
+
+test("released pages stay open in production", async () => {
+  await withServer(true, async (origin) => {
+    for (const path of RELEASED_PAGE_PATHS) {
+      const response = await fetch(`${origin}${path}`);
+      assert.equal(response.status, 200, `${path} should be open`);
+      assert.equal(await response.text(), "SPA");
+    }
   });
 });
 

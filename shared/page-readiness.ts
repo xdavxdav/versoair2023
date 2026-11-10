@@ -4,18 +4,19 @@ export interface PageReadinessConfig {
   blockedPaths: string[];
 }
 
-export const PAGE_READINESS_CONFIG_VERSION = 7;
+export const PAGE_READINESS_CONFIG_VERSION = 9;
 
 export const LOCAL_PREVIEW_ONLY_PATHS = [
   "/arcade",
-  "/get-involved",
-  "/ong-culturelle",
-  "/vheartz",
-  "/vheatrz",
-  "/artihuman-foundation",
   "/programs",
-  "/partners",
   "/sponsorship",
+] as const;
+
+// Launched from the preview gate: the business directory and featured category
+// pages (version 8), then the in-development community pages (version 9). Saved
+// configs from earlier versions still list them as blocked, so the migration
+// below strips them.
+export const RELEASED_PAGE_PATHS = [
   "/businesses-directory",
   "/commerce",
   "/hotellerie",
@@ -23,6 +24,12 @@ export const LOCAL_PREVIEW_ONLY_PATHS = [
   "/automobile",
   "/finances",
   "/divertissement",
+  "/get-involved",
+  "/ong-culturelle",
+  "/vheartz",
+  "/vheatrz",
+  "/artihuman-foundation",
+  "/partners",
 ] as const;
 
 export const PAGE_READINESS_CANDIDATES = [
@@ -109,17 +116,19 @@ export function migratePageReadinessConfig(
   config: PageReadinessConfig,
 ): PageReadinessConfig {
   if (config.version >= PAGE_READINESS_CONFIG_VERSION) return config;
+  const isRetired = (path: string) =>
+    path === "/docs" || (RELEASED_PAGE_PATHS as readonly string[]).includes(path);
   return {
     version: PAGE_READINESS_CONFIG_VERSION,
     eligiblePaths: [
       ...new Set([
-        ...config.eligiblePaths.filter((path) => path !== "/docs"),
+        ...config.eligiblePaths.filter((path) => !isRetired(path)),
         ...LOCAL_PREVIEW_ONLY_PATHS,
       ]),
     ],
     blockedPaths: [
       ...new Set([
-        ...config.blockedPaths.filter((path) => path !== "/docs"),
+        ...config.blockedPaths.filter((path) => !isRetired(path)),
         ...LOCAL_PREVIEW_ONLY_PATHS,
       ]),
     ],
