@@ -12,6 +12,7 @@ import {
   getCsrfToken,
   initializeCsrfToken,
 } from "@/lib/auth";
+import { readAdminBusinessResponse } from "@/lib/admin-business-api";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
@@ -897,12 +898,16 @@ const BusinessManagement = ({
   sharedCategories,
   openAdd,
   onOpenAddHandled,
+  onBusinessSavePending,
 }: {
   sharedCategories?: any[];
   openAdd?: boolean;
   onOpenAddHandled?: () => void;
+  onBusinessSavePending?: (pending: boolean) => void;
 } = {}) => {
   const [businesses, setBusinesses] = useState<any[]>([]);
+  const [businessLoadError, setBusinessLoadError] = useState("");
+  const [businessSaveError, setBusinessSaveError] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -912,11 +917,20 @@ const BusinessManagement = ({
   const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  useOpenRequest(openAdd, () => setShowAddDialog(true), onOpenAddHandled);
+  useOpenRequest(
+    openAdd,
+    () => {
+      setBusinessSaveError("");
+      setShowAddDialog(true);
+    },
+    onOpenAddHandled,
+  );
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [currentBusiness, setCurrentBusiness] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [isSavingBusiness, setIsSavingBusiness] = useState(false);
+  const createInFlightRef = useRef(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -1159,50 +1173,41 @@ const BusinessManagement = ({
         if (countryFilter && countryFilter !== "all")
           params.set("countryCode", countryFilter);
 
-        // Try admin endpoint first, fall back to public endpoint
-        let businessData: any = null;
         const adminUrl = `${API_BASE_URL}/api/v1/admin/businesses?${params.toString()}`;
-        const publicUrl = `${API_BASE_URL}/api/businesses?${params.toString()}`;
-
-        try {
-          const businessRes = await authenticatedFetch(adminUrl);
-          if (businessRes.ok) {
-            businessData = await businessRes.json();
-          }
-        } catch {
-          // Admin endpoint failed — try public
+        const businessRes = await authenticatedFetch(adminUrl);
+        const businessData = await readAdminBusinessResponse(
+          businessRes,
+          "load",
+        );
+        if (!Array.isArray(businessData.data)) {
+          throw new Error("The admin endpoint returned no business list.");
         }
 
-        if (!businessData?.success && !businessData?.data) {
-          const publicRes = await fetch(publicUrl);
-          if (publicRes.ok) {
-            businessData = await publicRes.json();
-          }
-        }
-
-        if (businessData?.success || businessData?.data) {
-          setBusinesses(businessData.data || []);
-          if (businessData.pagination) {
-            setTotalPages(
-              businessData.pagination.totalPages ||
-                businessData.pagination.pages ||
-                1,
-            );
-            setTotalCount(Number(businessData.pagination.total) || 0);
-          } else {
-            setTotalPages(1);
-            setTotalCount(businessData.data?.length || 0);
-          }
+        setBusinesses(businessData.data);
+        const pagination =
+          businessData.pagination &&
+          typeof businessData.pagination === "object" &&
+          !Array.isArray(businessData.pagination)
+            ? (businessData.pagination as Record<string, unknown>)
+            : null;
+        if (pagination) {
+          const pages = Number(pagination.totalPages || pagination.pages || 1);
+          setTotalPages(Number.isFinite(pages) && pages > 0 ? pages : 1);
+          setTotalCount(Number(pagination.total) || 0);
         } else {
-          throw new Error("No businesses returned from API");
+          setTotalPages(1);
+          setTotalCount(businessData.data.length);
         }
-
-        // Categories are loaded separately in their own useEffect
+        setBusinessLoadError("");
+        return true;
       } catch (error) {
-        console.error("Failed to fetch data:", error);
-        setBusinesses([]);
-        setTotalPages(1);
-        setTotalCount(0);
+        console.error("Failed to fetch admin businesses:", error);
+        setBusinessLoadError(
+          error instanceof Error
+            ? error.message
+            : "Could not load businesses from the admin endpoint.",
+        );
+        return false;
       } finally {
         setLoading(false);
       }
@@ -1325,107 +1330,90 @@ const BusinessManagement = ({
   };
 
   const handleAddBusiness = async () => {
-    if (!newBusiness.name || !newBusiness.categoryId) {
+    if (createInFlightRef.current) return;
+    if (!newBusiness.name.trim() || !newBusiness.categoryId) {
+      const message = "Business name and category are required.";
+      setBusinessSaveError(message);
       toast({
         title: "Validation Error",
-        description: "Business name and category are required",
+        description: message,
         variant: "destructive",
       });
       return;
     }
 
-    setLoading(true);
+    createInFlightRef.current = true;
+    setIsSavingBusiness(true);
+    setBusinessSaveError("");
+    onBusinessSavePending?.(true);
     try {
-      // Use authenticatedFetch which handles auth cookie + CSRF token automatically.
-      // Retries once on network failure / 5xx to absorb Render cold-start hiccups,
-      // and never lets a non-JSON (HTML error page) response crash into a generic message.
-      const postBusiness = () =>
-        authenticatedFetch(`${API_BASE_URL}/api/v1/admin/businesses`, {
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/v1/admin/businesses`,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(newBusiness),
-          signal: AbortSignal.timeout(15000),
-        });
+          signal: AbortSignal.timeout(60000),
+        },
+      );
+      await readAdminBusinessResponse(response, "create");
 
-      let response: Response;
-      try {
-        response = await postBusiness();
-        if (!response.ok && response.status >= 500) {
-          // Cold-start / transient server error — retry once
-          response = await postBusiness();
-        }
-      } catch {
-        // Network error / timeout — retry once before giving up
-        response = await postBusiness();
-      }
-
-      let data: any = null;
-      try {
-        data = await response.json();
-      } catch {
-        // Server returned non-JSON (e.g. HTML 502/504 during a cold start)
-        toast({
-          title: "Error",
-          description: `Server returned an unexpected response (HTTP ${response.status}). This usually means the server is waking up — please try again in a few seconds.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (response.ok && data?.success) {
-        await fetchBusinesses(search, selectedCategory, page, selectedCountry);
-        setShowAddDialog(false);
-        setNewBusiness({
-          name: "",
-          categoryId: 0,
-          email: "",
-          phone: "",
-          address: "",
-          description: "",
-          regionId: "",
-          regionName: "",
-          cityName: "",
-          countryCode: "",
-          latitude: "",
-          longitude: "",
-          website: "",
-          businessType: "",
-          tags: "",
-          openingHours: "",
-        });
-        toast({
-          title: "Success",
-          description: "Business added successfully",
-        });
-      } else {
-        const serverMessage =
-          data?.error?.message || data?.error || data?.message;
-        const safeMessage =
-          typeof serverMessage === "string" &&
-          serverMessage.toLowerCase().startsWith("failed query")
-            ? "The business could not be saved because the database schema is updating. Please retry in a few seconds."
-            : serverMessage;
-        toast({
-          title: "Error",
-          description:
-            safeMessage || `Failed to add business (HTTP ${response.status})`,
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
+      const listRefreshed = await fetchBusinesses(
+        search,
+        selectedCategory,
+        page,
+        selectedCountry,
+      );
+      setShowAddDialog(false);
+      setNewBusiness({
+        name: "",
+        categoryId: 0,
+        email: "",
+        phone: "",
+        address: "",
+        description: "",
+        regionId: "",
+        regionName: "",
+        cityName: "",
+        countryCode: "",
+        latitude: "",
+        longitude: "",
+        website: "",
+        businessType: "",
+        tags: "",
+        openingHours: "",
+      });
+      toast({
+        title: "Success",
+        description: listRefreshed
+          ? "Business added successfully"
+          : "Business saved, but the list could not refresh. Check the list before trying again.",
+        variant: listRefreshed ? "default" : "destructive",
+      });
+    } catch (error) {
       console.error("Failed to add business:", error);
+      const isUncertainFailure =
+        error instanceof TypeError ||
+        (error instanceof Error &&
+          (error.name === "TimeoutError" || error.name === "AbortError"));
+      const message =
+        isUncertainFailure
+          ? "The save could not be confirmed because the server or connection timed out. Check the business list before retrying."
+          : error instanceof Error
+            ? error.message
+            : "Could not save the business. Check the business list before retrying.";
+      setBusinessSaveError(message);
       toast({
         title: "Error",
-        description:
-          error?.name === "TimeoutError" || error?.name === "AbortError"
-            ? "Request timed out — the server may be waking up. Please try again."
-            : "Failed to add business. Check your connection and try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      createInFlightRef.current = false;
+      setIsSavingBusiness(false);
+      onBusinessSavePending?.(false);
     }
   };
 
@@ -1542,6 +1530,7 @@ const BusinessManagement = ({
             <Button
               size="sm"
               onClick={() => {
+                setBusinessSaveError("");
                 setShowAddDialog(true);
                 // Pre-fill countryCode with selected country (if not "all")
                 if (selectedCountry && selectedCountry !== "all") {
@@ -1569,6 +1558,14 @@ const BusinessManagement = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
+          {businessLoadError && (
+            <Alert variant="destructive" role="alert">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Business list could not be refreshed</AlertTitle>
+              <AlertDescription>{businessLoadError}</AlertDescription>
+            </Alert>
+          )}
+
           {/* Country Filter */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
             <div className="flex items-center gap-2">
@@ -1996,7 +1993,14 @@ const BusinessManagement = ({
       </CardContent>
 
       {/* Add Business Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog
+        open={showAddDialog}
+        onOpenChange={(open) => {
+          if (isSavingBusiness) return;
+          if (open) setBusinessSaveError("");
+          setShowAddDialog(open);
+        }}
+      >
         <DialogContent className="z-[110] w-[calc(100vw-1rem)] max-w-2xl max-h-[calc(100dvh-1rem)] overflow-hidden flex flex-col p-4 sm:max-h-[90vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>Add New Business</DialogTitle>
@@ -2004,6 +2008,12 @@ const BusinessManagement = ({
               Create a new business listing with full discovery metrics
             </DialogDescription>
           </DialogHeader>
+          {businessSaveError && (
+            <Alert variant="destructive" role="alert">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{businessSaveError}</AlertDescription>
+            </Alert>
+          )}
           <div className="min-h-0 overflow-y-auto overscroll-contain flex-1 pr-2 space-y-6">
             {/* ── Identity ── */}
             <div>
@@ -2480,20 +2490,24 @@ const BusinessManagement = ({
             </div>
           </div>
           <DialogFooter className="sticky bottom-0 z-10 -mx-4 -mb-4 gap-2 bg-background px-4 pb-[env(safe-area-inset-bottom)] pt-4 sm:-mx-6 sm:-mb-6 sm:px-6">
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowAddDialog(false)}
+              disabled={isSavingBusiness}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleAddBusiness}
-              disabled={loading}
+              disabled={isSavingBusiness}
               className="gap-2"
             >
-              {loading ? (
+              {isSavingBusiness ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Add Business
+              {isSavingBusiness ? "Saving..." : "Add Business"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -6676,7 +6690,29 @@ export default function AdminDashboard() {
   );
   const [adminElevationError, setAdminElevationError] = useState("");
 
+  const businessSavePendingRef = useRef(false);
+  const sessionExpiredDuringBusinessSaveRef = useRef(false);
+  const handleBusinessSavePending = useCallback(
+    (pending: boolean) => {
+      businessSavePendingRef.current = pending;
+      if (!pending && sessionExpiredDuringBusinessSaveRef.current) {
+        sessionExpiredDuringBusinessSaveRef.current = false;
+        toast({
+          title: "GeoAdmin session expired",
+          description: "The business save finished. Sign in again to continue.",
+        });
+        setIsAdminPanelAuthenticated(false);
+        setLocation("/geo-admin");
+      }
+    },
+    [setLocation],
+  );
+
   const handleSessionExpired = useCallback(() => {
+    if (businessSavePendingRef.current) {
+      sessionExpiredDuringBusinessSaveRef.current = true;
+      return;
+    }
     setIsAdminPanelAuthenticated(false);
     setLocation("/geo-admin");
   }, [setLocation]);
@@ -7291,6 +7327,16 @@ export default function AdminDashboard() {
       >
         {/* Wrap all children in a flex column that takes full height of the main content area */}
         <div className="flex flex-col min-h-full min-w-0 overflow-x-hidden">
+          {!isPanelOwner && (
+            <p
+              role="note"
+              className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            >
+              Owner only: Users, Roles, Security, SMTP, TSR Whitelist, Artisan
+              Profiles, and Listening Sessions.
+            </p>
+          )}
+
           {/* Fixed top section (non-scrolling) */}
           <div className="flex-none space-y-4">
             <div className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-2 sm:px-4 py-2 sm:py-3 rounded-lg shadow-sm flex flex-wrap justify-end gap-2">
@@ -7374,7 +7420,9 @@ export default function AdminDashboard() {
                 <GeoAdminSummary />
                 <GeoAdminAddonRequests />
                 <PendingApprovals />
-                <BusinessManagement />
+                <BusinessManagement
+                  onBusinessSavePending={handleBusinessSavePending}
+                />
                 <CategoryManagement />
                 <JobManagement />
               </>
@@ -7385,6 +7433,7 @@ export default function AdminDashboard() {
                 <BusinessManagement
                   openAdd={pendingAdd === "business"}
                   onOpenAddHandled={clearPendingAdd}
+                  onBusinessSavePending={handleBusinessSavePending}
                 />
               </>
             )}

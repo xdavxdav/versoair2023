@@ -8,8 +8,6 @@ import {
   Briefcase,
   Users,
   Globe,
-  BarChart3,
-  Settings,
   ChevronRight,
 } from "lucide-react";
 
@@ -159,40 +157,6 @@ export function DashboardSidebar({
             })}
           </nav>
 
-          {/* Divider */}
-          <div className="border-t border-slate-700" />
-
-          {/* System Sections */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-4">
-              System
-            </p>
-            {[
-              { id: "analytics", label: "Analytics", icon: BarChart3 },
-              { id: "settings", label: "Settings", icon: Settings },
-            ].map((item) => {
-              const Icon = item.icon;
-              const isActive = activeSection === item.id;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onSelectSection(item.id);
-                    onToggle(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-800"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
       </aside>
     </>
