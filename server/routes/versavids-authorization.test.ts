@@ -48,6 +48,10 @@ function scriptedVersaVidsDb() {
     }
     if (sql.startsWith("INSERT INTO video_briefs")) return { rows: [{ id: 1 }] };
     if (sql.startsWith("INSERT INTO video_deliverables")) return { rows: [{ id: 41 }] };
+    // Only videaste 9 has an artist profile.
+    if (sql.startsWith("SELECT id FROM artist_profiles WHERE user_id = $1")) {
+      return { rows: Number(params[0]) === 9 ? [{ id: 90 }] : [] };
+    }
     return undefined;
   });
 }
@@ -102,10 +106,11 @@ test("an open project can be claimed once", async () => {
     assert.match(claim.sql, /WHERE id = \$2 AND status = 'open' RETURNING id/);
     assert.deepEqual(claim.params, [9, 2]);
 
-    // Once it is claimed, the open-only claim finds nothing to take over, and a
-    // stranger who is not a party cannot change it either.
+    // Once it is claimed, anyone asking for it again is told it is gone (409),
+    // which the board shows as "someone else took it", not as a permission error.
     const second = await patchProject(origin, stranger, 2, { claimed_by: true });
-    assert.equal(second.status, 403);
+    assert.equal(second.status, 409);
+    assert.equal(second.body?.error, "Project is no longer open");
   });
 });
 
@@ -113,6 +118,9 @@ test("losing a claim race is a 409, not a silent overwrite", async () => {
   const db = scriptExecute((sql) => {
     if (sql.startsWith("SELECT client_id, status, claimed_by FROM video_projects")) {
       return { rows: [{ client_id: 5, claimed_by: null, status: "open" }] };
+    }
+    if (sql.startsWith("SELECT id FROM artist_profiles WHERE user_id = $1")) {
+      return { rows: [{ id: 90 }] };
     }
     // Somebody else claimed it between the read and the guarded update.
     return { rows: [] };

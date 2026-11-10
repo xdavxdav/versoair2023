@@ -66,7 +66,7 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
         </h2>
         <p className="mb-5 text-sm leading-relaxed text-gray-600">
           Prices are shown in CAD in Canada, EUR in France, and FCFA in Côte
-          d’Ivoire. Other countries are coming soon.
+          d’Ivoire. Availability in other markets is confirmed individually.
         </p>
         <p className="mb-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
           Your current access level is{" "}

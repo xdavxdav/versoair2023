@@ -218,7 +218,19 @@ test("sentences with placeholders keep their token in every language and read na
     fill("fr", "COMING SOON IN {country}", { country: "BELGIQUE" }),
     "PROCHAINEMENT DISPONIBLE : BELGIQUE",
   );
+  assert.equal(
+    fill("fr", "AVAILABILITY NOT CONFIRMED IN {country}", {
+      country: "SÉNÉGAL",
+    }),
+    "DISPONIBILITÉ NON CONFIRMÉE : SÉNÉGAL",
+  );
   assert.equal(fill("es", "COMING SOON IN {country}", { country: "BÉLGICA" }), "PRÓXIMAMENTE EN BÉLGICA");
+  assert.equal(
+    fill("es", "AVAILABILITY NOT CONFIRMED IN {country}", {
+      country: "SENEGAL",
+    }),
+    "DISPONIBILIDAD NO CONFIRMADA EN SENEGAL",
+  );
 });
 
 test("the texts shared with other modules are still catalogued and native", () => {

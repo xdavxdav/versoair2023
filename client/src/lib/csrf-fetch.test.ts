@@ -118,6 +118,19 @@ test("keeps a token the caller already set", async () => {
   assert.equal(calls[2].init, pairs);
 });
 
+test("replaces a blank token the caller set with the real one", async () => {
+  const { csrfFetch, calls } = harness({ token: "tok-1" });
+
+  await csrfFetch("/a", { method: "POST", headers: { "x-csrf-token": "" } });
+  await csrfFetch("/b", { method: "POST", headers: { "X-CSRF-Token": "  " } });
+  await csrfFetch("/c", {
+    method: "PUT",
+    headers: new Headers({ "x-csrf-token": "" }),
+  });
+
+  assert.deepEqual(calls.map(sentToken), ["tok-1", "tok-1", "tok-1"]);
+});
+
 test("handles a Request input and keeps its own headers", async () => {
   const { csrfFetch, calls } = harness({ token: "tok-1" });
   const request = new Request(`${ORIGIN}/api/x`, {

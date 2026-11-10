@@ -1,8 +1,9 @@
 /**
  * Business Logo Upload API
- * Handles logo uploads for businesses with tier gating.
- * Only paid tiers (essential, verified, max, enterprise) can upload logos.
- * Mounted at /api/business-logo
+ * Handles logo uploads for business owners.
+ * While subscriptions are on sale, only paid tiers (essential, verified, max,
+ * enterprise) can upload; until then every owner can, because nobody could
+ * otherwise get a tier. Mounted at /api/business-logo
  */
 import { Router, Request, Response } from "express";
 import multer from "multer";
@@ -10,7 +11,8 @@ import path from "path";
 import fs from "fs";
 import { pool } from "../db";
 import { publicBusinessVisibilitySql } from "../utils/business-visibility";
-import { requireAuth } from "../middleware/auth";
+import { commercialSubscriptionsEnabled } from "../utils/commercial-gates";
+import { optionalAuth, requireAuth } from "../middleware/auth";
 
 const router = Router();
 
@@ -87,13 +89,14 @@ const logoUpload = multer({
   },
 });
 
-// Tiers that allow logo upload (all paid tiers)
+// Tiers that allow logo upload once subscriptions are on sale
 const PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
 
 /**
  * POST /api/business-logo/upload
  * Upload a logo for the authenticated user's business.
- * Requires: paid tier subscription on the user OR the business.
+ * Requires: ownership of the business, plus a paid tier on the user OR the
+ * business while subscriptions are on sale.
  * Body: multipart/form-data with "logo" file field + "businessId" field.
  */
 router.post(
@@ -164,7 +167,7 @@ router.post(
       const hasPaidTier =
         PAID_TIERS.includes(userTier) || PAID_TIERS.includes(bizTier);
 
-      if (!hasPaidTier) {
+      if (commercialSubscriptionsEnabled() && !hasPaidTier) {
         // Remove uploaded file
         return res.status(403).json({
           success: false,
@@ -186,8 +189,8 @@ router.post(
         fs.unlink(oldPath, () => {}); // Non-blocking cleanup
       }
 
-      // Build the URL path
-      const logoUrl = `/api/business-logo/file/${businessId}`;
+      // A new address per upload, so a replaced logo is not hidden by the cache.
+      const logoUrl = `/api/business-logo/file/${businessId}?v=${Date.now()}`;
 
       // Store new logos in PostgreSQL so redeploys cannot delete them.
       await pool.query(
@@ -268,6 +271,64 @@ router.delete(
   },
 );
 
+// The same team that may open any business dossier (requireBusinessOwnerOrStaff).
+const STAFF_ROLES = ["admin", "moderator", "superuser"];
+const isStaff = (role: unknown) => STAFF_ROLES.includes(String(role));
+
+// Resolves with the signed-in user, undefined for a visitor, or null once
+// optionalAuth has already answered (a token that is no longer valid).
+function identify(req: Request, res: Response) {
+  return new Promise<Request["user"] | null>((resolve) => {
+    res.once("close", () => resolve(null));
+    optionalAuth(req, res, () => resolve(req.user));
+  });
+}
+
+async function serveStoredLogo(
+  req: Request,
+  res: Response,
+  businessId: number,
+) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT b.logo_data, b.logo_mime, b.owner_id,
+              (${publicBusinessVisibilitySql("b")}) AS is_public
+         FROM businesses b
+        WHERE b.id = $1`,
+      [businessId],
+    );
+    const logo = rows[0];
+    const notFound = () =>
+      res.status(404).json({ success: false, message: "Logo not found" });
+    if (!logo?.logo_data) return notFound();
+
+    // Until the business is in the directory, only its owner and the team
+    // can see the logo; visitors never need to sign in for a public one.
+    if (!logo.is_public) {
+      const user = await identify(req, res);
+      if (user === null) return;
+      if (!user || (String(logo.owner_id) !== user.id && !isStaff(user.role))) {
+        return notFound();
+      }
+    }
+
+    res.set({
+      "Cache-Control": logo.is_public
+        ? "public, max-age=86400"
+        : "private, no-store",
+      // Uploads are untrusted: an SVG opened on its own must not run scripts.
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy":
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    });
+    res.type(logo.logo_mime || "application/octet-stream");
+    res.send(logo.logo_data);
+  } catch (error) {
+    console.error("[LOGO] Database read error:", error);
+    res.status(500).json({ success: false, message: "Logo unavailable" });
+  }
+}
+
 /**
  * GET /api/business-logo/file/:filename
  * Serve a logo file statically.
@@ -276,28 +337,7 @@ router.get("/file/:filename", (req: Request, res: Response) => {
   const { filename } = req.params;
 
   if (/^\d+$/.test(filename)) {
-    pool
-      .query(
-        `SELECT b.logo_data, b.logo_mime
-         FROM businesses b
-         WHERE b.id = $1 AND ${publicBusinessVisibilitySql("b")}`,
-        [Number(filename)],
-      )
-      .then((result) => {
-        const logo = result.rows[0];
-        if (!logo?.logo_data) {
-          return res
-            .status(404)
-            .json({ success: false, message: "Logo not found" });
-        }
-        res.set("Cache-Control", "public, max-age=86400");
-        res.type(logo.logo_mime || "application/octet-stream");
-        return res.send(logo.logo_data);
-      })
-      .catch((error) => {
-        console.error("[LOGO] Database read error:", error);
-        res.status(500).json({ success: false, message: "Logo unavailable" });
-      });
+    void serveStoredLogo(req, res, Number(filename));
     return;
   }
 

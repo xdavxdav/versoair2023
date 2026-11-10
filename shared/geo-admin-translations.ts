@@ -93,6 +93,7 @@ export const GEO_ADMIN_COPY = [
 
   // Market status banner
   ["COMING SOON IN {country}", "PROCHAINEMENT DISPONIBLE : {country}"],
+  ["AVAILABILITY NOT CONFIRMED IN {country}", "DISPONIBILITÉ NON CONFIRMÉE : {country}"],
   ["CHECKING GEOADMIN AVAILABILITY", "VÉRIFICATION DE LA DISPONIBILITÉ DE GEOADMIN"],
   ["SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY", "SÉLECTIONNEZ VOTRE PAYS POUR VÉRIFIER LA DISPONIBILITÉ DE GEOADMIN"],
   ["Available markets: Canada, France, and Côte d’Ivoire. Final scope and terms are confirmed before purchase.", "Marchés disponibles : Canada, France et Côte d'Ivoire. Le périmètre final et les conditions sont confirmés avant l'achat."],
@@ -185,6 +186,7 @@ export const GEO_ADMIN_ES = {
   "You're viewing Geo Admin as a {tier} subscriber.": "Estás viendo Geo Admin como suscriptor {tier}.",
 
   "COMING SOON IN {country}": "PRÓXIMAMENTE EN {country}",
+  "AVAILABILITY NOT CONFIRMED IN {country}": "DISPONIBILIDAD NO CONFIRMADA EN {country}",
   "CHECKING GEOADMIN AVAILABILITY": "COMPROBANDO LA DISPONIBILIDAD DE GEOADMIN",
   "SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY": "SELECCIONA TU PAÍS PARA COMPROBAR LA DISPONIBILIDAD DE GEOADMIN",
   "Available markets: Canada, France, and Côte d’Ivoire. Final scope and terms are confirmed before purchase.": "Mercados disponibles: Canadá, Francia y Costa de Marfil. El alcance final y las condiciones se confirman antes de la compra.",

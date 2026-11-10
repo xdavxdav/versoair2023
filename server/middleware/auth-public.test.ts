@@ -24,6 +24,8 @@ test("anonymous public reads work through the global auth gate without exposing 
   app.post("/api/page-readiness", (_req, res) => res.sendStatus(204));
   // Stands in for the listening-sessions router: only the gate's decision is under test here.
   app.use("/api/listening-sessions", (_req, res) => res.json({ reached: true }));
+  // Stands in for the business-logo router: only the gate's decision is under test here.
+  app.use("/api/business-logo", (_req, res) => res.json({ reached: true }));
   app.post("/auth/verify-login-otp", (_req, res) =>
     res.status(400).json({ success: false, message: "Missing code or token" }),
   );
@@ -80,6 +82,32 @@ test("anonymous public reads work through the global auth gate without exposing 
       ["POST", "/api/listening-sessions/admin/42/cancel"],
       ["POST", "/api/listening-sessions/42/chat"],
       ["DELETE", "/api/listening-sessions/42"],
+    ]) {
+      assert.equal(
+        (await fetch(`${origin}${path}`, { method })).status,
+        401,
+        `${method} ${path} needs a session`,
+      );
+    }
+    // Business logos: a visitor can load a stored logo by numeric id, nothing else.
+    for (const path of [
+      "/api/business-logo/file/7",
+      "/api/business-logo/file/7?v=1700000000000",
+    ]) {
+      assert.equal((await fetch(`${origin}${path}`)).status, 200, `GET ${path} is public`);
+    }
+    for (const path of [
+      "/api/business-logo/file/logo.png",
+      "/api/business-logo/file/7/extra",
+      "/api/business-logo/file/",
+      "/api/business-logo/7",
+    ]) {
+      assert.equal((await fetch(`${origin}${path}`)).status, 401, `GET ${path} is not public`);
+    }
+    for (const [method, path] of [
+      ["POST", "/api/business-logo/upload"],
+      ["DELETE", "/api/business-logo/7"],
+      ["POST", "/api/business-logo/file/7"],
     ]) {
       assert.equal(
         (await fetch(`${origin}${path}`, { method })).status,

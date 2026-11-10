@@ -1,8 +1,8 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { db, pool } from "../db";
 import { sql, eq, and, or, ilike, desc, count } from "drizzle-orm";
 import * as schema from "@shared/schema";
-import jwt from "jsonwebtoken";
+import multer from "multer";
 import { requireAuth } from "../middleware/auth";
 import { sendGeoAdminCrudNotificationEmail } from "../services/email-service";
 
@@ -10,11 +10,52 @@ const ADMIN_NOTIFICATION_EMAIL =
   process.env.ADMIN_EMAIL || process.env.SMTP_USER || "";
 import { uuidRouteParam } from "../middleware/uuid-route-param";
 import { withSavedJobsTable } from "../utils/saved-jobs";
+import {
+  RESUME_MAX_BYTES,
+  cleanResumeName,
+  decodeMultipartFileName,
+  isGenuineResume,
+  resumeFormatOf,
+  resumeMimeOf,
+  withJobApplicationsTable,
+} from "../utils/job-applications";
 
 const router = Router();
 // jobs.id is a UUID column, so the serial-integer guard used elsewhere would
 // turn every real job id into a 404
 router.param("id", uuidRouteParam);
+router.param("applicationId", uuidRouteParam);
+
+// The CV stays in memory and goes straight into the application row.
+const resumeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: RESUME_MAX_BYTES,
+    files: 1,
+    fields: 20,
+    fieldSize: 64 * 1024,
+  },
+});
+
+// The apply form sends multipart when a CV is attached; plain JSON still works.
+const readApplicationBody: RequestHandler = (req, res, next) => {
+  if (!req.is("multipart/form-data")) return next();
+  resumeUpload.single("resume")(req, res, (error: unknown) => {
+    if (!error) return next();
+    const tooBig =
+      error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE";
+    res.status(tooBig ? 413 : 400).json({
+      success: false,
+      error: tooBig
+        ? "Your resume must be 5 MB or smaller."
+        : "Your application could not be read.",
+    });
+  });
+};
+
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const asText = (value: unknown, max: number) =>
+  typeof value === "string" ? value.trim().slice(0, max) : "";
 
 // GET /api/jobs — list all jobs
 router.get("/", async (req, res) => {
@@ -321,126 +362,261 @@ router.get("/mine", requireAuth(), async (req, res) => {
   }
 });
 
+const isStaff = (role: unknown) => role === "admin" || role === "superuser";
+
 // GET /api/jobs/my-applications — applications the user submitted
-router.get("/my-applications", requireAuth(), async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT a.id, a.job_id, a.status, a.applied_date, j.title, j.company, j.location
-         FROM job_applications a LEFT JOIN jobs j ON j.id::text = a.job_id::text
-        WHERE a.applicant_id = $1 OR lower(a.applicant_id) = lower($2)
-        ORDER BY a.applied_date DESC NULLS LAST LIMIT 200`,
-      [String(req.user!.id), String(req.user!.email || "")],
-    );
-    res.json({ success: true, applications: rows });
-  } catch (error) {
-    console.error("[jobs] my-applications:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Failed to load applications" });
-  }
-});
+router.get(
+  "/my-applications",
+  requireAuth(),
+  withJobApplicationsTable,
+  async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT a.id, a.job_id, a.status, a.applied_date, j.title, j.company, j.location
+           FROM job_applications a LEFT JOIN jobs j ON j.id::text = a.job_id::text
+          WHERE a.applicant_id = $1
+          ORDER BY a.applied_date DESC NULLS LAST LIMIT 200`,
+        [String(req.user!.id)],
+      );
+      res.json({ success: true, applications: rows });
+    } catch (error) {
+      console.error("[jobs] my-applications:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to load applications" });
+    }
+  },
+);
 
 // GET /api/jobs/:id/applications — applicants for a posting the user owns
-router.get("/:id/applications", requireAuth(), async (req, res) => {
-  try {
-    const owned = await pool.query(
-      `SELECT 1 FROM jobs j JOIN businesses b ON b.id = j.business_id
-        WHERE j.id::text = $1 AND b.owner_id = $2`,
-      [req.params.id, Number(req.user!.id)],
-    );
-    if (!owned.rowCount) {
-      return res.status(404).json({ success: false, error: "Posting not found" });
-    }
-    const { rows } = await pool.query(
-      `SELECT id, applicant_id, status, cover_letter, resume_url, notes, applied_date
-         FROM job_applications WHERE job_id::text = $1
-        ORDER BY applied_date DESC NULLS LAST LIMIT 500`,
-      [req.params.id],
-    );
-    res.json({ success: true, applications: rows });
-  } catch (error) {
-    console.error("[jobs] applications:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Failed to load applications" });
-  }
-});
-
-// POST /api/jobs/:id/apply
-router.post("/:id/apply", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      applicant_name,
-      applicant_email,
-      applicant_phone,
-      linkedin,
-      portfolio,
-      cover_letter,
-      resume_url,
-      notes,
-    } = req.body;
-
-    let applicantId = "anonymous";
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith("Bearer ")) {
-      try {
-        const token = authHeader.substring(7);
-        const secret = process.env.JWT_SECRET;
-        if (!secret) throw new Error("JWT_SECRET not set");
-        const decoded = jwt.verify(token, secret) as any;
-        applicantId = decoded.userId || decoded.email || "authenticated-user";
-      } catch {
-        // Token invalid — continue with anonymous
+// (or any posting, for the team)
+router.get(
+  "/:id/applications",
+  requireAuth(),
+  withJobApplicationsTable,
+  async (req, res) => {
+    try {
+      const owned = await pool.query(
+        `SELECT 1 FROM jobs j JOIN businesses b ON b.id = j.business_id
+          WHERE j.id::text = $1 AND b.owner_id = $2`,
+        [req.params.id, Number(req.user!.id)],
+      );
+      if (!owned.rowCount && !isStaff(req.user!.role)) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Posting not found" });
       }
+      // The CV itself is never listed: it is fetched one application at a time.
+      const { rows } = await pool.query(
+        `SELECT id, applicant_id, applicant_name, applicant_email, status,
+                cover_letter, resume_url, resume_name,
+                (resume_data IS NOT NULL) AS has_resume, notes, applied_date
+           FROM job_applications WHERE job_id::text = $1
+          ORDER BY applied_date DESC NULLS LAST LIMIT 500`,
+        [req.params.id],
+      );
+      res.json({ success: true, applications: rows });
+    } catch (error) {
+      console.error("[jobs] applications:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to load applications" });
+    }
+  },
+);
+
+// GET /api/jobs/:id/applications/:applicationId/resume — the CV that came
+// with an application. Only the applicant, the posting's owner and the team
+// can read it; anyone else gets the same 404 as for a missing file.
+router.get(
+  "/:id/applications/:applicationId/resume",
+  requireAuth(),
+  withJobApplicationsTable,
+  async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT a.applicant_id, a.resume_name, a.resume_mime, a.resume_data,
+                b.owner_id
+           FROM job_applications a
+           JOIN jobs j ON j.id::text = a.job_id::text
+           LEFT JOIN businesses b ON b.id = j.business_id
+          WHERE a.id::text = $1 AND a.job_id::text = $2`,
+        [req.params.applicationId, req.params.id],
+      );
+      const row = rows[0];
+      const userId = String(req.user!.id);
+      const allowed =
+        row &&
+        (isStaff(req.user!.role) ||
+          row.applicant_id === userId ||
+          (row.owner_id != null && String(row.owner_id) === userId));
+      if (!allowed || !row.resume_data) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Resume not found" });
+      }
+
+      const name = cleanResumeName(row.resume_name || "resume");
+      const asciiName = name.replace(/[^\x20-\x7e]/g, "_");
+      const encodedName = encodeURIComponent(name).replace(
+        /['()*]/g,
+        (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+      );
+      res.set({
+        "Content-Type": row.resume_mime || "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
+        "Content-Length": String(row.resume_data.length),
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store",
+      });
+      res.send(row.resume_data);
+    } catch (error) {
+      console.error("[jobs] resume:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to load the resume" });
+    }
+  },
+);
+
+// POST /api/jobs/:id/apply — sign-in required, so every application belongs to
+// someone who can follow it. The CV comes as a file (multipart) or, for older
+// clients, as a link.
+router.post(
+  "/:id/apply",
+  requireAuth(),
+  withJobApplicationsTable,
+  readApplicationBody,
+  async (req, res) => {
+    const { id } = req.params;
+    const body = (req.body ?? {}) as Record<string, unknown>;
+
+    const email =
+      asText(body.applicant_email, 254) || String(req.user!.email || "");
+    if (!EMAIL_SHAPE.test(email)) {
+      return res
+        .status(400)
+        .json({ success: false, error: "A valid email address is required." });
     }
 
-    const fullNotes = [
-      notes,
-      applicant_phone ? `Phone: ${applicant_phone}` : null,
-      linkedin ? `LinkedIn: ${linkedin}` : null,
-      portfolio ? `Portfolio: ${portfolio}` : null,
-      applicant_name ? `Name: ${applicant_name}` : null,
+    let resume: { name: string; mime: string; data: Buffer } | null = null;
+    if (req.file) {
+      const name = cleanResumeName(
+        decodeMultipartFileName(req.file.originalname),
+      );
+      const format = resumeFormatOf(name);
+      if (!format || !isGenuineResume(req.file.buffer, format)) {
+        return res.status(400).json({
+          success: false,
+          error: "Your resume must be a PDF, DOC or DOCX file.",
+        });
+      }
+      resume = { name, mime: resumeMimeOf(format), data: req.file.buffer };
+    }
+    const resumeLink = asText(body.resume_url, 2000);
+
+    const phone = asText(body.applicant_phone, 60);
+    const linkedin = asText(body.linkedin, 300);
+    const portfolio = asText(body.portfolio, 300);
+    const notes = [
+      asText(body.notes, 5000),
+      phone && `Phone: ${phone}`,
+      linkedin && `LinkedIn: ${linkedin}`,
+      portfolio && `Portfolio: ${portfolio}`,
     ]
       .filter(Boolean)
       .join("\n");
 
-    const insertResult = await pool.query(
-      `INSERT INTO job_applications (job_id, applicant_id, status, cover_letter, resume_url, notes, applied_date)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-       RETURNING id, status, applied_date`,
-      [
+    try {
+      const job = await pool.query(`SELECT status FROM jobs WHERE id = $1`, [
         id,
-        applicant_email || applicantId,
-        "submitted",
-        cover_letter || null,
-        resume_url || null,
-        fullNotes || null,
-      ],
-    );
+      ]);
+      if (!job.rows.length) {
+        return res.status(404).json({ success: false, error: "Job not found" });
+      }
+      if (job.rows[0].status !== "active") {
+        return res.status(409).json({
+          success: false,
+          code: "JOB_CLOSED",
+          error: "This position is no longer accepting applications.",
+        });
+      }
 
-    await pool.query(
-      `UPDATE jobs SET application_count = COALESCE(application_count, 0) + 1, updated_at = NOW() WHERE id = $1`,
-      [id],
-    );
+      const client = await pool.connect();
+      let application: { id: string; status: string } | undefined;
+      try {
+        await client.query("BEGIN");
+        const applicantId = String(req.user!.id);
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))",
+          [id, applicantId],
+        );
+        const existing = await client.query(
+          `SELECT 1 FROM job_applications
+            WHERE job_id = $1 AND applicant_id = $2
+            LIMIT 1`,
+          [id, applicantId],
+        );
+        if (!existing.rows.length) {
+          const inserted = await client.query(
+            `INSERT INTO job_applications
+               (job_id, applicant_id, applicant_name, applicant_email, status,
+                cover_letter, resume_url, resume_name, resume_mime, resume_data,
+                notes, applied_date)
+             VALUES ($1, $2, $3, $4, 'submitted', $5, $6, $7, $8, $9, $10, NOW())
+             RETURNING id, status`,
+            [
+              id,
+              applicantId,
+              asText(body.applicant_name, 200) || null,
+              email,
+              asText(body.cover_letter, 10000) || null,
+              /^https?:\/\//i.test(resumeLink) ? resumeLink : null,
+              resume?.name ?? null,
+              resume?.mime ?? null,
+              resume?.data ?? null,
+              notes || null,
+            ],
+          );
+          application = inserted.rows[0];
+        }
+        if (application) {
+          await client.query(
+            `UPDATE jobs SET application_count = COALESCE(application_count, 0) + 1, updated_at = NOW() WHERE id = $1`,
+            [id],
+          );
+        }
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
 
-    const application = insertResult.rows[0];
-    res.json({
-      success: true,
-      message: "Application submitted successfully",
-      jobId: id,
-      applicationId: application?.id,
-      status: application?.status,
-    });
-  } catch (error: any) {
-    console.error("❌ Job application error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to submit application",
-      details: error.message,
-    });
-  }
-});
+      if (!application) {
+        return res.status(409).json({
+          success: false,
+          code: "ALREADY_APPLIED",
+          error: "You already applied to this position.",
+        });
+      }
+      res.json({
+        success: true,
+        message: "Application submitted successfully",
+        jobId: id,
+        applicationId: application.id,
+        status: application.status,
+        resumeSaved: Boolean(resume),
+      });
+    } catch (error) {
+      console.error("❌ Job application error:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to submit application" });
+    }
+  },
+);
 
 // GET /api/jobs/saved — ids of the jobs the signed-in user saved
 router.get("/saved", requireAuth(), withSavedJobsTable, async (req, res) => {

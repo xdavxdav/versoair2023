@@ -1,6 +1,9 @@
 import { useCountry } from "@/contexts/CountryContext";
 import { useLanguage } from "@/components/LanguageSwitcher";
-import { getMarketAvailability } from "@/lib/geoadmin-pricing";
+import {
+  getMarketAvailability,
+  isGeoAdminComingSoonCountry,
+} from "@/lib/geoadmin-pricing";
 import { COUNTRY_CODES, getCountryMeta } from "@/utils/countryMeta";
 import { localizedCountryName } from "@/utils/country-names";
 import { fillTemplate } from "@shared/public-translations";
@@ -37,9 +40,13 @@ export default function GeoAdminMarketStatusBanner() {
       : "border-sky-300/20 bg-slate-900 text-sky-100";
   const marketLabel =
     availability === false
-      ? tr("COMING SOON IN {country}", {
-          country: countryName.toLocaleUpperCase(),
-        })
+      ? isGeoAdminComingSoonCountry(selectedCountry ?? "")
+        ? tr("COMING SOON IN {country}", {
+            country: countryName.toLocaleUpperCase(),
+          })
+        : tr("AVAILABILITY NOT CONFIRMED IN {country}", {
+            country: countryName.toLocaleUpperCase(),
+          })
       : detecting
         ? tr("CHECKING GEOADMIN AVAILABILITY")
         : tr("SELECT YOUR COUNTRY TO CHECK GEOADMIN AVAILABILITY");

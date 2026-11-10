@@ -13,6 +13,8 @@ import {
   formatXofPrice,
   getGeoAdminMarket,
   getMarketAvailability,
+  isGeoAdminComingSoonCountry,
+  unavailableMarketLabel,
   GEOADMIN_CONTACTS,
 } from "./geoadmin-pricing.ts";
 import { TIERS, TIER_ORDER, TIER_FEATURES } from "./tiers.ts";
@@ -54,7 +56,10 @@ test("every proposed commercial benefit has a native translation", () => {
 test("Enterprise custom quote does not depend on exchange-rate availability", () => {
   assert.equal(formatMarketXofPrice(null, "CA", "CAD", null), "Custom quote");
   assert.equal(formatMarketXofPrice(null, "FR", "EUR", null), "Custom quote");
-  assert.equal(formatMarketXofPrice(null, "SN", "XOF", null), "Coming soon");
+  assert.equal(
+    formatMarketXofPrice(null, "SN", "XOF", null),
+    "Availability not confirmed",
+  );
 });
 
 test("uses the approved annual FCFA price schedule", () => {
@@ -85,6 +90,10 @@ test("uses the configured GeoAdmin market list", () => {
   assert.equal(getMarketAvailability("ci"), true);
   assert.equal(getMarketAvailability("SN"), false);
   assert.equal(getMarketAvailability(""), null);
+  assert.equal(isGeoAdminComingSoonCountry("ci"), true);
+  assert.equal(isGeoAdminComingSoonCountry("SN"), false);
+  assert.equal(unavailableMarketLabel("CI"), "Coming soon");
+  assert.equal(unavailableMarketLabel("SN"), "Availability not confirmed");
 });
 
 test("formats FCFA when local exchange rates are unavailable", () => {
@@ -111,7 +120,10 @@ test("converts annual FCFA prices using the supplied currency rate", () => {
 });
 
 test("does not quote local pricing in an unavailable market", () => {
-  assert.equal(formatMarketXofPrice(180_000, "SN", "XOF", null), "Coming soon");
+  assert.equal(
+    formatMarketXofPrice(180_000, "SN", "XOF", null),
+    "Availability not confirmed",
+  );
 });
 
 test("does not show FCFA as Canadian or euro pricing when rates are missing", () => {
