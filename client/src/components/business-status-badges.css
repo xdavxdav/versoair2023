@@ -1,0 +1,51 @@
+/* Every text/background pair below must keep a 4.5:1 contrast ratio or better;
+   client/src/lib/business-status.test.ts reads this file and enforces it. */
+.biz-status {
+  --biz-fg: #065f46;
+  --biz-bg: #d1fae5;
+  --biz-bd: #6ee7b7;
+}
+.biz-status[data-status="unclaimed"] {
+  --biz-fg: #92400e;
+  --biz-bg: #fef3c7;
+  --biz-bd: #fcd34d;
+}
+.dark .biz-status[data-surface="auto"] {
+  --biz-fg: #a7f3d0;
+  --biz-bg: #064e3b;
+  --biz-bd: #047857;
+}
+.dark .biz-status[data-surface="auto"][data-status="unclaimed"] {
+  --biz-fg: #fde68a;
+  --biz-bg: #78350f;
+  --biz-bd: #b45309;
+}
+
+.biz-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.biz-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--biz-bd);
+  background: var(--biz-bg);
+  color: var(--biz-fg);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.biz-status svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
