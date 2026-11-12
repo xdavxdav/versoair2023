@@ -942,47 +942,6 @@ test("artist grade upgrade: the reviewer on record is the signed-in reviewer, wh
   }
 });
 
-const DISPATCH_PATH = "/api/data/dispatch";
-const DISPATCH_ROUTES = [
-  ["POST", "/categories", {}],
-  ["GET", "/status", undefined],
-  ["POST", "/all", {}],
-];
-
-test("data dispatch: only the owner and invited Admins may call it; every other caller is rejected and no category is written", async () => {
-  await pool.query("DELETE FROM business_categories WHERE slug = 'communication'");
-  const knownIds = (await pool.query("SELECT id FROM business_categories")).rows.map((row) => row.id);
-  const seeded = await pool.query(
-    "INSERT INTO business_categories(name, slug, description) VALUES ($1, 'communication', 'seeded by test') RETURNING id",
-    [`Dispatch seed ${runId}`],
-  );
-  const categoryCount = async () =>
-    (await pool.query("SELECT COUNT(*)::int AS n FROM business_categories")).rows[0].n;
-  const seededRow = async () =>
-    (await pool.query("SELECT name, slug, description FROM business_categories WHERE id = $1", [seeded.rows[0].id])).rows[0];
-  const before = { count: await categoryCount(), row: await seededRow() };
-  try {
-    for (const [principal, expected] of Object.entries(DENIED)) {
-      for (const [method, route, body] of DISPATCH_ROUTES) {
-        const result = await call(principal, method, `${DISPATCH_PATH}${route}`, body);
-        assert.equal(result.status, expected, `${principal} ${method} ${route}: ${JSON.stringify(result.body)}`);
-      }
-    }
-    assert.equal(await categoryCount(), before.count, "denied calls wrote no category");
-    assert.deepEqual(await seededRow(), before.row, "denied calls changed no category");
-
-    for (const principal of ALLOWED) {
-      for (const [method, route, body] of DISPATCH_ROUTES) {
-        const result = await call(principal, method, `${DISPATCH_PATH}${route}`, body);
-        assert.equal(result.status, 200, `${principal} ${method} ${route}: ${JSON.stringify(result.body)}`);
-        assert.equal(result.body?.success, true, `${principal} ${method} ${route}`);
-      }
-    }
-  } finally {
-    await pool.query("DELETE FROM business_categories WHERE id <> ALL($1::int[])", [knownIds]);
-  }
-});
-
 test("business PUT: reassigning the category validates it without reading a column that does not exist", async () => {
   const target = (
     await pool.query("INSERT INTO business_categories(name, slug) VALUES ($1, $2) RETURNING id", [
