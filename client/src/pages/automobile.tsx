@@ -160,10 +160,9 @@ async function searchAutomobileBusinesses(params: {
     if (params.status) queryParams.append("status", params.status);
     if (params.amenities) queryParams.append("amenities", params.amenities);
 
-    // Search within Automobile & Transport sector pool (parent category ID 5)
     const results = await searchBusinesses({
       query: params.query,
-      sectorId: 5,
+      sectorSlug: "automotive-motorbike",
       location: params.location,
       countryCode: params.countryCode,
       limit: params.limit || 50,
