@@ -617,11 +617,14 @@ router.get(
 
     // Keep the core business profile available even when optional detail
     // tables have not been provisioned in an older production database.
+    // Sector is the main category; sub-categories reach it through parent_id.
     const result = await pool.query(
       `
-      SELECT b.*, bc.name as category_name, u.subscription_tier as owner_tier
+      SELECT b.*, bc.name as category_name, sec.slug as sector_slug,
+        u.subscription_tier as owner_tier
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
+      LEFT JOIN business_categories sec ON sec.id = COALESCE(bc.parent_id, bc.id)
       LEFT JOIN users u ON b.owner_id = u.id
       WHERE b.id = $1
         AND ($2::boolean OR (${publicBusinessVisibilitySql("b")}))
@@ -642,6 +645,7 @@ router.get(
       "name",
       "category_id",
       "category_name",
+      "sector_slug",
       "description",
       "location",
       "address",
@@ -665,6 +669,7 @@ router.get(
       "updated_at",
       "is_advertiser",
       "logo_url",
+      "cover_url",
       "business_type",
       "pdf_path",
       "approval_status",
@@ -760,12 +765,16 @@ router.get(
           .status(404)
           .json({ success: false, error: "Business not found" });
       }
+      const actorId = Number(req.user?.userId ?? req.user?.id);
       res.json({
         success: true,
         canEdit: canEditFiche(
           { id: req.user?.userId ?? req.user?.id, role: req.user?.role },
           rows[0],
         ),
+        // Logo and cover uploads are owner-only, so staff who can edit the fiche still see no media menu.
+        ownsBusiness:
+          rows[0].owner_id !== null && Number(rows[0].owner_id) === actorId,
       });
     } catch (error) {
       console.error("Error checking fiche access:", error);
