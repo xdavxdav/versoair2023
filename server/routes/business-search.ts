@@ -4,6 +4,10 @@ import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { db, pool } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  PUBLIC_BUSINESS_LIST_SELECT_SQL,
+  toPublicBusinessListRow,
+} from "../utils/public-business-list-fields";
 
 const router = Router();
 
@@ -183,7 +187,7 @@ router.get(
     const total = parseInt(countResult.rows[0]?.count || "0", 10);
 
     const businessesResult = await pool.query(
-      `SELECT b.*, r.name as region_name,
+      `SELECT ${PUBLIC_BUSINESS_LIST_SELECT_SQL}, r.name as region_name,
          COALESCE(u.subscription_tier, 'free') as owner_tier
        FROM businesses b
        LEFT JOIN users u ON b.owner_id = u.id
@@ -205,7 +209,7 @@ router.get(
 
     res.json({
       success: true,
-      data: businessesResult.rows,
+      data: businessesResult.rows.map(toPublicBusinessListRow),
       total,
       page: pageNum,
       limit: limitNum,
