@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { pool } from "./db";
-import { injectBusinessRouteSeoMeta } from "./utils/business-route-seo";
+import { businessIdFromUrl, injectBusinessRouteSeoMeta } from "./utils/business-route-seo";
 import { publicBusinessVisibilitySql } from "./utils/business-visibility";
 import { injectRouteSeoMeta } from "./utils/route-seo-meta";
 
@@ -118,15 +118,14 @@ export function serveStatic(app: Express) {
         `$1${origin}${req.originalUrl}"`,
       );
 
-      const businessMatch = req.path.match(/^\/business\/(\d+)\/?$/);
-      if (!businessMatch) {
+      const businessId = businessIdFromUrl(req.originalUrl);
+      if (businessId === null) {
         // Last, so canonical www URLs are not rewritten to the runtime origin above.
         injected = injectRouteSeoMeta(injected, req.originalUrl.split("?")[0]);
         res.set("Content-Type", "text/html").send(injected);
         return;
       }
 
-      const businessId = Number(businessMatch[1]);
       pool
         .query(
           `SELECT b.id, b.name, b.description, b.address, b.city, b.country_code,

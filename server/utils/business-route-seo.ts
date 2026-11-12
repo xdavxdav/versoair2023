@@ -20,6 +20,12 @@ export type BusinessSeoRecord = {
   imageUrl?: string | null;
 };
 
+// Inside app.use("*") req.path is always "/", so callers pass originalUrl.
+export function businessIdFromUrl(url: string): number | null {
+  const match = url.split("?")[0].split("#")[0].match(/^\/business\/(\d+)\/?$/);
+  return match ? Number(match[1]) : null;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -40,7 +46,7 @@ export function injectBusinessRouteSeoMeta(
   const canonical = `${origin}/business/${business.id}`;
   const location = [business.city, business.country].filter(Boolean).join(", ");
   const category = business.category?.trim();
-  const title = `${business.name} | ${category || "Business"}${location ? ` in ${location}` : ""} | VersoAir`;
+  const title = `${business.name} | VersoAir`;
   const sourceDescription = business.description
     ? plainText(business.description)
     : `Discover ${business.name}${category ? `, a ${category}` : ""}${location ? ` in ${location}` : ""} on VersoAir.`;
