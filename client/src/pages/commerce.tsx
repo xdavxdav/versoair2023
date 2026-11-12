@@ -138,10 +138,9 @@ async function searchCommerceBusinesses(params: {
       }
     });
 
-    // Search within Commerce sector pool (parent category ID 4 — Supermarkets, Hardware, Retail)
     const results = await searchBusinesses({
       query: params.query,
-      sectorId: 4,
+      sectorSlug: "commerce",
       location: params.location,
       countryCode: params.countryCode,
       limit: params.limit || 50,

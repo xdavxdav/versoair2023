@@ -143,10 +143,9 @@ async function searchHospitalityBusinesses(params: {
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.sort_by) queryParams.append("sort_by", params.sort_by);
 
-    // Search within Hotellerie sector pool (parent category ID 9 — Hotels, Travel, Hostels)
     const results = await searchBusinesses({
       query: params.query,
-      sectorId: 9,
+      sectorSlug: "tourism-leisure",
       location: params.location,
       countryCode: params.countryCode,
       limit: params.limit || 50,
