@@ -297,7 +297,7 @@ const loginSchema = z.object({
   rememberMe: z.boolean().optional().default(false),
 });
 
-const registerSchema = z.object({
+export const registerSchema = z.object({
   email: z.string().email("Invalid email address").max(254),
   username: z
     .string()
@@ -312,9 +312,18 @@ const registerSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number"),
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
-  businessName: z.string().max(200).optional(),
+  businessName: z.string().trim().max(200).optional(),
+  accountType: z.enum(["general", "business_owner"]).default("general"),
   businessType: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
+}).superRefine((value, context) => {
+  if (value.accountType === "business_owner" && !value.businessName?.trim()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["businessName"],
+      message: "Business name is required for a Business Owner account",
+    });
+  }
 });
 
 const forgotPasswordSchema = z.object({
@@ -381,6 +390,7 @@ async function finishLogin(
       userId: String(user.id),
       email: user.email,
       role: effectiveLoginRole,
+      accountType: user.accountType || user.account_type || "general",
       subscriptionTier: user.subscription_tier || "free",
       ...(ownerMfaVerified ? { ownerMfa: true } : {}),
       ...(geoAdminCodeVerified
@@ -414,6 +424,7 @@ async function finishLogin(
       name: displayName || user.username || null,
       username: user.username || null,
       role: effectiveLoginRole,
+      accountType: user.accountType || user.account_type || "general",
       subscriptionTier: user.subscription_tier || "free",
       subscriptionStatus: user.subscription_status || "active",
       trialTier: user.trial_tier || null,
@@ -450,6 +461,7 @@ router.post(
       firstName,
       lastName,
       businessName,
+      accountType,
       businessType,
       phone,
     } = parsed.data;
@@ -497,6 +509,8 @@ router.post(
               password: hashedPassword,
               role: "user",
               isVerified: false,
+              accountType,
+              businessName: businessName || null,
             })
             .returning({
               id: schema.users.id,
@@ -568,6 +582,7 @@ router.post(
         id: String(newUser.id),
         email: newUser.email,
         role: newUser.role || "user",
+        accountType,
       },
     });
   }),
@@ -1235,7 +1250,8 @@ router.get(
 
       // Query DB for up-to-date subscription fields
       const dbResult = await db.execute(
-        sql`SELECT id, username, email, role, subscription_tier, subscription_status,
+        sql`SELECT id, username, email, role, account_type, business_name,
+                   subscription_tier, subscription_status,
                    trial_tier, trial_started_at, trial_expires_at,
                    display_name, created_at
             FROM users WHERE id = ${Number(userId)} LIMIT 1`,
@@ -1285,6 +1301,8 @@ router.get(
             "User",
           isAdmin,
           role: effectiveRole,
+          accountType: dbUser?.account_type || "general",
+          businessName: dbUser?.business_name || null,
           isFirstLogin: isNewAccount && !userDisplayName,
           needsDisplayName: isPlaceholderName(userDisplayName, dbUser?.username),
           subscriptionTier: dbUser?.subscription_tier || "free",

@@ -157,6 +157,7 @@ import { TierBadge } from "@/components/VisibilityMeter";
 import { TierComparisonModal } from "@/components/TierComparisonModal";
 import { RevenueSimulator } from "@/components/RevenueSimulator";
 import { VerificationQuickStatus } from "@/components/VerificationStatusClientView";
+import { MyBusinessClaimsCard } from "@/components/BusinessClaimAction";
 
 // Relevance Engine Imports
 import {
@@ -4387,6 +4388,7 @@ export default function UserDashboard() {
                     </CardContent>
                   </Card>
                 </div>
+                <MyBusinessClaimsCard />
                 {!hasRealBusiness && (
                   <Card className="border-0 shadow-sm bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
                     <CardContent className="p-6">

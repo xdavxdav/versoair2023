@@ -3,10 +3,12 @@ import { db, pool } from "./db";
 import { sql, eq } from "drizzle-orm";
 import databaseManagementRouter from "./routes/database-management";
 import businessesRouter from "./routes/businesses";
+import businessClaimsRouter from "./routes/business-claims";
 import propertiesRouter from "./routes/properties";
 import propertyBookingsRouter from "./routes/property-bookings";
 import apiV1Router from "./routes/api-v1";
 import authRouter from "./routes/auth";
+import accountRouter from "./routes/account";
 import oauthRouter from "./routes/oauth";
 import socialApiRoutes from "./routes/social-api";
 import faqApiRoutes from "./routes/faq-api";
@@ -144,6 +146,7 @@ export async function registerRoutes(app: Express) {
   // Register auth routes
   app.use("/auth", authRouter);
   app.use("/auth", oauthRouter);
+  app.use("/api/account", accountRouter);
 
   // Unified profile search + admin approval workflow
   app.use("/", profilesRouter);
@@ -209,6 +212,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api", geoRouter);
 
   // Register businesses routes
+  app.use("/api/businesses", businessClaimsRouter);
   app.use("/", businessesRouter);
 
   // Register properties routes

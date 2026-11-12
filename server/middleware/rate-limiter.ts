@@ -90,6 +90,32 @@ export const registerLimiter = rateLimit({
   },
 });
 
+export const accountTypeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many account type changes. Please try again later.",
+    });
+  },
+});
+
+export const businessClaimLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many claim requests. Please try again later.",
+    });
+  },
+});
+
 // Public contact form limiter: very low threshold to prevent spam bots
 export const contactFormLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

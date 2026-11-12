@@ -519,6 +519,9 @@ router.get(
     const isClaimedSelect = hasOwner
       ? ", (b.owner_id IS NOT NULL) as is_claimed"
       : ", NULL::boolean as is_claimed";
+    const claimableSelect = hasOwner
+      ? ", (b.owner_id IS NULL AND b.is_active = true) as claimable"
+      : ", false::boolean as claimable";
     const tierOrder = hasOwner
       ? `CASE COALESCE(u.subscription_tier, 'free')
           WHEN 'enterprise' THEN 1
@@ -544,6 +547,7 @@ router.get(
         bc.name as category_name
         ${ownerTierSelect}
         ${isClaimedSelect}
+        ${claimableSelect}
         ${extraSelectClause}
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
@@ -643,7 +647,8 @@ router.get(
       `
       SELECT b.*, bc.name as category_name, sec.slug as sector_slug,
         u.subscription_tier as owner_tier,
-        (b.owner_id IS NOT NULL) as is_claimed
+        (b.owner_id IS NOT NULL) as is_claimed,
+        (b.owner_id IS NULL AND b.is_active = true) as claimable
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
       LEFT JOIN business_categories sec ON sec.id = COALESCE(bc.parent_id, bc.id)
@@ -687,6 +692,7 @@ router.get(
       "is_active",
       "is_verified",
       "is_claimed",
+      "claimable",
       "verification_status",
       "created_at",
       "updated_at",

@@ -25,6 +25,7 @@ import securityRouter from "./security";
 import usersRouter from "./users";
 import rolesRouter from "./roles";
 import communitiesRouter from "./communities";
+import businessClaimsRouter from "./business-claims";
 
 const router = Router();
 // Invited Admins use the delegated panel; account, role, security and identity
@@ -189,6 +190,11 @@ router.delete(
 
 // Mount sub-routers
 router.use("/businesses", businessesRouter);
+router.use(
+  "/business-claims",
+  requireAuth(["admin", "superuser"]),
+  businessClaimsRouter,
+);
 router.use("/categories", categoriesRouter);
 router.use("/artists", artistsRouter);
 router.use("/campaigns", campaignsRouter);

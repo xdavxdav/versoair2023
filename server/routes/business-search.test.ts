@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { call, scriptPool, withRouter } from "../test-support/route-harness";
-import { PUBLIC_IS_CLAIMED_SQL } from "../utils/public-business-list-fields";
+import {
+  PUBLIC_CLAIMABLE_SQL,
+  PUBLIC_IS_CLAIMED_SQL,
+} from "../utils/public-business-list-fields";
 import businessSearchRouter from "./business-search";
 
 const PRIVATE_KEYS = [
@@ -30,6 +33,8 @@ function scripted(rowOverrides: Record<string, unknown> = {}) {
             category_id: 1,
             owner_tier: "free",
             region_name: "Ontario",
+            is_claimed: false,
+            claimable: true,
             ...rowOverrides,
           },
         ],
@@ -51,7 +56,8 @@ test("category search selects an explicit public column list, never b.*", async 
   assert.ok(query, "data query should select an explicit column list");
   const selectList = query.sql
     .split(" FROM businesses b")[0]
-    .replace(PUBLIC_IS_CLAIMED_SQL, "");
+    .replace(PUBLIC_IS_CLAIMED_SQL, "")
+    .replace(PUBLIC_CLAIMABLE_SQL, "");
   assert.ok(!selectList.includes("b.*"));
   for (const key of PRIVATE_KEYS) {
     assert.ok(!selectList.includes(`b.${key}`), `${key} must not be selected`);
@@ -74,6 +80,7 @@ test("category search strips private keys even if the query widens", async () =>
     const res = await call(base, "GET", "/category/commerce/search");
     const row = res.body.data[0];
     assert.equal(row.name, "Persaunafy Inc.");
+    assert.equal(row.claimable, true);
     for (const key of PRIVATE_KEYS) {
       assert.ok(!(key in row), `${key} leaked`);
     }

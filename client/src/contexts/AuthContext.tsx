@@ -18,6 +18,7 @@ export interface AuthUser {
   displayName?: string;
   username?: string;
   role?: string;
+  accountType?: "general" | "business_owner";
   isAdmin?: boolean;
   portals?: string[];
   hasArtistProfile?: boolean;
@@ -61,6 +62,10 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
       | undefined,
     username: u.username as string | undefined,
     role: normalizedRole || (u.role as string | undefined),
+    accountType:
+      u.accountType === "business_owner" || u.account_type === "business_owner"
+        ? "business_owner"
+        : "general",
     isAdmin: ["admin", "superuser", "moderator"].includes(normalizedRole),
     portals: (u.portals as string[]) || [],
     hasArtistProfile: Boolean(u.hasArtistProfile),

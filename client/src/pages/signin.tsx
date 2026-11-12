@@ -90,6 +90,7 @@ type LoginPortalUser = {
   userId?: string | number | null;
   email?: string | null;
   role?: string | null;
+  accountType?: "general" | "business_owner";
   portals?: string[];
   hasArtistProfile?: boolean;
   isContractor?: boolean;
@@ -130,6 +131,8 @@ const getRoleAwareLoginPath = (userData: any, requestedPath: string | null) =>
       id: String(userData?.id || userData?.userId || ""),
       email: String(userData?.email || ""),
       role: userData?.role ?? undefined,
+      accountType:
+        userData?.accountType === "business_owner" ? "business_owner" : "general",
       portals: userData?.portals,
       hasArtistProfile: userData?.hasArtistProfile,
       isContractor: userData?.isContractor,
@@ -148,6 +151,8 @@ const toAuthUser = (
   email: String(userData?.email || ""),
   name: userData?.name,
   role: userData?.role ?? undefined,
+  accountType:
+    userData?.accountType === "business_owner" ? "business_owner" : "general",
   isAdmin: Boolean(userData?.isAdmin),
   portals: Array.isArray(userData?.portals) ? userData.portals : [],
   hasArtistProfile: Boolean(userData?.hasArtistProfile),
@@ -301,6 +306,9 @@ export default function SignIn() {
     return "login";
   }); // 'login', 'register', 'forgot-password', 'reset-sent', 'mfa', 'verify-sent'
   const [selectedBusinessType, setSelectedBusinessType] = useState("");
+  const [accountType, setAccountType] = useState<"general" | "business_owner">(
+    "general",
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
@@ -787,6 +795,10 @@ export default function SignIn() {
       setRegisterError(validation.error);
       return;
     }
+    if (accountType === "business_owner" && !formData.businessName.trim()) {
+      setRegisterError("Enter your business name for a Business Owner account.");
+      return;
+    }
 
     setRegistering(true);
     try {
@@ -800,6 +812,7 @@ export default function SignIn() {
           firstName: formData.firstName,
           lastName: formData.lastName,
           businessName: formData.businessName,
+          accountType,
           businessType: selectedBusinessType,
           phone: formData.phone,
         }),
@@ -1951,19 +1964,52 @@ export default function SignIn() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account type
+                  </label>
+                  <select
+                    value={accountType}
+                    onChange={(e) =>
+                      setAccountType(
+                        e.target.value === "business_owner"
+                          ? "business_owner"
+                          : "general",
+                      )
+                    }
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
+                  >
+                    <option value="general">Personal (General)</option>
+                    <option value="business_owner">Business Owner</option>
+                  </select>
+                  {accountType === "business_owner" && (
+                    <p className="mt-2 text-xs text-gray-600">
+                      Business management access is granted only after an
+                      administrator approves a business claim.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Business Name{" "}
                     <span className="text-gray-400 font-normal">
-                      (optional)
+                      {accountType === "business_owner"
+                        ? "(required)"
+                        : "(optional)"}
                     </span>
                   </label>
                   <input
                     type="text"
+                    required={accountType === "business_owner"}
                     value={formData.businessName}
                     onChange={(e) =>
                       setFormData({ ...formData, businessName: e.target.value })
                     }
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
-                    placeholder="Leave blank if not a business"
+                    placeholder={
+                      accountType === "business_owner"
+                        ? "Your business name"
+                        : "Leave blank if not a business"
+                    }
                   />
                 </div>
 

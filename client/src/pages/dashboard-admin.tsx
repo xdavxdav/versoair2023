@@ -231,6 +231,7 @@ import { CommunityOperationsSection } from "@/components/sections/CommunityOpera
 import { ArtisanProfilesSection } from "@/components/sections/ArtisanProfilesSection";
 import { EventsModerationSection } from "@/components/sections/EventsModerationSection";
 import { ListeningSessionsSection } from "@/components/sections/ListeningSessionsSection";
+import { BusinessClaimsSection } from "@/components/sections/BusinessClaimsSection";
 import { useCountry } from "@/contexts/CountryContext";
 import { useOpenRequest } from "@/hooks/use-open-request";
 import { slugify } from "@/lib/admin-forms";
@@ -393,6 +394,12 @@ const MAIN_SECTIONS = [
     label: "Businesses",
     icon: Store,
     description: "Manage all business listings",
+  },
+  {
+    id: "business-claims",
+    label: "Business Claims",
+    icon: Building,
+    description: "Review business ownership claims",
   },
   {
     id: "categories",
@@ -7436,6 +7443,9 @@ export default function AdminDashboard() {
                   onBusinessSavePending={handleBusinessSavePending}
                 />
               </>
+            )}
+            {sectionAllowed && activeSection === "business-claims" && (
+              <BusinessClaimsSection />
             )}
             {sectionAllowed && activeSection === "categories" && (
               <CategoryManagement

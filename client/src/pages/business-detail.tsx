@@ -56,6 +56,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
+import { BusinessClaimAction } from "@/components/BusinessClaimAction";
 import { UNCLAIMED_NOTICE, parseClaimed } from "@/lib/business-status";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
@@ -94,6 +95,7 @@ interface Business {
   verified?: boolean;
   is_verified?: boolean;
   is_claimed?: boolean;
+  claimable?: boolean;
   is_advertiser?: boolean;
   description?: string;
   address?: string;
@@ -848,6 +850,13 @@ export default function BusinessDetailPage() {
                     </p>
                   )}
                 </div>
+                {biz.claimable === true && (
+                  <BusinessClaimAction
+                    businessId={biz.id}
+                    businessName={biz.name}
+                    claimable
+                  />
+                )}
 
                 {/* Badges row */}
                 <div className="flex flex-wrap items-center gap-1.5">

@@ -29,13 +29,21 @@ export const PUBLIC_BUSINESS_LIST_COLUMNS = [
 
 // Whether an owner exists, never who: owner_id itself stays private.
 export const PUBLIC_IS_CLAIMED_SQL = "(b.owner_id IS NOT NULL) AS is_claimed";
+export const PUBLIC_CLAIMABLE_SQL =
+  "(b.owner_id IS NULL AND b.is_active = true) AS claimable";
 
 export const PUBLIC_BUSINESS_LIST_SELECT_SQL = [
   ...PUBLIC_BUSINESS_LIST_COLUMNS.map((column) => `b.${column}`),
   PUBLIC_IS_CLAIMED_SQL,
+  PUBLIC_CLAIMABLE_SQL,
 ].join(", ");
 
-const PUBLIC_EXTRA_KEYS = ["region_name", "category_name", "is_claimed"];
+const PUBLIC_EXTRA_KEYS = [
+  "region_name",
+  "category_name",
+  "is_claimed",
+  "claimable",
+];
 
 /** Defense in depth: drop anything outside the whitelist even if a query widens. */
 export function toPublicBusinessListRow(row: Record<string, unknown>) {

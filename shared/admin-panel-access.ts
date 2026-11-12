@@ -8,6 +8,7 @@
 export const DELEGATED_ADMIN_PANEL_SECTIONS = [
   "dashboard",
   "businesses",
+  "business-claims",
   "categories",
   "jobs",
   "advertising",

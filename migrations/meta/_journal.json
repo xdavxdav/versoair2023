@@ -71,6 +71,13 @@
       "when": 1794063423397,
       "tag": "0009_listening_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794512827613,
+      "tag": "0010_business_claims",
+      "breakpoints": true
     }
   ]
 }

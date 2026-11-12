@@ -64,6 +64,10 @@ export const users = pgTable("users", {
 
   // User-chosen display name (set after email verification onboarding)
   displayName: text("display_name"),
+  accountType: varchar("account_type", { length: 30 })
+    .notNull()
+    .default("general"),
+  businessName: text("business_name"),
 
   // Premium & Subscription Tier Logic
   // 🛸 Growth Engine tiers: 'free' | 'essential' | 'verified' | 'max' | 'enterprise'
@@ -313,6 +317,54 @@ export const businesses = pgTable(
     searchIdx: index("search_idx").on(t.searchVector),
     ratingIdx: index("rating_ranking_idx").on(t.rating),
     createdAtIdx: index("businesses_created_idx").on(t.createdAt),
+  }),
+);
+
+export const businessClaims = pgTable(
+  "business_claims",
+  {
+    id: serial("id").primaryKey(),
+    businessId: integer("business_id")
+      .references(() => businesses.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    message: text("message"),
+    claimantRole: varchar("claimant_role", { length: 100 }).notNull(),
+    workEmail: text("work_email"),
+    workPhone: varchar("work_phone", { length: 30 }),
+    evidence: jsonb("evidence")
+      .$type<Record<string, boolean>>()
+      .notNull()
+      .default({}),
+    reviewedBy: integer("reviewed_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at"),
+    reviewNote: text("review_note"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    pendingBusinessUser: uniqueIndex(
+      "business_claims_pending_business_user_unique",
+    )
+      .on(table.businessId, table.userId)
+      .where(sql`${table.status} = 'pending'`),
+    businessStatus: index("business_claims_business_status_idx").on(
+      table.businessId,
+      table.status,
+    ),
+    userCreated: index("business_claims_user_created_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+    statusCheck: check(
+      "business_claims_status_check",
+      sql`${table.status} IN ('pending', 'approved', 'rejected', 'withdrawn')`,
+    ),
   }),
 );
 
