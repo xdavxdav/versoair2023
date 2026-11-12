@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { call, scriptPool, withRouter } from "../test-support/route-harness";
+import { PUBLIC_IS_CLAIMED_SQL } from "../utils/public-business-list-fields";
 import businessSearchRouter from "./business-search";
 
 const PRIVATE_KEYS = [
@@ -48,7 +49,9 @@ test("category search selects an explicit public column list, never b.*", async 
     q.sql.startsWith("SELECT b.id"),
   );
   assert.ok(query, "data query should select an explicit column list");
-  const selectList = query.sql.split(" FROM businesses b")[0];
+  const selectList = query.sql
+    .split(" FROM businesses b")[0]
+    .replace(PUBLIC_IS_CLAIMED_SQL, "");
   assert.ok(!selectList.includes("b.*"));
   for (const key of PRIVATE_KEYS) {
     assert.ok(!selectList.includes(`b.${key}`), `${key} must not be selected`);
