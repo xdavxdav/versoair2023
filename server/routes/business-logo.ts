@@ -60,7 +60,7 @@ function sanitizeStoredName(originalName: string): string {
   return safe.length > 150 ? safe.slice(0, 150) : safe;
 }
 
-function validateLogoFile(file: Express.Multer.File) {
+export function validateLogoFile(file: Express.Multer.File) {
   const extension = path.extname(file.originalname || "").toLowerCase();
   if (!file.originalname || file.originalname.includes("..")) {
     throw new Error("Invalid file name.");
@@ -90,7 +90,7 @@ const logoUpload = multer({
 });
 
 // Tiers that allow logo upload once subscriptions are on sale
-const PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
+export const PAID_TIERS = ["essential", "verified", "max", "enterprise", "premium"];
 
 /**
  * POST /api/business-logo/upload
@@ -273,11 +273,11 @@ router.delete(
 
 // The same team that may open any business dossier (requireBusinessOwnerOrStaff).
 const STAFF_ROLES = ["admin", "moderator", "superuser"];
-const isStaff = (role: unknown) => STAFF_ROLES.includes(String(role));
+export const isStaff = (role: unknown) => STAFF_ROLES.includes(String(role));
 
 // Resolves with the signed-in user, undefined for a visitor, or null once
 // optionalAuth has already answered (a token that is no longer valid).
-function identify(req: Request, res: Response) {
+export function identify(req: Request, res: Response) {
   return new Promise<Request["user"] | null>((resolve) => {
     res.once("close", () => resolve(null));
     optionalAuth(req, res, () => resolve(req.user));
