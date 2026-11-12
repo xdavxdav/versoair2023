@@ -13,6 +13,10 @@ import {
 } from "../services/email-service";
 import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 import {
+  PUBLIC_BUSINESS_LIST_SELECT_SQL,
+  toPublicBusinessListRow,
+} from "../utils/public-business-list-fields";
+import {
   buildBulkUpdateStatement,
   parseBulkBusinessUpdates,
 } from "../utils/business-bulk-update";
@@ -1184,9 +1188,8 @@ router.get(
       const result = await pool.query(
         `
         SELECT 
-          b.*, 
-          bc.name as category_name,
-          COALESCE(u.subscription_tier, 'free') as owner_tier
+          ${PUBLIC_BUSINESS_LIST_SELECT_SQL},
+          bc.name as category_name
         FROM businesses b
         LEFT JOIN business_categories bc ON b.category_id = bc.id
         LEFT JOIN users u ON b.owner_id = u.id
@@ -1209,7 +1212,7 @@ router.get(
 
       res.json({
         success: true,
-        data: result.rows,
+        data: result.rows.map(toPublicBusinessListRow),
         count: result.rows.length,
       });
     } catch (error) {
