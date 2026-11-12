@@ -70,7 +70,7 @@ export const INDUSTRY_PROFILES: Record<string, IndustryProfile> = {
   Santé: {
     name: "Santé",
     icon: "🏥",
-    accentColor: "text-red-600",
+    accentColor: "text-red-700",
     metrics: [
       {
         key: "views",
@@ -111,7 +111,7 @@ export const INDUSTRY_PROFILES: Record<string, IndustryProfile> = {
   Finance: {
     name: "Finance",
     icon: "🏦",
-    accentColor: "text-emerald-600",
+    accentColor: "text-emerald-700",
     metrics: [
       {
         key: "views",
@@ -152,7 +152,7 @@ export const INDUSTRY_PROFILES: Record<string, IndustryProfile> = {
   Alimentation: {
     name: "Alimentation",
     icon: "🍽️",
-    accentColor: "text-orange-600",
+    accentColor: "text-orange-700",
     metrics: [
       {
         key: "views",
@@ -398,7 +398,7 @@ export const INDUSTRY_PROFILES: Record<string, IndustryProfile> = {
   Divertissement: {
     name: "Divertissement",
     icon: "🎭",
-    accentColor: "text-pink-600",
+    accentColor: "text-pink-700",
     metrics: [
       {
         key: "views",
@@ -439,7 +439,7 @@ export const INDUSTRY_PROFILES: Record<string, IndustryProfile> = {
   Immobilier: {
     name: "Immobilier",
     icon: "🏠",
-    accentColor: "text-teal-600",
+    accentColor: "text-teal-700",
     metrics: [
       {
         key: "views",
