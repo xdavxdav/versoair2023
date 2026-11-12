@@ -287,6 +287,7 @@ router.get(
       categoryId = "",
       categoryIds = "",
       sectorId = "",
+      sectorSlug = "",
       categoryName = "",
       isActive = "",
       sortBy = "created_at",
@@ -393,6 +394,17 @@ router.get(
         (params.length + 1) +
         ")";
       params.push(Number(sectorId));
+    }
+
+    // sectorSlug: same parent-or-self match as sectorId, keyed by category slug.
+    if (sectorSlug) {
+      whereClause +=
+        " AND b.category_id IN (SELECT c.id FROM business_categories c WHERE c.slug = $" +
+        (params.length + 1) +
+        " OR c.parent_id IN (SELECT p.id FROM business_categories p WHERE p.slug = $" +
+        (params.length + 1) +
+        "))";
+      params.push(String(sectorSlug));
     }
 
     // categoryName: filter by category name (ILIKE match on the joined
