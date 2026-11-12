@@ -187,8 +187,7 @@ router.get(
     const total = parseInt(countResult.rows[0]?.count || "0", 10);
 
     const businessesResult = await pool.query(
-      `SELECT ${PUBLIC_BUSINESS_LIST_SELECT_SQL}, r.name as region_name,
-         COALESCE(u.subscription_tier, 'free') as owner_tier
+      `SELECT ${PUBLIC_BUSINESS_LIST_SELECT_SQL}, r.name as region_name
        FROM businesses b
        LEFT JOIN users u ON b.owner_id = u.id
        LEFT JOIN regions r ON b.region_id = r.id

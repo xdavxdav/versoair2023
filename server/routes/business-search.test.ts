@@ -11,6 +11,7 @@ const PRIVATE_KEYS = [
   "approved_by",
   "approval_status",
   "verification_status",
+  "owner_tier",
 ];
 
 function scripted(rowOverrides: Record<string, unknown> = {}) {
@@ -52,6 +53,10 @@ test("category search selects an explicit public column list, never b.*", async 
   for (const key of PRIVATE_KEYS) {
     assert.ok(!selectList.includes(`b.${key}`), `${key} must not be selected`);
   }
+  assert.ok(
+    !selectList.includes("owner_tier"),
+    "owner_tier must not be selected",
+  );
 });
 
 test("category search strips private keys even if the query widens", async () => {

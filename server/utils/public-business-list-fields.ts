@@ -31,7 +31,7 @@ export const PUBLIC_BUSINESS_LIST_SELECT_SQL = PUBLIC_BUSINESS_LIST_COLUMNS.map(
   (column) => `b.${column}`,
 ).join(", ");
 
-const PUBLIC_EXTRA_KEYS = ["region_name", "owner_tier", "category_name"];
+const PUBLIC_EXTRA_KEYS = ["region_name", "category_name"];
 
 /** Defense in depth: drop anything outside the whitelist even if a query widens. */
 export function toPublicBusinessListRow(row: Record<string, unknown>) {
