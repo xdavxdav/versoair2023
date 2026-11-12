@@ -51,6 +51,16 @@ and does not grant GeoAdmin access. Raw staff codes are never placed in Render,
 source control, logs, or invitation email.
 `SUPERUSER_ARTIST_CODE` is not accepted for GeoAdmin or artist login.
 
+## Business category assignment
+
+Select the closest matching category from the 33 top-level categories when
+creating a business, including field registration. There are no subcategories.
+Commerce (1) is for retail and commercial services, not a default bucket:
+repair shops belong in Miscellaneous Services (32), while IT support belongs
+in IT & Internet (10). Persaunafy remains in Commerce; Kick & Tech belongs in
+Miscellaneous Services. Sector directories must filter by category slug, not
+an unrelated numeric sector ID.
+
 ## VersoAI setup
 
 The hosted chat needs a server-side `GROQ_API_KEY`; no model download is

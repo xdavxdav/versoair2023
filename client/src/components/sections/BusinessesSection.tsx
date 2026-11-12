@@ -25,6 +25,11 @@ interface CreateBusinessInput {
   description: string;
 }
 
+interface BusinessCategory {
+  id: number;
+  name: string;
+}
+
 export function BusinessesSection() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +37,7 @@ export function BusinessesSection() {
   useScrollLock(isModalOpen);
   const [formData, setFormData] = useState<CreateBusinessInput>({
     name: "",
-    categoryId: 1,
+    categoryId: 0,
     email: "",
     phone: "",
     description: "",
@@ -41,6 +46,28 @@ export function BusinessesSection() {
   const [success, setSuccess] = useState("");
   const API_BASE_URL =
     typeof window !== "undefined" ? process.env.NEXT_PUBLIC_API_URL || "" : "";
+
+  const { data: categories = [], error: categoriesError } = useQuery<BusinessCategory[]>({
+    queryKey: ["business-creation-categories"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/categories`);
+      if (!res.ok) throw new Error("Could not load business categories.");
+      const data: unknown = await res.json();
+      if (
+        !Array.isArray(data) ||
+        !data.every(
+          (category): category is BusinessCategory =>
+            typeof category === "object" &&
+            category !== null &&
+            Number.isInteger(category.id) &&
+            typeof category.name === "string",
+        )
+      ) {
+        throw new Error("The category list returned an invalid response.");
+      }
+      return data;
+    },
+  });
 
   // Fetch businesses
   const {
@@ -140,7 +167,7 @@ export function BusinessesSection() {
   const resetForm = () => {
     setFormData({
       name: "",
-      categoryId: 1,
+      categoryId: 0,
       email: "",
       phone: "",
       description: "",
@@ -168,6 +195,11 @@ export function BusinessesSection() {
 
     if (!formData.name.trim()) {
       setError("Business name is required");
+      return;
+    }
+
+    if (!categories.some((category) => category.id === formData.categoryId)) {
+      setError("Select the category that best matches this business.");
       return;
     }
 
@@ -300,6 +332,30 @@ export function BusinessesSection() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label htmlFor="business-category" className="block text-sm font-medium text-slate-200 mb-2">
+                  Category
+                </label>
+                <select
+                  id="business-category"
+                  required
+                  value={formData.categoryId || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categoryId: Number(e.target.value) })
+                  }
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                >
+                  <option value="" disabled>Select the closest category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+                {categoriesError && (
+                  <p role="alert" className="mt-2 text-sm text-red-400">
+                    {categoriesError.message}
+                  </p>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">
                   Business Name

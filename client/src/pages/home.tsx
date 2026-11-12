@@ -3894,7 +3894,7 @@ export default function Home() {
               <p className="text-base md:text-xl text-purple-200 max-w-3xl mx-auto px-4">
                 {artistAnnuaireGenres.length > 0
                   ? `Explorez plus de ${artistAnnuaireGenres.length} catégories`
-                  : "Explorez les catégories musicales"}
+                  : "Explorez les catégories musicales"}{" "}
                 d'artistes à travers {countryMeta.nameFr}
               </p>
             </div>

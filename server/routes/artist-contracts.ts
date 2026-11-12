@@ -25,6 +25,12 @@ import { resolveAdminNotificationEmail } from "../utils/admin-notification-email
 
 const router = Router();
 
+// The reviewer on record is always the signed-in user; a reviewerId sent in a request body is never trusted.
+function sessionReviewerId(req: Request): number | null {
+  const id = Number(req.user?.userId);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 // Grade tier definitions — single source of truth
 const GRADE_TIERS: Record<
   string,
@@ -600,8 +606,8 @@ router.put(
     await ensureTable();
     try {
       const id = parseInt(req.params.id);
-      const { action, grade, reviewNotes, rejectionReason, reviewerId } =
-        req.body;
+      const { action, grade, reviewNotes, rejectionReason } = req.body;
+      const reviewerId = sessionReviewerId(req);
 
       if (
         !action ||
@@ -834,7 +840,8 @@ router.put(
     await ensureTable();
     try {
       const id = parseInt(req.params.id);
-      const { grade, reviewerId, reviewNotes } = req.body;
+      const { grade, reviewNotes } = req.body;
+      const reviewerId = sessionReviewerId(req);
 
       if (!grade || !GRADE_TIERS[grade]) {
         return res.status(400).json({ error: "Grade invalide" });
