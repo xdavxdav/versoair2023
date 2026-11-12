@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { call, scriptPool, withRouter } from "../test-support/route-harness";
+import { PUBLIC_IS_CLAIMED_SQL } from "../utils/public-business-list-fields";
 import businessesRouter from "./businesses";
 
 const PRIVATE_KEYS = [
@@ -44,7 +45,9 @@ test("category listing selects an explicit public column list, never b.*", async
   });
   const query = db.matching("FROM businesses b")[0];
   assert.ok(query, "category query should run");
-  const selectList = query.sql.split(" FROM businesses b")[0];
+  const selectList = query.sql
+    .split(" FROM businesses b")[0]
+    .replace(PUBLIC_IS_CLAIMED_SQL, "");
   assert.ok(!selectList.includes("b.*"));
   for (const key of PRIVATE_KEYS) {
     assert.ok(!selectList.includes(`b.${key}`), `${key} must not be selected`);
@@ -84,4 +87,14 @@ test("category listing keeps the public visibility predicate", async () => {
   const query = db.matching("FROM businesses b")[0];
   assert.ok(query?.sql.includes("is_verified"));
   assert.ok(query?.sql.includes("is_active"));
+});
+
+test("category listing exposes a yes/no is_claimed flag but never the owner", async () => {
+  scripted({ is_claimed: false, owner_id: 99 });
+  await withRouter(businessesRouter, async (base) => {
+    const res = await call(base, "GET", "/api/businesses/category/1?limit=5");
+    const row = res.body.data[0];
+    assert.equal(row.is_claimed, false);
+    assert.ok(!("owner_id" in row));
+  });
 });
