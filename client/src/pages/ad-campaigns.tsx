@@ -121,7 +121,7 @@ export default function AdCampaignsPage() {
           startDate: form.startDate,
           endDate: form.endDate || undefined,
           description: form.description || undefined,
-          status: "active",
+          status: "draft",
         }),
       });
 
@@ -237,6 +237,12 @@ export default function AdCampaignsPage() {
           </Button>
         </div>
 
+        <p role="note" className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          Campaigns are planning records. Saving a campaign or marking it Active
+          does not publish ads or charge a payment method. Amounts have no
+          stored currency and are not enforced daily spending limits.
+        </p>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
@@ -256,9 +262,9 @@ export default function AdCampaignsPage() {
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Budget</p>
+                <p className="text-sm text-gray-500">Total Planned Amount</p>
                 <p className="text-xl font-bold">
-                  ${totalBudget.toLocaleString()}
+                  {totalBudget.toLocaleString()}
                 </p>
               </div>
             </CardContent>
@@ -323,7 +329,7 @@ export default function AdCampaignsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="budget">Budget (USD) *</Label>
+                    <Label htmlFor="budget">Planned Amount (currency unspecified) *</Label>
                     <Input
                       id="budget"
                       type="number"
@@ -424,7 +430,7 @@ export default function AdCampaignsPage() {
                 <Megaphone className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p className="text-lg font-medium">No campaigns yet</p>
                 <p className="text-sm">
-                  Create your first ad campaign to boost your business
+                  Create your first campaign plan for your business
                   visibility
                 </p>
               </div>
@@ -435,7 +441,7 @@ export default function AdCampaignsPage() {
                     <tr className="border-b text-left text-gray-500">
                       <th className="pb-3 font-medium">Campaign</th>
                       <th className="pb-3 font-medium">Status</th>
-                      <th className="pb-3 font-medium text-right">Budget</th>
+                      <th className="pb-3 font-medium text-right">Planned Amount</th>
                       <th className="pb-3 font-medium text-right">
                         Impressions
                       </th>
@@ -466,7 +472,7 @@ export default function AdCampaignsPage() {
                         </td>
                         <td className="py-3">{statusBadge(campaign.status)}</td>
                         <td className="py-3 text-right font-mono">
-                          ${parseFloat(campaign.budget).toLocaleString()}
+                          {parseFloat(campaign.budget).toLocaleString()}
                         </td>
                         <td className="py-3 text-right">
                           {(campaign.impressions || 0).toLocaleString()}

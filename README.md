@@ -61,6 +61,17 @@ in IT & Internet (10). Persaunafy remains in Commerce; Kick & Tech belongs in
 Miscellaneous Services. Sector directories must filter by category slug, not
 an unrelated numeric sector ID.
 
+## Campaign budgets
+
+GeoAdmin Advertising and `/ad-campaigns` currently manage campaign planning
+records. The API's legacy `dailyBudget` field aliases the stored `budget`
+amount; it is not an enforced daily spending limit or a monthly estimate.
+Budget summaries add the recorded amounts without multiplying by 30. The
+currency is not stored per campaign and is labeled unspecified in GeoAdmin.
+Saving or marking a campaign Active does
+not itself publish ads, connect an advertising network, or charge a payment
+method.
+
 ## VersoAI setup
 
 The hosted chat needs a server-side `GROQ_API_KEY`; no model download is
