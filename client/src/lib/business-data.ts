@@ -149,7 +149,7 @@ export async function fetchBusinessesByCategory(
 export async function searchBusinesses(params: {
   query?: string;
   category?: string;
-  sectorId?: number;
+  sectorSlug?: string;
   categoryId?: number;
   categoryIds?: number[];
   location?: string;
@@ -167,13 +167,13 @@ export async function searchBusinesses(params: {
     if (params.countryCode)
       queryParams.append("countryCode", params.countryCode);
 
-    // Priority: categoryIds > categoryId > sectorId > category text fallback
+    // Priority: categoryIds > categoryId > sectorSlug > category text fallback
     if (params.categoryIds && params.categoryIds.length > 0) {
       queryParams.append("categoryIds", params.categoryIds.join(","));
     } else if (params.categoryId) {
       queryParams.append("categoryId", String(params.categoryId));
-    } else if (params.sectorId) {
-      queryParams.append("sectorId", String(params.sectorId));
+    } else if (params.sectorSlug) {
+      queryParams.append("sectorSlug", params.sectorSlug);
     } else if (params.category) {
       // category is a text name (e.g. "IT Services"); use it as a text search
       // since the API categoryId expects a numeric ID, not a name

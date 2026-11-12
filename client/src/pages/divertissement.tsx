@@ -167,10 +167,9 @@ async function searchEntertainmentBusinesses(params: {
     if (params.status) queryParams.append("status", params.status);
     if (params.amenities) queryParams.append("amenities", params.amenities);
 
-    // Search within Divertissement & Loisirs sector pool (parent category ID 6)
     const results = await searchBusinesses({
       query: params.query,
-      sectorId: 6,
+      sectorSlug: "entertainment-sports",
       location: params.location,
       countryCode: params.countryCode,
       limit: params.limit || 50,

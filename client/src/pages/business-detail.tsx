@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,8 +26,16 @@ import {
   Zap,
   Eye,
   Camera,
+  Trash2,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -40,6 +48,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -51,6 +60,10 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { FicheTechnique } from "@/components/FicheTechnique";
 import { FicheEditor } from "@/components/FicheEditor";
 import { useOptionalAuthContext } from "@/contexts/AuthContext";
+import {
+  ficheSectorStyle,
+  getFicheSectorPalette,
+} from "@/lib/fiche-sector-theme";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
@@ -73,6 +86,7 @@ interface Business {
   id: number | string;
   name: string;
   category_name?: string;
+  sector_slug?: string | null;
   categoryName?: string;
   status?: string;
   verified?: boolean;
@@ -83,6 +97,7 @@ interface Business {
   location?: string;
   phone?: string;
   email?: string;
+  website?: string | null;
   created_at?: string;
   createdAt?: string;
   attributes?: Record<string, any>;
@@ -94,55 +109,53 @@ interface Business {
   latitude?: string;
   longitude?: string;
   logo_url?: string; // optional for future avatar
+  cover_url?: string | null;
   [key: string]: any;
 }
+
+type MediaKind = "logo" | "cover";
+
+const MEDIA_ACCEPT = "image/jpeg,image/png,image/webp,image/svg+xml,image/gif";
 
 /* ─── Industry UI helpers with emoji avatars ────────────────────────── */
 
 const industryMap: Record<
   string,
-  { icon: string; gradient: string; label: string; avatarEmoji: string }
+  { icon: string; label: string; avatarEmoji: string }
 > = {
   commerce: {
     icon: "🛍️",
-    gradient: "from-amber-500/70 via-orange-500/70 to-yellow-500/70",
     label: "Commerce",
     avatarEmoji: "🛒",
   },
   hotellerie: {
     icon: "🏨",
-    gradient: "from-indigo-500/70 via-blue-500/70 to-cyan-500/70",
     label: "Hospitality",
     avatarEmoji: "🏨",
   },
   batiment: {
     icon: "🏗️",
-    gradient: "from-emerald-500/70 via-green-500/70 to-teal-500/70",
     label: "Construction",
     avatarEmoji: "🔨",
   },
   automobile: {
     icon: "🚗",
-    gradient: "from-slate-500/70 via-slate-400/70 to-slate-300/70",
     label: "Automobile",
     avatarEmoji: "🚗",
   },
   finance: {
     icon: "💰",
-    gradient: "from-lime-500/70 via-emerald-500/70 to-green-500/70",
     label: "Finance",
     avatarEmoji: "💵",
   },
   divertissement: {
     icon: "🎭",
-    gradient: "from-pink-500/70 via-fuchsia-500/70 to-purple-500/70",
     label: "Entertainment",
     avatarEmoji: "🎬",
   },
 };
 const defaultUI = {
   icon: "🏢",
-  gradient: "from-slate-500/70 via-slate-400/70 to-slate-300/70",
   label: "Business",
   avatarEmoji: "🏢",
 };
@@ -203,7 +216,7 @@ function GraffitiBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {/* Base dark gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#f3efe9] via-[#f8f5f1] to-[#efe7dd]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-fiche-soft via-white to-fiche-border" />
 
       {/* Grunge / spray texture */}
       <div
@@ -218,17 +231,17 @@ function GraffitiBackground() {
       <div className="absolute top-[15%] left-[5%] text-8xl opacity-10 rotate-12 select-none font-mono text-slate-900">
         ✪
       </div>
-      <div className="absolute bottom-[20%] right-[3%] text-7xl opacity-10 -rotate-6 select-none text-amber-800">
+      <div className="absolute bottom-[20%] right-[3%] text-7xl opacity-10 -rotate-6 select-none text-fiche-accent">
         ⨀
       </div>
-      <div className="absolute top-[40%] right-[12%] text-6xl opacity-8 rotate-45 select-none text-cyan-700">
+      <div className="absolute top-[40%] right-[12%] text-6xl opacity-8 rotate-45 select-none text-fiche-accent">
         ⌘
       </div>
-      <div className="absolute bottom-[30%] left-[8%] text-5xl opacity-8 -rotate-12 select-none text-purple-700">
+      <div className="absolute bottom-[30%] left-[8%] text-5xl opacity-8 -rotate-12 select-none text-fiche-accent">
         ◈
       </div>
-      <div className="absolute top-[70%] left-[20%] w-64 h-64 rounded-full bg-amber-500/5 blur-3xl animate-pulse" />
-      <div className="absolute top-[10%] right-[10%] w-96 h-96 rounded-full bg-purple-500/5 blur-3xl animate-pulse delay-1000" />
+      <div className="absolute top-[70%] left-[20%] w-64 h-64 rounded-full bg-fiche-soft blur-3xl animate-pulse" />
+      <div className="absolute top-[10%] right-[10%] w-96 h-96 rounded-full bg-fiche-border blur-3xl animate-pulse delay-1000" />
 
       {/* Neon grid lines */}
       <svg
@@ -247,7 +260,7 @@ function GraffitiBackground() {
               fill="none"
               stroke="currentColor"
               strokeWidth="0.5"
-              className="text-cyan-700"
+              className="text-fiche-accent"
             />
           </pattern>
         </defs>
@@ -277,7 +290,7 @@ export default function BusinessDetailPage() {
   const [ficheEditorOpen, setFicheEditorOpen] = useState(false);
 
   // Only owners and staff get a successful answer; everyone else sees no edit button.
-  const { data: ficheAccess } = useQuery<{ canEdit: boolean }>({
+  const { data: ficheAccess } = useQuery<{ canEdit: boolean; ownsBusiness?: boolean }>({
     queryKey: ["business-fiche-access", businessId, auth?.user?.id ?? null],
     enabled: Boolean(businessId && auth?.user),
     retry: false,
@@ -285,11 +298,16 @@ export default function BusinessDetailPage() {
       const res = await fetch(`/api/businesses/${businessId}/fiche/access`, {
         credentials: "include",
       });
-      if (!res.ok) return { canEdit: false };
+      if (!res.ok) return { canEdit: false, ownsBusiness: false };
       return res.json();
     },
   });
   const canEditFiche = ficheAccess?.canEdit === true;
+  // Logo and cover changes are owner-only, matching the server routes.
+  const isOwner = ficheAccess?.ownsBusiness === true;
+  const [mediaBusy, setMediaBusy] = useState<MediaKind | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   /* ── Queries ─────────────────────────────────────────────────── */
 
@@ -390,10 +408,24 @@ export default function BusinessDetailPage() {
   // Avatar emoji for the business
   const avatarEmoji = getBusinessAvatarEmoji(business);
 
-  const heroBlurb = useMemo(() => {
-    const sector = catName || "local";
-    return `A ${sector} partner built for traction — clear offers, responsive support, and measurable results.`;
-  }, [catName]);
+  const ledeText = useMemo(() => {
+    const text = (business?.description || "").replace(/\s+/g, " ").trim();
+    if (text.length <= 240) return text;
+    return `${text.slice(0, 237).trimEnd()}…`;
+  }, [business?.description]);
+
+  const memberSince = useMemo(() => {
+    const raw = business?.created_at || business?.createdAt;
+    if (!raw) return null;
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return null;
+    return { year: String(date.getFullYear()), full: formatDate(raw) };
+  }, [business?.created_at, business?.createdAt]);
+
+  const websiteHref = useMemo(() => {
+    const raw = (business?.website || "").trim();
+    return /^https?:\/\//i.test(raw) ? raw : "";
+  }, [business?.website]);
 
   const mapsLink = useMemo(() => {
     if (business?.latitude && business?.longitude)
@@ -458,7 +490,7 @@ export default function BusinessDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-900">
+      <div className="relative flex flex-col min-h-screen bg-fiche-soft text-slate-900">
         <SeoHead
           title="Loading Business Profile | VersoAir"
           description="Loading business information from the VersoAir directory."
@@ -492,7 +524,7 @@ export default function BusinessDetailPage() {
       error,
     });
     return (
-      <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-900 items-center justify-center px-4">
+      <div className="relative flex flex-col min-h-screen bg-fiche-soft text-slate-900 items-center justify-center px-4">
         <SeoHead
           title="Business Not Found | VersoAir"
           description="The requested business profile is unavailable or no longer listed on VersoAir."
@@ -531,103 +563,286 @@ export default function BusinessDetailPage() {
 
   // TypeScript narrowing: after the error guard above, business is guaranteed defined
   const biz = business!;
+  const ficheStyle = ficheSectorStyle(getFicheSectorPalette(biz.sector_slug));
+
+  // The server decides the paid-tier gate and explains a refusal in `message`, so we show that text as-is.
+  const runMediaChange = async (kind: MediaKind, send: () => Promise<Response>) => {
+    setMediaBusy(kind);
+    try {
+      const res = await send();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || "Request failed.");
+      queryClient.invalidateQueries({ queryKey: ["business", businessId] });
+    } catch (err) {
+      toast({
+        title: kind === "logo" ? "Logo not updated" : "Cover photo not updated",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMediaBusy(null);
+    }
+  };
+
+  const uploadMedia = (kind: MediaKind, file: File) => {
+    const formData = new FormData();
+    formData.append(kind, file);
+    formData.append("businessId", String(biz.id));
+    return runMediaChange(kind, () =>
+      fetch(
+        kind === "logo" ? "/api/business-logo/upload" : "/api/business-cover/upload",
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        },
+      ),
+    );
+  };
+
+  const removeMedia = (kind: MediaKind) =>
+    runMediaChange(kind, () =>
+      fetch(
+        kind === "logo" ? `/api/business-logo/${biz.id}` : `/api/business-cover/${biz.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      ),
+    );
+
+  const handleMediaFileChange =
+    (kind: MediaKind) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (file) void uploadMedia(kind, file);
+    };
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-[#f3efe9] text-slate-900">
+    <div className="relative flex flex-col min-h-screen bg-[#F6F1E9] font-inter text-[#1E2A32]" style={ficheStyle} data-testid="business-fiche">
       <SeoHead
         title={metaTitle}
         description={metaDescription}
         canonicalPath={canonicalPath}
         jsonLd={businessJsonLd}
       />
-      <GraffitiBackground />
+      {(biz.phone || biz.email || mapsLink) && (
+        <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-fiche-border bg-white/95 p-3 backdrop-blur md:hidden">
+          {biz.phone && (
+            <Button asChild className="flex-1 gap-2 bg-fiche-accent text-white hover:bg-fiche-accent hover:brightness-90">
+              <a href={`tel:${biz.phone}`}>
+                <Phone className="h-4 w-4" /> Call
+              </a>
+            </Button>
+          )}
+          {biz.email && (
+            <Button asChild variant="outline" className="flex-1 gap-2 border-fiche-border bg-white text-[#1E2A32]">
+              <a href={`mailto:${biz.email}`}>
+                <Mail className="h-4 w-4" /> Email
+              </a>
+            </Button>
+          )}
+          {mapsLink && (
+            <Button asChild variant="outline" className="flex-1 gap-2 border-fiche-border bg-white text-[#1E2A32]">
+              <a href={mapsLink} target="_blank" rel="noreferrer">
+                <Navigation className="h-4 w-4" /> Directions
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
 
-      <div className="relative z-10 max-w-[95vw] mx-auto px-4 sm:px-6 py-10 space-y-10">
-        {/* ══════════════ HERO SECTION — Futuristic Avatar & Glassmorphism ══════════════ */}
-        <div className="group relative bg-white/5 backdrop-blur-2xl border border-slate-200 rounded-3xl shadow-2xl overflow-hidden transition-all duration-500 hover:border-amber-500/30 hover:shadow-amber-500/10">
-          {/* Neon corner accents */}
-          <div className="absolute top-0 left-0 w-24 h-24 border-t-2 border-l-2 border-amber-500/30 rounded-tl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          <div className="absolute bottom-0 right-0 w-24 h-24 border-b-2 border-r-2 border-amber-500/30 rounded-br-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      <div className="relative z-10 mx-auto w-full max-w-[1140px] px-[clamp(16px,4vw,40px)] pb-28 pt-5 md:pb-10 space-y-[18px]">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 pb-1 text-[12.5px] text-[#7C878E]">
+          <Link href="/businesses-directory" className="hover:text-fiche-accent">
+            Businesses
+          </Link>
+          {catName && (
+            <>
+              <span aria-hidden="true" className="opacity-50">/</span>
+              <span>{catName}</span>
+            </>
+          )}
+          <span aria-hidden="true" className="opacity-50">/</span>
+          <span aria-current="page" className="font-medium text-[#4C5A63]">{biz.name}</span>
+        </nav>
 
-          <div className="p-8 md:p-10">
-            <div className="flex flex-col md:flex-row md:items-start gap-6">
-              {/* Futuristic Avatar with neon ring and emoji */}
+        {/* ══════════════ HERO ══════════════ */}
+        <div className="relative overflow-hidden rounded-[18px] border border-fiche-border bg-white shadow-[0_1px_2px_rgba(31,26,20,.05),0_18px_40px_-24px_rgba(31,26,20,.35)]">
+          {(biz.cover_url || isOwner) && (
+            <div
+              data-testid="business-cover"
+              className="relative h-40 md:h-52 w-full overflow-hidden bg-gradient-to-br from-fiche-soft via-fiche-border to-fiche-soft"
+            >
+              {biz.cover_url && (
+                <img
+                  src={biz.cover_url}
+                  alt={`${biz.name} cover`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
+              {isOwner && (
+                <div className="absolute top-3 right-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={mediaBusy !== null}
+                        data-testid="business-cover-menu"
+                        className="gap-2 bg-white/90 text-slate-900 shadow hover:bg-white"
+                      >
+                        {mediaBusy === "cover" ? (
+                          <Upload className="h-4 w-4 animate-pulse" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
+                        Cover photo
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => coverInputRef.current?.click()}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {biz.cover_url ? "Change cover photo" : "Add cover photo"}
+                      </DropdownMenuItem>
+                      {biz.cover_url && (
+                        <DropdownMenuItem
+                          onSelect={() => void removeMedia("cover")}
+                          className="text-red-600 focus:text-red-700"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove cover photo
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+              {isOwner && (
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept={MEDIA_ACCEPT}
+                  onChange={handleMediaFileChange("cover")}
+                  className="hidden"
+                />
+              )}
+            </div>
+          )}
+          <div className="relative p-[clamp(20px,3vw,32px)]">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(680px_240px_at_88%_-30%,var(--fiche-soft,#f9fafb),transparent_70%)]"
+            />
+            <div className="relative flex gap-[clamp(14px,2.4vw,24px)] items-start">
               <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-500 to-purple-500 blur-xl opacity-50 animate-pulse" />
-                <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-slate-50 to-slate-50 flex items-center justify-center text-6xl shadow-2xl border-2 border-amber-500/50 transition-all duration-300 group-hover:scale-105 group-hover:border-amber-400">
+                <div className="flex h-[clamp(64px,9vw,84px)] w-[clamp(64px,9vw,84px)] items-center justify-center overflow-hidden rounded-[20px] border border-fiche-border bg-gradient-to-br from-fiche-soft via-[#FBF7F1] to-fiche-soft text-4xl shadow-[inset_0_1px_0_rgba(255,255,255,.7),0_10px_22px_-16px_rgba(31,26,20,.8)]">
                   {biz.logo_url ? (
                     <img
                       src={biz.logo_url}
                       alt={biz.name}
-                      className="w-full h-full rounded-full object-cover"
+                      className="h-full w-full object-contain p-2"
                     />
                   ) : (
-                    <span className="drop-shadow-lg">{avatarEmoji}</span>
+                    <span>{avatarEmoji}</span>
                   )}
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 border border-amber-500/30">
-                  <Camera className="h-3 w-3 text-amber-800" />
-                </div>
+                {isVerified && !isOwner && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-fiche-border bg-white shadow-sm"
+                  >
+                    <CheckCircle className="h-3 w-3 text-[#0E7A58]" strokeWidth={2.6} />
+                  </span>
+                )}
+                {isOwner && (
+                  <>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={mediaBusy !== null}
+                          aria-label="Logo options"
+                          title="Logo options"
+                          data-testid="business-logo-menu"
+                          className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white border border-fiche-border shadow-md hover:bg-fiche-soft disabled:opacity-60"
+                        >
+                          {mediaBusy === "logo" ? (
+                            <Upload className="h-4 w-4 text-fiche-accent animate-pulse" />
+                          ) : (
+                            <Camera className="h-4 w-4 text-fiche-accent" />
+                          )}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onSelect={() => logoInputRef.current?.click()}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          {biz.logo_url ? "Change logo" : "Add logo"}
+                        </DropdownMenuItem>
+                        {biz.logo_url && (
+                          <DropdownMenuItem
+                            onSelect={() => void removeMedia("logo")}
+                            className="text-red-600 focus:text-red-700"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove logo
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept={MEDIA_ACCEPT}
+                      onChange={handleMediaFileChange("logo")}
+                      className="hidden"
+                    />
+                  </>
+                )}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0 space-y-3">
                 {/* Name + badges */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent tracking-tight">
+                  <h1 className="font-fraunces text-[clamp(1.7rem,4.4vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.025em] text-[#1E2A32]">
                     {biz.name}
                   </h1>
                   {isVerified && (
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger>
-                          <ShieldCheck className="h-6 w-6 text-emerald-700 drop-shadow-glow" />
+                        <TooltipTrigger asChild>
+                          <span
+                            aria-label="Verified listing"
+                            className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-fiche-border bg-fiche-soft"
+                          >
+                            <CheckCircle className="h-3 w-3 text-fiche-accent" strokeWidth={2.6} />
+                          </span>
                         </TooltipTrigger>
                         <TooltipContent>Verified Business</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   )}
                   {biz.is_advertiser && (
-                    <Badge className="bg-amber-500/20 text-amber-800 border-amber-500/30 backdrop-blur-sm">
+                    <Badge className="border-fiche-border bg-fiche-soft text-fiche-accent">
                       <Sparkles className="h-3 w-3 mr-1" /> Promoted
                     </Badge>
                   )}
                 </div>
 
-                {/* Star rating with glow */}
-                {rating > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-5 w-5 ${i < Math.round(rating) ? "fill-amber-400 text-amber-800 drop-shadow-glow" : "text-slate-600"}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm font-medium text-slate-700">
-                      {rating.toFixed(1)}
-                    </span>
-                    {reviewCount > 0 && (
-                      <span className="text-sm text-slate-700">
-                        ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
-                      </span>
-                    )}
-                  </div>
-                )}
-
                 {/* Badges row */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {catName && (
-                    <Badge className="bg-white/10 border-slate-200 text-slate-700 backdrop-blur-sm">
+                  <Badge className="border-fiche-border bg-fiche-soft text-fiche-accent">
                       {ui.icon} {catName}
                     </Badge>
                   )}
                   <Badge
                     className={
                       isActive
-                        ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/30 backdrop-blur-sm"
-                        : "bg-rose-500/20 text-rose-700 border-rose-500/30 backdrop-blur-sm"
+                        ? "border-[#BFE3D3] bg-[#DFF1E9] text-[#0E7A58]"
+                        : "border-rose-200 bg-rose-50 text-rose-700"
                     }
                   >
                     {isActive ? (
@@ -638,7 +853,7 @@ export default function BusinessDetailPage() {
                     {isActive ? "Active" : "Inactive"}
                   </Badge>
                   {attrs.type && (
-                    <Badge className="bg-white/10 border-slate-200 text-slate-700 backdrop-blur-sm">
+                    <Badge className="border-fiche-border bg-fiche-soft text-[#4C5A63]">
                       {attrs.type}
                     </Badge>
                   )}
@@ -651,7 +866,7 @@ export default function BusinessDetailPage() {
                       <Badge
                         key={tag}
                         variant="outline"
-                        className="text-xs bg-white/5 border-slate-200 text-slate-700"
+                        className="border-fiche-border bg-white text-xs text-[#4C5A63]"
                       >
                         <Tag className="h-3 w-3 mr-1" />
                         {tag}
@@ -660,125 +875,152 @@ export default function BusinessDetailPage() {
                   </div>
                 )}
 
-                {/* Hero blurb + CTA row */}
+                {/* Lede + CTA row */}
                 <div className="space-y-3">
-                  <p className="text-slate-700 leading-relaxed max-w-2xl font-light">
-                    {heroBlurb}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {biz.phone && (
-                      <Button
-                        asChild
-                        size="sm"
-                        className="gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-slate-900 hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
-                      >
-                        <a href={`tel:${biz.phone}`}>
-                          <Phone className="h-4 w-4" /> Call Now
-                        </a>
-                      </Button>
-                    )}
-                    {biz.email && (
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 hover:border-amber-500/30 transition-all"
-                      >
-                        <a href={`mailto:${biz.email}`}>
-                          <Mail className="h-4 w-4" /> Email
-                        </a>
-                      </Button>
-                    )}
-                    {mapsLink && (
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2 text-slate-700 hover:text-amber-800 hover:bg-white/5"
-                      >
-                        <a href={mapsLink} target="_blank" rel="noreferrer">
-                          <Navigation className="h-4 w-4" /> Directions
-                        </a>
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2 text-amber-800 hover:text-amber-800 hover:bg-white/5 border border-amber-500/20"
-                      onClick={() => setShowProfitModal(true)}
-                    >
-                      <Sparkles className="h-4 w-4" /> Profit Window
-                    </Button>
-                  </div>
+                  {ledeText && (
+                    <p className="max-w-[56ch] text-[14.5px] leading-[1.6] text-[#4C5A63]">
+                      {ledeText}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Quick highlight tiles with futuristic stats */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Card className="text-slate-900 bg-white/5 border-slate-200 backdrop-blur-sm overflow-hidden relative group/stats">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 opacity-0 group-hover/stats:opacity-100 transition-opacity duration-700" />
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-slate-700 tracking-wider">
-                      Rating
-                    </p>
-                    <p className="text-2xl font-bold text-slate-700">
-                      {rating > 0 ? rating.toFixed(1) : "—"}
-                    </p>
-                  </div>
-                  <Star className="h-5 w-5 text-amber-800" />
-                </CardContent>
-              </Card>
-              <Card className="text-slate-900 bg-white/5 border-slate-200 backdrop-blur-sm relative group/stats">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-slate-700 tracking-wider">
-                      Services
-                    </p>
-                    <p className="text-2xl font-bold text-slate-700">
-                      {serviceCount}
-                    </p>
-                  </div>
-                  <Briefcase className="h-5 w-5 text-slate-700" />
-                </CardContent>
-              </Card>
-              <Card className="text-slate-900 bg-white/5 border-slate-200 backdrop-blur-sm relative group/stats">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-slate-700 tracking-wider">
-                      Reviews
-                    </p>
-                    <p className="text-2xl font-bold text-slate-700">
-                      {reviewCount}
-                    </p>
-                  </div>
-                  <MessageSquare className="h-5 w-5 text-slate-700" />
-                </CardContent>
-              </Card>
+            <div className="relative mt-5 flex flex-wrap gap-2">
+              {biz.phone && (
+                <Button
+                  asChild
+                  className="h-[38px] gap-[7px] rounded-[10px] bg-[#0E7A58] px-[15px] text-[13.5px] font-semibold text-white shadow-[0_8px_18px_-10px_rgba(14,122,88,.9)] hover:bg-[#0B6249]"
+                >
+                  <a href={`tel:${biz.phone}`}>
+                    <Phone className="h-[15px] w-[15px]" /> Call now
+                  </a>
+                </Button>
+              )}
+              {biz.email && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-[38px] gap-[7px] rounded-[10px] border-[#DCCFBC] bg-white px-[15px] text-[13.5px] font-semibold text-[#1E2A32] hover:border-fiche-accent hover:bg-fiche-soft"
+                >
+                  <a href={`mailto:${biz.email}`}>
+                    <Mail className="h-[15px] w-[15px]" /> Email
+                  </a>
+                </Button>
+              )}
+              {websiteHref && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-[38px] gap-[7px] rounded-[10px] border-[#DCCFBC] bg-white px-[15px] text-[13.5px] font-semibold text-[#1E2A32] hover:border-fiche-accent hover:bg-fiche-soft"
+                >
+                  <a href={websiteHref} target="_blank" rel="noopener noreferrer">
+                    <Globe className="h-[15px] w-[15px]" /> Website
+                  </a>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="hidden h-[38px] gap-[7px] rounded-[10px] border-[#DCCFBC] bg-white px-[15px] text-[13.5px] font-semibold text-[#1E2A32] hover:border-fiche-accent hover:bg-fiche-soft sm:inline-flex"
+                onClick={() =>
+                  copyToClipboard(
+                    [biz.phone, biz.email, biz.address].filter(Boolean).join(" • "),
+                  )
+                }
+              >
+                <Copy className="h-[15px] w-[15px]" /> Copy details
+              </Button>
+              <Button
+                variant="outline"
+                className="h-[38px] gap-[7px] rounded-[10px] border-[#DCCFBC] bg-white px-[15px] text-[13.5px] font-semibold text-fiche-accent hover:bg-fiche-soft"
+                onClick={() => setShowProfitModal(true)}
+              >
+                <Sparkles className="h-[15px] w-[15px]" /> Profit Window
+              </Button>
+            </div>
+
+            {/* Stat strip */}
+            <div className="relative mt-[22px] grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-2 gap-y-3.5 border-t border-fiche-border pt-[18px] md:grid-cols-[repeat(4,minmax(0,1fr))]">
+              {[
+                { k: "Rating", v: rating > 0 ? rating.toFixed(1) : "—", n: rating > 0 ? "Average rating" : "No ratings yet" },
+                { k: "Services", v: String(serviceCount), n: serviceCount > 0 ? "Listed" : "None listed" },
+                { k: "Reviews", v: String(reviewCount), n: reviewCount > 0 ? "Customer reviews" : "Be the first" },
+                {
+                  k: "Member since",
+                  v: memberSince?.year ?? "—",
+                  n: memberSince?.full ?? "",
+                },
+              ].map((stat, i) => (
+                <div
+                  key={stat.k}
+                  className={`flex flex-col gap-0.5 pl-3.5 border-l border-fiche-border ${i === 0 ? "!pl-0 !border-l-0" : ""} ${i === 2 ? "max-md:!pl-0 max-md:!border-l-0" : ""}`}
+                >
+                  <span className="text-[10.5px] font-bold uppercase tracking-[0.11em] text-[#7C878E]">
+                    {stat.k}
+                  </span>
+                  <span className="font-fraunces text-[19px] font-semibold leading-[1.25] tracking-[-0.02em] tabular-nums text-[#1E2A32] sm:text-[22px]">
+                    {stat.v}
+                  </span>
+                  <span className="text-[11.5px] text-[#7C878E]">{stat.n}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* ══════════════ MAIN GRID ══════════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* ── Left Column (2/3) ──────────────────────────────── */}
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_344px] gap-5 items-start">
+          {/* ── Left Column ──────────────────────────────── */}
+          <div className="min-w-0 space-y-5 max-lg:order-1">
+            <div className="overflow-hidden rounded-[18px] border border-fiche-border bg-white shadow-[0_1px_2px_rgba(31,26,20,.05),0_18px_40px_-24px_rgba(31,26,20,.35)]">
+            <Tabs defaultValue="about">
+              <TabsList className="h-auto w-full justify-start gap-0.5 overflow-x-auto rounded-none border-b border-fiche-border bg-[#FBF7F1] px-2 pb-0 pt-2 [scrollbar-width:none]">
+                {[
+                  ["about", "About"],
+                  ["details", "Details"],
+                  ["reviews", "Reviews"],
+                ].map(([value, label]) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className="relative rounded-b-none rounded-t-[9px] bg-transparent px-[15px] pb-[13px] pt-[11px] text-[13.5px] font-semibold text-[#7C878E] shadow-none transition-colors hover:bg-[#F3EBDF]/70 hover:text-[#1E2A32] data-[state=active]:bg-white data-[state=active]:text-fiche-accent data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-2.5 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-sm data-[state=active]:after:bg-fiche-accent"
+                  >
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              <TabsContent value="about" className="mt-0 space-y-6 p-[clamp(18px,2.6vw,26px)]">
             {/* About */}
             {biz.description && (
-              <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/50 via-purple-500/50 to-cyan-500/50 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-left" />
-                <CardHeader>
-                  <CardTitle className="text-slate-700 flex items-center gap-2">
-                    <Building className="h-5 w-5 text-amber-800" /> About
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-700 leading-relaxed whitespace-pre-line">
-                    {biz.description}
-                  </p>
-                </CardContent>
-              </Card>
+              <div>
+                <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.11em] text-[#7C878E]">
+                  What they do
+                </h3>
+                <p className="max-w-[64ch] whitespace-pre-line text-[14.5px] leading-[1.7] text-[#4C5A63]">
+                  {biz.description}
+                </p>
+              </div>
+            )}
+
+            {(catName || biz.location || attrs.type) && (
+              <dl className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-px overflow-hidden rounded-xl border border-fiche-border bg-fiche-border">
+                {[
+                  ["Category", [catName, attrs.type].filter(Boolean).join(" · ")],
+                  ["Based in", biz.location || ""],
+                ]
+                  .filter(([, value]) => value)
+                  .map(([label, value]) => (
+                    <div key={label} className="min-w-0 bg-white px-3.5 py-3">
+                      <dt className="mb-[3px] text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#7C878E]">
+                        {label}
+                      </dt>
+                      <dd className="m-0 break-words text-[13.5px] font-semibold text-[#1E2A32]">
+                        {value}
+                      </dd>
+                    </div>
+                  ))}
+              </dl>
             )}
 
             {/* Fiche Technique (tier + sector gated) */}
@@ -800,106 +1042,26 @@ export default function BusinessDetailPage() {
               />
             )}
 
-            {/* Contact & Location cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {biz.address && (
-                <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-xl hover:shadow-amber-500/10 transition-all duration-500 hover:border-amber-500/30 group">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 group-hover:scale-110 transition-transform">
-                        <MapPin className="h-5 w-5 text-blue-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-700 uppercase tracking-wider">
-                          Address
-                        </p>
-                        <p className="text-sm text-slate-700 mt-1">
-                          {biz.address}
-                        </p>
-                        {biz.location && (
-                          <p className="text-xs text-slate-700 mt-0.5">
-                            {biz.location}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              </TabsContent>
 
-              {biz.phone && (
-                <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 hover:border-emerald-500/30 group">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                        <Phone className="h-5 w-5 text-emerald-700" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-slate-700 uppercase tracking-wider">
-                          Phone
-                        </p>
-                        <a
-                          href={`tel:${biz.phone}`}
-                          className="text-sm text-slate-700 hover:text-emerald-700 transition-colors mt-1 block"
-                        >
-                          {biz.phone}
-                        </a>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {biz.email && (
-                <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-xl hover:shadow-rose-500/10 transition-all duration-500 hover:border-rose-500/30 group">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 group-hover:scale-110 transition-transform">
-                        <Mail className="h-5 w-5 text-rose-700" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-slate-700 uppercase tracking-wider">
-                          Email
-                        </p>
-                        <a
-                          href={`mailto:${biz.email}`}
-                          className="text-sm text-slate-700 hover:text-rose-700 transition-colors mt-1 block truncate"
-                        >
-                          {biz.email}
-                        </a>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {(biz.created_at || biz.createdAt) && (
-                <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:border-purple-500/30 group">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 group-hover:scale-110 transition-transform">
-                        <Calendar className="h-5 w-5 text-purple-700" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-slate-700 uppercase tracking-wider">
-                          Member Since
-                        </p>
-                        <p className="text-sm text-slate-700 mt-1">
-                          {formatDate(biz.created_at || biz.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
+              <TabsContent value="details" className="mt-0 space-y-6 p-[clamp(18px,2.6vw,26px)]">
             {/* Business Details / Attributes — FIXED safe array handling */}
+            {Object.keys(attrs || {}).length === 0 && !(biz.services && biz.services.length > 0) && (
+              <div className="flex items-center gap-3.5 rounded-[14px] border border-dashed border-[#DCCFBC] bg-[#FBF7F1] p-[18px]">
+                <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[11px] bg-[#F3EBDF]">
+                  <Package className="h-[17px] w-[17px] text-[#7C878E]" />
+                </span>
+                <div>
+                  <p className="text-[13.5px] font-semibold text-[#1E2A32]">No additional details yet</p>
+                  <p className="mt-0.5 text-[12.5px] text-[#7C878E]">Services, products and other details appear here.</p>
+                </div>
+              </div>
+            )}
             {attrs && Object.keys(attrs).length > 0 && (
-              <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl overflow-hidden">
+              <Card className="text-[#1E2A32] bg-white border border-fiche-border shadow-sm rounded-2xl overflow-hidden">
                 <CardHeader>
                   <CardTitle className="text-slate-700 flex items-center gap-2">
-                    <Package className="h-5 w-5 text-amber-800" /> Business
+                    <Package className="h-5 w-5 text-fiche-accent" /> Business
                     Details
                   </CardTitle>
                 </CardHeader>
@@ -1034,10 +1196,10 @@ export default function BusinessDetailPage() {
             {biz.services &&
               Array.isArray(biz.services) &&
               biz.services.length > 0 && (
-                <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl overflow-hidden">
+                <Card className="text-[#1E2A32] bg-white border border-fiche-border shadow-sm rounded-2xl overflow-hidden">
                   <CardHeader>
                     <CardTitle className="text-slate-700 flex items-center gap-2">
-                      <Briefcase className="h-5 w-5 text-amber-800" /> Services
+                      <Briefcase className="h-5 w-5 text-fiche-accent" /> Services
                       ({biz.services.length})
                     </CardTitle>
                   </CardHeader>
@@ -1046,7 +1208,7 @@ export default function BusinessDetailPage() {
                       {biz.services.map((svc) => (
                         <div
                           key={svc.id}
-                          className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-slate-200 hover:bg-white/[0.07] transition-all hover:border-amber-500/30"
+                          className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-slate-200 hover:bg-white/[0.07] transition-all hover:border-fiche-border"
                         >
                           <div>
                             <p className="text-sm font-medium text-slate-700">
@@ -1059,7 +1221,7 @@ export default function BusinessDetailPage() {
                             )}
                           </div>
                           {svc.price !== undefined && svc.price !== null && (
-                            <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">
+                            <Badge className="border-fiche-border bg-fiche-soft text-fiche-accent">
                               ${svc.price}
                             </Badge>
                           )}
@@ -1070,12 +1232,15 @@ export default function BusinessDetailPage() {
                 </Card>
               )}
 
+              </TabsContent>
+
+              <TabsContent value="reviews" className="mt-0 space-y-6 p-[clamp(18px,2.6vw,26px)]">
             {/* Reviews */}
-            {biz.reviews && biz.reviews.length > 0 && (
-              <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl">
+            {biz.reviews && biz.reviews.length > 0 ? (
+              <Card className="text-[#1E2A32] bg-white border border-fiche-border shadow-sm rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-slate-700 flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-amber-800" /> Reviews
+                    <MessageSquare className="h-5 w-5 text-fiche-accent" /> Reviews
                     ({biz.reviews.length})
                   </CardTitle>
                   <CardDescription className="text-slate-700">
@@ -1115,19 +1280,31 @@ export default function BusinessDetailPage() {
                   ))}
                 </CardContent>
               </Card>
+            ) : (
+              <Card className="text-[#1E2A32] bg-white border border-fiche-border shadow-sm rounded-2xl">
+                <CardContent className="py-10 text-center">
+                  <MessageSquare className="mx-auto mb-3 h-6 w-6 text-[#7C878E]" />
+                  <p className="font-medium text-[#1E2A32]">No reviews yet</p>
+                  <p className="mt-1 text-sm text-[#4C5A63]">
+                    Feedback from customers appears here.
+                  </p>
+                </CardContent>
+              </Card>
             )}
-
+              </TabsContent>
+            </Tabs>
+            </div>
             {/* Map Embed */}
             {biz.latitude && biz.longitude && (
-              <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl overflow-hidden group">
+              <Card className="text-[#1E2A32] bg-white border border-fiche-border shadow-sm rounded-2xl overflow-hidden group">
                 <CardHeader>
                   <CardTitle className="text-slate-700 flex items-center gap-2">
-                    <Navigation className="h-5 w-5 text-amber-800" /> Location
+                    <Navigation className="h-5 w-5 text-fiche-accent" /> Location
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#f3efe9] via-transparent to-transparent pointer-events-none z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent pointer-events-none z-10" />
                     <iframe
                       title="Business Location"
                       width="100%"
@@ -1145,49 +1322,17 @@ export default function BusinessDetailPage() {
           </div>
 
           {/* ── Right Sidebar (1/3) ────────────────────────────── */}
-          <div className="space-y-6">
-            {/* Contact Actions */}
-            <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl overflow-hidden sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-slate-700 text-base flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-amber-800" /> Instant Connect
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {biz.phone && (
-                  <Button
-                    asChild
-                    className="w-full gap-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 text-slate-900 hover:from-emerald-500 hover:to-green-600 shadow-lg shadow-emerald-500/20"
-                    size="lg"
-                  >
-                    <a href={`tel:${biz.phone}`}>
-                      <Phone className="h-4 w-4" /> Call Now
-                    </a>
-                  </Button>
-                )}
-                {biz.email && (
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full gap-2 bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 hover:border-amber-500/30 transition-all"
-                    size="lg"
-                  >
-                    <a href={`mailto:${biz.email}`}>
-                      <Mail className="h-4 w-4" /> Send Email
-                    </a>
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 hover:border-amber-500/30 transition-all"
-                  size="lg"
-                >
-                  <MessageSquare className="h-4 w-4" /> Message
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full gap-2 text-slate-700 hover:text-amber-800 hover:bg-white/5"
-                  size="sm"
+          <div className="min-w-0 space-y-3.5 lg:sticky lg:top-[18px] self-start max-lg:order-2">
+            {/* Contact */}
+            <section className="rounded-2xl border border-fiche-border bg-white p-[18px] shadow-[0_1px_2px_rgba(31,26,20,.06)]">
+              <div className="mb-3.5 flex items-center justify-between gap-2.5">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#7C878E]">
+                  Contact
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Copy contact info"
+                  className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] text-[#7C878E] transition-colors hover:bg-fiche-soft hover:text-fiche-accent"
                   onClick={() =>
                     copyToClipboard(
                       [biz.phone, biz.email, biz.address]
@@ -1196,113 +1341,134 @@ export default function BusinessDetailPage() {
                     )
                   }
                 >
-                  <Copy className="h-3 w-3" /> Copy contact info
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Business Info */}
-            <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-slate-700 text-base flex items-center gap-2">
-                  <Award className="h-5 w-5 text-amber-800" /> Business Intel
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
-                  <span className="text-slate-700">Status</span>
-                  <Badge
-                    className={
-                      isActive
-                        ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/30"
-                        : "bg-rose-500/20 text-rose-700 border-rose-500/30"
-                    }
+                  <Copy className="h-[13px] w-[13px]" />
+                </button>
+              </div>
+              {[
+                biz.address && {
+                  key: "address",
+                  label: "Address",
+                  icon: MapPin,
+                  value: <>{biz.address}{biz.location && <span className="block text-[12.5px] font-normal text-[#7C878E]">{biz.location}</span>}</>,
+                },
+                biz.phone && {
+                  key: "phone",
+                  label: "Phone",
+                  icon: Phone,
+                  value: <a href={`tel:${biz.phone}`} className="hover:text-fiche-accent hover:underline underline-offset-2">{biz.phone}</a>,
+                },
+                biz.email && {
+                  key: "email",
+                  label: "Email",
+                  icon: Mail,
+                  value: <a href={`mailto:${biz.email}`} className="hover:text-fiche-accent hover:underline underline-offset-2">{biz.email}</a>,
+                },
+                websiteHref && {
+                  key: "website",
+                  label: "Website",
+                  icon: Globe,
+                  value: (
+                    <a href={websiteHref} target="_blank" rel="noopener noreferrer" className="hover:text-fiche-accent hover:underline underline-offset-2">
+                      {websiteHref.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "")}
+                    </a>
+                  ),
+                },
+              ]
+                .filter(Boolean)
+                .map((row: any) => (
+                  <div
+                    key={row.key}
+                    className="flex min-w-0 gap-[11px] border-t border-fiche-border py-[11px] first:border-t-0 first:pt-0"
                   >
-                    {isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                {isVerified && (
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
-                    <span className="text-slate-700">Verified</span>
-                    <div className="flex items-center gap-1 text-emerald-700">
-                      <ShieldCheck className="h-4 w-4" />
-                      <span className="text-xs font-medium">Yes</span>
-                    </div>
-                  </div>
-                )}
-                {catName && (
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
-                    <span className="text-slate-700">Category</span>
-                    <span className="text-slate-700 font-medium">
-                      {catName}
+                    <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] border border-fiche-border bg-[#FBF7F1]">
+                      <row.icon className="h-3.5 w-3.5 text-fiche-accent" />
                     </span>
-                  </div>
-                )}
-                {(biz.created_at || biz.createdAt) && (
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-white/5">
-                    <span className="text-slate-700">Member Since</span>
-                    <span className="text-slate-700">
-                      {new Date(
-                        biz.created_at || biz.createdAt || "",
-                      ).getFullYear()}
-                    </span>
-                  </div>
-                )}
-                {biz.performance_score &&
-                  parseFloat(biz.performance_score) > 0 && (
-                    <div className="pt-2 border-t border-slate-200 mt-2">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-slate-700 text-xs">
-                          Performance Score
-                        </span>
-                        <span className="text-slate-700 font-medium text-xs">
-                          {parseFloat(biz.performance_score).toFixed(1)}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.11em] text-[#7C878E]">
+                        {row.label}
                       </div>
-                      <Progress
-                        value={Math.min(
-                          parseFloat(biz.performance_score) * 10,
-                          100,
-                        )}
-                        className="h-1.5 bg-white/5"
-                      />
+                      <div className="break-words text-[13.5px] font-medium leading-[1.45] text-[#1E2A32]">
+                        {row.value}
+                      </div>
                     </div>
+                  </div>
+                ))}
+              {(biz.phone || mapsLink) && (
+                <div className="mt-3.5 flex gap-2">
+                  {biz.phone && (
+                    <Button
+                      asChild
+                      className="h-9 flex-1 gap-[7px] rounded-[10px] bg-[#0E7A58] px-2.5 text-[12.5px] font-semibold text-white hover:bg-[#0B6249]"
+                    >
+                      <a href={`tel:${biz.phone}`}>
+                        <Phone className="h-[15px] w-[15px]" /> Call
+                      </a>
+                    </Button>
                   )}
-              </CardContent>
-            </Card>
+                  {mapsLink && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="h-9 flex-1 gap-[7px] rounded-[10px] border-[#DCCFBC] bg-white px-2.5 text-[12.5px] font-semibold text-[#1E2A32] hover:bg-fiche-soft"
+                    >
+                      <a href={mapsLink} target="_blank" rel="noreferrer">
+                        <MapPin className="h-[15px] w-[15px]" /> Directions
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              )}
+            </section>
 
-            {/* Quick Links */}
-            <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-2xl">
-              <CardContent className="p-4 space-y-2">
-                <Link href="/businesses-directory">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-slate-700 hover:text-amber-800 hover:bg-white/5"
-                    size="sm"
-                  >
-                    <Building className="h-4 w-4" /> Business Directory
-                  </Button>
-                </Link>
-                <Link href="/geo-admin">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-slate-700 hover:text-amber-800 hover:bg-white/5"
-                    size="sm"
-                  >
-                    <Globe className="h-4 w-4" /> Geo Admin Observer
-                  </Button>
-                </Link>
-                <Link href="/geo-admin/dashboard">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-amber-800 hover:text-amber-800 hover:bg-white/5"
-                    size="sm"
-                  >
-                    <Shield className="h-4 w-4" /> Admin Dashboard
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            {/* Listing details */}
+            <section className="rounded-2xl border border-fiche-border bg-white p-[18px] shadow-[0_1px_2px_rgba(31,26,20,.06)]">
+              <div className="mb-3.5 flex items-center justify-between gap-2.5">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#7C878E]">
+                  Listing details
+                </h2>
+              </div>
+              <div className="flex flex-col text-[13px]">
+                {[
+                  {
+                    k: "Status",
+                    v: (
+                      <span className={`inline-flex items-center gap-[5px] font-bold ${isActive ? "text-[#0E7A58]" : "text-rose-700"}`}>
+                        {isActive ? <CheckCircle className="h-[11px] w-[11px]" strokeWidth={3} /> : <XCircle className="h-[11px] w-[11px]" strokeWidth={3} />}
+                        {isActive ? "Active" : "Inactive"}
+                      </span>
+                    ),
+                  },
+                  isVerified && { k: "Verified", v: "Yes" },
+                  catName && { k: "Category", v: [catName, attrs.type].filter(Boolean).join(" · ") },
+                  memberSince && { k: "Member since", v: memberSince.full },
+                  { k: "Listing", v: `VI-${String(biz.id).padStart(4, "0")}` },
+                ]
+                  .filter(Boolean)
+                  .map((row: any) => (
+                    <div
+                      key={row.k}
+                      className="flex items-center justify-between gap-2.5 border-t border-fiche-border py-[9px] first:border-t-0 first:pt-0"
+                    >
+                      <span className="text-[#7C878E]">{row.k}</span>
+                      <span className="text-right font-semibold text-[#1E2A32]">{row.v}</span>
+                    </div>
+                  ))}
+                {biz.performance_score && parseFloat(biz.performance_score) > 0 && (
+                  <div className="mt-2 border-t border-fiche-border pt-2.5">
+                    <div className="mb-1 flex justify-between text-xs">
+                      <span className="text-[#7C878E]">Performance Score</span>
+                      <span className="font-semibold text-[#1E2A32]">
+                        {parseFloat(biz.performance_score).toFixed(1)}
+                      </span>
+                    </div>
+                    <Progress
+                      value={Math.min(parseFloat(biz.performance_score) * 10, 100)}
+                      className="h-1.5 bg-fiche-soft"
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         </div>
 
@@ -1313,7 +1479,7 @@ export default function BusinessDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-slate-700 flex items-center gap-3">
-                  <Sparkles className="h-6 w-6 text-amber-800 animate-pulse" />{" "}
+                  <Sparkles className="h-6 w-6 text-fiche-accent animate-pulse" />{" "}
                   You Might Also Like
                 </h2>
                 <p className="text-sm text-slate-700 mt-1">
@@ -1326,7 +1492,7 @@ export default function BusinessDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 gap-2 hover:border-amber-500/30"
+                  className="bg-white/5 border-slate-200 text-slate-700 hover:bg-white/10 gap-2 hover:border-fiche-border"
                 >
                   View All <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -1340,16 +1506,16 @@ export default function BusinessDetailPage() {
                 const bizUI = getIndustryUI(bizCat);
                 return (
                   <Link key={biz.id} href={`/business/${biz.id}`}>
-                    <Card className="text-slate-900 bg-white/5 backdrop-blur-xl border border-slate-200 shadow-xl hover:shadow-2xl hover:shadow-amber-500/5 hover:bg-white/[0.07] hover:border-amber-500/30 transition-all duration-500 cursor-pointer group h-full">
+                    <Card className="text-[#1E2A32] bg-white border border-fiche-border shadow-sm hover:shadow-md hover:border-fiche-border transition-all duration-300 cursor-pointer group h-full rounded-2xl">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${bizUI.gradient} flex items-center justify-center text-lg shadow-md border border-slate-200 group-hover:scale-110 transition-transform duration-300`}
+                            className={`flex-shrink-0 w-10 h-10 rounded-xl bg-fiche-soft flex items-center justify-center text-lg shadow-md border border-fiche-border group-hover:scale-110 transition-transform duration-300`}
                           >
                             {bizUI.icon}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-slate-700 truncate text-sm group-hover:text-amber-800 transition-colors">
+                            <h3 className="font-semibold text-slate-700 truncate text-sm group-hover:text-fiche-accent transition-colors">
                               {biz.name}
                             </h3>
                             {biz.address && (
@@ -1373,7 +1539,7 @@ export default function BusinessDetailPage() {
                               )}
                             </div>
                           </div>
-                          <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-amber-800 group-hover:translate-x-1 transition-all mt-1 flex-shrink-0" />
+                          <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-fiche-accent group-hover:translate-x-1 transition-all mt-1 flex-shrink-0" />
                         </div>
                       </CardContent>
                     </Card>
@@ -1405,20 +1571,20 @@ export default function BusinessDetailPage() {
             onClick={() => setShowProfitModal(false)}
           />
           <div className="fixed inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-20 left-10 text-9xl opacity-10 rotate-12 text-amber-800">
+            <div className="absolute top-20 left-10 text-9xl opacity-10 rotate-12 text-fiche-accent">
               ✪
             </div>
-            <div className="absolute bottom-20 right-10 text-8xl opacity-10 -rotate-12 text-purple-700">
+            <div className="absolute bottom-20 right-10 text-8xl opacity-10 -rotate-12 text-fiche-accent">
               ⌘
             </div>
           </div>
 
-          <Card className="text-slate-900 relative max-w-2xl w-full bg-white backdrop-blur-2xl border border-amber-500/30 shadow-2xl shadow-amber-500/10 animate-in fade-in zoom-in-95 duration-200 my-auto overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-purple-500 to-cyan-500" />
+          <Card className="text-slate-900 relative max-w-2xl w-full bg-white backdrop-blur-2xl border border-fiche-border shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-auto overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-fiche-accent" />
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl text-slate-700 flex items-center gap-2">
-                  <Sparkles className="h-6 w-6 text-amber-800 animate-pulse" />
+                  <Sparkles className="h-6 w-6 text-fiche-accent animate-pulse" />
                   Profit Window — {biz.name}
                 </CardTitle>
                 <Button
@@ -1439,7 +1605,7 @@ export default function BusinessDetailPage() {
             <CardContent className="space-y-6 text-sm text-slate-700">
               <p className="leading-relaxed bg-white/5 p-4 rounded-xl border border-slate-200">
                 💎 This profit window is the revenue hub for{" "}
-                <span className="text-amber-800 font-semibold">{biz.name}</span>
+                <span className="text-fiche-accent font-semibold">{biz.name}</span>
                 . Use it to configure offers, track conversion funnels, and
                 manage sponsorship placements that turn page views into
                 measurable revenue.
@@ -1448,10 +1614,10 @@ export default function BusinessDetailPage() {
               {/* Two-column feature grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Promotions */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 hover:scale-105 transition-transform duration-300">
+                <div className="p-4 rounded-xl bg-fiche-soft border border-fiche-border hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
-                    <Tag className="h-4 w-4 text-amber-800" />
-                    <h4 className="font-semibold text-amber-800">Promotions</h4>
+                    <Tag className="h-4 w-4 text-fiche-accent" />
+                    <h4 className="font-semibold text-fiche-accent">Promotions</h4>
                   </div>
                   <ul className="space-y-1.5 text-slate-700 text-xs">
                     <li>• Flash sale banners & countdown timers</li>
@@ -1462,10 +1628,10 @@ export default function BusinessDetailPage() {
                 </div>
 
                 {/* Booking & Leads */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-500/20 hover:scale-105 transition-transform duration-300">
+                <div className="p-4 rounded-xl bg-fiche-soft border border-fiche-border hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="h-4 w-4 text-emerald-700" />
-                    <h4 className="font-semibold text-emerald-700">
+                    <Calendar className="h-4 w-4 text-fiche-accent" />
+                    <h4 className="font-semibold text-fiche-accent">
                       Booking & Leads
                     </h4>
                   </div>
@@ -1478,10 +1644,10 @@ export default function BusinessDetailPage() {
                 </div>
 
                 {/* Sponsorship */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 hover:scale-105 transition-transform duration-300">
+                <div className="p-4 rounded-xl bg-fiche-soft border border-fiche-border hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
-                    <Award className="h-4 w-4 text-purple-700" />
-                    <h4 className="font-semibold text-purple-700">
+                    <Award className="h-4 w-4 text-fiche-accent" />
+                    <h4 className="font-semibold text-fiche-accent">
                       Sponsorship
                     </h4>
                   </div>
@@ -1494,10 +1660,10 @@ export default function BusinessDetailPage() {
                 </div>
 
                 {/* Analytics */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 hover:scale-105 transition-transform duration-300">
+                <div className="p-4 rounded-xl bg-fiche-soft border border-fiche-border hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
-                    <Eye className="h-4 w-4 text-blue-700" />
-                    <h4 className="font-semibold text-blue-700">Analytics</h4>
+                    <Eye className="h-4 w-4 text-fiche-accent" />
+                    <h4 className="font-semibold text-fiche-accent">Analytics</h4>
                   </div>
                   <ul className="space-y-1.5 text-slate-700 text-xs">
                     <li>• Page-view & click-through rates</li>
@@ -1531,7 +1697,7 @@ export default function BusinessDetailPage() {
               </div>
 
               {/* Info banner */}
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 text-xs leading-relaxed">
+              <div className="p-4 rounded-xl bg-fiche-soft border border-fiche-border text-fiche-accent text-xs leading-relaxed">
                 💡 <span className="font-semibold">Coming soon:</span> Real
                 promotional content, live pricing tiers, booking integrations,
                 and conversion dashboards will replace these placeholders. Each
@@ -1553,7 +1719,7 @@ export default function BusinessDetailPage() {
                   Close
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-slate-900 hover:from-amber-500 hover:to-orange-500 gap-2 shadow-lg shadow-amber-500/20"
+                  className="bg-fiche-accent text-white hover:bg-fiche-accent hover:brightness-90 gap-2 shadow-lg"
                   onClick={() => setShowProfitModal(false)}
                 >
                   <Sparkles className="h-4 w-4" /> Got it

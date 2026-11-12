@@ -92,8 +92,8 @@ function SectionBlock({
   children: ReactNode;
 }) {
   return (
-    <section className="fiche-section rounded-xl border border-slate-200 bg-white p-4 print:break-inside-avoid">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-800 print:text-slate-900">
+    <section className="fiche-section rounded-2xl border border-fiche-border bg-white p-4 print:break-inside-avoid">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-fiche-accent print:text-slate-900">
         {title}
       </h3>
       <div className="mt-2 space-y-2 text-sm text-slate-800">{children}</div>
@@ -244,29 +244,22 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
   const hasAnyContent = hasExtra || hoursEntries.length > 0 || showSocial;
 
   const tierLabel = TIER_LABELS[tier][isFr ? "fr" : "en"];
-  const sectorLabel = SECTOR_LABELS[sector][isFr ? "fr" : "en"];
 
   return (
     <Card
       id="fiche-technique"
-      className="fiche-technique border border-slate-200 bg-white text-slate-900 shadow-md print:border-slate-300 print:shadow-none"
+      className="fiche-technique rounded-none border-0 border-t border-fiche-border bg-transparent pt-5 text-[#1E2A32] shadow-none print:border-slate-300"
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="px-0 pb-3 pt-0">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
-            <CardTitle className="text-xl text-slate-900">
+            <CardTitle className="text-[11px] font-bold uppercase tracking-[0.11em] text-[#7C878E]">
               {isFr ? "Fiche technique" : "Technical Profile"}
             </CardTitle>
             <div className="flex flex-wrap items-center gap-2">
               <Badge
                 variant="outline"
-                className="border-slate-300 bg-slate-50 text-slate-800"
-              >
-                {sectorLabel}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="border-amber-300 bg-amber-50 text-amber-900"
+                className="border-fiche-border bg-fiche-soft text-fiche-accent"
               >
                 {tierLabel}
               </Badge>
@@ -294,7 +287,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-0 pb-0">
         {onEdit && !hasAnyContent && (
           <div className="rounded-xl border border-dashed border-amber-400 bg-amber-50 p-4 text-sm text-amber-950 print:hidden">
             <p className="font-medium">
@@ -315,7 +308,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
         )}
 
         <div className="grid gap-4 md:grid-cols-5">
-          <div className="space-y-4 md:col-span-3">
+          <div className={hasExtra ? "space-y-4 md:col-span-3" : "hidden"}>
             {showServices && (
               <SectionBlock title={label("services")}>
                 {fiche.services.length > 0 && (
@@ -399,7 +392,11 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
             )}
           </div>
 
-          <aside className="space-y-4 md:col-span-2">
+          <aside
+            className={
+              hasExtra ? "space-y-4 md:col-span-2" : "space-y-4 md:col-span-5"
+            }
+          >
             {(business.phone ||
               business.email ||
               website ||
@@ -426,7 +423,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
                         aria-hidden="true"
                       />
                       <a
-                        className="text-blue-800 underline-offset-2 hover:underline"
+                        className="text-fiche-accent underline-offset-2 hover:underline"
                         href={`tel:${business.phone}`}
                       >
                         {business.phone}
@@ -440,7 +437,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
                         aria-hidden="true"
                       />
                       <a
-                        className="break-all text-blue-800 underline-offset-2 hover:underline"
+                        className="break-all text-fiche-accent underline-offset-2 hover:underline"
                         href={`mailto:${business.email}`}
                       >
                         {business.email}
@@ -454,7 +451,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
                         aria-hidden="true"
                       />
                       <a
-                        className="break-all text-blue-800 underline-offset-2 hover:underline"
+                        className="break-all text-fiche-accent underline-offset-2 hover:underline"
                         href={website}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -489,7 +486,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
                         key={day}
                         className={
                           day === today
-                            ? "bg-amber-50 font-semibold text-slate-900"
+                            ? "bg-fiche-soft font-semibold text-[#1E2A32]"
                             : ""
                         }
                         aria-current={day === today ? "date" : undefined}
@@ -516,7 +513,7 @@ export function FicheTechnique({ business, onEdit }: FicheTechniqueProps) {
                   {socialEntries.map(([network, url]) => (
                     <li key={network}>
                       <a
-                        className="inline-flex items-center gap-1.5 text-blue-800 underline-offset-2 hover:underline"
+                        className="inline-flex items-center gap-1.5 text-fiche-accent underline-offset-2 hover:underline"
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer nofollow"

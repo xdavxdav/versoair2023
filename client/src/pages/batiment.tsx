@@ -283,10 +283,9 @@ async function searchBatimentFacilities(params: {
     if (params.specialization)
       queryParams.append("specialization", params.specialization);
 
-    // Search within Construction sector pool (parent category ID 2 — Construction Companies, Civil Engineering)
     const results = (await searchBusinesses({
       query: params.query,
-      sectorId: 2,
+      sectorSlug: "building-construction",
       location: params.location,
       countryCode: params.countryCode,
       limit: params.limit || 50,

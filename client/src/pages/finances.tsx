@@ -108,9 +108,8 @@ interface FinanceAnalytics {
 // Generate mock finance analytics from businesses
 async function fetchFinanceAnalytics(): Promise<FinanceAnalytics> {
   try {
-    // Fetch real businesses from Finance sector pool (parent category ID 3)
     const businesses = await searchBusinesses({
-      sectorId: 3,
+      sectorSlug: "finance",
       limit: 1000,
     });
 
@@ -249,12 +248,11 @@ export default function Finance() {
     enabled: databaseConnected !== false,
   });
 
-  // Fetch initial finance businesses (parent category ID 3 — Banks, Insurance, Fintech)
   const fetchBusinesses = useCallback(async () => {
     setIsInitialLoading(true);
     try {
       const results = await searchBusinesses({
-        sectorId: 3,
+        sectorSlug: "finance",
         countryCode: selectedCountry || undefined,
         limit: 9,
       });
@@ -294,10 +292,9 @@ export default function Finance() {
     setIsSearching(true);
     setCurrentPage(page);
     try {
-      // Search within Finance sector pool (parent category ID 3 — Banks, Insurance, Fintech)
       const results = await searchBusinesses({
         query: searchQuery || undefined,
-        sectorId: 3,
+        sectorSlug: "finance",
         location: locationQuery || undefined,
         countryCode: selectedCountry || undefined,
         limit: 9,

@@ -5,6 +5,8 @@ module.exports = {
     extend: {
       fontFamily: {
         handstyle: ["Caveat", "cursive"],
+        fraunces: ["Fraunces", "Georgia", "serif"],
+        inter: ["Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -23,6 +25,11 @@ module.exports = {
           danger: "#ef4444",
           text: "#f8fafc",
           "text-muted": "#94a3b8",
+        },
+        fiche: {
+          accent: "var(--fiche-accent, #4b5563)",
+          soft: "var(--fiche-soft, #f9fafb)",
+          border: "var(--fiche-border, #e5e7eb)",
         },
         background: "var(--background)",
         foreground: "var(--foreground)",

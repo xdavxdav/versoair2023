@@ -56,6 +56,7 @@ import geoSeoRouter, {
   sitemapXmlHandler,
 } from "./routes/geo-seo";
 import businessLogoRouter from "./routes/business-logo";
+import businessCoverRouter from "./routes/business-cover";
 import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
 import communityRouter from "./routes/community";
@@ -286,6 +287,7 @@ export async function registerRoutes(app: Express) {
 
   // Business logo upload (paid tiers only)
   app.use("/api/business-logo", businessLogoRouter);
+  app.use("/api/business-cover", businessCoverRouter);
 
   // Register user browsing history routes
   app.use("/api/user/history", userHistoryRouter);

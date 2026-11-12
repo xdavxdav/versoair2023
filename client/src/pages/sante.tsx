@@ -137,10 +137,9 @@ async function searchHealthcareBusinesses(params: {
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.sort_by) queryParams.append("sort_by", params.sort_by);
 
-    // Search within Health sector pool (parent category ID 10 — Hospitals, Clinics, Pharmacies, Labs)
     const results = await searchBusinesses({
       query: params.query,
-      sectorId: 10,
+      sectorSlug: "health",
       location: params.location,
       countryCode: params.countryCode,
       limit: params.limit || 50,
