@@ -346,7 +346,7 @@ export default function Logement() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#f3efe9] via-[#f3efe9] to-[#f3efe9] text-slate-900">
 
-      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20 mb-12">
+      <div className="w-full max-w-[95vw] mx-auto px-4 mt-8 relative z-20 mb-12">
         <Card className="bg-gradient-to-br from-slate-50 to-cyan-50 backdrop-blur-md border-cyan-700 shadow-2xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
