@@ -287,7 +287,7 @@ router.post(
           input.name,
           input.description ?? null,
           input.budget ?? 0,
-          input.status || "active",
+          input.status || "draft",
           startDate,
           input.endDate ?? null,
         ],

@@ -271,7 +271,7 @@ export function AdvertisingSection({
     },
     {
       key: "dailyBudget",
-      label: "Daily Budget",
+      label: "Planned Amount",
       render: (value) => {
         if (!value) return "Not set";
         return `$${parseFloat(String(value)).toFixed(2)}`;
@@ -300,7 +300,7 @@ export function AdvertisingSection({
   ];
 
   // Stats cards
-  const activeCampaigns = campaigns.filter(
+  const draftCampaigns = campaigns.filter(
     (c: Campaign) => c.status === "draft",
   ).length;
   const stats = [
@@ -312,23 +312,23 @@ export function AdvertisingSection({
     },
     {
       label: "Draft Campaigns",
-      value: String(activeCampaigns),
+      value: String(draftCampaigns),
       color: "yellow",
     },
     {
-      label: "Total Budget",
+      label: "Total Planned Amount",
       value:
         campaigns.length > 0
-          ? `$${campaigns.reduce((sum: number, c: Campaign) => sum + (parseFloat(String(c.dailyBudget)) || 0) * 30, 0).toFixed(2)}`
-          : "$0",
+          ? campaigns.reduce((sum: number, c: Campaign) => sum + (parseFloat(String(c.dailyBudget)) || 0), 0).toFixed(2)
+          : "0.00",
       color: "green",
     },
     {
-      label: "Avg Daily Budget",
+      label: "Avg Planned Amount",
       value:
         campaigns.length > 0
-          ? `$${(campaigns.reduce((sum: number, c: Campaign) => sum + (parseFloat(String(c.dailyBudget)) || 0), 0) / campaigns.length).toFixed(2)}`
-          : "$0",
+          ? (campaigns.reduce((sum: number, c: Campaign) => sum + (parseFloat(String(c.dailyBudget)) || 0), 0) / campaigns.length).toFixed(2)
+          : "0.00",
       color: "purple",
     },
   ];
@@ -340,7 +340,7 @@ export function AdvertisingSection({
         <div>
           <h3 className="text-xl font-bold text-white">Advertising</h3>
           <p className="text-sm text-slate-400 mt-1">
-            Manage advertising campaigns and performance
+            Manage campaign plans and recorded budgets
           </p>
         </div>
         <button
@@ -354,6 +354,12 @@ export function AdvertisingSection({
           New Campaign
         </button>
       </div>
+
+      <p role="note" className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-sm text-slate-300">
+        Campaigns are planning records. Saving a campaign or marking it Active
+        does not publish ads or charge a payment method. Amounts have no stored
+        currency and are not enforced daily spending limits.
+      </p>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -497,7 +503,7 @@ export function AdvertisingSection({
 
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">
-                  Daily Budget ($)
+                  Planned Amount (currency unspecified)
                 </label>
                 <input
                   type="number"
