@@ -552,20 +552,8 @@
   gap: 5px;
   overflow-wrap: anywhere;
 }
-.sd-vf {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--brand-soft);
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-}
-.sd-vf svg {
-  width: 8px;
-  height: 8px;
-  stroke: var(--brand-ink);
-  stroke-width: 3.4;
+.sd-status {
+  margin-top: 7px;
 }
 .sd-meta {
   font-size: 12px;

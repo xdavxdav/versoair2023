@@ -515,6 +515,10 @@ router.get(
     const ownerTierSelect = hasOwner
       ? ", COALESCE(u.subscription_tier, 'free') as owner_tier"
       : ", 'free' as owner_tier";
+    // Whether an owner exists, never who: owner_id itself stays private.
+    const isClaimedSelect = hasOwner
+      ? ", (b.owner_id IS NOT NULL) as is_claimed"
+      : ", NULL::boolean as is_claimed";
     const tierOrder = hasOwner
       ? `CASE COALESCE(u.subscription_tier, 'free')
           WHEN 'enterprise' THEN 1
@@ -539,6 +543,7 @@ router.get(
         b.created_at, b.updated_at,
         bc.name as category_name
         ${ownerTierSelect}
+        ${isClaimedSelect}
         ${extraSelectClause}
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
@@ -637,7 +642,8 @@ router.get(
     const result = await pool.query(
       `
       SELECT b.*, bc.name as category_name, sec.slug as sector_slug,
-        u.subscription_tier as owner_tier
+        u.subscription_tier as owner_tier,
+        (b.owner_id IS NOT NULL) as is_claimed
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
       LEFT JOIN business_categories sec ON sec.id = COALESCE(bc.parent_id, bc.id)
@@ -680,6 +686,7 @@ router.get(
       "featured",
       "is_active",
       "is_verified",
+      "is_claimed",
       "verification_status",
       "created_at",
       "updated_at",

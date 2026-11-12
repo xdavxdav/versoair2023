@@ -55,6 +55,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
+import { UNCLAIMED_NOTICE, parseClaimed } from "@/lib/business-status";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { FicheTechnique } from "@/components/FicheTechnique";
@@ -91,6 +93,7 @@ interface Business {
   status?: string;
   verified?: boolean;
   is_verified?: boolean;
+  is_claimed?: boolean;
   is_advertiser?: boolean;
   description?: string;
   address?: string;
@@ -400,6 +403,7 @@ export default function BusinessDetailPage() {
     business?.category_name || business?.categoryName || attrs?.category || "";
   const ui = getIndustryUI(catName);
   const isVerified = Boolean(business?.verified || business?.is_verified);
+  const claimed = parseClaimed(business?.is_claimed);
   const isActive = (business?.status || "active").toLowerCase() !== "inactive";
   const serviceCount =
     business?.services?.length || safeArray(attrs?.services).length || 0;
@@ -828,6 +832,20 @@ export default function BusinessDetailPage() {
                     <Badge className="border-fiche-border bg-fiche-soft text-fiche-accent">
                       <Sparkles className="h-3 w-3 mr-1" /> Promoted
                     </Badge>
+                  )}
+                </div>
+
+                {/* Verified / claimed status, spelled out */}
+                <div className="space-y-1.5">
+                  <BusinessStatusBadges
+                    verified={isVerified}
+                    claimed={claimed}
+                    surface="light"
+                  />
+                  {claimed === false && (
+                    <p className="text-sm text-slate-700 max-w-xl">
+                      {UNCLAIMED_NOTICE}
+                    </p>
                   )}
                 </div>
 
@@ -1439,6 +1457,7 @@ export default function BusinessDetailPage() {
                     ),
                   },
                   isVerified && { k: "Verified", v: "Yes" },
+                  claimed !== undefined && { k: "Claimed by owner", v: claimed ? "Yes" : "No" },
                   catName && { k: "Category", v: [catName, attrs.type].filter(Boolean).join(" · ") },
                   memberSince && { k: "Member since", v: memberSince.full },
                   { k: "Listing", v: `VI-${String(biz.id).padStart(4, "0")}` },

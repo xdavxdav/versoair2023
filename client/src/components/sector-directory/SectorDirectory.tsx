@@ -23,6 +23,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
 import { searchBusinesses, type Business } from "@/lib/business-data";
 import { useCountry } from "@/contexts/CountryContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -436,19 +437,17 @@ export default function SectorDirectory({ sector }: { sector: SectorKey }) {
                       )}
                     </div>
                     <div className="sd-id">
-                      <h3 className="sd-name">
-                        {biz.title}
-                        {biz.is_verified && (
-                          <span className="sd-vf" title="Verified by Verso Air">
-                            <Check aria-label="Verified" />
-                          </span>
-                        )}
-                      </h3>
+                      <h3 className="sd-name">{biz.title}</h3>
                       <div className="sd-meta">
                         {biz.category && <span>{biz.category}</span>}
                         {biz.category && cityOf(biz) && <span>·</span>}
                         {cityOf(biz) && <span>{cityOf(biz)}</span>}
                       </div>
+                      <BusinessStatusBadges
+                        className="sd-status"
+                        verified={biz.is_verified}
+                        claimed={biz.is_claimed}
+                      />
                     </div>
                   </div>
                   {biz.description && <p className="sd-desc">{biz.description}</p>}

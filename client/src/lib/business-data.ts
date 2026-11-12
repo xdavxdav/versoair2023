@@ -3,6 +3,8 @@
  * Uses the public /api/businesses endpoint (no auth required)
  */
 
+import { parseClaimed } from "./business-status";
+
 const API_BASE_URL = "";
 
 export interface Business {
@@ -36,6 +38,7 @@ export interface Business {
   assets_under_management?: number;
   daily_volume?: number;
   is_verified?: boolean;
+  is_claimed?: boolean;
   verified_at?: string;
   imageUrl?: string;
 }
@@ -92,6 +95,7 @@ function normalizeRow(row: any): Business {
       row.is_verified === true ||
       row.is_verified === "true" ||
       row.isVerified === true,
+    is_claimed: parseClaimed(row.is_claimed),
     verified_at: row.verified_at || undefined,
     imageUrl: row.image_url || row.image || row.imageUrl || undefined,
   };

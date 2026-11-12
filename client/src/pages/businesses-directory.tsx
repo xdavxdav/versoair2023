@@ -41,7 +41,6 @@ import {
   Phone,
   Tag,
   Building,
-  CheckCircle,
   X,
   ExternalLink,
   ChevronRight,
@@ -52,6 +51,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
+import { parseClaimed } from "@/lib/business-status";
 import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
@@ -86,6 +87,8 @@ interface Business {
   revenue?: number;
   employees?: number;
   status?: "active" | "inactive" | "popular" | "verified" | "premium";
+  is_verified?: boolean;
+  is_claimed?: boolean;
   specialization?: string[];
   years_experience?: number;
 }
@@ -485,6 +488,8 @@ async function searchBusinessesByCategory(params: {
           ? "premium"
           : "active"
         : "inactive",
+      is_verified: row.is_verified === true,
+      is_claimed: parseClaimed(row.is_claimed),
       specialization: row.specialization,
       years_experience: row.years_experience,
     }));
@@ -1187,12 +1192,11 @@ export default function BusinessesDirectory() {
                                   {business.location}
                                 </span>
                               </div>
-                              {(business as any).is_verified && (
-                                <Badge className="bg-blue-50 text-blue-700 border-blue-500/30 text-xs">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Verified
-                                </Badge>
-                              )}
+                              <BusinessStatusBadges
+                                verified={business.is_verified}
+                                claimed={business.is_claimed}
+                                surface="light"
+                              />
                             </div>
                             {business.rating && (
                               <div className="flex items-center gap-1 bg-amber-50 px-3 py-2 rounded-lg">
