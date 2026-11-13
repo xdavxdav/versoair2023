@@ -1,7 +1,6 @@
 name: Prerender SEO CI
 
 on:
-  pull_request:
   push:
     branches:
       - main
@@ -27,5 +26,4 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Build + prerender + SEO validation
-        if: github.event_name != 'pull_request'
         run: npm run build:prerender
