@@ -126,7 +126,11 @@ router.post(
       }
 
       const businessResult = await client.query(
-        `SELECT b.id, b.name, b.owner_id, b.email, b.phone, b.website
+        `SELECT b.id, b.name, b.owner_id, b.email, b.phone, b.website,
+                EXISTS (
+                  SELECT 1 FROM business_owners bo
+                   WHERE bo.business_id = b.id AND bo.status = 'active'
+                ) AS has_active_owner
          FROM businesses b
          WHERE b.id = $1 AND ${publicBusinessVisibilitySql("b")}
          FOR UPDATE OF b`,
@@ -140,7 +144,7 @@ router.post(
           error: "Business not found or not available to claim",
         });
       }
-      if (business.owner_id !== null) {
+      if (business.owner_id !== null || business.has_active_owner) {
         await client.query("ROLLBACK");
         return res.status(409).json({
           success: false,

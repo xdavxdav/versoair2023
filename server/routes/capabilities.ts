@@ -83,7 +83,11 @@ export async function computeUserCapabilities(userId: number) {
   // 3b. Employers (own a business with job postings) unlock Careers
   const employerResult = await db.execute(
     sql`SELECT 1 FROM jobs j JOIN businesses b ON b.id = j.business_id
-        WHERE b.owner_id = ${userId} LIMIT 1`,
+        WHERE (b.owner_id = ${userId} OR EXISTS (
+          SELECT 1 FROM business_owners bo
+           WHERE bo.business_id = b.id AND bo.user_id = ${userId}
+             AND bo.status = 'active'
+        )) LIMIT 1`,
   );
   const isEmployer = (employerResult.rows?.length ?? 0) > 0;
 

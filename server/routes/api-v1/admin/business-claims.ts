@@ -127,7 +127,12 @@ router.patch(
       }
 
       const businessResult = await client.query(
-        `SELECT id, name, owner_id FROM businesses WHERE id = $1 FOR UPDATE`,
+        `SELECT id, name, owner_id,
+                EXISTS (
+                  SELECT 1 FROM business_owners bo
+                   WHERE bo.business_id = businesses.id AND bo.status = 'active'
+                ) AS has_active_owner
+           FROM businesses WHERE id = $1 FOR UPDATE`,
         [initial.rows[0].business_id],
       );
       const business = businessResult.rows[0];
@@ -159,7 +164,10 @@ router.patch(
       }
 
       const { action, reviewNote } = parsed.data;
-      if (action === "approve" && business.owner_id !== null) {
+      if (
+        action === "approve" &&
+        (business.owner_id !== null || business.has_active_owner)
+      ) {
         await client.query("ROLLBACK");
         return res.status(409).json({
           success: false,
@@ -168,6 +176,14 @@ router.patch(
       }
 
       if (action === "approve") {
+        await client.query(
+          `INSERT INTO business_owners
+             (business_id, user_id, status, accepted_at, created_at, updated_at)
+           VALUES ($1, $2, 'active', NOW(), NOW(), NOW())
+           ON CONFLICT (business_id, user_id) DO UPDATE
+             SET status = 'active', accepted_at = NOW(), updated_at = NOW()`,
+          [claim.business_id, claim.user_id],
+        );
         const ownerUpdate = await client.query(
           `UPDATE businesses SET owner_id = $1, updated_at = NOW()
            WHERE id = $2 AND owner_id IS NULL

@@ -15,6 +15,7 @@ function installPool(options: {
   accountType?: string;
   verified?: boolean;
   ownerId?: number | null;
+  hasActiveOwner?: boolean;
   duplicate?: boolean;
 } = {}) {
   return scriptPool((sql) => {
@@ -36,6 +37,7 @@ function installPool(options: {
             id: businessId,
             name: "Example Business",
             owner_id: options.ownerId ?? null,
+            has_active_owner: options.hasActiveOwner ?? false,
             email: "hello@example.com",
             phone: "416-555-0100",
             website: "https://example.com",
@@ -138,8 +140,8 @@ test("a concurrent duplicate pending claim returns conflict", async () => {
   });
 });
 
-test("an already-owned listing cannot receive a claim", async () => {
-  installPool({ ownerId: 99 });
+test("a listing with an active owner cannot receive an initial claim", async () => {
+  installPool({ hasActiveOwner: true });
   const headers = signIn({ id: userId, role: "user" });
   await withRouter(businessClaimsRouter, async (origin) => {
     const response = await call(origin, "POST", `/${businessId}/claim`, {

@@ -317,8 +317,8 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
     const search = (req.query.q as string) ?? "";
     const limit = Math.min(Number(req.query.limit) || 20, 50);
 
-    // businesses has city_name / country_code / owner_id (no city, country or user_id). Excluding the
-    // caller's own business with owner_id IS DISTINCT FROM keeps rows for callers who own none.
+    // businesses has city_name / country_code / owner_id (no city, country or user_id).
+    // Exclude both the primary owner and any accepted co-owner.
     const rows = await db.execute(
       sql`
         SELECT
@@ -335,6 +335,12 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
         WHERE b.verification_status = 'verified'
           AND b.is_active = true
           AND b.owner_id IS DISTINCT FROM ${Number(req.user!.userId)}
+          AND NOT EXISTS (
+            SELECT 1 FROM business_owners bo
+             WHERE bo.business_id = b.id
+               AND bo.user_id = ${Number(req.user!.userId)}
+               AND bo.status = 'active'
+          )
           ${search ? sql`AND b.name ILIKE ${"%" + search + "%"}` : sql``}
         ORDER BY b.rating DESC NULLS LAST
         LIMIT ${limit}
