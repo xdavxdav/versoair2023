@@ -11,6 +11,7 @@ import logoRouter from "./business-logo";
 
 const BUSINESS = 5;
 const owner = { id: 21, role: "user" };
+const coOwner = { id: 22, role: "business_owner" };
 const stranger = { id: 8, role: "user" };
 const admin = { id: 1, role: "admin" };
 const moderator = { id: 3, role: "moderator" };
@@ -43,6 +44,7 @@ interface StoredLogo {
 interface Scenario {
   /** Who owns the business. */
   ownerId?: number;
+  coOwnerId?: number;
   userTier?: string;
   bizTier?: string;
   /** The row behind GET /file/:id; undefined: no such business. */
@@ -54,7 +56,9 @@ function scriptedDb(scenario: Scenario = {}) {
   return scriptPool((sql, params) => {
     const ownsIt = () =>
       String(params[0]) === String(BUSINESS) &&
-      String(params[1]) === String(scenario.ownerId ?? owner.id);
+      [scenario.ownerId ?? owner.id, scenario.coOwnerId].some(
+        (id) => id != null && String(params[1]) === String(id),
+      );
 
     if (sql.startsWith("SELECT b.id, b.tier, b.name, u.subscription_tier")) {
       return {
@@ -73,11 +77,7 @@ function scriptedDb(scenario: Scenario = {}) {
     if (sql === "SELECT logo_url FROM businesses WHERE id = $1") {
       return { rows: [{ logo_url: "/api/business-logo/file/5?v=1" }] };
     }
-    if (
-      sql.startsWith(
-        "SELECT logo_url FROM businesses WHERE id = $1 AND owner_id = $2",
-      )
-    ) {
+    if (sql.startsWith("SELECT logo_url FROM businesses b")) {
       return {
         rows: ownsIt() ? [{ logo_url: "/api/business-logo/file/5?v=1" }] : [],
       };
@@ -90,6 +90,17 @@ function scriptedDb(scenario: Scenario = {}) {
           scenario.stored && String(params[0]) === String(BUSINESS)
             ? [scenario.stored]
             : [],
+      };
+    }
+    if (sql.includes("FROM business_owners bo") && sql.includes("AS is_owner")) {
+      return {
+        rows: [
+          {
+            is_owner:
+              String(params[0]) === String(BUSINESS) &&
+              String(params[1]) === String(scenario.coOwnerId),
+          },
+        ],
       };
     }
     return undefined;
@@ -206,6 +217,15 @@ test("a free-tier owner can upload a logo while subscriptions are not on sale", 
   assert.deepEqual(update.params[1], PNG);
   assert.equal(update.params[2], "image/png");
   assert.equal(String(update.params[3]), String(BUSINESS));
+});
+
+test("an accepted co-owner can upload a logo", async () => {
+  const db = scriptedDb({ coOwnerId: coOwner.id });
+  await serve(async (origin) => {
+    const res = await postForm(origin, UPLOAD, logoForm(png), signIn(coOwner));
+    assert.equal(res.status, 200);
+  });
+  assert.equal(writes(db).length, 1);
 });
 
 test("when subscriptions are on sale a free-tier owner is asked to upgrade", async () => {
@@ -402,7 +422,7 @@ test("a logo of a business in the directory is shown to every visitor", async ()
 });
 
 test("the logo of a business that is not in the directory yet is private to its owner and the team", async () => {
-  scriptedDb({ stored: pendingLogo });
+  scriptedDb({ coOwnerId: coOwner.id, stored: pendingLogo });
   await serve(async (origin) => {
     // A visitor learns nothing: same answer as for a logo that does not exist.
     const visitor = await fetchLogo(origin, FILE);
@@ -425,6 +445,10 @@ test("the logo of a business that is not in the directory yet is private to its 
     });
     assert.equal(viaCookie.status, 200);
     assert.deepEqual(viaCookie.bytes, PNG);
+
+    const coOwnerResponse = await fetchLogo(origin, FILE, signIn(coOwner));
+    assert.equal(coOwnerResponse.status, 200);
+    assert.deepEqual(coOwnerResponse.bytes, PNG);
 
     const other = await fetchLogo(origin, FILE, signIn(stranger));
     assert.equal(other.status, 404);

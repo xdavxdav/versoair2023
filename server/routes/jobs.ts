@@ -351,7 +351,11 @@ router.get("/mine", requireAuth(), async (req, res) => {
               j.posted_date, COALESCE(j.application_count, 0) AS application_count,
               b.name AS business_name
          FROM jobs j JOIN businesses b ON b.id = j.business_id
-        WHERE b.owner_id = $1
+        WHERE (b.owner_id = $1 OR EXISTS (
+          SELECT 1 FROM business_owners bo
+           WHERE bo.business_id = b.id AND bo.user_id = $1
+             AND bo.status = 'active'
+        ))
         ORDER BY j.created_at DESC NULLS LAST LIMIT 200`,
       [Number(req.user!.id)],
     );
@@ -398,7 +402,12 @@ router.get(
     try {
       const owned = await pool.query(
         `SELECT 1 FROM jobs j JOIN businesses b ON b.id = j.business_id
-          WHERE j.id::text = $1 AND b.owner_id = $2`,
+          WHERE j.id::text = $1
+            AND (b.owner_id = $2 OR EXISTS (
+              SELECT 1 FROM business_owners bo
+               WHERE bo.business_id = b.id AND bo.user_id = $2
+                 AND bo.status = 'active'
+            ))`,
         [req.params.id, Number(req.user!.id)],
       );
       if (!owned.rowCount && !isStaff(req.user!.role)) {
@@ -436,12 +445,17 @@ router.get(
     try {
       const { rows } = await pool.query(
         `SELECT a.applicant_id, a.resume_name, a.resume_mime, a.resume_data,
-                b.owner_id
+                b.owner_id,
+                EXISTS (
+                  SELECT 1 FROM business_owners bo
+                   WHERE bo.business_id = b.id AND bo.user_id = $3
+                     AND bo.status = 'active'
+                ) AS is_owner
            FROM job_applications a
            JOIN jobs j ON j.id::text = a.job_id::text
            LEFT JOIN businesses b ON b.id = j.business_id
           WHERE a.id::text = $1 AND a.job_id::text = $2`,
-        [req.params.applicationId, req.params.id],
+        [req.params.applicationId, req.params.id, Number(req.user!.id)],
       );
       const row = rows[0];
       const userId = String(req.user!.id);
@@ -449,7 +463,8 @@ router.get(
         row &&
         (isStaff(req.user!.role) ||
           row.applicant_id === userId ||
-          (row.owner_id != null && String(row.owner_id) === userId));
+        (row.owner_id != null && String(row.owner_id) === userId) ||
+        row.is_owner === true);
       if (!allowed || !row.resume_data) {
         return res
           .status(404)

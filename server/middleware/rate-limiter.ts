@@ -116,6 +116,19 @@ export const businessClaimLimiter = rateLimit({
   },
 });
 
+export const businessOwnerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many ownership invitations. Please try again later.",
+    });
+  },
+});
+
 // Public contact form limiter: very low threshold to prevent spam bots
 export const contactFormLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

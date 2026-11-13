@@ -111,6 +111,11 @@ test("approval locks the business and only promotes a basic user role", async ()
     entry.sql.includes("FROM businesses WHERE id = $1 FOR UPDATE"),
   );
   assert.ok(businessLock, "approval locks the business row");
+  const ownership = database.log.find((entry) =>
+    entry.sql.startsWith("INSERT INTO business_owners"),
+  );
+  assert.ok(ownership, "approval creates the accepted ownership membership");
+  assert.deepEqual(ownership.params.slice(0, 2), [25, 51]);
   const roleGrant = database.log.find((entry) =>
     entry.sql.startsWith("UPDATE users SET role = 'business_owner'"),
   );
