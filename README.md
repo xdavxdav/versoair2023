@@ -281,7 +281,11 @@ the server looks up public businesses and injects route-specific metadata and
 `<SeoHead>` metadata. This server-rendered behavior requires a database and is
 not covered by the static prerender build.
 
-Run full prerender pipeline (route list → build → react-snap):
+The pull-request workflow runs the TypeScript check only. The full prerender
+pipeline runs after changes reach `main`, or can be started manually from the
+GitHub Actions tab with **Run workflow**.
+
+Run the full prerender pipeline locally (route list → build → react-snap):
 
 ```bash
 npm run build:prerender

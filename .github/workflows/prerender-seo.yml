@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   prerender-seo:
@@ -26,4 +27,5 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Build + prerender + SEO validation
+        if: github.event_name != 'pull_request'
         run: npm run build:prerender
