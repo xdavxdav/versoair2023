@@ -2,8 +2,8 @@ import { Router, Request, Response } from "express";
 import type { PoolClient } from "pg";
 import { db, pool } from "../db";
 import { validateBusinessCategory } from "../services/business-validation";
-import { eq } from "drizzle-orm";
-import { businesses, auditLogs, users } from "@shared/schema";
+import { and, eq } from "drizzle-orm";
+import { businesses, businessOwners, auditLogs, users } from "@shared/schema";
 import { requireAuth, requireAdminPanel } from "../middleware/auth";
 import { generateBusinessPDF, renderBusinessPDF } from "../services/pdf-generator";
 import {
@@ -13,6 +13,7 @@ import {
 } from "../services/email-service";
 import { publicBusinessVisibilitySql } from "../utils/business-visibility";
 import {
+  BUSINESS_HAS_ACTIVE_OWNER_SQL,
   PUBLIC_BUSINESS_LIST_SELECT_SQL,
   toPublicBusinessListRow,
 } from "../utils/public-business-list-fields";
@@ -52,8 +53,14 @@ async function requireBusinessOwnerOrStaff(
   businessId: string,
 ): Promise<boolean> {
   const result = await pool.query(
-    "SELECT owner_id FROM businesses WHERE id = $1",
-    [businessId],
+    `SELECT b.owner_id,
+            EXISTS (
+              SELECT 1 FROM business_owners bo
+               WHERE bo.business_id = b.id AND bo.user_id = $2
+                 AND bo.status = 'active'
+            ) AS is_owner
+       FROM businesses b WHERE b.id = $1`,
+    [businessId, Number(req.user?.userId ?? req.user?.id)],
   );
   const business = result.rows[0];
   if (!business) {
@@ -61,11 +68,15 @@ async function requireBusinessOwnerOrStaff(
     return false;
   }
 
-  const requesterId = Number(req.user?.userId);
+  const requesterId = Number(req.user?.userId ?? req.user?.id);
   const isStaff = ["admin", "moderator", "superuser"].includes(
     req.user?.role || "",
   );
-  if (!isStaff && (!requesterId || Number(business.owner_id) !== requesterId)) {
+  if (
+    !isStaff &&
+    (!requesterId ||
+      (Number(business.owner_id) !== requesterId && !business.is_owner))
+  ) {
     res.status(403).json({
       success: false,
       error: "You do not have access to this business",
@@ -432,7 +443,12 @@ router.get(
 
     // userId / ownerId filter — fetch businesses owned by a specific user
     if (userIdFilter) {
-      whereClause += " AND b.owner_id = $" + (params.length + 1);
+      whereClause +=
+        " AND (b.owner_id = $" +
+        (params.length + 1) +
+        " OR EXISTS (SELECT 1 FROM business_owners bo WHERE bo.business_id = b.id AND bo.user_id = $" +
+        (params.length + 1) +
+        " AND bo.status = 'active'))";
       params.push(requestedOwnerId);
     }
 
@@ -517,10 +533,10 @@ router.get(
       : ", 'free' as owner_tier";
     // Whether an owner exists, never who: owner_id itself stays private.
     const isClaimedSelect = hasOwner
-      ? ", (b.owner_id IS NOT NULL) as is_claimed"
+      ? `, ${BUSINESS_HAS_ACTIVE_OWNER_SQL} as is_claimed`
       : ", NULL::boolean as is_claimed";
     const claimableSelect = hasOwner
-      ? ", (b.owner_id IS NULL AND b.is_active = true) as claimable"
+      ? `, (NOT ${BUSINESS_HAS_ACTIVE_OWNER_SQL} AND b.is_active = true) as claimable`
       : ", false::boolean as claimable";
     const tierOrder = hasOwner
       ? `CASE COALESCE(u.subscription_tier, 'free')
@@ -647,8 +663,8 @@ router.get(
       `
       SELECT b.*, bc.name as category_name, sec.slug as sector_slug,
         u.subscription_tier as owner_tier,
-        (b.owner_id IS NOT NULL) as is_claimed,
-        (b.owner_id IS NULL AND b.is_active = true) as claimable
+        ${BUSINESS_HAS_ACTIVE_OWNER_SQL} as is_claimed,
+        (NOT ${BUSINESS_HAS_ACTIVE_OWNER_SQL} AND b.is_active = true) as claimable
       FROM businesses b
       LEFT JOIN business_categories bc ON b.category_id = bc.id
       LEFT JOIN business_categories sec ON sec.id = COALESCE(bc.parent_id, bc.id)
@@ -786,8 +802,14 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { rows } = await pool.query(
-        "SELECT owner_id FROM businesses WHERE id = $1",
-        [req.params.id],
+        `SELECT b.owner_id,
+                EXISTS (
+                  SELECT 1 FROM business_owners bo
+                   WHERE bo.business_id = b.id AND bo.user_id = $2
+                     AND bo.status = 'active'
+                ) AS is_owner
+           FROM businesses b WHERE b.id = $1`,
+        [req.params.id, Number(req.user?.userId ?? req.user?.id)],
       );
       if (rows.length === 0) {
         return res
@@ -803,7 +825,8 @@ router.get(
         ),
         // Logo and cover uploads are owner-only, so staff who can edit the fiche still see no media menu.
         ownsBusiness:
-          rows[0].owner_id !== null && Number(rows[0].owner_id) === actorId,
+          (rows[0].owner_id !== null && Number(rows[0].owner_id) === actorId) ||
+          rows[0].is_owner === true,
       });
     } catch (error) {
       console.error("Error checking fiche access:", error);
@@ -819,8 +842,14 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { rows } = await pool.query(
-        "SELECT owner_id, attributes, opening_hours, social_links FROM businesses WHERE id = $1",
-        [req.params.id],
+        `SELECT b.owner_id, b.attributes, b.opening_hours, b.social_links,
+                EXISTS (
+                  SELECT 1 FROM business_owners bo
+                   WHERE bo.business_id = b.id AND bo.user_id = $2
+                     AND bo.status = 'active'
+                ) AS is_owner
+           FROM businesses b WHERE b.id = $1`,
+        [req.params.id, Number(req.user?.userId ?? req.user?.id)],
       );
       if (rows.length === 0) {
         return res
@@ -875,7 +904,23 @@ router.put(
         if (
           !canEditFiche(
             { id: actorId, role: req.user?.role },
-            { owner_id: current.ownerId },
+            {
+              owner_id: current.ownerId,
+              is_owner:
+                (
+                  await tx
+                    .select({ id: businessOwners.id })
+                    .from(businessOwners)
+                    .where(
+                      and(
+                        eq(businessOwners.businessId, businessId),
+                        eq(businessOwners.userId, actorId),
+                        eq(businessOwners.status, "active"),
+                      ),
+                    )
+                    .limit(1)
+                ).length > 0,
+            },
           )
         ) {
           return { status: 403 as const };

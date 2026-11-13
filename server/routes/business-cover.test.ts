@@ -11,6 +11,7 @@ import coverRouter from "./business-cover";
 
 const BUSINESS = 5;
 const owner = { id: 21, role: "user" };
+const coOwner = { id: 22, role: "business_owner" };
 const stranger = { id: 8, role: "user" };
 const admin = { id: 1, role: "admin" };
 const moderator = { id: 3, role: "moderator" };
@@ -39,6 +40,7 @@ interface StoredCover {
 
 interface Scenario {
   ownerId?: number;
+  coOwnerId?: number;
   userTier?: string;
   bizTier?: string;
   /** The row behind GET /file/:id; undefined: no such business. */
@@ -50,7 +52,9 @@ function scriptedDb(scenario: Scenario = {}) {
   return scriptPool((sql, params) => {
     const ownsIt = () =>
       String(params[0]) === String(BUSINESS) &&
-      String(params[1]) === String(scenario.ownerId ?? owner.id);
+      [scenario.ownerId ?? owner.id, scenario.coOwnerId].some(
+        (id) => id != null && String(params[1]) === String(id),
+      );
 
     if (sql.startsWith("SELECT b.id, b.tier, u.subscription_tier")) {
       return {
@@ -65,7 +69,7 @@ function scriptedDb(scenario: Scenario = {}) {
           : [],
       };
     }
-    if (sql === "SELECT id FROM businesses WHERE id = $1 AND owner_id = $2") {
+    if (sql.startsWith("SELECT b.id FROM businesses b")) {
       return { rows: ownsIt() ? [{ id: BUSINESS }] : [] };
     }
     if (sql.startsWith("SELECT b.cover_data, b.cover_mime, b.owner_id,")) {
@@ -76,6 +80,17 @@ function scriptedDb(scenario: Scenario = {}) {
           scenario.stored && String(params[0]) === String(BUSINESS)
             ? [scenario.stored]
             : [],
+      };
+    }
+    if (sql.includes("FROM business_owners bo") && sql.includes("AS is_owner")) {
+      return {
+        rows: [
+          {
+            is_owner:
+              String(params[0]) === String(BUSINESS) &&
+              String(params[1]) === String(scenario.coOwnerId),
+          },
+        ],
       };
     }
     return undefined;
@@ -193,6 +208,15 @@ test("an owner can upload a cover while subscriptions are not on sale", async ()
   assert.deepEqual(update.params[1], PNG);
   assert.equal(update.params[2], "image/png");
   assert.equal(String(update.params[3]), String(BUSINESS));
+});
+
+test("an accepted co-owner can upload a cover", async () => {
+  const db = scriptedDb({ coOwnerId: coOwner.id });
+  await serve(async (origin) => {
+    const res = await postForm(origin, UPLOAD, coverForm(png), signIn(coOwner));
+    assert.equal(res.status, 200);
+  });
+  assert.equal(writes(db).length, 1);
 });
 
 test("when subscriptions are on sale a free-tier owner is asked to upgrade", async () => {
@@ -345,7 +369,7 @@ test("a cover of a business in the directory is shown to every visitor", async (
 });
 
 test("the cover of a business that is not in the directory yet is private to its owner and the team", async () => {
-  scriptedDb({ stored: pendingCover });
+  scriptedDb({ coOwnerId: coOwner.id, stored: pendingCover });
   await serve(async (origin) => {
     const visitor = await fetchCover(origin, FILE);
     assert.equal(visitor.status, 404);
@@ -367,6 +391,10 @@ test("the cover of a business that is not in the directory yet is private to its
     });
     assert.equal(viaCookie.status, 200);
     assert.deepEqual(viaCookie.bytes, PNG);
+
+    const coOwnerResponse = await fetchCover(origin, FILE, signIn(coOwner));
+    assert.equal(coOwnerResponse.status, 200);
+    assert.deepEqual(coOwnerResponse.bytes, PNG);
 
     const other = await fetchCover(origin, FILE, signIn(stranger));
     assert.equal(other.status, 404);

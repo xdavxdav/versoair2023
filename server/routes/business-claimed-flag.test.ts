@@ -58,12 +58,13 @@ test("the detail route reports a claimed listing as is_claimed true without the 
   assert.equal(business.contact_info, undefined);
 });
 
-test("the detail query derives is_claimed from owner_id presence only", async () => {
+test("the detail query derives claim status from active business ownership", async () => {
   const { database } = await fetchDetail(businessRow());
   const query = database.log.find((entry) => entry.sql.includes("WHERE b.id = $1"));
   assert.ok(query, "the detail query ran");
-  assert.match(query.sql, /\(b\.owner_id IS NOT NULL\) as is_claimed/);
-  assert.match(query.sql, /\(b\.owner_id IS NULL AND b\.is_active = true\) as claimable/);
+  assert.match(query.sql, /business_owners bo/);
+  assert.match(query.sql, /as is_claimed/);
+  assert.match(query.sql, /as claimable/);
 });
 
 test("the list route selects is_claimed and still never selects owner_id", async () => {
@@ -82,8 +83,9 @@ test("the list route selects is_claimed and still never selects owner_id", async
   });
   const data = database.log.find((entry) => entry.sql.startsWith("SELECT b.id, b.name"));
   assert.ok(data, "the list data query ran");
-  assert.match(data.sql, /\(b\.owner_id IS NOT NULL\) as is_claimed/);
-  assert.match(data.sql, /\(b\.owner_id IS NULL AND b\.is_active = true\) as claimable/);
+  assert.match(data.sql, /business_owners bo/);
+  assert.match(data.sql, /as is_claimed/);
+  assert.match(data.sql, /as claimable/);
   assert.doesNotMatch(data.sql, /b\.owner_id,|, b\.owner_id\b(?! IS)/);
   assert.equal(body.data[0].is_claimed, false);
   assert.equal(body.data[0].claimable, true);

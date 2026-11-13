@@ -359,15 +359,15 @@ const STAFF_ROLES = new Set(["admin", "moderator", "superuser"]);
 // Staff curate any listing; everyone else may only edit a business they own.
 export function canEditFiche(
   actor: { id: number | string | null | undefined; role?: string | null },
-  business: { owner_id: number | null },
+  business: { owner_id: number | null; is_owner?: boolean },
 ): boolean {
   if (actor.role && STAFF_ROLES.has(actor.role)) return true;
   const id = Number(actor.id);
   return (
     Number.isInteger(id) &&
     id > 0 &&
-    business.owner_id !== null &&
-    Number(business.owner_id) === id
+    (business.is_owner === true ||
+      (business.owner_id !== null && Number(business.owner_id) === id))
   );
 }
 

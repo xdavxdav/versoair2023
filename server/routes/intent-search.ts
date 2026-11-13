@@ -136,11 +136,13 @@ router.post(
       const { businessIds, message, contactPhone, contactEmail, location } =
         parsed.data;
 
-      // Look up business owner details
+      // Notify every accepted owner, falling back to the legacy primary owner.
       const businessResult = await pool.query(
         `SELECT b.id, b.name, b.phone, b.email, u.id as owner_id, u.email as owner_email
          FROM businesses b
-         LEFT JOIN users u ON b.user_id = u.id
+         LEFT JOIN business_owners bo
+           ON bo.business_id = b.id AND bo.status = 'active'
+         LEFT JOIN users u ON u.id = COALESCE(bo.user_id, b.owner_id)
          WHERE b.id = ANY($1) AND ${publicBusinessVisibilitySql("b")}`,
         [businessIds],
       );
@@ -195,9 +197,12 @@ router.post(
         }
       }
 
+      const notifiedBusinessIds = new Set<number>();
       for (const biz of businessResult.rows) {
+        if (notifiedBusinessIds.has(Number(biz.id))) continue;
+        notifiedBusinessIds.add(Number(biz.id));
         notified.push({
-          businessId: biz.id,
+          businessId: Number(biz.id),
           businessName: biz.name,
           method: biz.owner_id ? "in_app" : "email_pending",
         });

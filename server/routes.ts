@@ -4,6 +4,7 @@ import { sql, eq } from "drizzle-orm";
 import databaseManagementRouter from "./routes/database-management";
 import businessesRouter from "./routes/businesses";
 import businessClaimsRouter from "./routes/business-claims";
+import businessOwnersRouter from "./routes/business-owners";
 import propertiesRouter from "./routes/properties";
 import propertyBookingsRouter from "./routes/property-bookings";
 import apiV1Router from "./routes/api-v1";
@@ -213,6 +214,7 @@ export async function registerRoutes(app: Express) {
 
   // Register businesses routes
   app.use("/api/businesses", businessClaimsRouter);
+  app.use("/api/businesses", businessOwnersRouter);
   app.use("/", businessesRouter);
 
   // Register properties routes
