@@ -4,6 +4,7 @@ import { Plus, X, AlertCircle, Check, TrendingUp } from "lucide-react";
 import { DataTable, DataTableColumn } from "../shared/DataTable";
 import { BusinessPicker } from "@/components/BusinessPicker";
 import { authenticatedFetch } from "@/lib/auth";
+import { useOptionalAuthContext } from "@/contexts/AuthContext";
 import {
   ADMIN_ACCESS_MESSAGES,
   adminAccessIssue,
@@ -67,6 +68,9 @@ export function AdvertisingSection({
   openAdd?: boolean;
   onOpenAddHandled?: () => void;
 } = {}) {
+  const { user } = useOptionalAuthContext() ?? {};
+  const canManageCampaigns =
+    user?.role === "admin" || user?.role === "superuser";
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
@@ -183,7 +187,7 @@ export function AdvertisingSection({
   };
 
   useOpenRequest(
-    openAdd,
+    openAdd && canManageCampaigns,
     () => {
       resetForm();
       setIsModalOpen(true);
@@ -343,16 +347,18 @@ export function AdvertisingSection({
             Manage campaign plans and recorded budgets
           </p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Campaign
-        </button>
+        {canManageCampaigns && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Campaign
+          </button>
+        )}
       </div>
 
       <p role="note" className="rounded-lg border border-slate-700 bg-slate-900 p-4 text-sm text-slate-300">
@@ -422,18 +428,26 @@ export function AdvertisingSection({
       <DataTable
         data={campaigns}
         columns={columns}
-        onEdit={handleEdit}
-        onDelete={(row) => {
-          if (confirm(`Delete campaign "${row.name}"?`)) {
-            deleteMutation.mutate(row.id);
-          }
-        }}
+        onEdit={canManageCampaigns ? handleEdit : undefined}
+        onDelete={
+          canManageCampaigns
+            ? (row) => {
+                if (confirm(`Delete campaign "${row.name}"?`)) {
+                  deleteMutation.mutate(row.id);
+                }
+              }
+            : undefined
+        }
         isLoading={isLoading}
-        emptyMessage="No campaigns found. Click 'New Campaign' to get started."
+        emptyMessage={
+          canManageCampaigns
+            ? "No campaigns found. Click 'New Campaign' to get started."
+            : "No campaigns found."
+        }
       />
 
       {/* Modal */}
-      {isModalOpen && (
+      {isModalOpen && canManageCampaigns && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}

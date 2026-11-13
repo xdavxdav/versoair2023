@@ -30,7 +30,7 @@ function toCampaign(row: any) {
     objective: row.description || null,
     budget,
     dailyBudget: budget,
-    status: row.status || "active",
+    status: row.status || "draft",
     startDate: row.start_date,
     endDate: row.end_date,
     impressions: row.impressions || 0,
@@ -185,8 +185,7 @@ async function writeAudit(action: string, campaignId: string, changes: any) {
 
 /**
  * GET /api/v1/admin/campaigns
- * List all ad campaigns with pagination and filtering
- * Requires at least verified tier for business owners
+ * Admins and moderators list all campaigns; business owners see only their own.
  */
 router.get(
   "/",
@@ -201,8 +200,19 @@ router.get(
       );
       const offset = (pageNum - 1) * limitNum;
       const searchValue = typeof search === "string" ? search.trim() : "";
-      const filter = searchValue ? " WHERE name ILIKE $1" : "";
-      const filterParams = searchValue ? [`${searchValue}%`] : [];
+      const filters: string[] = [];
+      const filterParams: (string | number)[] = [];
+      if (searchValue) {
+        filters.push(`name ILIKE $${filterParams.length + 1}`);
+        filterParams.push(`${searchValue}%`);
+      }
+      if (req.user?.role === "business_owner") {
+        filters.push(
+          `business_id IN (SELECT id FROM businesses WHERE owner_id = $${filterParams.length + 1})`,
+        );
+        filterParams.push(req.user.userId);
+      }
+      const filter = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
       const totalResult = await pool.query(
         `SELECT COUNT(*)::int AS total FROM ad_campaigns${filter}`,
         filterParams,

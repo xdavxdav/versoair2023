@@ -84,6 +84,7 @@ router.get(
           description: businesses.description,
           email: businesses.email,
           phone: businesses.phone,
+          website: businesses.website,
           location: businesses.location,
           address: businesses.address,
           isVerified: businesses.isVerified,

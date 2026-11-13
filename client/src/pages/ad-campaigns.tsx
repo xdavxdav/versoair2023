@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { authenticatedFetch } from "@/lib/auth";
+import { useOptionalAuthContext } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,9 @@ const emptyForm = () => ({
 });
 
 export default function AdCampaignsPage() {
+  const { user } = useOptionalAuthContext() ?? {};
+  const canManageCampaigns =
+    user?.role === "admin" || user?.role === "superuser";
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -229,12 +233,14 @@ export default function AdCampaignsPage() {
             <Megaphone className="h-6 w-6 text-blue-600" />
             <h1 className="text-2xl font-bold">Ad Campaigns</h1>
           </div>
-          <Button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-1" /> New Campaign
-          </Button>
+          {canManageCampaigns && (
+            <Button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-1" /> New Campaign
+            </Button>
+          )}
         </div>
 
         <p role="note" className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
@@ -298,7 +304,7 @@ export default function AdCampaignsPage() {
         </div>
 
         {/* Create Form */}
-        {showForm && (
+        {showForm && canManageCampaigns && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Create New Campaign</CardTitle>
@@ -417,7 +423,7 @@ export default function AdCampaignsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Your Campaigns ({campaigns.length})
+              Campaigns ({campaigns.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -428,11 +434,15 @@ export default function AdCampaignsPage() {
             ) : campaigns.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <Megaphone className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="text-lg font-medium">No campaigns yet</p>
-                <p className="text-sm">
-                  Create your first campaign plan for your business
-                  visibility
+                <p className="text-lg font-medium">
+                  {canManageCampaigns ? "No campaigns yet" : "No campaigns for your businesses yet"}
                 </p>
+                {canManageCampaigns && (
+                  <p className="text-sm">
+                    Create your first campaign plan for your business
+                    visibility
+                  </p>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -448,7 +458,9 @@ export default function AdCampaignsPage() {
                       <th className="pb-3 font-medium text-right">Clicks</th>
                       <th className="pb-3 font-medium text-right">CTR</th>
                       <th className="pb-3 font-medium text-right">Conv.</th>
-                      <th className="pb-3 font-medium text-center">Actions</th>
+                      {canManageCampaigns && (
+                        <th className="pb-3 font-medium text-center">Actions</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -486,34 +498,36 @@ export default function AdCampaignsPage() {
                         <td className="py-3 text-right">
                           {(campaign.conversions || 0).toLocaleString()}
                         </td>
-                        <td className="py-3">
-                          <div className="flex justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleStatus(campaign)}
-                              title={
-                                campaign.status === "active"
-                                  ? "Pause"
-                                  : "Resume"
-                              }
-                            >
-                              {campaign.status === "active" ? (
-                                <Pause className="h-4 w-4 text-yellow-600" />
-                              ) : (
-                                <Play className="h-4 w-4 text-green-600" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteCampaign(campaign.id)}
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </td>
+                        {canManageCampaigns && (
+                          <td className="py-3">
+                            <div className="flex justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleStatus(campaign)}
+                                title={
+                                  campaign.status === "active"
+                                    ? "Pause"
+                                    : "Resume"
+                                }
+                              >
+                                {campaign.status === "active" ? (
+                                  <Pause className="h-4 w-4 text-yellow-600" />
+                                ) : (
+                                  <Play className="h-4 w-4 text-green-600" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteCampaign(campaign.id)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

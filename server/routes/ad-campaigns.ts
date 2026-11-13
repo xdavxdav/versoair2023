@@ -2,39 +2,43 @@ import { Router } from "express";
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
 router.get(
   "/",
+  requireAuth(["admin", "moderator", "business_owner"]),
   asyncHandler(async (req, res) => {
     const { countryCode, limit = "50" } = req.query;
     const limitNum = Math.min(100, parseInt(String(limit), 10) || 50);
-
-    const result =
-      countryCode && String(countryCode) !== "all"
-        ? await db.execute(
-            sql`SELECT ac.*, b.name AS business_name, b.country_code
-                FROM ad_campaigns ac
-                INNER JOIN businesses b ON b.id = ac.business_id
-                  AND UPPER(b.country_code) = UPPER(${String(countryCode)})
-                ORDER BY ac.created_at DESC NULLS LAST
-                LIMIT ${limitNum}`,
-          )
-        : await db.execute(
-            sql`SELECT ac.*, b.name AS business_name, b.country_code
-                FROM ad_campaigns ac
-                LEFT JOIN businesses b ON b.id = ac.business_id
-                ORDER BY ac.created_at DESC NULLS LAST
-                LIMIT ${limitNum}`,
-          );
+    const conditions = [];
+    if (countryCode && String(countryCode) !== "all") {
+      conditions.push(
+        sql`UPPER(b.country_code) = UPPER(${String(countryCode)})`,
+      );
+    }
+    if (req.user?.role === "business_owner") {
+      conditions.push(sql`b.owner_id = ${req.user.userId}`);
+    }
+    const where = conditions.length
+      ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
+      : sql.empty();
+    const result = await db.execute(sql`
+      SELECT ac.*, b.name AS business_name, b.country_code
+      FROM ad_campaigns ac
+      LEFT JOIN businesses b ON b.id = ac.business_id
+      ${where}
+      ORDER BY ac.created_at DESC NULLS LAST
+      LIMIT ${limitNum}
+    `);
 
     const campaigns = (result.rows || []).map((r: any) => ({
       id: r.id,
       name: r.name,
       daily_budget: r.budget || r.daily_budget || "0",
       objective: r.description || r.name || "Campaign",
-      status: r.status || "active",
+      status: r.status || "draft",
       start_date: r.start_date,
       end_date: r.end_date,
       impressions: r.impressions || 0,

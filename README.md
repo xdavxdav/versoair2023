@@ -70,7 +70,15 @@ Budget summaries add the recorded amounts without multiplying by 30. The
 currency is not stored per campaign and is labeled unspecified in GeoAdmin.
 Saving or marking a campaign Active does
 not itself publish ads, connect an advertising network, or charge a payment
-method.
+method. Business owners can view campaigns only for businesses they own;
+only Admins and the configured Superuser can create, edit, or delete campaign
+records.
+
+The Admin business list shows read-only directory eligibility diagnostics.
+Eligibility follows the configured directory country (Canada by default),
+active and verified status, and the existing placeholder email/website
+exclusions. This indicates whether a listing qualifies for the public
+directory; it does not claim that Google has indexed the page.
 
 ## VersoAI setup
 
