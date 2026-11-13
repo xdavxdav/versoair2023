@@ -359,6 +359,62 @@ test("business page switches between About, Details and Reviews tabs", { timeout
   }
 });
 
+test("business fiche theme switch preserves the graffiti background and persists the selection", { timeout: 60000 }, async () => {
+  const context = await browser.createBrowserContext();
+  try {
+    const api = createFakeApi({});
+    const { page, pageErrors } = await openBusinessPage(context, api);
+    await gotoBusiness(page);
+
+    const root = '[data-testid="business-fiche"]';
+    const toggle = 'button[aria-label="Switch to dark theme"]';
+    assert.equal(await page.$eval(root, (el) => el.getAttribute("data-theme")), "light");
+    assert.ok(await page.$(`${root} > .fixed`), "expected the graffiti background layer");
+
+    await page.click(toggle);
+    await page.waitForFunction(
+      (selector) => document.querySelector(selector)?.getAttribute("data-theme") === "dark",
+      {},
+      root,
+    );
+    const darkAppearance = await page.evaluate((selector) => {
+      const fiche = document.querySelector(selector);
+      const surface = fiche?.querySelector('[class~="bg-white"]');
+      return {
+        background: getComputedStyle(fiche).backgroundColor,
+        surface: surface ? getComputedStyle(surface).backgroundColor : null,
+        heading: fiche?.querySelector("h1") ? getComputedStyle(fiche.querySelector("h1")).color : null,
+        savedTheme: localStorage.getItem("verso_theme"),
+        toggleLabel: fiche?.querySelector('button[aria-label="Switch to light theme"]')?.getAttribute("aria-label"),
+      };
+    }, root);
+    assert.equal(darkAppearance.background, "rgb(15, 23, 42)");
+    assert.equal(darkAppearance.surface, "rgb(30, 41, 59)");
+    assert.equal(darkAppearance.heading, "rgb(226, 232, 240)");
+    assert.equal(darkAppearance.savedTheme, "dark");
+    assert.equal(darkAppearance.toggleLabel, "Switch to light theme");
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await gotoBusiness(page);
+    assert.equal(
+      await page.$eval(root, (el) => el.getAttribute("data-theme")),
+      "dark",
+      "dark mode should persist when the business fiche reloads",
+    );
+
+    await page.click('button[aria-label="Switch to light theme"]');
+    await page.waitForFunction(
+      (selector) => document.querySelector(selector)?.getAttribute("data-theme") === "light",
+      {},
+      root,
+    );
+    assert.equal(await page.evaluate(() => localStorage.getItem("verso_theme")), "light");
+    assert.deepEqual(pageErrors, []);
+  } finally {
+    await context.close();
+  }
+});
+
 test("commerce sector gives the business page its blue palette", { timeout: 60000 }, async () => {
   await assertFicheSectorPalette(
     { sector_slug: "commerce" },

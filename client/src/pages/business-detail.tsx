@@ -28,6 +28,8 @@ import {
   Camera,
   Trash2,
   Upload,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +70,8 @@ import {
   getFicheSectorPalette,
 } from "@/lib/fiche-sector-theme";
 import { SeoHead } from "@/components/seo/SeoHead";
+import { useTheme } from "@/contexts/ThemeContext";
+import "./business-detail-theme.css";
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -217,23 +221,28 @@ function safeArray<T = string>(v: unknown): T[] {
 }
 
 /* ─── Futuristic Graffiti Background Component ──────────────────────── */
-function GraffitiBackground() {
+function GraffitiBackground({ isDark = false }: { isDark?: boolean }) {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Base dark gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-fiche-soft via-white to-fiche-border" />
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${
+          isDark
+            ? "from-slate-950 via-slate-900 to-slate-800"
+            : "from-fiche-soft via-white to-fiche-border"
+        }`}
+      />
 
       {/* Grunge / spray texture */}
       <div
         className="absolute inset-0 opacity-30 mix-blend-overlay"
         style={{
-          backgroundImage: `radial-gradient(circle at 20% 40%, rgba(255,255,255,0.08) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(circle at 20% 40%, rgba(255,255,255,${isDark ? "0.12" : "0.08"}) 1px, transparent 1px)`,
           backgroundSize: "24px 24px",
         }}
       />
 
       {/* Graffiti spray elements */}
-      <div className="absolute top-[15%] left-[5%] text-8xl opacity-10 rotate-12 select-none font-mono text-slate-900">
+      <div className={`absolute top-[15%] left-[5%] text-8xl opacity-10 rotate-12 select-none font-mono ${isDark ? "text-white" : "text-slate-900"}`}>
         ✪
       </div>
       <div className="absolute bottom-[20%] right-[3%] text-7xl opacity-10 -rotate-6 select-none text-fiche-accent">
@@ -273,7 +282,7 @@ function GraffitiBackground() {
       </svg>
 
       {/* Graffiti tag mock */}
-      <div className="absolute bottom-8 right-8 font-mono text-xs text-slate-900/5 tracking-widest select-none">
+      <div className={`absolute bottom-8 right-8 font-mono text-xs ${isDark ? "text-white/10" : "text-slate-900/5"} tracking-widest select-none`}>
         VERSO // AIR // DISCOVER
       </div>
     </div>
@@ -292,6 +301,8 @@ export default function BusinessDetailPage() {
   const businessId = params?.id;
   const queryClient = useQueryClient();
   const auth = useOptionalAuthContext();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [ficheEditorOpen, setFicheEditorOpen] = useState(false);
 
   // Only owners and staff get a successful answer; everyone else sees no edit button.
@@ -625,13 +636,14 @@ export default function BusinessDetailPage() {
     };
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-[#F6F1E9] font-inter text-[#1E2A32]" style={ficheStyle} data-testid="business-fiche">
+    <div className="relative flex flex-col min-h-screen bg-[#F6F1E9] font-inter text-[#1E2A32]" style={ficheStyle} data-testid="business-fiche" data-theme={resolvedTheme}>
       <SeoHead
         title={metaTitle}
         description={metaDescription}
         canonicalPath={canonicalPath}
         jsonLd={businessJsonLd}
       />
+      <GraffitiBackground isDark={isDark} />
       {(biz.phone || biz.email || mapsLink) && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-fiche-border bg-white/95 p-3 backdrop-blur md:hidden">
           {biz.phone && (
@@ -659,19 +671,33 @@ export default function BusinessDetailPage() {
       )}
 
       <div className="relative z-10 mx-auto w-full max-w-[1140px] px-[clamp(16px,4vw,40px)] pb-28 pt-5 md:pb-10 space-y-[18px]">
-        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 pb-1 text-[12.5px] text-[#7C878E]">
-          <Link href="/businesses-directory" className="hover:text-fiche-accent">
-            Businesses
-          </Link>
-          {catName && (
-            <>
-              <span aria-hidden="true" className="opacity-50">/</span>
-              <span>{catName}</span>
-            </>
-          )}
-          <span aria-hidden="true" className="opacity-50">/</span>
-          <span aria-current="page" className="font-medium text-[#4C5A63]">{biz.name}</span>
-        </nav>
+        <div className="flex items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-2 pb-1 text-[12.5px] text-[#7C878E]">
+            <Link href="/businesses-directory" className="hover:text-fiche-accent">
+              Businesses
+            </Link>
+            {catName && (
+              <>
+                <span aria-hidden="true" className="opacity-50">/</span>
+                <span>{catName}</span>
+              </>
+            )}
+            <span aria-hidden="true" className="opacity-50">/</span>
+            <span aria-current="page" className="font-medium text-[#4C5A63]">{biz.name}</span>
+          </nav>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-2 border-fiche-border bg-white/90 text-[#1E2A32] shadow-sm hover:bg-white"
+            aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+          >
+            {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+            <span className="hidden sm:inline">{isDark ? "Light mode" : "Dark mode"}</span>
+          </Button>
+        </div>
 
         {/* ══════════════ HERO ══════════════ */}
         <div className="relative overflow-hidden rounded-[18px] border border-fiche-border bg-white shadow-[0_1px_2px_rgba(31,26,20,.05),0_18px_40px_-24px_rgba(31,26,20,.35)]">

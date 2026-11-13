@@ -1,0 +1,45 @@
+[data-testid="business-fiche"] {
+  color-scheme: light;
+}
+
+[data-testid="business-fiche"][data-theme="dark"] {
+  --fiche-soft: #1e293b;
+  --fiche-border: #334155;
+  color-scheme: dark;
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+[data-testid="business-fiche"][data-theme="dark"] [class~="bg-white"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="bg-[#FBF7F1]"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="bg-[#F6F1E9]"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="bg-[#F3EBDF]"] {
+  background-color: #1e293b;
+}
+
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-[#1E2A32]"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-[#4C5A63]"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-slate-900"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-slate-800"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-slate-700"] {
+  color: #e2e8f0;
+}
+
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-[#7C878E]"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-slate-600"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="text-slate-500"] {
+  color: #94a3b8;
+}
+
+[data-testid="business-fiche"][data-theme="dark"] [class~="border-[#DCCFBC]"],
+[data-testid="business-fiche"][data-theme="dark"] [class~="border-fiche-border"] {
+  border-color: #334155;
+}
+
+[data-testid="business-fiche"][data-theme="dark"] input,
+[data-testid="business-fiche"][data-theme="dark"] textarea,
+[data-testid="business-fiche"][data-theme="dark"] select {
+  background-color: #0f172a;
+  border-color: #475569;
+  color: #e2e8f0;
+}
