@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { authErrorMessage } from "@/lib/auth-error";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface GeoAdminMember {
 
 export default function GeoAdminAccessManager() {
   const queryClient = useQueryClient();
+  const [isExpanded, setIsExpanded] = useState(false);
   const [email, setEmail] = useState("");
   const [gateUsername, setGateUsername] = useState("");
   const [role, setRole] = useState<GeoAdminInvitableRole>("admin");
@@ -32,6 +34,7 @@ export default function GeoAdminAccessManager() {
   const [message, setMessage] = useState("");
   const members = useQuery<{ users: GeoAdminMember[] }>({
     queryKey: ["/auth/geoadmin-access"],
+    enabled: isExpanded,
   });
 
   const invite = async (event: React.FormEvent) => {
@@ -79,7 +82,24 @@ export default function GeoAdminAccessManager() {
 
   return (
     <section className="m-4 rounded-xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm">
-      <h2 className="text-xl font-bold">Manage Geo Admin access</h2>
+      <h2>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left text-xl font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          aria-expanded={isExpanded}
+          aria-controls="geo-admin-access-manager-content"
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+        >
+          <span>Manage Geo Admin access</span>
+          <ChevronDown
+            aria-hidden="true"
+            className={`h-5 w-5 shrink-0 transition-transform ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+      </h2>
+      <div id="geo-admin-access-manager-content" hidden={!isExpanded}>
       <p className="mt-2 text-sm text-slate-600">
         Superadmin only. Invite selected staff using real email addresses.
         Admin and Moderator use the existing staff permissions; neither can
@@ -161,6 +181,7 @@ export default function GeoAdminAccessManager() {
       )}
       <GeoAdminOwnerCredentials />
       <GeoAdminAccessHistory />
+      </div>
     </section>
   );
 }

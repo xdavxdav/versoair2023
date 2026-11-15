@@ -515,7 +515,7 @@ ConnectionStatusBadge.displayName = "ConnectionStatusBadge";
 
 const AdminOnlyBanner = memo(
   ({
-    message = "Les données affichées sont en lecture seule. Les opérations CRUD sont réservées aux administrateurs autorisés via Geo Admin.",
+    message = "Displayed data is read-only. Changes are reserved for authorized administrators through Geo Admin.",
   }: {
     message?: string;
   }) => (
@@ -525,15 +525,15 @@ const AdminOnlyBanner = memo(
       </div>
       <div className="flex-1">
         <p className="text-sm font-semibold text-slate-100">
-          Mode lecture seule
+          Read-only mode
         </p>
         <p className="text-xs text-slate-400 mt-0.5">{message}</p>
         <div className="flex items-center gap-3 mt-2">
           <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-            <Eye className="h-3 w-3" /> Consultation
+            <Eye className="h-3 w-3" /> View only
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-            <Shield className="h-3 w-3" /> CRUD sous permission
+            <Shield className="h-3 w-3" /> Admin-managed changes
           </span>
         </div>
       </div>
@@ -907,6 +907,14 @@ const TableRowItem = memo(
 TableRowItem.displayName = "TableRowItem";
 
 // Main component
+interface ObserverNotification {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  read: boolean;
+}
+
 export default function DatabaseExpert({
   username,
   tier = "free",
@@ -918,7 +926,7 @@ export default function DatabaseExpert({
   role?: string | null;
   readOnly?: boolean;
 }) {
-  const { logout } = useAuthContext();
+  const { logout, user } = useAuthContext();
   const normalizedRole = role?.toLowerCase() || "subscriber";
   const owner = useOwnerAccess();
   const isSuperAdmin = owner.data?.isOwner === true;
@@ -1049,16 +1057,46 @@ export default function DatabaseExpert({
   } | null>(null);
   const [isDeletingJob, setIsDeletingJob] = useState(false);
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: "info",
-      title: "Geo Admin Observer",
-      description: "Read-only view — use Admin Dashboard for changes",
-      time: "now",
-      read: false,
+  const {
+    data: notifications = [],
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+    error: notificationError,
+    refetch: refetchNotifications,
+  } = useQuery<ObserverNotification[]>({
+    queryKey: ["geo-admin-observer-notifications", user?.id],
+    enabled: Boolean(user),
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const response = await authenticatedFetch("/api/notifications");
+      if (!response.ok) {
+        throw new Error(`Could not load notifications (${response.status}).`);
+      }
+
+      const payload = await response.json();
+      if (!payload?.success || !Array.isArray(payload.notifications)) {
+        throw new Error("The notifications endpoint returned invalid data.");
+      }
+
+      return payload.notifications.map((notification: {
+        id: string | number;
+        type?: string;
+        actorName?: string | null;
+        text?: string | null;
+        createdAt?: string;
+        read?: boolean;
+      }) => ({
+        id: String(notification.id),
+        title:
+          notification.actorName ||
+          notification.type?.replaceAll("_", " ") ||
+          "Notification",
+        description: notification.text || "",
+        createdAt: notification.createdAt || "",
+        read: Boolean(notification.read),
+      }));
     },
-  ]);
+  });
 
   // Health check query
   const { data: healthData, refetch: refetchHealth } = useQuery({
@@ -1396,9 +1434,26 @@ export default function DatabaseExpert({
     });
   }, []);
 
-  const handleMarkAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
+  const handleMarkAllAsRead = useCallback(async () => {
+    try {
+      const response = await authenticatedFetch("/api/notifications/read-all", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Could not mark notifications as read (${response.status}).`);
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ["geo-admin-observer-notifications", user?.id],
+      });
+    } catch (error) {
+      toast({
+        title: "Could not update notifications",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [queryClient, user?.id]);
 
   const handleRefresh = useCallback(() => {
     refetchHealth();
@@ -1547,10 +1602,14 @@ export default function DatabaseExpert({
                       variant="ghost"
                       size="icon"
                       className="relative text-slate-400 hover:text-slate-100 hover:bg-white/5"
-                      onClick={() => setShowNotifications(!showNotifications)}
+                      onClick={() => {
+                        const nextOpen = !showNotifications;
+                        setShowNotifications(nextOpen);
+                        if (nextOpen) void refetchNotifications();
+                      }}
                     >
                       <Bell className="h-5 w-5" />
-                      {notifications.filter((n) => !n.read).length > 0 && (
+                      {notifications.some((n) => !n.read) && (
                         <span className="absolute -top-1 -right-1 h-2 w-2 bg-rose-500 rounded-full" />
                       )}
                     </Button>
@@ -1671,6 +1730,10 @@ export default function DatabaseExpert({
                     variant="ghost"
                     size="sm"
                     onClick={handleMarkAllAsRead}
+                    disabled={
+                      notificationsLoading ||
+                      !notifications.some((notification) => !notification.read)
+                    }
                     className="text-xs text-slate-400 hover:text-slate-200"
                   >
                     Mark all read
@@ -1687,7 +1750,25 @@ export default function DatabaseExpert({
               </div>
             </div>
             <ScrollArea className="h-64">
-              {notifications.length === 0 ? (
+              {notificationsLoading ? (
+                <p role="status" className="p-6 text-center text-slate-400">
+                  Loading notifications...
+                </p>
+              ) : notificationsError ? (
+                <div role="alert" className="p-6 text-center text-sm text-rose-300">
+                  {notificationError instanceof Error
+                    ? notificationError.message
+                    : "Could not load notifications."}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void refetchNotifications()}
+                    className="mt-2 text-slate-200"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">
                   <Bell className="h-12 w-12 mx-auto mb-4 text-slate-600" />
                   <p>No notifications</p>
@@ -1712,7 +1793,9 @@ export default function DatabaseExpert({
                           {notification.description}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
-                          {notification.time}
+                          {notification.createdAt
+                            ? new Date(notification.createdAt).toLocaleString()
+                            : "Time unavailable"}
                         </p>
                       </div>
                     </div>
