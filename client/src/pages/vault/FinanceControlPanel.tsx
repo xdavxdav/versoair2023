@@ -665,7 +665,7 @@ export default function FinanceControlPanel() {
         />
         <DbTable
           name="adCampaigns"
-          columns="id, name, budget (decimal), status, start_date, end_date, target_audience, impressions, clicks, created_at"
+          columns="id (uuid PK), business_id (FK → businesses), name, description, budget (numeric 12,2; currency unspecified), status, start_date, end_date, impressions, clicks, conversions, created_at, updated_at"
         />
         <DbTable
           name="paymentCardTypes"

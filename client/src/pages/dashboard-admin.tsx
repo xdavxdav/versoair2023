@@ -13,6 +13,7 @@ import {
   initializeCsrfToken,
 } from "@/lib/auth";
 import { readAdminBusinessResponse } from "@/lib/admin-business-api";
+import { getBusinessPublicVisibilityLabel } from "@/lib/business-public-visibility";
 import { useSessionTimer } from "@/hooks/use-session-timer";
 import { SessionTimerBar } from "@/components/ui/session-timer-bar";
 import { MarketplaceModeration } from "@/components/sections/MarketplaceModeration";
@@ -1167,6 +1168,7 @@ const BusinessManagement = ({
         const params = new URLSearchParams({
           page: String(pageNum),
           limit: "20",
+          status: "all",
         });
         if (searchTerm.trim()) params.set("search", searchTerm.trim());
         if (categoryFilter !== "all") params.set("category", categoryFilter);
@@ -1860,6 +1862,10 @@ const BusinessManagement = ({
                     const Icon = fallbackCategory?.icon || Store;
                     const bgColor = fallbackCategory?.bgColor || "bg-gray-100";
                     const color = fallbackCategory?.color || "text-gray-600";
+                    const visibilityLabel = getBusinessPublicVisibilityLabel(
+                      business,
+                      import.meta.env.VITE_DIRECTORY_COUNTRY_CODE || "CA",
+                    );
 
                     return (
                       <TableRow
@@ -1884,6 +1890,15 @@ const BusinessManagement = ({
                               </p>
                               <p className="text-sm text-gray-500 truncate max-w-[180px] sm:max-w-none">
                                 {business.address || business.location || "—"}
+                              </p>
+                              <p
+                                className={`mt-1 text-xs font-medium ${
+                                  visibilityLabel === "Public"
+                                    ? "text-emerald-700"
+                                    : "text-amber-700"
+                                }`}
+                              >
+                                {visibilityLabel}
                               </p>
                               {/* Mobile-only: show category + status inline */}
                               <div className="flex items-center gap-1.5 mt-1 sm:hidden">
@@ -3029,6 +3044,38 @@ const BusinessManagement = ({
                     })
                   }
                 />
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  Directory visibility
+                </h4>
+                <label className="flex items-center gap-3 rounded-md border p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(
+                      currentBusiness.isVerified ?? currentBusiness.is_verified,
+                    )}
+                    onChange={(event) =>
+                      setCurrentBusiness({
+                        ...currentBusiness,
+                        isVerified: event.target.checked,
+                        is_verified: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>
+                    Verified for the public directory
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      {getBusinessPublicVisibilityLabel(
+                        currentBusiness,
+                        import.meta.env.VITE_DIRECTORY_COUNTRY_CODE || "CA",
+                      )}
+                    </span>
+                  </span>
+                </label>
               </div>
             </div>
           )}

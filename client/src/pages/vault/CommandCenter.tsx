@@ -1302,7 +1302,7 @@ export default function CommandCenter() {
                   />
                   <DbTable
                     name="adCampaigns"
-                    columns="id, name, budget, status, start_date, end_date, target_audience, created_at"
+                    columns="id (uuid), business_id, name, description, budget (currency unspecified), status, start_date, end_date, impressions, clicks, conversions, created_at, updated_at"
                   />
                   <DbTable
                     name="reservations"

@@ -515,7 +515,7 @@ ConnectionStatusBadge.displayName = "ConnectionStatusBadge";
 
 const AdminOnlyBanner = memo(
   ({
-    message = "Les données affichées sont en lecture seule. Les opérations CRUD sont réservées aux administrateurs autorisés via Geo Admin.",
+    message = "Displayed data is read-only. Changes are reserved for authorized administrators through Geo Admin.",
   }: {
     message?: string;
   }) => (
@@ -525,15 +525,15 @@ const AdminOnlyBanner = memo(
       </div>
       <div className="flex-1">
         <p className="text-sm font-semibold text-slate-100">
-          Mode lecture seule
+          Read-only mode
         </p>
         <p className="text-xs text-slate-400 mt-0.5">{message}</p>
         <div className="flex items-center gap-3 mt-2">
           <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-            <Eye className="h-3 w-3" /> Consultation
+            <Eye className="h-3 w-3" /> View only
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-            <Shield className="h-3 w-3" /> CRUD sous permission
+            <Shield className="h-3 w-3" /> Admin-managed changes
           </span>
         </div>
       </div>
@@ -3201,6 +3201,10 @@ export default function DatabaseExpert({
                       {" · "}
                       {adCampaignsData.length} campaigns
                     </CardDescription>
+                    <p className="mt-2 text-xs text-amber-200/80">
+                      Planning records only: amounts have no stored currency or
+                      daily cap. Active does not publish ads or charge.
+                    </p>
                   </div>
                   <Badge
                     variant="outline"
@@ -3247,7 +3251,16 @@ export default function DatabaseExpert({
                           </div>
                           <div className="flex items-center gap-4 text-xs text-slate-400">
                             <span>{ad.objective}</span>
-                            <span>${ad.daily_budget}/day</span>
+                            <span>
+                              Planned amount (currency unspecified):{" "}
+                              {Number(ad.daily_budget || 0).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}
+                            </span>
                             {ad.business_name && (
                               <span>by {ad.business_name}</span>
                             )}

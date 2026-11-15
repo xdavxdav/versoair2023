@@ -121,7 +121,7 @@ export default function AdCampaignsPage() {
           startDate: form.startDate,
           endDate: form.endDate || undefined,
           description: form.description || undefined,
-          status: "active",
+          status: "draft",
         }),
       });
 
@@ -237,6 +237,15 @@ export default function AdCampaignsPage() {
           </Button>
         </div>
 
+        <div
+          role="note"
+          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          Campaigns are planning records only. Creating or marking one active
+          does not publish ads or charge a payment method. Amounts have no
+          stored currency and are not enforced daily spending limits.
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
@@ -256,9 +265,14 @@ export default function AdCampaignsPage() {
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Budget</p>
+                <p className="text-sm text-gray-500">
+                  Total Planned Amount (currency unspecified)
+                </p>
                 <p className="text-xl font-bold">
-                  ${totalBudget.toLocaleString()}
+                  {totalBudget.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               </div>
             </CardContent>
@@ -323,7 +337,9 @@ export default function AdCampaignsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="budget">Budget (USD) *</Label>
+                    <Label htmlFor="budget">
+                      Planned Amount (currency unspecified) *
+                    </Label>
                     <Input
                       id="budget"
                       type="number"
@@ -435,7 +451,9 @@ export default function AdCampaignsPage() {
                     <tr className="border-b text-left text-gray-500">
                       <th className="pb-3 font-medium">Campaign</th>
                       <th className="pb-3 font-medium">Status</th>
-                      <th className="pb-3 font-medium text-right">Budget</th>
+                      <th className="pb-3 font-medium text-right">
+                        Planned Amount (currency unspecified)
+                      </th>
                       <th className="pb-3 font-medium text-right">
                         Impressions
                       </th>
@@ -466,7 +484,13 @@ export default function AdCampaignsPage() {
                         </td>
                         <td className="py-3">{statusBadge(campaign.status)}</td>
                         <td className="py-3 text-right font-mono">
-                          ${parseFloat(campaign.budget).toLocaleString()}
+                          {parseFloat(campaign.budget).toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
                         </td>
                         <td className="py-3 text-right">
                           {(campaign.impressions || 0).toLocaleString()}

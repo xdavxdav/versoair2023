@@ -655,7 +655,7 @@ export const adCampaigns = pgTable("ad_campaigns", {
   name: text("name").notNull(),
   description: text("description"),
   budget: decimal("budget", { precision: 12, scale: 2 }).notNull(),
-  status: varchar("status").default("active"), // 'active', 'paused', 'ended'
+  status: varchar("status").default("draft"), // 'draft', 'active', 'paused', 'ended'
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
   impressions: integer("impressions").default(0),
@@ -4008,3 +4008,60 @@ export const systemSettings = pgTable("system_settings", {
 
 export const insertSystemSettingsSchema = createInsertSchema(systemSettings);
 export type SystemSettings = typeof systemSettings.$inferSelect;
+
+// ─── Presentation Maker (VersoAI Presentations) ─────────────────────────────
+export const presentations = pgTable(
+  "presentations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    topic: text("topic").notNull(),
+    audience: text("audience"),
+    slideCount: integer("slide_count").default(10),
+    language: varchar("language", { length: 10 }).default("en"),
+    outline: text("outline"), // Draft outline, editable
+    outlineApprovedAt: timestamp("outline_approved_at"), // When outline was approved
+    pptxUrl: text("pptx_url"), // URL to generated .pptx file
+    fileSize: integer("file_size"), // bytes
+    status: varchar("status", { length: 20 }).default("draft"),
+    // 'draft' | 'outline_approved' | 'generating' | 'generated' | 'saved' | 'published'
+    isPublished: boolean("is_published").default(false),
+    publishedAt: timestamp("published_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("presentations_user_idx").on(t.userId),
+    statusIdx: index("presentations_status_idx").on(t.status),
+    publishedIdx: index("presentations_published_idx").on(t.isPublished),
+  }),
+);
+
+export const insertPresentationSchema = createInsertSchema(presentations);
+export type Presentation = typeof presentations.$inferSelect;
+
+// ─── Presentation Generation Quota (per-user, per-IP daily tracking) ────────
+export const presentationQuota = pgTable(
+  "presentation_quota",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .unique("quota_user_idx"),
+    ipHash: varchar("ip_hash", { length: 255 }).unique("quota_ip_idx"),
+    // ip_hash = SHA256(IP + salt); salted to prevent precomputation
+    generationsToday: integer("generations_today").default(0),
+    lastResetAt: timestamp("last_reset_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userResetIdx: index("quota_user_reset_idx").on(t.userId, t.lastResetAt),
+    ipResetIdx: index("quota_ip_reset_idx").on(t.ipHash, t.lastResetAt),
+  }),
+);
+
+export const insertPresentationQuotaSchema = createInsertSchema(presentationQuota);
+export type PresentationQuota = typeof presentationQuota.$inferSelect;

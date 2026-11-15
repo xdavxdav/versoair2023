@@ -92,6 +92,7 @@ router.get(
           rating: businesses.rating,
           countryCode: businesses.countryCode,
           cityName: businesses.cityName,
+          website: businesses.website,
           createdAt: businesses.createdAt,
         })
         .from(businesses)
@@ -289,6 +290,124 @@ router.post(
 );
 
 /**
+ * POST /api/v1/admin/businesses/draft
+ * Create a new business in draft state (inactive, pending, unverified)
+ * Draft businesses do not appear in public listings or trigger notifications
+ * Used for internal review and staging before public activation
+ */
+router.post(
+  "/draft",
+  requireAuth(["admin"]),
+  asyncHandler(async (req, res) => {
+    const {
+      name,
+      categoryId,
+      description,
+      countryCode,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !categoryId) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Name and categoryId are required for draft creation",
+        },
+      });
+    }
+
+    // Verify category exists
+    const category = await db
+      .select({
+        id: businessCategories.id,
+        name: businessCategories.name,
+        slug: businessCategories.slug,
+      })
+      .from(businessCategories)
+      .where(eq(businessCategories.id, categoryId))
+      .limit(1);
+
+    if (!category.length) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        error: {
+          code: "CATEGORY_NOT_FOUND",
+          message: "Category does not exist",
+        },
+      });
+    }
+
+    // Create business in draft state
+    // Explicitly set: isActive=false, approvalStatus='pending', verificationStatus='unverified'
+    // This ensures the business does NOT appear in public listings
+    const [business] = await db
+      .insert(businesses)
+      .values({
+        name,
+        categoryId,
+        description: description || null,
+        countryCode: countryCode ? countryCode.toUpperCase() : null,
+        isActive: false, // 🔴 CRITICAL: Draft must be inactive
+        approvalStatus: "pending", // 🔴 CRITICAL: Draft must be pending
+        verificationStatus: "unverified", // 🔴 CRITICAL: Draft must be unverified
+        // Do not set email, phone, address, etc. - draft may be incomplete
+        email: null,
+        phone: null,
+        address: null,
+        location: null,
+        latitude: null,
+        longitude: null,
+        website: null,
+        tags: null,
+        regionId: null,
+        cityName: null,
+        businessType: null,
+        openingHours: null,
+        attributes: null,
+      })
+      .returning({
+        id: businesses.id,
+        name: businesses.name,
+        categoryId: businesses.categoryId,
+        description: businesses.description,
+        countryCode: businesses.countryCode,
+        isActive: businesses.isActive,
+        approvalStatus: businesses.approvalStatus,
+        verificationStatus: businesses.verificationStatus,
+        createdAt: businesses.createdAt,
+      });
+
+    // Audit log
+    try {
+      await db.insert(auditLogs).values({
+        action: "CREATE_DRAFT",
+        entityType: "business",
+        entityId: String(business.id),
+      });
+    } catch (e) {
+      console.warn("Audit log insert failed:", e);
+    }
+
+    // 🔴 NO email, NO GeoAdmin notification for draft
+    // Draft is internal-only; when activated, a separate approval event notifies
+
+    res.status(201).json({
+      success: true,
+      status: 201,
+      message: "Draft business created successfully",
+      data: business,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        note: "This draft business is not visible to the public. It will remain hidden until its status is changed to active and it is verified.",
+      },
+    });
+  }),
+);
+
+/**
  * GET /api/v1/admin/businesses/:id
  * Get a specific business
  */
@@ -352,6 +471,7 @@ router.put(
       description,
       address,
       isActive,
+      isVerified,
       countryCode,
       country_code,
       cityName,
@@ -397,6 +517,17 @@ router.put(
         success: false,
         status: 404,
         error: { code: "NOT_FOUND", message: "Business not found" },
+      });
+    }
+
+    if (isVerified !== undefined && typeof isVerified !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "isVerified must be a boolean",
+        },
       });
     }
 
@@ -464,6 +595,9 @@ router.put(
     if (isActive !== undefined) {
       updateFields.isActive = isActive;
     }
+    if (isVerified !== undefined) {
+      updateFields.isVerified = isVerified;
+    }
     if (parsedTags !== undefined) {
       updateFields.tags = parsedTags;
     }
@@ -489,6 +623,7 @@ router.put(
         latitude: businesses.latitude,
         longitude: businesses.longitude,
         website: businesses.website,
+        isVerified: businesses.isVerified,
         isActive: businesses.isActive,
         rating: businesses.rating,
         createdAt: businesses.createdAt,
@@ -500,6 +635,10 @@ router.put(
         action: "UPDATE",
         entityType: "business",
         entityId: String(businessId),
+        changes:
+          isVerified === undefined
+            ? undefined
+            : { isVerified: { from: oldBusiness.isVerified, to: isVerified } },
       });
     } catch (e) {
       console.warn("Audit log insert failed:", e);

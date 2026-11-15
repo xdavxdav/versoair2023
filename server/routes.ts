@@ -124,6 +124,7 @@ import publicStatsRouter from "./routes/public-stats";
 import seedRouter from "./routes/seed";
 import systemRouter from "./routes/system";
 import usersRouter from "./routes/users";
+import presentationsRouter from "./routes/presentations";
 export async function registerRoutes(app: Express) {
   app.use("/api/admin", requireOwner);
   app.get("/auth/owner-status", requireAuth(), (req, res) => {
@@ -342,6 +343,9 @@ export async function registerRoutes(app: Express) {
 
   // ─── Ad Campaigns endpoint (used by geo-admin dashboard) ───
   app.use("/api/ad-campaigns", adCampaignsRouter);
+
+  // ─── VersoAI Presentation Maker ───
+  app.use("/api/presentation", presentationsRouter);
 
   // Health check endpoint
   app.use("/api", systemRouter);

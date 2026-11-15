@@ -235,3 +235,33 @@ test("adds the message send key column and its partial unique index idempotently
     restoreEnv("NODE_ENV", previousNodeEnv);
   }
 });
+
+test("creates campaign tables with a draft status default", async () => {
+  const previousDisableFlag = process.env.DISABLE_DB_CHECK;
+  const previousNodeEnv = process.env.NODE_ENV;
+  delete process.env.DISABLE_DB_CHECK;
+  process.env.NODE_ENV = "test";
+  const queries: string[] = [];
+  const client = {
+    async query(query: string) {
+      queries.push(query.replace(/\s+/g, " ").trim());
+      if (query.includes("information_schema.tables")) {
+        return { rows: [{ table_name: "users" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    },
+    release() {},
+  } as unknown as PoolClient;
+
+  try {
+    assert.equal(await ensureAllTables(async () => client), "verified");
+    const campaignTable = queries.find((query) =>
+      query.includes("CREATE TABLE IF NOT EXISTS ad_campaigns"),
+    );
+    assert.ok(campaignTable, "expected the ad_campaigns table to be ensured");
+    assert.match(campaignTable, /status VARCHAR DEFAULT 'draft'/);
+  } finally {
+    restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
+    restoreEnv("NODE_ENV", previousNodeEnv);
+  }
+});

@@ -118,6 +118,13 @@ with duration and terms confirmed before activation. This clarification does not
 activate trials or change account permissions.
 Selecting an offer or preparing the mail inquiry never upgrades an account.
 
+### GeoAdmin campaign records
+
+GeoAdmin campaigns are planning records. A **Planned Amount** is stored for
+reference only; it is not an enforced daily cap and no currency, charge,
+delivery, approval, or performance workflow is started by creating or marking
+a campaign active. New campaigns default to **Draft**.
+
 The navy/gold promotional card keeps the same content and visual treatment
 across resolutions. Offer columns adapt to the card's available width, with
 full-width placement above the selector on pricing and the GeoAdmin gate.

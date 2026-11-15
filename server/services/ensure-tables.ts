@@ -1279,7 +1279,7 @@ const TABLE_STATEMENTS: TableDef[] = [
       name TEXT NOT NULL,
       description TEXT,
       budget DECIMAL(12,2) NOT NULL,
-      status VARCHAR DEFAULT 'active',
+      status VARCHAR DEFAULT 'draft',
       start_date TIMESTAMP NOT NULL,
       end_date TIMESTAMP,
       impressions INTEGER DEFAULT 0,

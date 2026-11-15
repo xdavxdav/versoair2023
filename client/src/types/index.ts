@@ -147,62 +147,6 @@ export const analytics = pgTable("analytics", {
 });
 
 // =======================
-// ADVERTISING TABLES
-// =======================
-
-export const adCampaigns = pgTable("ad_campaigns", {
-  id: serial("id").primaryKey(),
-  businessId: integer("business_id").notNull(),
-  name: text("name").notNull(),
-  objective: text("objective"),
-  dailyBudget: decimal("daily_budget"),
-  startDate: date("start_date"),
-  endDate: date("end_date"),
-  status: text("status").default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const adAudiences = pgTable("ad_audiences", {
-  id: serial("id").primaryKey(),
-  campaignId: integer("campaign_id").notNull(),
-  targetRegionId: integer("target_region_id"),
-  ageMin: integer("age_min"),
-  ageMax: integer("age_max"),
-  interests: jsonb("interests"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const adCreatives = pgTable("ad_creatives", {
-  id: serial("id").primaryKey(),
-  campaignId: integer("campaign_id").notNull(),
-  creativeType: text("creative_type"),
-  headline: text("headline"),
-  description: text("description"),
-  mediaUrl: text("media_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const adPerformance = pgTable("ad_performance", {
-  id: serial("id").primaryKey(),
-  campaignId: integer("campaign_id").notNull(),
-  impressions: integer("impressions").default(0),
-  clicks: integer("clicks").default(0),
-  conversions: integer("conversions").default(0),
-  spend: decimal("spend").default("0"),
-  reportDate: date("report_date").defaultNow(),
-});
-
-export const billingHistory = pgTable("billing_history", {
-  id: serial("id").primaryKey(),
-  businessId: integer("business_id").notNull(),
-  campaignId: integer("campaign_id"),
-  amount: decimal("amount"),
-  paymentMethod: text("payment_method"),
-  paymentStatus: text("payment_status").default("pending"),
-  transactionDate: timestamp("transaction_date").defaultNow(),
-});
-
-// =======================
 // GEOGRAPHY TABLES
 // =======================
 
@@ -504,8 +448,6 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   reviews: many(businessReviews),
   analytics: many(analytics),
   reservations: many(reservations),
-  adCampaigns: many(adCampaigns),
-  billingHistory: many(billingHistory),
   favorites: many(userFavorites),
 }));
 
@@ -542,58 +484,6 @@ export const businessReviewsRelations = relations(
     }),
   })
 );
-
-// Ad Campaigns Relations
-export const adCampaignsRelations = relations(adCampaigns, ({ one, many }) => ({
-  business: one(businesses, {
-    fields: [adCampaigns.businessId],
-    references: [businesses.id],
-  }),
-  audiences: many(adAudiences),
-  creatives: many(adCreatives),
-  performances: many(adPerformance),
-  billingRecords: many(billingHistory),
-}));
-
-// Ad Audiences Relations
-export const adAudiencesRelations = relations(adAudiences, ({ one }) => ({
-  campaign: one(adCampaigns, {
-    fields: [adAudiences.campaignId],
-    references: [adCampaigns.id],
-  }),
-  targetRegion: one(targetRegions, {
-    fields: [adAudiences.targetRegionId],
-    references: [targetRegions.id],
-  }),
-}));
-
-// Ad Creatives Relations
-export const adCreativesRelations = relations(adCreatives, ({ one }) => ({
-  campaign: one(adCampaigns, {
-    fields: [adCreatives.campaignId],
-    references: [adCampaigns.id],
-  }),
-}));
-
-// Ad Performance Relations
-export const adPerformanceRelations = relations(adPerformance, ({ one }) => ({
-  campaign: one(adCampaigns, {
-    fields: [adPerformance.campaignId],
-    references: [adCampaigns.id],
-  }),
-}));
-
-// Billing History Relations
-export const billingHistoryRelations = relations(billingHistory, ({ one }) => ({
-  business: one(businesses, {
-    fields: [billingHistory.businessId],
-    references: [businesses.id],
-  }),
-  campaign: one(adCampaigns, {
-    fields: [billingHistory.campaignId],
-    references: [adCampaigns.id],
-  }),
-}));
 
 // Geography Relations
 export const countriesRelations = relations(countries, ({ many }) => ({
@@ -755,11 +645,6 @@ export const insertBusinessSchema = createInsertSchema(businesses);
 export const insertBusinessCategorySchema =
   createInsertSchema(businessCategories);
 
-// Advertising schemas
-export const insertAdCampaignSchema = createInsertSchema(adCampaigns);
-export const insertAdAudienceSchema = createInsertSchema(adAudiences);
-export const insertAdCreativeSchema = createInsertSchema(adCreatives);
-
 // Job schemas
 export const insertJobSchema = createInsertSchema(jobs);
 export const insertJobApplicationSchema = createInsertSchema(jobApplications);
@@ -889,14 +774,6 @@ export type UserWithRelations = User & {
   notifications?: (typeof notifications.$inferSelect)[];
 };
 
-// Ad campaign with related data
-export type AdCampaignWithRelations = AdCampaign & {
-  business?: Business;
-  audiences?: (typeof adAudiences.$inferSelect)[];
-  creatives?: (typeof adCreatives.$inferSelect)[];
-  performance?: (typeof adPerformance.$inferSelect)[];
-};
-
 // Job with related data
 export type JobWithRelations = Job & {
   applications?: (typeof jobApplications.$inferSelect)[];
@@ -984,15 +861,6 @@ export type InsertBusinessCategory = z.infer<
   typeof insertBusinessCategorySchema
 >;
 
-export type AdCampaign = typeof adCampaigns.$inferSelect;
-export type InsertAdCampaign = z.infer<typeof insertAdCampaignSchema>;
-
-export type AdAudience = typeof adAudiences.$inferSelect;
-export type InsertAdAudience = z.infer<typeof insertAdAudienceSchema>;
-
-export type AdCreative = typeof adCreatives.$inferSelect;
-export type InsertAdCreative = z.infer<typeof insertAdCreativeSchema>;
-
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = z.infer<typeof insertJobSchema>;
 
@@ -1073,11 +941,6 @@ export default {
   businessReviews,
   reservations,
   analytics,
-  adCampaigns,
-  adAudiences,
-  adCreatives,
-  adPerformance,
-  billingHistory,
   countries,
   regions,
   cities,
@@ -1105,11 +968,6 @@ export default {
   businessHoursRelations,
   businessServicesRelations,
   businessReviewsRelations,
-  adCampaignsRelations,
-  adAudiencesRelations,
-  adCreativesRelations,
-  adPerformanceRelations,
-  billingHistoryRelations,
   countriesRelations,
   regionsRelations,
   citiesRelations,

@@ -94,6 +94,7 @@ const BusinessDetail = lazy(() => import("@/pages/business-detail"));
 const CategoryDetail = lazy(() => import("@/pages/category-detail"));
 const AnnuaireTV = lazy(() => import("@/pages/annuaire-tv"));
 const DatabaseResults = lazy(() => import("@/pages/database-results"));
+const PresentationMaker = lazy(() => import("@/pages/presentation-maker"));
 
 // ─────────────────────────────────────────────────────
 // 📋 Services & Careers (lazy-loaded)
@@ -604,7 +605,7 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={AdCampaignsPage}
-            roles={["admin", "superuser", "moderator", "business_owner"]}
+            roles={["admin", "superuser"]}
           />
         )}
       </Route>
@@ -626,6 +627,7 @@ function Router() {
       <Route path="/category/:slug" component={CategoryDetail} />
       <Route path="/annuaire-tv" component={AnnuaireTV} />
       <Route path="/database-results" component={DatabaseResults} />
+      <Route path="/versoai/presentation-maker" component={PresentationMaker} />
 
       {/* ═══════════════════════════════════════════════
           📋 SERVICES — Platform utilities & careers

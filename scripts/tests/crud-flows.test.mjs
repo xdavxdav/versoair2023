@@ -476,6 +476,37 @@ test("business: the exact dashboard payload persists and shows in the country-fi
   assert.equal(noCategory.body.error.code, "CATEGORY_NOT_FOUND");
 });
 
+test("business: an admin can verify a Canadian listing through PUT, but a business owner cannot", async () => {
+  const tag = tagFor("business_verify");
+  const created = await call("admin", "POST", "/api/v1/admin/businesses", {
+    name: tag,
+    categoryId: fixture.categoryId,
+    countryCode: "CA",
+    cityName: "Toronto",
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+
+  const id = created.body.data.id;
+  const denied = await call("businessOwner", "PUT", `/api/v1/admin/businesses/${id}`, {
+    isVerified: true,
+  });
+  assert.equal(denied.status, 403, JSON.stringify(denied.body));
+
+  const verified = await call("admin", "PUT", `/api/v1/admin/businesses/${id}`, {
+    isVerified: true,
+  });
+  assert.equal(verified.status, 200, JSON.stringify(verified.body));
+  assert.equal(verified.body.data.isVerified, true);
+  assert.equal(
+    (await pool.query("SELECT is_verified FROM businesses WHERE id = $1", [id])).rows[0].is_verified,
+    true,
+  );
+
+  const publicList = await call("anonymous", "GET", `/api/businesses?search=${encodeURIComponent(tag)}`);
+  assert.equal(publicList.status, 200, JSON.stringify(publicList.body));
+  assert.ok(publicList.body.data.some((business) => business.id === id));
+});
+
 test("job: the exact dashboard payload persists, including country, and lists under that country", async () => {
   const tag = tagFor("job_ui");
   const payload = {
