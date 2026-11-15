@@ -240,6 +240,7 @@ const Documentation = lazy(() => import("@/pages/docs"));
 // ─────────────────────────────────────────────────────
 const PrivacyPolicy = lazy(() => import("@/pages/privacy"));
 const TermsOfService = lazy(() => import("@/pages/terms"));
+const AcceptableUsePolicy = lazy(() => import("@/pages/aup"));
 const CookiePolicy = lazy(() => import("@/pages/cookies"));
 const GDPRCompliance = lazy(() => import("@/pages/gdpr"));
 const InformationHub = lazy(() => import("@/pages/information"));
@@ -828,6 +829,7 @@ function Router() {
           ═══════════════════════════════════════════════ */}
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
+      <Route path="/aup" component={AcceptableUsePolicy} />
       <Route path="/cookies" component={CookiePolicy} />
       <Route path="/gdpr" component={GDPRCompliance} />
       <Route path="/information" component={InformationHub} />
