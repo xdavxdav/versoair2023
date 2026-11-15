@@ -8,12 +8,9 @@ import {
   consumePresentationQuota,
   getClientIP,
 } from "../services/presentation-quota";
-import { generatePresentation, sanitizePath } from "../services/pptx-builder";
+import { generatePresentation } from "../services/pptx-builder";
 import { requireVerifiedTier } from "../middleware/presentation-tier-gate";
 import { requireAuth } from "../middleware/auth";
-import path from "path";
-import fs from "fs";
-import os from "os";
 
 const router = Router();
 
@@ -358,14 +355,7 @@ router.delete(
         return;
       }
 
-      // Delete PPTX file if it exists
-      const tmpDir = path.join(os.tmpdir(), "verso-presentations");
-      const filePath = path.join(tmpDir, `${id}.pptx`);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
-      // Delete database record
+      // Delete database record (blob is automatically deleted by cascade)
       await db
         .delete(presentations)
         .where(eq(presentations.id, id));
