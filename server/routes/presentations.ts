@@ -204,6 +204,17 @@ router.post(
       }
 
       // Generate PPTX
+/**
+ * WARNING: File Storage
+ * Currently using /tmp directory, which is not guaranteed to persist across deployments.
+ * For production, configure one of:
+ * 1. AWS S3 (with cloudfront CDN for downloads)
+ * 2. Google Cloud Storage
+ * 3. Persistent file system mount (EBS volume on AWS, persistent disk on GCP)
+ * 4. Azure Blob Storage
+ * Set PPTX_STORAGE_TYPE env var to: "s3" | "gcs" | "local" | "azure"
+ * Each requires corresponding SDK and configuration in environment variables.
+ */
       const tmpDir = path.join(os.tmpdir(), "verso-presentations");
       const fileName = `${presentation[0].id}.pptx`;
       const outputPath = sanitizePath(tmpDir, fileName);

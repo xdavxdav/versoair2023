@@ -4,7 +4,8 @@ import path from "path";
 import fs from "fs";
 
 const VERSO_AIR_FOOTER = "Made with Verso Air — versoair.com";
-const VERSO_AIR_BRAND_COLOR = "#0066CC";
+const VERSO_AIR_BRAND_COLOR = "#2C1810"; // Verso Air dark brown
+const VERSO_AIR_ACCENT = "#D4AF37"; // Verso Air gold accent
 
 /**
  * Zod schema for validating AI-generated slide content
@@ -133,8 +134,9 @@ export async function generatePresentation(
 
   // Closing branded slide
   const closingSlide = prs.addSlide("LAYOUT1");
-  closingSlide.background = { color: VERSO_AIR_BRAND_COLOR };
+  closingSlide.background = { color: VERSO_AIR_BRAND_COLOR }; // Dark brown background
   closingSlide.addText("Verso Air", {
+    // White text on dark brown for excellent readability
     x: 0.5,
     y: 2.5,
     w: 9,

@@ -38,6 +38,10 @@ interface Presentation {
 
 export default function PresentationMakerPage() {
   const { user, loading: authLoading } = useAuth();
+  // ⚠️ Phase 1 Demo: AI content is mocked for demonstration
+  // Real Groq/Ollama integration is deferred to Phase 1.1
+  const [showMockWarning] = useState(true);
+
   const [location, navigate] = useLocation();
   const [step, setStep] = useState<"input" | "outline" | "generate" | "download">("input");
   const [currentPresentation, setCurrentPresentation] = useState<Presentation | null>(null);
@@ -173,7 +177,7 @@ export default function PresentationMakerPage() {
     setError(null);
 
     try {
-      // Mock AI-generated content for demo; in production, call AI service
+      // ⚠️ DEMO ONLY: Mock AI-generated content. Real AI integration deferred to Phase 1.1
       const mockSlides = [
         {
           title: currentPresentation.topic,

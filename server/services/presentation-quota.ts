@@ -5,7 +5,23 @@ import { eq, and, gt } from "drizzle-orm";
 
 const DAILY_LIMIT = 5; // Configurable: 5 presentations per day per account and IP
 const QUOTA_RESET_HOURS = 24;
-const IP_SALT = process.env.IP_QUOTA_SALT || "verso-air-quota-salt";
+// IP_QUOTA_SALT must be configured in production
+// Fallback to "dev-only" for local testing only
+const IP_SALT = (() => {
+  const salt = process.env.IP_QUOTA_SALT;
+  if (!salt) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "IP_QUOTA_SALT environment variable is required in production. Set it to a strong random string."
+      );
+    }
+    console.warn(
+      "[DEV] IP_QUOTA_SALT not set. Using development default. DO NOT USE IN PRODUCTION."
+    );
+    return "dev-only-change-in-production";
+  }
+  return salt;
+})();
 
 /**
  * Hash an IP address for safe storage in quota tracking
