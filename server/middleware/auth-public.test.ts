@@ -1,3 +1,4 @@
+import "../test-support/env";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import test from "node:test";
@@ -10,10 +11,12 @@ test("anonymous public reads work through the global auth gate without exposing 
   process.env.DATABASE_URL = "postgresql://test:test@127.0.0.1:1/test";
   const { globalAuthGate } = await import("./auth");
   const { pool } = await import("../db");
+  const { default: notifications } = await import("../routes/notifications");
   const app = express();
   app.use(globalAuthGate);
   app.use("/api/translations", translations);
   app.use("/api/music", music);
+  app.use("/api/notifications", notifications);
   app.get("/auth/oauth/providers", (_req, res) => res.json({ providers: [] }));
   app.get("/api/page-readiness", (_req, res) =>
     res.json({ blockedPaths: ["/get-involved"] }),
@@ -42,6 +45,22 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await fetch(`${origin}/api/translations/not-a-language`)).status, 400);
     assert.equal((await fetch(`${origin}/api/translations/en?text=private`)).status, 400);
     assert.equal((await fetch(`${origin}/api/music/analytics`)).status, 401);
+    const publicNotifications = await fetch(`${origin}/api/notifications`);
+    assert.equal(publicNotifications.status, 200);
+    assert.equal((await publicNotifications.json()).publicUpdates.url, "/news");
+    const publicUnreadCount = await fetch(
+      `${origin}/api/notifications/unread-count`,
+    );
+    assert.equal(publicUnreadCount.status, 200);
+    assert.equal((await publicUnreadCount.json()).count, 0);
+    assert.equal(
+      (
+        await fetch(`${origin}/api/notifications/read-all`, {
+          method: "POST",
+        })
+      ).status,
+      401,
+    );
     assert.equal((await fetch(`${origin}/auth/oauth/providers`)).status, 200);
     const pageReadiness = await fetch(`${origin}/api/page-readiness`);
     assert.equal(pageReadiness.status, 200);
