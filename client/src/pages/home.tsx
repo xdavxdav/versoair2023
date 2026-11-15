@@ -968,7 +968,7 @@ function ShowcaseToggle({
   gradient,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
   icon: React.ReactNode;
   isOpen: boolean;
   onToggle: () => void;
@@ -2031,8 +2031,9 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.4 }}
               className="mx-auto max-w-3xl px-2 text-base text-white/90 sm:text-lg md:text-xl lg:text-2xl"
             >
+              <span className="notranslate">VERSO AIR INC.</span>{" "}
               {localize(
-                "VERSO AIR INC. lance sa plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs. Nous démarrons en Ontario, avec l’ambition de nous développer à l’échelle mondiale.",
+                "lance sa plateforme numérique dédiée à la visibilité des entreprises et aux projets créatifs. Nous démarrons en Ontario, avec l’ambition de nous développer à l’échelle mondiale.",
               )}
             </motion.p>
 
@@ -2909,7 +2910,7 @@ export default function Home() {
             <div className="mb-5 flex flex-col gap-2 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">
-                  Explorer Verso Air
+                  Explorer <span className="notranslate">Verso Air</span>
                 </p>
                 <h2 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
                   Vos points de départ
@@ -4167,7 +4168,11 @@ export default function Home() {
 
       {/* Verso Air Music Artists Section */}
       <ShowcaseToggle
-        label="Verso Air Music Label"
+        label={
+          <>
+            <span className="notranslate">Verso Air</span> Music Label
+          </>
+        }
         icon={<Disc3 className="w-5 h-5" />}
         isOpen={!!expandedSections["music"]}
         onToggle={() => toggleSection("music")}
