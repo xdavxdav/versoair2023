@@ -16,6 +16,7 @@ export const PUBLIC_STATIC_ROUTES: ReadonlyArray<{
   { path: "/about", changefreq: "monthly", priority: "0.7" },
   { path: "/contact", changefreq: "monthly", priority: "0.7" },
   { path: "/get-involved", changefreq: "monthly", priority: "0.6" },
+  { path: "/news", changefreq: "weekly", priority: "0.6" },
   { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },
   { path: "/cookies", changefreq: "yearly", priority: "0.3" },

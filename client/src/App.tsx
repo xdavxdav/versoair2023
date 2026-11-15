@@ -99,7 +99,7 @@ const DatabaseResults = lazy(() => import("@/pages/database-results"));
 // 📋 Services & Careers (lazy-loaded)
 // ─────────────────────────────────────────────────────
 const Services = lazy(() => import("@/pages/services"));
-const News = lazy(() => import("@/pages/services/news"));
+const News = lazy(() => import("@/pages/news"));
 const Careers = lazy(() => import("@/pages/services/careers"));
 const CareersPortal = lazy(() => import("@/pages/careers-portal"));
 const Contractors = lazy(() => import("@/pages/services/contractors"));
@@ -631,6 +631,7 @@ function Router() {
           📋 SERVICES — Platform utilities & careers
           ═══════════════════════════════════════════════ */}
       <Route path="/services" component={Services} />
+      <Route path="/news" component={News} />
       <Route path="/services/news" component={News} />
       <Route path="/services/careers" component={Careers} />
       <Route path="/services/careers/dashboard">

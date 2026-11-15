@@ -63,6 +63,11 @@ export const ROUTE_SEO_META: Readonly<Record<string, RouteMeta>> = {
     description:
       "Explore future ways to participate in Verso Air and vHeartz community initiatives. Programs are announced when confirmed.",
   },
+  "/news": {
+    title: "News & Updates | Verso Air",
+    description:
+      "Read public platform-wide announcements and updates from Verso Air.",
+  },
   "/privacy": {
     title: "Privacy Policy | Verso Air",
     description:

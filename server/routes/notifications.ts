@@ -1,13 +1,19 @@
-// GET  /api/notifications              — user's latest 50 notifications
-// GET  /api/notifications/unread-count — unread notifications count
+// GET  /api/notifications              — user's latest 50 notifications or public news hint
+// GET  /api/notifications/unread-count — unread count (zero for public visitors)
 // POST /api/notifications/read-all     — mark all read
 // POST /api/notifications/:id/read     — mark one read
 import { Router } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { optionalAuth, requireAuth } from "../middleware/auth";
 import { markNotificationReadStatement } from "./notification-queries";
 
 const router = Router();
+
+const publicUpdatesInfo = {
+  title: "Public news and updates",
+  message: "Platform-wide announcements are available in the public news journal.",
+  url: "/news",
+};
 
 async function ensureNotifTable() {
   await pool.query(
@@ -74,7 +80,16 @@ function mapType(raw: string): string {
 }
 
 // GET /api/notifications
-router.get("/", requireAuth(), async (req, res) => {
+router.get("/", optionalAuth, async (req, res) => {
+  if (!req.user) {
+    return res.json({
+      success: true,
+      audience: "public",
+      notifications: [],
+      publicUpdates: publicUpdatesInfo,
+    });
+  }
+
   try {
     await ensureNotifTable();
     const userId = parseInt(req.user!.userId);
@@ -112,7 +127,15 @@ router.get("/", requireAuth(), async (req, res) => {
 });
 
 // GET /api/notifications/unread-count
-router.get("/unread-count", requireAuth(), async (req, res) => {
+router.get("/unread-count", optionalAuth, async (req, res) => {
+  if (!req.user) {
+    return res.json({
+      success: true,
+      count: 0,
+      publicUpdates: publicUpdatesInfo,
+    });
+  }
+
   try {
     await ensureNotifTable();
     const userId = parseInt(req.user!.userId);

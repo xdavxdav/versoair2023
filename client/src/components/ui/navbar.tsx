@@ -827,7 +827,7 @@ export default function Navbar({
             )}
 
             {/* Notifications — bell icon with unread badge */}
-            {user && <NotificationCenter />}
+            <NotificationCenter />
 
             {/* User Actions - Always visible */}
             {user ? (

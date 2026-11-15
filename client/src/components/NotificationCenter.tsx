@@ -21,6 +21,7 @@ import {
   type SocketNotificationEvent,
 } from "@/hooks/use-inbox-socket";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { Link } from "wouter";
 
 interface AppNotification {
   id: string;
@@ -230,7 +231,18 @@ export default function NotificationCenter() {
     if (nextOpen && unread > 0) void markAllRead();
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Link
+        href="/news"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-800 text-white transition-colors hover:bg-slate-700"
+        aria-label={translateText("Public news and updates")}
+        title={translateText("Public news and updates")}
+      >
+        <Bell className="h-5 w-5" />
+      </Link>
+    );
+  }
 
   return (
     <div ref={panelRef} className="relative">

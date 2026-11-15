@@ -78,6 +78,7 @@ export const PAGE_READINESS_CANDIDATES = [
   "/database-results",
   "/services",
   "/services/news",
+  "/news",
   "/services/careers",
   "/services/contractors",
   "/contracts",
