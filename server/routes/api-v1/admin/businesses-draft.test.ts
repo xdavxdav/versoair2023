@@ -6,7 +6,7 @@ import {
   scriptPool,
   signIn,
   withRouter,
-} from "../../test-support/route-harness";
+} from "../../../test-support/route-harness";
 import businessesAdminRouter from "./businesses";
 
 const admin = { id: 1, role: "admin" };
