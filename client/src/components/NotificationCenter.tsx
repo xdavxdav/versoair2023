@@ -235,7 +235,7 @@ export default function NotificationCenter() {
     return (
       <Link
         href="/news"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-800 text-white transition-colors hover:bg-slate-700"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-400/50 bg-slate-800 text-amber-400 transition-colors hover:bg-slate-700 hover:border-amber-300 hover:text-amber-200 cursor-pointer"
         aria-label={translateText("Public news and updates")}
         title={translateText("Public news and updates")}
       >
