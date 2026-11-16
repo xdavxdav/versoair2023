@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { sql } from "drizzle-orm";
 import { db } from "../db";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import { publicBusinessVisibilitySql as scopedVisibilitySql, requestedOrDefaultCountryCode } from "../utils/business-visibility";
 import { asyncHandler } from "../middleware/asyncHandler";
 
 const router = Router();
@@ -13,6 +13,9 @@ router.get(
       category?: string;
       businessId?: string;
     };
+    const selectedCountry = requestedOrDefaultCountryCode(req);
+    const publicBusinessVisibilitySql = (alias: "b" | "businesses") =>
+      scopedVisibilitySql(alias, selectedCountry);
 
     if (businessId) {
       return res.status(503).json({

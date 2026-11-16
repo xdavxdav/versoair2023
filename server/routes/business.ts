@@ -4,7 +4,10 @@ import { db } from "../db";
 import { businesses } from "@shared/schema";
 import { ilike, or, and, sql } from "drizzle-orm";
 import { z } from "zod";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  publicBusinessVisibilitySql,
+  requestedOrDefaultCountryCode,
+} from "../utils/business-visibility";
 
 const router = express.Router();
 
@@ -28,7 +31,9 @@ router.get("/search", async (req, res) => {
 
     // Start building the query
     let query: any = db.select().from(businesses);
-    const conditions = [sql.raw(publicBusinessVisibilitySql("businesses"))];
+    const conditions = [
+      sql.raw(publicBusinessVisibilitySql("businesses", requestedOrDefaultCountryCode(req))),
+    ];
 
     // Text search across multiple fields
     if (params.query && params.query.trim()) {

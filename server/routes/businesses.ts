@@ -11,7 +11,10 @@ import {
   sendBusinessApprovedEmail,
   sendBusinessRejectedEmail,
 } from "../services/email-service";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  publicBusinessVisibilitySql,
+  requestedOrDefaultCountryCode,
+} from "../utils/business-visibility";
 import {
   PUBLIC_BUSINESS_LIST_SELECT_SQL,
   toPublicBusinessListRow,
@@ -324,7 +327,7 @@ router.get(
     let whereClause = "WHERE 1=1";
     const params: any[] = [];
     if (!isStaff && requestedOwnerId === null) {
-      whereClause += ` AND ${publicBusinessVisibilitySql("b")}`;
+      whereClause += ` AND ${publicBusinessVisibilitySql("b", requestedOrDefaultCountryCode(req))}`;
     }
 
     if (search) {
@@ -1192,7 +1195,7 @@ router.get(
         COUNT(DISTINCT category_id) as total_categories,
         SUM(reviews) as total_reviews
       FROM businesses b
-      WHERE ${publicBusinessVisibilitySql("b")}
+      WHERE ${publicBusinessVisibilitySql("b", requestedOrDefaultCountryCode(req))}
     `);
 
       res.json({
@@ -1228,7 +1231,7 @@ router.get(
         LEFT JOIN business_categories bc ON b.category_id = bc.id
         LEFT JOIN users u ON b.owner_id = u.id
         WHERE b.category_id = $1
-          AND ${publicBusinessVisibilitySql("b")}
+          AND ${publicBusinessVisibilitySql("b", requestedOrDefaultCountryCode(req))}
         ORDER BY
           CASE COALESCE(u.subscription_tier, 'free')
             WHEN 'enterprise' THEN 1

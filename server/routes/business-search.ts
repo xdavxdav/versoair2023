@@ -3,7 +3,10 @@ import * as schema from "@shared/schema";
 import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { db, pool } from "../db";
 import { asyncHandler } from "../middleware/asyncHandler";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  publicBusinessVisibilitySql,
+  requestedOrDefaultCountryCode,
+} from "../utils/business-visibility";
 import {
   PUBLIC_BUSINESS_LIST_SELECT_SQL,
   toPublicBusinessListRow,
@@ -18,7 +21,9 @@ router.get(
 
     console.log("🔍 [BUSINESS] Search:", { query, category, location });
 
-    const conditions: any[] = [sql.raw(publicBusinessVisibilitySql("businesses"))];
+    const conditions: any[] = [
+      sql.raw(publicBusinessVisibilitySql("businesses", requestedOrDefaultCountryCode(req))),
+    ];
     if (query && typeof query === "string") {
       const searchCondition = or(
         ilike(schema.businesses.name, `${query}%`),
@@ -151,7 +156,7 @@ router.get(
 
     const whereConditions: string[] = [
       "b.category_id = $1",
-      publicBusinessVisibilitySql("b"),
+      publicBusinessVisibilitySql("b", requestedOrDefaultCountryCode(req)),
     ];
     const params: any[] = [category.id];
     let paramIndex = 2;
@@ -322,7 +327,7 @@ router.get(
 
     const poolExists = await pool.query("SELECT to_regclass($1) AS name", [selectedPool.tableName]);
     if (!poolExists.rows[0]?.name) {
-      const visibility = publicBusinessVisibilitySql("businesses");
+      const visibility = publicBusinessVisibilitySql("businesses", requestedOrDefaultCountryCode(req));
       const [items, count] = await Promise.all([
         pool.query(`SELECT id, name, created_at FROM businesses WHERE category_id = $1 AND (${visibility}) ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [selectedPool.categoryId, limitNum, offset]),
         pool.query(`SELECT COUNT(*) AS count FROM businesses WHERE category_id = $1 AND (${visibility})`, [selectedPool.categoryId]),
@@ -370,13 +375,13 @@ router.get(
 
 router.get(
   "/business/locations",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     try {
       const locResult = await db.execute(
         sql`SELECT DISTINCT b.location FROM businesses b
             WHERE b.location IS NOT NULL
               AND TRIM(b.location) != ''
-              AND ${sql.raw(publicBusinessVisibilitySql("b"))}
+              AND ${sql.raw(publicBusinessVisibilitySql("b", requestedOrDefaultCountryCode(req)))}
             ORDER BY b.location LIMIT 100`,
       );
       const locations = (locResult.rows as any[])

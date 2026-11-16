@@ -10,7 +10,11 @@
  */
 
 import { pool } from "../db";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  getDirectoryCountryCode,
+  normalizeCountryCode,
+  publicBusinessVisibilitySql,
+} from "../utils/business-visibility";
 import type { IntentContext } from "./intent-parser";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -154,7 +158,9 @@ export async function searchRelevantBusinesses(
   limit: number = 5,
 ): Promise<KnowledgeResult> {
   const params: any[] = [];
-  const whereClauses: string[] = [publicBusinessVisibilitySql("b")];
+  const searchCountry =
+    normalizeCountryCode(intent.countryCode) ?? getDirectoryCountryCode();
+  const whereClauses: string[] = [publicBusinessVisibilitySql("b", searchCountry)];
   let orderClause: string;
   let searchMethod = "intent_filter";
 

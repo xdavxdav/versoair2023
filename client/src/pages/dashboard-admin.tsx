@@ -1896,11 +1896,7 @@ const BusinessManagement = ({
                               </p>
                               <p className="text-xs text-gray-500">
                                 Directory visibility:{" "}
-                                {getBusinessPublicVisibilityLabel(
-                                  business,
-                                  import.meta.env.VITE_DIRECTORY_COUNTRY_CODE ||
-                                    "CA",
-                                )}
+                                {getBusinessPublicVisibilityLabel(business)}
                               </p>
                               {/* Mobile-only: show category + status inline */}
                               <div className="flex items-center gap-1.5 mt-1 sm:hidden">

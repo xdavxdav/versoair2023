@@ -134,7 +134,7 @@ export default function EventsPage() {
             {message}
           </p>
         )}
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <Card className="border-emerald-100 shadow-sm">
             <CardHeader>
               <Sparkles className="h-6 w-6 text-emerald-600" />
@@ -144,7 +144,7 @@ export default function EventsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="h-auto min-h-10 max-w-full whitespace-normal py-2 text-left">
                 <Link href="/artisan-workshops">Explore workshops</Link>
               </Button>
             </CardContent>
@@ -158,7 +158,7 @@ export default function EventsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="h-auto min-h-10 max-w-full whitespace-normal py-2 text-left">
                 <Link href="/programs">View programs</Link>
               </Button>
             </CardContent>
@@ -172,7 +172,7 @@ export default function EventsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="h-auto min-h-10 max-w-full whitespace-normal py-2 text-left">
                 <Link href="/divertissement">Browse entertainment</Link>
               </Button>
             </CardContent>
@@ -184,7 +184,7 @@ export default function EventsPage() {
             {loading ? (
               <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" />
             ) : events.length ? (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {events.map((event) => (
                   <Card key={event.id} className="border-slate-200 text-left">
                     <CardHeader>
