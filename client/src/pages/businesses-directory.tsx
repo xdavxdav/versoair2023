@@ -56,18 +56,33 @@ import { parseClaimed } from "@/lib/business-status";
 import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useCountry } from "@/contexts/CountryContext";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 const API_BASE_URL = "";
 const configuredDirectoryCountryCode =
   import.meta.env.VITE_DIRECTORY_COUNTRY_CODE?.trim().toUpperCase() || "CA";
-const DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(
+const DEFAULT_DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(
   configuredDirectoryCountryCode,
 )
   ? configuredDirectoryCountryCode
   : "CA";
-const DIRECTORY_MARKET_LABEL =
+const DEFAULT_DIRECTORY_MARKET_LABEL =
   import.meta.env.VITE_DIRECTORY_MARKET_LABEL?.trim() || "Toronto, Canada";
+
+function marketLabelFor(countryCode: string): string {
+  if (countryCode === DEFAULT_DIRECTORY_COUNTRY_CODE) {
+    return DEFAULT_DIRECTORY_MARKET_LABEL;
+  }
+  try {
+    return (
+      new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ??
+      countryCode
+    );
+  } catch {
+    return countryCode;
+  }
+}
 
 interface Business {
   id: string;
@@ -587,6 +602,12 @@ export default function BusinessesDirectory() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("location") ?? "";
   });
+  const { selectedCountry } = useCountry();
+  const normalizedSelectedCountry = selectedCountry?.trim().toUpperCase();
+  const DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(normalizedSelectedCountry)
+    ? normalizedSelectedCountry
+    : DEFAULT_DIRECTORY_COUNTRY_CODE;
+  const DIRECTORY_MARKET_LABEL = marketLabelFor(DIRECTORY_COUNTRY_CODE);
   const continentAdj = getContinentAdjective(DIRECTORY_COUNTRY_CODE);
   const continentName = getContinentForCountry(DIRECTORY_COUNTRY_CODE);
   const [selectedCategory, setSelectedCategory] = useState<
@@ -656,7 +677,7 @@ export default function BusinessesDirectory() {
       }
       setIsSearching(false);
     },
-    [],
+    [DIRECTORY_COUNTRY_CODE],
   );
 
   const handleSubcategoryClick = useCallback(
@@ -689,7 +710,7 @@ export default function BusinessesDirectory() {
       }
       setIsSearching(false);
     },
-    [],
+    [DIRECTORY_COUNTRY_CODE],
   );
 
   const handleSearch = useCallback(
@@ -814,6 +835,7 @@ export default function BusinessesDirectory() {
       searchQuery,
       locationQuery,
       searchMode,
+      DIRECTORY_COUNTRY_CODE,
     ],
   );
 
@@ -825,6 +847,14 @@ export default function BusinessesDirectory() {
     }, 500);
     return () => clearTimeout(timer);
   }, [searchMode, searchQuery, locationQuery, handleSearch]);
+
+  // Re-run an active search when the visitor switches country.
+  const previousCountryRef = React.useRef(DIRECTORY_COUNTRY_CODE);
+  useEffect(() => {
+    if (previousCountryRef.current === DIRECTORY_COUNTRY_CODE) return;
+    previousCountryRef.current = DIRECTORY_COUNTRY_CODE;
+    if (hasSearched) handleSearch(1);
+  }, [DIRECTORY_COUNTRY_CODE, hasSearched, handleSearch]);
 
   const clearSearch = () => {
     setSelectedCategory(null);

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { call, scriptPool, withRouter } from "../test-support/route-harness";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  getDirectoryCountryCode,
+  publicBusinessVisibilitySql,
+} from "../utils/business-visibility";
 import businessesRouter from "./businesses";
 
 const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
@@ -41,8 +44,11 @@ test("sectorSlug is combined with the public visibility rule", async () => {
   const { count, data } = await listQueries(
     "/api/businesses?sectorSlug=commerce",
   );
-  assert.ok(count.sql.includes(oneLine(publicBusinessVisibilitySql("b"))));
-  assert.ok(data.sql.includes(oneLine(publicBusinessVisibilitySql("b"))));
+  const visibility = oneLine(
+    publicBusinessVisibilitySql("b", getDirectoryCountryCode()),
+  );
+  assert.ok(count.sql.includes(visibility));
+  assert.ok(data.sql.includes(visibility));
 });
 
 test("without sectorSlug no category-slug clause is added", async () => {

@@ -11,24 +11,17 @@ export interface BusinessPublicVisibilityFields {
 
 export function getBusinessPublicVisibilityLabel(
   business: BusinessPublicVisibilityFields,
-  directoryCountryCode = "CA",
 ): string {
-  const directoryCountry = directoryCountryCode.trim().toUpperCase();
-  const countryCode = String(
-    business.countryCode ?? business.country_code ?? "",
-  ).toUpperCase();
   const isVerified = business.isVerified ?? business.is_verified ?? false;
   const isActive = business.isActive ?? business.is_active ?? false;
   const email = String(business.email || "").toLowerCase();
   const website = String(business.website || "").toLowerCase();
   const blockers: string[] = [];
 
-  if (countryCode !== directoryCountry) {
-    blockers.push(
-      `country ${countryCode || "not set"} (directory is ${
-        directoryCountry === "CA" ? "Canada-only" : `${directoryCountry}-only`
-      })`,
-    );
+  // Listings are public in the visitor's selected country, so a country is
+  // needed for the business to appear in any country's directory.
+  if (!String(business.countryCode ?? business.country_code ?? "").trim()) {
+    blockers.push("country not set");
   }
   if (!isVerified) blockers.push("not verified");
   if (!isActive) blockers.push("inactive");

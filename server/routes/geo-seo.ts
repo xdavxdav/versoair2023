@@ -17,7 +17,10 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { buildRobotsTxt, createSitemapHandlers } from "../services/sitemap";
 import { getSiteOrigin } from "../utils/site-origin";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  publicBusinessVisibilitySql,
+  requestedOrDefaultCountryCode,
+} from "../utils/business-visibility";
 import {
   generateBusinessJsonLd,
   generateOrganizationJsonLd,
@@ -96,6 +99,7 @@ router.get("/json-ld/website", (_req: Request, res: Response) => {
 router.get("/json-ld/search", async (req: Request, res: Response) => {
   const query = (req.query.q as string) || "";
   const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+  const searchCountry = requestedOrDefaultCountryCode(req);
 
   try {
     let sqlQuery: string;
@@ -106,7 +110,7 @@ router.get("/json-ld/search", async (req: Request, res: Response) => {
                   FROM businesses b
                   LEFT JOIN business_categories bc ON b.category_id = bc.id
                   LEFT JOIN countries c ON b.country_code = c.code
-                  WHERE ${publicBusinessVisibilitySql("b")}
+                  WHERE ${publicBusinessVisibilitySql("b", searchCountry)}
                     AND (b.name ILIKE $1 OR b.description ILIKE $1)
                   ORDER BY b.rating DESC NULLS LAST
                   LIMIT $2`;
@@ -116,7 +120,7 @@ router.get("/json-ld/search", async (req: Request, res: Response) => {
                   FROM businesses b
                   LEFT JOIN business_categories bc ON b.category_id = bc.id
                   LEFT JOIN countries c ON b.country_code = c.code
-                  WHERE ${publicBusinessVisibilitySql("b")}
+                  WHERE ${publicBusinessVisibilitySql("b", searchCountry)}
                   ORDER BY b.rating DESC NULLS LAST
                   LIMIT $1`;
       params = [limit];

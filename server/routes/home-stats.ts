@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { pool } from "../db";
-import { publicBusinessVisibilitySql } from "../utils/business-visibility";
+import {
+  normalizeCountryCode,
+  getDirectoryCountryCode,
+  publicBusinessVisibilitySql,
+} from "../utils/business-visibility";
 
 const router = Router();
 
@@ -16,13 +20,14 @@ const router = Router();
 router.get("/stats", async (req, res) => {
   try {
     const { countryCode = "" } = req.query as Record<string, string>;
-    const cc = countryCode.trim().toUpperCase();
+    const cc = normalizeCountryCode(countryCode) ?? "";
+    const visibilityCountry = cc || getDirectoryCountryCode();
 
     /* ── aggregate counts ── */
     const bizCountParams = cc ? [cc] : [];
     const bizCountFilter = cc
-      ? `WHERE country_code = $1 AND ${publicBusinessVisibilitySql("businesses")}`
-      : `WHERE ${publicBusinessVisibilitySql("businesses")}`;
+      ? `WHERE country_code = $1 AND ${publicBusinessVisibilitySql("businesses", cc)}`
+      : `WHERE ${publicBusinessVisibilitySql("businesses", visibilityCountry)}`;
 
     const [bizRes, artisanRes, catRes] = await Promise.all([
       pool.query(
@@ -55,8 +60,8 @@ router.get("/stats", async (req, res) => {
           ),
       pool.query(
         cc
-          ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND ${publicBusinessVisibilitySql("businesses")} AND category_id IS NOT NULL`
-          : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE ${publicBusinessVisibilitySql("businesses")} AND category_id IS NOT NULL`,
+          ? `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE country_code = $1 AND ${publicBusinessVisibilitySql("businesses", cc)} AND category_id IS NOT NULL`
+          : `SELECT COUNT(DISTINCT category_id)::int AS count FROM businesses WHERE ${publicBusinessVisibilitySql("businesses", visibilityCountry)} AND category_id IS NOT NULL`,
         bizCountParams,
       ),
     ]);

@@ -19,6 +19,7 @@ import { optionalAuth, requireAuth } from "../middleware/auth";
 import { pool } from "../db";
 import {
   getDirectoryCountryCode,
+  normalizeCountryCode,
   publicBusinessVisibilitySql,
 } from "../utils/business-visibility";
 
@@ -58,9 +59,10 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
 
     // Step 1: Parse intent from natural language
     const intent = await parseUserIntent(query, language);
-    // Public directory discovery is always scoped to the configured launch
-    // market; query text cannot broaden it to unverified countries.
-    intent.countryCode = getDirectoryCountryCode();
+    // Discovery is scoped to the visitor's selected country (validated as a
+    // two-letter code); anything else falls back to the configured market.
+    intent.countryCode =
+      normalizeCountryCode(parsed.data.countryCode) ?? getDirectoryCountryCode();
 
     // Step 2: Search database with grounded knowledge
     const results = await searchRelevantBusinesses(intent, limit);
