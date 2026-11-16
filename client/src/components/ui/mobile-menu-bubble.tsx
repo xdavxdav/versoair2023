@@ -455,11 +455,11 @@ export function MobileMenuBubble() {
         {/* ── Menu panel ── */}
         {isOpen && !dragging && (
           <div
-            className="absolute w-[calc(100vw-1rem)] max-w-[320px] max-h-[calc(100dvh-100px)] overflow-y-auto overscroll-contain rounded-2xl border border-gray-200/60 bg-white/95 shadow-[0_8px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl"
+            className="absolute w-[calc(100vw-1rem)] max-w-[320px] max-h-[calc(100dvh-100px)] flex flex-col rounded-2xl border border-gray-200/60 bg-white/95 shadow-[0_8px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl"
             style={panelPlacement}
           >
             {/* Panel header */}
-            <div className="bg-gradient-to-r from-[#bf831c] to-[#d4941f] px-4 py-2.5 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-[#bf831c] to-[#d4941f] px-4 py-2.5 flex items-center justify-between shrink-0">
               <span className="text-white text-xs font-bold tracking-wide">
                 <NativeLabel text="Menu" />
               </span>
@@ -471,7 +471,8 @@ export function MobileMenuBubble() {
               </button>
             </div>
 
-            <div className="overflow-y-auto overscroll-contain max-h-[calc(100vh-160px)] px-3 py-3">
+            {/* Scrollable content area */}
+            <div className="overflow-y-auto overscroll-contain flex-1 px-3 py-3">
               {/* ── Navigation ── */}
               <SectionLabel text="Navigation" />
               <div className="space-y-0.5 mb-3">
@@ -558,8 +559,8 @@ export function MobileMenuBubble() {
 
               <hr className="border-gray-100 my-2" />
 
-              {/* ── Auth Section — adapts to signed-in / signed-out ── */}
-              {user ? (
+              {/* ── Auth Section (User Info Only if Authenticated) ── */}
+              {user && (
                 <div className="space-y-2">
                   {/* User info badge */}
                   <div className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/80">
@@ -680,15 +681,19 @@ export function MobileMenuBubble() {
                     </span>
                     <ChevronRight className="ml-auto h-3 w-3 text-gray-300 shrink-0" />
                   </button>
-
-                  {/* Logout */}
-                  <LogoutDropdown
-                    variant="red-solid"
-                    label={tr("Disconnect")}
-                  />
                 </div>
+              )}
+            </div>
+
+            {/* Fixed footer - Auth button (Sign In / Logout) */}
+            <div className="border-t border-gray-200/60 px-3 py-3 shrink-0 bg-white/50">
+              {user ? (
+                <LogoutDropdown
+                  variant="red-solid"
+                  label={tr("Disconnect")}
+                />
               ) : (
-                <Link href="/auth/signin">
+                <Link href="/auth/signin" className="block">
                   <button
                     onClick={close}
                     className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 touch-manipulation ${
