@@ -1,9 +1,22 @@
-import React from 'react';
-import { Container } from '@/components/ui/container';
+import { useLocalizedContent } from "@/hooks/use-localized-content";
+import { Link } from "wouter";
+import { AlertCircle, ArrowLeft } from "lucide-react";
+import ScrollableNavbar from "@/components/ScrollableNavbar";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function AcceptableUsePolicy() {
+  const localize = useLocalizedContent();
   return (
-    <Container className="prose max-w-4xl py-12">
+    <>
+      <SeoHead
+        title="Acceptable Use Policy | Verso Air"
+        description="Verso Air's Acceptable Use Policy outlines prohibited conduct, content guidelines, and enforcement measures."
+        canonicalPath="/aup"
+      />
+      {localize((
+    <div className="min-h-screen bg-[#f3efe9] text-slate-900">
+      <ScrollableNavbar isAuthenticated={false} />
+      <div className="mx-auto max-w-4xl px-4 py-16">
       <h1>Acceptable Use Policy</h1>
       
       <p className="text-gray-600 mb-6">
@@ -214,6 +227,17 @@ export default function AcceptableUsePolicy() {
         <strong>Last Reviewed:</strong> November 15, 2026<br />
         <strong>Next Review:</strong> May 15, 2027
       </p>
-    </Container>
+
+      {/* Back link */}
+      <div className="mt-12">
+        <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
+      </div>
+    </div>
+      ))}
+    </>
   );
 }
