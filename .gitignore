@@ -88,3 +88,6 @@ client/public/prerender-routes.txt
 
 # Private credentials file — never commit
 .private/
+
+# Stray empty SQLite file; never commit
+/session.db
