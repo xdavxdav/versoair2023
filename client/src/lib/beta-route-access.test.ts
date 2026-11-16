@@ -56,6 +56,14 @@ test("listening session pages are reachable while the beta scope is frozen", () 
   assert.equal(isBetaRoute("/sessions-archive"), false);
 });
 
+test("the legal policy pages linked from the footer are reachable while the beta scope is frozen", () => {
+  for (const path of ["/privacy", "/terms", "/cookies", "/gdpr", "/aup", "/aup/", "/aup?from=footer"]) {
+    assert.equal(isBetaRoute(path), true, path);
+    assert.equal(isRouteReachable(path), true, path);
+  }
+  assert.equal(isBetaRoute("/aupx"), false);
+});
+
 test("short and legacy URLs reach their redirect instead of bouncing to the home page", () => {
   for (const alias of ["/support", "/careers", "/contractor", "/signup", "/artisan", "/billing"]) {
     assert.equal(isBetaRoute(alias), true, alias);

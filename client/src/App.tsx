@@ -403,6 +403,7 @@ function getDocumentTitle(pathname: string) {
     "/privacy": "Privacy Policy",
     "/terms": "Terms of Service",
     "/cookies": "Cookie Policy",
+    "/aup": "Acceptable Use Policy",
   };
   if (titles[path]) return titles[path];
   if (path.startsWith("/business/")) return "Business Profile";

@@ -390,6 +390,7 @@ export const SPANISH_COPY = {
   "Terms of Service": "Términos de servicio",
   "Privacy Policy": "Política de privacidad",
   "Cookie Policy": "Política de cookies",
+  "Acceptable Use Policy": "Política de uso aceptable",
   "Last updated: March 13, 2026": "Última actualización: 13 de marzo de 2026",
   "Last updated: October 18, 2026": "Última actualización: 18 de octubre de 2026",
   "Last updated: October 26, 2026": "Última actualización: 26 de octubre de 2026",
