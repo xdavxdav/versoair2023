@@ -886,7 +886,7 @@ export default function BlogNavbar({
                     </a>
                   </Link>
                   <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-white/5 rounded-lg text-[9px] sm:text-xs lg:text-sm flex-shrink-0">
-                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-emerald-400 rounded-full" />
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-amber-400 rounded-full" />
                     <span className="text-slate-300 truncate max-w-[60px] sm:max-w-[80px] lg:max-w-[100px]">
                       {userName}
                     </span>

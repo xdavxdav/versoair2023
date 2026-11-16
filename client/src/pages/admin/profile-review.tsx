@@ -83,7 +83,7 @@ export default function ProfileReviewPage() {
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
             Verso Air Admin
           </p>
           <h1 className="mt-2 text-3xl font-bold">
@@ -124,7 +124,7 @@ export default function ProfileReviewPage() {
                         className="h-12 w-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
                         <Eye className="h-5 w-5" />
                       </div>
                     )}
@@ -160,7 +160,7 @@ export default function ProfileReviewPage() {
                       }))
                     }
                     placeholder="Note interne facultative"
-                    className="border-white/10 bg-black/20 text-white placeholder:text-slate-500"
+                    className="border-white/10 bg-slate-900/20 text-white placeholder:text-slate-500"
                   />
                   <div className="flex flex-wrap justify-end gap-2">
                     <Button
@@ -172,7 +172,7 @@ export default function ProfileReviewPage() {
                       <X className="mr-2 h-4 w-4" /> Rejeter
                     </Button>
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-500"
+                      className="bg-amber-600 hover:bg-amber-500"
                       onClick={() => review(profile.id, "approve")}
                       disabled={busyId === profile.id}
                     >

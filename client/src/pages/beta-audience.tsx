@@ -64,7 +64,7 @@ const AUDIENCES: Record<Audience, AudienceConfig> = {
       "Add photos, services, and contact details",
       "Move through verification with GeoAdmin support",
     ],
-    accent: "from-cyan-300 via-teal-400 to-emerald-500",
+    accent: "from-cyan-300 via-teal-400 to-amber-500",
   },
   listeners: {
     eyebrow: "Free listener beta",
@@ -186,7 +186,7 @@ export default function BetaAudiencePage({ audience }: { audience: Audience }) {
                 <ul className="space-y-5">
                   {config.benefits.map((benefit) => (
                     <li key={benefit} className="flex gap-3 text-slate-200">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
                       <span>{benefit}</span>
                     </li>
                   ))}

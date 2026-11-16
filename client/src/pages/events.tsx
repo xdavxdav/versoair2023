@@ -107,17 +107,17 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-emerald-50/30 to-amber-50/40">
-      <section className="border-b border-emerald-100 bg-emerald-950 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-white via-amber-50/30 to-amber-50/40">
+      <section className="border-b border-amber-100 bg-amber-950 text-white">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-300">
               <CalendarDays className="h-4 w-4" /> Events on Verso Air
             </p>
             <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
               Find something worth showing up for.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-emerald-100">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-amber-100">
               Discover workshops, cultural programs, live entertainment, and
               community gatherings in one dedicated event space.
             </p>
@@ -135,9 +135,9 @@ export default function EventsPage() {
           </p>
         )}
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="border-emerald-100 shadow-sm">
+          <Card className="border-amber-100 shadow-sm">
             <CardHeader>
-              <Sparkles className="h-6 w-6 text-emerald-600" />
+              <Sparkles className="h-6 w-6 text-amber-600" />
               <CardTitle>Workshops</CardTitle>
               <CardDescription>
                 Learn directly from artisans and craft professionals.
@@ -182,7 +182,7 @@ export default function EventsPage() {
         <Card className="mt-10 border-slate-200 bg-white/80 shadow-sm">
           <CardContent className="py-10">
             {loading ? (
-              <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" />
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-amber-600" />
             ) : events.length ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {events.map((event) => (
@@ -242,7 +242,7 @@ export default function EventsPage() {
         </Card>
 
         {formOpen && user && (
-          <Card className="mt-6 border-emerald-200">
+          <Card className="mt-6 border-amber-200">
             <CardHeader>
               <CardTitle>Submit an event draft</CardTitle>
               <CardDescription>

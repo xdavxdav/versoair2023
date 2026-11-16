@@ -98,7 +98,7 @@ export default function APIDocumentation() {
       <div className="relative pt-20 pb-16 px-4">
         <div className="max-w-[95vw] mx-auto">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Network className="h-8 w-8 text-emerald-400" />
+            <Network className="h-8 w-8 text-amber-400" />
             <h1 className="text-5xl md:text-6xl font-bold text-white">
               API Documentation
             </h1>
@@ -142,16 +142,16 @@ export default function APIDocumentation() {
       <div className="max-w-[95vw] mx-auto px-4 py-16 border-t border-slate-700">
         <div className="grid md:grid-cols-2 gap-8">
           {/* FOR */}
-          <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 border border-emerald-700/50 rounded-xl p-8">
+          <div className="bg-gradient-to-br from-amber-900/20 to-amber-950/20 border border-amber-700/50 rounded-xl p-8">
             <div className="flex items-center gap-2 mb-6">
-              <Check className="h-6 w-6 text-emerald-400" />
-              <h2 className="text-2xl font-bold text-emerald-100">
+              <Check className="h-6 w-6 text-amber-400" />
+              <h2 className="text-2xl font-bold text-amber-100">
                 What the API Is For
               </h2>
             </div>
             <ul className="space-y-3 text-slate-300">
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">Business Discovery</strong> -
                   Search and retrieve business data across multiple sectors
@@ -159,7 +159,7 @@ export default function APIDocumentation() {
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">Analytics Queries</strong> -
                   Access aggregated business intelligence and performance
@@ -167,28 +167,28 @@ export default function APIDocumentation() {
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">Category Management</strong> -
                   Query business categories and industry classifications
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">Reservation Systems</strong> -
                   Enable booking and reservation management for hospitality
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">Geographic Services</strong> -
                   Location-based filtering and region/country data
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">Real-time Updates</strong> -
                   WebSocket connections for live notifications and data
@@ -196,7 +196,7 @@ export default function APIDocumentation() {
                 </span>
               </li>
               <li className="flex gap-3">
-                <span className="text-emerald-400 font-bold min-w-fit">✓</span>
+                <span className="text-amber-400 font-bold min-w-fit">✓</span>
                 <span>
                   <strong className="text-white">
                     Third-party Integration
@@ -278,13 +278,13 @@ export default function APIDocumentation() {
       {/* API Architecture & Network */}
       <div className="max-w-[95vw] mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-          <Code2 className="h-8 w-8 text-emerald-400" />
+          <Code2 className="h-8 w-8 text-amber-400" />
           Technical Architecture
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6 mb-16">
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-emerald-400 mb-3">
+            <h3 className="text-lg font-bold text-amber-400 mb-3">
               Backend Stack
             </h3>
             <ul className="space-y-2 text-slate-300 text-sm">
@@ -386,7 +386,7 @@ export default function APIDocumentation() {
                     >
                       {ep.method}
                     </span>
-                    <code className="text-emerald-400 font-mono flex-1 truncate">
+                    <code className="text-amber-400 font-mono flex-1 truncate">
                       {ep.endpoint}
                     </code>
                   </div>
@@ -396,7 +396,7 @@ export default function APIDocumentation() {
                     size="sm"
                     className={`whitespace-nowrap ${
                       result?.success
-                        ? "bg-emerald-600 hover:bg-emerald-700"
+                        ? "bg-amber-600 hover:bg-amber-700"
                         : result?.success === false
                           ? "bg-red-600 hover:bg-red-700"
                           : "bg-slate-700 hover:bg-slate-600"
@@ -429,7 +429,7 @@ export default function APIDocumentation() {
                   <div
                     className={`text-xs p-3 rounded border ${
                       result.success
-                        ? "bg-emerald-950/30 border-emerald-700/50 text-emerald-300"
+                        ? "bg-amber-950/30 border-amber-700/50 text-amber-300"
                         : "bg-red-950/30 border-red-700/50 text-red-300"
                     }`}
                   >
@@ -493,9 +493,9 @@ export default function APIDocumentation() {
             <a
               key={idx}
               href={section.link}
-              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group"
+              className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-amber-500/50 transition-all group"
             >
-              <div className="text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
+              <div className="text-amber-400 mb-4 group-hover:scale-110 transition-transform">
                 {section.icon}
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
@@ -512,7 +512,7 @@ export default function APIDocumentation() {
           <div className="space-y-6">
             <div>
               <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white">
                   1
                 </span>
                 Get Your API Key
@@ -520,19 +520,19 @@ export default function APIDocumentation() {
               <p className="text-slate-400 text-sm mb-4">
                 For development, use session-based authentication via login
               </p>
-              <code className="bg-slate-900/50 p-3 rounded text-emerald-400 text-sm block font-mono">
+              <code className="bg-slate-900/50 p-3 rounded text-amber-400 text-sm block font-mono">
                 Authorization: Bearer YOUR_SESSION_TOKEN
               </code>
             </div>
 
             <div>
               <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white">
                   2
                 </span>
                 Make Your First Request
               </h3>
-              <code className="bg-slate-900/50 p-3 rounded text-emerald-400 text-sm block font-mono overflow-x-auto">
+              <code className="bg-slate-900/50 p-3 rounded text-amber-400 text-sm block font-mono overflow-x-auto">
                 curl {API_BASE_URL}/api/countries \<br />
                 &nbsp;&nbsp;-H "Content-Type: application/json"
               </code>
@@ -540,7 +540,7 @@ export default function APIDocumentation() {
 
             <div>
               <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white">
                   3
                 </span>
                 Use in Your App
@@ -556,7 +556,7 @@ export default function APIDocumentation() {
 
       {/* CTA */}
       <div className="max-w-4xl mx-auto px-4 py-16">
-        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
+        <div className="bg-gradient-to-r from-amber-600/20 to-teal-600/20 border border-amber-500/30 p-8 md:p-12 rounded-xl text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Build?
           </h2>
@@ -565,14 +565,14 @@ export default function APIDocumentation() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/commerce">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold">
                 Explore Commerce
               </Button>
             </Link>
             <Link href="/contact">
               <Button
                 variant="outline"
-                className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
+                className="border-amber-500 text-amber-400 hover:bg-amber-500/10"
               >
                 Contact Us
               </Button>

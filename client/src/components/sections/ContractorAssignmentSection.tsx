@@ -209,7 +209,7 @@ export function ContractorAssignmentSection() {
       accepted: "bg-green-100 text-green-700",
       declined: "bg-red-100 text-red-700",
       in_progress: "bg-indigo-100 text-indigo-700",
-      completed: "bg-emerald-100 text-emerald-700",
+      completed: "bg-amber-100 text-amber-700",
       cancelled: "bg-gray-100 text-gray-500",
     };
     return (
@@ -675,7 +675,7 @@ export function ContractorAssignmentSection() {
                       )}
                       {assign.status === "in_progress" && (
                         <button
-                          className="rounded border border-emerald-300 px-3 py-1.5 text-xs text-emerald-700"
+                          className="rounded border border-amber-200 px-3 py-1.5 text-xs text-amber-700"
                           onClick={() =>
                             lifecycleMutation.mutate({
                               id: assign.id,

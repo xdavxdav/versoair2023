@@ -249,7 +249,7 @@ export default function GeoAdminPage() {
     return localize(
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-100 via-orange-50 to-rose-50 items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 text-emerald-400 animate-spin mx-auto mb-3" />
+          <Loader2 className="h-8 w-8 text-amber-400 animate-spin mx-auto mb-3" />
           <p className="text-slate-400 text-sm">Verifying your access…</p>
         </div>
       </div>
@@ -333,7 +333,7 @@ export default function GeoAdminPage() {
       {/* Connection status dot */}
       {isStillConnected && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+          <div className="h-3 w-3 rounded-full bg-amber-500 shadow-lg shadow-amber-500/50" />
           <Button
             size="sm"
             variant="outline"
@@ -361,11 +361,11 @@ export default function GeoAdminPage() {
       {/* Session status banner — context-aware messaging */}
       {gateBypass && !isAuthenticated && !loading && (
         <div
-          className={`border-b ${sessionTimeLeft > 0 ? "bg-emerald-500/10 border-emerald-500/20" : "bg-amber-500/10 border-amber-500/20"}`}
+          className={`border-b ${sessionTimeLeft > 0 ? "bg-amber-500/10 border-amber-500/20" : "bg-amber-500/10 border-amber-500/20"}`}
         >
           <div className="max-w-[95vw] mx-auto px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <p
-              className={`text-xs sm:text-sm ${sessionTimeLeft > 0 ? "text-emerald-300" : "text-amber-300"}`}
+              className={`text-xs sm:text-sm ${sessionTimeLeft > 0 ? "text-amber-300" : "text-amber-300"}`}
             >
               {sessionTimeLeft > 0 ? (
                 <>
@@ -433,9 +433,9 @@ export default function GeoAdminPage() {
           </div>
         </div>
       ) : tier && tier !== "free" ? (
-        <div className="bg-emerald-500/10 border-b border-emerald-500/20">
+        <div className="bg-amber-500/10 border-b border-amber-500/20">
           <div className="max-w-[95vw] mx-auto px-4 py-2">
-            <p className="text-emerald-300 text-xs sm:text-sm">
+            <p className="text-amber-300 text-xs sm:text-sm">
               <TrendingUp className="inline-block h-4 w-4 mr-1.5" />
               {tierSentenceStart}
               <span className="font-semibold">{tierName}</span>

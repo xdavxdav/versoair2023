@@ -230,8 +230,8 @@ const ROLE_CONFIG: Record<RoleId, RoleConfig> = {
     id: "sound_engineer",
     label: "Sound Engineer",
     icon: "🎚️",
-    color: "from-emerald-500 to-teal-500",
-    accent: "text-emerald-400",
+    color: "from-amber-500 to-teal-500",
+    accent: "text-amber-400",
     description: "Mixing, mastering, post-production & audio restoration",
     briefPlaceholder:
       "What audio service do you need? Mix & master? Podcast cleanup? Noise removal?",

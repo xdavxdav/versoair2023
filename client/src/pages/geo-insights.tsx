@@ -204,7 +204,7 @@ export default function GeoInsightsPage() {
 
         <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex items-start gap-3">
-            <BarChart3 className="mt-1 h-6 w-6 shrink-0 text-emerald-300" />
+            <BarChart3 className="mt-1 h-6 w-6 shrink-0 text-amber-300" />
             <div>
               <h2 className="text-xl font-bold">Illustrative annual fee examples</h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
@@ -279,7 +279,7 @@ export default function GeoInsightsPage() {
         </section>
 
         {hasPaidPlan && !isStaff && (
-          <section className="mt-8 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-6">
+          <section className="mt-8 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-6">
             <div className="flex items-start gap-3">
               <FileSearch className="mt-1 h-6 w-6 shrink-0 text-amber-300" />
               <div className="w-full">
@@ -360,7 +360,7 @@ export default function GeoInsightsPage() {
                         type="checkbox"
                         checked={priorities.includes(priority)}
                         onChange={() => togglePriority(priority)}
-                        className="accent-emerald-400"
+                        className="accent-amber-400"
                       />
                       {priority}
                     </label>
@@ -373,7 +373,7 @@ export default function GeoInsightsPage() {
                   </p>
                 )}
                 {requestMessage && (
-                  <p role="status" className="mt-4 flex items-start gap-2 rounded-lg bg-emerald-950 p-3 text-sm text-emerald-200">
+                  <p role="status" className="mt-4 flex items-start gap-2 rounded-lg bg-amber-950 p-3 text-sm text-amber-200">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                     {requestMessage}
                   </p>
@@ -382,7 +382,7 @@ export default function GeoInsightsPage() {
                   type="button"
                   onClick={() => void submitRequest()}
                   disabled={submitting || !!requestMessage}
-                  className="mt-5 inline-flex items-center rounded-xl bg-emerald-300 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-5 inline-flex items-center rounded-xl bg-amber-300 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

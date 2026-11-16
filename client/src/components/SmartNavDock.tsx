@@ -272,7 +272,7 @@ export function SmartNavDock({
   };
 
   const statusColor = {
-    online: "bg-emerald-400",
+    online: "bg-amber-400",
     away: "bg-amber-400",
     offline: "bg-slate-500",
   }[userStatus];

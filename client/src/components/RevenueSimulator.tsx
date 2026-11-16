@@ -103,8 +103,8 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
               <div className="text-2xl font-bold">$2,400</div>
               <div className="text-sm text-gray-500">Current estimate</div>
             </div>
-            <div className="bg-emerald-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-emerald-600">$7,200</div>
+            <div className="bg-amber-50 rounded-lg p-4">
+              <div className="text-2xl font-bold text-amber-600">$7,200</div>
               <div className="text-sm text-gray-500">Projected</div>
             </div>
           </div>
@@ -122,7 +122,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
           </p>
           <button
             onClick={onUpgradeClick}
-            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-bold hover:from-emerald-600 hover:to-teal-700 transition-all"
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-teal-600 text-white rounded-lg text-sm font-bold hover:from-amber-600 hover:to-teal-700 transition-all"
           >
             Unlock with Pro Verified →
           </button>
@@ -213,14 +213,14 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
           </div>
           <div className="text-xs text-gray-400">/month</div>
         </div>
-        <div className="bg-emerald-50 rounded-lg p-4 text-center border border-emerald-200">
-          <div className="text-xs text-emerald-600 mb-1">
+        <div className="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+          <div className="text-xs text-amber-600 mb-1">
             With {tierDef.name} ({tierDef.rankingPower}x)
           </div>
-          <div className="text-2xl font-bold text-emerald-700">
+          <div className="text-2xl font-bold text-amber-700">
             {formatUsdEstimate(result.projectedEstimate)}
           </div>
-          <div className="text-xs text-emerald-500">/month</div>
+          <div className="text-xs text-amber-500">/month</div>
         </div>
       </div>
 
@@ -238,7 +238,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
           <span className="text-sm font-semibold text-gray-700">
             Revenue Growth
           </span>
-          <span className="text-lg font-black text-emerald-600">
+          <span className="text-lg font-black text-amber-600">
             +{result.upliftPercent}%
           </span>
         </div>
@@ -248,7 +248,7 @@ export const RevenueSimulator: React.FC<RevenueSimulatorProps> = ({
               ROI (uplift vs. plan cost)
             </span>
             <span
-              className={`text-lg font-black ${roi > 100 ? "text-emerald-600" : "text-orange-500"}`}
+              className={`text-lg font-black ${roi > 100 ? "text-amber-600" : "text-orange-500"}`}
             >
               {roi}%
             </span>

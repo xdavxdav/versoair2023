@@ -115,8 +115,8 @@ export function SessionMonitorPanel() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-white/5 backdrop-blur-xl border border-white/10">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/20">
-              <Shield className="h-5 w-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <Shield className="h-5 w-5 text-amber-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-100">

@@ -84,7 +84,7 @@ export default function VerificationPendingNotice({
         role={deliveryConfirmed === true ? "status" : "alert"}
         className={`rounded-lg border p-4 text-sm ${
           deliveryConfirmed === true
-            ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100"
+            ? "border-amber-400/30 bg-amber-400/10 text-amber-100"
             : "border-amber-400/30 bg-amber-400/10 text-amber-100"
         }`}
       >

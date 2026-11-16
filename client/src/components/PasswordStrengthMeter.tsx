@@ -65,7 +65,7 @@ export function PasswordStrengthMeter({
           <div
             key={check.label}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
-              check.passed ? "bg-emerald-500" : "bg-red-500"
+              check.passed ? "bg-amber-500" : "bg-red-500"
             }`}
           />
         ))}
@@ -73,7 +73,7 @@ export function PasswordStrengthMeter({
       <p
         className={`text-xs font-semibold ${
           meetsRequirements
-            ? "text-emerald-600"
+            ? "text-amber-600"
             : variant === "dark"
               ? "text-red-400"
               : "text-red-600"
@@ -89,7 +89,7 @@ export function PasswordStrengthMeter({
             key={label}
             className={`flex items-center gap-1.5 text-xs ${
               passed
-                ? "text-emerald-600"
+                ? "text-amber-600"
                 : variant === "dark"
                   ? "text-red-400"
                   : "text-red-600"
@@ -115,8 +115,8 @@ export function PasswordStrengthMeter({
             className={`flex items-center gap-1.5 text-xs ${
               passed
                 ? variant === "dark"
-                  ? "text-emerald-300"
-                  : "text-emerald-600"
+                  ? "text-amber-200"
+                  : "text-amber-600"
                 : variant === "dark"
                   ? "text-amber-300"
                   : "text-amber-700"

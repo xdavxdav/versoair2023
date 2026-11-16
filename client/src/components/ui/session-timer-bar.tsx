@@ -26,7 +26,7 @@ export function SessionTimerBar({
           ? "border-rose-300 bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950 dark:to-red-950"
           : isSessionLow
             ? "border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950"
-            : "border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950"
+            : "border-amber-200 bg-gradient-to-r from-amber-50 to-green-50 dark:from-amber-950 dark:to-green-950"
       }`}
     >
       <div className="px-4 py-3 flex items-center justify-between gap-4">
@@ -37,7 +37,7 @@ export function SessionTimerBar({
                 ? "bg-rose-200 dark:bg-rose-800"
                 : isSessionLow
                   ? "bg-amber-200 dark:bg-amber-800"
-                  : "bg-emerald-200 dark:bg-emerald-800"
+                  : "bg-amber-100 dark:bg-amber-900"
             }`}
           >
             {isSessionCritical ? (
@@ -47,7 +47,7 @@ export function SessionTimerBar({
                     ? "text-rose-600 dark:text-rose-300"
                     : isSessionLow
                       ? "text-amber-600 dark:text-amber-300"
-                      : "text-emerald-600 dark:text-emerald-300"
+                      : "text-amber-600 dark:text-amber-200"
                 }`}
               />
             ) : isSessionLow ? (
@@ -57,7 +57,7 @@ export function SessionTimerBar({
                     ? "text-rose-600 dark:text-rose-300"
                     : isSessionLow
                       ? "text-amber-600 dark:text-amber-300"
-                      : "text-emerald-600 dark:text-emerald-300"
+                      : "text-amber-600 dark:text-amber-200"
                 }`}
               />
             ) : (
@@ -67,7 +67,7 @@ export function SessionTimerBar({
                     ? "text-rose-600 dark:text-rose-300"
                     : isSessionLow
                       ? "text-amber-600 dark:text-amber-300"
-                      : "text-emerald-600 dark:text-emerald-300"
+                      : "text-amber-600 dark:text-amber-200"
                 }`}
               />
             )}
@@ -80,7 +80,7 @@ export function SessionTimerBar({
                     ? "text-rose-700 dark:text-rose-200"
                     : isSessionLow
                       ? "text-amber-700 dark:text-amber-200"
-                      : "text-emerald-700 dark:text-emerald-200"
+                      : "text-amber-700 dark:text-amber-100"
                 }`}
               >
                 {isSessionCritical
@@ -95,7 +95,7 @@ export function SessionTimerBar({
                     ? "text-rose-600 dark:text-rose-300"
                     : isSessionLow
                       ? "text-amber-600 dark:text-amber-300"
-                      : "text-emerald-600 dark:text-emerald-300"
+                      : "text-amber-600 dark:text-amber-200"
                 }`}
               >
                 {formatTimeLeft(sessionTimeLeft)} remaining
@@ -108,7 +108,7 @@ export function SessionTimerBar({
                   ? "[&>div]:bg-rose-500 dark:[&>div]:bg-rose-400"
                   : isSessionLow
                     ? "[&>div]:bg-amber-500 dark:[&>div]:bg-amber-400"
-                    : "[&>div]:bg-emerald-500 dark:[&>div]:bg-emerald-400"
+                    : "[&>div]:bg-amber-500 dark:[&>div]:bg-amber-400"
               }`}
             />
           </div>
@@ -122,7 +122,7 @@ export function SessionTimerBar({
               ? "border-rose-300 text-rose-700 hover:bg-rose-100 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-900"
               : isSessionLow
                 ? "border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900"
-                : "border-emerald-300 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                : "border-amber-200 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-950"
           }`}
         >
           <Zap className="h-4 w-4" />

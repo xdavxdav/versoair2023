@@ -273,7 +273,7 @@ export default function ImplementationTracker({
             </p>
           )}
           {sendSignal.isSuccess && (
-            <p role="status" className="mt-2 text-sm text-emerald-700">
+            <p role="status" className="mt-2 text-sm text-amber-700">
               {t("signalSent")}
             </p>
           )}

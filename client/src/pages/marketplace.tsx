@@ -81,7 +81,7 @@ const CATEGORIES = [
     id: "home",
     label: "Home & Living",
     icon: HomeIcon,
-    color: "from-emerald-500 to-teal-500",
+    color: "from-amber-500 to-teal-500",
   },
   {
     id: "instruments",
@@ -117,7 +117,7 @@ const CATEGORIES = [
     id: "sports",
     label: "Sports & Outdoors",
     icon: Dumbbell,
-    color: "from-green-500 to-emerald-500",
+    color: "from-green-500 to-amber-500",
   },
   {
     id: "community",
@@ -142,7 +142,7 @@ const COMMUNITY_ACTIVITY: {
 const conditionStyle = (c: string) => {
   switch (c) {
     case "New":
-      return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
     case "Like New":
       return "bg-green-500/20 text-green-400 border-green-500/30";
     case "Very Good":
@@ -960,7 +960,7 @@ export default function MarketplacePage() {
                     icon: BadgeCheck,
                     color: "text-blue-400",
                   },
-                  { label: "Nearby", icon: MapPin, color: "text-emerald-400" },
+                  { label: "Nearby", icon: MapPin, color: "text-amber-400" },
                   {
                     label: "Trending",
                     icon: TrendingUp,
@@ -1240,11 +1240,11 @@ export default function MarketplacePage() {
                         pending:
                           "bg-amber-500/20 text-amber-400 border-amber-500/30",
                         approved:
-                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                          "bg-amber-500/20 text-amber-400 border-amber-500/30",
                         rejected:
                           "bg-red-500/20 text-red-400 border-red-500/30",
                         active:
-                          "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                          "bg-amber-500/20 text-amber-400 border-amber-500/30",
                         draft:
                           "bg-slate-500/20 text-slate-400 border-slate-500/30",
                       };
@@ -1423,7 +1423,7 @@ export default function MarketplacePage() {
                                 e.stopPropagation();
                                 toggleFav(item.id);
                               }}
-                              className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full hover:bg-black/60 transition-colors"
+                              className="absolute top-3 right-3 p-2 bg-slate-900/40 backdrop-blur-sm rounded-full hover:bg-slate-900/60 transition-colors"
                             >
                               <Heart
                                 className={`w-4 h-4 ${favorites.includes(item.id) ? "fill-red-500 text-red-500" : "text-white"}`}
@@ -1742,7 +1742,7 @@ export default function MarketplacePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMobileSidebar(false)}
-              className="fixed inset-0 bg-black/60 z-50 lg:hidden backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-900/60 z-50 lg:hidden backdrop-blur-sm"
             />
             <motion.div
               initial={{ x: -320 }}
@@ -1835,7 +1835,7 @@ export default function MarketplacePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowCreateListing(false)}
-              className="fixed inset-0 bg-black/60 z-[70] backdrop-blur-md"
+              className="fixed inset-0 bg-slate-900/60 z-[70] backdrop-blur-md"
             />
             <motion.div
               drag
@@ -2119,7 +2119,7 @@ export default function MarketplacePage() {
                               />
                               <button
                                 onClick={() => removeImage(i)}
-                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-slate-900/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Trash2 className="w-3 h-3 text-red-400" />
                               </button>
@@ -2166,7 +2166,7 @@ export default function MarketplacePage() {
                           {videoPreviews.map((src, i) => (
                             <div
                               key={i}
-                              className="relative w-24 h-16 rounded-lg overflow-hidden group bg-black"
+                              className="relative w-24 h-16 rounded-lg overflow-hidden group bg-slate-900"
                             >
                               <video
                                 src={src}
@@ -2178,7 +2178,7 @@ export default function MarketplacePage() {
                               </div>
                               <button
                                 onClick={() => removeVideo(i)}
-                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-0.5 right-0.5 w-5 h-5 bg-slate-900/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Trash2 className="w-3 h-3 text-red-400" />
                               </button>
@@ -2302,7 +2302,7 @@ export default function MarketplacePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => messageState !== "sending" && setMessageTarget(null)}
-            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
@@ -2349,8 +2349,8 @@ export default function MarketplacePage() {
               <div className="p-5">
                 {messageState === "sent" ? (
                   <div className="text-center py-6">
-                    <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
-                      <CheckCircle className="w-8 h-8 text-emerald-400" />
+                    <div className="w-14 h-14 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
+                      <CheckCircle className="w-8 h-8 text-amber-400" />
                     </div>
                     <p className={`text-base font-semibold ${t.text} mb-1`}>
                       Message sent!

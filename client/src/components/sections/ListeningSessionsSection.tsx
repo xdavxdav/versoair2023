@@ -65,7 +65,7 @@ function ReadinessBadge({ readiness }: { readiness: AdminReadiness | null }) {
   }
   if (readiness.state === "ready") {
     return (
-      <Badge variant="outline" className="gap-1 border-emerald-200 bg-emerald-50 text-emerald-800" role="status">
+      <Badge variant="outline" className="gap-1 border-amber-100 bg-amber-50 text-amber-900" role="status">
         <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> Sessions ready
       </Badge>
     );

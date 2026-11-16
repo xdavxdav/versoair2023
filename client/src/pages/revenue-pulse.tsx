@@ -179,11 +179,11 @@ function PoolOverview() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="bg-gradient-to-r from-emerald-900/30 via-purple-900/20 to-fuchsia-900/30 border-emerald-500/20 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px]" />
+      <Card className="bg-gradient-to-r from-amber-900/30 via-purple-900/20 to-fuchsia-900/30 border-amber-500/20 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[100px]" />
         <CardHeader>
           <div className="flex items-center justify-between">
-            <Badge className="bg-emerald-500/20 text-emerald-300 border-0">
+            <Badge className="bg-amber-500/20 text-amber-300 border-0">
               Week {pool.weekNumber}/{pool.yearNumber}
             </Badge>
             <Badge
@@ -198,13 +198,13 @@ function PoolOverview() {
             </Badge>
           </div>
           <CardTitle className="text-white text-2xl mt-2 flex items-center gap-2">
-            <Wallet className="w-6 h-6 text-emerald-400" />
+            <Wallet className="w-6 h-6 text-amber-400" />
             Weekly Revenue Pool
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center mb-6">
-            <p className="text-4xl font-bold bg-gradient-to-r from-emerald-300 to-green-300 bg-clip-text text-transparent">
+            <p className="text-4xl font-bold bg-gradient-to-r from-amber-300 to-green-300 bg-clip-text text-transparent">
               ${total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </p>
             <p className="text-sm text-gray-400 mt-1">Total pool this week</p>
@@ -212,21 +212,21 @@ function PoolOverview() {
 
           {/* Pool breakdown */}
           <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="bg-black/20 rounded-lg p-3 text-center">
+            <div className="bg-slate-900/20 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500 mb-1">Guaranteed (20%)</p>
-              <p className="text-lg font-bold text-emerald-300">
+              <p className="text-lg font-bold text-amber-300">
                 ${guaranteed.toFixed(0)}
               </p>
               <Progress value={20} className="h-1 mt-2" />
             </div>
-            <div className="bg-black/20 rounded-lg p-3 text-center">
+            <div className="bg-slate-900/20 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500 mb-1">Performance (70%)</p>
               <p className="text-lg font-bold text-purple-300">
                 ${performance.toFixed(0)}
               </p>
               <Progress value={70} className="h-1 mt-2" />
             </div>
-            <div className="bg-black/20 rounded-lg p-3 text-center">
+            <div className="bg-slate-900/20 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500 mb-1">Platform (10%)</p>
               <p className="text-lg font-bold text-fuchsia-300">
                 ${platform.toFixed(0)}
@@ -318,27 +318,27 @@ function MyImpactScore() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-black/20 rounded-lg p-3">
+            <div className="bg-slate-900/20 rounded-lg p-3">
               <p className="text-xs text-gray-500">Streams this week</p>
               <p className="text-lg font-bold text-fuchsia-300">
                 {impact.streamCount.toLocaleString()}
               </p>
             </div>
-            <div className="bg-black/20 rounded-lg p-3">
+            <div className="bg-slate-900/20 rounded-lg p-3">
               <p className="text-xs text-gray-500">Unique listeners</p>
               <p className="text-lg font-bold text-purple-300">
                 {impact.uniqueListeners.toLocaleString()}
               </p>
             </div>
-            <div className="bg-black/20 rounded-lg p-3">
+            <div className="bg-slate-900/20 rounded-lg p-3">
               <p className="text-xs text-gray-500">Avg duration</p>
               <p className="text-lg font-bold text-indigo-300">
                 {impact.avgDuration}s
               </p>
             </div>
-            <div className="bg-black/20 rounded-lg p-3">
+            <div className="bg-slate-900/20 rounded-lg p-3">
               <p className="text-xs text-gray-500">Completion rate</p>
-              <p className="text-lg font-bold text-emerald-300">
+              <p className="text-lg font-bold text-amber-300">
                 {(impact.completionRate * 100).toFixed(0)}%
               </p>
             </div>
@@ -349,7 +349,7 @@ function MyImpactScore() {
               <Separator className="bg-white/10 my-4" />
               <div className="text-center">
                 <p className="text-sm text-gray-400">Estimated weekly payout</p>
-                <p className="text-2xl font-bold text-emerald-300">
+                <p className="text-2xl font-bold text-amber-300">
                   ${parseFloat(impact.estimatedPayout).toFixed(2)}
                 </p>
               </div>
@@ -518,7 +518,7 @@ function BadgeProgression() {
                 </div>
                 <Badge
                   variant="outline"
-                  className="border-emerald-500/30 text-emerald-300 text-xs"
+                  className="border-amber-500/30 text-amber-300 text-xs"
                 >
                   {tier.boost}
                 </Badge>
@@ -539,7 +539,7 @@ export default function RevenuePulsePage() {
     <div className="min-h-screen bg-[#06020f] relative overflow-hidden">
       {/* Ambient background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 right-1/4 w-[500px] h-[500px] bg-emerald-600/5 rounded-full blur-[120px]" />
+        <div className="absolute top-20 right-1/4 w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[120px]" />
         <div className="absolute bottom-40 left-1/4 w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[100px]" />
       </div>
 
@@ -550,13 +550,13 @@ export default function RevenuePulsePage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-4">
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm text-emerald-300 font-medium">
+          <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 mb-4">
+            <TrendingUp className="w-4 h-4 text-amber-400" />
+            <span className="text-sm text-amber-300 font-medium">
               Revenue Pulse
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
             Your Royalty Dashboard
           </h1>
           <p className="text-gray-400 mt-2 max-w-lg mx-auto">
@@ -570,7 +570,7 @@ export default function RevenuePulsePage() {
           <TabsList className="bg-white/5 border border-white/10 w-full justify-start">
             <TabsTrigger
               value="overview"
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300 text-gray-400"
+              className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300 text-gray-400"
             >
               <PieChart className="w-4 h-4 mr-2" /> Overview
             </TabsTrigger>

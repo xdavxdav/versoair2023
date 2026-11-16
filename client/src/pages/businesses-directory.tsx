@@ -128,8 +128,8 @@ const categories = [
     title: "Immobilier",
     description: "Agences immobilières, promoteurs et gestion de propriétés.",
     icon: HomeIcon,
-    color: "from-emerald-500 to-green-500",
-    bgColor: "bg-emerald-50",
+    color: "from-amber-500 to-green-500",
+    bgColor: "bg-amber-50",
     links: [
       { label: "Agences Immobilières", categoryId: "real-estate-agencies" },
       { label: "Promoteurs", categoryId: "real-estate-developers" },
@@ -203,7 +203,7 @@ const categories = [
     title: "Maison & Décoration",
     description: "Mobilier, décoration intérieure, électroménager et design.",
     icon: Sofa,
-    color: "from-teal-500 to-emerald-500",
+    color: "from-teal-500 to-amber-500",
     bgColor: "bg-teal-50",
     links: [
       { label: "Meubles", categoryId: "furniture-stores" },
@@ -294,8 +294,8 @@ const categories = [
     description:
       "Cabinets de recrutement, agences d'intérim et formation professionnelle.",
     icon: Briefcase,
-    color: "from-emerald-500 to-teal-500",
-    bgColor: "bg-emerald-50",
+    color: "from-amber-500 to-teal-500",
+    bgColor: "bg-amber-50",
     links: [
       { label: "Agences de Recrutement", categoryId: "recruitment-agencies" },
       { label: "Formation", categoryId: "training-centers" },
@@ -1120,7 +1120,7 @@ export default function BusinessesDirectory() {
                           {aiIntent.location}
                         </Badge>
                       )}
-                      <Badge className="bg-emerald-100 text-emerald-800">
+                      <Badge className="bg-amber-100 text-amber-900">
                         Verified listings only
                       </Badge>
                     </div>
@@ -1314,7 +1314,7 @@ export default function BusinessesDirectory() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setShowBusinessDetails(false)}
           >
             <motion.div

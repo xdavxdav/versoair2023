@@ -178,8 +178,8 @@ const SECTORS = [
   {
     value: "immobilier",
     label: "Immobilier",
-    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
-    gradient: "from-emerald-600 to-green-600",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-green-600",
   },
   {
     value: "conseil-juridique",
@@ -215,7 +215,7 @@ const SECTORS = [
     value: "maison-deco",
     label: "Maison & Décoration",
     color: "bg-teal-200 text-teal-900 border-teal-400",
-    gradient: "from-teal-600 to-emerald-600",
+    gradient: "from-teal-600 to-amber-600",
   },
   {
     value: "mode-textile",
@@ -256,8 +256,8 @@ const SECTORS = [
   {
     value: "emploi",
     label: "Emploi & RH",
-    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
-    gradient: "from-emerald-600 to-teal-600",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-teal-600",
   },
   {
     value: "commerce",
@@ -287,7 +287,7 @@ const SECTORS = [
     value: "finances",
     label: "Finances & Assurances",
     color: "bg-green-200 text-green-900 border-green-400",
-    gradient: "from-green-600 to-emerald-600",
+    gradient: "from-green-600 to-amber-600",
   },
   {
     value: "divertissement",
@@ -411,7 +411,7 @@ function Stars({
 function Stat({ icon, value, label, trend, color = "amber" }: any) {
   const bg =
     color === "green"
-      ? "from-emerald-100 to-green-100"
+      ? "from-amber-100 to-green-100"
       : color === "purple"
         ? "from-purple-100 to-violet-100"
         : color === "amber"
@@ -419,7 +419,7 @@ function Stat({ icon, value, label, trend, color = "amber" }: any) {
           : "from-blue-100 to-cyan-100";
   const fg =
     color === "green"
-      ? "text-emerald-600"
+      ? "text-amber-600"
       : color === "purple"
         ? "text-purple-600"
         : color === "amber"
@@ -427,7 +427,7 @@ function Stat({ icon, value, label, trend, color = "amber" }: any) {
           : "text-blue-600";
   const pill =
     color === "green"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-amber-50 text-amber-700"
       : color === "purple"
         ? "bg-purple-50 text-purple-700"
         : color === "amber"
@@ -672,7 +672,7 @@ export default function Contractors() {
         className={
           "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border shadow-sm " +
           (ok
-            ? "bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border-emerald-200"
+            ? "bg-gradient-to-r from-amber-50 to-green-50 text-amber-700 border-amber-200"
             : "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border-amber-200")
         }
       >
@@ -951,7 +951,7 @@ export default function Contractors() {
               >
                 Discover {filtered.length} contract opportunities across all
                 industries.
-                <span className="font-semibold text-emerald-600 ml-2 hidden sm:inline">
+                <span className="font-semibold text-amber-600 ml-2 hidden sm:inline">
                   ✅ Updated in real time
                 </span>
               </motion.p>

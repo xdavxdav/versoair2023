@@ -223,7 +223,7 @@ export default function TrackDetailPage() {
               {/* Play overlay on art */}
               <div
                 onClick={handlePlay}
-                className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer"
+                className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer"
               >
                 <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-xl shadow-amber-500/40">
                   {isPlaying ? (
@@ -602,7 +602,7 @@ export default function TrackDetailPage() {
                       <Music className="w-6 h-6 text-white/30" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-end justify-end p-2 transition-all">
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-end justify-end p-2 transition-all">
                     <div className="w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
                       <Play className="w-4 h-4 text-black ml-0.5" />
                     </div>

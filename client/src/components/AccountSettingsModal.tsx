@@ -445,7 +445,7 @@ export function AccountSettingsModal({
         <DialogHeader className="px-6 pt-6 pb-2">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Settings className="h-5 w-5 text-emerald-400" />
+              <Settings className="h-5 w-5 text-amber-400" />
               Account & Preferences
             </DialogTitle>
             {onBackToDashboard && (
@@ -474,14 +474,14 @@ export function AccountSettingsModal({
           <TabsList className="grid w-full grid-cols-2 bg-slate-800 mb-4">
             <TabsTrigger
               value="account"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
             >
               <User className="h-4 w-4 mr-2" />
               Account Settings
             </TabsTrigger>
             <TabsTrigger
               value="preferences"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
             >
               <Bell className="h-4 w-4 mr-2" />
               Preferences
@@ -494,7 +494,7 @@ export function AccountSettingsModal({
           <TabsContent value="account" className="space-y-4 mt-0">
             {profileLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
                 <span className="ml-2 text-slate-400">Loading profile...</span>
               </div>
             ) : profile ? (
@@ -503,7 +503,7 @@ export function AccountSettingsModal({
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <User className="h-4 w-4 text-emerald-400" />
+                      <User className="h-4 w-4 text-amber-400" />
                       Profile Information
                     </CardTitle>
                     <CardDescription className="text-slate-400">
@@ -513,7 +513,7 @@ export function AccountSettingsModal({
                   <CardContent className="space-y-4">
                     {/* Avatar + Role badges */}
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
+                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-amber-500 to-cyan-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
                         {(profile.username || profile.email || "U")
                           .charAt(0)
                           .toUpperCase()}
@@ -525,7 +525,7 @@ export function AccountSettingsModal({
                           </span>
                           <Badge
                             variant="outline"
-                            className="text-emerald-400 border-emerald-400/30 text-[10px]"
+                            className="text-amber-400 border-amber-400/30 text-[10px]"
                           >
                             {roleLabel(profile.role || "user")}
                           </Badge>
@@ -581,7 +581,7 @@ export function AccountSettingsModal({
                           disabled={
                             savingProfile || editUsername === profile.username
                           }
-                          className="bg-emerald-600 hover:bg-emerald-500 gap-1 shrink-0"
+                          className="bg-amber-600 hover:bg-amber-500 gap-1 shrink-0"
                           size="sm"
                         >
                           {savingProfile ? (
@@ -815,7 +815,7 @@ export function AccountSettingsModal({
           <TabsContent value="preferences" className="space-y-4 mt-0">
             {prefsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
                 <span className="ml-2 text-slate-400">
                   Loading preferences...
                 </span>
@@ -1072,7 +1072,7 @@ export function AccountSettingsModal({
                   <Button
                     onClick={handleSavePreferences}
                     disabled={savingPrefs || !prefsChanged}
-                    className="bg-emerald-600 hover:bg-emerald-500 gap-1"
+                    className="bg-amber-600 hover:bg-amber-500 gap-1"
                   >
                     {savingPrefs ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

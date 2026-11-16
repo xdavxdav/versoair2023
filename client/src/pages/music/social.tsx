@@ -129,8 +129,8 @@ function PostTrackCard({ track }: { track: TrackAttachment }) {
             className={cn(
               "absolute inset-0 flex items-center justify-center transition-all",
               track.has_audio_data
-                ? "bg-black/40 hover:bg-black/60 cursor-pointer"
-                : "bg-black/60 cursor-not-allowed",
+                ? "bg-slate-900/40 hover:bg-slate-900/60 cursor-pointer"
+                : "bg-slate-900/60 cursor-not-allowed",
             )}
           >
             {isCurrent && isPlaying ? (
@@ -268,7 +268,7 @@ function ComposeBox({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden rounded-xl border border-white/10 bg-black/40"
+                className="overflow-hidden rounded-xl border border-white/10 bg-slate-900/40"
               >
                 <div className="p-3 space-y-1 max-h-48 overflow-y-auto">
                   <p className="text-xs font-medium text-white/50 mb-2">

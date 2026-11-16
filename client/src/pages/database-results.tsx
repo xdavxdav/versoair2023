@@ -152,7 +152,7 @@ export default function DatabaseResults() {
                     onChange={(e) =>
                       setFilters({ ...filters, category: e.target.value })
                     }
-                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-amber-500"
                   >
                     <option value="all">All Categories</option>
                     {categories.map((category) => (
@@ -175,7 +175,7 @@ export default function DatabaseResults() {
                         countryCode: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-amber-500"
                   >
                     <option value="all">All Countries</option>
                     {availableCountries.map((countryCode) => (
@@ -195,7 +195,7 @@ export default function DatabaseResults() {
                     onChange={(e) =>
                       setFilters({ ...filters, sort: e.target.value })
                     }
-                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-amber-500"
                   >
                     <option value="created_at">Newest</option>
                     <option value="rating">Highest Rated</option>
@@ -205,7 +205,7 @@ export default function DatabaseResults() {
                 </div>
 
                 <Button
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white"
                   onClick={() => setPage(1)}
                 >
                   Apply Filters
@@ -228,15 +228,15 @@ export default function DatabaseResults() {
                 {results.map((result) => (
                   <div
                     key={result.id}
-                    className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-lg p-6 hover:border-emerald-500/50 transition-all group"
+                    className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-lg p-6 hover:border-amber-500/50 transition-all group"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">
+                        <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
                           {result.name || `Business #${result.id}`}
                         </h3>
                         <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-400">
-                          <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">
+                          <span className="bg-amber-500/20 text-amber-400 px-2 py-1 rounded">
                             {result.category_name || "General"}
                           </span>
                           {result.country_code && (
@@ -261,7 +261,7 @@ export default function DatabaseResults() {
                     <Link href={`/business/${result.id}`}>
                       <Button
                         variant="outline"
-                        className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                        className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
                       >
                         View Details →
                       </Button>
@@ -301,7 +301,7 @@ export default function DatabaseResults() {
                       onClick={() => setPage(pageNumber)}
                       className={
                         pageNumber === page
-                          ? "bg-emerald-600"
+                          ? "bg-amber-600"
                           : "border-slate-600 text-slate-300 bg-transparent hover:bg-white/10 hover:text-white"
                       }
                     >
@@ -325,7 +325,7 @@ export default function DatabaseResults() {
       </div>
 
       <div className="max-w-[95vw] mx-auto px-4 py-16">
-        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
+        <div className="bg-gradient-to-r from-amber-600/20 to-teal-600/20 border border-amber-500/30 p-8 md:p-12 rounded-xl text-center">
           <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-2">
             <BarChart3 className="h-8 w-8" />
             Ready to Analyze?
@@ -334,7 +334,7 @@ export default function DatabaseResults() {
             Create custom dashboards and unlock insights from these datasets
           </p>
           <Link href="/dashboard">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+            <Button className="bg-amber-600 hover:bg-amber-700 text-white font-semibold">
               Start Analyzing
             </Button>
           </Link>

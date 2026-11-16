@@ -64,13 +64,13 @@ const PORTAL_META: Record<
     label: "Artisan",
     icon: <Palette className="w-3.5 h-3.5" />,
     path: "/artisans-portal",
-    color: "text-emerald-400",
+    color: "text-amber-400",
   },
   "geo-admin": {
     label: "GeoAdmin",
     icon: <Globe className="w-3.5 h-3.5" />,
     path: "/geo-admin",
-    color: "text-emerald-400",
+    color: "text-amber-400",
   },
   community: {
     label: "Community",
@@ -639,42 +639,42 @@ export default function Navbar({
                 </div>
               </div>
 
-              {/* Services — emerald */}
+              {/* Services — amber */}
               <div className="relative group shrink-0">
                 <button
-                  className={`text-emerald-800 hover:text-emerald-800 hover:bg-emerald-50 gap-1 ${tabletNavIconItemClass}`}
+                  className={`text-amber-900 hover:text-amber-900 hover:bg-amber-50 gap-1 ${tabletNavIconItemClass}`}
                 >
                   Services <ChevronDown className="h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-emerald-100">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-xl rounded-xl mt-2 py-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-amber-100">
                   <Link
                     href="/services"
-                    className="block px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg mx-1 font-medium transition-colors"
+                    className="block px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 hover:text-amber-900 rounded-lg mx-1 font-medium transition-colors"
                   >
                     Tous les services
                   </Link>
                   <Link
                     href="/services/news"
-                    className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg mx-1 transition-colors"
+                    className="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg mx-1 transition-colors"
                   >
                     Actualités
                   </Link>
                   <Link
                     href="/services/careers"
-                    className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg mx-1 transition-colors"
+                    className="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg mx-1 transition-colors"
                   >
                     Carrières
                   </Link>
                   <Link
                     href="/services/contractors"
-                    className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg mx-1 transition-colors"
+                    className="block px-4 py-2 text-sm text-gray-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg mx-1 transition-colors"
                   >
                     Prestataires
                   </Link>
-                  <div className="border-t border-emerald-100 my-1 mx-2" />
+                  <div className="border-t border-amber-100 my-1 mx-2" />
                   <Link
                     href="/about"
-                    className="block px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg mx-1 font-medium transition-colors"
+                    className="block px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 hover:text-amber-900 rounded-lg mx-1 font-medium transition-colors"
                   >
                     À propos
                   </Link>
@@ -949,7 +949,7 @@ function PortalSwitcher({
                   <span className={meta.color}>{meta.icon}</span>
                   <span className="font-medium">{meta.label}</span>
                   {isActive && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400" />
                   )}
                 </button>
               );

@@ -148,7 +148,7 @@ export default function GeoAdminAccessManager() {
         </Button>
       </form>
       {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
-      {message && <p role="status" className="mt-3 text-sm text-emerald-700">{message}</p>}
+      {message && <p role="status" className="mt-3 text-sm text-amber-700">{message}</p>}
       {members.isLoading && <p className="mt-4">Loading access list...</p>}
       {members.isError && (
         <div role="alert" className="mt-4 text-red-700">

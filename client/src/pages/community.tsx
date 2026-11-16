@@ -392,7 +392,7 @@ export default function CommunityDetail() {
                     key={idx}
                     className="bg-slate-800/30 border border-slate-700 rounded-lg p-4"
                   >
-                    <div className="text-emerald-400 mb-3">{item.icon}</div>
+                    <div className="text-amber-400 mb-3">{item.icon}</div>
                     <h3 className="font-semibold text-white mb-1">
                       {item.title}
                     </h3>

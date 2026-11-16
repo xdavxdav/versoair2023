@@ -86,7 +86,7 @@ export default function ArtisansDirectory() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-12 md:py-16">
+      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12 md:py-16">
         <div className="max-w-[95vw] mx-auto px-4">
           <motion.h1
             variants={fadeInUp}
@@ -101,14 +101,14 @@ export default function ArtisansDirectory() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="text-lg text-emerald-50 max-w-2xl"
+            className="text-lg text-amber-50 max-w-2xl"
           >
             Discover individual craft professionals and makers from across Ivory
             Coast. Artisans create, teach, or sell a craft or traditional
             practice, bringing skill, heritage, and a living creative business
             to the public directory.
           </motion.p>
-          <p className="mt-4 max-w-2xl text-sm text-emerald-100">
+          <p className="mt-4 max-w-2xl text-sm text-amber-100">
             Apply as an Artisan to create a public profile, showcase your
             portfolio, access communities and workshops, and connect with
             customers. Profiles are reviewed before publication; approved
@@ -116,7 +116,7 @@ export default function ArtisansDirectory() {
             sponsorship opportunities.
           </p>
           <Link href="/apply?portal=artisan&redirect=/artisans-portal">
-            <Button className="mt-5 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg">
+            <Button className="mt-5 bg-white text-amber-700 hover:bg-amber-50 font-semibold shadow-lg">
               Apply as an artisan
               <Briefcase className="ml-2 h-4 w-4" />
             </Button>
@@ -167,7 +167,7 @@ export default function ArtisansDirectory() {
               placeholder="Search by name, location, or specialty..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
         </div>
@@ -216,14 +216,14 @@ export default function ArtisansDirectory() {
                 whileHover={{ y: -6, scale: 1.02 }}
               >
                 <Card className="hover:shadow-xl transition-all border-0 shadow-lg overflow-hidden h-full">
-                  <CardHeader className="pb-3 bg-gradient-to-r from-emerald-50 to-emerald-100/50">
+                  <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-amber-100/50">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <CardTitle className="text-lg text-gray-900">
                           {artisan.name}
                         </CardTitle>
                         {artisan.category && (
-                          <CardDescription className="text-emerald-700 font-medium">
+                          <CardDescription className="text-amber-700 font-medium">
                             {artisan.category}
                           </CardDescription>
                         )}
@@ -240,7 +240,7 @@ export default function ArtisansDirectory() {
 
                     {(artisan.cityName || artisan.countryCode) && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 text-emerald-600" />
+                        <MapPin className="h-4 w-4 text-amber-600" />
                         {[artisan.cityName, artisan.countryCode]
                           .filter(Boolean)
                           .join(", ")}
@@ -254,7 +254,7 @@ export default function ArtisansDirectory() {
                       {artisan.phone && (
                         <a
                           href={`tel:${artisan.phone}`}
-                          className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                          className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-700 transition-colors"
                         >
                           <Phone className="h-4 w-4" />
                           {artisan.phone}
@@ -263,7 +263,7 @@ export default function ArtisansDirectory() {
                       {artisan.email && (
                         <a
                           href={`mailto:${artisan.email}`}
-                          className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                          className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-700 transition-colors"
                         >
                           <Mail className="h-4 w-4" />
                           {artisan.email}
@@ -282,14 +282,14 @@ export default function ArtisansDirectory() {
                     <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {artisan.slug ? (
                         <Link href={`/profiles/${artisan.slug}`}>
-                          <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                          <Button className="w-full bg-amber-600 hover:bg-amber-700">
                             View profile
                             <Globe className="ml-2 h-4 w-4" />
                           </Button>
                         </Link>
                       ) : null}
                       <Link href="/artisan-workshops">
-                        <button className="w-full group bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden">
+                        <button className="w-full group bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-900 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden">
                           <span className="relative z-10 flex items-center gap-2">
                             <Zap className="h-4 w-4 animate-pulse" />
                             Partake in Workshops
@@ -305,7 +305,7 @@ export default function ArtisansDirectory() {
           </motion.div>
         ) : !loading && !error ? (
           <Card className="text-center py-12 border-0 shadow-lg bg-gray-50">
-            <Award className="h-12 w-12 mx-auto text-emerald-300 mb-4" />
+            <Award className="h-12 w-12 mx-auto text-amber-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
               {searchQuery ? "No artisans found" : "Artisan Directory Ready"}
             </h3>
@@ -323,17 +323,17 @@ export default function ArtisansDirectory() {
         ) : null}
 
         {/* Support Section */}
-        <div className="mt-16 bg-gradient-to-r from-emerald-50 to-emerald-100/50 rounded-xl p-8 border border-emerald-200">
-          <h2 className="text-2xl font-bold text-emerald-900 mb-3">
+        <div className="mt-16 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-xl p-8 border border-amber-200">
+          <h2 className="text-2xl font-bold text-amber-900 mb-3">
             Support Our Artisans
           </h2>
-          <p className="text-emerald-800 mb-4">
+          <p className="text-amber-900 mb-4">
             Every purchase directly supports artisans and their families. Help
             preserve cultural heritage and empower communities across Ivory
             Coast.
           </p>
           <Link href="/support">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button className="bg-amber-600 hover:bg-amber-700 text-white">
               Learn About Our Mission
             </Button>
           </Link>

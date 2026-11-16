@@ -73,7 +73,7 @@ function getUrgency(days: number | null): {
     return { label: "Urgent", color: "#F59E0B", bg: "bg-amber-500/10" };
   if (days <= 14)
     return { label: "Warning", color: "#3B82F6", bg: "bg-blue-500/10" };
-  return { label: "Healthy", color: "#10B981", bg: "bg-emerald-500/10" };
+  return { label: "Healthy", color: "#10B981", bg: "bg-amber-500/10" };
 }
 
 function formatCurrency(val: number | string | null): string {
@@ -150,7 +150,7 @@ function StatCard({
 // Stock badge
 function StockBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    "In Stock": "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    "In Stock": "bg-amber-500/10 text-amber-400 border-amber-500/30",
     "Low Stock": "bg-amber-500/10 text-amber-400 border-amber-500/30",
     "Out of Stock": "bg-red-500/10 text-red-400 border-red-500/30",
     Discontinued: "bg-gray-500/10 text-gray-400 border-gray-500/30",
@@ -855,7 +855,7 @@ export default function InventoryDashboard() {
                           <p className="text-xs text-gray-500">
                             Projected profit
                           </p>
-                          <p className="text-sm text-emerald-400">
+                          <p className="text-sm text-amber-400">
                             {formatCurrency(profit)}/mo
                           </p>
                         </div>

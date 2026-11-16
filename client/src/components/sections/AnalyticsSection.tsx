@@ -314,7 +314,7 @@ export function AnalyticsSection() {
 
               <div className="bg-slate-800/60 rounded-lg shadow p-6 border border-slate-700">
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  <TrendingUp className="h-5 w-5 text-amber-400" />
                   <h4 className="font-semibold text-white">
                     Events Per Session
                   </h4>

@@ -124,12 +124,12 @@ export default function CommandCenter() {
               ],
             }}
             transition={{ duration: 3, repeat: Infinity }}
-            className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center"
+            className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-amber-600 flex items-center justify-center"
           >
             <LayoutDashboard className="w-5 h-5 text-black" />
           </motion.div>
           <div>
-            <h2 className="text-xl font-black font-mono bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+            <h2 className="text-xl font-black font-mono bg-gradient-to-r from-green-400 to-amber-400 bg-clip-text text-transparent">
               COMMAND CENTER
             </h2>
             <p className="text-gray-600 text-[11px] font-mono">
@@ -1570,7 +1570,7 @@ export default function CommandCenter() {
                   {
                     name: "analytics-service.ts",
                     desc: "Aggregates analytics data across entities (revenue, performance, trends)",
-                    icon: <Activity className="h-3 w-3 text-emerald-400" />,
+                    icon: <Activity className="h-3 w-3 text-amber-400" />,
                   },
                   {
                     name: "pdf-generator.ts",
@@ -1872,7 +1872,7 @@ export default function CommandCenter() {
                 icon={<GitBranch className="w-3.5 h-3.5 text-white" />}
                 color="amber"
               >
-                <div className="font-mono text-[11px] text-gray-400 bg-black/40 rounded-lg p-4 leading-relaxed">
+                <div className="font-mono text-[11px] text-gray-400 bg-slate-900/40 rounded-lg p-4 leading-relaxed">
                   <div className="text-green-400">client/src/</div>
                   <div className="ml-4">
                     ├── pages/{" "}

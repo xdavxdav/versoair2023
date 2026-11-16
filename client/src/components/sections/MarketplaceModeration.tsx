@@ -264,11 +264,11 @@ export function MarketplaceModeration() {
               </div>
               <div className="text-sm text-amber-700">Pending Review</div>
             </div>
-            <div className="bg-emerald-50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-emerald-600">
+            <div className="bg-amber-50 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-amber-600">
                 <CheckCircle className="h-6 w-6 mx-auto" />
               </div>
-              <div className="text-sm text-emerald-700">Auto-approve: 24h</div>
+              <div className="text-sm text-amber-700">Auto-approve: 24h</div>
             </div>
             <div className="bg-blue-50 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">
@@ -403,7 +403,7 @@ export function MarketplaceModeration() {
                         <>
                           <Button
                             size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-amber-600 hover:bg-amber-700"
                             onClick={() => handleAction(listing, "approve")}
                             disabled={statusMutation.isPending}
                           >
@@ -627,7 +627,7 @@ export function MarketplaceModeration() {
               disabled={statusMutation.isPending}
               className={
                 actionDialog?.action === "approve"
-                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  ? "bg-amber-600 hover:bg-amber-700"
                   : "bg-red-600 hover:bg-red-700"
               }
             >

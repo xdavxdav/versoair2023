@@ -417,9 +417,9 @@ export default function InactivityGuard() {
   if (mode === "success") {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-        <div className="bg-white border border-emerald-200 shadow-2xl rounded-2xl px-8 py-6 flex items-center gap-3 animate-in fade-in zoom-in-95 duration-300">
-          <CheckCircle className="h-6 w-6 text-emerald-600" />
-          <span className="font-semibold text-emerald-700">Verified ✓</span>
+        <div className="bg-white border border-amber-100 shadow-2xl rounded-2xl px-8 py-6 flex items-center gap-3 animate-in fade-in zoom-in-95 duration-300">
+          <CheckCircle className="h-6 w-6 text-amber-600" />
+          <span className="font-semibold text-amber-700">Verified ✓</span>
         </div>
       </div>
     );

@@ -103,7 +103,7 @@ export default function GameControlPanel() {
             placeholder="Search wallets by username..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-black/40 border border-gray-800 rounded-lg text-white text-sm font-mono focus:border-amber-500/50 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2 bg-slate-900/40 border border-gray-800 rounded-lg text-white text-sm font-mono focus:border-amber-500/50 focus:outline-none"
           />
         </div>
 

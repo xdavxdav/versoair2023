@@ -376,16 +376,16 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-emerald-100/50">
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-amber-50 to-amber-100/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-emerald-600">
+                <p className="text-2xl font-bold text-amber-600">
                   {statsData?.data?.active_businesses || 0}
                 </p>
               </div>
-              <div className="text-emerald-200">
+              <div className="text-amber-100">
                 <Check className="w-12 h-12" />
               </div>
             </div>
@@ -679,7 +679,7 @@ export function BusinessesManagement({ categories }: { categories: any[] }) {
                         </TableCell>
                         <TableCell className="text-center">
                           {business.is_active ? (
-                            <Badge className="bg-emerald-100 text-emerald-800">
+                            <Badge className="bg-amber-100 text-amber-900">
                               Active
                             </Badge>
                           ) : (

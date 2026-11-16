@@ -135,7 +135,7 @@ export default function GeoAdminSubscriberView({
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="mb-3 flex items-center gap-2 text-emerald-700">
+              <div className="mb-3 flex items-center gap-2 text-amber-700">
                 <ShieldCheck className="h-5 w-5" />
                 <span className="text-sm font-semibold">
                   {isFree
@@ -154,7 +154,7 @@ export default function GeoAdminSubscriberView({
             </div>
             <Badge
               variant="outline"
-              className="border-emerald-200 text-emerald-800"
+              className="border-amber-100 text-amber-900"
             >
               {tierName} plan
             </Badge>
@@ -218,7 +218,7 @@ export default function GeoAdminSubscriberView({
                           </Badge>
                         )}
                         {!isFree && business.is_verified && (
-                          <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                          <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
                             Verified
                           </Badge>
                         )}

@@ -34,7 +34,7 @@ export default function DashboardTab({
       key: "artists",
       label: "Artists",
       value: stats.artists,
-      icon: <Music2 className="h-5 w-5 text-emerald-300" />,
+      icon: <Music2 className="h-5 w-5 text-amber-200" />,
     },
     {
       key: "activity",
@@ -66,7 +66,7 @@ export default function DashboardTab({
         <h2 className="text-slate-100 font-medium mb-2">System health</h2>
         <p className="text-sm text-slate-400">
           Database status:{" "}
-          <span className={dbConnected ? "text-emerald-300" : "text-red-300"}>
+          <span className={dbConnected ? "text-amber-200" : "text-red-300"}>
             {dbConnected === null
               ? "Checking..."
               : dbConnected

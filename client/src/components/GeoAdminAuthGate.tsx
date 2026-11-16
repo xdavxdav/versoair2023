@@ -278,7 +278,7 @@ export default function GeoAdminAuthGate({
     return localize(
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center relative overflow-hidden">
         {/* Background orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
         <div
           className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"
           style={{ animationDelay: "1s" }}
@@ -288,7 +288,7 @@ export default function GeoAdminAuthGate({
           <Card className="bg-white/5 border-white/10 backdrop-blur-xl shadow-2xl relative z-[9999]">
             <CardContent className="p-8">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
                   <CheckCircle className="h-8 w-8 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">
@@ -302,7 +302,7 @@ export default function GeoAdminAuthGate({
               <div className="space-y-4">
                 <Button
                   onClick={() => onSignInSuccess(signedInUsername)}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white py-5 rounded-xl"
                 >
                   <ArrowRight className="mr-2 h-4 w-4" />
                   Go to Dashboard
@@ -332,7 +332,7 @@ export default function GeoAdminAuthGate({
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2dyaWQpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-50" />
 
         {/* Floating orbs */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
         <div
           className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
@@ -349,9 +349,9 @@ export default function GeoAdminAuthGate({
             </div>
 
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              <Globe className="inline-block h-10 w-10 mr-3 text-emerald-400" />
+              <Globe className="inline-block h-10 w-10 mr-3 text-amber-400" />
               Geo Admin
-              <span className="text-emerald-400"> Observer</span>
+              <span className="text-amber-400"> Observer</span>
             </h1>
 
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-2">
@@ -388,7 +388,7 @@ export default function GeoAdminAuthGate({
             <Button
               size="lg"
               onClick={() => setMode("signin")}
-              className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-emerald-500/20"
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-amber-500/20"
             >
               <KeyRound className="mr-2 h-5 w-5" />
               Sign In to Access Geo Admin
@@ -399,7 +399,7 @@ export default function GeoAdminAuthGate({
               <span>Don't have an account?</span>
               <Link
                 href="/auth/signin?mode=register&redirect=%2Fgeo-admin"
-                className="text-emerald-400 hover:text-emerald-300 underline underline-offset-4"
+                className="text-amber-400 hover:text-amber-200 underline underline-offset-4"
               >
                 Create one →
               </Link>
@@ -409,7 +409,7 @@ export default function GeoAdminAuthGate({
           {/* Trust indicators */}
           <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600">
             <div className="flex items-center gap-1.5">
-              <Shield className="h-4 w-4 text-emerald-500/50" />
+              <Shield className="h-4 w-4 text-amber-500/50" />
               <span>Secure authentication</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -431,7 +431,7 @@ export default function GeoAdminAuthGate({
   return localize(
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center relative overflow-hidden">
       {/* Background orbs */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute top-20 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
       <div
         className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse pointer-events-none"
         style={{ animationDelay: "1s" }}
@@ -442,7 +442,7 @@ export default function GeoAdminAuthGate({
           <CardContent className="p-8">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
                 <Globe className="h-8 w-8 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">Sign In</h2>
@@ -465,7 +465,7 @@ export default function GeoAdminAuthGate({
                 }}
                 className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
                   mode === "signin"
-                    ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"
+                    ? "bg-amber-500/20 border border-amber-500/50 text-amber-200"
                     : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
                 }`}
               >
@@ -484,7 +484,7 @@ export default function GeoAdminAuthGate({
                 }}
                 className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
                   mode === "geoadmin"
-                    ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"
+                    ? "bg-amber-500/20 border border-amber-500/50 text-amber-200"
                     : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10"
                 }`}
               >
@@ -539,13 +539,13 @@ export default function GeoAdminAuthGate({
                     }
                     placeholder="000000"
                     required
-                    className="bg-white/5 border-white/10 text-white text-center text-lg tracking-[0.4em] placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                    className="bg-white/5 border-white/10 text-white text-center text-lg tracking-[0.4em] placeholder:text-slate-600 focus:border-amber-500/50 focus:ring-amber-500/20"
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={loading || ownerOtpCode.length !== 6}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white py-5 rounded-xl disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -589,7 +589,7 @@ export default function GeoAdminAuthGate({
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@business.com"
                       required
-                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-amber-500/50 focus:ring-amber-500/20"
                     />
                   </div>
                 </div>
@@ -606,7 +606,7 @@ export default function GeoAdminAuthGate({
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                      className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-amber-500/50 focus:ring-amber-500/20"
                     />
                     <button
                       type="button"
@@ -625,7 +625,7 @@ export default function GeoAdminAuthGate({
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white py-5 rounded-xl"
                 >
                   {loading ? (
                     <>
@@ -654,7 +654,7 @@ export default function GeoAdminAuthGate({
                   {/* Google */}
                   <button
                     type="button"
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-xs font-medium"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-amber-500/30 transition-all text-xs font-medium"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path
@@ -679,7 +679,7 @@ export default function GeoAdminAuthGate({
                   {/* Microsoft */}
                   <button
                     type="button"
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-xs font-medium"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-amber-500/30 transition-all text-xs font-medium"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <rect x="1" y="1" width="10" height="10" fill="#F25022" />
@@ -710,7 +710,7 @@ export default function GeoAdminAuthGate({
                   {/* Apple */}
                   <button
                     type="button"
-                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-emerald-500/30 transition-all text-xs font-medium"
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:border-amber-500/30 transition-all text-xs font-medium"
                   >
                     <svg
                       className="w-5 h-5"
@@ -743,12 +743,12 @@ export default function GeoAdminAuthGate({
                       }}
                       placeholder="AAA-000-AAA"
                       required
-                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-amber-500/50 focus:ring-amber-500/20"
                     />
                   </div>
                 </div>
 
-                <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-200">
+                <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-100">
                   GeoAdmin uses an individual passwordless access code.
                   Owner access also requires an authenticator code.
                 </p>
@@ -756,7 +756,7 @@ export default function GeoAdminAuthGate({
                 <Button
                   type="submit"
                   disabled={loading || !GEOADMIN_STAFF_CODE_PATTERN.test(username.trim())}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-5 rounded-xl disabled:opacity-50"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white py-5 rounded-xl disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -793,7 +793,7 @@ export default function GeoAdminAuthGate({
                   <>
                     <Link
                       href="/auth/forgot-password"
-                      className="text-emerald-400/70 hover:text-emerald-400"
+                      className="text-amber-400/70 hover:text-amber-400"
                     >
                       Forgot password?
                     </Link>
@@ -802,7 +802,7 @@ export default function GeoAdminAuthGate({
                 )}
                 <Link
                   href="/auth/signin?mode=register&redirect=%2Fgeo-admin"
-                  className="text-emerald-400/70 hover:text-emerald-400"
+                  className="text-amber-400/70 hover:text-amber-400"
                 >
                   Create account
                 </Link>

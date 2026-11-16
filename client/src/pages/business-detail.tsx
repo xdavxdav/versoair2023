@@ -1621,7 +1621,7 @@ export default function BusinessDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 overflow-y-auto">
           {/* Backdrop with blur and graffiti effect */}
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-900/80 backdrop-blur-md"
             onClick={() => setShowProfitModal(false)}
           />
           <div className="fixed inset-0 pointer-events-none overflow-hidden">

@@ -325,7 +325,7 @@ export default function MusicLibrary() {
               value={playlistName}
               onChange={(event) => setPlaylistName(event.target.value)}
               placeholder="Nom de la playlist"
-              className="flex-1 rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-white"
+              className="flex-1 rounded-lg bg-slate-900/30 border border-white/10 px-3 py-2 text-white"
             />
             <Button onClick={makePlaylist} disabled={createPlaylist.isPending}>
               Créer
@@ -438,7 +438,7 @@ export default function MusicLibrary() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white flex items-center gap-1.5">
                         {track.title}
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 inline shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 inline shrink-0" />
                       </p>
                       <p className="truncate text-xs text-white/40">
                         {track.artistName} ·{" "}
@@ -520,7 +520,7 @@ export default function MusicLibrary() {
                             <Disc3 className="h-10 w-10" />
                           </div>
                         )}
-                        <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white/90">
+                        <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/60 backdrop-blur-md text-[10px] font-semibold text-white/90">
                           {album.total_tracks || album.track_count || 0} titres
                         </span>
                       </div>

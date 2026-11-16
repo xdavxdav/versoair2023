@@ -94,7 +94,7 @@ export const VisibilityMeter: React.FC<VisibilityMeterProps> = ({
   const zoneLabels: Record<string, { label: string; color: string }> = {
     red: { label: "Base Visibility", color: "text-red-600" },
     yellow: { label: "Getting Noticed", color: "text-yellow-600" },
-    green: { label: "Competitive", color: "text-emerald-600" },
+    green: { label: "Competitive", color: "text-amber-600" },
     purple: { label: "Market Leader", color: "text-purple-600" },
   };
 
@@ -211,7 +211,7 @@ export const RankScoreDisplay: React.FC<RankScoreProps> = ({
 
   const getScoreColor = (s: number) => {
     if (s >= 80) return "text-purple-600";
-    if (s >= 60) return "text-emerald-600";
+    if (s >= 60) return "text-amber-600";
     if (s >= 40) return "text-yellow-600";
     return "text-red-500";
   };
@@ -228,7 +228,7 @@ export const RankScoreDisplay: React.FC<RankScoreProps> = ({
       {/* Score Bar */}
       <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden mb-2">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-red-400 via-yellow-400 via-emerald-400 to-purple-500 transition-all duration-1000"
+          className="h-full rounded-full bg-gradient-to-r from-red-400 via-yellow-400 via-amber-400 to-purple-500 transition-all duration-1000"
           style={{ width: `${score}%` }}
         />
         {/* Potential score indicator */}

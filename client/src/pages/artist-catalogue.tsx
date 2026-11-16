@@ -561,7 +561,7 @@ export default function ArtistCataloguePage() {
                             <Disc3 className="w-10 h-10 text-white/20" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
+                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
                           <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
                             <Play className="w-4 h-4 text-black ml-0.5" />
                           </div>
@@ -799,7 +799,7 @@ export default function ArtistCataloguePage() {
       {/* MESSAGE ARTIST MODAL — free/ungated music_artist DM         */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {showMessageModal && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-[#efe7dd] border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
@@ -829,8 +829,8 @@ export default function ArtistCataloguePage() {
             <div className="px-5 py-4">
               {messageState === "sent" ? (
                 <div className="text-center py-6">
-                  <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
-                    <Send className="w-5 h-5 text-emerald-400" />
+                  <div className="w-12 h-12 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
+                    <Send className="w-5 h-5 text-amber-400" />
                   </div>
                   <p className="text-white font-semibold">Message sent!</p>
                   <p className="text-white/50 text-xs mt-1">

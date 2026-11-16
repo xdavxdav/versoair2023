@@ -243,7 +243,7 @@ export function UserRow({
             {!u.isVerified && (
               <button
                 onClick={() => onAction("verify", u.id)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-bold hover:bg-emerald-500/20 transition-colors border border-emerald-800/30"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-amber-500/10 text-amber-400 text-[10px] font-mono font-bold hover:bg-amber-500/20 transition-colors border border-amber-900/30"
               >
                 <BadgeCheck className="h-3 w-3" />
                 VERIFY
@@ -848,7 +848,7 @@ export default function UsersControlPanel() {
                 <div className="flex items-center gap-2">
                   <div className="w-20 h-1.5 bg-gray-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                      className="h-full bg-gradient-to-r from-green-500 to-amber-500 rounded-full"
                       style={{
                         width: `${stats.total ? ((count as number) / stats.total) * 100 : 0}%`,
                       }}
@@ -870,7 +870,7 @@ export default function UsersControlPanel() {
                 {
                   free: "from-gray-500 to-gray-600",
                   essential: "from-blue-500 to-cyan-600",
-                  verified: "from-green-500 to-emerald-600",
+                  verified: "from-green-500 to-amber-600",
                   max: "from-amber-500 to-orange-600",
                   enterprise: "from-red-500 to-rose-600",
                 }[tier] || "from-gray-500 to-gray-600";
@@ -976,7 +976,7 @@ export default function UsersControlPanel() {
 
           {/* Artist Code Preview */}
           {artistCodePreview && (
-            <div className="bg-black/40 border border-purple-700/30 rounded-lg p-3 flex items-center gap-3">
+            <div className="bg-slate-900/40 border border-purple-700/30 rounded-lg p-3 flex items-center gap-3">
               <Hash className="h-4 w-4 text-purple-400 flex-shrink-0" />
               <div>
                 <div className="text-[9px] text-gray-500 font-mono uppercase mb-0.5">
@@ -1221,7 +1221,7 @@ export default function UsersControlPanel() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="admin-set-password-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4"
         >
           <div className="w-full max-w-md space-y-4 rounded-xl border border-gray-700 bg-gray-950 p-5 shadow-2xl">
             <div>
@@ -1435,7 +1435,7 @@ export default function UsersControlPanel() {
           icon={<Terminal className="w-3.5 h-3.5 text-white" />}
           color="green"
         >
-          <div className="bg-black/40 rounded-lg p-3 max-h-40 overflow-y-auto font-mono text-[10px] space-y-0.5">
+          <div className="bg-slate-900/40 rounded-lg p-3 max-h-40 overflow-y-auto font-mono text-[10px] space-y-0.5">
             {actionLog.map((log, i) => (
               <div
                 key={i}

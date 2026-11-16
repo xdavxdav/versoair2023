@@ -118,7 +118,7 @@ export default function SettingsTab({ dbConnected }: SettingsTabProps) {
         </p>
         <div className="text-sm text-slate-300">
           Database:{" "}
-          <span className={dbConnected ? "text-emerald-300" : "text-red-300"}>
+          <span className={dbConnected ? "text-amber-200" : "text-red-300"}>
             {dbConnected === null
               ? "Checking..."
               : dbConnected

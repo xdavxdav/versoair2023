@@ -88,8 +88,8 @@ const PLATFORM_SECTORS = [
     id: "finances",
     title: "Finance & Banques",
     icon: Banknote,
-    color: "from-emerald-500 to-teal-500",
-    gradient: "bg-gradient-to-r from-emerald-500 to-teal-500",
+    color: "from-amber-500 to-teal-500",
+    gradient: "bg-gradient-to-r from-amber-500 to-teal-500",
     description:
       "Annuaire des services financiers & intelligence du secteur bancaire",
     route: "/finances",
@@ -343,7 +343,7 @@ function CompanySection() {
           viewport={{ once: true }}
           className="text-center mb-10 md:mb-14"
         >
-          <Badge className="mb-4 px-4 py-2 bg-emerald-50 border-emerald-200 text-emerald-700">
+          <Badge className="mb-4 px-4 py-2 bg-amber-50 border-amber-200 text-amber-700">
             {copy.badge}
           </Badge>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900">
@@ -365,7 +365,7 @@ function CompanySection() {
                 transition={{ delay: i * 0.1 }}
                 className="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 md:p-8 shadow-sm"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-md">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-teal-600 flex items-center justify-center mb-4 shadow-md">
                   <Icon className="h-6 w-6 text-slate-900" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">

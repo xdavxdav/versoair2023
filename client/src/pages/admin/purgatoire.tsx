@@ -175,8 +175,8 @@ export default function PurgatoirePage() {
             {
               label: "Approved Today",
               value: stats.approved_today || 0,
-              color: "text-emerald-600",
-              bg: "bg-emerald-50",
+              color: "text-amber-600",
+              bg: "bg-amber-50",
               icon: CheckCircle2,
             },
             {
@@ -334,7 +334,7 @@ export default function PurgatoirePage() {
                       track.status === "pending_review"
                         ? "bg-amber-500/15 text-amber-400"
                         : track.status === "published"
-                          ? "bg-emerald-500/15 text-emerald-400"
+                          ? "bg-amber-500/15 text-amber-400"
                           : "bg-red-500/15 text-red-400"
                     }`}
                   >
@@ -465,7 +465,7 @@ export default function PurgatoirePage() {
                         <button
                           onClick={() => approveMutation.mutate(track.id)}
                           disabled={approveMutation.isPending}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
                         >
                           <CheckCircle2 className="w-4 h-4" />
                           {approveMutation.isPending

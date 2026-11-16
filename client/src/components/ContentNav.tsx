@@ -1034,7 +1034,7 @@ export default function ContentNav() {
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                <span className="w-2 h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="w-2 h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 rounded-full bg-amber-400 flex-shrink-0" />
                 <span className="max-w-[80px] md:max-w-[100px] truncate md:max-lg:hidden">
                   {userName}
                 </span>

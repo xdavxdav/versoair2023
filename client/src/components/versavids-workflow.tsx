@@ -65,8 +65,8 @@ const PILL_TONES: Record<string, string> = {
   submitted: "border-violet-400/40 bg-violet-500/15 text-violet-100",
   revision: "border-orange-400/40 bg-orange-500/15 text-orange-100",
   revision_requested: "border-orange-400/40 bg-orange-500/15 text-orange-100",
-  completed: "border-emerald-400/40 bg-emerald-500/15 text-emerald-100",
-  approved: "border-emerald-400/40 bg-emerald-500/15 text-emerald-100",
+  completed: "border-amber-400/40 bg-amber-500/15 text-amber-100",
+  approved: "border-amber-400/40 bg-amber-500/15 text-amber-100",
   cancelled: "border-white/25 bg-white/10 text-white/80",
 };
 
@@ -134,7 +134,7 @@ function NoticeBar({
       className={`mb-4 flex flex-wrap items-center gap-3 rounded-2xl border p-4 ${
         isError
           ? "border-red-400/50 bg-red-500/10 text-red-100"
-          : "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+          : "border-amber-400/40 bg-amber-500/10 text-amber-100"
       }`}
     >
       {isError ? (

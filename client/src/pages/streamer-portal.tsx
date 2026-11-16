@@ -187,7 +187,7 @@ function TrackThreadCard({
               <Music className="w-8 h-8 text-white/50" />
             </div>
           )}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
             {isPlaying ? (
               <Pause className="w-8 h-8 text-white" />
             ) : (
@@ -359,7 +359,7 @@ function ThreadModal({
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
+      <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
       </div>
     );
@@ -368,7 +368,7 @@ function ThreadModal({
   // Without this a failed load looked like "No comments yet".
   if (isError) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
+      <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6">
         <div className="max-w-sm text-center">
           <p className="text-white">We could not load this thread.</p>
           <div className="mt-4 flex justify-center gap-3">
@@ -396,7 +396,7 @@ function ThreadModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-xl overflow-y-auto"
     >
       <div className="max-w-2xl mx-auto p-4 pb-32">
         {/* Header */}
@@ -429,7 +429,7 @@ function ThreadModal({
                     <Music className="w-10 h-10 text-white/50" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                   <Play className="w-10 h-10 text-white ml-1" />
                 </div>
               </div>
@@ -741,7 +741,7 @@ function ArtistDashboardPanel({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 p-2 bg-black/40 hover:bg-black/60 rounded-full transition-colors z-10"
+          className="absolute top-4 left-4 p-2 bg-slate-900/40 hover:bg-slate-900/60 rounded-full transition-colors z-10"
         >
           <X className="w-5 h-5 text-white" />
         </button>

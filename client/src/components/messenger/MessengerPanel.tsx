@@ -817,7 +817,7 @@ export default function MessengerPanel({
                     activeConvo.participantName?.[0]?.toUpperCase()
                   )}
                   {otherOnline && (
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border border-[#0f0f17]" />
+                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-amber-400 border border-[#0f0f17]" />
                   )}
                 </button>
               )}
@@ -1312,7 +1312,7 @@ export default function MessengerPanel({
                               disabled={m.isPublished || publishingId === m.id}
                               className={`mt-1 flex items-center gap-1 text-[10px] ${
                                 m.isPublished
-                                  ? "text-emerald-400"
+                                  ? "text-amber-400"
                                   : "text-white/40 hover:text-purple-300"
                               } transition-colors disabled:cursor-default`}
                               title={

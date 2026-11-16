@@ -169,7 +169,7 @@ export default function AdminPrintshop() {
     printing: "bg-indigo-500/20 text-indigo-400",
     quality_check: "bg-cyan-500/20 text-cyan-400",
     shipped: "bg-green-500/20 text-green-400",
-    completed: "bg-emerald-500/20 text-emerald-400",
+    completed: "bg-amber-500/20 text-amber-400",
     cancelled: "bg-red-500/20 text-red-400",
     paid: "bg-blue-500/20 text-blue-400",
     processing: "bg-purple-500/20 text-purple-400",

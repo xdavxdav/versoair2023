@@ -1029,7 +1029,7 @@ export default function SignIn() {
         <div className="text-center z-10 max-w-md mx-auto px-6">
           {/* Animated checkmark */}
           <div
-            className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
+            className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30"
             style={{ animation: "scale-in 0.6s ease-out forwards" }}
           >
             <CheckCircle2 className="h-12 w-12 text-white" />
@@ -1270,7 +1270,7 @@ export default function SignIn() {
                   {resendLoading ? "Sending..." : "Resend Verification Email"}
                 </Button>
                 {resendMessage && (
-                  <p className={`text-sm mb-3 ${verificationEmailSent === false ? "text-red-400" : "text-emerald-400"}`}>
+                  <p className={`text-sm mb-3 ${verificationEmailSent === false ? "text-red-400" : "text-amber-400"}`}>
                     {resendMessage}
                   </p>
                 )}
@@ -1475,7 +1475,7 @@ export default function SignIn() {
                   {onboardingName.trim().length > 0 && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       {onboardingName.trim().length >= 2 ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <CheckCircle2 className="h-4 w-4 text-amber-400" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-400" />
                       )}
@@ -2507,14 +2507,14 @@ export default function SignIn() {
             <div className="max-w-md mx-auto">
               <div className="bg-white rounded-2xl shadow-xl p-8">
                 {authStatus.visible && (
-                  <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-left">
+                  <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left">
                     <div className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-amber-600" />
                       <div>
-                        <p className="text-sm font-semibold text-emerald-800">
+                        <p className="text-sm font-semibold text-amber-900">
                           {authStatus.title}
                         </p>
-                        <p className="text-xs text-emerald-700">
+                        <p className="text-xs text-amber-700">
                           {authStatus.detail}
                         </p>
                       </div>
@@ -2599,12 +2599,12 @@ export default function SignIn() {
                 {passwordResetComplete && (
                   <div
                     role="status"
-                    className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4"
+                    className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4"
                   >
-                    <p className="font-semibold text-emerald-800">
+                    <p className="font-semibold text-amber-900">
                       Password reset successful
                     </p>
-                    <p className="text-sm text-emerald-700">
+                    <p className="text-sm text-amber-700">
                       Sign in below using your new password.
                     </p>
                   </div>

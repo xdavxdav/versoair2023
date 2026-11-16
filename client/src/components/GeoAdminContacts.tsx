@@ -3,7 +3,7 @@ import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 export default function GeoAdminContacts({ light = false }: { light?: boolean }) {
   const localize = useLocalizedContent(false);
-  const linkClass = `inline-flex min-h-11 items-center rounded-md underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${light ? "text-emerald-800" : "text-[#f4d779]"}`;
+  const linkClass = `inline-flex min-h-11 items-center rounded-md underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${light ? "text-amber-900" : "text-[#f4d779]"}`;
   return localize(
     <div data-testid="geoadmin-contacts" className="min-w-0 space-y-3 text-sm">
       <p className="font-semibold">Contact Us</p>

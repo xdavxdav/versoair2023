@@ -86,9 +86,9 @@ export default function Industries() {
           {industries.map((industry, idx) => (
             <div
               key={idx}
-              className="bg-gradient-to-br from-slate-50 to-slate-50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group hover:bg-white"
+              className="bg-gradient-to-br from-slate-50 to-slate-50 backdrop-blur p-6 rounded-xl border border-slate-700 hover:border-amber-500/50 transition-all group hover:bg-white"
             >
-              <div className="text-emerald-700 mb-4 group-hover:scale-110 transition-transform">
+              <div className="text-amber-700 mb-4 group-hover:scale-110 transition-transform">
                 {industry.icon}
               </div>
 
@@ -102,7 +102,7 @@ export default function Industries() {
               <div className="space-y-2 mb-6">
                 {industry.features.map((feature, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full"></span>
+                    <span className="h-1.5 w-1.5 bg-amber-400 rounded-full"></span>
                     <span className="text-slate-700 text-sm">{feature}</span>
                   </div>
                 ))}
@@ -110,7 +110,7 @@ export default function Industries() {
 
               <Button
                 variant="outline"
-                className="w-full border-emerald-500/50 text-emerald-700 hover:bg-emerald-500/10"
+                className="w-full border-amber-500/50 text-amber-700 hover:bg-amber-500/10"
               >
                 Learn More
               </Button>
@@ -121,7 +121,7 @@ export default function Industries() {
 
       {/* CTA Section */}
       <div className="max-w-4xl mx-auto px-4 py-16">
-        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 md:p-12 rounded-xl text-center">
+        <div className="bg-gradient-to-r from-amber-600/20 to-teal-600/20 border border-amber-500/30 p-8 md:p-12 rounded-xl text-center">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
             Your Industry, Optimized
           </h2>
@@ -131,14 +131,14 @@ export default function Industries() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/contact">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold">
+              <Button className="bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold">
                 Contact Sales
               </Button>
             </Link>
             <Link href="/demo">
               <Button
                 variant="outline"
-                className="border-emerald-500 text-emerald-700 hover:bg-emerald-500/10"
+                className="border-amber-500 text-amber-700 hover:bg-amber-500/10"
               >
                 Schedule Demo
               </Button>

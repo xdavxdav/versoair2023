@@ -376,9 +376,9 @@ const SECTORS = [
     name: "Construction",
     description: "Building, contractors, trades",
     icon: Hammer,
-    color: "from-emerald-500 to-green-600",
-    bgLight: "bg-emerald-50 border-emerald-200",
-    textColor: "text-emerald-700",
+    color: "from-amber-500 to-green-600",
+    bgLight: "bg-amber-50 border-amber-200",
+    textColor: "text-amber-700",
     href: "/batiment",
   },
   {
@@ -587,7 +587,7 @@ function IndustryMetricCard({
           </span>
         </div>
         {metric.positive ? (
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
             &uarr; {Math.abs(metric.change)}%
           </span>
         ) : (
@@ -640,7 +640,7 @@ function FeatureRow({
         </div>
       </div>
       {active ? (
-        <CheckCircle className="h-4 w-4 text-emerald-500" />
+        <CheckCircle className="h-4 w-4 text-amber-500" />
       ) : (
         <Lock className="h-4 w-4 text-gray-300" />
       )}
@@ -1116,8 +1116,8 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
                       ? "VersoAI Support"
                       : "Business Network"}
                     {activeConversation.type === "support" && (
-                      <span className="inline-flex items-center gap-0.5 text-emerald-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="inline-flex items-center gap-0.5 text-amber-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                         Always live
                       </span>
                     )}
@@ -1320,7 +1320,7 @@ function Inbox({ user, businesses, userRole }: InboxProps) {
 
       {/* New Conversation Modal */}
       {showNewConversationModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="font-semibold text-slate-800">
@@ -2096,7 +2096,7 @@ export default function UserDashboard() {
     superuser: "text-red-400 bg-red-500/15 border-red-500/30",
     admin: "text-blue-400 bg-blue-500/15 border-blue-500/30",
     moderator: "text-purple-400 bg-purple-500/15 border-purple-500/30",
-    owner: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30",
+    owner: "text-amber-400 bg-amber-500/15 border-amber-500/30",
     user: "text-slate-400 bg-slate-500/15 border-slate-500/30",
   };
 
@@ -2117,7 +2117,7 @@ export default function UserDashboard() {
     const d = dossierData;
     return (
       <div
-        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
         onClick={(e) => {
           if (e.target === e.currentTarget) setShowDossier(false);
         }}
@@ -2133,7 +2133,7 @@ export default function UserDashboard() {
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   {business.name}
                   {business.verification_status === "verified" && (
-                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                    <ShieldCheck className="h-4 w-4 text-amber-400" />
                   )}
                 </h2>
                 <p className="text-[11px] text-slate-400 font-mono">
@@ -2171,7 +2171,7 @@ export default function UserDashboard() {
                 onClick={() => void handlePdfDownload()}
                 disabled={pdfBusy}
                 title="Download the registration form as a PDF"
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 disabled:opacity-60 transition-all"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 disabled:opacity-60 transition-all"
               >
                 <Download
                   className={`h-3 w-3 ${pdfBusy ? "animate-pulse" : ""}`}
@@ -2233,7 +2233,7 @@ export default function UserDashboard() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2">
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2">
                         <Phone className="h-3.5 w-3.5" /> Contact Information
                       </h3>
                       <div className="bg-slate-800/50 rounded-xl border border-slate-700/40 px-4">
@@ -2745,7 +2745,7 @@ export default function UserDashboard() {
                         </Avatar>
                         <button
                           onClick={() => setShowAvatarModal(true)}
-                          className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity text-xs font-semibold"
+                          className="absolute inset-0 bg-slate-900/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity text-xs font-semibold"
                           title="Modifier la photo"
                         >
                           <Camera className="h-5 w-5" />
@@ -2808,7 +2808,7 @@ export default function UserDashboard() {
                   <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
                     <div className="flex items-center justify-between text-sm text-slate-500">
                       <span>Account status</span>
-                      <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
+                      <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
                         Active
                       </span>
                     </div>
@@ -2837,11 +2837,11 @@ export default function UserDashboard() {
                           {myCommunity?.counts?.joined ?? 0}
                         </p>
                       </div>
-                      <div className="rounded-xl bg-emerald-50 p-3">
+                      <div className="rounded-xl bg-amber-50 p-3">
                         <p className="text-[11px] uppercase tracking-wide text-slate-500">
                           Last sign-in
                         </p>
-                        <p className="mt-2 text-lg font-bold text-emerald-700">
+                        <p className="mt-2 text-lg font-bold text-amber-700">
                           {memberSince}
                         </p>
                       </div>
@@ -2855,7 +2855,7 @@ export default function UserDashboard() {
             {isStaffRole && (
               <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700">
                 <div className="flex items-center gap-2 mb-4">
-                  <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                  <ShieldCheck className="h-5 w-5 text-amber-400" />
                   <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
                     Staff Quick Access
                   </h3>
@@ -2877,7 +2877,7 @@ export default function UserDashboard() {
                     </div>
                   </Link>
                   <Link href="/businesses-directory">
-                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-700/50 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 transition-all cursor-pointer text-sm">
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-700/50 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 transition-all cursor-pointer text-sm">
                       <ShoppingCart className="h-4 w-4" /> Business Directory
                     </div>
                   </Link>
@@ -2912,9 +2912,9 @@ export default function UserDashboard() {
                     description: "Buy and sell locally",
                     href: "/marketplace",
                     icon: ShoppingCart,
-                    color: "from-emerald-500 to-green-600",
-                    accent: "text-emerald-700",
-                    soft: "bg-emerald-50",
+                    color: "from-amber-500 to-green-600",
+                    accent: "text-amber-700",
+                    soft: "bg-amber-50",
                   },
                   {
                     title: "Communities",
@@ -2977,7 +2977,7 @@ export default function UserDashboard() {
                       disabled={logoUploading}
                       aria-label={business.logo_url ? "Change logo" : "Add logo"}
                       title={business.logo_url ? "Change logo" : "Add logo"}
-                      className="absolute inset-0 rounded-xl bg-black/60 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      className="absolute inset-0 rounded-xl bg-slate-900/60 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                     >
                       {logoUploading ? (
                         <Upload className="h-4 w-4 text-white animate-pulse" />
@@ -3025,7 +3025,7 @@ export default function UserDashboard() {
                       </button>
                     )}
                     {business.verification_status === "verified" ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                         <ShieldCheck className="h-3 w-3" /> Verified
                       </span>
                     ) : (
@@ -3108,7 +3108,7 @@ export default function UserDashboard() {
                           console.error("Verify toggle error:", err);
                         }
                       }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${business.verification_status === "verified" ? "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${business.verification_status === "verified" ? "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100" : "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100"}`}
                     >
                       {business.verification_status === "verified" ? (
                         <>
@@ -3259,9 +3259,9 @@ export default function UserDashboard() {
                 </Card>
               </Link>
               <Link href="/marketplace">
-                <Card className="h-full border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer group bg-gradient-to-br from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100">
+                <Card className="h-full border-0 shadow-sm hover:shadow-lg transition-all cursor-pointer group bg-gradient-to-br from-amber-50 to-green-50 hover:from-amber-100 hover:to-green-100">
                   <CardContent className="p-5 flex flex-col items-center text-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500 to-green-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
                       <Package className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -3316,7 +3316,7 @@ export default function UserDashboard() {
                     <div className="text-2xl font-bold text-slate-900">
                       {(stats?.totalBusinesses || 0).toLocaleString()}
                     </div>
-                    <span className="text-xs text-emerald-600 font-medium">
+                    <span className="text-xs text-amber-600 font-medium">
                       On the platform
                     </span>
                   </div>
@@ -3350,7 +3350,7 @@ export default function UserDashboard() {
                   </div>
                   <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-1">
-                      <Globe className="h-4 w-4 text-emerald-500" />
+                      <Globe className="h-4 w-4 text-amber-500" />
                       <span className="text-xs text-slate-500 font-medium">
                         Countries
                       </span>
@@ -3556,11 +3556,11 @@ export default function UserDashboard() {
                               Your Rating
                             </div>
                           </div>
-                          <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                            <div className="text-2xl font-bold text-emerald-700">
+                          <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                            <div className="text-2xl font-bold text-amber-700">
                               {business.reviewCount}
                             </div>
-                            <div className="text-sm text-emerald-600">
+                            <div className="text-sm text-amber-600">
                               Reviews
                             </div>
                           </div>
@@ -3867,7 +3867,7 @@ export default function UserDashboard() {
                               variant="outline"
                               className={
                                 res.status === "confirmed"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
                                   : res.status === "pending"
                                     ? "bg-amber-50 text-amber-700 border-amber-200"
                                     : "bg-slate-50 text-slate-600 border-slate-200"
@@ -3956,13 +3956,13 @@ export default function UserDashboard() {
               {/* COMMUNITY TAB */}
               <TabsContent value="community" className="space-y-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <Card className="border-emerald-100 bg-emerald-50/60 shadow-sm">
+                  <Card className="border-amber-100 bg-amber-50/60 shadow-sm">
                     <CardContent className="p-5">
-                      <Users2 className="h-5 w-5 text-emerald-600" />
+                      <Users2 className="h-5 w-5 text-amber-600" />
                       <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Joined communities
                       </p>
-                      <p className="mt-1 text-3xl font-bold text-emerald-700">
+                      <p className="mt-1 text-3xl font-bold text-amber-700">
                         {myCommunity?.counts.joined ?? 0}
                       </p>
                     </CardContent>
@@ -3995,7 +3995,7 @@ export default function UserDashboard() {
                   <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Users2 className="h-5 w-5 text-emerald-600" /> My
+                        <Users2 className="h-5 w-5 text-amber-600" /> My
                         Community
                       </CardTitle>
                       <CardDescription>
@@ -4032,7 +4032,7 @@ export default function UserDashboard() {
                                   {community.focus}
                                 </p>
                               </div>
-                              <Badge className="w-fit bg-emerald-50 text-emerald-700">
+                              <Badge className="w-fit bg-amber-50 text-amber-700">
                                 Joined
                               </Badge>
                             </div>
@@ -4345,7 +4345,7 @@ export default function UserDashboard() {
                           icon: Package,
                           label: "Marketplace",
                           href: "/marketplace",
-                          color: "text-emerald-500",
+                          color: "text-amber-500",
                         },
                         {
                           icon: Music,
@@ -4485,7 +4485,7 @@ export default function UserDashboard() {
                           ? Object.keys(stats.businessesByCountry).length
                           : 0),
                       icon: MapPin,
-                      color: "emerald",
+                      color: "amber",
                     },
                   ].map((stat) => {
                     const Icon = stat.icon;

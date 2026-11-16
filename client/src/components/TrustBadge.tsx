@@ -39,9 +39,9 @@ export function TrustBadge({
     },
     premium: {
       label: "Premium",
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+      border: "border-amber-100",
     },
     enterprise: {
       label: "Enterprise",
@@ -56,7 +56,7 @@ export function TrustBadge({
   if (compact) {
     return (
       <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border bg-white/90 backdrop-blur-sm shadow-sm text-xs font-medium">
-        {isVerified && <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />}
+        {isVerified && <CheckCircle className="w-3.5 h-3.5 text-amber-500" />}
         <span className={config.color}>{config.label}</span>
         {rating > 0 && (
           <>
@@ -76,7 +76,7 @@ export function TrustBadge({
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
           {isVerified ? (
-            <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
               <CheckCircle className="w-6 h-6 text-white" />
             </div>
           ) : (
@@ -100,7 +100,7 @@ export function TrustBadge({
 
           <div className="flex items-center gap-3 text-xs text-slate-600">
             {isVerified && (
-              <span className="flex items-center gap-1 text-emerald-600 font-medium">
+              <span className="flex items-center gap-1 text-amber-600 font-medium">
                 <CheckCircle className="w-3 h-3" />
                 Vérifié par Verso Air
               </span>

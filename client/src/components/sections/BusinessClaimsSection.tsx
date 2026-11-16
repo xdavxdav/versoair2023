@@ -186,17 +186,17 @@ export function BusinessClaimsSection() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {claim.evidence?.emailMatchesListed && (
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">
                     Matches listed email
                   </span>
                 )}
                 {claim.evidence?.emailDomainMatchesWebsite && (
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">
                     Website email domain
                   </span>
                 )}
                 {claim.evidence?.phoneMatchesListed && (
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">
                     Matches listed phone
                   </span>
                 )}
@@ -231,7 +231,7 @@ export function BusinessClaimsSection() {
                 type="button"
                 onClick={() => void review(claim.id, "approve")}
                 disabled={busyId !== null}
-                className="bg-emerald-700 hover:bg-emerald-800"
+                className="bg-amber-700 hover:bg-amber-900"
               >
                 {busyId === claim.id ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -312,8 +312,8 @@ const BUSINESS_CATEGORIES = [
     id: 16,
     name: "Commerce",
     icon: ShoppingCart,
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
   },
   {
     id: 17,
@@ -349,8 +349,8 @@ const BUSINESS_CATEGORIES = [
     id: 21,
     name: "Retail",
     icon: ShoppingCart,
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
   },
   {
     id: 22,
@@ -531,8 +531,8 @@ const DATABASE_OPERATIONS = [
     id: "backup",
     label: "Backup",
     icon: DatabaseBackup,
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
   },
   {
     id: "export",
@@ -587,7 +587,7 @@ const QUICK_ACTIONS: {
     id: "add-category",
     label: "Add Category",
     icon: Tag,
-    color: "bg-gradient-to-r from-emerald-500 to-green-500",
+    color: "bg-gradient-to-r from-amber-500 to-green-500",
     section: "categories",
     add: "category",
   },
@@ -629,18 +629,18 @@ const DashboardStats = ({ stats, onRefresh, isRefreshing }: any) => (
       </CardContent>
     </Card>
 
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-50">
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-green-50">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-600">Active Categories</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">
+            <p className="text-3xl font-bold text-amber-600 mt-2">
               {stats.categories}
             </p>
             <p className="text-xs text-gray-500 mt-1">+3 new this week</p>
           </div>
-          <div className="p-3 rounded-full bg-emerald-100">
-            <Tag className="h-6 w-6 text-emerald-600" />
+          <div className="p-3 rounded-full bg-amber-100">
+            <Tag className="h-6 w-6 text-amber-600" />
           </div>
         </div>
       </CardContent>
@@ -699,7 +699,7 @@ const GeoAdminSummary = () => {
 
   const cards = [
     ["Pending Artisan Profiles", "pendingArtisanProfiles", "text-amber-700"],
-    ["Join Requests", "pendingJoinRequests", "text-emerald-700"],
+    ["Join Requests", "pendingJoinRequests", "text-amber-700"],
     ["Unpublished Communities", "unpublishedCommunities", "text-sky-700"],
     ["Moderation Items", "moderationItems", "text-rose-700"],
   ] as const;
@@ -866,7 +866,7 @@ const PendingApprovals = () => {
                   )}
                   <Button
                     size="sm"
-                    className="gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs"
+                    className="gap-1 bg-amber-500 hover:bg-amber-600 text-white text-xs"
                     disabled={actionId === biz.id}
                     onClick={() => handleApprove(biz.id, biz.name)}
                   >
@@ -1549,7 +1549,7 @@ const BusinessManagement = ({
                   }));
                 }
               }}
-              className="gap-1.5 text-xs sm:text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+              className="gap-1.5 text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-teal-500 hover:from-amber-600 hover:to-teal-600"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Business
@@ -1707,7 +1707,7 @@ const BusinessManagement = ({
                         }}
                         className={`w-full text-left px-3 py-2 text-sm border-b font-semibold transition-colors ${
                           selectedCategory === "all"
-                            ? "bg-emerald-50 text-emerald-700"
+                            ? "bg-amber-50 text-amber-700"
                             : "text-gray-600 hover:bg-gray-50"
                         }`}
                       >
@@ -1741,12 +1741,12 @@ const BusinessManagement = ({
                                 onClick={() => handleSelectCategory(mainCat.id)}
                                 className={`w-full text-left px-3 py-2.5 text-sm font-semibold border-b transition-colors group ${
                                   selectedCategory === String(mainCat.id)
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : "text-gray-900 hover:bg-emerald-50"
+                                    ? "bg-amber-100 text-amber-900"
+                                    : "text-gray-900 hover:bg-amber-50"
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
-                                  <Tag className="h-3 w-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <Tag className="h-3 w-3 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                                   {mainCat.name}
                                 </div>
                               </button>
@@ -1758,9 +1758,9 @@ const BusinessManagement = ({
                                       onClick={() =>
                                         handleSelectCategory(sub.id)
                                       }
-                                      className={`w-full text-left px-6 py-2 text-sm border-b transition-colors hover:bg-emerald-50 ${
+                                      className={`w-full text-left px-6 py-2 text-sm border-b transition-colors hover:bg-amber-50 ${
                                         selectedCategory === String(sub.id)
-                                          ? "bg-emerald-100 text-emerald-700"
+                                          ? "bg-amber-100 text-amber-700"
                                           : "text-gray-700"
                                       }`}
                                     >
@@ -1792,7 +1792,7 @@ const BusinessManagement = ({
                     {selectedCategory === "all"
                       ? "All Businesses"
                       : "Filtered Businesses"}
-                    <span className="text-emerald-600 font-bold ml-2">
+                    <span className="text-amber-600 font-bold ml-2">
                       ({businesses.length} showing out of {totalCount})
                     </span>
                   </h3>
@@ -1913,7 +1913,7 @@ const BusinessManagement = ({
                                 <span
                                   className={`text-[10px] px-1.5 py-0 rounded-full font-medium ${
                                     business.isActive !== false
-                                      ? "bg-emerald-100 text-emerald-700"
+                                      ? "bg-amber-100 text-amber-700"
                                       : "bg-gray-100 text-gray-600"
                                   }`}
                                 >
@@ -1957,7 +1957,7 @@ const BusinessManagement = ({
                             }
                             className={
                               business.isActive !== false
-                                ? "bg-emerald-100 text-emerald-700"
+                                ? "bg-amber-100 text-amber-700"
                                 : ""
                             }
                           >
@@ -3314,7 +3314,7 @@ const CategoryManagement = ({
           </div>
           <Button
             onClick={() => setShowAddDialog(true)}
-            className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500"
+            className="gap-2 bg-gradient-to-r from-amber-500 to-green-500"
           >
             <Plus className="h-4 w-4" />
             Add Category
@@ -3323,11 +3323,11 @@ const CategoryManagement = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3 mb-6">
-          <div className="px-4 py-2 bg-emerald-50 rounded-lg border border-emerald-200">
-            <span className="text-lg font-bold text-emerald-700">
+          <div className="px-4 py-2 bg-amber-50 rounded-lg border border-amber-200">
+            <span className="text-lg font-bold text-amber-700">
               {categories.filter((c: any) => !c.parentId).length}
             </span>
-            <span className="text-xs text-emerald-600 ml-1">
+            <span className="text-xs text-amber-600 ml-1">
               Main Categories
             </span>
           </div>
@@ -3787,8 +3787,8 @@ const SECTOR_META: Record<
   },
   immobilier: {
     label: "Immobilier",
-    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
-    gradient: "from-emerald-600 to-green-600",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-green-600",
   },
   "conseil-juridique": {
     label: "Conseil & Juridique",
@@ -3818,7 +3818,7 @@ const SECTOR_META: Record<
   "maison-deco": {
     label: "Maison & Décoration",
     color: "bg-teal-200 text-teal-900 border-teal-400",
-    gradient: "from-teal-600 to-emerald-600",
+    gradient: "from-teal-600 to-amber-600",
   },
   "mode-textile": {
     label: "Mode & Textile",
@@ -3852,8 +3852,8 @@ const SECTOR_META: Record<
   },
   emploi: {
     label: "Emploi & RH",
-    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
-    gradient: "from-emerald-600 to-teal-600",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-teal-600",
   },
   commerce: {
     label: "Commerce",
@@ -3878,7 +3878,7 @@ const SECTOR_META: Record<
   finances: {
     label: "Finances & Assurances",
     color: "bg-green-200 text-green-900 border-green-400",
-    gradient: "from-green-600 to-emerald-600",
+    gradient: "from-green-600 to-amber-600",
   },
   divertissement: {
     label: "Divertissement & Sport",
@@ -4305,10 +4305,10 @@ const JobManagement = ({
             </Popover>
 
             <span
-              className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full ${jobs.length > 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+              className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full ${jobs.length > 0 ? "bg-amber-100 text-amber-700" : "bg-amber-100 text-amber-700"}`}
             >
               <span
-                className={`h-1.5 w-1.5 rounded-full ${jobs.length > 0 ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`}
+                className={`h-1.5 w-1.5 rounded-full ${jobs.length > 0 ? "bg-amber-500" : "bg-amber-500 animate-pulse"}`}
               />
               {jobs.length > 0
                 ? `${jobs.length} jobs live`
@@ -5538,7 +5538,7 @@ const RoleManagementSection = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      className="flex-1 gap-1 border-amber-300 text-amber-700 hover:bg-amber-50"
                       disabled={isReservedOwnerRole(role.name)}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -5897,7 +5897,7 @@ const RoleManagementSection = () => {
             <Button
               onClick={handleAssignUser}
               disabled={loading || !selectedUserId}
-              className="gap-2 bg-gradient-to-r from-emerald-500 to-cyan-500"
+              className="gap-2 bg-gradient-to-r from-amber-500 to-cyan-500"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -7321,13 +7321,13 @@ export default function AdminDashboard() {
         <div
           className={`flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
             dbConnected
-              ? "bg-emerald-100 text-emerald-700"
+              ? "bg-amber-100 text-amber-700"
               : "bg-rose-100 text-rose-700"
           }`}
         >
           <div
             className={`h-2 w-2 rounded-full ${
-              dbConnected ? "bg-emerald-500" : "bg-rose-500"
+              dbConnected ? "bg-amber-500" : "bg-rose-500"
             }`}
           />
           {dbConnected ? "✅ Connected" : "❌ Offline"}
@@ -7400,24 +7400,24 @@ export default function AdminDashboard() {
                     newDismissed.add("db-status");
                     setDismissedAlerts(newDismissed);
                   }}
-                  className="absolute top-2 right-2 p-1 hover:bg-black/10 rounded transition-colors"
+                  className="absolute top-2 right-2 p-1 hover:bg-slate-900/10 rounded transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
                 <div
                   className={`h-2 w-2 rounded-full mr-2 ${
-                    dbConnected ? "bg-emerald-500" : "bg-rose-500"
+                    dbConnected ? "bg-amber-500" : "bg-rose-500"
                   }`}
                 />
                 <AlertTitle
-                  className={dbConnected ? "text-emerald-900" : "text-rose-900"}
+                  className={dbConnected ? "text-amber-900" : "text-rose-900"}
                 >
                   {dbConnected
                     ? "Database Connected"
                     : "Database Connection Issues"}
                 </AlertTitle>
                 <AlertDescription
-                  className={dbConnected ? "text-emerald-700" : "text-rose-700"}
+                  className={dbConnected ? "text-amber-700" : "text-rose-700"}
                 >
                   {dbConnected
                     ? "All systems operational."
@@ -7685,7 +7685,7 @@ export default function AdminDashboard() {
                   {sqlExecTime}ms
                 </span>
               )}
-              <span className="text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-700/30 hidden sm:inline-flex">
+              <span className="text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded bg-amber-900/30 text-amber-400 border border-amber-700/30 hidden sm:inline-flex">
                 PostgreSQL 16
               </span>
             </div>
@@ -7855,7 +7855,7 @@ export default function AdminDashboard() {
             >
               {sqlCopied ? (
                 <>
-                  <span className="text-emerald-400">✓</span> Copied!
+                  <span className="text-amber-400">✓</span> Copied!
                 </>
               ) : (
                 <>
@@ -7888,8 +7888,8 @@ export default function AdminDashboard() {
 
             <div className="ml-auto flex items-center gap-2 flex-shrink-0">
               {queryResult && !queryResult.error && (
-                <span className="flex items-center gap-1.5 text-xs sm:text-[10px] font-mono text-slate-400 bg-emerald-900/20 px-2.5 py-1.5 rounded border border-emerald-700/30">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="flex items-center gap-1.5 text-xs sm:text-[10px] font-mono text-slate-400 bg-amber-900/20 px-2.5 py-1.5 rounded border border-amber-700/30">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                   <span>
                     {Array.isArray(queryResult?.rows)
                       ? `${queryResult.rows.length} row${queryResult.rows.length !== 1 ? "s" : ""}`
@@ -8019,7 +8019,7 @@ export default function AdminDashboard() {
                               ) : typeof val === "boolean" ? (
                                 <span
                                   className={
-                                    val ? "text-emerald-400" : "text-red-400"
+                                    val ? "text-amber-400" : "text-red-400"
                                   }
                                 >
                                   {String(val)}
@@ -8039,8 +8039,8 @@ export default function AdminDashboard() {
               ) : queryResult ? (
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span className="text-[10px] font-mono text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <span className="text-[10px] font-mono text-amber-400">
                       Query OK — {queryResult.rowCount ?? 0} row(s) affected
                     </span>
                   </div>

@@ -6,7 +6,7 @@ import { FEEDBACK_FORM_URL } from "@/lib/feedback";
 import { FOOTER_COLUMNS, FOOTER_SOCIAL_LINKS } from "@shared/footer-links";
 
 const linkClass =
-  "inline-flex min-h-11 items-center rounded-sm text-slate-700 underline-offset-4 transition-colors hover:text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/80";
+  "inline-flex min-h-11 items-center rounded-sm text-slate-700 underline-offset-4 transition-colors hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/80";
 
 export default function Footer() {
   const { translateText } = useLanguage();
@@ -96,7 +96,7 @@ export default function Footer() {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="notranslate inline-flex min-h-11 items-center rounded-sm px-2 underline-offset-4 transition-colors hover:text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/80"
+                    className="notranslate inline-flex min-h-11 items-center rounded-sm px-2 underline-offset-4 transition-colors hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/80"
                   >
                     {label}
                     <span className="sr-only">

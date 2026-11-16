@@ -13,7 +13,7 @@ export default function Demo() {
         canonicalPath="/demo"
       />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-20 text-center text-slate-900">
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-emerald-700">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-amber-700">
           <CalendarClock className="h-7 w-7" />
         </div>
         <h1 className="mb-5 text-4xl font-bold md:text-5xl">
@@ -34,7 +34,7 @@ export default function Demo() {
         </div>
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Link href="/services">
-            <Button className="bg-emerald-600 text-slate-900 hover:bg-emerald-700">
+            <Button className="bg-amber-600 text-slate-900 hover:bg-amber-700">
               Request a listing review
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

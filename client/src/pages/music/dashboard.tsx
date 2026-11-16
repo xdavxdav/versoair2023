@@ -136,7 +136,7 @@ function StatChip({
         <span className="text-2xl font-bold text-white">{value}</span>
         {trend && (
           <span
-            className={`text-xs ${isPositive ? "text-emerald-400" : "text-red-400"}`}
+            className={`text-xs ${isPositive ? "text-amber-400" : "text-red-400"}`}
           >
             {trend}
           </span>

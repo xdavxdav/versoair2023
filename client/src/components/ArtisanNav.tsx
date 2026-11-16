@@ -57,21 +57,21 @@ export default function ArtisanNav() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 bg-gradient-to-r from-emerald-900/95 via-emerald-800/95 to-emerald-900/95 backdrop-blur-xl border-b border-emerald-500/20">
+    <nav className="sticky top-0 z-40 bg-gradient-to-r from-amber-950/95 via-amber-900/95 to-amber-950/95 backdrop-blur-xl border-b border-amber-500/20">
       <div className="max-w-[95vw] mx-auto px-4">
         {/* Top bar with logo and passerelle */}
-        <div className="flex items-center justify-between py-3 border-b border-emerald-500/10">
+        <div className="flex items-center justify-between py-3 border-b border-amber-500/10">
           {/* Logo */}
           <Link href="/artisans-portal">
             <div className="flex items-center gap-3 cursor-pointer group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-lg group-hover:shadow-emerald-500/30 transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-green-600 flex items-center justify-center shadow-lg group-hover:shadow-amber-500/30 transition-shadow">
                 <Palette className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white">
-                  Portail <span className="text-emerald-400">Artisans</span>
+                  Portail <span className="text-amber-400">Artisans</span>
                 </h1>
-                <p className="text-[10px] text-emerald-300/60 -mt-0.5">
+                <p className="text-[10px] text-amber-200/60 -mt-0.5">
                   VERSO AIR™ Community
                 </p>
               </div>
@@ -93,7 +93,7 @@ export default function ArtisanNav() {
             </Link>
 
             <Link href="/">
-              <button className="p-2 rounded-lg bg-emerald-700/50 hover:bg-emerald-600/50 text-emerald-200 transition-colors">
+              <button className="p-2 rounded-lg bg-amber-700/50 hover:bg-amber-600/50 text-amber-100 transition-colors">
                 <Home className="w-5 h-5" />
               </button>
             </Link>
@@ -113,8 +113,8 @@ export default function ArtisanNav() {
                   whileTap={{ scale: 0.98 }}
                   className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                     active
-                      ? "bg-emerald-500/20 text-emerald-300 shadow-inner"
-                      : "text-emerald-100/70 hover:text-emerald-100 hover:bg-emerald-700/30"
+                      ? "bg-amber-500/20 text-amber-200 shadow-inner"
+                      : "text-amber-100/70 hover:text-amber-100 hover:bg-amber-700/30"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -131,7 +131,7 @@ export default function ArtisanNav() {
                   {active && (
                     <motion.div
                       layoutId="artisan-nav-indicator"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-emerald-400"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-amber-400"
                     />
                   )}
                 </motion.button>

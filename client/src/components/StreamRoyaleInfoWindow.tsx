@@ -259,7 +259,7 @@ export default function StreamRoyaleInfoWindow({
                           title: "Artist Terms",
                           desc: "Any artist participation, revenue share, and payout terms must be set out in a signed written agreement.",
                           icon: DollarSign,
-                          color: "from-green-500 to-emerald-500",
+                          color: "from-green-500 to-amber-500",
                         },
                       ].map((item, i) => (
                         <motion.div
@@ -502,7 +502,7 @@ export default function StreamRoyaleInfoWindow({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.5 }}
-                        className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-5"
+                        className="bg-gradient-to-r from-green-500/10 to-amber-500/10 border border-green-500/20 rounded-2xl p-5"
                       >
                         <div className="flex items-start gap-3">
                           <TrendingUp className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />

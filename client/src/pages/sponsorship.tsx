@@ -63,7 +63,7 @@ const WHY_SPONSOR = [
     icon: Globe,
     title: "International Visibility",
     desc: "Possible event participation is subject to confirmed programs and third-party approval.",
-    color: "from-teal-500 to-emerald-600",
+    color: "from-teal-500 to-amber-600",
   },
   {
     icon: TrendingUp,
@@ -125,9 +125,9 @@ const SPONSORSHIP_TIERS = [
     name: "SUPPORTER",
     subtitle: "Cultural Partner",
     investment: "Concept only — no current pricing",
-    color: "from-emerald-600 to-teal-500",
-    border: "border-emerald-400/50",
-    badge: "bg-gradient-to-r from-emerald-500 to-teal-400 text-emerald-900",
+    color: "from-amber-600 to-teal-500",
+    border: "border-amber-400/50",
+    badge: "bg-gradient-to-r from-amber-500 to-teal-400 text-amber-900",
     icon: "🤝",
     benefits: [
       "Potential recognition scope, subject to channel and audience verification",
@@ -191,7 +191,7 @@ const SPONSORSHIP_OPTIONS = [
       "Craft Shop Setup",
     ],
     icon: Heart,
-    color: "from-emerald-500 to-teal-600",
+    color: "from-amber-500 to-teal-600",
   },
   {
     title: "Scholarship Sponsorship",
@@ -276,7 +276,7 @@ const TESTIMONIALS = [
     author: "Testimonial pending approval",
     role: "",
     org: "",
-    color: "from-emerald-500 to-teal-600",
+    color: "from-amber-500 to-teal-600",
   },
 ];
 
@@ -284,7 +284,7 @@ export default function Sponsorship() {
   return (
     <div className="flex flex-col min-h-screen bg-white overflow-x-hidden">
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900">
+      <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -293,7 +293,7 @@ export default function Sponsorship() {
             backgroundSize: "60px 60px",
           }}
         />
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-teal-500/20 rounded-full blur-3xl" />
 
         <div className="relative z-10 max-w-[95vw] mx-auto px-6 text-center">
@@ -301,7 +301,7 @@ export default function Sponsorship() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-semibold mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-sm font-semibold mb-6"
           >
             <Gift className="w-4 h-4" />
             Sponsorship Opportunities
@@ -314,7 +314,7 @@ export default function Sponsorship() {
             className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-6 leading-tight"
           >
             Invest in Culture.{" "}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-400 to-teal-300 bg-clip-text text-transparent">
               Impact Lives.
             </span>
           </motion.h1>
@@ -338,7 +338,7 @@ export default function Sponsorship() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <a href="#tiers">
-              <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-emerald-500/30 hover:scale-105 transition-all">
+              <Button className="bg-gradient-to-r from-amber-500 to-teal-500 hover:from-amber-600 hover:to-teal-600 text-white font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all">
                 View Illustrative Concepts
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
@@ -367,7 +367,7 @@ export default function Sponsorship() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
               The Opportunity
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -392,7 +392,7 @@ export default function Sponsorship() {
                 key={i}
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-emerald-200 transition-all group"
+                className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-amber-200 transition-all group"
               >
                 <div
                   className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
@@ -421,7 +421,7 @@ export default function Sponsorship() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Flexible Models
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -466,7 +466,7 @@ export default function Sponsorship() {
                         key={j}
                         className="text-xs text-slate-500 flex items-center gap-2"
                       >
-                        <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                        <span className="w-1 h-1 bg-amber-500 rounded-full" />
                         {ex}
                       </li>
                     ))}
@@ -488,7 +488,7 @@ export default function Sponsorship() {
             viewport={viewport}
             className="text-center mb-16"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Investment Levels
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -546,7 +546,7 @@ export default function Sponsorship() {
                         key={j}
                         className="flex items-start gap-2 text-sm text-slate-700"
                       >
-                        <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                         {benefit}
                       </li>
                     ))}
@@ -559,7 +559,7 @@ export default function Sponsorship() {
                   </div>
                   <Link to="/contact">
                     <Button
-                      className={`w-full mt-4 font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"}`}
+                      className={`w-full mt-4 font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700 text-white"}`}
                     >
                       Explore {tier.name}
                       <ArrowRight className="ml-1 w-4 h-4" />
@@ -603,13 +603,13 @@ export default function Sponsorship() {
                         key={j}
                         className="flex items-start gap-2 text-xs text-slate-700"
                       >
-                        <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
                         {benefit}
                       </li>
                     ))}
                   </ul>
                   <Link to="/contact">
-                    <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-lg text-sm">
+                    <Button className="w-full bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700 text-white font-bold rounded-lg text-sm">
                       Learn More
                     </Button>
                   </Link>
@@ -621,7 +621,7 @@ export default function Sponsorship() {
       </section>
 
       {/* ── HOW IT WORKS ──────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-emerald-50">
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-amber-50">
         <div className="max-w-[95vw] mx-auto px-6">
           <motion.div
             variants={fadeInUp}
@@ -630,7 +630,7 @@ export default function Sponsorship() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-600 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Process
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -652,7 +652,7 @@ export default function Sponsorship() {
                 className="flex gap-6 items-start"
               >
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-black">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-500 to-teal-600 text-white font-black">
                     {item.step}
                   </div>
                 </div>
@@ -671,7 +671,7 @@ export default function Sponsorship() {
       </section>
 
       {/* ── TESTIMONIALS ──────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-5"
           style={{
@@ -688,7 +688,7 @@ export default function Sponsorship() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-400 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-400 font-semibold text-sm uppercase tracking-widest mb-3 block">
               From Our Sponsors
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
@@ -708,7 +708,7 @@ export default function Sponsorship() {
                 key={i}
                 variants={fadeInUp}
                 whileHover={{ y: -6 }}
-                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-emerald-500/30 transition-all"
+                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-amber-500/30 transition-all"
               >
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, j) => (
@@ -732,7 +732,7 @@ export default function Sponsorship() {
                     <div className="font-bold text-white text-sm">
                       {t.author}
                     </div>
-                    <div className="text-emerald-400 text-xs">{t.role}</div>
+                    <div className="text-amber-400 text-xs">{t.role}</div>
                     <div className="text-slate-400 text-xs">{t.org}</div>
                   </div>
                 </div>
@@ -743,7 +743,7 @@ export default function Sponsorship() {
       </section>
 
       {/* ── CONTACT CTA ───────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-r from-amber-600 via-teal-600 to-amber-700 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -772,7 +772,7 @@ export default function Sponsorship() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Link to="/contact">
-                <Button className="bg-white text-emerald-700 hover:bg-emerald-50 font-black px-8 py-6 rounded-2xl text-lg shadow-2xl hover:scale-105 transition-all">
+                <Button className="bg-white text-amber-700 hover:bg-amber-50 font-black px-8 py-6 rounded-2xl text-lg shadow-2xl hover:scale-105 transition-all">
                   Contact VERSO AIR INC.
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>

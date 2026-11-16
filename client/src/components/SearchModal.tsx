@@ -237,9 +237,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                           onClick={() => goToBusiness(biz.id)}
                           className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex items-start gap-3 group"
                         >
-                          <Store className="w-4 h-4 mt-0.5 text-emerald-400 flex-shrink-0" />
+                          <Store className="w-4 h-4 mt-0.5 text-amber-400 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium truncate group-hover:text-emerald-300 transition-colors">
+                            <p className="text-white text-sm font-medium truncate group-hover:text-amber-200 transition-colors">
                               {biz.name}
                             </p>
                             <p className="text-xs text-slate-500 truncate mt-0.5">
@@ -248,7 +248,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                 .join("")}
                             </p>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 transition-colors mt-1" />
+                          <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-amber-400 transition-colors mt-1" />
                         </button>
                       ))}
                     </>

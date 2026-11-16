@@ -98,7 +98,7 @@ export const CulturalProgramsModal = ({
             onClick={(e) => e.stopPropagation()}
             style={{ overscrollBehavior: "contain" }}
           >
-            <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-4 md:p-6 text-white">
+            <div className="bg-gradient-to-r from-amber-600 to-amber-700 p-4 md:p-6 text-white">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl md:text-3xl font-bold">
                   Our Cultural Programs
@@ -110,7 +110,7 @@ export const CulturalProgramsModal = ({
                   <X size={20} />
                 </button>
               </div>
-              <p className="text-emerald-100 mt-2 text-sm md:text-base">
+              <p className="text-amber-100 mt-2 text-sm md:text-base">
                 Discover how we're transforming communities through art and
                 culture
               </p>
@@ -124,7 +124,7 @@ export const CulturalProgramsModal = ({
                       onClick={() => setSelectedProgram(program)}
                       className={`w-full text-left p-3 md:p-4 rounded-xl transition-all duration-200 ${
                         selectedProgram.id === program.id
-                          ? "bg-white shadow-lg border-2 border-emerald-500 scale-105"
+                          ? "bg-white shadow-lg border-2 border-amber-500 scale-105"
                           : "bg-gray-100 hover:bg-white hover:shadow-md"
                       }`}
                     >
@@ -133,14 +133,14 @@ export const CulturalProgramsModal = ({
                           size={18}
                           className={
                             selectedProgram.id === program.id
-                              ? "text-emerald-600"
+                              ? "text-amber-600"
                               : "text-gray-600"
                           }
                         />
                         <span
                           className={`font-semibold text-sm md:text-base ${
                             selectedProgram.id === program.id
-                              ? "text-emerald-700"
+                              ? "text-amber-700"
                               : "text-gray-700"
                           }`}
                         >
@@ -155,7 +155,7 @@ export const CulturalProgramsModal = ({
                 <div className="flex items-center gap-3 mb-4">
                   <selectedProgram.icon
                     size={20}
-                    className="text-emerald-600"
+                    className="text-amber-600"
                   />
                   <div>
                     <h3 className="text-lg md:text-2xl font-bold text-gray-800">
@@ -169,8 +169,8 @@ export const CulturalProgramsModal = ({
                 <p className="text-gray-700 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
                   {selectedProgram.details}
                 </p>
-                <div className="bg-emerald-50 rounded-xl p-4 md:p-6">
-                  <h4 className="font-semibold text-emerald-800 mb-3 md:mb-4 text-base md:text-lg">
+                <div className="bg-amber-50 rounded-xl p-4 md:p-6">
+                  <h4 className="font-semibold text-amber-900 mb-3 md:mb-4 text-base md:text-lg">
                     Program Highlights:
                   </h4>
                   <div className="space-y-2 md:space-y-3">
@@ -182,7 +182,7 @@ export const CulturalProgramsModal = ({
                         transition={{ delay: index * 0.1 }}
                         className="flex items-start gap-3 text-gray-700 text-sm md:text-base"
                       >
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
                         <span>{item}</span>
                       </motion.div>
                     ))}
@@ -190,12 +190,12 @@ export const CulturalProgramsModal = ({
                 </div>
                 <div className="mt-4 md:mt-6 flex flex-col sm:flex-row gap-3">
                   <Link to="/ong-culturelle">
-                    <button className="bg-emerald-600 text-white px-4 md:px-6 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-colors text-sm md:text-base">
+                    <button className="bg-amber-600 text-white px-4 md:px-6 py-2 rounded-lg font-semibold hover:bg-amber-700 transition-colors text-sm md:text-base">
                       Learn More
                     </button>
                   </Link>
                   <Link to="/get-involved">
-                    <button className="border border-emerald-600 text-emerald-600 px-4 md:px-6 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition-colors text-sm md:text-base">
+                    <button className="border border-amber-600 text-amber-600 px-4 md:px-6 py-2 rounded-lg font-semibold hover:bg-amber-50 transition-colors text-sm md:text-base">
                       Get Involved
                     </button>
                   </Link>

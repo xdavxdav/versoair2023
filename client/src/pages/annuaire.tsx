@@ -1198,7 +1198,7 @@ export default function Annuaire() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setShowBusinessDetails(false)}
           >
             <motion.div
@@ -1244,7 +1244,7 @@ export default function Annuaire() {
                     )}
                   </div>
                   {selectedBusiness.isVerified && (
-                    <Badge className="bg-emerald-900/30 text-emerald-300 border-emerald-500/30">
+                    <Badge className="bg-amber-900/30 text-amber-300 border-amber-500/30">
                       ✓ Vérifié
                     </Badge>
                   )}

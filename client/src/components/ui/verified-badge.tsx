@@ -73,7 +73,7 @@ export default function VerifiedBadge({
         )}
       </div>
       {verifiedFast && (
-        <span className="text-xs text-emerald-400 ml-1">
+        <span className="text-xs text-amber-400 ml-1">
           ⚡ Verified in under 24h
         </span>
       )}

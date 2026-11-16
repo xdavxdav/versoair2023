@@ -294,7 +294,7 @@ export default function ArcadePage() {
       description:
         "Who's the artist? Match tracks and albums to their creators.",
       icon: "🎤",
-      color: "from-green-600 to-emerald-600",
+      color: "from-green-600 to-amber-600",
       borderColor: "border-green-500",
       rounds: 5,
       timePerRound: 12,
@@ -653,8 +653,8 @@ export default function ArcadePage() {
               onClick={() => navigate("/artist-portal?from=arcade")}
               className={
                 fromPage === "artist-portal"
-                  ? "text-emerald-200 bg-emerald-500/30 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-                  : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
+                  : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
               }
             >
               Portail Artiste
@@ -704,7 +704,7 @@ export default function ArcadePage() {
             </div>
 
             {/* Wallet stats strip - always visible */}
-            <div className="flex items-center gap-4 bg-black/50 border border-purple-500/30 rounded-xl px-5 py-3">
+            <div className="flex items-center gap-4 bg-slate-900/50 border border-purple-500/30 rounded-xl px-5 py-3">
               <div className="text-center">
                 <p className="text-xs text-gray-500 uppercase tracking-wider">
                   PAY
@@ -772,7 +772,7 @@ export default function ArcadePage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="bg-black/40 border border-purple-500/20 p-1 flex w-full overflow-x-auto scrollbar-hide h-auto">
+          <TabsList className="bg-slate-900/40 border border-purple-500/20 p-1 flex w-full overflow-x-auto scrollbar-hide h-auto">
             <TabsTrigger
               value="play"
               className="shrink-0 data-[state=active]:bg-purple-600/40 data-[state=active]:text-white text-xs sm:text-sm"
@@ -812,7 +812,7 @@ export default function ArcadePage() {
                   initial="hidden"
                   animate="visible"
                 >
-                  <Card className="bg-black/50 border-purple-500/30">
+                  <Card className="bg-slate-900/50 border-purple-500/30">
                     <CardHeader className="text-center">
                       <Badge className="mx-auto mb-2 bg-fuchsia-600/30 text-fuchsia-300 border-fuchsia-500/40">
                         Round {activeMatch.current_round} /{" "}
@@ -854,7 +854,7 @@ export default function ArcadePage() {
                             "bg-purple-600/40 border-purple-500 text-white";
                         } else {
                           btnClass +=
-                            "bg-black/30 border-gray-700 text-gray-200 hover:border-purple-500/50 hover:bg-purple-900/20";
+                            "bg-slate-900/30 border-gray-700 text-gray-200 hover:border-purple-500/50 hover:bg-purple-900/20";
                         }
 
                         return (
@@ -915,7 +915,7 @@ export default function ArcadePage() {
                   initial="hidden"
                   animate="visible"
                 >
-                  <Card className="bg-black/50 border-purple-500/30 text-center py-12">
+                  <Card className="bg-slate-900/50 border-purple-500/30 text-center py-12">
                     <Loader2 className="w-12 h-12 mx-auto text-purple-400 animate-spin mb-4" />
                     <h3 className="text-xl font-bold text-white mb-2">
                       En attente d'un adversaire...
@@ -967,8 +967,8 @@ export default function ArcadePage() {
                                 selectedGame === game.id && game.available
                                   ? `bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
                                   : game.available
-                                    ? "bg-black/40 border-purple-500/20 hover:border-purple-500/50"
-                                    : "bg-black/20 border-gray-700/30 opacity-60"
+                                    ? "bg-slate-900/40 border-purple-500/20 hover:border-purple-500/50"
+                                    : "bg-slate-900/20 border-gray-700/30 opacity-60"
                               }`}
                               onClick={() =>
                                 game.available && setSelectedGame(game.id)
@@ -1027,16 +1027,16 @@ export default function ArcadePage() {
                                       : "text-gray-600"
                                   }`}
                                 >
-                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
                                     {game.format}
                                   </span>
-                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
                                     {game.rounds} rounds
                                   </span>
-                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
                                     {game.timePerRound}s
                                   </span>
-                                  <span className="bg-black/20 px-2 py-0.5 rounded">
+                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
                                     Min {game.minWager} cr
                                   </span>
                                 </div>
@@ -1049,7 +1049,7 @@ export default function ArcadePage() {
                   </div>
 
                   {/* ═══════════ SELECTED GAME DETAILS & WAGER ═══════════ */}
-                  <Card className="bg-black/50 border-purple-500/30">
+                  <Card className="bg-slate-900/50 border-purple-500/30">
                     <CardHeader>
                       <CardTitle className="text-white flex items-center gap-2">
                         <span className="text-2xl">{currentGame.icon}</span>
@@ -1062,25 +1062,25 @@ export default function ArcadePage() {
                     <CardContent className="space-y-6">
                       {/* Game stats */}
                       <div className="grid grid-cols-4 gap-3 text-center text-sm">
-                        <div className="bg-black/30 rounded-lg p-3">
+                        <div className="bg-slate-900/30 rounded-lg p-3">
                           <p className="text-gray-500 text-xs">Format</p>
                           <p className="text-white font-medium">
                             {currentGame.format}
                           </p>
                         </div>
-                        <div className="bg-black/30 rounded-lg p-3">
+                        <div className="bg-slate-900/30 rounded-lg p-3">
                           <p className="text-gray-500 text-xs">Rounds</p>
                           <p className="text-white font-medium">
                             {currentGame.rounds}
                           </p>
                         </div>
-                        <div className="bg-black/30 rounded-lg p-3">
+                        <div className="bg-slate-900/30 rounded-lg p-3">
                           <p className="text-gray-500 text-xs">Temps</p>
                           <p className="text-white font-medium">
                             {currentGame.timePerRound}s
                           </p>
                         </div>
-                        <div className="bg-black/30 rounded-lg p-3">
+                        <div className="bg-slate-900/30 rounded-lg p-3">
                           <p className="text-gray-500 text-xs">Commission</p>
                           <p className="text-white font-medium">
                             {currentGame.commission}
@@ -1088,7 +1088,7 @@ export default function ArcadePage() {
                         </div>
                       </div>
 
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
                         Free beta mode: no deposits, wagers, subscriptions, or
                         prizes. Play Trivia for points and practice.
                       </div>
@@ -1112,28 +1112,28 @@ export default function ArcadePage() {
 
                   {/* Quick stats */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
+                    <Card className="bg-slate-900/40 border-purple-500/20 p-4 text-center">
                       <Swords className="w-5 h-5 mx-auto text-purple-400 mb-1" />
                       <p className="text-2xl font-bold text-white">
                         {totalPlayed}
                       </p>
                       <p className="text-xs text-gray-500">Matchs joués</p>
                     </Card>
-                    <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
+                    <Card className="bg-slate-900/40 border-purple-500/20 p-4 text-center">
                       <Trophy className="w-5 h-5 mx-auto text-amber-400 mb-1" />
                       <p className="text-2xl font-bold text-white">
                         {totalWins}
                       </p>
                       <p className="text-xs text-gray-500">Victoires</p>
                     </Card>
-                    <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
+                    <Card className="bg-slate-900/40 border-purple-500/20 p-4 text-center">
                       <Target className="w-5 h-5 mx-auto text-green-400 mb-1" />
                       <p className="text-2xl font-bold text-white">
                         {winRate}%
                       </p>
                       <p className="text-xs text-gray-500">Win Rate</p>
                     </Card>
-                    <Card className="bg-black/40 border-purple-500/20 p-4 text-center">
+                    <Card className="bg-slate-900/40 border-purple-500/20 p-4 text-center">
                       <CircleDollarSign className="w-5 h-5 mx-auto text-fuchsia-400 mb-1" />
                       <p className="text-2xl font-bold text-white">
                         {balance.toLocaleString()}
@@ -1164,7 +1164,7 @@ export default function ArcadePage() {
             </div>
 
             {openMatches.length === 0 ? (
-              <Card className="bg-black/40 border-purple-500/20 py-12 text-center">
+              <Card className="bg-slate-900/40 border-purple-500/20 py-12 text-center">
                 <Gamepad2 className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Aucun duel en attente</p>
                 <p className="text-gray-500 text-sm mt-1">Lancez le premier!</p>
@@ -1179,7 +1179,7 @@ export default function ArcadePage() {
               <div className="space-y-3">
                 {openMatches.map((match) => (
                   <motion.div key={match.id} {...staggerItem}>
-                    <Card className="bg-black/40 border-purple-500/20 hover:border-purple-500/40 transition-colors">
+                    <Card className="bg-slate-900/40 border-purple-500/20 hover:border-purple-500/40 transition-colors">
                       <CardContent className="flex items-center justify-between py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
@@ -1222,7 +1222,7 @@ export default function ArcadePage() {
               Mes Matchs
             </h3>
             {myMatches.length === 0 ? (
-              <Card className="bg-black/40 border-purple-500/20 py-12 text-center">
+              <Card className="bg-slate-900/40 border-purple-500/20 py-12 text-center">
                 <Swords className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Aucun match encore</p>
                 <p className="text-gray-500 text-sm mt-1">
@@ -1244,7 +1244,7 @@ export default function ArcadePage() {
                   return (
                     <Card
                       key={match.id}
-                      className="bg-black/40 border-purple-500/20"
+                      className="bg-slate-900/40 border-purple-500/20"
                     >
                       <CardContent className="flex items-center justify-between py-4">
                         <div className="flex items-center gap-3">
@@ -1313,7 +1313,7 @@ export default function ArcadePage() {
               Top Joueurs
             </h3>
             {leaderboard.length === 0 ? (
-              <Card className="bg-black/40 border-purple-500/20 py-12 text-center">
+              <Card className="bg-slate-900/40 border-purple-500/20 py-12 text-center">
                 <Crown className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Le classement est vide</p>
                 <p className="text-gray-500 text-sm mt-1">
@@ -1325,7 +1325,7 @@ export default function ArcadePage() {
                 {leaderboard.map((entry, idx) => (
                   <Card
                     key={entry.user_id}
-                    className="bg-black/40 border-purple-500/20"
+                    className="bg-slate-900/40 border-purple-500/20"
                   >
                     <CardContent className="flex items-center justify-between py-4">
                       <div className="flex items-center gap-3">
@@ -1378,7 +1378,7 @@ export default function ArcadePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4"
             onClick={() => setShowAgeModal(false)}
           >
             <motion.div
@@ -1404,7 +1404,7 @@ export default function ArcadePage() {
                     type="date"
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
-                    className="w-full bg-black/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                    className="w-full bg-slate-900/50 border border-purple-500/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
                     max={new Date().toISOString().split("T")[0]}
                   />
                 </div>
@@ -1435,7 +1435,7 @@ export default function ArcadePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4"
             onClick={() => setShowDeposit(false)}
           >
             <motion.div
@@ -1461,7 +1461,7 @@ export default function ArcadePage() {
               {/* Bonus schedule */}
               {paypalConfig?.bonusTiers &&
                 paypalConfig.bonusTiers.length > 0 && (
-                  <div className="bg-black/40 border border-amber-500/20 rounded-lg p-3 mb-5">
+                  <div className="bg-slate-900/40 border border-amber-500/20 rounded-lg p-3 mb-5">
                     <p className="text-xs text-amber-400 font-semibold mb-2 uppercase tracking-wider">
                       Bonus de dépôt
                     </p>
@@ -1510,7 +1510,7 @@ export default function ArcadePage() {
                     step="1"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
-                    className="w-full bg-black/50 border border-amber-500/30 rounded-lg px-4 py-2 text-white text-center text-lg font-bold focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-900/50 border border-amber-500/30 rounded-lg px-4 py-2 text-white text-center text-lg font-bold focus:outline-none focus:border-amber-500"
                   />
                   <p className="text-center text-gray-500 text-xs mt-1">
                     1 USD = 100 crédits
@@ -1578,7 +1578,7 @@ export default function ArcadePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4"
             onClick={() => setShowContractGate(false)}
           >
             <motion.div

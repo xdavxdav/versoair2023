@@ -128,9 +128,9 @@ const PORTALS: Portal[] = [
       "Join the Verso Air community — write blog posts, connect with others, and share insights.",
     icon: MessageSquare,
     color: "green",
-    gradient: "from-emerald-500 to-teal-500",
-    cardRing: "ring-emerald-400/40 border-emerald-400/30",
-    badgeClassName: "bg-emerald-500/15 text-emerald-100 border-emerald-400/30",
+    gradient: "from-amber-500 to-teal-500",
+    cardRing: "ring-amber-400/40 border-amber-400/30",
+    badgeClassName: "bg-amber-500/15 text-amber-100 border-amber-400/30",
     features: [
       "Write & publish blog posts",
       "Comment & engage",
@@ -149,10 +149,10 @@ const PORTALS: Portal[] = [
     description:
       "Create a public craft profile, showcase your work, and connect with customers and cultural communities.",
     icon: Palette,
-    color: "emerald",
-    gradient: "from-emerald-500 to-teal-500",
-    cardRing: "ring-emerald-400/40 border-emerald-400/30",
-    badgeClassName: "bg-emerald-500/15 text-emerald-100 border-emerald-400/30",
+    color: "amber",
+    gradient: "from-amber-500 to-teal-500",
+    cardRing: "ring-amber-400/40 border-amber-400/30",
+    badgeClassName: "bg-amber-500/15 text-amber-100 border-amber-400/30",
     features: [
       "Public artisan directory profile",
       "Portfolio and craft specializations",
@@ -1075,11 +1075,11 @@ export default function ApplyPage() {
           <div className="mx-auto mb-8 max-w-3xl rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
             GeoAdmin plans use annual reference pricing and are requested
             directly; this portal does not activate a subscription.{" "}
-            <Link href="/pricing" className="text-emerald-300 underline">
+            <Link href="/pricing" className="text-amber-300 underline">
               View plan details
             </Link>
             {" · "}
-            <Link href="/auth/signin" className="text-emerald-300 underline">
+            <Link href="/auth/signin" className="text-amber-300 underline">
               Existing subscribers can sign in
             </Link>
             .
