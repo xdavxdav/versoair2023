@@ -153,7 +153,7 @@ export function BusinessClaimAction({
         <Button
           type="button"
           variant="outline"
-          className="gap-2 border-[#CDA65F] text-[#76551F]"
+          className="h-auto min-h-10 max-w-full gap-2 whitespace-normal border-[#CDA65F] py-2 text-left text-[#76551F]"
           onClick={() => {
             setError("");
             setOpen(true);
@@ -168,7 +168,7 @@ export function BusinessClaimAction({
           asChild
           type="button"
           variant="outline"
-          className="gap-2 border-[#CDA65F] text-[#76551F]"
+          className="h-auto min-h-10 max-w-full gap-2 whitespace-normal border-[#CDA65F] py-2 text-left text-[#76551F]"
         >
           <Link href={`/auth/signin?redirect=${redirect}`}>
             <Building2 className="h-4 w-4" /> Is this your business? Claim it
