@@ -82,7 +82,7 @@ const GENRE_ICONS: Record<string, string> = {
 // Genre colors — Ivorian music genres
 const GENRE_COLORS: Record<string, string> = {
   "Coupé-Décalé": "from-orange-500 to-yellow-500",
-  Zouglou: "from-green-500 to-emerald-500",
+  Zouglou: "from-green-500 to-amber-500",
   Reggae: "from-green-600 to-yellow-500",
   Afrobeats: "from-red-500 to-orange-500",
   "Afro-Trap": "from-purple-600 to-pink-500",
@@ -92,7 +92,7 @@ const GENRE_COLORS: Record<string, string> = {
   "Afro-Electronic": "from-fuchsia-500 to-cyan-500",
   "R&B": "from-violet-500 to-purple-600",
   Traditional: "from-amber-600 to-orange-600",
-  "World Music": "from-teal-500 to-emerald-500",
+  "World Music": "from-teal-500 to-amber-500",
 };
 
 function formatNumber(num: number | null | undefined): string {
@@ -777,7 +777,7 @@ export default function ArtistDirectory() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => {
               setShowArtistDetails(false);
               setSelectedArtist(null);
@@ -821,7 +821,7 @@ export default function ArtistDirectory() {
                           setShowArtistDetails(false);
                           setSelectedArtist(null);
                         }}
-                        className="p-2 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full transition-colors"
+                        className="p-2 bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur-sm rounded-full transition-colors"
                       >
                         <X className="h-5 w-5 text-slate-900" />
                       </button>

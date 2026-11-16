@@ -55,8 +55,8 @@ const INDUSTRY_UI: Record<
   },
   commerce: {
     icon: "🛒",
-    gradient: "from-emerald-500 to-green-500",
-    bg: "bg-emerald-500/10",
+    gradient: "from-amber-500 to-green-500",
+    bg: "bg-amber-500/10",
   },
   construction: {
     icon: "🏗️",
@@ -70,7 +70,7 @@ const INDUSTRY_UI: Record<
   },
   finance: {
     icon: "💰",
-    gradient: "from-green-500 to-emerald-600",
+    gradient: "from-green-500 to-amber-600",
     bg: "bg-green-500/10",
   },
   entertainment: {
@@ -319,7 +319,7 @@ export default function AnnuaireTV() {
               onClick={() => setIsPlaying(!isPlaying)}
               className={`gap-1.5 ${
                 isPlaying
-                  ? "text-emerald-700 hover:text-emerald-700 hover:bg-emerald-500/10"
+                  ? "text-amber-700 hover:text-amber-700 hover:bg-amber-500/10"
                   : "text-slate-700 hover:text-slate-700 hover:bg-white/5"
               }`}
             >
@@ -474,7 +474,7 @@ export default function AnnuaireTV() {
                                         </Badge>
                                       )}
                                       {biz.is_verified && (
-                                        <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">
+                                        <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">
                                           <ShieldCheck className="h-3 w-3 mr-1" />{" "}
                                           Verified
                                         </Badge>
@@ -529,7 +529,7 @@ export default function AnnuaireTV() {
                                   )}
                                   {biz.phone && (
                                     <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-slate-200">
-                                      <Phone className="h-4 w-4 text-emerald-700 flex-shrink-0" />
+                                      <Phone className="h-4 w-4 text-amber-700 flex-shrink-0" />
                                       <span className="text-sm text-slate-700 truncate">
                                         {biz.phone}
                                       </span>
@@ -552,7 +552,7 @@ export default function AnnuaireTV() {
                                       <Badge
                                         className={
                                           biz.is_active
-                                            ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/30"
+                                            ? "bg-amber-500/20 text-amber-700 border-amber-500/30"
                                             : "bg-rose-500/20 text-rose-700 border-rose-500/30"
                                         }
                                       >
@@ -625,8 +625,8 @@ export default function AnnuaireTV() {
                 <div className="flex items-center gap-1.5">
                   {isPlaying ? (
                     <>
-                      <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-700">
+                      <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                      <span className="text-amber-700">
                         Auto • {SPEED_OPTIONS[speed].label}
                       </span>
                     </>

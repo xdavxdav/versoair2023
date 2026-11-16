@@ -201,7 +201,7 @@ export default function Communities() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-12 md:py-16">
+      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12 md:py-16">
         <div className="max-w-[95vw] mx-auto px-4">
           <motion.h1
             variants={fadeInUp}
@@ -216,18 +216,18 @@ export default function Communities() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="text-lg text-emerald-50 max-w-2xl"
+            className="text-lg text-amber-50 max-w-2xl"
           >
             Explore local artisan collectives and communities across Ivory
             Coast. Connect, collaborate, and support traditional crafts.
           </motion.p>
-          <p className="mt-4 max-w-2xl text-sm text-emerald-100">
+          <p className="mt-4 max-w-2xl text-sm text-amber-100">
             Community is the base membership for conversations, workshops, and
             connections. Craftspeople can apply directly for Artisan access;
             Artisan accounts include Community access automatically.
           </p>
           <Link href="/apply?portal=community&redirect=/communities">
-            <Button className="mt-5 bg-white text-emerald-700 hover:bg-emerald-50 font-semibold shadow-lg">
+            <Button className="mt-5 bg-white text-amber-700 hover:bg-amber-50 font-semibold shadow-lg">
               Join the Community
               <Users className="ml-2 h-4 w-4" />
             </Button>
@@ -278,7 +278,7 @@ export default function Communities() {
               placeholder="Search communities by name, region, or focus area..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
@@ -290,7 +290,7 @@ export default function Communities() {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-full font-medium transition-all ${
                   selectedCategory === category
-                    ? "bg-emerald-600 text-white shadow-lg"
+                    ? "bg-amber-600 text-white shadow-lg"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
@@ -307,7 +307,7 @@ export default function Communities() {
         )}
         {joinMessage && (
           <p
-            className="mb-6 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"
+            className="mb-6 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
             role="status"
           >
             {joinMessage}
@@ -344,15 +344,15 @@ export default function Communities() {
               >
                 <Card className="hover:shadow-xl transition-all border-0 shadow-lg overflow-hidden group h-full">
                   {/* Header with category badge */}
-                  <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 h-2" />
+                  <div className="bg-gradient-to-r from-amber-600 to-amber-700 h-2" />
 
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <CardTitle className="text-lg text-gray-900 group-hover:text-emerald-700 transition-colors">
+                        <CardTitle className="text-lg text-gray-900 group-hover:text-amber-700 transition-colors">
                           {community.name}
                         </CardTitle>
-                        <CardDescription className="text-emerald-600 font-medium mt-1">
+                        <CardDescription className="text-amber-600 font-medium mt-1">
                           {community.focus}
                         </CardDescription>
                       </div>
@@ -361,10 +361,10 @@ export default function Communities() {
                     {/* Location & Category */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 text-emerald-600" />
+                        <MapPin className="h-4 w-4 text-amber-600" />
                         {community.region}
                       </div>
-                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
                         {community.category}
                       </span>
                     </div>
@@ -377,7 +377,7 @@ export default function Communities() {
                     </p>
 
                     {/* Members Count */}
-                    <div className="flex items-center gap-2 text-sm text-emerald-700 font-medium">
+                    <div className="flex items-center gap-2 text-sm text-amber-700 font-medium">
                       <Users className="h-4 w-4" />
                       <span>{community.members} active members</span>
                     </div>
@@ -409,14 +409,14 @@ export default function Communities() {
                     {/* Action Buttons */}
                     {!user && (
                       <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <Lock className="h-3.5 w-3.5 text-emerald-600" />
+                        <Lock className="h-3.5 w-3.5 text-amber-600" />
                         Create a free Community account to join or save this
                         community.
                       </p>
                     )}
                     <div className="flex gap-2 pt-3 border-t border-gray-200">
                       <Button
-                        className="flex-1 bg-emerald-600 text-sm font-bold hover:bg-emerald-700"
+                        className="flex-1 bg-amber-600 text-sm font-bold hover:bg-amber-700"
                         onClick={() => joinCommunity(community.id)}
                         disabled={
                           joiningId === community.id ||
@@ -439,16 +439,16 @@ export default function Communities() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="border-emerald-200 hover:bg-emerald-50"
+                          className="border-amber-200 hover:bg-amber-50"
                           title="Discover workshops"
                         >
-                          <BookOpen className="h-4 w-4 text-emerald-600" />
+                          <BookOpen className="h-4 w-4 text-amber-600" />
                         </Button>
                       </Link>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="border-emerald-200 hover:bg-emerald-50"
+                        className="border-amber-200 hover:bg-amber-50"
                         title={
                           user
                             ? "Save this community"
@@ -471,7 +471,7 @@ export default function Communities() {
                           );
                         }}
                       >
-                        <Heart className="h-4 w-4 text-emerald-600" />
+                        <Heart className="h-4 w-4 text-amber-600" />
                       </Button>
                     </div>
                   </CardContent>
@@ -508,8 +508,8 @@ export default function Communities() {
           viewport={defaultViewport}
         >
           <Card className="border-0 shadow-lg overflow-hidden mb-12">
-            <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 p-8 border-b border-emerald-200">
-              <h2 className="text-2xl font-bold text-emerald-900">
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100/50 p-8 border-b border-amber-200">
+              <h2 className="text-2xl font-bold text-amber-900">
                 How to Join a Community
               </h2>
             </div>
@@ -533,7 +533,7 @@ export default function Communities() {
                   },
                 ].map((step, idx) => (
                   <div key={idx} className="text-center">
-                    <div className="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">
+                    <div className="w-10 h-10 bg-amber-600 text-white rounded-full flex items-center justify-center font-bold text-lg mx-auto mb-4">
                       {step.number}
                     </div>
                     <h3 className="font-bold text-gray-900 mb-2">
@@ -553,19 +553,19 @@ export default function Communities() {
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
-          className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-8 text-white"
+          className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-xl p-8 text-white"
         >
           <div className="max-w-2xl mx-auto text-center">
-            <Zap className="h-12 w-12 mx-auto mb-4 text-emerald-100" />
+            <Zap className="h-12 w-12 mx-auto mb-4 text-amber-100" />
             <h2 className="text-3xl font-bold mb-4">
               Strengthen Our Communities
             </h2>
-            <p className="text-emerald-50 mb-6">
+            <p className="text-amber-50 mb-6">
               Support artisan communities by purchasing their crafts, attending
               workshops, and sharing their stories.
             </p>
             <Link href="/artisans">
-              <Button className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold">
+              <Button className="bg-white text-amber-600 hover:bg-amber-50 font-bold">
                 Discover Artisans <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>

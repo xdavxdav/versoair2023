@@ -79,7 +79,7 @@ const SECTORS = [
     title: "Finance",
     icon: DollarSign,
     path: "/finances",
-    color: "from-emerald-500 to-teal-500",
+    color: "from-amber-500 to-teal-500",
   },
   {
     title: "Entertainment",
@@ -121,7 +121,7 @@ const SERVICES = [
     desc: "Location intelligence portal",
     icon: Globe,
     path: "/geo-admin",
-    color: "from-teal-500 to-emerald-600",
+    color: "from-teal-500 to-amber-600",
   },
   {
     title: "SAV 24/7",

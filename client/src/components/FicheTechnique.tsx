@@ -180,7 +180,7 @@ function OpenNowBadge({ fiche, isFr }: { fiche: Fiche; isFr: boolean }) {
     <Badge
       className={
         open
-          ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+          ? "border-amber-200 bg-amber-50 text-amber-900"
           : "border-rose-300 bg-rose-50 text-rose-800"
       }
     >

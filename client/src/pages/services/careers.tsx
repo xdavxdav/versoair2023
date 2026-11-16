@@ -219,8 +219,8 @@ const SECTORS = [
   {
     value: "immobilier",
     label: "Immobilier",
-    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
-    gradient: "from-emerald-600 to-green-600",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-green-600",
   },
   {
     value: "conseil-juridique",
@@ -256,7 +256,7 @@ const SECTORS = [
     value: "maison-deco",
     label: "Maison & Décoration",
     color: "bg-teal-200 text-teal-900 border-teal-400",
-    gradient: "from-teal-600 to-emerald-600",
+    gradient: "from-teal-600 to-amber-600",
   },
   {
     value: "mode-textile",
@@ -297,8 +297,8 @@ const SECTORS = [
   {
     value: "emploi",
     label: "Emploi & RH",
-    color: "bg-emerald-200 text-emerald-900 border-emerald-400",
-    gradient: "from-emerald-600 to-teal-600",
+    color: "bg-amber-200 text-amber-900 border-amber-400",
+    gradient: "from-amber-600 to-teal-600",
   },
   {
     value: "commerce",
@@ -328,7 +328,7 @@ const SECTORS = [
     value: "finances",
     label: "Finances & Assurances",
     color: "bg-green-200 text-green-900 border-green-400",
-    gradient: "from-green-600 to-emerald-600",
+    gradient: "from-green-600 to-amber-600",
   },
   {
     value: "divertissement",
@@ -855,7 +855,7 @@ export default function Careers() {
         <div
           className={`p-2 rounded-lg bg-gradient-to-br ${
             color === "green"
-              ? "from-emerald-100 to-green-100"
+              ? "from-amber-100 to-green-100"
               : color === "blue"
                 ? "from-blue-100 to-cyan-100"
                 : color === "purple"
@@ -866,7 +866,7 @@ export default function Careers() {
           <div
             className={
               color === "green"
-                ? "text-emerald-600"
+                ? "text-amber-600"
                 : color === "blue"
                   ? "text-blue-600"
                   : color === "purple"
@@ -880,7 +880,7 @@ export default function Careers() {
         <span
           className={`text-xs font-semibold px-2 py-1 rounded ${
             color === "green"
-              ? "bg-emerald-50 text-emerald-700"
+              ? "bg-amber-50 text-amber-700"
               : color === "blue"
                 ? "bg-blue-50 text-blue-700"
                 : color === "purple"
@@ -1414,7 +1414,7 @@ export default function Careers() {
                       {stat.isBadge ? (
                         <Badge
                           variant="default"
-                          className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                          className="bg-amber-100 text-amber-700 hover:bg-amber-200"
                         >
                           Connected
                         </Badge>
@@ -1444,8 +1444,8 @@ export default function Careers() {
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {platformUser.name || platformUser.email}
                           </p>
-                          <p className="text-xs text-emerald-600 flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <p className="text-xs text-amber-600 flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             Connected to Community
                           </p>
                         </div>
@@ -1967,7 +1967,7 @@ export default function Careers() {
       {/* ── Real Auth Popup ── */}
       {showAuthPopup && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowAuthPopup(false);
           }}

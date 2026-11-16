@@ -65,7 +65,7 @@ const SPONSORSHIP_RULES = {
     eligible: true,
     types: ["informal", "formal"],
     reason: "Eligible for both Informal & Formal Sponsorship",
-    color: "from-emerald-500 to-emerald-600",
+    color: "from-amber-500 to-amber-600",
     icon: CheckCircle,
     message: "Full access to Friend → Supporter tier sponsorship",
     maxAmount: "Pricing to be confirmed",
@@ -222,14 +222,14 @@ export default function SponsorsDirectory() {
           className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8"
         >
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl" />
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
           </div>
 
           <div className="relative max-w-4xl mx-auto text-center">
             <motion.h1
               variants={fadeInUp}
-              className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent mb-6"
+              className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-amber-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent mb-6"
             >
               Become a Sponsor
             </motion.h1>
@@ -245,9 +245,9 @@ export default function SponsorsDirectory() {
             {isAuthenticated && (
               <motion.div
                 variants={fadeInUp}
-                className="inline-block px-6 py-2 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-full border border-emerald-400/30"
+                className="inline-block px-6 py-2 bg-gradient-to-r from-amber-500/20 to-blue-500/20 rounded-full border border-amber-400/30"
               >
-                <span className="text-emerald-300">
+                <span className="text-amber-300">
                   Your Tier: <strong>{eligibilityData?.tier}</strong>
                 </span>
               </motion.div>
@@ -268,14 +268,14 @@ export default function SponsorsDirectory() {
               <div
                 className={`rounded-2xl border-2 p-8 backdrop-blur-sm ${
                   isEligible
-                    ? "bg-emerald-500/10 border-emerald-400/30"
+                    ? "bg-amber-500/10 border-amber-400/30"
                     : "bg-amber-500/10 border-amber-400/30"
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div className="mt-1">
                     {isEligible ? (
-                      <CheckCircle className="w-6 h-6 text-emerald-400" />
+                      <CheckCircle className="w-6 h-6 text-amber-400" />
                     ) : (
                       <Lock className="w-6 h-6 text-amber-400" />
                     )}
@@ -298,7 +298,7 @@ export default function SponsorsDirectory() {
                         {eligibilityData?.types.map((type) => (
                           <span
                             key={type}
-                            className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/50 rounded-full text-sm text-emerald-300"
+                            className="px-3 py-1 bg-amber-500/20 border border-amber-400/50 rounded-full text-sm text-amber-300"
                           >
                             {type}
                           </span>
@@ -376,7 +376,7 @@ export default function SponsorsDirectory() {
                         )}
                       </div>
                       {canAccess && isEligible && (
-                        <span className="px-2 py-1 bg-emerald-500/20 border border-emerald-400/50 rounded text-xs text-emerald-300 font-semibold">
+                        <span className="px-2 py-1 bg-amber-500/20 border border-amber-400/50 rounded text-xs text-amber-300 font-semibold">
                           Eligible
                         </span>
                       )}
@@ -410,7 +410,7 @@ export default function SponsorsDirectory() {
                         <ul className="text-sm text-gray-400 space-y-1">
                           {type.examples.slice(0, 2).map((example, idx) => (
                             <li key={idx} className="flex items-start gap-2">
-                              <span className="text-emerald-400 mt-0.5">•</span>
+                              <span className="text-amber-400 mt-0.5">•</span>
                               {example}
                             </li>
                           ))}
@@ -430,7 +430,7 @@ export default function SponsorsDirectory() {
           whileInView="visible"
           viewport={viewport}
           variants={stagger}
-          className="py-20 px-4 sm:px-6 lg:px-8 bg-black/30"
+          className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/30"
         >
           <div className="max-w-[95vw] mx-auto">
             <motion.h2
@@ -456,7 +456,7 @@ export default function SponsorsDirectory() {
                   <div className="text-4xl mb-3">{sponsor.logo}</div>
                   <h3 className="font-bold text-white mb-1">{sponsor.name}</h3>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs px-2 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded text-emerald-300">
+                    <span className="text-xs px-2 py-1 bg-amber-500/20 border border-amber-400/30 rounded text-amber-300">
                       {sponsor.tier}
                     </span>
                     <div className="flex gap-1">
@@ -475,7 +475,7 @@ export default function SponsorsDirectory() {
                   <p className="text-sm text-gray-400 mb-3">
                     {sponsor.description}
                   </p>
-                  <p className="text-xs font-semibold text-emerald-400">
+                  <p className="text-xs font-semibold text-amber-400">
                     {sponsor.amount}
                   </p>
                 </motion.div>
@@ -514,7 +514,7 @@ export default function SponsorsDirectory() {
               <Button
                 onClick={handleSponsorshipCTA}
                 size="lg"
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-bold px-8 py-6 text-lg rounded-lg"
+                className="bg-gradient-to-r from-amber-500 to-cyan-500 hover:from-amber-600 hover:to-cyan-600 text-white font-bold px-8 py-6 text-lg rounded-lg"
               >
                 {!isAuthenticated
                   ? "Sign In to Sponsor"
@@ -530,7 +530,7 @@ export default function SponsorsDirectory() {
 
       {/* Eligibility Modal */}
       {showEligibilityModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -547,7 +547,7 @@ export default function SponsorsDirectory() {
             <div className="space-y-3">
               <Button
                 onClick={() => navigate("/pricing")}
-                className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700"
+                className="w-full bg-gradient-to-r from-amber-600 to-cyan-600 hover:from-amber-700 hover:to-cyan-700"
               >
                 View Upgrade Plans
               </Button>

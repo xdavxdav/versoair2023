@@ -2221,8 +2221,8 @@ export default function HousingReservations() {
                     className="h-10 font-semibold"
                   />
                   {checkInDate && (
-                    <div className="text-xs bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-2 rounded">
-                      <p className="text-emerald-700 dark:text-emerald-400">
+                    <div className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 p-2 rounded">
+                      <p className="text-amber-700 dark:text-amber-400">
                         ✓{" "}
                         {new Date(checkInDate).toLocaleDateString("en-US", {
                           weekday: "long",

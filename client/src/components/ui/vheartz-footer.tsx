@@ -10,7 +10,7 @@ const visionLinks = [
 
 export default function VHeartzFooter() {
   return (
-    <footer className="relative isolate overflow-hidden border-t border-amber-200/15 bg-[#071d19] text-emerald-50">
+    <footer className="relative isolate overflow-hidden border-t border-amber-200/15 bg-[#071d19] text-amber-50">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 opacity-40"
@@ -40,7 +40,7 @@ export default function VHeartzFooter() {
                 className="h-5 w-5 text-amber-200/80 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
               />
             </Link>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-emerald-100/65">
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-amber-100/65">
               An independent cultural and community vision in development,
               distinct from VERSO AIR INC. Updates will be shared as plans are
               confirmed.
@@ -53,7 +53,7 @@ export default function VHeartzFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="text-emerald-50/75 underline-offset-4 transition-colors hover:text-amber-200 hover:underline"
+                    className="text-amber-50/75 underline-offset-4 transition-colors hover:text-amber-200 hover:underline"
                   >
                     {label}
                   </Link>
@@ -62,7 +62,7 @@ export default function VHeartzFooter() {
               <li>
                 <Link
                   href="/contact"
-                  className="text-emerald-50/75 underline-offset-4 transition-colors hover:text-amber-200 hover:underline"
+                  className="text-amber-50/75 underline-offset-4 transition-colors hover:text-amber-200 hover:underline"
                 >
                   Contact
                 </Link>
@@ -71,7 +71,7 @@ export default function VHeartzFooter() {
           </nav>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 border-t border-emerald-50/10 pt-5 text-xs text-emerald-100/50 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col gap-3 border-t border-amber-50/10 pt-5 text-xs text-amber-100/50 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} vHeartz. A future organization; not a
             VERSO AIR INC. service.

@@ -1146,7 +1146,7 @@ function MiniStudio({
       <AnimatePresence>
         {!collapsed && (
           <motion.div
-            className="fixed inset-0 z-[49] bg-black/60 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[49] bg-slate-900/60 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1211,7 +1211,7 @@ function MiniStudio({
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 )}
                 {micReady && recState === "idle" && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 )}
                 {instrumentalPlaying && (
                   <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-400" />
@@ -1229,7 +1229,7 @@ function MiniStudio({
                         ? "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] cursor-pointer"
                         : micMuted
                           ? "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08]"
-                          : "border-emerald-500/25 bg-emerald-500/15 hover:bg-emerald-500/25"
+                          : "border-amber-500/25 bg-amber-500/15 hover:bg-amber-500/25"
                   }`}
                   title={
                     micDenied
@@ -1242,7 +1242,7 @@ function MiniStudio({
                   }
                 >
                   {micReady && !micMuted ? (
-                    <Mic2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
+                    <Mic2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
                   ) : (
                     <MicOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/40" />
                   )}
@@ -1437,7 +1437,7 @@ function MiniStudio({
 
                           {/* Mic Volume */}
                           <div className="flex items-center gap-2">
-                            <Mic2 className="w-3 h-3 text-emerald-400/60 flex-shrink-0" />
+                            <Mic2 className="w-3 h-3 text-amber-400/60 flex-shrink-0" />
                             <input
                               type="range"
                               min={0}
@@ -1446,7 +1446,7 @@ function MiniStudio({
                               onChange={(e) =>
                                 setMicVolume(Number(e.target.value))
                               }
-                              className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-emerald-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400 [&::-webkit-slider-thumb]:appearance-none"
+                              className="flex-1 h-1 rounded-full appearance-none bg-white/10 accent-amber-500 cursor-pointer [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:appearance-none"
                             />
                             <span className="text-[9px] text-white/25 w-6 text-right font-mono">
                               {micVol}
@@ -1588,12 +1588,12 @@ function MiniStudio({
                               onClick={toggleCompressor}
                               className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
                                 compressorOn
-                                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                                  ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
                                   : "border-white/[0.06] bg-white/[0.02] text-white/25 hover:bg-white/[0.04]"
                               }`}
                             >
                               <div
-                                className={`w-1.5 h-1.5 rounded-full ${compressorOn ? "bg-emerald-400" : "bg-white/15"}`}
+                                className={`w-1.5 h-1.5 rounded-full ${compressorOn ? "bg-amber-400" : "bg-white/15"}`}
                               />
                               Compresseur
                             </button>
@@ -1851,11 +1851,11 @@ function MiniStudio({
                             ) : (
                               <button
                                 onClick={resumeRecording}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/15 text-emerald-400 text-[11px] font-medium transition-colors"
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/15 text-amber-400 text-[11px] font-medium transition-colors"
                               >
                                 <Play className="w-3 h-3" fill="currentColor" />
                                 Reprendre{" "}
-                                <span className="text-emerald-300/40 text-[9px]">
+                                <span className="text-amber-300/40 text-[9px]">
                                   (Espace)
                                 </span>
                               </button>
@@ -1972,7 +1972,7 @@ function MiniStudio({
                         </span>
                         <div className="flex items-center gap-1">
                           {[
-                            { on: compressorOn, color: "emerald" },
+                            { on: compressorOn, color: "amber" },
                             { on: deEsserOn, color: "amber" },
                             { on: noiseGateOn, color: "cyan" },
                             { on: reverbOn, color: "purple" },
@@ -2524,7 +2524,7 @@ export default function ArtistPortalWelcome() {
       icon: Shield,
       title: "Protection des droits d'auteur",
       desc: "Suivi transparent des royalties avec des pistes de paiement vérifiées par blockchain.",
-      gradient: "from-emerald-500 to-teal-500",
+      gradient: "from-amber-500 to-teal-500",
     },
     {
       icon: Crown,
@@ -2944,7 +2944,7 @@ export default function ArtistPortalWelcome() {
                           🎤
                         </div>
                         {/* Online indicator */}
-                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#120826]" />
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 border-2 border-[#120826]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-bold text-xl tracking-tight leading-tight">
@@ -2954,8 +2954,8 @@ export default function ArtistPortalWelcome() {
                           Genre • Style
                         </p>
                         <div className="flex items-center gap-1.5 mt-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          <span className="text-emerald-400/80 text-[10px] font-medium">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          <span className="text-amber-400/80 text-[10px] font-medium">
                             Aperçu du profil artiste
                           </span>
                         </div>
@@ -3886,12 +3886,12 @@ export default function ArtistPortalWelcome() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-3"
+                    className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-3"
                   >
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
-                      <Check className="w-6 h-6 text-emerald-400" />
+                    <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto">
+                      <Check className="w-6 h-6 text-amber-400" />
                     </div>
-                    <h3 className="text-emerald-400 font-bold text-lg">
+                    <h3 className="text-amber-400 font-bold text-lg">
                       Candidature Envoyée!
                     </h3>
                     <p className="text-white/40 text-sm leading-relaxed">
@@ -4013,7 +4013,7 @@ export default function ArtistPortalWelcome() {
           CINEMATIC TRANSITION OVERLAY — Auth → Dashboard
           ═══════════════════════════════════════════════ */}
       {pendingName && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/80 p-4">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-900/80 p-4">
           <form
             onSubmit={handleSaveName}
             className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d0d1a] p-6 space-y-4"

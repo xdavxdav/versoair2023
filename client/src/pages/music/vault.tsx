@@ -140,13 +140,13 @@ function VaultStatCard({
   label: string;
   value: string | number;
   trend?: string;
-  color: "purple" | "pink" | "amber" | "emerald";
+  color: "purple" | "pink" | "amber" | "amber";
 }) {
   const colors = {
     purple: "from-purple-500 to-purple-600",
     pink: "from-pink-500 to-fuchsia-600",
     amber: "from-amber-500 to-orange-600",
-    emerald: "from-emerald-500 to-green-600",
+    amber: "from-amber-500 to-green-600",
   };
   const isPositive = trend?.startsWith("+");
 
@@ -164,7 +164,7 @@ function VaultStatCard({
         <span className="text-2xl font-bold text-white">{value}</span>
         {trend && (
           <span
-            className={`text-xs ${isPositive ? "text-emerald-400" : "text-red-400"}`}
+            className={`text-xs ${isPositive ? "text-amber-400" : "text-red-400"}`}
           >
             {trend}
           </span>
@@ -557,7 +557,7 @@ export default function MusicVault() {
             icon={CheckCircle}
             label="Published"
             value={publishedTracks}
-            color="emerald"
+            color="amber"
           />
           <VaultStatCard
             icon={TrendingUp}
@@ -690,7 +690,7 @@ export default function MusicVault() {
                       <Music2 className="w-12 h-12 text-white/20" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <Button
                       size="icon"
                       className="bg-purple-500 hover:bg-purple-600"
@@ -832,7 +832,7 @@ export default function MusicVault() {
                     <td className="p-4 text-white">
                       {(track.streams || 0).toLocaleString()}
                     </td>
-                    <td className="p-4 text-emerald-400 hidden md:table-cell">
+                    <td className="p-4 text-amber-400 hidden md:table-cell">
                       ${parseFloat(track.revenue || "0").toFixed(2)}
                     </td>
                     <td className="p-4">
@@ -840,7 +840,7 @@ export default function MusicVault() {
                         variant="outline"
                         className={
                           track.status === "published"
-                            ? "border-emerald-500/30 text-emerald-400"
+                            ? "border-amber-500/30 text-amber-400"
                             : "border-amber-500/30 text-amber-400"
                         }
                       >
@@ -1246,7 +1246,7 @@ function VaultPaymentFooter() {
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-amber-600 flex items-center justify-center">
             <DollarSign className="w-4 h-4 text-white" />
           </div>
           <div>

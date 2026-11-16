@@ -68,7 +68,7 @@ export default function Services() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <h2 className="mb-3 text-xl font-semibold">Other services</h2>

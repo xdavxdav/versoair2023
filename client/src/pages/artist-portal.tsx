@@ -1639,7 +1639,7 @@ export default function ArtistPortal() {
                         </div>
                         <button
                           onClick={() => handlePlayTrack(track)}
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition-opacity"
+                          className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition-opacity"
                         >
                           <Play className="h-4 w-4 text-white" />
                         </button>
@@ -2113,7 +2113,7 @@ export default function ArtistPortal() {
                       ) : (
                         <Music2 className="h-10 w-10 text-white/40" />
                       )}
-                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white/90">
+                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/60 backdrop-blur-md text-[10px] font-semibold text-white/90">
                         {album.track_count || album.total_tracks || 0} titres
                       </span>
                     </div>
@@ -2448,7 +2448,7 @@ export default function ArtistPortal() {
                 <div className="flex items-center space-x-4">
                   <div className="relative">
                     <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${hasAudio ? "bg-gradient-to-br from-green-500 to-emerald-600" : "bg-gradient-to-br from-purple-500 to-pink-500"}`}
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${hasAudio ? "bg-gradient-to-br from-green-500 to-amber-600" : "bg-gradient-to-br from-purple-500 to-pink-500"}`}
                     >
                       <Music2 className="h-6 w-6 text-white" />
                     </div>
@@ -2470,7 +2470,7 @@ export default function ArtistPortal() {
                           String(currentTrack.id) === String(track.id) &&
                           isPlaying
                             ? "bg-purple-500/60 opacity-100 ring-2 ring-purple-400/50"
-                            : "bg-black/60 opacity-0 group-hover:opacity-100"
+                            : "bg-slate-900/60 opacity-0 group-hover:opacity-100"
                         }`}
                       >
                         {currentTrack &&
@@ -2624,7 +2624,7 @@ export default function ArtistPortal() {
 
       {/* ── Earnings Summary Card ── */}
       {earnings?.summary && (
-        <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
+        <Card className="bg-gradient-to-r from-green-500/10 to-amber-500/10 border-green-500/20">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-bold flex items-center gap-2">
@@ -2889,7 +2889,7 @@ export default function ArtistPortal() {
                   const colors = [
                     "from-purple-500 to-pink-500",
                     "from-blue-500 to-cyan-500",
-                    "from-green-500 to-emerald-500",
+                    "from-green-500 to-amber-500",
                     "from-yellow-500 to-orange-500",
                     "from-red-500 to-rose-500",
                   ];
@@ -3230,7 +3230,7 @@ export default function ArtistPortal() {
                   )}
                 </div>
                 {/* Badge tier icon */}
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-black/80 border-2 border-purple-400/50 flex items-center justify-center text-lg">
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-slate-900/80 border-2 border-purple-400/50 flex items-center justify-center text-lg">
                   {["🌱", "🥉", "🥈", "🥇", "💎", "👑", "⚡"][
                     (badge?.tier || 1) - 1
                   ] || "🌱"}
@@ -3257,7 +3257,7 @@ export default function ArtistPortal() {
                 </div>
                 {/* Artist Code */}
                 {(profile as any)?.artistCode ? (
-                  <div className="inline-flex items-center gap-2 bg-black/40 border border-purple-500/30 rounded-xl px-3 py-1.5">
+                  <div className="inline-flex items-center gap-2 bg-slate-900/40 border border-purple-500/30 rounded-xl px-3 py-1.5">
                     <Shield className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
                     <code className="text-purple-300 text-sm font-mono tracking-wider">
                       {(profile as any).artistCode}
@@ -3802,7 +3802,7 @@ export default function ArtistPortal() {
                         <div className="flex items-center space-x-2">
                           <Button
                             size="sm"
-                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500"
+                            className="flex-1 bg-gradient-to-r from-green-500 to-amber-500"
                             onClick={async () => {
                               try {
                                 await updateCollabStatus(
@@ -4177,7 +4177,7 @@ export default function ArtistPortal() {
       </Dialog>
 
       {/* Artist Portal Header */}
-      <div className="bg-black/20 backdrop-blur-md border-b border-white/10 sticky top-8 z-40">
+      <div className="bg-slate-900/20 backdrop-blur-md border-b border-white/10 sticky top-8 z-40">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -4547,7 +4547,7 @@ export default function ArtistPortal() {
 
                 {/* Pool stats bar */}
                 {poolData?.pool && (
-                  <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-4 flex flex-wrap items-center gap-6">
+                  <div className="bg-gradient-to-r from-green-500/10 to-amber-500/10 border border-green-500/20 rounded-2xl p-4 flex flex-wrap items-center gap-6">
                     <div>
                       <p className="text-white/40 text-xs">
                         Fonds hebdomadaire

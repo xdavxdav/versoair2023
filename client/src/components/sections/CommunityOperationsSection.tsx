@@ -186,7 +186,7 @@ export function CommunityOperationsSection() {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2 text-slate-900">
-              <Users className="h-5 w-5 text-emerald-600" /> Community
+              <Users className="h-5 w-5 text-amber-600" /> Community
               Operations
             </CardTitle>
             <CardDescription>
@@ -313,7 +313,7 @@ export function CommunityOperationsSection() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-amber-600 hover:bg-amber-700"
                       disabled={busyKey === `request-${request.id}`}
                       onClick={() =>
                         void updateRequestStatus(request.id, "APPROVED")

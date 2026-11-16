@@ -164,7 +164,7 @@ function SearchMethodBadge({ method }: { method?: string }) {
   const labels: Record<string, { text: string; color: string }> = {
     fulltext: {
       text: "Full-text",
-      color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+      color: "bg-amber-500/20 text-amber-200 border-amber-500/30",
     },
     ilike: {
       text: "Keyword",
@@ -627,7 +627,7 @@ export default function VersoAIChat() {
                 <div className="w-9 h-9 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-full flex items-center justify-center shadow-md shadow-blue-500/30">
                   <Bot className="h-5 w-5 text-white" />
                 </div>
-                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-950 animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-950 animate-pulse" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -638,8 +638,8 @@ export default function VersoAIChat() {
                     TALK & CHAT
                   </span>
                 </div>
-                <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse inline-block" />
+                <p className="text-[11px] text-amber-400 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse inline-block" />
                   {aiStatus === "ollama"
                     ? "Local LLM · Grounded"
                     : aiStatus === "groq"
@@ -804,8 +804,8 @@ export default function VersoAIChat() {
                     >
                       {copiedId === msg.id ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="text-emerald-300">Copied</span>
+                          <Check className="h-3.5 w-3.5 text-amber-400" />
+                          <span className="text-amber-200">Copied</span>
                         </>
                       ) : (
                         <>
@@ -945,7 +945,7 @@ export default function VersoAIChat() {
           >
             <Bot className="h-6 w-6 text-white" />
             {/* Unread / Active indicator */}
-            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-slate-950 animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-slate-950 animate-pulse" />
           </button>
 
           {/* Tooltip label */}

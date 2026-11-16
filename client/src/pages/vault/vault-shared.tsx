@@ -40,13 +40,13 @@ export function SectionBlock({
     }[color] || "border-green-900/50";
   const headGrad =
     {
-      green: "from-green-500 to-emerald-600",
+      green: "from-green-500 to-amber-600",
       blue: "from-blue-500 to-cyan-600",
       amber: "from-amber-500 to-orange-600",
       red: "from-red-500 to-rose-600",
       purple: "from-purple-500 to-violet-600",
       cyan: "from-cyan-500 to-teal-600",
-    }[color] || "from-green-500 to-emerald-600";
+    }[color] || "from-green-500 to-amber-600";
 
   return (
     <div
@@ -166,7 +166,7 @@ export function ApiEndpoint({
   desc: string;
 }) {
   const methodColors: Record<string, string> = {
-    GET: "text-emerald-400 bg-emerald-500/10",
+    GET: "text-amber-400 bg-amber-500/10",
     POST: "text-blue-400 bg-blue-500/10",
     PUT: "text-amber-400 bg-amber-500/10",
     DELETE: "text-red-400 bg-red-500/10",

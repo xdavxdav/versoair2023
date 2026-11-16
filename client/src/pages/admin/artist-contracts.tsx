@@ -139,7 +139,7 @@ function StatusBadge({ status }: { status: string }) {
       label: "En examen",
     },
     approved: {
-      bg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+      bg: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       icon: Check,
       label: "Approuvé",
     },
@@ -289,7 +289,7 @@ export default function ArtistContractsAdmin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0118] via-[#0d021a] to-[#06010d] text-white">
       {/* Header */}
-      <div className="border-b border-white/[0.06] bg-black/20 backdrop-blur-sm">
+      <div className="border-b border-white/[0.06] bg-slate-900/20 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -362,7 +362,7 @@ export default function ArtistContractsAdmin() {
                           <span
                             className={
                               g.canBeFeatured
-                                ? "text-emerald-400"
+                                ? "text-amber-400"
                                 : "text-red-400"
                             }
                           >
@@ -374,7 +374,7 @@ export default function ArtistContractsAdmin() {
                           <span
                             className={
                               g.hasAnalytics
-                                ? "text-emerald-400"
+                                ? "text-amber-400"
                                 : "text-red-400"
                             }
                           >
@@ -411,7 +411,7 @@ export default function ArtistContractsAdmin() {
               {
                 label: "Approuvés",
                 value: stats.approved,
-                color: "text-emerald-400",
+                color: "text-amber-400",
                 icon: Check,
               },
               {
@@ -594,10 +594,10 @@ export default function ArtistContractsAdmin() {
                                   setSelectedApp(app);
                                   setReviewAction("approve");
                                 }}
-                                className="w-7 h-7 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 flex items-center justify-center transition-colors"
+                                className="w-7 h-7 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 flex items-center justify-center transition-colors"
                                 title="Approuver"
                               >
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                <Check className="w-3.5 h-3.5 text-amber-400" />
                               </button>
                               <button
                                 onClick={(e) => {
@@ -681,7 +681,7 @@ export default function ArtistContractsAdmin() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => {
               setSelectedApp(null);
               setReviewAction("");
@@ -852,14 +852,14 @@ export default function ArtistContractsAdmin() {
 
                 {/* Contract Benefits (if approved) */}
                 {selectedApp.status === "approved" && (
-                  <div className="p-4 rounded-xl bg-emerald-500/[0.05] border border-emerald-500/15 space-y-3">
-                    <h4 className="text-emerald-400 text-sm font-medium flex items-center gap-2">
+                  <div className="p-4 rounded-xl bg-amber-500/[0.05] border border-amber-500/15 space-y-3">
+                    <h4 className="text-amber-400 text-sm font-medium flex items-center gap-2">
                       <Shield className="w-4 h-4" /> Avantages du Contrat
                     </h4>
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
                         <span className="text-white/30">Part artiste:</span>{" "}
-                        <span className="text-emerald-400 font-bold">
+                        <span className="text-amber-400 font-bold">
                           {selectedApp.revenue_share_artist}%
                         </span>
                       </div>
@@ -882,7 +882,7 @@ export default function ArtistContractsAdmin() {
                         <span
                           className={
                             selectedApp.can_be_featured
-                              ? "text-emerald-400"
+                              ? "text-amber-400"
                               : "text-red-400"
                           }
                         >
@@ -892,7 +892,7 @@ export default function ArtistContractsAdmin() {
                     </div>
 
                     {/* Grade upgrade buttons */}
-                    <div className="pt-2 border-t border-emerald-500/10">
+                    <div className="pt-2 border-t border-amber-500/10">
                       <p className="text-white/30 text-[10px] uppercase tracking-wider mb-2">
                         Changer le grade
                       </p>
@@ -955,7 +955,7 @@ export default function ArtistContractsAdmin() {
                         {
                           value: "approve",
                           label: "Approuver",
-                          color: "emerald",
+                          color: "amber",
                         },
                         { value: "reject", label: "Refuser", color: "red" },
                         {
@@ -981,7 +981,7 @@ export default function ArtistContractsAdmin() {
                             reviewAction === a.value
                               ? {
                                   backgroundColor:
-                                    a.color === "emerald"
+                                    a.color === "amber"
                                       ? "rgba(16,185,129,0.15)"
                                       : a.color === "red"
                                         ? "rgba(239,68,68,0.15)"
@@ -989,7 +989,7 @@ export default function ArtistContractsAdmin() {
                                           ? "rgba(59,130,246,0.15)"
                                           : "rgba(249,115,22,0.15)",
                                   color:
-                                    a.color === "emerald"
+                                    a.color === "amber"
                                       ? "#34d399"
                                       : a.color === "red"
                                         ? "#f87171"

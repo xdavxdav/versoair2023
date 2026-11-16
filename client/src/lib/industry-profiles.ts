@@ -111,7 +111,7 @@ export const INDUSTRY_PROFILES: Record<string, IndustryProfile> = {
   Finance: {
     name: "Finance",
     icon: "🏦",
-    accentColor: "text-emerald-700",
+    accentColor: "text-amber-700",
     metrics: [
       {
         key: "views",

@@ -588,8 +588,8 @@ export default function CardVaultPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                  <Zap className="h-5 w-5 text-emerald-600" />
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                  <Zap className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">

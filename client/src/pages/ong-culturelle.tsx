@@ -168,7 +168,7 @@ export default function OngCulturelle() {
                 icon: BookOpen,
                 title: "Langues & Histoires",
                 desc: "Des pistes de valorisation des langues et de la transmission orale.",
-                color: "from-green-500 to-emerald-500",
+                color: "from-green-500 to-amber-500",
               },
               {
                 icon: Zap,

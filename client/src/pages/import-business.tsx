@@ -175,9 +175,9 @@ export default function ImportBusinessPage() {
 
         {/* Import success */}
         {importResult && (
-          <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-6">
-            <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-            <p className="text-emerald-300 text-sm">
+          <div className="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-6">
+            <CheckCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <p className="text-amber-300 text-sm">
               Import complete: <strong>{importResult.imported}</strong> added,{" "}
               <strong>{importResult.skipped}</strong> duplicates skipped
             </p>
@@ -205,7 +205,7 @@ export default function ImportBusinessPage() {
                   onClick={handleImport}
                   disabled={isImporting || selectedIds.size === 0}
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-amber-600 hover:bg-amber-700"
                 >
                   {isImporting ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-1" />
@@ -223,7 +223,7 @@ export default function ImportBusinessPage() {
                   key={idx}
                   className={`border transition-colors cursor-pointer ${
                     selectedIds.has(idx)
-                      ? "bg-emerald-500/10 border-emerald-500/30"
+                      ? "bg-amber-500/10 border-amber-500/30"
                       : "bg-slate-800/30 border-slate-700/50"
                   }`}
                   onClick={() => toggleSelect(idx)}
@@ -232,7 +232,7 @@ export default function ImportBusinessPage() {
                     <div
                       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
                         selectedIds.has(idx)
-                          ? "border-emerald-500 bg-emerald-500"
+                          ? "border-amber-500 bg-amber-500"
                           : "border-slate-500"
                       }`}
                     >

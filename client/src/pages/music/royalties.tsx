@@ -67,13 +67,13 @@ function RoyaltyStatCard({
   label: string;
   value: string;
   subValue?: string;
-  color: "purple" | "pink" | "amber" | "emerald" | "violet";
+  color: "purple" | "pink" | "amber" | "amber" | "violet";
 }) {
   const colors = {
     purple: "from-purple-500 to-purple-600",
     pink: "from-pink-500 to-fuchsia-600",
     amber: "from-amber-500 to-orange-600",
-    emerald: "from-emerald-500 to-green-600",
+    amber: "from-amber-500 to-green-600",
     violet: "from-violet-500 to-purple-600",
   };
 
@@ -120,7 +120,7 @@ function TransactionRow({
   const Icon = icons[type];
 
   const statusColors = {
-    completed: "text-emerald-400 bg-emerald-400/10",
+    completed: "text-amber-400 bg-amber-400/10",
     pending: "text-amber-400 bg-amber-400/10",
     processing: "text-blue-400 bg-blue-400/10",
     rejected: "text-red-400 bg-red-400/10",
@@ -139,7 +139,7 @@ function TransactionRow({
       </div>
       <div className="text-right">
         <p
-          className={`font-semibold ${type === "payout" ? "text-red-400" : "text-emerald-400"}`}
+          className={`font-semibold ${type === "payout" ? "text-red-400" : "text-amber-400"}`}
         >
           {type === "payout" ? "-" : "+"}
           {amount}
@@ -293,7 +293,7 @@ export default function MusicRoyalties() {
             label="Total Earnings"
             value={`$${totalRevenue.toFixed(2)}`}
             subValue={`${summary.total_streams.toLocaleString()} streams`}
-            color="emerald"
+            color="amber"
           />
           <RoyaltyStatCard
             icon={Calendar}
@@ -556,7 +556,7 @@ export default function MusicRoyalties() {
                           {(track.streams || 0).toLocaleString()} streams
                         </p>
                       </div>
-                      <span className="text-emerald-400 font-semibold">
+                      <span className="text-amber-400 font-semibold">
                         ${parseFloat(track.revenue || "0").toFixed(2)}
                       </span>
                     </div>

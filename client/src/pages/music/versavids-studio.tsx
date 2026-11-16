@@ -210,8 +210,8 @@ const ROLE_CONFIG: Record<RoleId, RoleConfig> = {
     id: "vfx_artist",
     label: "VFX Artist",
     icon: "🌟",
-    color: "from-emerald-500 to-teal-600",
-    accent: "text-emerald-400",
+    color: "from-amber-500 to-teal-600",
+    accent: "text-amber-400",
     description: "Visual effects, compositing, CGI & green screen keying",
     briefPlaceholder:
       "What VFX do you need? Green screen removal? CGI elements? Particle effects?",

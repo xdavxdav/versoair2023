@@ -150,7 +150,7 @@ const THEME = {
   primary: "from-slate-700 to-slate-900",
   primaryLight: "from-slate-800/50 to-slate-900/50",
   accent: "from-slate-600 to-slate-800",
-  success: "from-emerald-600/90 to-teal-700/90",
+  success: "from-amber-600/90 to-teal-700/90",
   warning: "from-amber-600/90 to-orange-700/90",
   danger: "from-rose-600/90 to-red-700/90",
   glass: "bg-white/10 backdrop-blur-2xl border border-white/10 shadow-2xl",
@@ -173,8 +173,8 @@ const EXPERT_CATEGORIES = [
     id: "operations",
     name: "Operations",
     icon: Settings,
-    gradient: "bg-gradient-to-r from-emerald-500/80 to-green-500/80",
-    lightBg: "bg-emerald-50",
+    gradient: "bg-gradient-to-r from-amber-500/80 to-green-500/80",
+    lightBg: "bg-amber-50",
     description: "Operational and process tracking tables",
   },
   {
@@ -371,8 +371,8 @@ const INDUSTRY_UI_MAP = {
   },
   retail: {
     icon: "🛒",
-    color: "text-emerald-600",
-    gradient: "from-emerald-500 to-green-500",
+    color: "text-amber-600",
+    gradient: "from-amber-500 to-green-500",
   },
   construction: {
     icon: "🏗️",
@@ -489,7 +489,7 @@ const ConnectionStatusBadge = memo(
       variant={connectionStatus === "connected" ? "default" : "destructive"}
       className={`text-xs gap-1 ${
         connectionStatus === "connected"
-          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+          ? "bg-amber-500/20 text-amber-200 border-amber-500/30"
           : connectionStatus === "connecting"
             ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
             : "bg-rose-500/20 text-rose-300 border-rose-500/30"
@@ -529,7 +529,7 @@ const AdminOnlyBanner = memo(
         </p>
         <p className="text-xs text-slate-400 mt-0.5">{message}</p>
         <div className="flex items-center gap-3 mt-2">
-          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1 text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
             <Eye className="h-3 w-3" /> View only
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
@@ -1642,14 +1642,14 @@ export default function DatabaseExpert({
                     variant="ghost"
                     className="gap-2 text-slate-300 hover:bg-white/5 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                   >
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-700 to-emerald-900 flex items-center justify-center text-slate-200 font-semibold border border-white/10">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-700 to-amber-950 flex items-center justify-center text-slate-200 font-semibold border border-white/10">
                       {username ? username.charAt(0).toUpperCase() : "U"}
                     </div>
                     <div className="hidden md:block text-left">
                       <div className="text-sm font-medium text-slate-200">
                         {username || "User"}
                       </div>
-                      <div className="text-xs text-emerald-400/80">
+                      <div className="text-xs text-amber-400/80">
                         {role || "Admin Access"}
                       </div>
                     </div>
@@ -1825,7 +1825,7 @@ export default function DatabaseExpert({
               dbStats?.tableCounts?.businesses ?? businessesData.length ?? "—"
             }
             icon={Building}
-            color="from-emerald-500 to-green-600"
+            color="from-amber-500 to-green-600"
           />
           {/* Highlight top category by records */}
           {topCategory && (
@@ -1940,12 +1940,12 @@ export default function DatabaseExpert({
                 <div
                   className={`p-3 rounded-xl ${
                     connectionStatus === "connected"
-                      ? "bg-emerald-500/20"
+                      ? "bg-amber-500/20"
                       : "bg-rose-500/20"
                   }`}
                 >
                   {connectionStatus === "connected" ? (
-                    <CheckCircle className="h-5 w-5 text-emerald-400" />
+                    <CheckCircle className="h-5 w-5 text-amber-400" />
                   ) : (
                     <XCircle className="h-5 w-5 text-rose-400" />
                   )}
@@ -2158,7 +2158,7 @@ export default function DatabaseExpert({
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-slate-100">
-                  <Shield className="h-5 w-5 text-emerald-400" />
+                  <Shield className="h-5 w-5 text-amber-400" />
                   Access audit
                 </CardTitle>
                 <CardDescription className="text-slate-400">
@@ -2197,7 +2197,7 @@ export default function DatabaseExpert({
                         <Badge
                           className={
                             allowed
-                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                              ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
                               : "border-amber-500/30 bg-amber-500/10 text-amber-300"
                           }
                         >
@@ -2283,8 +2283,8 @@ export default function DatabaseExpert({
                         </Button>
                       </Link>
                     ) : (
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium text-emerald-300">
+                      <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-amber-200">
                           <Shield className="h-4 w-4" /> Subscriber access
                         </div>
                         <p className="mt-2 text-xs leading-relaxed text-slate-400">
@@ -2300,7 +2300,7 @@ export default function DatabaseExpert({
                         className="w-full justify-start gap-3 h-auto py-4 bg-white/5 border-white/10 hover:bg-white/10 text-slate-300"
                       >
                         <div className="flex items-center gap-1">
-                          <Shield className="h-5 w-5 text-emerald-400" />
+                          <Shield className="h-5 w-5 text-amber-400" />
                           <Sparkles className="h-4 w-4 text-amber-300" />
                         </div>
                         <div className="text-left">
@@ -2314,15 +2314,15 @@ export default function DatabaseExpert({
                     <Link href="/geo-admin/immobilier">
                       <Button
                         variant="outline"
-                        className="w-full justify-start gap-3 h-auto py-4 bg-gradient-to-r from-emerald-900/30 to-teal-900/30 border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-900/40 text-slate-300"
+                        className="w-full justify-start gap-3 h-auto py-4 bg-gradient-to-r from-amber-950/30 to-teal-900/30 border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-950/40 text-slate-300"
                       >
                         <div className="flex items-center gap-1">
-                          <Home className="h-5 w-5 text-emerald-400" />
+                          <Home className="h-5 w-5 text-amber-400" />
                           <Sparkles className="h-4 w-4 text-amber-300" />
                         </div>
                         <div className="text-left">
                           <div className="font-medium">Portail Immobilier</div>
-                          <div className="text-xs text-emerald-400">
+                          <div className="text-xs text-amber-400">
                             Vente & location premium
                           </div>
                         </div>
@@ -2527,7 +2527,7 @@ export default function DatabaseExpert({
                                         variant="outline"
                                         className={`text-[10px] ${
                                           (biz.is_active ?? true)
-                                            ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                            ? "bg-amber-500/20 border-amber-400/30 text-amber-200"
                                             : "bg-red-500/20 border-red-400/30 text-red-300"
                                         }`}
                                       >
@@ -2923,7 +2923,7 @@ export default function DatabaseExpert({
                                     )}
                                     {biz.is_active !== undefined && (
                                       <span
-                                        className={`w-2 h-2 rounded-full ${biz.is_active ? "bg-emerald-400" : "bg-slate-500"}`}
+                                        className={`w-2 h-2 rounded-full ${biz.is_active ? "bg-amber-400" : "bg-slate-500"}`}
                                       />
                                     )}
                                     <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
@@ -3022,7 +3022,7 @@ export default function DatabaseExpert({
                                 variant="secondary"
                                 className={`text-xs ${
                                   selectedBusiness.is_active
-                                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                    ? "bg-amber-500/20 border-amber-400/30 text-amber-200"
                                     : "bg-slate-500/20 border-slate-400/30 text-slate-400"
                                 }`}
                               >
@@ -3171,7 +3171,7 @@ export default function DatabaseExpert({
                                 variant="outline"
                                 className={`text-[10px] ${
                                   artist.label_status === "signed"
-                                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                    ? "bg-amber-500/20 border-amber-400/30 text-amber-200"
                                     : artist.label_status === "independent"
                                       ? "bg-blue-500/20 border-blue-400/30 text-blue-300"
                                       : "bg-slate-500/20 border-slate-400/30 text-slate-300"
@@ -3243,7 +3243,7 @@ export default function DatabaseExpert({
                                 href={artist.spotify_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                                className="flex items-center gap-2 text-sm text-amber-400 hover:text-amber-200 transition-colors"
                               >
                                 <ExternalLink className="h-3 w-3" />
                                 <span>Spotify</span>
@@ -3319,7 +3319,7 @@ export default function DatabaseExpert({
                               variant="outline"
                               className={`text-[10px] ${
                                 ad.status === "active"
-                                  ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                  ? "bg-amber-500/20 border-amber-400/30 text-amber-200"
                                   : ad.status === "paused"
                                     ? "bg-amber-500/20 border-amber-400/30 text-amber-300"
                                     : "bg-slate-500/20 border-slate-400/30 text-slate-300"
@@ -3441,7 +3441,7 @@ export default function DatabaseExpert({
                                 variant="outline"
                                 className={`text-[10px] ${
                                   job.type === "remote"
-                                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"
+                                    ? "bg-amber-500/20 border-amber-400/30 text-amber-200"
                                     : "bg-blue-500/20 border-blue-400/30 text-blue-300"
                                 }`}
                               >
@@ -3511,7 +3511,7 @@ export default function DatabaseExpert({
                               </span>
                             )}
                             {job.is_remote && (
-                              <span className="flex items-center gap-1 text-emerald-400">
+                              <span className="flex items-center gap-1 text-amber-400">
                                 🏠 Remote
                               </span>
                             )}
@@ -3826,7 +3826,7 @@ export default function DatabaseExpert({
                               Cache Hit Rate
                             </span>
                           </div>
-                          <span className="font-semibold text-emerald-400">
+                          <span className="font-semibold text-amber-400">
                             98.7%
                           </span>
                         </div>
@@ -3902,16 +3902,16 @@ export default function DatabaseExpert({
                         Database Health
                       </h4>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                        <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
                           <div className="flex items-center gap-2">
-                            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                            <ShieldCheck className="h-4 w-4 text-amber-400" />
                             <span className="text-sm text-slate-200">
                               Connection Status
                             </span>
                           </div>
                           <Badge
                             variant="default"
-                            className="bg-emerald-500/20 text-emerald-300"
+                            className="bg-amber-500/20 text-amber-200"
                           >
                             {connectionStatus.toUpperCase()}
                           </Badge>
@@ -4148,7 +4148,7 @@ export default function DatabaseExpert({
             <Link href="/geo-admin/dashboard">
               <Button
                 variant="outline"
-                className="w-full justify-start gap-3 text-emerald-400 hover:bg-emerald-500/10 border-emerald-600"
+                className="w-full justify-start gap-3 text-amber-400 hover:bg-amber-500/10 border-amber-600"
               >
                 <Shield className="h-4 w-4" />
                 Platform Dashboard

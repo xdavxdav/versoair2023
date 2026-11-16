@@ -173,9 +173,9 @@ function ProfileCard({
   onEdit: () => void;
 }) {
   return (
-    <Card className="text-slate-900 bg-white border-emerald-500/20 overflow-hidden">
+    <Card className="text-slate-900 bg-white border-amber-500/20 overflow-hidden">
       {/* Cover image */}
-      <div className="relative h-32 bg-gradient-to-r from-emerald-600 to-green-600">
+      <div className="relative h-32 bg-gradient-to-r from-amber-600 to-green-600">
         {profile.coverImage && (
           <img
             src={profile.coverImage}
@@ -186,7 +186,7 @@ function ProfileCard({
         <Button
           size="sm"
           variant="ghost"
-          className="absolute top-2 right-2 bg-black/30 hover:bg-black/50 text-slate-900"
+          className="absolute top-2 right-2 bg-slate-900/30 hover:bg-slate-900/50 text-slate-900"
           onClick={onEdit}
         >
           <Edit3 className="w-4 h-4" />
@@ -196,7 +196,7 @@ function ProfileCard({
       {/* Avatar */}
       <div className="relative px-6 -mt-12">
         <div className="relative inline-block">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 p-1">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-green-600 p-1">
             <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
               {profile.avatar ? (
                 <img
@@ -205,12 +205,12 @@ function ProfileCard({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-10 h-10 text-emerald-700" />
+                <User className="w-10 h-10 text-amber-700" />
               )}
             </div>
           </div>
           {profile.isVerified && (
-            <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+            <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center">
               <Check className="w-4 h-4 text-slate-900" />
             </div>
           )}
@@ -223,7 +223,7 @@ function ProfileCard({
           <h2 className="text-xl font-bold text-slate-900">
             {profile.displayName}
           </h2>
-          <Badge className="bg-emerald-500/20 text-emerald-700">
+          <Badge className="bg-amber-500/20 text-amber-700">
             {profile.status === "PUBLISHED"
               ? "Publié"
               : profile.status === "PENDING"
@@ -233,7 +233,7 @@ function ProfileCard({
                   : "Brouillon"}
           </Badge>
           {profile.isVerified && (
-            <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">
+            <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">
               Vérifié
             </Badge>
           )}
@@ -241,7 +241,7 @@ function ProfileCard({
 
         {/* Location */}
         {profile.location && (
-          <p className="text-emerald-700 text-sm flex items-center gap-1 mb-3">
+          <p className="text-amber-700 text-sm flex items-center gap-1 mb-3">
             <MapPin className="w-3 h-3" />
             {profile.location}
           </p>
@@ -260,7 +260,7 @@ function ProfileCard({
             <Badge
               key={spec}
               variant="secondary"
-              className="bg-emerald-50 text-emerald-700 text-xs"
+              className="bg-amber-50 text-amber-700 text-xs"
             >
               {spec}
             </Badge>
@@ -276,12 +276,12 @@ function ProfileCard({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-emerald-500/10">
+        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-amber-500/10">
           <div className="text-center">
             <p className="text-2xl font-bold text-slate-900">
               {profile.rating}
             </p>
-            <p className="text-xs text-emerald-700 flex items-center justify-center gap-1">
+            <p className="text-xs text-amber-700 flex items-center justify-center gap-1">
               <Star className="w-3 h-3 fill-amber-400 text-amber-800" />
               Note
             </p>
@@ -290,20 +290,20 @@ function ProfileCard({
             <p className="text-2xl font-bold text-slate-900">
               {profile.portfolioCount}
             </p>
-            <p className="text-xs text-emerald-700">Créations</p>
+            <p className="text-xs text-amber-700">Créations</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-slate-900">
               {profile.orderCount}
             </p>
-            <p className="text-xs text-emerald-700">Commandes</p>
+            <p className="text-xs text-amber-700">Commandes</p>
           </div>
         </div>
 
         {/* Contact buttons */}
         <div className="flex gap-2 mt-4">
           <Button
-            className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+            className="flex-1 bg-amber-600 hover:bg-amber-500"
             size="sm"
           >
             <Mail className="w-4 h-4 mr-2" />
@@ -312,7 +312,7 @@ function ProfileCard({
           <Button
             variant="outline"
             size="sm"
-            className="border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10"
+            className="border-amber-500/30 text-amber-700 hover:bg-amber-500/10"
           >
             <Share2 className="w-4 h-4" />
           </Button>
@@ -332,7 +332,7 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
           whileHover={{ y: -4 }}
           className="group cursor-pointer"
         >
-          <Card className="text-slate-900 bg-white border-emerald-500/20 overflow-hidden h-full">
+          <Card className="text-slate-900 bg-white border-amber-500/20 overflow-hidden h-full">
             <div className="relative aspect-square">
               <img
                 src={item.imageUrl}
@@ -359,7 +359,7 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
               </h3>
               <Badge
                 variant="secondary"
-                className="bg-emerald-50 text-emerald-700 text-xs"
+                className="bg-amber-50 text-amber-700 text-xs"
               >
                 {item.category}
               </Badge>
@@ -370,12 +370,12 @@ function PortfolioGrid({ items }: { items: PortfolioItem[] }) {
 
       {/* Add new item card */}
       <motion.div whileHover={{ y: -4 }} className="cursor-pointer">
-        <Card className="text-slate-900 bg-white border-dashed border-emerald-500/30 hover:border-emerald-500/50 h-full flex items-center justify-center min-h-[200px] transition-colors">
+        <Card className="text-slate-900 bg-white border-dashed border-amber-500/30 hover:border-amber-500/50 h-full flex items-center justify-center min-h-[200px] transition-colors">
           <div className="text-center p-6">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
-              <Plus className="w-6 h-6 text-emerald-700" />
+            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
+              <Plus className="w-6 h-6 text-amber-700" />
             </div>
-            <p className="text-emerald-700 font-medium text-sm">
+            <p className="text-amber-700 font-medium text-sm">
               Ajouter une création
             </p>
           </div>
@@ -390,10 +390,10 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
   return (
     <div className="space-y-4">
       {reviews.map((review) => (
-        <Card key={review.id} className="text-slate-900 bg-white border-emerald-500/20">
+        <Card key={review.id} className="text-slate-900 bg-white border-amber-500/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                 {review.authorAvatar ? (
                   <img
                     src={review.authorAvatar}
@@ -401,7 +401,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <User className="w-5 h-5 text-emerald-700" />
+                  <User className="w-5 h-5 text-amber-700" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -409,7 +409,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
                   <h4 className="font-semibold text-slate-900 text-sm">
                     {review.authorName}
                   </h4>
-                  <span className="text-xs text-emerald-700">
+                  <span className="text-xs text-amber-700">
                     {new Date(review.createdAt).toLocaleDateString("fr-FR")}
                   </span>
                 </div>
@@ -422,7 +422,7 @@ function ReviewsList({ reviews }: { reviews: Review[] }) {
                   ))}
                 </div>
                 {review.projectTitle && (
-                  <p className="text-xs text-emerald-700 mb-1">
+                  <p className="text-xs text-amber-700 mb-1">
                     Projet: {review.projectTitle}
                   </p>
                 )}
@@ -461,19 +461,19 @@ function OrdersTable({ orders }: { orders: Order[] }) {
   return (
     <div className="space-y-3">
       {orders.map((order) => (
-        <Card key={order.id} className="text-slate-900 bg-white border-emerald-500/20">
+        <Card key={order.id} className="text-slate-900 bg-white border-amber-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex-1 min-w-0">
                 <h4 className="font-semibold text-slate-900 text-sm mb-1">
                   {order.title}
                 </h4>
-                <p className="text-emerald-700 text-xs">
+                <p className="text-amber-700 text-xs">
                   Client: {order.clientName}
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-emerald-700">
+                <p className="font-bold text-amber-700">
                   {order.amount.toLocaleString()} FCFA
                 </p>
                 <div className="flex items-center gap-2 mt-1">
@@ -493,7 +493,7 @@ function OrdersTable({ orders }: { orders: Order[] }) {
 
       {orders.length === 0 && (
         <div className="text-center py-12">
-          <ShoppingBag className="w-12 h-12 text-emerald-700 mx-auto mb-3" />
+          <ShoppingBag className="w-12 h-12 text-amber-700 mx-auto mb-3" />
           <p className="text-slate-700">Aucune commande pour le moment</p>
         </div>
       )}
@@ -580,7 +580,7 @@ function SettingsForm({
 
   return (
     <div className="space-y-6">
-      <Card className="text-slate-900 bg-white border-emerald-500/20">
+      <Card className="text-slate-900 bg-white border-amber-500/20">
         <CardHeader>
           <CardTitle className="text-slate-900 text-lg">
             Informations personnelles
@@ -589,76 +589,76 @@ function SettingsForm({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-emerald-700">Nom d'affichage</Label>
+              <Label className="text-amber-700">Nom d'affichage</Label>
               <Input
                 value={formData.displayName}
                 onChange={(e) =>
                   setFormData({ ...formData, displayName: e.target.value })
                 }
-                className="bg-white border-emerald-500/30 text-slate-900"
+                className="bg-white border-amber-500/30 text-slate-900"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-emerald-700">Téléphone</Label>
+              <Label className="text-amber-700">Téléphone</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="bg-white border-emerald-500/30 text-slate-900"
+                className="bg-white border-amber-500/30 text-slate-900"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-emerald-700">Bio</Label>
+            <Label className="text-amber-700">Bio</Label>
             <Textarea
               value={formData.bio}
               onChange={(e) =>
                 setFormData({ ...formData, bio: e.target.value })
               }
-              className="bg-white border-emerald-500/30 text-slate-900 min-h-[100px]"
+              className="bg-white border-amber-500/30 text-slate-900 min-h-[100px]"
               placeholder="Parlez de vous et de votre artisanat..."
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-emerald-700">Localisation</Label>
+              <Label className="text-amber-700">Localisation</Label>
               <Input
                 value={formData.location}
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
-                className="bg-white border-emerald-500/30 text-slate-900"
+                className="bg-white border-amber-500/30 text-slate-900"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-emerald-700">Site web</Label>
+              <Label className="text-amber-700">Site web</Label>
               <Input
                 value={formData.website}
                 onChange={(e) =>
                   setFormData({ ...formData, website: e.target.value })
                 }
-                className="bg-white border-emerald-500/30 text-slate-900"
+                className="bg-white border-amber-500/30 text-slate-900"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-emerald-700">Tarif horaire (FCFA)</Label>
+            <Label className="text-amber-700">Tarif horaire (FCFA)</Label>
             <Input
               type="number"
               value={formData.hourlyRate}
               onChange={(e) =>
                 setFormData({ ...formData, hourlyRate: e.target.value })
               }
-              className="bg-white border-emerald-500/30 text-slate-900 max-w-[200px]"
+              className="bg-white border-amber-500/30 text-slate-900 max-w-[200px]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-emerald-700">Spécialisations</Label>
+            <Label className="text-amber-700">Spécialisations</Label>
             <Select
               value=""
               onValueChange={(specialization) => {
@@ -673,7 +673,7 @@ function SettingsForm({
                 }
               }}
             >
-              <SelectTrigger className="bg-white border-emerald-500/30 text-slate-900">
+              <SelectTrigger className="bg-white border-amber-500/30 text-slate-900">
                 <SelectValue placeholder="Ajouter une spécialisation" />
               </SelectTrigger>
               <SelectContent>
@@ -690,7 +690,7 @@ function SettingsForm({
               {formData.specializations.map((spec) => (
                 <Badge
                   key={spec}
-                  className="bg-emerald-500/20 text-emerald-700 cursor-pointer hover:bg-red-500/20 hover:text-red-700"
+                  className="bg-amber-500/20 text-amber-700 cursor-pointer hover:bg-red-500/20 hover:text-red-700"
                   onClick={() =>
                     setFormData({
                       ...formData,
@@ -708,7 +708,7 @@ function SettingsForm({
 
           <div className="flex justify-end pt-4">
             <Button
-              className="bg-emerald-600 hover:bg-emerald-500"
+              className="bg-amber-600 hover:bg-amber-500"
               onClick={saveProfile}
               disabled={saving}
             >
@@ -717,7 +717,7 @@ function SettingsForm({
             </Button>
           </div>
           {message && (
-            <p className="text-sm text-emerald-700" role="status">
+            <p className="text-sm text-amber-700" role="status">
               {message}
             </p>
           )}
@@ -845,13 +845,13 @@ export default function ArtisansPortal() {
   const activeTab = searchParams.get("tab") || "profile";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f3efe9] via-emerald-950/20 to-[#efe7dd]">
+    <div className="min-h-screen bg-gradient-to-br from-[#f3efe9] via-amber-950/20 to-[#efe7dd]">
       {/* Navigation */}
       <ArtisanNav />
 
       {/* Background decorations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px]" />
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-amber-500/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-green-500/10 rounded-full blur-[100px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px]" />
       </div>
@@ -867,7 +867,7 @@ export default function ArtisansPortal() {
             />
 
             {/* Quick stats */}
-            <Card className="text-slate-900 bg-white border-emerald-500/20 mt-4">
+            <Card className="text-slate-900 bg-white border-amber-500/20 mt-4">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-700 flex items-center gap-2">
@@ -883,7 +883,7 @@ export default function ArtisansPortal() {
                     <DollarSign className="w-4 h-4" />
                     Tarif horaire
                   </span>
-                  <span className="text-emerald-700 font-medium">
+                  <span className="text-amber-700 font-medium">
                     {profile.hourlyRate?.toLocaleString()} FCFA
                   </span>
                 </div>
@@ -906,11 +906,11 @@ export default function ArtisansPortal() {
           {/* Main content area */}
           <div>
             <Tabs value={activeTab} className="space-y-6">
-              <TabsList className="bg-white border border-emerald-500/20 p-1">
+              <TabsList className="bg-white border border-amber-500/20 p-1">
                 <Link href="/artisans-portal">
                   <TabsTrigger
                     value="profile"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
+                    className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-900"
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profil
@@ -919,7 +919,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=portfolio">
                   <TabsTrigger
                     value="portfolio"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
+                    className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-900"
                   >
                     <Image className="w-4 h-4 mr-2" />
                     Portfolio
@@ -928,7 +928,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=orders">
                   <TabsTrigger
                     value="orders"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
+                    className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-900"
                   >
                     <ShoppingBag className="w-4 h-4 mr-2" />
                     Commandes
@@ -937,7 +937,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=reviews">
                   <TabsTrigger
                     value="reviews"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
+                    className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-900"
                   >
                     <Star className="w-4 h-4 mr-2" />
                     Avis
@@ -946,7 +946,7 @@ export default function ArtisansPortal() {
                 <Link href="/artisans-portal?tab=settings">
                   <TabsTrigger
                     value="settings"
-                    className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-800"
+                    className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-900"
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     Paramètres
@@ -960,11 +960,11 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Mon Profil
                   </h2>
-                  <p className="text-emerald-700">
+                  <p className="text-amber-700">
                     Gérez votre présence sur la plateforme
                   </p>
                 </div>
-                <Card className="text-slate-900 bg-white/10 border-emerald-500/20">
+                <Card className="text-slate-900 bg-white/10 border-amber-500/20">
                   <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-semibold text-slate-900">
@@ -974,7 +974,7 @@ export default function ArtisansPortal() {
                             ? "Votre profil est en cours de vérification"
                             : "Votre profil est encore en brouillon"}
                       </p>
-                      <p className="text-sm text-emerald-700">
+                      <p className="text-sm text-amber-700">
                         {profile.status === "PUBLISHED"
                           ? "Les visiteurs peuvent maintenant vous trouver dans l'annuaire."
                           : "Complétez vos informations puis envoyez-les à l'équipe Verso Air."}
@@ -982,7 +982,7 @@ export default function ArtisansPortal() {
                     </div>
                     {profile.status === "DRAFT" && (
                       <Button
-                        className="bg-emerald-600 hover:bg-emerald-500"
+                        className="bg-amber-600 hover:bg-amber-500"
                         onClick={submitProfile}
                       >
                         Envoyer pour validation
@@ -991,19 +991,19 @@ export default function ArtisansPortal() {
                   </CardContent>
                 </Card>
                 {profileMessage && (
-                  <p className="text-sm text-emerald-700" role="status">
+                  <p className="text-sm text-amber-700" role="status">
                     {profileMessage}
                   </p>
                 )}
 
                 {/* Recent portfolio preview */}
-                <Card className="text-slate-900 bg-white border-emerald-500/20">
+                <Card className="text-slate-900 bg-white border-amber-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle className="text-slate-900">
                         Dernières créations
                       </CardTitle>
-                      <CardDescription className="text-emerald-700">
+                      <CardDescription className="text-amber-700">
                         Vos œuvres les plus récentes
                       </CardDescription>
                     </div>
@@ -1011,7 +1011,7 @@ export default function ArtisansPortal() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-emerald-700 hover:text-emerald-700"
+                        className="text-amber-700 hover:text-amber-700"
                       >
                         Voir tout <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
@@ -1036,13 +1036,13 @@ export default function ArtisansPortal() {
                 </Card>
 
                 {/* Recent reviews preview */}
-                <Card className="text-slate-900 bg-white border-emerald-500/20">
+                <Card className="text-slate-900 bg-white border-amber-500/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle className="text-slate-900">
                         Derniers avis
                       </CardTitle>
-                      <CardDescription className="text-emerald-700">
+                      <CardDescription className="text-amber-700">
                         Ce que disent vos clients
                       </CardDescription>
                     </div>
@@ -1050,7 +1050,7 @@ export default function ArtisansPortal() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-emerald-700 hover:text-emerald-700"
+                        className="text-amber-700 hover:text-amber-700"
                       >
                         Voir tout <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
@@ -1069,11 +1069,11 @@ export default function ArtisansPortal() {
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">
                       Mon Portfolio
                     </h2>
-                    <p className="text-emerald-700">
+                    <p className="text-amber-700">
                       {portfolio.length} créations
                     </p>
                   </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-500">
+                  <Button className="bg-amber-600 hover:bg-amber-500">
                     <Upload className="w-4 h-4 mr-2" />
                     Ajouter
                   </Button>
@@ -1087,7 +1087,7 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Mes Commandes
                   </h2>
-                  <p className="text-emerald-700">
+                  <p className="text-amber-700">
                     {orders.length} commande(s)
                   </p>
                 </div>
@@ -1100,7 +1100,7 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Avis Clients
                   </h2>
-                  <p className="text-emerald-700">
+                  <p className="text-amber-700">
                     {reviews.length} avis · Note moyenne: {profile.rating}/5
                   </p>
                 </div>
@@ -1113,7 +1113,7 @@ export default function ArtisansPortal() {
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">
                     Paramètres
                   </h2>
-                  <p className="text-emerald-700">
+                  <p className="text-amber-700">
                     Gérez vos informations et préférences
                   </p>
                 </div>

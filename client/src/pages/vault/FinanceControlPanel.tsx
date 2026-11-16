@@ -593,7 +593,7 @@ export default function FinanceControlPanel() {
         icon={<ArrowRightLeft className="w-3.5 h-3.5 text-white" />}
         color="red"
       >
-        <div className="font-mono text-[11px] text-gray-400 bg-black/40 rounded-lg p-4 leading-relaxed space-y-2">
+        <div className="font-mono text-[11px] text-gray-400 bg-slate-900/40 rounded-lg p-4 leading-relaxed space-y-2">
           <div className="text-green-400 font-bold">▸ CHECKOUT FLOW:</div>
           <div className="ml-4">
             1. Client →{" "}
@@ -784,7 +784,7 @@ export default function FinanceControlPanel() {
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="bg-black/40 rounded-lg p-3 border border-gray-800/30"
+                className="bg-slate-900/40 rounded-lg p-3 border border-gray-800/30"
               >
                 <div className="text-[9px] text-gray-600 font-mono">
                   {stat.icon} {stat.label}
@@ -903,7 +903,7 @@ export default function FinanceControlPanel() {
               value={posSearch}
               onChange={(e) => setPosSearch(e.target.value)}
               placeholder="Search customers by name or email..."
-              className="w-full bg-black/40 border border-gray-800/50 rounded-lg px-3 py-2 text-[11px] text-gray-300 font-mono placeholder:text-gray-700 focus:border-purple-500/50 focus:outline-none"
+              className="w-full bg-slate-900/40 border border-gray-800/50 rounded-lg px-3 py-2 text-[11px] text-gray-300 font-mono placeholder:text-gray-700 focus:border-purple-500/50 focus:outline-none"
             />
           </div>
 
@@ -929,7 +929,7 @@ export default function FinanceControlPanel() {
                   className={`border rounded-lg transition-all cursor-pointer ${
                     selectedCustomer?.user_id === customer.user_id
                       ? "border-purple-500/50 bg-purple-500/5"
-                      : "border-gray-800/30 bg-black/20 hover:border-gray-700/50"
+                      : "border-gray-800/30 bg-slate-900/20 hover:border-gray-700/50"
                   }`}
                   onClick={() =>
                     setSelectedCustomer(
@@ -1000,7 +1000,7 @@ export default function FinanceControlPanel() {
                                       <span
                                         className={`text-[8px] font-mono px-1 py-0.5 rounded ${
                                           card.cvc_check === "pass"
-                                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                                             : card.cvc_check === "fail"
                                               ? "bg-red-500/10 text-red-400 border border-red-500/20"
                                               : "bg-gray-500/10 text-gray-400"
@@ -1132,7 +1132,7 @@ export default function FinanceControlPanel() {
         >
           <div className="max-w-lg mx-auto">
             {/* Terminal Display */}
-            <div className="bg-black border-2 border-green-500/30 rounded-xl p-6 mb-4 relative overflow-hidden">
+            <div className="bg-slate-900 border-2 border-green-500/30 rounded-xl p-6 mb-4 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-green-500/5 to-transparent pointer-events-none" />
               <div className="relative">
                 <div className="text-center mb-6">
@@ -1272,7 +1272,7 @@ export default function FinanceControlPanel() {
                   className={`w-full py-3 rounded-lg font-mono font-black text-sm transition-all ${
                     chargeLoading || !chargeForm.cardId || !chargeForm.amount
                       ? "bg-gray-800 text-gray-600 cursor-not-allowed"
-                      : "bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 shadow-lg shadow-green-500/20"
+                      : "bg-gradient-to-r from-green-600 to-amber-600 text-black hover:from-green-500 hover:to-amber-500 shadow-lg shadow-green-500/20"
                   }`}
                 >
                   {chargeLoading ? (

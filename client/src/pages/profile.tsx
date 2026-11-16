@@ -466,7 +466,7 @@ export default function ProfilePage() {
                           editName.trim().length < 2 ||
                           (!!user?.displayName && !currentPassword)
                         }
-                        className="p-1 text-emerald-700 hover:text-emerald-700 disabled:opacity-40"
+                        className="p-1 text-amber-700 hover:text-amber-700 disabled:opacity-40"
                       >
                         {isSavingName ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                           editUsername.trim().length < 2 ||
                           editUsername.trim() === user.username
                         }
-                        className="p-1 text-emerald-700 hover:text-emerald-700 disabled:opacity-40"
+                        className="p-1 text-amber-700 hover:text-amber-700 disabled:opacity-40"
                         title="Save username"
                       >
                         {isSavingUsername ? (
@@ -579,7 +579,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-700">Status</span>
-                  <span className="text-emerald-700">
+                  <span className="text-amber-700">
                     {user.subscriptionStatus || "Active"}
                   </span>
                 </div>
@@ -597,7 +597,7 @@ export default function ProfilePage() {
                   <span className="text-slate-700">Artist Profile</span>
                   <span
                     className={
-                      hasArtist ? "text-emerald-700" : "text-slate-700"
+                      hasArtist ? "text-amber-700" : "text-slate-700"
                     }
                   >
                     {hasArtist ? "✓ Active" : "Not set up"}
@@ -616,7 +616,7 @@ export default function ProfilePage() {
                   <span
                     className={
                       capabilities?.canAccessBlog
-                        ? "text-emerald-700"
+                        ? "text-amber-700"
                         : "text-slate-700"
                     }
                   >
@@ -628,7 +628,7 @@ export default function ProfilePage() {
                   <span
                     className={
                       capabilities?.isContractor
-                        ? "text-emerald-700"
+                        ? "text-amber-700"
                         : "text-slate-700"
                     }
                   >
@@ -654,24 +654,24 @@ export default function ProfilePage() {
                 {capabilities?.portals?.map((portal: string) => (
                   <div
                     key={portal}
-                    className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3"
+                    className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center gap-3"
                   >
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
                       {portal === "artist" ? (
-                        <Music className="w-4 h-4 text-emerald-700" />
+                        <Music className="w-4 h-4 text-amber-700" />
                       ) : portal === "streamer" ? (
-                        <Camera className="w-4 h-4 text-emerald-700" />
+                        <Camera className="w-4 h-4 text-amber-700" />
                       ) : portal === "geo-admin" ? (
-                        <Shield className="w-4 h-4 text-emerald-700" />
+                        <Shield className="w-4 h-4 text-amber-700" />
                       ) : (
-                        <Globe className="w-4 h-4 text-emerald-700" />
+                        <Globe className="w-4 h-4 text-amber-700" />
                       )}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-900 capitalize">
                         {portal.replace("-", " ")}
                       </p>
-                      <p className="text-[10px] text-emerald-700">
+                      <p className="text-[10px] text-amber-700">
                         ✓ Connected
                       </p>
                     </div>
@@ -700,7 +700,7 @@ export default function ProfilePage() {
                 </Link>
                 <Link href="/marketplace">
                   <div className="bg-white/[0.03] hover:bg-white/[0.06] border border-slate-200 rounded-xl p-4 text-center cursor-pointer transition-all group">
-                    <ShoppingBag className="w-6 h-6 text-emerald-700 mx-auto mb-2 group-hover:scale-110 transition-transform" />
+                    <ShoppingBag className="w-6 h-6 text-amber-700 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                     <p className="text-sm text-slate-900 font-medium notranslate">
                       Marketplace
                     </p>

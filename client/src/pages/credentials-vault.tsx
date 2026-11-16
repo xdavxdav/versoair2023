@@ -80,7 +80,7 @@ const ROLE_CONFIG: Record<
   moderator: {
     icon: <Wrench className="h-4 w-4" />,
     label: "MODERATOR",
-    gradient: "from-teal-500 via-emerald-500 to-green-500",
+    gradient: "from-teal-500 via-amber-500 to-green-500",
     glow: "shadow-teal-500/20",
     ring: "ring-teal-500/30",
   },
@@ -185,7 +185,7 @@ function AccessDenied() {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-50 overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 overflow-hidden">
       <MatrixRain />
       <motion.div
         initial={{ scale: 0, rotate: -180 }}
@@ -352,7 +352,7 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
   // Password entry screen
   if (phase === "password" || phase === "denied") {
     return (
-      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden">
+      <div className="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center overflow-hidden">
         <MatrixRain />
         <div className="relative z-10 w-full max-w-md px-6">
           {/* Lock icon */}
@@ -417,7 +417,7 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
             )}
 
             <form onSubmit={handlePasswordSubmit} className="flex gap-2">
-              <div className="flex-1 flex items-center bg-black/50 border border-gray-700 rounded px-3 py-2 focus-within:border-green-600/60 transition-colors">
+              <div className="flex-1 flex items-center bg-slate-900/50 border border-gray-700 rounded px-3 py-2 focus-within:border-green-600/60 transition-colors">
                 <span className="text-green-500 mr-2">❯</span>
                 <input
                   ref={inputRef}
@@ -461,7 +461,7 @@ function BiometricGate({ onComplete }: { onComplete: () => void }) {
 
   // Unlock animation (scanning → verifying → granted)
   return (
-    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center overflow-hidden">
       <MatrixRain />
       <div className="relative z-10 w-full max-w-lg px-6">
         {/* Fingerprint scanner */}
@@ -767,7 +767,7 @@ function CredentialField({
         {label}
       </label>
       <div className="flex items-center gap-1.5 mt-1">
-        <code className="flex-1 bg-black/50 border border-gray-800 text-green-400/80 px-2.5 py-1.5 rounded-md text-xs font-mono truncate">
+        <code className="flex-1 bg-slate-900/50 border border-gray-800 text-green-400/80 px-2.5 py-1.5 rounded-md text-xs font-mono truncate">
           {value}
         </code>
         <CopyButton
@@ -1032,7 +1032,7 @@ export default function CredentialsVault() {
   // The useEffect handles redirect for unauthenticated users
   if (vaultAuthorized === null) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -1064,7 +1064,7 @@ export default function CredentialsVault() {
 
       <div className="relative z-10">
         {/* ═══════════ HEADER ═══════════ */}
-        <header className="border-b border-gray-800/50 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
+        <header className="border-b border-gray-800/50 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-50">
           <div className="max-w-[95vw] mx-auto px-6 py-4">
             {/* Top row */}
             <div className="flex items-center justify-between mb-4">
@@ -1078,13 +1078,13 @@ export default function CredentialsVault() {
                     ],
                   }}
                   transition={{ duration: 3, repeat: Infinity }}
-                  className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center"
+                  className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-amber-600 flex items-center justify-center"
                 >
                   <Terminal className="w-5 h-5 text-black" />
                 </motion.div>
                 <div>
                   <h1 className="text-xl font-black tracking-tight flex items-center gap-2">
-                    <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-green-400 via-amber-400 to-teal-400 bg-clip-text text-transparent">
                       CREDENTIALS VAULT
                     </span>
                     <Badge
@@ -1180,7 +1180,7 @@ export default function CredentialsVault() {
                 placeholder="Search credentials... (⌘K)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-black/60 border border-gray-800 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-green-800 focus:ring-1 focus:ring-green-900 transition-all font-mono"
+                className="w-full bg-slate-900/60 border border-gray-800 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-green-800 focus:ring-1 focus:ring-green-900 transition-all font-mono"
               />
               {searchQuery && (
                 <button

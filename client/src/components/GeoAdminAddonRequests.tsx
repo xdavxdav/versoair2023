@@ -214,7 +214,7 @@ export default function GeoAdminAddonRequests() {
                             type="button"
                             disabled={workingId === request.id}
                             onClick={() => void decide(request, "approve")}
-                            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                            className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                           >
                             Approve and activate
                           </button>

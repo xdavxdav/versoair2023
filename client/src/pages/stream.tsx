@@ -237,7 +237,7 @@ function ImmersiveBackground() {
 
 // Genre color mapping
 const GENRE_COLORS: Record<string, string> = {
-  Afrobeats: "from-green-500 to-emerald-700",
+  Afrobeats: "from-green-500 to-amber-700",
   Afropop: "from-pink-500 to-rose-700",
   Rumba: "from-blue-500 to-indigo-700",
   Soukous: "from-cyan-500 to-teal-700",
@@ -251,7 +251,7 @@ const GENRE_COLORS: Record<string, string> = {
   Mbalax: "from-indigo-500 to-blue-700",
   "Bongo Flava": "from-yellow-500 to-amber-700",
   Gospel: "from-purple-500 to-indigo-700",
-  Mandingue: "from-emerald-500 to-green-700",
+  Mandingue: "from-amber-500 to-green-700",
   Zoblazo: "from-rose-500 to-red-700",
   "Afro-Pop": "from-sky-500 to-blue-700",
   "Afro-Blues": "from-slate-500 to-gray-700",
@@ -772,8 +772,8 @@ export default function StreamPage() {
                           onClick={() => navigate("/artist-portal?from=stream")}
                           className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
                             fromPage === "artist-portal"
-                              ? "bg-emerald-400/40 text-emerald-700 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-                              : "bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30"
+                              ? "bg-amber-400/40 text-amber-700 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
+                              : "bg-amber-500/20 text-amber-700 hover:bg-amber-500/30"
                           }`}
                         >
                           <Mic2 className="w-3.5 h-3.5" />
@@ -820,7 +820,7 @@ export default function StreamPage() {
               {/* Back Button - positioned below top bar, above header */}
               <button
                 onClick={handleBack}
-                className="mb-4 p-2 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md border border-slate-200 hover:border-white/20 transition-all duration-200 text-slate-900 flex items-center gap-2"
+                className="mb-4 p-2 rounded-lg bg-slate-900/40 hover:bg-slate-900/60 backdrop-blur-md border border-slate-200 hover:border-white/20 transition-all duration-200 text-slate-900 flex items-center gap-2"
                 title="Go back"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -911,8 +911,8 @@ export default function StreamPage() {
                     <button
                       className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl backdrop-blur transition-all ${
                         fromPage === "artist-portal"
-                          ? "bg-gradient-to-r from-emerald-400/40 to-teal-400/40 text-emerald-700 border-2 border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-                          : "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-700 border border-emerald-500/30 hover:from-emerald-500/30 hover:to-teal-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                          ? "bg-gradient-to-r from-amber-400/40 to-teal-400/40 text-amber-700 border-2 border-amber-400/60 shadow-[0_0_20px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
+                          : "bg-gradient-to-r from-amber-500/20 to-teal-500/20 text-amber-700 border border-amber-500/30 hover:from-amber-500/30 hover:to-teal-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
                       }`}
                     >
                       <Mic2 className="w-4 h-4" />
@@ -1039,7 +1039,7 @@ export default function StreamPage() {
                             Qualité audio
                           </p>
                           <p
-                            className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-emerald-700" : "text-slate-900"}`}
+                            className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-amber-700" : "text-slate-900"}`}
                           >
                             {isGodTier ? "FLAC" : currentPlan.audioQuality}
                           </p>
@@ -1067,7 +1067,7 @@ export default function StreamPage() {
                             Publicités
                           </p>
                           <p
-                            className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-emerald-700" : "text-orange-700"}`}
+                            className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-amber-700" : "text-orange-700"}`}
                           >
                             {!currentPlan.ads || isGodTier ? "Aucune ✓" : "Oui"}
                           </p>
@@ -1351,7 +1351,7 @@ export default function StreamPage() {
                           {/* Dark gradient overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                           {/* Play overlay */}
-                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                             <motion.div
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
@@ -1362,7 +1362,7 @@ export default function StreamPage() {
                           </div>
                           {/* Rank badge */}
                           <div className="absolute top-2.5 left-2.5">
-                            <div className="px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-amber-400 text-xs font-bold border border-amber-500/20">
+                            <div className="px-2.5 py-1 bg-slate-900/60 backdrop-blur-md rounded-lg text-amber-400 text-xs font-bold border border-amber-500/20">
                               #{i + 1}
                             </div>
                           </div>
@@ -2076,7 +2076,7 @@ export default function StreamPage() {
                               ? "∞ Streams illimités"
                               : `${plan.weeklyStreams} streams/semaine`}
                           </div>
-                          <div className="mb-4 rounded-xl border border-slate-200 bg-black/10 px-3 py-2.5">
+                          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-900/10 px-3 py-2.5">
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-700">
                                 Arena vote power

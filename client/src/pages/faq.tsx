@@ -958,7 +958,7 @@ export default function FaqPage() {
                               {post.title}
                             </h3>
                             {post.isResolved && (
-                              <span className="flex flex-shrink-0 items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-700">
+                              <span className="flex flex-shrink-0 items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700">
                                 <CheckCircle2 className="h-2.5 w-2.5" />
                                 Resolved
                               </span>
@@ -1030,7 +1030,7 @@ export default function FaqPage() {
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={() => setIsCreateOpen(false)}
           >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -234,9 +234,9 @@ export function getDashboardTheme(
       };
     case "artisan":
       return {
-        shell: "bg-gradient-to-br from-emerald-50 via-white to-teal-50",
-        accent: "from-emerald-600 to-teal-600",
-        primary: "text-emerald-800",
+        shell: "bg-gradient-to-br from-amber-50 via-white to-teal-50",
+        accent: "from-amber-600 to-teal-600",
+        primary: "text-amber-800",
         secondary: "text-teal-700",
         label: "Artisan Portal",
       };
@@ -250,9 +250,9 @@ export function getDashboardTheme(
       };
     case "contractor":
       return {
-        shell: "bg-gradient-to-br from-emerald-950 via-teal-900 to-amber-900",
-        accent: "from-emerald-500 to-amber-400",
-        primary: "text-emerald-200",
+        shell: "bg-gradient-to-br from-amber-950 via-teal-900 to-amber-900",
+        accent: "from-amber-500 to-amber-400",
+        primary: "text-amber-200",
         secondary: "text-amber-200",
         label: "Contractor Portal",
       };

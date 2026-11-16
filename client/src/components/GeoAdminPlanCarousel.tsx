@@ -74,12 +74,12 @@ export default function GeoAdminPlanCarousel({
         card: "border-slate-200 bg-white",
         title: "text-slate-900",
         description: "text-slate-600",
-        price: "text-emerald-800",
+        price: "text-amber-900",
         benefit: "text-slate-700",
-        activeDot: "bg-emerald-700",
+        activeDot: "bg-amber-700",
         inactiveDot: "bg-slate-300 hover:bg-slate-500",
         arrow: "border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
-        selection: "border-emerald-700 bg-emerald-50 text-emerald-900",
+        selection: "border-amber-700 bg-amber-50 text-amber-950",
         label: "text-slate-500",
       };
 
@@ -142,7 +142,7 @@ export default function GeoAdminPlanCarousel({
                       >
                         <CheckCircle
                           aria-hidden="true"
-                          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
+                          className="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
                         />
                         <span>{benefit}</span>
                       </li>

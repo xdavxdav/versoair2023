@@ -113,7 +113,7 @@ export default function CulturalPrograms() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-12 md:py-16">
+      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12 md:py-16">
         <div className="max-w-[95vw] mx-auto px-4">
           <motion.h1
             variants={fadeInUp}
@@ -128,7 +128,7 @@ export default function CulturalPrograms() {
             initial="hidden"
             animate="visible"
             transition={{ delay: 0.15 }}
-            className="text-lg text-emerald-50 max-w-2xl"
+            className="text-lg text-amber-50 max-w-2xl"
           >
             Discover our transformative cultural initiatives empowering
             communities through art, music, theater, and creative expression
@@ -190,26 +190,26 @@ export default function CulturalPrograms() {
                 <Card
                   className={`cursor-pointer h-full border-2 transition-all ${
                     selectedProgram?.id === program.id
-                      ? "border-emerald-500 shadow-xl bg-emerald-50"
-                      : "border-gray-200 shadow-md hover:shadow-lg hover:border-emerald-300"
+                      ? "border-amber-500 shadow-xl bg-amber-50"
+                      : "border-gray-200 shadow-md hover:shadow-lg hover:border-amber-300"
                   }`}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between mb-3">
-                      <Icon className="h-10 w-10 text-emerald-600" />
+                      <Icon className="h-10 w-10 text-amber-600" />
                       {selectedProgram?.id === program.id && (
-                        <CheckCircle className="h-5 w-5 text-emerald-500" />
+                        <CheckCircle className="h-5 w-5 text-amber-500" />
                       )}
                     </div>
                     <CardTitle className="text-lg text-gray-900">
                       {program.title}
                     </CardTitle>
-                    <CardDescription className="text-emerald-700 font-medium text-sm">
+                    <CardDescription className="text-amber-700 font-medium text-sm">
                       {program.desc}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-xs font-semibold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full inline-block">
+                    <div className="text-xs font-semibold text-amber-600 bg-amber-100 px-2 py-1 rounded-full inline-block">
                       {program.impact}
                     </div>
                   </CardContent>
@@ -223,7 +223,7 @@ export default function CulturalPrograms() {
         {selectedProgram && (
           <div className="mb-12">
             <Card className="border-0 shadow-xl overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-8 text-white">
+              <div className="bg-gradient-to-r from-amber-600 to-amber-700 p-8 text-white">
                 <div className="flex items-center gap-4 mb-4">
                   {selectedProgram.icon && (
                     <selectedProgram.icon className="h-12 w-12" />
@@ -232,7 +232,7 @@ export default function CulturalPrograms() {
                     <h2 className="text-3xl font-bold">
                       {selectedProgram.title}
                     </h2>
-                    <p className="text-emerald-100 mt-1">
+                    <p className="text-amber-100 mt-1">
                       {selectedProgram.desc}
                     </p>
                   </div>
@@ -258,29 +258,29 @@ export default function CulturalPrograms() {
                           key={idx}
                           className="flex items-center gap-3 text-gray-700"
                         >
-                          <ArrowRight className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                          <ArrowRight className="h-5 w-5 text-amber-600 flex-shrink-0" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200 h-fit">
+                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200 h-fit">
                     <div className="space-y-6">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <Award className="h-5 w-5 text-emerald-600" />
+                          <Award className="h-5 w-5 text-amber-600" />
                           <p className="font-bold text-gray-900">
                             Program Impact
                           </p>
                         </div>
-                        <p className="text-sm text-emerald-700 font-semibold">
+                        <p className="text-sm text-amber-700 font-semibold">
                           {selectedProgram.impact}
                         </p>
                       </div>
 
                       <Link href="/artisan-workshops">
-                        <button className="w-full group bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden">
+                        <button className="w-full group bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-900 text-white font-bold py-2 px-4 rounded-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden">
                           <span className="relative z-10 flex items-center gap-2">
                             <Zap className="h-4 w-4 animate-pulse" />
                             Partake Now
@@ -321,7 +321,7 @@ export default function CulturalPrograms() {
                     <p className="font-bold text-gray-900">
                       Témoignage à venir
                     </p>
-                    <p className="text-sm text-emerald-600 font-medium">
+                    <p className="text-sm text-amber-600 font-medium">
                       Participant identity pending verification
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
@@ -335,20 +335,20 @@ export default function CulturalPrograms() {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-8 text-white">
+        <div className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-xl p-8 text-white">
           <div className="max-w-2xl mx-auto text-center">
-            <Heart className="h-12 w-12 mx-auto mb-4 text-emerald-100" />
+            <Heart className="h-12 w-12 mx-auto mb-4 text-amber-100" />
             <h2 className="text-3xl font-bold mb-4">
               Support Cultural Development
             </h2>
-            <p className="text-emerald-50 mb-6">
+            <p className="text-amber-50 mb-6">
               Join us in empowering artists, musicians, and performers. Your
               support directly impacts communities and preserves cultural
               heritage.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/support">
-                <Button className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold">
+                <Button className="bg-white text-amber-600 hover:bg-amber-50 font-bold">
                   Donate Now
                 </Button>
               </Link>

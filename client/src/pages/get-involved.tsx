@@ -159,7 +159,7 @@ function DetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40"
           />
 
           {/* Modal */}
@@ -224,7 +224,7 @@ function DetailModal({
                   <h2 className="text-3xl font-bold text-slate-900 mb-2">
                     {activity.title}
                   </h2>
-                  <p className="text-emerald-700 text-lg font-medium">
+                  <p className="text-amber-700 text-lg font-medium">
                     {activity.subtitle}
                   </p>
                 </motion.div>
@@ -245,7 +245,7 @@ function DetailModal({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <Button className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold py-3 px-8 rounded-lg">
+                  <Button className="w-full md:w-auto bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold py-3 px-8 rounded-lg">
                     {activity.cta}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -287,7 +287,7 @@ export default function GetInvolved() {
       <section className="relative pt-20 pb-24 px-4 overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 right-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl" />
+          <div className="absolute top-20 right-10 w-72 h-72 bg-amber-500/20 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
         </div>
 
@@ -298,9 +298,9 @@ export default function GetInvolved() {
             animate="visible"
             className="text-center mb-4"
           >
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-2 mb-6">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-              <span className="text-emerald-700 text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2 mb-6">
+              <div className="w-2 h-2 bg-amber-400 rounded-full" />
+              <span className="text-amber-700 text-sm font-medium">
                 Join the Movement
               </span>
             </div>
@@ -383,7 +383,7 @@ export default function GetInvolved() {
                       initial={{ opacity: 0 }}
                       whileHover={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center rounded-lg"
+                      className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center rounded-lg"
                     >
                       <Button
                         variant="outline"
@@ -397,10 +397,10 @@ export default function GetInvolved() {
 
                   {/* Text Content - Minimalist */}
                   <div className="space-y-2 px-1">
-                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    <h3 className="text-2xl font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
                       {activity.title}
                     </h3>
-                    <p className="text-emerald-700 text-sm font-medium">
+                    <p className="text-amber-700 text-sm font-medium">
                       {activity.subtitle}
                     </p>
                     <p className="text-slate-700 text-sm leading-relaxed line-clamp-2 pt-2">
@@ -445,9 +445,9 @@ export default function GetInvolved() {
               <motion.div
                 key={idx}
                 variants={staggerItem}
-                className="flex items-start gap-4 p-4 rounded-lg bg-white border border-slate-700 hover:border-emerald-500/30 transition-colors"
+                className="flex items-start gap-4 p-4 rounded-lg bg-white border border-slate-700 hover:border-amber-500/30 transition-colors"
               >
-                <div className="w-2 h-2 bg-emerald-400 rounded-full mt-2 flex-shrink-0" />
+                <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0" />
                 <p className="text-slate-700 font-medium">{benefit}</p>
               </motion.div>
             ))}
@@ -463,11 +463,11 @@ export default function GetInvolved() {
             initial="hidden"
             whileInView="visible"
             viewport={defaultViewport}
-            className="relative p-12 rounded-2xl bg-gradient-to-br from-emerald-600/20 via-teal-600/10 to-cyan-600/20 border border-emerald-500/30 backdrop-blur-sm overflow-hidden"
+            className="relative p-12 rounded-2xl bg-gradient-to-br from-amber-600/20 via-teal-600/10 to-cyan-600/20 border border-amber-500/30 backdrop-blur-sm overflow-hidden"
           >
             {/* Background decoration */}
             <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500 rounded-full blur-3xl" />
             </div>
 
             <div className="relative z-10 text-center">
@@ -478,7 +478,7 @@ export default function GetInvolved() {
                 Find out more about the future vision of vHeartz.
               </p>
               <Link href="/contact">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all">
+                <Button className="bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-amber-500/50 transition-all">
                   Get Started
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>

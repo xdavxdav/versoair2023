@@ -8,7 +8,7 @@ import { cn } from "./utils";
 // lightness is clear, fixes the text colour so options are always legible.
 
 const DARK_BG =
-  /^bg-(?:(?:gray|slate|zinc|neutral|stone)-(?:7|8|9)\d\d|(?:purple|indigo|emerald|rose|fuchsia|amber|blue|red|green|teal|cyan|violet|sky|orange|pink)-(?:8|9)\d\d|black|\[#(?:[0-3][0-9a-f]){3}\]|\[rgba?\(\s*\d{1,2}\s*,\s*\d{1,2}\s*,\s*\d{1,2}[^\]]*\)\])$/i;
+  /^bg-(?:(?:gray|slate|zinc|neutral|stone)-(?:7|8|9)\d\d|(?:purple|indigo|amber|rose|fuchsia|amber|blue|red|green|teal|cyan|violet|sky|orange|pink)-(?:8|9)\d\d|black|\[#(?:[0-3][0-9a-f]){3}\]|\[rgba?\(\s*\d{1,2}\s*,\s*\d{1,2}\s*,\s*\d{1,2}[^\]]*\)\])$/i;
 const LIGHT_BG =
   /^bg-(?:white|(?:gray|slate|zinc|neutral|stone)-(?:50|100|200)|\[#(?:[e-f][0-9a-f]){3}\])$/i;
 

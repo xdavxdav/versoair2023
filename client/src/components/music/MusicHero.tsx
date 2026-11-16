@@ -127,7 +127,7 @@ function StatItem({
       <div className="flex items-center gap-2">
         <p className="text-sm text-white/50">{label}</p>
         {trend && (
-          <span className="flex items-center text-xs text-emerald-400">
+          <span className="flex items-center text-xs text-amber-400">
             <TrendingUp className="w-3 h-3 mr-0.5" />
             {trend}
           </span>

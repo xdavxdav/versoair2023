@@ -75,12 +75,12 @@ export default function ArtisanWorkshops() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-12 md:py-16">
+      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12 md:py-16">
         <div className="max-w-[95vw] mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Artisan Workshops
           </h1>
-          <p className="text-lg text-emerald-50 max-w-2xl">
+          <p className="text-lg text-amber-50 max-w-2xl">
             Learn directly from master artisans. Register for hands-on workshops
             and develop real craft skills.
           </p>
@@ -98,7 +98,7 @@ export default function ArtisanWorkshops() {
               placeholder="Search workshops, artisans, or specialties..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
 
@@ -110,7 +110,7 @@ export default function ArtisanWorkshops() {
                 onClick={() => setSelectedLevel(level)}
                 className={`px-4 py-2 rounded-full font-medium transition-all ${
                   selectedLevel === level
-                    ? "bg-emerald-600 text-white shadow-lg"
+                    ? "bg-amber-600 text-white shadow-lg"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
@@ -137,13 +137,13 @@ export default function ArtisanWorkshops() {
                 <div key={workshop.id} className="group">
                   <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden flex flex-col">
                     {/* Header */}
-                    <CardHeader className="pb-3 bg-gradient-to-r from-emerald-50 to-emerald-100/50">
+                    <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-amber-100/50">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <CardTitle className="text-lg text-gray-900">
                             {workshop.title}
                           </CardTitle>
-                          <CardDescription className="text-emerald-700 font-medium">
+                          <CardDescription className="text-amber-700 font-medium">
                             {workshop.artisan}
                           </CardDescription>
                         </div>
@@ -165,7 +165,7 @@ export default function ArtisanWorkshops() {
                       {/* Workshop Details */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Calendar className="h-4 w-4 text-emerald-600" />
+                          <Calendar className="h-4 w-4 text-amber-600" />
                           {new Date(workshop.date).toLocaleDateString("en-US", {
                             weekday: "short",
                             month: "short",
@@ -173,11 +173,11 @@ export default function ArtisanWorkshops() {
                           })}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Clock className="h-4 w-4 text-emerald-600" />
+                          <Clock className="h-4 w-4 text-amber-600" />
                           {workshop.time} ({workshop.duration})
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <MapPin className="h-4 w-4 text-emerald-600" />
+                          <MapPin className="h-4 w-4 text-amber-600" />
                           {workshop.location}
                         </div>
                       </div>
@@ -196,13 +196,13 @@ export default function ArtisanWorkshops() {
                           {workshop.skills.slice(0, 2).map((skill, idx) => (
                             <span
                               key={idx}
-                              className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded"
+                              className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded"
                             >
                               {skill}
                             </span>
                           ))}
                           {workshop.skills.length > 2 && (
-                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
                               +{workshop.skills.length - 2} more
                             </span>
                           )}
@@ -212,7 +212,7 @@ export default function ArtisanWorkshops() {
                       {/* Availability */}
                       <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                         <div className="flex items-center gap-2 text-sm">
-                          <Users className="h-4 w-4 text-emerald-600" />
+                          <Users className="h-4 w-4 text-amber-600" />
                           <span
                             className={
                               isAlmostFull
@@ -223,7 +223,7 @@ export default function ArtisanWorkshops() {
                             {availableSpots} spots left
                           </span>
                         </div>
-                        <span className="text-lg font-bold text-emerald-600">
+                        <span className="text-lg font-bold text-amber-600">
                           {workshop.price.toLocaleString()} XOF
                         </span>
                       </div>
@@ -240,10 +240,10 @@ export default function ArtisanWorkshops() {
                     </CardContent>
 
                     {/* Partake Button */}
-                    <div className="p-4 bg-gradient-to-r from-emerald-600 to-emerald-700">
+                    <div className="p-4 bg-gradient-to-r from-amber-600 to-amber-700">
                       <button
                         onClick={() => setSelectedWorkshop(workshop)}
-                        className="w-full group/btn bg-white text-emerald-700 font-bold py-2 px-4 rounded-lg hover:bg-emerald-50 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden"
+                        className="w-full group/btn bg-white text-amber-700 font-bold py-2 px-4 rounded-lg hover:bg-amber-50 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden"
                       >
                         <span className="relative z-10 flex items-center gap-2">
                           <Zap className="h-4 w-4" />
@@ -259,7 +259,7 @@ export default function ArtisanWorkshops() {
           </div>
         ) : (
           <Card className="text-center py-12 border-0 shadow-lg bg-gray-50">
-            <BookOpen className="h-12 w-12 mx-auto text-emerald-300 mb-4" />
+            <BookOpen className="h-12 w-12 mx-auto text-amber-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 mb-2">
               {WORKSHOPS.length === 0 && !searchQuery && selectedLevel === "All"
                 ? "Workshop Schedule Ready"
@@ -286,15 +286,15 @@ export default function ArtisanWorkshops() {
 
         {/* Workshop Registration Modal */}
         {selectedWorkshop && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
             <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
-              <CardHeader className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+              <CardHeader className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-2xl">
                       {selectedWorkshop.title}
                     </CardTitle>
-                    <CardDescription className="text-emerald-100 mt-2">
+                    <CardDescription className="text-amber-100 mt-2">
                       with {selectedWorkshop.artisan}
                     </CardDescription>
                   </div>
@@ -342,12 +342,12 @@ export default function ArtisanWorkshops() {
                 </div>
 
                 {/* Price & Availability */}
-                <div className="grid md:grid-cols-2 gap-4 p-4 bg-emerald-50 rounded-lg">
+                <div className="grid md:grid-cols-2 gap-4 p-4 bg-amber-50 rounded-lg">
                   <div>
                     <p className="text-xs text-gray-500 uppercase font-bold mb-1">
                       Price
                     </p>
-                    <p className="text-2xl font-bold text-emerald-700">
+                    <p className="text-2xl font-bold text-amber-700">
                       {selectedWorkshop.price.toLocaleString()} XOF
                     </p>
                   </div>
@@ -355,7 +355,7 @@ export default function ArtisanWorkshops() {
                     <p className="text-xs text-gray-500 uppercase font-bold mb-1">
                       Availability
                     </p>
-                    <p className="text-2xl font-bold text-emerald-700">
+                    <p className="text-2xl font-bold text-amber-700">
                       {selectedWorkshop.capacity - selectedWorkshop.enrolled}/
                       {selectedWorkshop.capacity} spots
                     </p>
@@ -381,7 +381,7 @@ export default function ArtisanWorkshops() {
                         key={idx}
                         className="flex items-center gap-3 text-gray-700"
                       >
-                        <Award className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                        <Award className="h-5 w-5 text-amber-600 flex-shrink-0" />
                         <span>{skill}</span>
                       </li>
                     ))}
@@ -397,17 +397,17 @@ export default function ArtisanWorkshops() {
                     <input
                       type="text"
                       placeholder="Full Name"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                     <input
                       type="email"
                       placeholder="Email Address"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                     <input
                       type="tel"
                       placeholder="Phone Number"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export default function ArtisanWorkshops() {
                 {/* Action Buttons */}
                 <div className="flex gap-3">
                   <Link href="/reservations" className="flex-1">
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold">
                       Continue to Payment
                     </Button>
                   </Link>
@@ -433,30 +433,30 @@ export default function ArtisanWorkshops() {
         )}
 
         {/* Info Section */}
-        <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 rounded-xl p-8 border border-emerald-200">
-          <h2 className="text-2xl font-bold text-emerald-900 mb-4">
+        <div className="bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-xl p-8 border border-amber-200">
+          <h2 className="text-2xl font-bold text-amber-900 mb-4">
             Workshop Details
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div>
-              <h3 className="font-bold text-emerald-900 mb-2">
+              <h3 className="font-bold text-amber-900 mb-2">
                 Hands-On Learning
               </h3>
-              <p className="text-emerald-800 text-sm">
+              <p className="text-amber-900 text-sm">
                 Work directly with master artisans in well-equipped studios with
                 all materials provided.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-emerald-900 mb-2">Small Groups</h3>
-              <p className="text-emerald-800 text-sm">
+              <h3 className="font-bold text-amber-900 mb-2">Small Groups</h3>
+              <p className="text-amber-900 text-sm">
                 Limited capacity ensures personalized attention and quality
                 instruction from experts.
               </p>
             </div>
             <div>
-              <h3 className="font-bold text-emerald-900 mb-2">Certificates</h3>
-              <p className="text-emerald-800 text-sm">
+              <h3 className="font-bold text-amber-900 mb-2">Certificates</h3>
+              <p className="text-amber-900 text-sm">
                 Receive completion certificates that recognize your new skills
                 in traditional crafts.
               </p>

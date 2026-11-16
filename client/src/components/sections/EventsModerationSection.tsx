@@ -149,7 +149,7 @@ export function EventsModerationSection() {
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-slate-900">
-              <Calendar className="h-5 w-5 text-emerald-600" /> Events Review
+              <Calendar className="h-5 w-5 text-amber-600" /> Events Review
             </CardTitle>
             <CardDescription>
               Review organizer submissions before they appear publicly.

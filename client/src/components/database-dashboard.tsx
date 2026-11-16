@@ -325,7 +325,7 @@ export function DatabaseDashboard() {
                         <div className="flex items-start justify-between mb-3">
                           <span className="text-2xl">🏢</span>
                           {business.status === "healthy" ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <CheckCircle2 className="w-4 h-4 text-amber-500" />
                           ) : business.status === "warning" ? (
                             <AlertCircle className="w-4 h-4 text-yellow-500" />
                           ) : (

@@ -176,7 +176,7 @@ export function GeoActionQueueSection() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Globe className="h-6 w-6 text-emerald-600" />
+            <Globe className="h-6 w-6 text-amber-600" />
             Geo-Action Queue
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -235,13 +235,13 @@ export function GeoActionQueueSection() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by action type, entity, requester, or justification..."
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
         />
       </div>
 
       {/* Action Modal (inline) */}
       {actionTarget && (
-        <div className="bg-white border-2 border-emerald-200 rounded-xl p-5 shadow-lg">
+        <div className="bg-white border-2 border-amber-100 rounded-xl p-5 shadow-lg">
           <h3 className="font-semibold text-lg mb-2">
             {actionTarget.action === "approve"
               ? "✅ Approve Geo-Action"
@@ -270,7 +270,7 @@ export function GeoActionQueueSection() {
                 : "Reason for rejection (required)..."
             }
             rows={3}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-3"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 mb-3"
           />
           <div className="flex gap-2">
             <button
@@ -278,7 +278,7 @@ export function GeoActionQueueSection() {
               disabled={approveMutation.isPending || rejectMutation.isPending}
               className={`px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 ${
                 actionTarget.action === "approve"
-                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  ? "bg-amber-600 hover:bg-amber-700"
                   : "bg-red-600 hover:bg-red-700"
               }`}
             >
@@ -327,8 +327,8 @@ export function GeoActionQueueSection() {
                   onClick={() => setExpandedId(isExpanded ? null : req.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                      <MapPin className="h-5 w-5 text-emerald-600" />
+                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-amber-600" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">
@@ -435,7 +435,7 @@ export function GeoActionQueueSection() {
                             e.stopPropagation();
                             setActionTarget({ id: req.id, action: "approve" });
                           }}
-                          className="flex items-center gap-1 px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors"
+                          className="flex items-center gap-1 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition-colors"
                         >
                           <Check className="h-3 w-3" />
                           Approve

@@ -155,13 +155,13 @@ function InfoCard({
   const colors = {
     default: "border-slate-300 bg-gray-900/50",
     warning: "border-amber-500/30 bg-amber-500/5",
-    success: "border-emerald-500/30 bg-emerald-500/5",
+    success: "border-amber-500/30 bg-amber-500/5",
     info: "border-blue-500/30 bg-blue-500/5",
   };
   const iconColors = {
     default: "text-amber-600",
     warning: "text-amber-600",
-    success: "text-emerald-400",
+    success: "text-amber-400",
     info: "text-blue-400",
   };
   return (
@@ -874,7 +874,7 @@ function CookiesTab() {
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
                       c.type === "Essential"
-                        ? "bg-emerald-500/20 text-emerald-700"
+                        ? "bg-amber-500/20 text-amber-700"
                         : c.type === "Functional"
                           ? "bg-blue-500/20 text-blue-700"
                           : "bg-purple-500/20 text-purple-700"

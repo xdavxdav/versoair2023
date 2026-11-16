@@ -20,7 +20,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 /** Color themes for sector pages */
-export type SectorTheme = "blue" | "purple" | "emerald" | "amber" | "pink";
+export type SectorTheme = "blue" | "purple" | "amber" | "amber" | "pink";
 
 const themes: Record<
   SectorTheme,
@@ -64,18 +64,18 @@ const themes: Record<
     buttonGradient: "from-purple-600 to-pink-600",
     buttonHover: "hover:from-purple-700 hover:to-pink-700",
   },
-  emerald: {
-    hoverBorder: "hover:border-emerald-500/30",
-    barGradient: "from-emerald-600 to-green-600",
-    titleHover: "group-hover:text-emerald-300",
-    iconColor: "text-emerald-500",
-    ratingGradient: "from-emerald-400 to-green-500",
-    reviewsIcon: "text-emerald-400",
-    tagBg: "bg-emerald-900/20",
-    tagText: "text-emerald-300",
-    tagBorder: "border-emerald-500/30",
-    buttonGradient: "from-emerald-600 to-green-600",
-    buttonHover: "hover:from-emerald-700 hover:to-green-700",
+  amber: {
+    hoverBorder: "hover:border-amber-500/30",
+    barGradient: "from-amber-600 to-green-600",
+    titleHover: "group-hover:text-amber-200",
+    iconColor: "text-amber-500",
+    ratingGradient: "from-amber-400 to-green-500",
+    reviewsIcon: "text-amber-400",
+    tagBg: "bg-amber-950/20",
+    tagText: "text-amber-200",
+    tagBorder: "border-amber-500/30",
+    buttonGradient: "from-amber-600 to-green-600",
+    buttonHover: "hover:from-amber-700 hover:to-green-700",
   },
   amber: {
     hoverBorder: "hover:border-amber-500/30",

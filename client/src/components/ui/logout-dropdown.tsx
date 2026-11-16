@@ -55,7 +55,7 @@ function detectActiveSessions(): ActiveSession[] {
       id: "geoadmin",
       label: "Geo Admin",
       icon: <Shield className="h-3.5 w-3.5" />,
-      color: "text-emerald-400",
+      color: "text-amber-400",
     });
   }
 

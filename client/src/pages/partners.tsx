@@ -65,10 +65,10 @@ const TIERS: {
   },
   {
     tier: "Silver",
-    color: "from-emerald-400 to-teal-300",
-    ring: "border-emerald-400/60",
-    badge: "bg-gradient-to-r from-emerald-500 to-teal-400 text-emerald-900",
-    glow: "shadow-emerald-400/20",
+    color: "from-amber-400 to-teal-300",
+    ring: "border-amber-400/60",
+    badge: "bg-gradient-to-r from-amber-500 to-teal-400 text-amber-900",
+    glow: "shadow-amber-400/20",
     partners: [],
   },
 ];
@@ -86,7 +86,7 @@ const BENEFITS = [
     title: "Network Access",
     // TODO(pending-verification): community count must come from real data.
     desc: "Possible introductions and community collaborations would depend on confirmed programs and consent.",
-    color: "from-emerald-500 to-teal-600",
+    color: "from-amber-500 to-teal-600",
   },
   {
     icon: Zap,
@@ -157,8 +157,8 @@ const PARTNER_TIERS_INFO = [
   {
     name: "Silver",
     price: "Discuss terms with us",
-    color: "from-emerald-600 to-teal-500",
-    border: "border-emerald-400/40",
+    color: "from-amber-600 to-teal-500",
+    border: "border-amber-400/40",
     highlight: false,
     perks: [
       "Website logo listing",
@@ -177,7 +177,7 @@ export default function Partners() {
   return (
     <div className="flex flex-col min-h-screen bg-white overflow-x-hidden">
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-950 to-slate-50">
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-amber-950 to-slate-50">
         {/* animated grid background */}
         <div
           className="absolute inset-0 opacity-10"
@@ -188,7 +188,7 @@ export default function Partners() {
           }}
         />
         {/* glow orbs */}
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-teal-500/20 rounded-full blur-3xl" />
 
         <div className="relative z-10 max-w-[95vw] mx-auto px-6 text-center">
@@ -196,7 +196,7 @@ export default function Partners() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-700 text-sm font-semibold mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-700 text-sm font-semibold mb-6"
           >
             <Handshake className="w-4 h-4" />
             Partnership Program
@@ -233,7 +233,7 @@ export default function Partners() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <a href="#become-partner">
-              <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-900 font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-emerald-500/30 hover:scale-105 transition-all">
+              <Button className="bg-gradient-to-r from-amber-500 to-teal-500 hover:from-amber-600 hover:to-teal-600 text-slate-900 font-bold px-8 py-6 rounded-2xl text-lg shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all">
                 Register Interest
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
@@ -265,8 +265,8 @@ export default function Partners() {
           >
             {STATS.map((s, i) => (
               <motion.div key={i} variants={fadeInUp} className="text-center">
-                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <s.icon className="w-6 h-6 text-emerald-700" />
+                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <s.icon className="w-6 h-6 text-amber-700" />
                 </div>
                 <div className="text-3xl font-black text-slate-900">
                   {s.value}
@@ -288,7 +288,7 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-16"
           >
-            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Our Ecosystem
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -356,7 +356,7 @@ export default function Partners() {
       </section>
 
       {/* ── TESTIMONIALS ──────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 via-emerald-950 to-slate-50 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-slate-50 via-amber-950 to-slate-50 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-5"
           style={{
@@ -373,7 +373,7 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Partner Voices
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -393,7 +393,7 @@ export default function Partners() {
                 key={i}
                 variants={fadeInUp}
                 whileHover={{ y: -6 }}
-                className="bg-white/5 backdrop-blur-md border border-slate-200 rounded-2xl p-6 hover:border-emerald-500/30 transition-all"
+                className="bg-white/5 backdrop-blur-md border border-slate-200 rounded-2xl p-6 hover:border-amber-500/30 transition-all"
               >
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, j) => (
@@ -416,7 +416,7 @@ export default function Partners() {
                     <div className="font-bold text-slate-900 text-sm">
                       {t.author}
                     </div>
-                    <div className="text-emerald-700 text-xs">
+                    <div className="text-amber-700 text-xs">
                       {t.role} · {t.org}
                     </div>
                   </div>
@@ -437,7 +437,7 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Why Partner With Us
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -461,7 +461,7 @@ export default function Partners() {
                 key={i}
                 variants={fadeInUp}
                 whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-emerald-200 transition-all group"
+                className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-amber-200 transition-all group"
               >
                 <div
                   className={`w-12 h-12 rounded-xl bg-gradient-to-br ${b.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}
@@ -483,7 +483,7 @@ export default function Partners() {
       {/* ── PARTNERSHIP TIERS ─────────────────────────────────── */}
       <section
         id="become-partner"
-        className="py-20 bg-gradient-to-br from-slate-50 to-emerald-50"
+        className="py-20 bg-gradient-to-br from-slate-50 to-amber-50"
       >
         <div className="max-w-[95vw] mx-auto px-6">
           <motion.div
@@ -493,7 +493,7 @@ export default function Partners() {
             viewport={viewport}
             className="text-center mb-14"
           >
-            <span className="text-emerald-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
+            <span className="text-amber-700 font-semibold text-sm uppercase tracking-widest mb-3 block">
               Tiers & Pricing
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
@@ -539,14 +539,14 @@ export default function Partners() {
                         key={j}
                         className="flex items-start gap-2 text-sm text-slate-600"
                       >
-                        <CheckCircle className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
+                        <CheckCircle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                         {perk}
                       </li>
                     ))}
                   </ul>
                   <Link to="/contact">
                     <Button
-                      className={`w-full font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-slate-900"}`}
+                      className={`w-full font-bold rounded-xl ${tier.highlight ? "bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-amber-900" : "bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700 text-slate-900"}`}
                     >
                       Apply for {tier.name}
                       <ChevronRight className="ml-1 w-4 h-4" />
@@ -560,7 +560,7 @@ export default function Partners() {
       </section>
 
       {/* ── CONTACT CTA ───────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-r from-amber-600 via-teal-600 to-amber-700 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -589,7 +589,7 @@ export default function Partners() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/contact">
-                <Button className="bg-white text-emerald-700 hover:bg-emerald-50 font-black px-8 py-6 rounded-2xl text-lg shadow-2xl hover:scale-105 transition-all">
+                <Button className="bg-white text-amber-700 hover:bg-amber-50 font-black px-8 py-6 rounded-2xl text-lg shadow-2xl hover:scale-105 transition-all">
                   Start the Conversation
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>

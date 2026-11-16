@@ -134,7 +134,7 @@ export default function StreamRoyaleReview() {
                   value={weekInput}
                   placeholder={String(data?.period?.weekNumber ?? "")}
                   onChange={(event) => setWeekInput(event.target.value)}
-                  className="w-28 border-white/15 bg-black/20 text-white"
+                  className="w-28 border-white/15 bg-slate-900/20 text-white"
                 />
               </label>
               <label className="space-y-1 text-xs text-white/50">
@@ -146,7 +146,7 @@ export default function StreamRoyaleReview() {
                   value={yearInput}
                   placeholder={String(data?.period?.yearNumber ?? "")}
                   onChange={(event) => setYearInput(event.target.value)}
-                  className="w-28 border-white/15 bg-black/20 text-white"
+                  className="w-28 border-white/15 bg-slate-900/20 text-white"
                 />
               </label>
               <Button type="submit" className="bg-purple-700 hover:bg-purple-600">
@@ -181,7 +181,7 @@ export default function StreamRoyaleReview() {
               </Card>
               <Card className="border-white/10 bg-white/[0.04]">
                 <CardContent className="flex items-center gap-3 p-5">
-                  <DollarSign className="h-8 w-8 text-emerald-300" />
+                  <DollarSign className="h-8 w-8 text-amber-300" />
                   <div>
                     <p className="text-xs text-white/50">Weekly pool</p>
                     <p className="text-xl font-bold">{money(pool?.total)}</p>
@@ -310,7 +310,7 @@ export default function StreamRoyaleReview() {
                                 <Badge
                                   className={
                                     artist.qualifies
-                                      ? "bg-emerald-400/15 text-emerald-200"
+                                      ? "bg-amber-400/15 text-amber-200"
                                       : "bg-amber-400/15 text-amber-200"
                                   }
                                 >
@@ -326,7 +326,7 @@ export default function StreamRoyaleReview() {
                               <TableCell className="text-right">
                                 {Number(artist.weightedStreams).toFixed(2)}
                               </TableCell>
-                              <TableCell className="text-right font-semibold text-emerald-200">
+                              <TableCell className="text-right font-semibold text-amber-200">
                                 {earnings ? (
                                   <div>
                                     <div>{money(earnings.totalEarnings)}</div>
@@ -406,7 +406,7 @@ export default function StreamRoyaleReview() {
                                 <Badge
                                   className={
                                     event.isValid
-                                      ? "bg-emerald-400/15 text-emerald-200"
+                                      ? "bg-amber-400/15 text-amber-200"
                                       : "bg-amber-400/15 text-amber-200"
                                   }
                                 >

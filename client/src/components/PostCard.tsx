@@ -292,7 +292,7 @@ const PostCard: React.FC<PostCardProps> = ({
       )}
 
       {post.engagementScore && post.engagementScore > 0 && (
-        <div className="mb-4 flex items-center gap-1 text-xs font-medium text-emerald-600">
+        <div className="mb-4 flex items-center gap-1 text-xs font-medium text-amber-600">
           <TrendingUp className="h-3 w-3" />
           {post.engagementScore.toFixed(1)} engagement score
         </div>

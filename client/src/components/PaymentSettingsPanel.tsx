@@ -36,7 +36,7 @@ interface PlatformSetting {
 const SETTING_ICONS: Record<string, React.ReactNode> = {
   payment_paypal_enabled: <Wallet className="h-4 w-4 text-blue-400" />,
   payment_stripe_enabled: <CreditCard className="h-4 w-4 text-purple-400" />,
-  payment_interac_enabled: <Globe className="h-4 w-4 text-emerald-400" />,
+  payment_interac_enabled: <Globe className="h-4 w-4 text-amber-400" />,
   payment_crypto_enabled: <Bitcoin className="h-4 w-4 text-amber-400" />,
   payment_mobile_money_enabled: (
     <Smartphone className="h-4 w-4 text-orange-400" />
@@ -181,7 +181,7 @@ export function PaymentSettingsPanel() {
                       variant="outline"
                       className={
                         isTruthy(setting.setting_value)
-                          ? "border-emerald-500/50 text-emerald-300 text-[10px]"
+                          ? "border-amber-500/50 text-amber-200 text-[10px]"
                           : "border-slate-500/50 text-slate-500 text-[10px]"
                       }
                     >
@@ -333,7 +333,7 @@ export function PaymentSettingsPanel() {
                       key={f}
                       className="flex items-center gap-1.5 text-xs text-slate-400"
                     >
-                      <CheckCircle className="h-3 w-3 text-emerald-500" />
+                      <CheckCircle className="h-3 w-3 text-amber-500" />
                       {f}
                     </li>
                   ))}

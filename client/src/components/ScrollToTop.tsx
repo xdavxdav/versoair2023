@@ -51,7 +51,7 @@ export default function ScrollToTop() {
           whileTap={{ scale: 0.85 }}
           onClick={scrollToTop}
           data-cookie-clearance="bottom-right"
-          className={`fixed right-8 z-[9999] flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 border-emerald-400/40 bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 text-white transition-all duration-300 group backdrop-blur-md hover:border-emerald-300/60 hover:from-emerald-500/40 hover:to-emerald-600/40 hover:backdrop-blur-lg ${hasBottomNavigation ? "bottom-[7.5rem]" : "bottom-8"}`}
+          className={`fixed right-8 z-[9999] flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 border-amber-400/40 bg-gradient-to-br from-amber-500/30 to-amber-600/30 text-white transition-all duration-300 group backdrop-blur-md hover:border-amber-200/60 hover:from-amber-500/40 hover:to-amber-600/40 hover:backdrop-blur-lg ${hasBottomNavigation ? "bottom-[7.5rem]" : "bottom-8"}`}
           style={{
             boxShadow:
               "0 0 30px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.1)",
@@ -60,7 +60,7 @@ export default function ScrollToTop() {
         >
           {/* Pulsing glow effect */}
           <motion.div
-            className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400/40 to-emerald-500/40"
+            className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400/40 to-amber-500/40"
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.5, 0.8, 0.5],
@@ -84,7 +84,7 @@ export default function ScrollToTop() {
           </span>
 
           {/* Additional glow on hover */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-300/0 to-emerald-400/0 group-hover:from-emerald-300/30 group-hover:to-emerald-400/30 transition-all duration-300"></div>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-200/0 to-amber-400/0 group-hover:from-amber-200/30 group-hover:to-amber-400/30 transition-all duration-300"></div>
         </motion.button>
       )}
     </AnimatePresence>

@@ -550,7 +550,7 @@ export function UsersSection() {
   const StatusBadge = ({ active }: { active: boolean }) => (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-        active ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+        active ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
       }`}
     >
       {active ? (
@@ -720,7 +720,7 @@ export function UsersSection() {
                     {/* GeoAdmin */}
                     <td className="px-4 py-3">
                       {user.gateUsername ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                           <Shield className="h-3 w-3" />
                           {user.gateUsername}
                         </span>
@@ -850,7 +850,7 @@ export function UsersSection() {
                 <div>
                   <p className="text-xs text-slate-400 mb-1">GeoAdmin Access</p>
                   {viewingUser.gateUsername ? (
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700">
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-amber-700">
                       <Shield className="h-3 w-3" />
                       {viewingUser.gateUsername}
                     </span>

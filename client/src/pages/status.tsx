@@ -19,7 +19,7 @@ export default function SystemStatus() {
       {/* Status Dashboard */}
       <div className="max-w-[95vw] mx-auto px-4 py-16">
         {/* Overall Status */}
-        <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border border-emerald-500/30 p-8 rounded-xl mb-8">
+        <div className="bg-gradient-to-r from-amber-600/20 to-teal-600/20 border border-amber-500/30 p-8 rounded-xl mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">

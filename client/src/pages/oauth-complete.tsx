@@ -133,7 +133,7 @@ export default function OAuthComplete() {
 
           {status === "success" && credentials && (
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="h-8 w-8 text-white" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -193,7 +193,7 @@ export default function OAuthComplete() {
                   <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
                     Checkpoint
                   </span>
-                  <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
+                  <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
                     <Shield className="h-3 w-3" />
                     {credentials.checkpoint}
                   </span>
@@ -201,8 +201,8 @@ export default function OAuthComplete() {
               </div>
 
               {/* Live status indicator */}
-              <div className="flex items-center justify-center gap-2 text-sm text-emerald-600">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
+                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                 Redirecting to your dashboard…
               </div>
             </div>

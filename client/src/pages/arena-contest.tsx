@@ -252,8 +252,8 @@ function ArenaList() {
           size="sm"
           className={
             fromPage === "artist-portal"
-              ? "text-emerald-200 bg-emerald-500/30 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-              : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+              ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
+              : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
           }
           onClick={() => navigate("/artist-portal?from=arena")}
         >
@@ -634,8 +634,8 @@ function ArenaDetail({ contestId }: { contestId: number }) {
           size="sm"
           className={
             fromPage === "artist-portal"
-              ? "text-emerald-200 bg-emerald-500/30 border-2 border-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-emerald-400/30"
-              : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+              ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
+              : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
           }
           onClick={() => navigate("/artist-portal?from=arena")}
         >
@@ -899,7 +899,7 @@ function ArenaDetail({ contestId }: { contestId: number }) {
 
                             {/* Stats */}
                             <div className="grid grid-cols-2 gap-2 text-center mb-3">
-                              <div className="bg-black/20 rounded px-2 py-1">
+                              <div className="bg-slate-900/20 rounded px-2 py-1">
                                 <p className="text-lg font-bold text-fuchsia-300">
                                   {entry.vote_count}
                                 </p>
@@ -907,7 +907,7 @@ function ArenaDetail({ contestId }: { contestId: number }) {
                                   Votes
                                 </p>
                               </div>
-                              <div className="bg-black/20 rounded px-2 py-1">
+                              <div className="bg-slate-900/20 rounded px-2 py-1">
                                 <p className="text-lg font-bold text-purple-300">
                                   {entry.streams}
                                 </p>
@@ -986,7 +986,7 @@ function ArenaDetail({ contestId }: { contestId: number }) {
               {myVotes.map((v: MyVote) => (
                 <div
                   key={v.artist_profile_id}
-                  className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2"
+                  className="flex items-center justify-between bg-slate-900/20 rounded-lg px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-fuchsia-500/30 flex items-center justify-center text-white text-xs">

@@ -64,10 +64,10 @@ const CHANNEL_CONFIG: Record<
     label: "Reservation Tracking",
     description: "Track your booking status and updates in real-time",
     icon: "📋",
-    gradient: "from-emerald-600 to-emerald-500",
-    accentClass: "text-emerald-600",
-    bgClass: "bg-emerald-50",
-    borderClass: "border-emerald-200",
+    gradient: "from-amber-600 to-amber-500",
+    accentClass: "text-amber-600",
+    bgClass: "bg-amber-50",
+    borderClass: "border-amber-100",
   },
   geoadmin_reports: {
     label: "Market Reports",
@@ -264,7 +264,7 @@ export default function EmailSubscribeCTA({
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-gray-900">{config.label}</h3>
               {subscribed && currentSub?.isActive && (
-                <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-emerald-700 bg-emerald-100 rounded-full">
+                <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
                   <Check className="w-3 h-3" /> Active
                 </span>
               )}

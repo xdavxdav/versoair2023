@@ -501,7 +501,7 @@ const ResponsiveFooter = ({
             from verified program data before public promotion */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-amber-300 to-amber-500 bg-clip-text text-transparent">
               —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
@@ -509,7 +509,7 @@ const ResponsiveFooter = ({
             </p>
           </div>
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-amber-300 to-amber-500 bg-clip-text text-transparent">
               —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
@@ -517,7 +517,7 @@ const ResponsiveFooter = ({
             </p>
           </div>
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-amber-300 to-amber-500 bg-clip-text text-transparent">
               —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
@@ -525,7 +525,7 @@ const ResponsiveFooter = ({
             </p>
           </div>
           <div className="text-center">
-            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+            <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-b from-amber-300 to-amber-500 bg-clip-text text-transparent">
               —
             </p>
             <p className="text-gray-500 text-[11px] uppercase tracking-[0.15em] mt-2">
@@ -541,7 +541,7 @@ const ResponsiveFooter = ({
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <span className="text-white font-bold text-xs tracking-tight">
                   VH
                 </span>
@@ -568,7 +568,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/programs"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Initiatives culturelles
                 </Link>
@@ -576,7 +576,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/artisan"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Création et savoir-faire
                 </Link>
@@ -584,7 +584,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/programs"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Échanges communautaires
                 </Link>
@@ -592,7 +592,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/commerce"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors notranslate"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors notranslate"
                 >
                   Arts et artisanat
                 </Link>
@@ -600,7 +600,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/programs"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Projets à venir
                 </Link>
@@ -617,7 +617,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/support"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Collaborations
                 </Link>
@@ -625,7 +625,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/support"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Participation
                 </Link>
@@ -633,7 +633,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/support"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Partenariats
                 </Link>
@@ -641,7 +641,7 @@ const ResponsiveFooter = ({
               <li>
                 <Link
                   to="/support"
-                  className="text-gray-400 hover:text-emerald-400 text-sm transition-colors"
+                  className="text-gray-400 hover:text-amber-400 text-sm transition-colors"
                 >
                   Nouvelles de lancement
                 </Link>
@@ -650,7 +650,7 @@ const ResponsiveFooter = ({
                 <li>
                   <Link
                     to="/geo-admin"
-                    className="text-emerald-400 text-sm inline-flex items-center gap-1.5"
+                    className="text-amber-400 text-sm inline-flex items-center gap-1.5"
                   >
                     <Database size={13} /> Geo Admin
                   </Link>
@@ -662,7 +662,7 @@ const ResponsiveFooter = ({
                     className="text-gray-600 text-sm inline-flex items-center gap-1.5 group"
                   >
                     <Lock size={12} /> Geo Admin
-                    <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
                       Se connecter
                     </span>
                   </Link>
@@ -678,15 +678,15 @@ const ResponsiveFooter = ({
             </h4>
             <ul className="space-y-3 mb-6">
               <li className="flex items-center gap-2 text-gray-400 text-sm">
-                <Phone size={14} className="text-emerald-500/50" />
+                <Phone size={14} className="text-amber-500/50" />
                 {countryMeta.phone}
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
-                <Mail size={14} className="text-emerald-500/50" />
+                <Mail size={14} className="text-amber-500/50" />
                 support@versoair.com
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
-                <GlobeIcon size={14} className="text-emerald-500/50" />
+                <GlobeIcon size={14} className="text-amber-500/50" />
                 {countryMeta.flag} {countryMeta.name}
               </li>
             </ul>
@@ -698,9 +698,9 @@ const ResponsiveFooter = ({
               <input
                 type="email"
                 placeholder="Votre email"
-                className="flex-1 min-w-0 px-3 py-2 rounded-l-lg bg-white/[0.03] border border-slate-800 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/40"
+                className="flex-1 min-w-0 px-3 py-2 rounded-l-lg bg-white/[0.03] border border-slate-800 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-amber-500/40"
               />
-              <button className="bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 rounded-r-lg text-sm font-medium hover:from-emerald-400 hover:to-teal-500 transition-all">
+              <button className="bg-gradient-to-r from-amber-500 to-teal-600 px-4 py-2 rounded-r-lg text-sm font-medium hover:from-amber-400 hover:to-teal-500 transition-all">
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -2117,7 +2117,7 @@ export default function Home() {
                     }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       searchMode === "classic"
-                        ? "bg-emerald-500 text-white shadow-lg"
+                        ? "bg-amber-500 text-white shadow-lg"
                         : "text-slate-300 hover:text-white"
                     }`}
                   >
@@ -2149,13 +2149,13 @@ export default function Home() {
                     className={`relative bg-slate-800/90 rounded-2xl md:rounded-3xl border transition-colors group ${
                       searchMode === "ai"
                         ? "border-purple-500/40 hover:border-purple-400/60"
-                        : "border-emerald-500/40 hover:border-emerald-400/60"
+                        : "border-amber-500/40 hover:border-amber-400/60"
                     }`}
                   >
                     {searchMode === "ai" ? (
                       <Sparkles className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
                     ) : (
-                      <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-emerald-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
+                      <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-amber-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
                     )}
                     <input
                       type="text"
@@ -2175,7 +2175,7 @@ export default function Home() {
                           ? activeAiSearchPlaceholder
                           : activeClassicSearchPlaceholder
                       }
-                      className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
+                      className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-amber-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
                     />
                     {isAiSearching && searchMode === "ai" && (
                       <Loader2 className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5 animate-spin" />
@@ -2184,14 +2184,14 @@ export default function Home() {
                 </MagneticInput>
                 {searchMode === "classic" && (
                   <MagneticInput className="flex-1">
-                    <div className="relative bg-slate-800/90 rounded-2xl md:rounded-3xl border border-emerald-500/40 hover:border-emerald-400/60 transition-colors group">
-                      <MapPin className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-emerald-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
+                    <div className="relative bg-slate-800/90 rounded-2xl md:rounded-3xl border border-amber-500/40 hover:border-amber-400/60 transition-colors group">
+                      <MapPin className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-amber-400 w-5 h-5 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
                       <input
                         type="text"
                         value={locationQuery}
                         onChange={(e) => setLocationQuery(e.target.value)}
                         placeholder="Entrer un lieu..."
-                        className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-emerald-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
+                        className="w-full pl-12 md:pl-20 pr-6 md:pr-8 py-4 md:py-6 bg-transparent border-none focus:outline-none text-white placeholder-amber-100/60 text-base md:text-xl font-medium rounded-2xl md:rounded-3xl"
                       />
                     </div>
                   </MagneticInput>
@@ -2242,7 +2242,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`mt-3 rounded-xl border px-4 py-3 text-sm md:text-base ${
                     (aiResults.results?.totalMatches || 0) > 0
-                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                      ? "border-amber-400/30 bg-amber-500/10 text-amber-200"
                       : "border-amber-400/30 bg-amber-500/10 text-amber-100"
                   }`}
                 >
@@ -2322,7 +2322,7 @@ export default function Home() {
                 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setFiltersVisible(!filtersVisible)}
-                className="flex items-center gap-3 md:gap-4 px-8 md:px-12 py-4 md:py-6 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-2xl text-white font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all border border-white/20 text-base md:text-lg"
+                className="flex items-center gap-3 md:gap-4 px-8 md:px-12 py-4 md:py-6 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full shadow-2xl text-white font-bold hover:from-amber-600 hover:to-amber-700 transition-all border border-white/20 text-base md:text-lg"
               >
                 <SlidersHorizontal className="w-5 h-5 md:w-6 md:h-6" />
                 <span>Filtre avancé</span>
@@ -2350,12 +2350,12 @@ export default function Home() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="flex items-center gap-2 md:gap-3 bg-emerald-100 text-emerald-800 px-4 py-2 md:px-5 md:py-2.5 rounded-full text-sm md:text-base font-medium"
+                    className="flex items-center gap-2 md:gap-3 bg-amber-100 text-amber-900 px-4 py-2 md:px-5 md:py-2.5 rounded-full text-sm md:text-base font-medium"
                   >
                     {filter.label}
                     <button
                       onClick={() => removeFilter(filter.id)}
-                      className="hover:text-emerald-600"
+                      className="hover:text-amber-600"
                     >
                       <XCircle size={16} className="md:w-5 md:h-5" />
                     </button>
@@ -2380,7 +2380,7 @@ export default function Home() {
                 transition={{ duration: 0.4, ease: "easeInOut" }}
                 className="max-w-[95vw] mx-auto mb-8 md:mb-12 overflow-hidden"
               >
-                <div className="bg-gradient-to-br from-white to-emerald-50 rounded-3xl md:rounded-[2rem] p-6 md:p-10 shadow-2xl border border-emerald-200">
+                <div className="bg-gradient-to-br from-white to-amber-50 rounded-3xl md:rounded-[2rem] p-6 md:p-10 shadow-2xl border border-amber-200">
                   {searchMode === "ai" ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                       <div>
@@ -2388,7 +2388,7 @@ export default function Home() {
                           Langue
                         </label>
                         <select
-                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                           value={effectiveAiLanguage}
                           onChange={(e) => {
                             const next = e.target.value;
@@ -2413,7 +2413,7 @@ export default function Home() {
                           Service
                         </label>
                         <select
-                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                           onChange={(e) =>
                             e.target.value &&
                             addFilter(
@@ -2447,7 +2447,7 @@ export default function Home() {
                           Emplacement
                         </label>
                         <select
-                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                           onChange={(e) =>
                             e.target.value &&
                             addFilter(
@@ -2476,7 +2476,7 @@ export default function Home() {
                           Urgence
                         </label>
                         <select
-                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                           onChange={(e) =>
                             e.target.value &&
                             addFilter(
@@ -2504,7 +2504,7 @@ export default function Home() {
                           Action
                         </label>
                         <select
-                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                           onChange={(e) =>
                             e.target.value &&
                             addFilter(
@@ -2542,7 +2542,7 @@ export default function Home() {
                         <input
                           type="text"
                           placeholder="plombier, fuite, tuyau, réparation"
-                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                          className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                           onChange={(e) => {
                             const value = e.target.value.trim();
                             if (!value) return;
@@ -2580,7 +2580,7 @@ export default function Home() {
                             {section.label}
                           </label>
                           <select
-                            className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-base md:text-lg"
+                            className="w-full p-3 md:p-4 border border-gray-300 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white text-base md:text-lg"
                             onChange={(e) =>
                               e.target.value &&
                               addFilter(
@@ -2612,7 +2612,7 @@ export default function Home() {
                     <button
                       onClick={getUserLocation}
                       disabled={isGettingLocation}
-                      className="flex items-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl hover:bg-emerald-700 transition-colors disabled:opacity-50 text-sm md:text-base"
+                      className="flex items-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 bg-amber-600 text-white rounded-xl md:rounded-2xl hover:bg-amber-700 transition-colors disabled:opacity-50 text-sm md:text-base"
                     >
                       {isGettingLocation ? (
                         <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
@@ -2646,7 +2646,7 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 className="text-center py-16 md:py-24"
               >
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl md:rounded-[2rem] p-10 md:p-16 max-w-lg md:max-w-xl mx-auto shadow-2xl border border-emerald-200">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl md:rounded-[2rem] p-10 md:p-16 max-w-lg md:max-w-xl mx-auto shadow-2xl border border-amber-200">
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{
@@ -2657,13 +2657,13 @@ export default function Home() {
                     className="mb-8 md:mb-10"
                   >
                     <div className="relative w-20 h-20 md:w-28 md:h-28 mx-auto">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full opacity-30" />
-                      <div className="relative w-20 h-20 md:w-28 md:h-28 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center shadow-2xl">
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full opacity-30" />
+                      <div className="relative w-20 h-20 md:w-28 md:h-28 bg-gradient-to-r from-amber-600 to-amber-700 rounded-full flex items-center justify-center shadow-2xl">
                         <Search className="h-10 w-10 md:h-14 md:w-14 text-white" />
                       </div>
                     </div>
                   </motion.div>
-                  <h3 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent mb-3 md:mb-4">
+                  <h3 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-transparent mb-3 md:mb-4">
                     Recherche dans la base PostgreSQL...
                   </h3>
                   <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg">
@@ -2682,7 +2682,7 @@ export default function Home() {
                   className="mb-8 md:mb-12"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 md:mb-4">
-                    <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+                    <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 bg-clip-text text-transparent">
                       🎨 Résultats des communautés artisanales
                     </h3>
                     {databaseConnected === false && (
@@ -2741,7 +2741,7 @@ export default function Home() {
                             }
                             className="business-card bg-white rounded-2xl md:rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100"
                           >
-                            <div className="h-2 bg-gradient-to-r from-emerald-500 to-emerald-600" />
+                            <div className="h-2 bg-gradient-to-r from-amber-500 to-amber-600" />
                             <div className="p-6 md:p-8">
                               <div className="flex items-start justify-between mb-4 md:mb-6">
                                 <div className="flex-1">
@@ -2749,7 +2749,7 @@ export default function Home() {
                                     {business.title}
                                   </h4>
                                   <div className="flex items-center gap-2 md:gap-3 text-gray-600">
-                                    <MapPin className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+                                    <MapPin className="h-4 w-4 md:h-5 md:w-5 text-amber-500" />
                                     <span className="text-sm md:text-base capitalize font-medium">
                                       {business.location}
                                     </span>
@@ -2764,7 +2764,7 @@ export default function Home() {
                               </div>
 
                               {business.distance && (
-                                <div className="inline-flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full text-sm font-bold mb-4 md:mb-6 shadow-lg">
+                                <div className="inline-flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-green-500 to-amber-600 text-white rounded-full text-sm font-bold mb-4 md:mb-6 shadow-lg">
                                   <Navigation className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
                                   {business.distance.toFixed(1)} km
                                 </div>
@@ -2776,7 +2776,7 @@ export default function Home() {
 
                               <div className="flex flex-col pt-4 md:pt-6 border-t border-gray-100 gap-3">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="max-w-full px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-800 rounded-full text-sm font-bold capitalize break-words">
+                                  <span className="max-w-full px-3 md:px-5 py-1.5 md:py-2.5 bg-gradient-to-r from-amber-100 to-amber-50 text-amber-900 rounded-full text-sm font-bold capitalize break-words">
                                     {business.category}
                                   </span>
                                   {business.tags &&
@@ -2798,7 +2798,7 @@ export default function Home() {
                                 </div>
                                 <Link
                                   to={`/business/${business.id}`}
-                                  className="self-end text-emerald-600 hover:text-emerald-700 text-sm md:text-base font-bold flex items-center gap-2"
+                                  className="self-end text-amber-600 hover:text-amber-700 text-sm md:text-base font-bold flex items-center gap-2"
                                 >
                                   <span>Détails</span>
                                   <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
@@ -2858,9 +2858,9 @@ export default function Home() {
                             boxShadow: "0 20px 40px rgba(16, 185, 129, 0.4)",
                           }}
                           whileTap={{ scale: 0.95 }}
-                          className="group relative px-10 md:px-14 py-5 md:py-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 text-lg md:text-xl flex items-center justify-center gap-4 mx-auto overflow-hidden"
+                          className="group relative px-10 md:px-14 py-5 md:py-6 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-white rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 text-lg md:text-xl flex items-center justify-center gap-4 mx-auto overflow-hidden"
                         >
-                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                           <div className="relative z-10 flex items-center gap-3 md:gap-4">
                             <Database className="w-6 h-6 md:w-7 md:h-7" />
                             <span className="text-lg md:text-xl font-bold">
@@ -2868,7 +2868,7 @@ export default function Home() {
                             </span>
                             <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform duration-300" />
                           </div>
-                          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full blur-md opacity-30 group-hover:opacity-70 transition-opacity duration-300"></div>
+                          <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full blur-md opacity-30 group-hover:opacity-70 transition-opacity duration-300"></div>
                         </motion.button>
                       </Link>
                     </div>
@@ -2887,8 +2887,8 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 className="text-center py-16 md:py-24"
               >
-                <div className="bg-gradient-to-br from-white to-emerald-50 rounded-3xl md:rounded-[2rem] p-10 md:p-16 max-w-lg md:max-w-2xl mx-auto border-2 border-dashed border-emerald-200">
-                  <Search className="h-20 w-20 md:h-28 md:w-28 mx-auto mb-6 md:mb-8 text-emerald-300" />
+                <div className="bg-gradient-to-br from-white to-amber-50 rounded-3xl md:rounded-[2rem] p-10 md:p-16 max-w-lg md:max-w-2xl mx-auto border-2 border-dashed border-amber-200">
+                  <Search className="h-20 w-20 md:h-28 md:w-28 mx-auto mb-6 md:mb-8 text-amber-300" />
                   <h3 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4 md:mb-6">
                     Aucun résultat
                   </h3>
@@ -2897,7 +2897,7 @@ export default function Home() {
                   </p>
                   <button
                     onClick={clearAllFilters}
-                    className="px-8 md:px-10 py-4 md:py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl font-bold text-base md:text-lg shadow-xl"
+                    className="px-8 md:px-10 py-4 md:py-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-2xl font-bold text-base md:text-lg shadow-xl"
                   >
                     Tout effacer et recommencer
                   </button>
@@ -2906,10 +2906,10 @@ export default function Home() {
             )}
           </div>
 
-          <div className="mt-12 md:mt-16 rounded-[2rem] border border-emerald-100 bg-white/70 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-6 md:p-8">
+          <div className="mt-12 md:mt-16 rounded-[2rem] border border-amber-100 bg-white/70 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-6 md:p-8">
             <div className="mb-5 flex flex-col gap-2 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700">
                   Explorer <span className="notranslate">Verso Air</span>
                 </p>
                 <h2 className="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">
@@ -2930,11 +2930,11 @@ export default function Home() {
                   desc: "Artisans qualifiés",
                   href: "/artisans",
                   mood: {
-                    border: "border-emerald-200/80 hover:border-emerald-300",
-                    icon: "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:rotate-[-6deg]",
-                    arrow: "group-hover:text-emerald-600",
+                    border: "border-amber-200/80 hover:border-amber-300",
+                    icon: "bg-amber-50 text-amber-700 group-hover:bg-amber-600 group-hover:rotate-[-6deg]",
+                    arrow: "group-hover:text-amber-600",
                     shadow: "hover:shadow-[0_14px_30px_rgba(16,185,129,0.14)]",
-                    focus: "focus-within:ring-emerald-400",
+                    focus: "focus-within:ring-amber-400",
                   },
                 },
                 {
@@ -3064,7 +3064,7 @@ export default function Home() {
                 touchAction: "pan-y",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900" />
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
@@ -3094,7 +3094,7 @@ export default function Home() {
                       className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-amber-300 transition-colors" />
                         Notre impact {countryMeta.nameIn} :
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
@@ -3147,9 +3147,9 @@ export default function Home() {
                             transition={{ delay: idx * 0.05 }}
                             className="flex items-center gap-2"
                           >
-                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-300 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-300 rounded-full flex-shrink-0"></div>
                             <span className="text-white/90 text-xs sm:text-sm">
-                              <span className="font-bold text-emerald-300">
+                              <span className="font-bold text-amber-300">
                                 {item.stat}
                               </span>{" "}
                               {item.label}
@@ -3185,7 +3185,7 @@ export default function Home() {
                             className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
                           >
                             <item.icon
-                              className="mx-auto mb-0.5 sm:mb-1 text-emerald-300"
+                              className="mx-auto mb-0.5 sm:mb-1 text-amber-300"
                               size={16}
                             />
                             <span className="text-white text-[10px] sm:text-xs md:text-sm font-semibold">
@@ -3196,7 +3196,7 @@ export default function Home() {
                       </div>
                       <button
                         onClick={() => setIsCulturalModalOpen(true)}
-                        className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-amber-400 to-amber-300 text-amber-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-amber-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         <Sparkles size={14} className="inline mr-1 sm:mr-2" />
                         Explorer les programmes
@@ -3206,10 +3206,10 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/20 to-emerald-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/20 to-amber-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3
-                      className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors"
+                      className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors"
                       style={{ fontFamily: "'Alegreya', Georgia, serif" }}
                     >
                       Rejoignez notre mouvement
@@ -3223,7 +3223,7 @@ export default function Home() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="bg-white text-emerald-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-emerald-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
+                          className="bg-white text-amber-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
                           En savoir plus
                         </motion.button>
@@ -3407,7 +3407,7 @@ export default function Home() {
                 touchAction: "pan-y",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800" />
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900" />
               <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top_right,_rgba(134,239,172,0.4)_0%,_transparent_60%),radial-gradient(ellipse_at_bottom_left,_rgba(110,231,183,0.4)_0%,_transparent_60%)]" />
               <div className="relative z-10 w-full h-full flex items-start sm:items-center justify-center pt-20 sm:pt-0 px-3 sm:px-4 lg:p-8">
                 <div className="max-w-[95vw] w-full flex flex-col items-center justify-center max-h-full">
@@ -3434,7 +3434,7 @@ export default function Home() {
                       className="bg-white/15 rounded-xl p-2 sm:p-3 md:p-6 border border-white/20 hover:border-white/40 transition-all cursor-pointer group"
                     >
                       <h3 className="text-xs sm:text-sm md:text-xl font-bold text-white mb-1 sm:mb-2 flex items-center gap-1 sm:gap-2">
-                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-emerald-300 transition-colors" />
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:text-amber-300 transition-colors" />
                         Croissance communautaire
                       </h3>
                       <div className="space-y-1 sm:space-y-2">
@@ -3472,9 +3472,9 @@ export default function Home() {
                             transition={{ delay: idx * 0.05 }}
                             className="flex items-center gap-2"
                           >
-                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-300 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-300 rounded-full flex-shrink-0"></div>
                             <span className="text-white/90 text-xs sm:text-sm">
-                              <span className="font-bold text-emerald-300">
+                              <span className="font-bold text-amber-300">
                                 {item.stat}
                               </span>{" "}
                               {item.label}
@@ -3542,20 +3542,20 @@ export default function Home() {
                             className="text-center p-1.5 sm:p-2 md:p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all cursor-pointer"
                           >
                             <item.icon
-                              className="mx-auto mb-0.5 sm:mb-1 text-emerald-300"
+                              className="mx-auto mb-0.5 sm:mb-1 text-amber-300"
                               size={16}
                             />
                             <span className="text-white text-[10px] sm:text-xs md:text-sm font-semibold block">
                               {item.label}
                             </span>
-                            <span className="text-emerald-300 font-bold text-xs sm:text-sm md:text-base">
+                            <span className="text-amber-300 font-bold text-xs sm:text-sm md:text-base">
                               {item.value}
                             </span>
                           </motion.div>
                         ))}
                       </div>
                       <Link to="/impact">
-                        <button className="w-full bg-gradient-to-r from-emerald-400 to-emerald-300 text-emerald-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-emerald-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <button className="w-full bg-gradient-to-r from-amber-400 to-amber-300 text-amber-900 py-1.5 sm:py-2 rounded-lg font-bold hover:from-white hover:to-amber-100 transition-all duration-300 text-[10px] sm:text-xs md:text-sm shadow-lg hover:shadow-xl transform hover:scale-105">
                           <TrendingUp
                             size={14}
                             className="inline mr-1 sm:mr-2"
@@ -3568,10 +3568,10 @@ export default function Home() {
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="bg-gradient-to-r from-white/20 to-emerald-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
+                    className="bg-gradient-to-r from-white/20 to-amber-100/20 rounded-xl p-2 sm:p-3 md:p-6 text-center border border-white/20 w-full max-w-2xl hover:border-white/40 transition-all cursor-pointer group"
                   >
                     <h3
-                      className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors"
+                      className="text-base sm:text-xl md:text-3xl font-bold text-white mb-1 group-hover:text-amber-200 transition-colors"
                       style={{ fontFamily: "'Alegreya', Georgia, serif" }}
                     >
                       Voir notre impact en action
@@ -3585,7 +3585,7 @@ export default function Home() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="bg-white text-emerald-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-emerald-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
+                          className="bg-white text-amber-700 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-full font-bold hover:bg-amber-50 transition-all duration-300 text-xs sm:text-sm shadow-md hover:shadow-lg"
                         >
                           Voir l'impact
                         </motion.button>
@@ -3777,7 +3777,7 @@ export default function Home() {
       <section className="py-12 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
-            <span className="text-emerald-400 font-semibold text-sm md:text-lg mb-2 block">
+            <span className="text-amber-400 font-semibold text-sm md:text-lg mb-2 block">
               Rencontrez nos artisans
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
@@ -3806,7 +3806,7 @@ export default function Home() {
                     color: [
                       "from-indigo-500 to-purple-600",
                       "from-amber-500 to-orange-600",
-                      "from-emerald-500 to-teal-600",
+                      "from-amber-500 to-teal-600",
                     ][homeStats.featuredArtisans.indexOf(a) % 3],
                   };
                 }).map((artisan, i) => (
@@ -3817,7 +3817,7 @@ export default function Home() {
                 transition={{ delay: i * 0.2 }}
                 viewport={{ once: true, margin: "-50px" }}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl md:rounded-3xl overflow-hidden border border-slate-700/50 hover:border-emerald-500/60 transition-all shadow-lg hover:shadow-2xl hover:shadow-emerald-500/10 group"
+                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl md:rounded-3xl overflow-hidden border border-slate-700/50 hover:border-amber-500/60 transition-all shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 group"
               >
                 <div
                   className={`bg-gradient-to-r ${artisan.color} p-4 md:p-6 flex items-center gap-3 md:gap-4`}
@@ -3837,16 +3837,16 @@ export default function Home() {
                 <div className="p-4 md:p-6">
                   <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
                     <div className="flex items-center gap-2 text-gray-300 text-sm md:text-base">
-                      <Palette className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" />
+                      <Palette className="w-3 h-3 md:w-4 md:h-4 text-amber-400" />
                       <span>{artisan.specialty}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-300 text-sm md:text-base">
-                      <MapPin className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" />
+                      <MapPin className="w-3 h-3 md:w-4 md:h-4 text-amber-400" />
                       <span>{artisan.location}</span>
                     </div>
                   </div>
                   <Link to="/artisans">
-                    <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-1 md:gap-2 text-sm md:text-base group-hover:shadow-lg group-hover:shadow-emerald-500/30">
+                    <button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-amber-600 hover:to-amber-700 transition-all flex items-center justify-center gap-1 md:gap-2 text-sm md:text-base group-hover:shadow-lg group-hover:shadow-amber-500/30">
                       <ExternalLink className="w-4 h-4 md:w-5 md:h-5" />
                       Voir le profil
                     </button>
@@ -4228,14 +4228,14 @@ export default function Home() {
       </ShowcaseToggle>
 
       <SponsorsSection />
-      <section className="py-12 md:py-20 bg-gradient-to-br from-emerald-50 to-white">
+      <section className="py-12 md:py-20 bg-gradient-to-br from-amber-50 to-white">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-16">
             <motion.span
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-emerald-600 font-semibold text-sm md:text-lg mb-2 block"
+              className="text-amber-600 font-semibold text-sm md:text-lg mb-2 block"
             >
               Devenez bénévole
             </motion.span>
@@ -4269,7 +4269,7 @@ export default function Home() {
                 icon: Users,
                 volunteers: 120,
                 capacity: 150,
-                color: "from-emerald-600 to-teal-700",
+                color: "from-amber-600 to-teal-700",
                 tag: "Terrain",
               },
               {
@@ -4310,13 +4310,13 @@ export default function Home() {
                     <span className="text-gray-600 font-medium text-sm md:text-base">
                       Bénévoles actifs
                     </span>
-                    <span className="text-xl md:text-2xl font-bold text-emerald-600">
+                    <span className="text-xl md:text-2xl font-bold text-amber-600">
                       {opportunity.volunteers}
                     </span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-700"
+                      className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-700"
                       style={{
                         width: `${(opportunity.volunteers / opportunity.capacity) * 100}%`,
                       }}
@@ -4327,7 +4327,7 @@ export default function Home() {
                     pourvues
                   </p>
                   <Link to="/get-involved">
-                    <button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md md:shadow-lg text-sm md:text-base group-hover:shadow-emerald-500/30">
+                    <button className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-2 md:py-3 rounded-lg md:rounded-xl font-bold hover:from-amber-700 hover:to-amber-900 transition-all shadow-md md:shadow-lg text-sm md:text-base group-hover:shadow-amber-500/30">
                       Postuler
                     </button>
                   </Link>

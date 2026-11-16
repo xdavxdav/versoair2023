@@ -239,7 +239,7 @@ export default function VersoAirCardPanel() {
               points
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-lg p-3 border border-green-500/20">
+          <div className="bg-gradient-to-br from-green-500/10 to-amber-500/10 rounded-lg p-3 border border-green-500/20">
             <div className="text-[9px] text-green-500/70 font-mono font-bold mb-1">
               MULTIPLIER
             </div>
@@ -474,7 +474,7 @@ export default function VersoAirCardPanel() {
 
                   {/* Revealed full card details (PAN + CVV) */}
                   {isRevealed && revealedCard && (
-                    <div className="mb-3 p-3 bg-black/40 rounded-lg border border-cyan-500/30">
+                    <div className="mb-3 p-3 bg-slate-900/40 rounded-lg border border-cyan-500/30">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[9px] text-cyan-500 font-mono font-bold">
                           🔐 SECURE CARD DETAILS

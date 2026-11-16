@@ -254,7 +254,7 @@ export default function LibraryPage() {
                         ))}
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
                       <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
                         <Play className="w-4 h-4 text-black ml-0.5" />
                       </div>
@@ -504,7 +504,7 @@ export default function LibraryPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div

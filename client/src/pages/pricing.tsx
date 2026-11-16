@@ -47,7 +47,7 @@ export default function Pricing() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-12 sm:py-16">
         <Link
           href="/geo-admin"
-          className="mb-5 inline-flex w-fit items-center gap-2 rounded-md text-sm font-semibold text-emerald-800 hover:text-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+          className="mb-5 inline-flex w-fit items-center gap-2 rounded-md text-sm font-semibold text-amber-900 hover:text-amber-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to GeoAdmin
@@ -55,7 +55,7 @@ export default function Pricing() {
         <div className="grid min-w-0 gap-7">
           <GeoAdminPromoCard />
           <section>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-amber-900">
               Annual plan reference prices
             </p>
             <h1 className="mb-4 text-4xl font-bold md:text-5xl">
@@ -77,13 +77,13 @@ export default function Pricing() {
                   }}
                   className={`rounded-xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                     selectedTier === tier
-                      ? "border-emerald-700 ring-1 ring-emerald-700"
+                      ? "border-amber-700 ring-1 ring-amber-700"
                       : "border-slate-200"
                   }`}
                 >
                   <span className="block font-semibold">{GEOADMIN_OFFER_NAMES[tier]}</span>
                   <span
-                    className="mt-1 block text-lg font-bold text-emerald-800"
+                    className="mt-1 block text-lg font-bold text-amber-900"
                   >
                     {formatAnnualPrice(tier)}
                     {GEOADMIN_OFFER_PRICES_XOF[tier] !== null &&
@@ -120,7 +120,7 @@ export default function Pricing() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
                 onClick={() => setDetailsOpen(true)}
-                className="bg-emerald-800 text-white hover:bg-emerald-900"
+                className="bg-amber-900 text-white hover:bg-amber-900"
               >
                 Learn more and customize
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -132,7 +132,7 @@ export default function Pricing() {
 
         <section className="mt-14" aria-labelledby="plan-inclusions-heading">
           <div className="mx-auto mb-7 max-w-3xl text-center">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-800">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-900">
               Clear plan comparison
             </p>
             <h2
@@ -169,7 +169,7 @@ export default function Pricing() {
                       setSelectedTier(tier);
                       setDetailsOpen(true);
                     }}
-                    className="mt-6 inline-flex items-center gap-2 font-semibold text-emerald-800 hover:text-emerald-950"
+                    className="mt-6 inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-950"
                   >
                     <span>Discuss</span>
                     <span>{GEOADMIN_OFFER_NAMES[tier]}</span>

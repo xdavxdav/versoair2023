@@ -767,12 +767,12 @@ export default function Logement() {
 
       {/* ─── Premium CTA: Immobilier Portal ──────────────────────────── */}
       <div className="max-w-[95vw] mx-auto px-4 pb-12">
-        <Card className="bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50 border-emerald-500/20 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <Card className="bg-gradient-to-r from-amber-50 via-teal-50 to-amber-50 border-amber-500/20 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="p-8 relative">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-shrink-0 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20">
-                <Home className="h-10 w-10 text-emerald-700" />
+              <div className="flex-shrink-0 p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-teal-500/20 border border-amber-500/20">
+                <Home className="h-10 w-10 text-amber-700" />
               </div>
               <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
@@ -791,7 +791,7 @@ export default function Logement() {
                 </p>
               </div>
               <a href="/geo-admin/immobilier">
-                <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-slate-900 px-8 py-3 gap-2 whitespace-nowrap">
+                <Button className="bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700 text-slate-900 px-8 py-3 gap-2 whitespace-nowrap">
                   <Sparkles className="h-4 w-4" />
                   Portail Immobilier →
                 </Button>

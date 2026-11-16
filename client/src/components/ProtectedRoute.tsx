@@ -102,7 +102,7 @@ export default function ProtectedRoute({
           <button
             type="button"
             onClick={() => restoreAuth()}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-700"
           >
             <RefreshCw className="h-4 w-4" /> Retry
           </button>

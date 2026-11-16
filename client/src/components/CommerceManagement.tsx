@@ -348,7 +348,7 @@ export function CommerceManagement({ categories }: { categories: any[] }) {
         </div>
         <Button
           onClick={handleAddBusiness}
-          className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+          className="gap-2 bg-gradient-to-r from-green-500 to-amber-600 hover:from-green-600 hover:to-amber-700"
         >
           <Plus className="h-4 w-4" />
           Add Commerce Business

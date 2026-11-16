@@ -99,10 +99,10 @@ export default function EventDetailPage() {
     );
 
   return (
-    <main className="min-h-screen bg-emerald-50/30 px-4 py-12">
+    <main className="min-h-screen bg-amber-50/30 px-4 py-12">
       <Card className="mx-auto max-w-3xl border-slate-200">
         <CardHeader>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600">
             {event.event_type}
           </p>
           <CardTitle className="text-3xl">{event.title}</CardTitle>
@@ -113,12 +113,12 @@ export default function EventDetailPage() {
           </p>
           <div className="grid gap-3 text-sm text-slate-600">
             <span className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-emerald-600" />
+              <CalendarDays className="h-4 w-4 text-amber-600" />
               {new Date(event.starts_at).toLocaleString()}
             </span>
             {(event.venue || event.city) && (
               <span className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-emerald-600" />
+                <MapPin className="h-4 w-4 text-amber-600" />
                 {[event.venue, event.city].filter(Boolean).join(" · ")}
               </span>
             )}
@@ -136,8 +136,8 @@ export default function EventDetailPage() {
                 disabled={rsvpLoading}
                 className={
                   attending
-                    ? "bg-emerald-700"
-                    : "bg-emerald-600 hover:bg-emerald-700"
+                    ? "bg-amber-700"
+                    : "bg-amber-600 hover:bg-amber-700"
                 }
               >
                 {rsvpLoading ? (

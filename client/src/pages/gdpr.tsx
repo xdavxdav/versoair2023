@@ -45,7 +45,7 @@ const REGIONS: Record<RegionKey, RegionInfo> = {
   za: {
     key: "za", flag: "🇿🇦", label: "South African Users", law: "POPIA",
     description: "Your rights under the Protection of Personal Information Act (Act 4 of 2013).",
-    color: "bg-emerald-500/10", borderColor: "border-emerald-500/30", textColor: "text-emerald-400",
+    color: "bg-amber-500/10", borderColor: "border-amber-500/30", textColor: "text-amber-400",
   },
   au: {
     key: "au", flag: "🇦🇺", label: "Australian Users", law: "Privacy Act / APPs",
