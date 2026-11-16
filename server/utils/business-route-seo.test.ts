@@ -227,7 +227,8 @@ test("buildBusinessSeoQuery scopes the lookup to one id and the public visibilit
 
   assert.match(text, /WHERE b\.id = \$1 AND \(b\.is_active = true/);
   assert.match(text, /b\.is_verified = true/);
-  assert.match(text, /UPPER\(b\.country_code\) = 'CA'/);
+  // Detail/SEO lookups resolve every country's pages; only list endpoints are country-scoped.
+  assert.doesNotMatch(text, /country_code/);
   assert.match(text, /NOT COALESCE\(b\.email ILIKE '%@versoair\.local', false\)/);
 });
 
