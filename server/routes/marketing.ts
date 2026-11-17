@@ -729,6 +729,23 @@ router.post(
       }
 
       const { product_id, advanced_check } = req.body;
+      const hasProduct =
+        product_id !== undefined && product_id !== null && product_id !== "";
+      const printProductId = hasProduct ? parseItemId(product_id) : null;
+      if (hasProduct) {
+        const known =
+          printProductId !== null &&
+          (
+            await pool.query(`SELECT 1 FROM print_products WHERE id = $1`, [
+              printProductId,
+            ])
+          ).rows.length > 0;
+        if (!known) {
+          return res
+            .status(400)
+            .json({ success: false, error: "Unknown print product" });
+        }
+      }
 
       // Basic validation (always runs)
       const basicChecks = basicValidation(req.file);
@@ -768,20 +785,15 @@ router.post(
       // Create a print job record
       const result = await pool.query(
         `INSERT INTO print_jobs
-       (user_id, product_id, file_url, file_name, file_size_bytes, status, specs)
-       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
+       (user_id, print_product_id, file_path, file_name, validation_report, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')
        RETURNING *`,
         [
           req.user!.userId,
-          product_id ? parseInt(product_id) : null,
+          printProductId,
           fileUrl,
           req.file.originalname,
-          req.file.size,
-          JSON.stringify({
-            mimetype: req.file.mimetype,
-            basic_validation: basicChecks,
-            advanced_validation: advancedResult,
-          }),
+          JSON.stringify({ checks: basicChecks, advanced: advancedResult }),
         ],
       );
 
@@ -865,9 +877,10 @@ router.get(
       const { status, page = "1", limit = "20" } = req.query;
       const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-      let query = `SELECT pj.*, pp.name as product_name, u.name as user_name
+      let query = `SELECT pj.*, pp.name as product_name,
+                        COALESCE(u.display_name, u.username) as user_name
                  FROM print_jobs pj
-                 LEFT JOIN print_products pp ON pj.product_id = pp.id
+                 LEFT JOIN print_products pp ON pj.print_product_id = pp.id
                  LEFT JOIN users u ON pj.user_id = u.id
                  WHERE 1=1`;
       const params: any[] = [];
@@ -1747,9 +1760,10 @@ router.get(
   async (_req: Request, res: Response) => {
     try {
       const result = await pool.query(
-        `SELECT pj.*, pp.name as product_name, u.name as user_name, u.email as user_email
+        `SELECT pj.*, pp.name as product_name,
+              COALESCE(u.display_name, u.username) as user_name, u.email as user_email
        FROM print_jobs pj
-       LEFT JOIN print_products pp ON pj.product_id = pp.id
+       LEFT JOIN print_products pp ON pj.print_product_id = pp.id
        LEFT JOIN users u ON pj.user_id = u.id
        WHERE pj.status NOT IN ('completed', 'cancelled')
        ORDER BY
