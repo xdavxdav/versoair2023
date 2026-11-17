@@ -140,13 +140,12 @@ function VaultStatCard({
   label: string;
   value: string | number;
   trend?: string;
-  color: "purple" | "pink" | "amber" | "amber";
+  color: "purple" | "pink" | "amber";
 }) {
   const colors = {
     purple: "from-purple-500 to-purple-600",
     pink: "from-pink-500 to-fuchsia-600",
     amber: "from-amber-500 to-orange-600",
-    amber: "from-amber-500 to-green-600",
   };
   const isPositive = trend?.startsWith("+");
 

@@ -67,13 +67,12 @@ function RoyaltyStatCard({
   label: string;
   value: string;
   subValue?: string;
-  color: "purple" | "pink" | "amber" | "amber" | "violet";
+  color: "purple" | "pink" | "amber" | "violet";
 }) {
   const colors = {
     purple: "from-purple-500 to-purple-600",
     pink: "from-pink-500 to-fuchsia-600",
     amber: "from-amber-500 to-orange-600",
-    amber: "from-amber-500 to-green-600",
     violet: "from-violet-500 to-purple-600",
   };
 
