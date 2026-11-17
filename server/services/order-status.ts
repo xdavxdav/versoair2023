@@ -5,7 +5,8 @@
  * amount that was actually collected; staff can never mark an unpaid order as
  * paid or move an order back to pending. "cancelled" is only for orders that
  * were never paid (a paid order is refunded instead), and both cancelled and
- * refunded are final.
+ * refunded are final. "disputed" and "chargeback" are set only by the Stripe
+ * dispute webhook and have no staff transitions.
  */
 export const ORDER_STATUSES = [
   "pending",

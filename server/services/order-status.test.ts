@@ -39,6 +39,17 @@ test("cancelled and refunded orders are final", () => {
   assert.deepEqual(allowedNextStatuses("refunded"), []);
 });
 
+test("an order under dispute cannot be moved by staff until the dispute webhook settles it", () => {
+  for (const status of ["disputed", "chargeback"]) {
+    assert.equal(isOrderStatus(status), false);
+    assert.deepEqual(allowedNextStatuses(status), []);
+  }
+  for (const to of ORDER_STATUSES) {
+    assert.ok(!statusesThatCanMoveTo(to).includes("disputed" as never));
+    assert.ok(!statusesThatCanMoveTo(to).includes("chargeback" as never));
+  }
+});
+
 test("no status can reach itself or an earlier stage", () => {
   const rank = new Map(ORDER_STATUSES.map((status, index) => [status, index]));
   for (const from of ORDER_STATUSES) {
