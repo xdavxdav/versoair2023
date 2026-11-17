@@ -41,7 +41,10 @@ import {
   getStripeClient,
   redactStripeSecrets,
 } from "../../utils/stripe-client";
-import { applyCheckoutSessionCompleted } from "../../services/stripe-webhook";
+import {
+  applyCheckoutSessionCompleted,
+  applyReversalEvent,
+} from "../../services/stripe-webhook";
 
 const router = Router();
 
@@ -202,27 +205,21 @@ router.post("/webhook", async (req: Request, res: Response) => {
   if (!stripe) {
     return res.status(503).json({ error: "Stripe not configured" });
   }
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+  if (!webhookSecret) {
+    // Fail closed in every environment: an unsigned event must never fulfil anything.
+    console.error("⚠️ STRIPE_WEBHOOK_SECRET not set - rejecting webhook");
+    return res.status(503).json({ error: "Webhook secret not configured" });
+  }
+
+  const signature = req.headers["stripe-signature"];
+  if (typeof signature !== "string" || !signature) {
+    return res.status(400).json({ error: "Missing Stripe-Signature header" });
+  }
 
   let event: Stripe.Event;
-
   try {
-    if (webhookSecret) {
-      const sig = req.headers["stripe-signature"] as string;
-      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } else if (process.env.NODE_ENV === "production") {
-      // SECURITY: Require webhook secret in production to prevent forged events
-      console.error(
-        "⚠️ STRIPE_WEBHOOK_SECRET not set in production - rejecting webhook",
-      );
-      return res.status(500).json({ error: "Webhook secret not configured" });
-    } else {
-      // Development only: trust the event payload directly
-      console.warn(
-        "⚠️ [DEV] Processing unverified webhook - set STRIPE_WEBHOOK_SECRET for production",
-      );
-      event = req.body as Stripe.Event;
-    }
+    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
   } catch (err: any) {
     const reason = redactStripeSecrets(err?.message);
     console.error("⚠️ Stripe webhook signature verification failed:", reason);
@@ -338,6 +335,27 @@ router.post("/webhook", async (req: Request, res: Response) => {
         `⚠️ Payment failed for intent ${paymentIntent.id}:`,
         paymentIntent.last_payment_error?.message,
       );
+      break;
+    }
+
+    case "charge.refunded":
+    case "charge.dispute.created":
+    case "charge.dispute.closed": {
+      try {
+        const outcome = await applyReversalEvent(pool, stripe, event);
+        if (outcome.status === "unmatched") {
+          console.warn(
+            `ℹ️ ${event.type} ${event.id} does not match a recorded checkout payment`,
+          );
+        }
+      } catch (reversalError: any) {
+        // Nothing was committed, so a 5xx lets Stripe retry safely.
+        console.error(
+          `❌ DB error processing ${event.type}:`,
+          redactStripeSecrets(reversalError?.message),
+        );
+        return res.status(500).json({ error: "Webhook processing failed" });
+      }
       break;
     }
 
