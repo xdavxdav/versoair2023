@@ -262,7 +262,7 @@ export default function Navbar({
               />
             </div>
 
-            <span className="ml-2 text-base xl:text-lg font-bold whitespace-nowrap hidden xl:inline notranslate">
+            <span className="ml-2 text-base xl:text-lg font-bold whitespace-nowrap hidden 2xl:inline notranslate">
               <AnimatedKeyboardText
                 text={isMobile ? "versoair™" : "versoair™"}
                 variant="default"
