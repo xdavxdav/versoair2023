@@ -100,7 +100,7 @@ export function TicketSlaReport({ userId, onOpen }: { userId: number; onOpen: (i
     placeholderData: (previous) => previous,
     refetchInterval: open ? 60000 : false,
   });
-  return <section className="rounded-xl border bg-white p-5" aria-labelledby="sla-report-title">
+  return <section className="sla-report rounded-xl border bg-white p-5" aria-labelledby="sla-report-title">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 id="sla-report-title" className="font-bold">{t("slaReport")}</h2>
       <div className="flex flex-wrap items-center gap-3">
