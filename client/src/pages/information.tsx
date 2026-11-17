@@ -421,13 +421,17 @@ function TermsTab() {
 
       <SectionHeading number="9" title="Paiement & Remboursements" />
       <p className="text-slate-700 leading-relaxed">
-        Online checkout and subscription billing are not currently available
-        through this Platform. No general billing schedule, refund window, or
-        marketplace refund policy is offered here. Any fees and transaction
-        terms will be provided in writing before an order is accepted. Existing
-        transactions remain subject to their agreed terms and applicable law.
-        Artist royalties, where applicable, are governed by the relevant
-        executed artist agreement.
+        Subscription billing and GeoAdmin plan payments are not available
+        online. Where online checkout is offered, it is limited to Verso Air
+        Marketing packs and print products, charged in Canadian dollars (CAD)
+        through Stripe; shipping and taxes are not calculated at checkout. No
+        general billing schedule, refund window, or marketplace refund policy
+        is offered here. To ask about a charge or request a refund, email
+        support@versoair.com with your order number. Any other fees and
+        transaction terms will be provided in writing before an order is
+        accepted. Existing transactions remain subject to their agreed terms
+        and applicable law. Artist royalties, where applicable, are governed by
+        the relevant executed artist agreement.
       </p>
 
       <SectionHeading number="10" title="Limitation de Responsabilité" />

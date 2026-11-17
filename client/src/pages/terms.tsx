@@ -35,7 +35,7 @@ export default function TermsOfService() {
               Terms of Service
             </h1>
             <p className="text-sm text-slate-700">
-              Last updated: October 18, 2026
+              Last updated: November 16, 2026
             </p>
           </div>
         </div>
@@ -140,6 +140,17 @@ export default function TermsOfService() {
               Availability, deliverables, taxes, billing, renewal, cancellation,
               and any refund conditions must be confirmed in a written offer
               before you accept.
+            </p>
+            <p className="text-slate-700 leading-relaxed mt-3">
+              Marketing packs and print products can be purchased online where
+              checkout is offered. Prices are shown and charged in Canadian
+              dollars (CAD) through Stripe; shipping and taxes are not
+              calculated at checkout, and the total shown at checkout is the
+              amount charged. To ask about a charge or request a refund, email
+              support@versoair.com with your order number; each request is
+              reviewed and the outcome is confirmed in writing. This does not
+              limit your right to dispute a charge with your card issuer or any
+              rights under applicable consumer law.
             </p>
           </section>
 

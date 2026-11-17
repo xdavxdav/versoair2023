@@ -162,7 +162,8 @@ export default function PrintServicesPage() {
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
             Business cards, flyers, brochures, posters, banners — high-quality
-            printing with fast turnaround and delivery.
+            printing. Prices are in CAD; shipping, delivery and taxes are not
+            calculated at checkout.
           </p>
         </div>
 
@@ -182,7 +183,7 @@ export default function PrintServicesPage() {
                       {product.name}
                     </CardTitle>
                     <span className="text-amber-400 font-bold">
-                      ${(product.price_cents / 100).toFixed(2)}
+                      ${(product.price_cents / 100).toFixed(2)} CAD
                     </span>
                   </div>
                 </CardHeader>

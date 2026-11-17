@@ -31,9 +31,13 @@ export default function PaymentsHelp() {
               <h2 className="text-xl font-semibold">Online payment availability</h2>
             </div>
             <p className="text-sm leading-relaxed text-gray-600">
-              Online checkout and subscription billing are not currently
-              available. We will confirm current options, fees, and terms
-              directly before accepting any payment.
+              Subscription billing and GeoAdmin plan payments are not available
+              online. Where online checkout is offered, it is limited to Verso
+              Air Marketing packs and print products, charged in Canadian
+              dollars (CAD) through Stripe. Shipping and taxes are not
+              calculated at checkout, and the total shown at checkout is the
+              amount charged. For anything else, we confirm current options,
+              fees, and terms directly before accepting any payment.
             </p>
           </div>
 
@@ -42,7 +46,10 @@ export default function PaymentsHelp() {
             <h2 className="text-xl font-semibold mb-3">Need information?</h2>
             <p className="mb-4 text-sm text-gray-600">
               Ask the team about availability. An inquiry does not create an
-              order or authorize a charge.
+              order or authorize a charge. For a question about a charge or a
+              refund request, email support@versoair.com with your order
+              number. This does not limit your right to dispute a charge with
+              your card issuer.
             </p>
             <Link href="/contact?subject=Payment%20availability">
               <Button variant="outline">

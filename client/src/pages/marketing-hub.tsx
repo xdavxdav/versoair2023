@@ -45,7 +45,7 @@ export default function MarketingHub() {
     {
       title: "Marketing Packs",
       description:
-        "Professional marketing bundles from $29 — flyers, banners, social media kits, and more.",
+        "Professional marketing bundles — flyers, banners, social media kits, and more. Current packs and CAD prices are listed on the packs page.",
       icon: Package,
       color: "text-amber-400",
       bgColor: "bg-amber-500/10",
@@ -195,9 +195,9 @@ export default function MarketingHub() {
                   )}
                   <CardTitle className="text-white">{pack.name}</CardTitle>
                   <div className="text-3xl font-bold text-white">
-                    ${(pack.price_cents / 100).toFixed(0)}
+                    ${(pack.price_cents / 100).toFixed(2)}
                     <span className="text-sm font-normal text-gray-400">
-                      /pack
+                      {" "}CAD /pack
                     </span>
                   </div>
                 </CardHeader>
