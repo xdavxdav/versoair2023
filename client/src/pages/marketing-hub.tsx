@@ -45,7 +45,7 @@ export default function MarketingHub() {
     {
       title: "Marketing Packs",
       description:
-        "Professional marketing bundles — flyers, banners, social media kits, and more. Current packs and CAD prices are listed on the packs page.",
+        "Professional marketing bundles — flyers, banners, social media kits, and more. Packs and CAD prices appear on the packs page as they are listed.",
       icon: Package,
       color: "text-amber-400",
       bgColor: "bg-amber-500/10",
@@ -60,7 +60,7 @@ export default function MarketingHub() {
       color: "text-green-400",
       bgColor: "bg-green-500/10",
       href: "/marketing/print",
-      cta: "Browse Catalog",
+      cta: "View Print Services",
     },
     {
       title: "Newsletter",
