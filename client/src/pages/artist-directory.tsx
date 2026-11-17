@@ -295,7 +295,7 @@ export default function ArtistDirectory() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen bg-slate-900 bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-white">
 
       {/* Search Section */}
       <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
