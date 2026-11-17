@@ -45,6 +45,10 @@ import {
   applyCheckoutSessionCompleted,
   applyReversalEvent,
 } from "../../services/stripe-webhook";
+import {
+  buildPlanCheckoutParams,
+  resolvePlanSelection,
+} from "../../services/plan-checkout";
 
 const router = Router();
 
@@ -61,49 +65,48 @@ const stripe = STRIPE_SECRET_KEY
   ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION as any })
   : null;
 
-// ─── PRICING MAP (mirrors client/src/lib/tiers.ts) ─────────────────────────────
-
-const TIER_PRICING: Record<
-  string,
-  { monthly: number; annual: number; name: string }
-> = {
-  essential: { monthly: 2900, annual: 29000, name: "Essential" }, // cents
-  verified: { monthly: 7900, annual: 79000, name: "Pro Verified" },
-  max: { monthly: 14900, annual: 149000, name: "Pro Max" },
-  enterprise: { monthly: 49900, annual: 499000, name: "Enterprise" },
-};
-
 // ─── HELPERS ────────────────────────────────────────────────────────────────────
+
+const STRIPE_NOT_CONFIGURED = {
+  success: false,
+  error:
+    "Payment processing not configured. Set STRIPE_SECRET_KEY in environment.",
+};
 
 function requireStripe(res: Response): res is Response {
   if (!stripe) {
-    res.status(503).json({
-      success: false,
-      error:
-        "Payment processing not configured. Set STRIPE_SECRET_KEY in environment.",
-    });
+    res.status(503).json(STRIPE_NOT_CONFIGURED);
     return false;
   }
   return true;
+}
+
+// Resolved per request, like the webhook, so tests can stub it.
+function requireStripeClient(res: Response): Stripe | null {
+  const client = getStripeClient({ apiVersion: STRIPE_API_VERSION });
+  if (!client) res.status(503).json(STRIPE_NOT_CONFIGURED);
+  return client;
 }
 
 // ─── CREATE CHECKOUT SESSION ────────────────────────────────────────────────────
 
 /**
  * POST /api/v1/payments/create-checkout
- * Creates a Stripe Checkout Session for subscription upgrade.
- * Body: { userId, targetTier, billingCycle: 'monthly' | 'annual' }
+ * Creates a Stripe Checkout Session for a plan, charged in CAD (see
+ * shared/plan-pricing.ts). Enterprise is quoted individually.
+ * Body: { targetTier: 'essential' | 'verified' | 'max', billingCycle?: 'monthly' | 'annual' }
  */
 router.post("/create-checkout", async (req: Request, res: Response) => {
   if (!onlinePaymentsEnabled() || !commercialSubscriptionsEnabled()) {
     rejectUnavailablePayment(res);
     return;
   }
-  if (!requireStripe(res)) return;
+  const stripeClient = requireStripeClient(res);
+  if (!stripeClient) return;
 
   try {
     const authenticatedUserId = req.user?.userId || (req as any).user?.id;
-    const { targetTier, billingCycle = "monthly" } = req.body;
+    const { targetTier, billingCycle } = req.body ?? {};
 
     if (!authenticatedUserId) {
       return res
@@ -119,11 +122,12 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
 
     const userId = authenticatedUserId;
 
-    const pricing = TIER_PRICING[targetTier];
-    if (!pricing) {
+    const plan = resolvePlanSelection(targetTier, billingCycle);
+    if (!plan.ok) {
       return res.status(400).json({
         success: false,
-        error: `Invalid tier: ${targetTier}. Valid: ${Object.keys(TIER_PRICING).join(", ")}`,
+        error: plan.error,
+        ...(plan.code ? { code: plan.code } : {}),
       });
     }
 
@@ -138,46 +142,23 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
     }
 
     const user = userResult.rows[0];
-    const amount = billingCycle === "annual" ? pricing.annual : pricing.monthly;
 
     // Get or create Stripe customer so card is attached to their account
     const customerId = await getOrCreateStripeCustomer(
       Number(userId),
       user.email,
       user.username,
+      stripeClient,
     );
 
-    // Create Stripe Checkout Session (one-time payment model)
-    // setup_future_usage saves the card for future billing automatically
-    const session = await stripe!.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      customer: customerId,
-      payment_intent_data: {
-        setup_future_usage: "off_session",
-      },
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `Verso Air — ${pricing.name} (${billingCycle})`,
-              description: `Business directory ${pricing.name} tier subscription`,
-            },
-            unit_amount: amount,
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        userId: String(userId),
-        targetTier,
-        billingCycle,
-        type: "subscription_fee",
-      },
-      success_url: `${getPublicBaseUrl()}/pricing?status=success&tier=${targetTier}`,
-      cancel_url: `${getPublicBaseUrl()}/pricing?status=cancelled`,
-    });
+    const session = await stripeClient.checkout.sessions.create(
+      buildPlanCheckoutParams({
+        userId,
+        selection: plan.selection,
+        customerId,
+        baseUrl: getPublicBaseUrl(),
+      }),
+    );
 
     res.json({
       success: true,
@@ -187,8 +168,13 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("❌ Stripe checkout error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    const reason = redactStripeSecrets(error?.message);
+    console.error("❌ Stripe checkout error:", reason, {
+      type: error?.type,
+      code: error?.code,
+      requestId: error?.requestId,
+    });
+    res.status(500).json({ success: false, error: reason });
   }
 });
 
@@ -528,6 +514,7 @@ async function getOrCreateStripeCustomer(
   userId: number,
   email: string,
   name?: string,
+  client: Stripe | null = stripe,
 ): Promise<string> {
   // Check if user already has a Stripe customer ID stored
   const existingResult = await pool.query(
@@ -539,13 +526,13 @@ async function getOrCreateStripeCustomer(
   if (existingCustomerId) return existingCustomerId;
 
   // Check Stripe by email
-  const customers = await stripe!.customers.list({ email, limit: 1 });
+  const customers = await client!.customers.list({ email, limit: 1 });
   let customerId: string;
 
   if (customers.data.length > 0) {
     customerId = customers.data[0].id;
   } else {
-    const customer = await stripe!.customers.create({
+    const customer = await client!.customers.create({
       email,
       name: name || undefined,
       metadata: { userId: String(userId), source: "ngo_pos" },

@@ -12,6 +12,7 @@ import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import * as schema from "@shared/schema";
+import { isSelfServePlanTier } from "@shared/plan-pricing";
 import { hasGeoAdminAccess } from "@shared/geoadmin-access";
 import {
   hasGeoAdminFreeAccess,
@@ -577,7 +578,10 @@ router.post(
 // ─── POST /api/user/upgrade-subscription ─────────────────────────────────────
 
 const upgradeSchema = z.object({
-  tier: z.enum(["essential", "verified", "max", "enterprise"]),
+  tier: z.string().refine(isSelfServePlanTier, {
+    message:
+      "Invalid tier. Valid: essential, verified, max (enterprise plans are quoted individually)",
+  }),
   billingCycle: z.enum(["monthly", "annual"]).default("monthly"),
 });
 

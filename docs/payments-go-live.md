@@ -19,8 +19,8 @@ it opens many other surfaces (table below) that are not ready.
 | Surface | Endpoint | Flags required | Notes |
 | --- | --- | --- | --- |
 | Marketing packs + print products | `POST /api/marketing/cart/checkout` | `MARKETING_CHECKOUT_ENABLED` **or** `ONLINE_PAYMENTS_ENABLED` | Stripe, CAD, price read from DB; request body ignored |
-| Business subscription (Stripe) | `POST /api/v1/payments/create-checkout` | `ONLINE_PAYMENTS_ENABLED` **and** `COMMERCIAL_SUBSCRIPTIONS_ENABLED` | Amounts server-side but currency is hard-coded **USD** (gap, below) |
-| Business tier from wallet balance | `POST /api/payments/tier/upgrade` | same two flags | Wallet funds, no Stripe |
+| Business subscription (Stripe) | `POST /api/v1/payments/create-checkout` | `ONLINE_PAYMENTS_ENABLED` **and** `COMMERCIAL_SUBSCRIPTIONS_ENABLED` | Stripe, CAD, amounts server-side from `shared/plan-pricing.ts`; Enterprise is quote-only (400 `PLAN_QUOTE_ONLY`) |
+| Business tier from wallet balance | `POST /api/payments/tier/upgrade` | same two flags | Wallet funds, no Stripe; own legacy prices (gap 7) |
 | Wallet deposit | `/api/wallet/deposit`, `/api/payments/wallet/deposit` | `ONLINE_PAYMENTS_ENABLED` | No Stripe top-up exists; first is a PayPal redirect preview, second always returns 503 |
 | PayPal, artist paid tiers, tips, withdraw, bank/Interac/crypto/mobile-money | `routes/paypal.ts`, `artist-subscriptions.ts`, `streamroyale.ts`, `payments.ts` | `ONLINE_PAYMENTS_ENABLED` | Not Stripe; out of scope for this go-live |
 | NGO POS charge | `POST /api/v1/payments/charge` | `ONLINE_PAYMENTS_ENABLED`, superuser | Admin types the amount; default currency USD |
@@ -37,13 +37,24 @@ it opens many other surfaces (table below) that are not ready.
    or edit items. Nothing can be sold until Luq supplies the product **names and
    CAD prices** (and which print products to launch), and they are loaded through
    a reviewed, deliberate step. Do not seed production with test or invented data.
-2. **Plan checkout currency.** `POST /api/v1/payments/create-checkout` charges
-   **USD** from `TIER_PRICING` (server/routes/api-v1/payments.ts): essential
-   2900 / 29000, verified 7900 / 79000, max 14900 / 149000, enterprise 49900 /
-   499000 cents (monthly / annual), while the shop charges CAD. The client page
-   (`client/src/lib/tiers.ts`) shows only FCFA reference prices, so no customer
-   sees these USD amounts today. Luq decides currency and prices; until then keep
-   `COMMERCIAL_SUBSCRIPTIONS_ENABLED=false`. The code was not changed.
+2. **Plan prices: currency decided, figures need your review.** Plans are
+   charged in **CAD** (the company is Canadian; FCFA stays the on-screen
+   reference on `client/src/lib/tiers.ts`). The single price table is
+   `shared/plan-pricing.ts`, derived from the FCFA schedule at 0.0024 CAD per
+   FCFA and rounded to the nearest CA$10 per year, monthly = a tenth of annual:
+
+   | Plan | FCFA reference (annual) | Charged monthly | Charged annual |
+   | --- | --- | --- | --- |
+   | Essential | 180,000 | CA$43 | CA$430 |
+   | Pro Verified | 400,000 | CA$96 | CA$960 |
+   | Pro Max | 780,000 | CA$187 | CA$1,870 |
+   | Enterprise | custom quote | not self-serve | not self-serve |
+
+   These figures are a derivation, not an owner-approved price list; change
+   them in that one file (the Finance panel and the tests read it too) before
+   turning on `COMMERCIAL_SUBSCRIPTIONS_ENABLED`, which stays `false`. The
+   `/pricing` page converts FCFA at a live indicative rate, so its CA$ figure
+   can differ from the charged price by about 1%.
 3. **Plans do not renew.** Plan checkout is `mode: "payment"` (one-time prepaid).
    `subscription-expiry.ts` marks a plan `past_due` at expiry, allows a 7-day
    grace, then downgrades it; nothing re-charges the card. Luq decides whether
@@ -57,10 +68,10 @@ it opens many other surfaces (table below) that are not ready.
    must register (CRA small-supplier threshold) is a question for your
    accountant. Options: set prices tax-inclusive, or enable Stripe Tax and add
    `automatic_tax` to the Checkout session (code change).
-2. **Subscription checkout charges USD** (the shop charges CAD) and plans are
-   one-time prepaid payments, not recurring. Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED`
-   off; the owner decides currency, prices and whether plans should recur
-   before it is touched.
+2. **Plans are one-time prepaid payments, not recurring** (they are charged in
+   CAD like the shop). Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED` off until the
+   owner has reviewed the plan prices (blocker 2) and decided whether plans
+   should recur (blocker 3).
 3. **No customer receipt email.** The Checkout session does not pass an email.
    Stripe's own receipts (Dashboard > Settings > Customer emails) are only sent
    in **live** mode, so they cannot be seen in the sandbox test. Check one with
@@ -76,9 +87,16 @@ it opens many other surfaces (table below) that are not ready.
 6. **The cart does not say tax is included or excluded.** Do not describe prices
    as "tax included" until gap 1 is decided.
 7. **Wallet-funded tier upgrade is not atomic** (`BEGIN` on the shared pool, no
-   row lock). It is behind two closed flags; fix before opening wallets.
+   row lock). It is behind two closed flags; fix before opening wallets. It is
+   also a separate legacy price list (premium 29.99, enterprise 99.99 per 30
+   days, in wallet currency) that is not governed by `shared/plan-pricing.ts`
+   and can sell `enterprise`; retire or align it before opening wallets.
 8. Pending orders from abandoned checkouts are never expired (harmless; they are
    not counted as revenue).
+9. **Billing history shows no currency code.** Ledger rows do not store the
+   currency (`transactions.currency` is never written), so amounts appear with
+   a `$` and nothing else. Everything Stripe charges for the shop and plans is
+   CAD.
 
 ## Part A: test mode (no real money)
 

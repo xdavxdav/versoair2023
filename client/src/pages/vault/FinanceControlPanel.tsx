@@ -33,8 +33,73 @@ import {
   Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PLAN_CURRENCY, PLAN_PRICES } from "@shared/plan-pricing";
 import { SectionBlock, InfoRow, ApiEndpoint, DbTable } from "./vault-shared";
 import VersoAirCardPanel from "./VersoAirCardPanel";
+
+const formatPlanPrice = (cents: number) =>
+  new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: PLAN_CURRENCY.toUpperCase(),
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  })
+    .format(cents / 100)
+    .replace(/^\$/, "CA$");
+
+const annualSavingPercent = (monthlyCents: number, annualCents: number) =>
+  `${Math.round((1 - annualCents / (monthlyCents * 12)) * 100)}%`;
+
+const PLAN_PRICING_ROWS = [
+  {
+    tier: "Free",
+    mo: formatPlanPrice(0),
+    yr: formatPlanPrice(0),
+    save: "—",
+    rank: "1×",
+    color: "text-gray-500",
+  },
+  {
+    tier: "Essential",
+    mo: formatPlanPrice(PLAN_PRICES.essential.monthlyCents),
+    yr: formatPlanPrice(PLAN_PRICES.essential.annualCents),
+    save: annualSavingPercent(
+      PLAN_PRICES.essential.monthlyCents,
+      PLAN_PRICES.essential.annualCents,
+    ),
+    rank: "2×",
+    color: "text-blue-400",
+  },
+  {
+    tier: "Verified",
+    mo: formatPlanPrice(PLAN_PRICES.verified.monthlyCents),
+    yr: formatPlanPrice(PLAN_PRICES.verified.annualCents),
+    save: annualSavingPercent(
+      PLAN_PRICES.verified.monthlyCents,
+      PLAN_PRICES.verified.annualCents,
+    ),
+    rank: "4×",
+    color: "text-green-400",
+  },
+  {
+    tier: "Max",
+    mo: formatPlanPrice(PLAN_PRICES.max.monthlyCents),
+    yr: formatPlanPrice(PLAN_PRICES.max.annualCents),
+    save: annualSavingPercent(
+      PLAN_PRICES.max.monthlyCents,
+      PLAN_PRICES.max.annualCents,
+    ),
+    rank: "6×",
+    color: "text-amber-400",
+  },
+  {
+    tier: "Enterprise",
+    mo: "Custom quote",
+    yr: "Custom quote",
+    save: "—",
+    rank: "10×",
+    color: "text-red-400",
+  },
+];
 
 // ═══════════════════════════════════════════════════════════
 // 💰 FINANCE CONTROL PANEL — Payments, revenue, billing
@@ -334,6 +399,10 @@ export default function FinanceControlPanel() {
         color="green"
       >
         <div className="overflow-x-auto">
+          <div className="mb-2 text-[10px] font-mono text-gray-500">
+            Charged in {PLAN_CURRENCY.toUpperCase()} (shared table: shared/plan-pricing.ts).
+            On-screen FCFA prices are the reference schedule.
+          </div>
           <table className="w-full text-[11px] font-mono">
             <thead>
               <tr className="text-gray-500 border-b border-gray-800/50">
@@ -345,48 +414,7 @@ export default function FinanceControlPanel() {
               </tr>
             </thead>
             <tbody className="text-gray-400">
-              {[
-                {
-                  tier: "Free",
-                  mo: "$0",
-                  yr: "$0",
-                  save: "—",
-                  rank: "1×",
-                  color: "text-gray-500",
-                },
-                {
-                  tier: "Essential",
-                  mo: "$29",
-                  yr: "$290",
-                  save: "17%",
-                  rank: "2×",
-                  color: "text-blue-400",
-                },
-                {
-                  tier: "Verified",
-                  mo: "$79",
-                  yr: "$790",
-                  save: "17%",
-                  rank: "4×",
-                  color: "text-green-400",
-                },
-                {
-                  tier: "Max",
-                  mo: "$149",
-                  yr: "$1,490",
-                  save: "17%",
-                  rank: "6×",
-                  color: "text-amber-400",
-                },
-                {
-                  tier: "Enterprise",
-                  mo: "$499",
-                  yr: "$4,990",
-                  save: "17%",
-                  rank: "10×",
-                  color: "text-red-400",
-                },
-              ].map((row) => (
+              {PLAN_PRICING_ROWS.map((row) => (
                 <tr
                   key={row.tier}
                   className="border-b border-gray-800/20 hover:bg-gray-800/20"

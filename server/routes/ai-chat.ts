@@ -277,7 +277,7 @@ const STATIC_FAQ: Array<{ q: string; a: string; keywords: string[] }> = [
       "max",
       "subscription",
     ],
-    a: "You can upgrade from your Dashboard → Account tab → Subscription section, or visit /pricing. Plans start at $29/mo (Essential) up to $149/mo (Pro Max).",
+    a: "You can upgrade from your Dashboard → Account tab → Subscription section, or visit /pricing, which lists every plan with its current price.",
   },
   {
     q: "How do I add photos to my listing?",

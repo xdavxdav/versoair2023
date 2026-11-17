@@ -11,6 +11,7 @@ import { Router, Request, Response } from "express";
 import { db, pool } from "../../db";
 import { eq } from "drizzle-orm";
 import { users } from "@shared/schema";
+import { publicTierPricing } from "@shared/plan-pricing";
 import { requireAuth } from "../../middleware/auth";
 import { resolveRequestActingUserId } from "../../utils/acting-user";
 import { getGeoAdminEntitlement } from "../../services/geoadmin-entitlement";
@@ -516,13 +517,7 @@ router.get("/tiers", async (_req: Request, res: Response) => {
     key: tier,
     order: TIER_ORDER[tier],
     features: TIER_FEATURES[tier],
-    pricing: {
-      free: { monthly: 0, annual: 0 },
-      essential: { monthly: 29, annual: 290 },
-      verified: { monthly: 79, annual: 790 },
-      max: { monthly: 149, annual: 1490 },
-      enterprise: { monthly: 499, annual: 4990 },
-    }[tier],
+    pricing: publicTierPricing(tier),
   }));
 
   res.json({ success: true, data: tiers });

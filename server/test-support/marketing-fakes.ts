@@ -26,6 +26,7 @@ export class FakeDb {
   orderItems: Row[] = [];
   transactions: Row[] = [];
   userTiers = new Map<number, string>();
+  userExpiries = new Map<number, string>();
   statements: string[] = [];
   connects = 0;
   releases = 0;
@@ -304,10 +305,14 @@ export class FakeDb {
     ) {
       const userId = Number(p[2]);
       const before = this.userTiers.get(userId);
+      const beforeExpiry = this.userExpiries.get(userId);
       this.userTiers.set(userId, p[0]);
+      this.userExpiries.set(userId, p[1]);
       undo?.push(() => {
         if (before === undefined) this.userTiers.delete(userId);
         else this.userTiers.set(userId, before);
+        if (beforeExpiry === undefined) this.userExpiries.delete(userId);
+        else this.userExpiries.set(userId, beforeExpiry);
       });
       return result();
     }
@@ -329,12 +334,20 @@ export interface StubStripeOptions {
 export function createStubStripe(options: StubStripeOptions = {}) {
   const calls = {
     sessionsCreate: [] as Array<{ params: any; options: any }>,
+    customersCreate: [] as any[],
     paymentIntentsRetrieve: [] as string[],
     setupIntentsRetrieve: [] as string[],
   };
   let seq = 0;
 
   const client = {
+    customers: {
+      list: async () => ({ data: [] }),
+      create: async (params: any) => {
+        calls.customersCreate.push(params);
+        return { id: `cus_stub_${++seq}` };
+      },
+    },
     checkout: {
       sessions: {
         create: async (params: any, requestOptions?: any) => {
