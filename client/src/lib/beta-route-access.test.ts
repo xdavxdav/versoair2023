@@ -56,6 +56,13 @@ test("listening session pages are reachable while the beta scope is frozen", () 
   assert.equal(isBetaRoute("/sessions-archive"), false);
 });
 
+test("the public news page is reachable while the beta scope is frozen", () => {
+  for (const path of ["/news", "/news/", "/news?source=notifications"]) {
+    assert.equal(isBetaRoute(path), true, path);
+    assert.equal(isRouteReachable(path), true, path);
+  }
+});
+
 test("the legal policy pages linked from the footer are reachable while the beta scope is frozen", () => {
   for (const path of ["/privacy", "/terms", "/cookies", "/gdpr", "/aup", "/aup/", "/aup?from=footer"]) {
     assert.equal(isBetaRoute(path), true, path);

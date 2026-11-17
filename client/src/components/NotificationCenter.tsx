@@ -72,7 +72,7 @@ export default function NotificationCenter() {
   currentUserId.current = user?.id;
   const push = usePushNotifications();
 
-  const unread = notifications.filter((n) => !n.read).length;
+  const unread = user ? notifications.filter((n) => !n.read).length : 0;
 
   useEffect(() => {
     loadRequestId.current++;
@@ -231,26 +231,15 @@ export default function NotificationCenter() {
     if (nextOpen && unread > 0) void markAllRead();
   };
 
-  if (!user) {
-    return (
-      <Link
-        href="/news"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-400/50 bg-slate-800 text-amber-400 transition-colors hover:bg-slate-700 hover:border-amber-300 hover:text-amber-200 cursor-pointer"
-        aria-label={translateText("Public news and updates")}
-        title={translateText("Public news and updates")}
-      >
-        <Bell className="h-5 w-5" />
-      </Link>
-    );
-  }
-
   return (
     <div ref={panelRef} className="relative">
       {/* Bell trigger */}
       <button
+        type="button"
         onClick={handleOpenToggle}
         className="relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-white transition-colors"
         aria-label={translateText("Notifications")}
+        aria-expanded={open}
       >
         <Bell className="w-5 h-5" />
         {unread > 0 && (
@@ -275,7 +264,7 @@ export default function NotificationCenter() {
                 {translateText("Notifications")}
               </span>
               <div className="flex items-center gap-2">
-                {push.isSupported && (
+                {user && push.isSupported && (
                   <button
                     onClick={() =>
                       push.isSubscribed ? push.unsubscribe() : push.subscribe()
@@ -293,7 +282,7 @@ export default function NotificationCenter() {
                     <BellRing className="w-3.5 h-3.5" />
                   </button>
                 )}
-                {unread > 0 && (
+                {user && unread > 0 && (
                   <button
                     onClick={markAllRead}
                     className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors"
@@ -314,31 +303,56 @@ export default function NotificationCenter() {
 
             {/* List */}
             <div className="max-h-[420px] overflow-y-auto">
-              {loading && (
-                <div className="flex items-center justify-center py-10">
-                  <span className="w-5 h-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
-                </div>
-              )}
-              {!loading && loadError && (
-                <div className="py-8 text-center space-y-3">
-                  <p className="text-rose-300 text-sm">{loadError}</p>
-                  <button
-                    onClick={fetchNotifications}
-                    className="text-sm text-amber-300 underline underline-offset-4"
+              {!user ? (
+                <div className="flex flex-col items-center gap-3 px-5 py-8 text-center">
+                  <Bell className="h-8 w-8 text-white/30" />
+                  <p className="text-sm text-white/60">
+                    {translateText("Sign in to continue")}
+                  </p>
+                  <Link
+                    href="/auth/signin"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-300"
                   >
-                    {translateText("Retry")}
-                  </button>
+                    {translateText("Login")}
+                  </Link>
+                  <Link
+                    href="/news"
+                    onClick={() => setOpen(false)}
+                    className="text-sm text-amber-300 underline underline-offset-4 hover:text-amber-200"
+                  >
+                    {translateText("Public news and updates")}
+                  </Link>
                 </div>
+              ) : (
+                <>
+                  {loading && (
+                    <div className="flex items-center justify-center py-10">
+                      <span className="w-5 h-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+                    </div>
+                  )}
+                  {!loading && loadError && (
+                    <div className="py-8 text-center space-y-3">
+                      <p className="text-rose-300 text-sm">{loadError}</p>
+                      <button
+                        onClick={fetchNotifications}
+                        className="text-sm text-amber-300 underline underline-offset-4"
+                      >
+                        {translateText("Retry")}
+                      </button>
+                    </div>
+                  )}
+                  {!loading && !loadError && notifications.length === 0 && (
+                    <div className="py-12 text-center space-y-2">
+                      <Bell className="w-8 h-8 text-white/20 mx-auto" />
+                      <p className="text-white/40 text-sm">
+                        {translateText("No notifications yet")}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
-              {!loading && !loadError && notifications.length === 0 && (
-                  <div className="py-12 text-center space-y-2">
-                    <Bell className="w-8 h-8 text-white/20 mx-auto" />
-                    <p className="text-white/40 text-sm">
-                      {translateText("No notifications yet")}
-                    </p>
-                  </div>
-              )}
-              {notifications.map((n) => (
+              {user && notifications.map((n) => (
                 <button
                   key={n.id}
                   onClick={async () => {

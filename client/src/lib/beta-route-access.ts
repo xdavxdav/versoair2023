@@ -36,6 +36,7 @@ const BETA_ROUTE_PREFIXES = [
   "/versoai",
   "/ai",
   "/help",
+  "/news",
   "/privacy",
   "/terms",
   "/cookies",
