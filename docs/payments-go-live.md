@@ -29,6 +29,27 @@ it opens many other surfaces (table below) that are not ready.
 | Listener subscription | `services/listener-subscription.ts` | n/a | Reads a table only; nothing creates a Stripe subscription |
 | Free trials | | `FREE_TRIALS_ENABLED` | Grants a tier with no payment; leave `false` |
 
+## Owner blockers (only Luq can resolve these)
+
+1. **The shop catalog is empty.** `marketing_packs` and `print_products` have 0
+   rows in production, `/api/marketing/packs` and `/api/marketing/print/products`
+   return `[]`, nothing seeds production, and there is no admin screen to create
+   or edit items. Nothing can be sold until Luq supplies the product **names and
+   CAD prices** (and which print products to launch), and they are loaded through
+   a reviewed, deliberate step. Do not seed production with test or invented data.
+2. **Plan checkout currency.** `POST /api/v1/payments/create-checkout` charges
+   **USD** from `TIER_PRICING` (server/routes/api-v1/payments.ts): essential
+   2900 / 29000, verified 7900 / 79000, max 14900 / 149000, enterprise 49900 /
+   499000 cents (monthly / annual), while the shop charges CAD. The client page
+   (`client/src/lib/tiers.ts`) shows only FCFA reference prices, so no customer
+   sees these USD amounts today. Luq decides currency and prices; until then keep
+   `COMMERCIAL_SUBSCRIPTIONS_ENABLED=false`. The code was not changed.
+3. **Plans do not renew.** Plan checkout is `mode: "payment"` (one-time prepaid).
+   `subscription-expiry.ts` marks a plan `past_due` at expiry, allows a 7-day
+   grace, then downgrades it; nothing re-charges the card. Luq decides whether
+   plans should be one-time or recurring (recurring needs code changes).
+4. GST/HST, receipts and print-order fulfilment: see Known gaps below.
+
 ## Known gaps (decide before or shortly after launch)
 
 1. **GST/HST is not handled.** No Stripe Tax, tax rates or tax lines. Charged
