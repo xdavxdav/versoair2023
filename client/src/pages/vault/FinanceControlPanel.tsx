@@ -2,7 +2,7 @@
  * Finance Control Panel — Payments, revenue, billing
  * Extracted from credentials-vault.tsx
  */
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   DollarSign,
@@ -34,6 +34,19 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PLAN_CURRENCY, PLAN_PRICES } from "@shared/plan-pricing";
+import {
+  CHARGE_CURRENCIES,
+  amountInputProps,
+  attemptFor,
+  checkChargeAmount,
+  formatMoney,
+  interpretChargeResponse,
+  interpretRefundResponse,
+  quickAmountsFor,
+  type ChargeAttempt,
+  type ChargeOutcome,
+  type RefundOutcome,
+} from "@/lib/charge-form";
 import { SectionBlock, InfoRow, ApiEndpoint, DbTable } from "./vault-shared";
 import VersoAirCardPanel from "./VersoAirCardPanel";
 
@@ -136,6 +149,10 @@ export default function FinanceControlPanel() {
     currency: "USD",
   });
   const [chargeLoading, setChargeLoading] = useState(false);
+  // The charge being tried. Kept while it is unknown whether the card was
+  // charged, so pressing Charge again retries it instead of charging twice.
+  const chargeAttempt = useRef<ChargeAttempt | null>(null);
+  const amountCheck = checkChargeAmount(chargeForm.amount, chargeForm.currency);
   const [chargeResult, setChargeResult] = useState<{
     success: boolean;
     message: string;
@@ -200,64 +217,98 @@ export default function FinanceControlPanel() {
 
   // ─── POS CHARGE HANDLER ──────────────────────────────────────────
   const handlePosCharge = async () => {
-    if (!chargeForm.cardId || !chargeForm.amount) return;
+    const check = checkChargeAmount(chargeForm.amount, chargeForm.currency);
+    const cardId = Number.parseInt(chargeForm.cardId, 10);
+    if (!Number.isSafeInteger(cardId) || !check.ok) {
+      setChargeResult({
+        success: false,
+        message: `❌ ${check.ok ? "Select a card to charge." : check.error}`,
+      });
+      return;
+    }
+
+    const attempt = attemptFor(chargeAttempt.current, {
+      cardId,
+      amount: check.amount,
+      currency: chargeForm.currency,
+      description: chargeForm.description.trim() || "NGO Activity Charge",
+      category: chargeForm.category,
+    });
+    chargeAttempt.current = attempt;
+
     setChargeLoading(true);
     setChargeResult(null);
+    let outcome: ChargeOutcome;
     try {
       const res = await fetch("/api/v1/payments/charge", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cardId: parseInt(chargeForm.cardId),
-          amount: parseFloat(chargeForm.amount),
-          currency: chargeForm.currency,
-          description: chargeForm.description || "NGO Activity Charge",
-          category: chargeForm.category,
+          ...attempt.request,
+          idempotencyKey: attempt.key,
         }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setChargeResult({
-          success: true,
-          message: `✅ Charged ${chargeForm.currency} ${parseFloat(chargeForm.amount).toFixed(2)} successfully! Intent: ${data.data?.paymentIntent?.id}`,
-        });
-        setChargeForm((prev) => ({ ...prev, amount: "", description: "" }));
-        loadPosData(); // Refresh stats
-      } else {
-        setChargeResult({
-          success: false,
-          message: `❌ ${data.error || "Charge failed"}`,
-        });
-      }
-    } catch (err: any) {
-      setChargeResult({
-        success: false,
-        message: `❌ Network error: ${err.message}`,
-      });
+      outcome = interpretChargeResponse(
+        res.status,
+        await res.json().catch(() => null),
+      );
+    } catch {
+      outcome = interpretChargeResponse(null, null);
     }
     setChargeLoading(false);
+
+    if (!outcome.keepAttempt) chargeAttempt.current = null;
+    if (!outcome.ok) {
+      setChargeResult({ success: false, message: `❌ ${outcome.message}` });
+      return;
+    }
+
+    const charged = formatMoney(
+      attempt.request.amount,
+      attempt.request.currency,
+    );
+    const intent = outcome.paymentIntentId
+      ? ` Intent: ${outcome.paymentIntentId}`
+      : "";
+    setChargeResult({
+      success: true,
+      message: outcome.replayed
+        ? `✅ ${charged} had already been charged. The card was not charged again.${intent}`
+        : `✅ Charged ${charged} successfully!${intent}`,
+    });
+    setChargeForm((prev) => ({ ...prev, amount: "", description: "" }));
+    loadPosData(); // Refresh stats
   };
 
   // ─── POS REFUND HANDLER ──────────────────────────────────────────
-  const handleRefund = async (chargeId: string) => {
-    if (!confirm("Process refund for this charge?")) return;
+  const handleRefund = async (charge: any) => {
+    const amount = formatMoney(charge.amount, charge.currency || "USD");
+    if (!confirm(`Refund ${amount}? The full amount goes back to the card.`)) {
+      return;
+    }
+    let outcome: RefundOutcome;
     try {
       const res = await fetch("/api/v1/payments/refund", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chargeId }),
+        body: JSON.stringify({ chargeId: charge.id }),
       });
-      const data = await res.json();
-      if (data.success) {
-        loadPosData();
-      } else {
-        alert(data.error || "Refund failed");
-      }
+      outcome = interpretRefundResponse(
+        res.status,
+        await res.json().catch(() => null),
+      );
     } catch {
-      alert("Network error");
+      outcome = interpretRefundResponse(null, null);
     }
+
+    if (outcome.ok) {
+      loadPosData();
+      return;
+    }
+    alert(outcome.message);
+    if (outcome.alreadyRefunded) loadPosData();
   };
 
   const totalRevenue = useMemo(
@@ -1136,8 +1187,11 @@ export default function FinanceControlPanel() {
                                   )}
                                   {card.max_charge && (
                                     <div className="text-[9px] text-amber-500 font-mono mt-0.5">
-                                      Max charge: {card.currency || "USD"} $
-                                      {card.max_charge}
+                                      Max charge:{" "}
+                                      {formatMoney(
+                                        card.max_charge,
+                                        card.currency || "USD",
+                                      )}
                                     </div>
                                   )}
                                   {card.card_fingerprint && (
@@ -1248,16 +1302,11 @@ export default function FinanceControlPanel() {
                       }
                       className="bg-gray-950 border border-green-500/20 rounded-lg px-2 py-2.5 text-[11px] text-green-300 font-mono focus:border-green-500/50 focus:outline-none w-20"
                     >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="XOF">XOF</option>
-                      <option value="XAF">XAF</option>
-                      <option value="NGN">NGN</option>
-                      <option value="KES">KES</option>
-                      <option value="ZAR">ZAR</option>
-                      <option value="GHS">GHS</option>
-                      <option value="MAD">MAD</option>
+                      {CHARGE_CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.code}
+                        </option>
+                      ))}
                     </select>
                     <input
                       type="number"
@@ -1268,12 +1317,15 @@ export default function FinanceControlPanel() {
                           amount: e.target.value,
                         }))
                       }
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0.50"
+                      {...amountInputProps(chargeForm.currency)}
                       className="flex-1 bg-gray-950 border border-green-500/20 rounded-lg px-3 py-2.5 text-2xl text-green-300 font-mono font-black text-right focus:border-green-500/50 focus:outline-none placeholder:text-green-900"
                     />
                   </div>
+                  {chargeForm.amount && !amountCheck.ok && (
+                    <div className="mt-1 text-[10px] text-red-400 font-mono">
+                      {amountCheck.error}
+                    </div>
+                  )}
                 </div>
 
                 {/* Category */}
@@ -1324,10 +1376,10 @@ export default function FinanceControlPanel() {
                 <button
                   onClick={handlePosCharge}
                   disabled={
-                    chargeLoading || !chargeForm.cardId || !chargeForm.amount
+                    chargeLoading || !chargeForm.cardId || !amountCheck.ok
                   }
                   className={`w-full py-3 rounded-lg font-mono font-black text-sm transition-all ${
-                    chargeLoading || !chargeForm.cardId || !chargeForm.amount
+                    chargeLoading || !chargeForm.cardId || !amountCheck.ok
                       ? "bg-gray-800 text-gray-600 cursor-not-allowed"
                       : "bg-gradient-to-r from-green-600 to-amber-600 text-black hover:from-green-500 hover:to-amber-500 shadow-lg shadow-green-500/20"
                   }`}
@@ -1339,8 +1391,8 @@ export default function FinanceControlPanel() {
                   ) : (
                     <span>
                       ⚡ CHARGE{" "}
-                      {chargeForm.amount
-                        ? `${chargeForm.currency} ${parseFloat(chargeForm.amount).toFixed(2)}`
+                      {amountCheck.ok
+                        ? formatMoney(amountCheck.amount, chargeForm.currency)
                         : ""}
                     </span>
                   )}
@@ -1363,7 +1415,7 @@ export default function FinanceControlPanel() {
 
             {/* Quick Amount Buttons */}
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {[5, 10, 20, 25, 50, 100, 200, 500].map((amt) => (
+              {quickAmountsFor(chargeForm.currency).map((amt) => (
                 <button
                   key={amt}
                   onClick={() =>
@@ -1374,7 +1426,7 @@ export default function FinanceControlPanel() {
                   }
                   className="px-3 py-1.5 text-[10px] font-mono bg-gray-900/60 border border-gray-800/30 rounded-lg text-gray-400 hover:text-green-400 hover:border-green-500/30 transition-colors"
                 >
-                  ${amt}
+                  {chargeForm.currency} {amt.toLocaleString()}
                 </button>
               ))}
             </div>
@@ -1439,10 +1491,7 @@ export default function FinanceControlPanel() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[12px] text-white font-mono font-black">
-                          {charge.currency || "USD"} $
-                          {parseFloat(charge.amount).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatMoney(charge.amount, charge.currency || "USD")}
                         </span>
                         <span
                           className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${statusColor}`}
@@ -1475,7 +1524,7 @@ export default function FinanceControlPanel() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {charge.status === "succeeded" && (
                         <button
-                          onClick={() => handleRefund(charge.id)}
+                          onClick={() => handleRefund(charge)}
                           className="px-2 py-1 text-[8px] font-mono bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20 transition-colors"
                           title="Refund this charge"
                         >

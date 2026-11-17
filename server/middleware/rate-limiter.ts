@@ -254,6 +254,46 @@ export const marketplaceMessageLimiter = rateLimit({
   },
 });
 
+// Payment session limiters: every request can create a Stripe object (checkout
+// session, customer, setup intent) or a pending order, so each flow is capped
+// per signed-in user (IP for anonymous callers) with its own counter. They must
+// run after authentication so the user id is available.
+function paymentSessionLimiter(scope: string, max: number) {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => {
+      const userId = (req as any).user?.userId ?? (req as any).user?.id;
+      return userId
+        ? `pay-${scope}-user-${userId}`
+        : ipKeyGenerator(req.ip ?? "unknown");
+    },
+    handler: (req: Request, res: Response) => {
+      console.warn(
+        `[RATE_LIMIT] ${scope} limit exceeded for: ${(req as any).user?.userId || req.ip}`,
+      );
+      res.status(429).json({
+        success: false,
+        error: "Too many attempts. Please wait a few minutes and try again.",
+        code: "PAYMENT_RATE_LIMITED",
+      });
+    },
+  });
+}
+
+export const marketingCheckoutLimiter = paymentSessionLimiter(
+  "marketing-checkout",
+  10,
+);
+export const subscriptionCheckoutLimiter = paymentSessionLimiter(
+  "subscription-checkout",
+  10,
+);
+export const cardSetupLimiter = paymentSessionLimiter("card-setup", 10);
+export const billingPortalLimiter = paymentSessionLimiter("billing-portal", 10);
+
 // Fan-chat slow mode: 2 messages per minute per user (== 30s cooldown).
 // Paid tiers (essential+) skip the limit — Phase 1 plan: "free for all, cooldown removed for subscribers".
 export const fanChatSlowMode = rateLimit({

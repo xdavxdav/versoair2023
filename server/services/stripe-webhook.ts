@@ -6,14 +6,45 @@
  * (order paid, cart cleared, tier upgrade) share one database transaction. A
  * replay or a concurrent duplicate finds the claim already present and does
  * nothing; a failure rolls the claim back so Stripe's retry processes it.
+ *
+ * A paid marketing session is only applied to an order that is still pending
+ * and whose total and currency match what Stripe collected. Anything else keeps
+ * the payment recorded and is reported as "review", so goods are never released
+ * against a payment that does not cover them and a human reconciles the rest.
  */
 import type Stripe from "stripe";
-import type { TxClient, TxPool } from "./marketing-checkout";
+import { inTransaction } from "./db-transaction";
+import type { Queryable, TxClient, TxPool } from "./marketing-checkout";
+
+export type CheckoutReviewReason =
+  | "order_not_found"
+  | "order_not_pending"
+  | "amount_mismatch"
+  | "currency_mismatch";
+
+export interface CheckoutReview {
+  status: "review";
+  kind: "marketing_order";
+  reason: CheckoutReviewReason;
+  sessionId: string;
+  userId: number;
+  orderId: number;
+  paidCents: number | null;
+  paidCurrency: string | null;
+  orderCents: number | null;
+  orderCurrency: string | null;
+  orderStatus: string | null;
+}
 
 export type CheckoutCompletion =
   | { status: "processed"; kind: "subscription" | "marketing_order" }
+  | CheckoutReview
   | { status: "duplicate" }
   | { status: "unhandled" }
+  | { status: "ignored"; reason: string };
+
+export type CheckoutExpiry =
+  | { status: "cancelled"; orderId: number }
   | { status: "ignored"; reason: string };
 
 export function positiveInt(value: unknown): number | null {
@@ -24,23 +55,8 @@ export function positiveInt(value: unknown): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-export async function inTransaction<T>(
-  db: TxPool,
-  work: (client: TxClient) => Promise<T>,
-): Promise<T> {
-  const client = await db.connect();
-  try {
-    await client.query("BEGIN");
-    const result = await work(client);
-    await client.query("COMMIT");
-    return result;
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    throw err;
-  } finally {
-    client.release();
-  }
-}
+// Plan-subscription handlers import the shared transaction helper from here.
+export { inTransaction };
 
 // The field moved between Stripe API versions, so accept either location.
 function describeShipping(session: Stripe.Checkout.Session): string | null {
@@ -165,31 +181,69 @@ export async function applyCheckoutSessionCompleted(
       );
       if (!claimed) return { status: "duplicate" };
 
-      const updated = await client.query(
+      // Locked so a concurrent status change cannot slip in between the checks
+      // and the update.
+      const found = await client.query(
+        `SELECT status, total_cents, currency
+           FROM orders
+          WHERE id = $1 AND user_id = $2
+          FOR UPDATE`,
+        [orderIdNumber, userIdNumber],
+      );
+      const order = found.rows[0] as
+        | { status: string; total_cents: unknown; currency: unknown }
+        | undefined;
+
+      const paidCents =
+        typeof session.amount_total === "number" ? session.amount_total : null;
+      const paidCurrency = session.currency
+        ? String(session.currency).toUpperCase()
+        : null;
+      const orderCents = order ? Number(order.total_cents) : null;
+      const orderCurrency = order?.currency
+        ? String(order.currency).toUpperCase()
+        : null;
+
+      let reason: CheckoutReviewReason | null = null;
+      if (!order) reason = "order_not_found";
+      else if (order.status !== "pending") reason = "order_not_pending";
+      else if (paidCents === null || paidCents !== orderCents) {
+        reason = "amount_mismatch";
+      } else if (
+        paidCurrency !== null &&
+        orderCurrency !== null &&
+        paidCurrency !== orderCurrency
+      ) {
+        reason = "currency_mismatch";
+      }
+
+      if (reason) {
+        // The claim above stays: the payment is recorded, and only the order
+        // needs a human. Failing here would make Stripe retry into the same state.
+        console.error(
+          `❌ Marketing order ${orderIdNumber} for user ${userIdNumber} held for review (${reason}) after session ${session.id} was paid`,
+        );
+        return {
+          status: "review",
+          kind: "marketing_order",
+          reason,
+          sessionId: session.id,
+          userId: userIdNumber,
+          orderId: orderIdNumber,
+          paidCents,
+          paidCurrency,
+          orderCents,
+          orderCurrency,
+          orderStatus: order?.status ?? null,
+        };
+      }
+
+      await client.query(
         `UPDATE orders
             SET status = 'paid', stripe_session_id = $1, paid_at = NOW(), updated_at = NOW()
-          WHERE id = $2 AND user_id = $3 AND status = 'pending'
-          RETURNING id, total_cents`,
-        [session.id, orderIdNumber, userIdNumber],
+          WHERE id = $2`,
+        [session.id, orderIdNumber],
       );
-
-      if (updated.rows.length === 0) {
-        // The payment is recorded above; only the order needs manual attention.
-        console.error(
-          `❌ Marketing order ${orderIdNumber} for user ${userIdNumber} was not pending when session ${session.id} was paid`,
-        );
-        return { status: "processed", kind: "marketing_order" };
-      }
-
-      const storedCents = Number(updated.rows[0].total_cents);
-      if (
-        session.amount_total != null &&
-        storedCents !== session.amount_total
-      ) {
-        console.error(
-          `❌ Marketing order ${orderIdNumber}: Stripe charged ${session.amount_total} but the order total is ${storedCents} cents`,
-        );
-      }
 
       const shipping = describeShipping(session);
       if (shipping) {
@@ -412,4 +466,36 @@ export async function applyReversalEvent(
     );
   }
   return { status: "unmatched" };
+}
+
+/**
+ * Stripe sends checkout.session.expired when a customer abandons checkout. The
+ * order created for that session is released so it does not stay pending
+ * forever; a paid, shipped or already cancelled order is never touched.
+ */
+export async function applyCheckoutSessionExpired(
+  db: Queryable,
+  session: Stripe.Checkout.Session,
+): Promise<CheckoutExpiry> {
+  const { userId, orderId, type } = session.metadata || {};
+  if (type !== "marketing_order" || !orderId) {
+    return { status: "ignored", reason: "not_marketing_order" };
+  }
+  const userIdNumber = positiveInt(userId);
+  const orderIdNumber = positiveInt(orderId);
+  if (userIdNumber === null || orderIdNumber === null) {
+    return { status: "ignored", reason: "invalid_metadata" };
+  }
+
+  const cancelled = await db.query(
+    `UPDATE orders
+        SET status = 'cancelled', notes = $3, updated_at = NOW()
+      WHERE id = $1 AND user_id = $2 AND status = 'pending'
+      RETURNING id`,
+    [orderIdNumber, userIdNumber, "Checkout session expired before payment"],
+  );
+  if (cancelled.rows.length === 0) {
+    return { status: "ignored", reason: "order_not_pending" };
+  }
+  return { status: "cancelled", orderId: orderIdNumber };
 }

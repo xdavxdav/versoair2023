@@ -31,6 +31,11 @@ import {
   isOwner,
 } from "../../middleware/auth";
 import {
+  billingPortalLimiter,
+  cardSetupLimiter,
+  subscriptionCheckoutLimiter,
+} from "../../middleware/rate-limiter";
+import {
   commercialSubscriptionsEnabled,
   onlinePaymentsEnabled,
   recurringBillingEnabled,
@@ -44,6 +49,7 @@ import {
 } from "../../utils/stripe-client";
 import {
   applyCheckoutSessionCompleted,
+  applyCheckoutSessionExpired,
   applyReversalEvent,
 } from "../../services/stripe-webhook";
 import {
@@ -55,6 +61,13 @@ import {
   buildRecurringPlanCheckoutParams,
   resolvePlanSelection,
 } from "../../services/plan-checkout";
+import { raisePaymentAlert } from "../../services/payment-alerts";
+import { ensureStripeCustomer } from "../../services/stripe-customers";
+import {
+  chargeSavedCard,
+  refundNgoCharge,
+  type ServiceFailure,
+} from "../../services/ngo-charges";
 
 const router = Router();
 
@@ -87,12 +100,37 @@ function requireStripe(res: Response): res is Response {
   return true;
 }
 
-// Resolved per request, like the webhook, so tests can stub it.
-function requireStripeClient(res: Response): Stripe | null {
+// Routes that read the Stripe key per request, so the key and test stubs apply
+// when the request runs rather than when this module loads.
+function stripeForRequest(res: Response): Stripe | null {
   const client = getStripeClient({ apiVersion: STRIPE_API_VERSION });
-  if (!client) res.status(503).json(STRIPE_NOT_CONFIGURED);
+  if (!client) {
+    res.status(503).json({
+      success: false,
+      error:
+        "Payment processing not configured. Set STRIPE_SECRET_KEY in environment.",
+    });
+    return null;
+  }
   return client;
 }
+
+function bodyOf(req: Request): Record<string, unknown> {
+  return req.body && typeof req.body === "object" ? req.body : {};
+}
+
+function actorUserId(req: Request): number | null {
+  const id = Number(req.user?.userId);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+function sendServiceFailure(res: Response, failure: ServiceFailure) {
+  const { ok: _ok, status, ...body } = failure;
+  return res.status(status).json({ success: false, ...body });
+}
+
+// Same per-request lookup under the name the plan-checkout routes use.
+const requireStripeClient = stripeForRequest;
 
 // ─── CREATE CHECKOUT SESSION ────────────────────────────────────────────────────
 
@@ -104,7 +142,7 @@ function requireStripeClient(res: Response): Stripe | null {
  * RECURRING_BILLING_ENABLED is on.
  * Body: { targetTier: 'essential' | 'verified' | 'max', billingCycle?: 'monthly' | 'annual' }
  */
-router.post("/create-checkout", async (req: Request, res: Response) => {
+router.post("/create-checkout", subscriptionCheckoutLimiter, async (req: Request, res: Response) => {
   if (!onlinePaymentsEnabled() || !commercialSubscriptionsEnabled()) {
     rejectUnavailablePayment(res);
     return;
@@ -260,6 +298,26 @@ router.post("/webhook", async (req: Request, res: Response) => {
         return res.json({ received: true, duplicate: true });
       }
       if (outcome.status === "ignored") break;
+      if (outcome.status === "review") {
+        // The payment is recorded; a person has to reconcile the order. Stripe
+        // is acknowledged so it does not retry into the same state.
+        await raisePaymentAlert({
+          kind: "marketing_order_needs_review",
+          summary: `A paid checkout could not be applied to order ${outcome.orderId} (${outcome.reason})`,
+          details: {
+            reason: outcome.reason,
+            checkoutSessionId: outcome.sessionId,
+            orderId: outcome.orderId,
+            userId: outcome.userId,
+            orderStatus: outcome.orderStatus,
+            paidCents: outcome.paidCents,
+            paidCurrency: outcome.paidCurrency,
+            orderCents: outcome.orderCents,
+            orderCurrency: outcome.orderCurrency,
+          },
+        });
+        break;
+      }
 
       try {
         const numericUserId = parseInt(userId);
@@ -305,6 +363,26 @@ router.post("/webhook", async (req: Request, res: Response) => {
           "⚠️ Auto-save card after checkout error:",
           redactStripeSecrets(autoSaveErr?.message),
         );
+      }
+      break;
+    }
+
+    case "checkout.session.expired": {
+      // An abandoned checkout releases its pending order; a retry on error is safe.
+      const session = event.data.object as Stripe.Checkout.Session;
+      try {
+        const expiry = await applyCheckoutSessionExpired(pool, session);
+        if (expiry.status === "cancelled") {
+          console.log(
+            `ℹ️ Checkout ${session.id} expired; order ${expiry.orderId} cancelled`,
+          );
+        }
+      } catch (dbError: any) {
+        console.error(
+          "❌ DB error processing checkout.session.expired:",
+          redactStripeSecrets(dbError?.message),
+        );
+        return res.status(500).json({ error: "Webhook processing failed" });
       }
       break;
     }
@@ -483,9 +561,9 @@ router.get("/billing-history", async (req: Request, res: Response) => {
  * Creates a Stripe Customer Portal session for managing billing.
  * Body: { userId }
  */
-router.post("/create-portal", async (req: Request, res: Response) => {
-  const stripeClient = requireStripeClient(res);
-  if (!stripeClient) return;
+router.post("/create-portal", billingPortalLimiter, async (req: Request, res: Response) => {
+  const client = stripeForRequest(res);
+  if (!client) return;
 
   try {
     const authenticatedUserId = req.user?.userId || (req as any).user?.id;
@@ -510,7 +588,7 @@ router.post("/create-portal", async (req: Request, res: Response) => {
     const userId = Number(authenticatedUserId);
 
     const userResult = await pool.query(
-      `SELECT email, stripe_customer_id FROM users WHERE id = $1`,
+      `SELECT email, username FROM users WHERE id = $1`,
       [userId],
     );
 
@@ -518,28 +596,13 @@ router.post("/create-portal", async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    // The customer saved at checkout owns any automatic-renewal subscription;
-    // looking one up by email could pick a different customer with that address.
-    let customerId: string | undefined =
-      userResult.rows[0].stripe_customer_id || undefined;
+    const { email, username } = userResult.rows[0];
+    const customerId = await ensureStripeCustomer(
+      { stripe: client, db: pool },
+      { userId, email, name: username, source: "billing_portal" },
+    );
 
-    if (!customerId) {
-      const customers = await stripeClient.customers.list({
-        email: userResult.rows[0].email,
-        limit: 1,
-      });
-      if (customers.data.length > 0) {
-        customerId = customers.data[0].id;
-      } else {
-        const customer = await stripeClient.customers.create({
-          email: userResult.rows[0].email,
-          metadata: { userId: String(userId) },
-        });
-        customerId = customer.id;
-      }
-    }
-
-    const portalSession = await stripeClient.billingPortal.sessions.create({
+    const portalSession = await client.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${getPublicBaseUrl()}/pricing`,
     });
@@ -567,37 +630,10 @@ async function getOrCreateStripeCustomer(
   name?: string,
   client: Stripe | null = stripe,
 ): Promise<string> {
-  // Check if user already has a Stripe customer ID stored
-  const existingResult = await pool.query(
-    `SELECT stripe_customer_id FROM users WHERE id = $1`,
-    [userId],
+  return ensureStripeCustomer(
+    { stripe: client!, db: pool },
+    { userId, email, name, source: "ngo_pos" },
   );
-
-  const existingCustomerId = existingResult.rows[0]?.stripe_customer_id;
-  if (existingCustomerId) return existingCustomerId;
-
-  // Check Stripe by email
-  const customers = await client!.customers.list({ email, limit: 1 });
-  let customerId: string;
-
-  if (customers.data.length > 0) {
-    customerId = customers.data[0].id;
-  } else {
-    const customer = await client!.customers.create({
-      email,
-      name: name || undefined,
-      metadata: { userId: String(userId), source: "ngo_pos" },
-    });
-    customerId = customer.id;
-  }
-
-  // Persist to users table
-  await pool.query(`UPDATE users SET stripe_customer_id = $1 WHERE id = $2`, [
-    customerId,
-    userId,
-  ]);
-
-  return customerId;
 }
 
 // ─── HELPER: Auto-save a Stripe PaymentMethod to our DB ─────────────────────────
@@ -717,7 +753,7 @@ async function autoSavePaymentMethod(
  * Redirects user to Stripe's secure hosted page to enter card details.
  * On completion, webhook auto-saves the card. No raw card numbers touch our server.
  */
-router.post("/add-card-session", async (req: Request, res: Response) => {
+router.post("/add-card-session", cardSetupLimiter, async (req: Request, res: Response) => {
   if (!requireStripe(res)) return;
 
   try {
@@ -775,7 +811,7 @@ router.post("/add-card-session", async (req: Request, res: Response) => {
  * Body: { userId }
  * Returns: { clientSecret, setupIntentId }
  */
-router.post("/setup-intent", requireAuth(), async (req: Request, res: Response) => {
+router.post("/setup-intent", requireAuth(), cardSetupLimiter, async (req: Request, res: Response) => {
   try {
     const userId = resolveRequestActingUserId(req, res, req.body?.userId);
     if (userId === null) return;
@@ -1120,8 +1156,9 @@ router.delete("/cards/:cardId", requireAuth(), async (req: Request, res: Respons
 
 /**
  * POST /api/v1/payments/charge
- * POS-style charge against a pre-authorized saved card.
- * Body: { cardId, amount, currency?, description?, category?, processedBy? }
+ * Staff-initiated charge against a saved card; only the owner can call it.
+ * Body: { cardId, amount, currency?, description?, category?, idempotencyKey? }
+ * Retry with the same idempotencyKey so the card is never charged twice.
  */
 router.post(
   "/charge",
@@ -1131,158 +1168,28 @@ router.post(
       rejectUnavailablePayment(res);
       return;
     }
-    if (!requireStripe(res)) return;
+    const client = stripeForRequest(res);
+    if (!client) return;
 
     try {
-      const {
-        cardId,
-        amount,
-        currency = "USD",
-        description = "NGO Activity Charge",
-        category = "activity_fee",
-        processedBy,
-      } = req.body;
-
-      if (!cardId || !amount) {
-        return res
-          .status(400)
-          .json({ success: false, error: "cardId and amount are required" });
-      }
-
-      const amountNum = parseFloat(amount);
-      if (isNaN(amountNum) || amountNum <= 0) {
-        return res
-          .status(400)
-          .json({ success: false, error: "Invalid amount" });
-      }
-
-      // Fetch the saved card
-      const cardResult = await pool.query(
-        `SELECT spm.*, u.email, u.username
-       FROM saved_payment_methods spm
-       JOIN users u ON u.id = spm.user_id
-       WHERE spm.id = $1 AND spm.status = 'active'`,
-        [cardId],
+      const result = await chargeSavedCard(
+        { db: pool, stripe: client },
+        { ...bodyOf(req), actorUserId: actorUserId(req) },
       );
-
-      if (cardResult.rows.length === 0) {
-        return res
-          .status(404)
-          .json({ success: false, error: "Active card not found" });
-      }
-
-      const card = cardResult.rows[0];
-
-      const isAdminCaller = true;
-
-      // Non-admin callers must use pre-authorized cards only
-      if (!isAdminCaller && !card.preauthorized) {
-        return res.status(403).json({
-          success: false,
-          error: "Card is not pre-authorized for charges",
-        });
-      }
-
-      // Check max charge amount (skip for admin-initiated charges)
-      if (
-        !isAdminCaller &&
-        card.max_charge_amount &&
-        amountNum > parseFloat(card.max_charge_amount)
-      ) {
-        return res.status(403).json({
-          success: false,
-          error: `Amount exceeds max charge limit of ${card.currency} ${card.max_charge_amount}`,
-        });
-      }
-
-      // Create PaymentIntent with saved payment method (off-session charge)
-      const paymentIntent = await stripe!.paymentIntents.create({
-        amount: Math.round(amountNum * 100), // Convert to cents
-        currency: (currency || card.currency || "USD").toLowerCase(),
-        customer: card.stripe_customer_id,
-        payment_method: card.stripe_payment_method_id,
-        off_session: true,
-        confirm: true,
-        description,
-        metadata: {
-          source: "ngo_pos",
-          cardId: String(cardId),
-          userId: String(card.user_id),
-          category,
-          processedBy: processedBy ? String(processedBy) : "system",
-        },
-      });
-
-      // Record charge in ngo_charges table
-      const chargeResult = await pool.query(
-        `INSERT INTO ngo_charges
-       (payment_method_id, user_id, amount, currency, description, category,
-        stripe_payment_intent_id, status, processed_by, receipt_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING *`,
-        [
-          cardId,
-          card.user_id,
-          amountNum.toFixed(2),
-          (currency || card.currency || "USD").toUpperCase(),
-          description,
-          category,
-          paymentIntent.id,
-          paymentIntent.status === "succeeded" ? "succeeded" : "pending",
-          processedBy || null,
-          null, // receipt URL populated by webhook later
-        ],
-      );
-
-      // Also record in main transactions table
-      await pool.query(
-        `INSERT INTO transactions (user_id, amount, type, status, reference)
-       VALUES ($1, $2, 'ngo_charge', $3, $4)`,
-        [
-          card.user_id,
-          amountNum.toFixed(2),
-          paymentIntent.status === "succeeded" ? "completed" : "pending",
-          paymentIntent.id,
-        ],
-      );
-
-      console.log(
-        `💰 POS Charge: ${currency} ${amountNum.toFixed(2)} → ${card.card_brand} ****${card.card_last4} (${card.username}) — ${description}`,
-      );
+      if (!result.ok) return sendServiceFailure(res, result);
 
       res.json({
         success: true,
         data: {
-          charge: chargeResult.rows[0],
-          paymentIntent: {
-            id: paymentIntent.id,
-            status: paymentIntent.status,
-            amount: amountNum,
-            currency: currency.toUpperCase(),
-          },
+          charge: result.charge,
+          paymentIntent: result.paymentIntent,
+          replayed: result.replayed,
         },
       });
     } catch (error: any) {
-      console.error("❌ POS Charge error:", error);
-
-      // Handle card declined or authentication needed
-      if (error.type === "StripeCardError") {
-        return res.status(402).json({
-          success: false,
-          error: `Card declined: ${error.message}`,
-          code: error.code,
-        });
-      }
-
-      if (error.code === "authentication_required") {
-        return res.status(402).json({
-          success: false,
-          error: "Card requires authentication. Cannot charge off-session.",
-          code: "authentication_required",
-        });
-      }
-
-      res.status(500).json({ success: false, error: error.message });
+      const message = redactStripeSecrets(error?.message);
+      console.error("❌ POS Charge error:", message);
+      res.status(500).json({ success: false, error: message });
     }
   },
 );
@@ -1291,85 +1198,38 @@ router.post(
 
 /**
  * POST /api/v1/payments/refund
- * Refund a previous NGO POS charge.
- * Body: { chargeId, reason? }
+ * Refund a previous NGO POS charge in full. Deliberately not behind the
+ * online-payments switch: turning charging off must never block giving money
+ * back. Safe to retry; Stripe issues at most one refund per charge.
+ * Body: { chargeId, reason? } where reason is duplicate, fraudulent or
+ * requested_by_customer (the default).
  */
 router.post(
   "/refund",
   requireSuperuser(),
   async (req: Request, res: Response) => {
-    if (!requireStripe(res)) return;
+    const client = stripeForRequest(res);
+    if (!client) return;
 
     try {
-      const { chargeId, reason = "requested_by_customer" } = req.body;
-
-      if (!chargeId) {
-        return res
-          .status(400)
-          .json({ success: false, error: "chargeId is required" });
-      }
-
-      const chargeResult = await pool.query(
-        `SELECT * FROM ngo_charges WHERE id = $1`,
-        [chargeId],
+      const result = await refundNgoCharge(
+        { db: pool, stripe: client },
+        bodyOf(req),
       );
-
-      if (chargeResult.rows.length === 0) {
-        return res
-          .status(404)
-          .json({ success: false, error: "Charge not found" });
-      }
-
-      const charge = chargeResult.rows[0];
-
-      if (charge.status === "refunded") {
-        return res
-          .status(400)
-          .json({ success: false, error: "Charge already refunded" });
-      }
-
-      if (!charge.stripe_payment_intent_id) {
-        return res.status(400).json({
-          success: false,
-          error: "No Stripe payment intent for this charge",
-        });
-      }
-
-      // Process refund via Stripe
-      const refund = await stripe!.refunds.create({
-        payment_intent: charge.stripe_payment_intent_id,
-        reason: reason as Stripe.RefundCreateParams.Reason,
-      });
-
-      // Update charge record
-      await pool.query(
-        `UPDATE ngo_charges
-       SET status = 'refunded', refunded_at = NOW(), refund_reason = $2
-       WHERE id = $1`,
-        [chargeId, reason],
-      );
-
-      // Update transaction record
-      await pool.query(
-        `UPDATE transactions SET status = 'refunded' WHERE reference = $1`,
-        [charge.stripe_payment_intent_id],
-      );
-
-      console.log(
-        `↩️ Refund processed: Charge ${chargeId} — ${charge.currency} ${charge.amount}`,
-      );
+      if (!result.ok) return sendServiceFailure(res, result);
 
       res.json({
         success: true,
         data: {
-          refundId: refund.id,
-          status: refund.status,
-          amount: parseFloat(charge.amount),
+          refundId: result.refundId,
+          status: result.status,
+          amount: result.amount,
         },
       });
     } catch (error: any) {
-      console.error("❌ Refund error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      const message = redactStripeSecrets(error?.message);
+      console.error("❌ Refund error:", message);
+      res.status(500).json({ success: false, error: message });
     }
   },
 );

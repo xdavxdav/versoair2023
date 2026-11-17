@@ -118,8 +118,9 @@ and reconcile from the Dashboard.
    also a separate legacy price list (premium 29.99, enterprise 99.99 per 30
    days, in wallet currency) that is not governed by `shared/plan-pricing.ts`
    and can sell `enterprise`; retire or align it before opening wallets.
-8. Pending orders from abandoned checkouts are never expired (harmless; they are
-   not counted as revenue).
+8. Pending orders from abandoned checkouts are cancelled only if the webhook
+   endpoint is subscribed to `checkout.session.expired` (Part A step 3);
+   otherwise they stay `pending` (harmless; they are not counted as revenue).
 9. **Billing history shows no currency code.** Ledger rows do not store the
    currency (`transactions.currency` is never written), so amounts appear with
    a `$` and nothing else. Everything Stripe charges for the shop and plans is
@@ -136,8 +137,8 @@ on the production service: a sandbox purchase writes real `orders` and
 2. Developers > API keys: copy the **test** secret key (`sk_test_...`).
 3. Developers > Webhooks > Add endpoint:
    - URL: `https://<staging-domain>/api/v1/payments/webhook`
-   - Events: `checkout.session.completed`, `charge.refunded`,
-     `charge.dispute.created`, `charge.dispute.closed`
+   - Events: `checkout.session.completed`, `checkout.session.expired`,
+     `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`
      (optional, log/card-save only: `payment_intent.payment_failed`,
      `setup_intent.succeeded`). To also test automatic-renewal plans (see
      "Recurring billing"), add `invoice.paid`, `invoice.payment_failed` and
@@ -155,7 +156,9 @@ on the production service: a sandbox purchase writes real `orders` and
 5. Sign in as the owner and open `GET /api/marketing/admin/payments-status`.
    Expect `keyMode: "test"`, `webhookSecretConfigured: true`, the right
    `publicBaseUrl`, and all flags false.
-6. Set `MARKETING_CHECKOUT_ENABLED=true` on staging only.
+6. Set `MARKETING_CHECKOUT_ENABLED=true` on staging only, then open
+   `payments-status` again: `blockers` must be empty (`warnings` will note that a
+   test key is active).
 
 The production catalog is empty (`marketing_packs` and `print_products` have no
 rows) and no admin screen can add items, so the cart has nothing to sell. For
@@ -331,6 +334,21 @@ Known limits (decide or handle through support):
   failure rolls back and returns 500 so Stripe retries.
 - Amounts are integer cents read from the database at checkout; currency is
   fixed to CAD for marketing orders. The request body is ignored.
+- A paid session is applied only to a `pending` order of the same user whose
+  total and currency match what Stripe collected. Anything else is held for
+  review: the payment stays recorded, the order and cart are left alone, Stripe
+  still gets `200`, and a `[PAYMENT-ALERT]` line is logged and emailed to
+  `ADMIN_EMAIL` (falling back to `SMTP_FROM`, then `SMTP_USER`). A redelivery
+  does not alert again.
+- `checkout.session.expired` cancels only a `pending` order and keeps the cart.
+- Checkout, saved-card setup and billing-portal sessions are limited to 10
+  requests per 15 minutes per signed-in user (HTTP 429, code
+  `PAYMENT_RATE_LIMITED`).
+- Staff order status changes only move forward: staff cannot mark an order paid
+  or pending, and `disputed` / `chargeback` orders have no staff transitions.
+- The NGO POS charge takes the amount as text (no float rounding), sends XOF and
+  XAF as whole units, and accepts an optional `idempotencyKey` so a retry never
+  charges twice. Refunds are intentionally not gated by `ONLINE_PAYMENTS_ENABLED`.
 
 Tests: `npm run test:payments` runs the whole payment set (checkout, webhook, reversals, plan pricing, and the recurring-billing files `plan-subscriptions`, `payments-recurring`, `subscription-downgrade`, `subscription-expiry`). The original webhook subset:
 `JWT_SECRET=local-test-only-secret-0123456789abcdef node --import tsx --test server/routes/api-v1/payments-webhook.test.ts server/services/stripe-reversals.test.ts server/services/stripe-webhook.test.ts server/services/marketing-checkout.test.ts`
