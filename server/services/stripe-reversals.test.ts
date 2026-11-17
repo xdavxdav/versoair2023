@@ -5,6 +5,7 @@ import {
   applyCheckoutSessionCompleted,
   applyReversalEvent,
 } from "./stripe-webhook";
+import { buildCheckoutSessionParams } from "./marketing-checkout";
 import { createStubStripe, FakeDb } from "../test-support/marketing-fakes";
 
 const SESSION = "cs_test_order_42";
@@ -193,4 +194,46 @@ test("inquiry-stage and unrelated events are ignored", async () => {
     ).status,
     "ignored",
   );
+});
+
+test("print orders collect a CA/US shipping address and keep it on the order; packs do not", async () => {
+  const line = (itemType: "pack" | "print_product") => ({
+    itemType,
+    itemId: 1,
+    name: "Item",
+    quantity: 1,
+    unitCents: 500,
+    lineCents: 500,
+  });
+  const base = { orderId: 1, userId: 7, baseUrl: "https://example.test" };
+  assert.deepEqual(
+    buildCheckoutSessionParams({ ...base, lines: [line("print_product")] })
+      .shipping_address_collection,
+    { allowed_countries: ["CA", "US"] },
+  );
+  assert.equal(
+    buildCheckoutSessionParams({ ...base, lines: [line("pack")] })
+      .shipping_address_collection,
+    undefined,
+  );
+
+  const db = new FakeDb();
+  db.orders.push({
+    id: 42, user_id: 7, total_cents: 5000, currency: "CAD",
+    status: "pending", stripe_session_id: null, notes: null, paid_at: null,
+  });
+  await applyCheckoutSessionCompleted(db, {
+    id: "cs_test_ship",
+    payment_status: "paid",
+    amount_total: 5000,
+    metadata: { userId: "7", orderId: "42", type: "marketing_order" },
+    collected_information: {
+      shipping_details: {
+        name: "Ama Mensah",
+        address: { line1: "1 Main St", city: "Toronto", state: "ON", postal_code: "M5V 1A1", country: "CA" },
+      },
+    },
+  } as unknown as Stripe.Checkout.Session);
+  assert.equal(db.orders[0]?.status, "paid");
+  assert.equal(db.orders[0]?.notes, "Ship to: Ama Mensah, 1 Main St, Toronto, ON, M5V 1A1, CA");
 });

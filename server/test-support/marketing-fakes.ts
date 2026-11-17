@@ -237,6 +237,19 @@ export class FakeDb {
       return result([{ id: order.id, total_cents: order.total_cents }]);
     }
 
+    if (
+      sql ===
+      "UPDATE orders SET notes = COALESCE(notes || E'\\n', '') || $2 WHERE id = $1"
+    ) {
+      const order = this.orders.find((o) => o.id === Number(p[0]));
+      if (order) {
+        const before = { ...order };
+        order.notes = `${order.notes ? `${order.notes}\n` : ""}${p[1]}`;
+        undo?.push(() => Object.assign(order, before));
+      }
+      return result();
+    }
+
     if (sql === "SELECT user_id FROM transactions WHERE reference = $1") {
       return result(
         this.transactions
