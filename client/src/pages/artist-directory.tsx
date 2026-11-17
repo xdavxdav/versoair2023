@@ -295,7 +295,7 @@ export default function ArtistDirectory() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-slate-900">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-white">
 
       {/* Search Section */}
       <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
@@ -309,7 +309,7 @@ export default function ArtistDirectory() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Recherchez des Artistes..."
-                  className="pl-12 bg-slate-800/50 border-purple-600 text-slate-900 placeholder-purple-300/60 focus:border-purple-400"
+                  className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60 focus:border-purple-400"
                 />
               </div>
 
@@ -334,7 +334,7 @@ export default function ArtistDirectory() {
                     variant="ghost"
                     size="sm"
                     onClick={clearAllFilters}
-                    className="text-purple-300 hover:text-slate-900 hover:bg-white/10"
+                    className="text-purple-300 hover:text-white hover:bg-white/10"
                   >
                     <X size={14} className="mr-1" />
                     Réinitialiser
@@ -623,7 +623,7 @@ export default function ArtistDirectory() {
                             {/* Centered initials — bigger, better shadow */}
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div
-                                className={`w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-slate-900 text-3xl font-bold shadow-2xl ring-4 ring-white/10 group-hover:ring-purple-400/30 group-hover:scale-105 transition-all duration-500`}
+                                className={`w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/10 group-hover:ring-purple-400/30 group-hover:scale-105 transition-all duration-500`}
                               >
                                 {(artist.name || "?")
                                   .split(/\s+/)
@@ -637,7 +637,7 @@ export default function ArtistDirectory() {
                             {/* Genre badge — polished glass effect */}
                             <div className="absolute top-3.5 right-3.5">
                               <Badge
-                                className={`bg-gradient-to-r ${getGenreGradient(artist.genre || "")} text-slate-900 border-0 shadow-lg backdrop-blur-sm px-3 py-1 text-xs font-semibold`}
+                                className={`bg-gradient-to-r ${getGenreGradient(artist.genre || "")} text-white border-0 shadow-lg backdrop-blur-sm px-3 py-1 text-xs font-semibold`}
                               >
                                 {GENRE_ICONS[artist.genre || ""] || "🎵"}{" "}
                                 {artist.genre || "Divers"}
@@ -647,7 +647,7 @@ export default function ArtistDirectory() {
 
                           {/* Card body — improved spacing & typography */}
                           <div className="p-6">
-                            <h4 className="text-lg font-bold text-slate-900 group-hover:text-purple-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight">
+                            <h4 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight">
                               {artist.name || "Artiste inconnu"}
                             </h4>
 
@@ -713,7 +713,7 @@ export default function ArtistDirectory() {
                         .map((page, idx, arr) => (
                           <span key={page} className="flex items-center gap-2">
                             {idx > 0 && arr[idx - 1] !== page - 1 && (
-                              <span className="text-gray-500">...</span>
+                              <span className="text-gray-400">...</span>
                             )}
                             <Button
                               size="sm"
@@ -747,11 +747,11 @@ export default function ArtistDirectory() {
               </>
             ) : (
               <div className="text-center py-12">
-                <Music className="h-16 w-16 mx-auto text-slate-500 mb-4" />
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                <Music className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-200 mb-2">
                   Aucun artiste trouvé
                 </h3>
-                <p className="text-slate-500">
+                <p className="text-gray-400">
                   Essayez une autre recherche ou un autre genre
                 </p>
               </div>
@@ -759,11 +759,11 @@ export default function ArtistDirectory() {
           </>
         ) : (
           <div className="text-center py-12">
-            <Radio className="h-16 w-16 mx-auto text-slate-500 mb-4" />
-            <h3 className="text-xl font-semibold text-slate-700 mb-2">
+            <Radio className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-200 mb-2">
               Explorez le répertoire musical
             </h3>
-            <p className="text-slate-500">
+            <p className="text-gray-400">
               Sélectionnez un genre ou lancez votre recherche
             </p>
           </div>
@@ -793,7 +793,7 @@ export default function ArtistDirectory() {
               {loadingDetails ? (
                 <div className="flex items-center justify-center py-20">
                   <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
-                  <span className="ml-3 text-slate-700">Chargement...</span>
+                  <span className="ml-3 text-gray-200">Chargement...</span>
                 </div>
               ) : selectedArtist ? (
                 <>
@@ -803,7 +803,7 @@ export default function ArtistDirectory() {
                       className={`h-48 bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} relative overflow-hidden`}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-slate-900 text-4xl font-bold">
+                        <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold">
                           {(selectedArtist.name || "?")
                             .split(/\s+/)
                             .map((w: string) => w[0])
@@ -823,18 +823,18 @@ export default function ArtistDirectory() {
                         }}
                         className="p-2 bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur-sm rounded-full transition-colors"
                       >
-                        <X className="h-5 w-5 text-slate-900" />
+                        <X className="h-5 w-5 text-white" />
                       </button>
                     </div>
 
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <Badge
-                        className={`bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} text-slate-900 border-0 mb-2`}
+                        className={`bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} text-white border-0 mb-2`}
                       >
                         {GENRE_ICONS[selectedArtist.genre || ""] || "🎵"}{" "}
                         {selectedArtist.genre || "Divers"}
                       </Badge>
-                      <h2 className="text-3xl font-bold text-slate-900 drop-shadow-lg">
+                      <h2 className="text-3xl font-bold text-white drop-shadow-lg">
                         {selectedArtist.name || "Artiste inconnu"}
                       </h2>
                     </div>
@@ -846,7 +846,7 @@ export default function ArtistDirectory() {
                       <Card className="bg-purple-900/30 border-purple-500/20">
                         <CardContent className="p-4 text-center">
                           <Mic2 className="h-5 w-5 text-purple-400 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-slate-900">
+                          <div className="text-lg font-bold text-white">
                             {selectedArtist.genre || "—"}
                           </div>
                           <div className="text-xs text-purple-300">Genre</div>
@@ -855,7 +855,7 @@ export default function ArtistDirectory() {
                       <Card className="bg-fuchsia-900/30 border-fuchsia-500/20">
                         <CardContent className="p-4 text-center">
                           <CheckCircle className="h-5 w-5 text-fuchsia-400 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-slate-900">
+                          <div className="text-lg font-bold text-white">
                             {selectedArtist.label_status === "signed"
                               ? "Signé"
                               : selectedArtist.label_status === "independent"
@@ -872,7 +872,7 @@ export default function ArtistDirectory() {
                     {/* Stream on Verso Air */}
                     <Link
                       href={`/artist-catalogue/${selectedArtist.id}`}
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-600 to-orange-500 rounded-lg text-slate-900 font-semibold hover:from-amber-700 hover:to-orange-600 transition-all"
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-600 to-orange-500 rounded-lg text-white font-semibold hover:from-amber-700 hover:to-orange-600 transition-all"
                     >
                       <Music className="h-5 w-5" />
                       Écouter sur Verso Air

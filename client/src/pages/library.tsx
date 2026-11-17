@@ -201,9 +201,9 @@ export default function LibraryPage() {
         <div className="max-w-[95vw] mx-auto px-4">
           {playlists.length === 0 ? (
             <div className="text-center py-16">
-              <ListMusic className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+              <ListMusic className="w-16 h-16 text-gray-500 mx-auto mb-4" />
               <p className="text-gray-400 mb-2">Aucune playlist encore</p>
-              <p className="text-gray-600 text-sm mb-4">
+              <p className="text-gray-400 text-sm mb-4">
                 Créez votre première playlist pour organiser vos titres préférés
               </p>
               <button
@@ -249,7 +249,7 @@ export default function LibraryPage() {
                             key={i}
                             className="bg-gray-800 border border-gray-700/30 flex items-center justify-center"
                           >
-                            <Music className="w-6 h-6 text-gray-600" />
+                            <Music className="w-6 h-6 text-gray-400" />
                           </div>
                         ))}
                       </div>
@@ -299,7 +299,7 @@ export default function LibraryPage() {
                     {selectedPlaylistMeta.description}
                   </p>
                 )}
-                <p className="text-gray-600 text-xs mt-1">
+                <p className="text-gray-400 text-xs mt-1">
                   {selectedPlaylistTracks.length} titres
                 </p>
                 <div className="flex gap-2 mt-3">
@@ -328,7 +328,7 @@ export default function LibraryPage() {
                     }`}
                   >
                     <span
-                      className={`w-6 text-center text-xs ${isCurrent ? "text-amber-400 font-bold" : "text-gray-600"}`}
+                      className={`w-6 text-center text-xs ${isCurrent ? "text-amber-400 font-bold" : "text-gray-400"}`}
                     >
                       {i + 1}
                     </span>
@@ -355,7 +355,7 @@ export default function LibraryPage() {
                         {track.artist_name}
                       </p>
                     </div>
-                    <span className="text-gray-600 text-xs w-10 text-right">
+                    <span className="text-gray-400 text-xs w-10 text-right">
                       {formatDuration(track.duration)}
                     </span>
                   </div>
@@ -372,9 +372,9 @@ export default function LibraryPage() {
         <div className="max-w-[95vw] mx-auto px-4">
           {likedTracks.length === 0 ? (
             <div className="text-center py-16">
-              <Heart className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+              <Heart className="w-16 h-16 text-gray-500 mx-auto mb-4" />
               <p className="text-gray-400 mb-2">Aucun titre aimé</p>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-400 text-sm">
                 Appuyez sur ❤️ sur un titre pour l'ajouter ici
               </p>
             </div>
@@ -426,10 +426,10 @@ export default function LibraryPage() {
                           {track.artist_name}
                         </p>
                       </div>
-                      <span className="text-gray-600 text-xs hidden sm:inline">
+                      <span className="text-gray-400 text-xs hidden sm:inline">
                         {formatStreams(track.streams || 0)}
                       </span>
-                      <span className="text-gray-600 text-xs w-10 text-right">
+                      <span className="text-gray-400 text-xs w-10 text-right">
                         {formatDuration(track.duration)}
                       </span>
                     </div>
@@ -448,9 +448,9 @@ export default function LibraryPage() {
         <div className="max-w-[95vw] mx-auto px-4">
           {history.length === 0 ? (
             <div className="text-center py-16">
-              <History className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+              <History className="w-16 h-16 text-gray-500 mx-auto mb-4" />
               <p className="text-gray-400 mb-2">Aucun historique</p>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-400 text-sm">
                 Écoutez de la musique pour voir votre historique ici
               </p>
             </div>
@@ -466,7 +466,7 @@ export default function LibraryPage() {
                       isCurrent ? "bg-amber-500/10" : "hover:bg-gray-800/50"
                     }`}
                   >
-                    <Clock className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                     <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
                       <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
                         <Music className="w-4 h-4 text-white/40" />
@@ -484,7 +484,7 @@ export default function LibraryPage() {
                           "Artiste inconnu"}
                       </p>
                     </div>
-                    <span className="text-gray-600 text-xs">
+                    <span className="text-gray-400 text-xs">
                       {entry.played_at ? timeAgo(entry.played_at) : ""}
                     </span>
                   </div>

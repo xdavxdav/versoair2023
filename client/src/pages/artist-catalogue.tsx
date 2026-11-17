@@ -122,8 +122,8 @@ export default function ArtistCataloguePage() {
 
   if (!artist) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center text-slate-900">
-        <Mic2 className="w-16 h-16 text-gray-700 mb-4" />
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center text-white">
+        <Mic2 className="w-16 h-16 text-gray-400 mb-4" />
         <p className="text-gray-400">Artiste introuvable</p>
         <Link href="/stream">
           <button className="mt-4 px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm">
@@ -264,7 +264,7 @@ export default function ArtistCataloguePage() {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                  <span className="text-5xl font-bold text-white/30">
+                  <span className="text-5xl font-bold text-white/50">
                     {artist.name?.[0]}
                   </span>
                 </div>
@@ -310,7 +310,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {formatStreams(artist.monthly_listeners || 0)}
                   </p>
-                  <p className="text-gray-500 text-[10px] uppercase tracking-wider">
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
                     Auditeurs/mois
                   </p>
                 </div>
@@ -318,7 +318,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {formatStreams(artist.total_streams || 0)}
                   </p>
-                  <p className="text-gray-500 text-[10px] uppercase tracking-wider">
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
                     Écoutes totales
                   </p>
                 </div>
@@ -326,7 +326,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {artist.followers || 0}
                   </p>
-                  <p className="text-gray-500 text-[10px] uppercase tracking-wider">
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
                     Abonnés
                   </p>
                 </div>
@@ -334,7 +334,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {artist.total_tracks || topTracks.length}
                   </p>
-                  <p className="text-gray-500 text-[10px] uppercase tracking-wider">
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
                     Titres
                   </p>
                 </div>
@@ -471,7 +471,7 @@ export default function ArtistCataloguePage() {
         <div className="max-w-[95vw] mx-auto px-4">
           {/* Top Tracks */}
           <div className="mb-10">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-amber-400" />
               Titres populaires
             </h3>
@@ -487,7 +487,7 @@ export default function ArtistCataloguePage() {
                     }`}
                   >
                     <span
-                      className={`w-6 text-center text-sm ${isCurrent ? "text-amber-400 font-bold" : "text-gray-600"}`}
+                      className={`w-6 text-center text-sm ${isCurrent ? "text-amber-400 font-bold" : "text-gray-400"}`}
                     >
                       {i + 1}
                     </span>
@@ -500,7 +500,7 @@ export default function ArtistCataloguePage() {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                          <Music className="w-4 h-4 text-white/40" />
+                          <Music className="w-4 h-4 text-white/50" />
                         </div>
                       )}
                     </div>
@@ -510,14 +510,14 @@ export default function ArtistCataloguePage() {
                       >
                         {track.title}
                       </p>
-                      <p className="text-gray-500 text-xs truncate">
+                      <p className="text-gray-400 text-xs truncate">
                         {track.album_title}
                       </p>
                     </div>
-                    <span className="text-gray-600 text-xs hidden sm:inline">
+                    <span className="text-gray-400 text-xs hidden sm:inline">
                       {formatStreams(track.streams || 0)}
                     </span>
-                    <span className="text-gray-600 text-xs w-10 text-right">
+                    <span className="text-gray-400 text-xs w-10 text-right">
                       {formatDuration(track.duration)}
                     </span>
                     <button
@@ -525,7 +525,7 @@ export default function ArtistCataloguePage() {
                         e.stopPropagation();
                         audio.addToQueue(track);
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-amber-400 transition-all"
+                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-amber-400 transition-all"
                     >
                       <Heart className="w-3.5 h-3.5" />
                     </button>
@@ -538,7 +538,7 @@ export default function ArtistCataloguePage() {
           {/* Albums */}
           {albums.length > 0 && (
             <div className="mb-10">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
+              <h3 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-1.5">
                 <Disc3 className="w-4 h-4 text-amber-400" />
                 Albums & Singles
               </h3>
@@ -558,7 +558,7 @@ export default function ArtistCataloguePage() {
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                            <Disc3 className="w-10 h-10 text-white/20" />
+                            <Disc3 className="w-10 h-10 text-white/50" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
@@ -570,7 +570,7 @@ export default function ArtistCataloguePage() {
                       <p className="text-white text-sm font-medium truncate">
                         {album.title}
                       </p>
-                      <p className="text-gray-500 text-xs">
+                      <p className="text-gray-400 text-xs">
                         {album.release_year ||
                           new Date(album.release_date).getFullYear()}{" "}
                         • {album.album_type || "Album"}
@@ -585,7 +585,7 @@ export default function ArtistCataloguePage() {
           {/* Stream Trend mini chart */}
           {streamTrend.length > 0 && (
             <div className="mb-10">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
+              <h3 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-1.5">
                 <BarChart3 className="w-4 h-4 text-amber-400" />
                 Tendance des écoutes (30 jours)
               </h3>
@@ -618,11 +618,11 @@ export default function ArtistCataloguePage() {
           {/* Bio */}
           {artist.bio && (
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">
+              <h3 className="text-sm font-semibold text-gray-200 mb-3">
                 Biographie
               </h3>
               <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700/30">
-                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
+                <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-line">
                   {artist.bio}
                 </p>
               </div>
@@ -633,7 +633,7 @@ export default function ArtistCataloguePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
             {artist.country && (
               <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-                <p className="text-gray-500 text-xs mb-1">Pays</p>
+                <p className="text-gray-400 text-xs mb-1">Pays</p>
                 <p className="text-white text-sm">
                   {getFlag(artist.country_code)} {artist.country}
                 </p>
@@ -641,30 +641,30 @@ export default function ArtistCataloguePage() {
             )}
             {artist.genre && (
               <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-                <p className="text-gray-500 text-xs mb-1">Genre</p>
+                <p className="text-gray-400 text-xs mb-1">Genre</p>
                 <p className="text-white text-sm">{artist.genre}</p>
               </div>
             )}
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-              <p className="text-gray-500 text-xs mb-1">Écoutes totales</p>
+              <p className="text-gray-400 text-xs mb-1">Écoutes totales</p>
               <p className="text-white text-sm">
                 {formatStreams(artist.total_streams || 0)}
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-              <p className="text-gray-500 text-xs mb-1">Auditeurs mensuels</p>
+              <p className="text-gray-400 text-xs mb-1">Auditeurs mensuels</p>
               <p className="text-white text-sm">
                 {formatStreams(artist.monthly_listeners || 0)}
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-              <p className="text-gray-500 text-xs mb-1">Albums</p>
+              <p className="text-gray-400 text-xs mb-1">Albums</p>
               <p className="text-white text-sm">
                 {artist.total_albums || albums.length}
               </p>
             </div>
             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
-              <p className="text-gray-500 text-xs mb-1">Abonnés</p>
+              <p className="text-gray-400 text-xs mb-1">Abonnés</p>
               <p className="text-white text-sm">
                 {formatStreams(artist.followers || 0)}
               </p>
@@ -673,7 +673,7 @@ export default function ArtistCataloguePage() {
 
           {/* External links */}
           <div className="mb-8">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Liens</h3>
+            <h3 className="text-sm font-semibold text-gray-200 mb-3">Liens</h3>
             <div className="flex flex-wrap gap-2">
               {artist.wiki_url && (
                 <a
@@ -735,7 +735,7 @@ export default function ArtistCataloguePage() {
       {/* ═══════════════════════════════════════════ */}
       {relatedArtists.length > 0 && (
         <section className="max-w-[95vw] mx-auto px-4 mt-8 mb-16">
-          <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-gray-200 mb-4 flex items-center gap-1.5">
             <Users className="w-4 h-4 text-amber-400" />
             Artistes similaires
           </h3>
@@ -752,7 +752,7 @@ export default function ArtistCataloguePage() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                        <span className="text-xl font-bold text-white/40">
+                        <span className="text-xl font-bold text-white/50">
                           {ra.name?.[0]}
                         </span>
                       </div>
@@ -761,7 +761,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white text-xs font-medium truncate">
                     {ra.name}
                   </p>
-                  <p className="text-gray-500 text-[10px]">{ra.genre}</p>
+                  <p className="text-gray-400 text-[10px]">{ra.genre}</p>
                 </div>
               </Link>
             ))}
@@ -855,7 +855,7 @@ export default function ArtistCataloguePage() {
                     disabled={messageState === "sending"}
                   />
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-white/40 text-[10px]">
+                    <span className="text-white/50 text-[10px]">
                       {messageText.length}/1000
                     </span>
                     <button
@@ -875,7 +875,7 @@ export default function ArtistCataloguePage() {
 
             {/* Footer */}
             <div className="px-5 py-2.5 bg-[#f3efe9] border-t border-slate-200">
-              <p className="text-slate-700 text-[10px] text-center">
+              <p className="text-gray-200 text-[10px] text-center">
                 Direct messaging is free for all fans · Rate-limited to prevent
                 spam
               </p>

@@ -110,7 +110,7 @@ export default function TrackDetailPage() {
   if (!track) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center text-white">
-        <Music className="w-16 h-16 text-gray-700 mb-4" />
+        <Music className="w-16 h-16 text-gray-500 mb-4" />
         <p className="text-gray-400">Titre introuvable</p>
         <Link href="/stream">
           <button className="mt-4 px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm">
@@ -477,7 +477,7 @@ export default function TrackDetailPage() {
                   } ${i > 0 ? "border-t border-gray-800/50" : ""}`}
                 >
                   <span
-                    className={`w-6 text-center text-xs ${isCurrent ? "text-amber-400 font-bold" : "text-gray-600"}`}
+                    className={`w-6 text-center text-xs ${isCurrent ? "text-amber-400 font-bold" : "text-gray-400"}`}
                   >
                     {at.track_number || i + 1}
                   </span>
@@ -488,10 +488,10 @@ export default function TrackDetailPage() {
                       {at.title}
                     </p>
                   </div>
-                  <span className="text-gray-600 text-xs">
+                  <span className="text-gray-400 text-xs">
                     {formatStreams(at.streams || 0)}
                   </span>
-                  <span className="text-gray-600 text-xs w-10 text-right">
+                  <span className="text-gray-400 text-xs w-10 text-right">
                     {formatDuration(at.duration)}
                   </span>
                 </div>
@@ -548,7 +548,7 @@ export default function TrackDetailPage() {
                   <span className="text-sm font-medium text-white">
                     {c.username || "Utilisateur"}
                   </span>
-                  <span className="text-gray-600 text-[10px]">
+                  <span className="text-gray-400 text-[10px]">
                     {timeAgo(c.created_at)}
                   </span>
                 </div>
@@ -567,7 +567,7 @@ export default function TrackDetailPage() {
             </button>
           )}
           {comments.length === 0 && (
-            <p className="text-gray-600 text-sm text-center py-6">
+            <p className="text-gray-400 text-sm text-center py-6">
               Soyez le premier à commenter ✨
             </p>
           )}

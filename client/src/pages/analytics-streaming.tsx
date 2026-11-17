@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
             We couldn&apos;t retrieve the streaming analytics right now. Your
             data has not been changed.
           </p>
-          <p className="mt-2 max-w-full break-all text-xs text-gray-600">
+          <p className="mt-2 max-w-full break-all text-xs text-gray-400">
             {error instanceof Error
               ? error.message
               : "The analytics service returned an error."}
@@ -328,7 +328,7 @@ export default function AnalyticsPage() {
                       title={`${d.date}: ${d.count} streams`}
                     />
                     {i % 5 === 0 && (
-                      <span className="text-gray-600 text-[8px]">
+                      <span className="text-gray-400 text-[8px]">
                         {d.date?.split("-").slice(1).join("/")}
                       </span>
                     )}
@@ -355,7 +355,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-colors">
                   <span
                     className={`w-6 text-center text-sm font-bold ${
-                      i < 3 ? "text-amber-400" : "text-gray-600"
+                      i < 3 ? "text-amber-400" : "text-gray-400"
                     }`}
                   >
                     {i + 1}
@@ -387,7 +387,7 @@ export default function AnalyticsPage() {
                     <p className="text-white text-sm font-medium">
                       {formatNumber(artist.total_streams || 0)}
                     </p>
-                    <p className="text-gray-600 text-[10px]">streams</p>
+                    <p className="text-gray-400 text-[10px]">streams</p>
                   </div>
                 </div>
               </Link>
@@ -410,7 +410,7 @@ export default function AnalyticsPage() {
                   <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-colors">
                     <span
                       className={`w-6 text-center text-sm font-bold ${
-                        i < 3 ? "text-amber-400" : "text-gray-600"
+                        i < 3 ? "text-amber-400" : "text-gray-400"
                       }`}
                     >
                       {i + 1}
@@ -432,7 +432,7 @@ export default function AnalyticsPage() {
                       <p className="text-white text-sm">
                         {formatNumber(track.streams || track.stream_count || 0)}
                       </p>
-                      <p className="text-gray-600 text-[10px]">streams</p>
+                      <p className="text-gray-400 text-[10px]">streams</p>
                     </div>
                   </div>
                 </Link>
@@ -440,7 +440,7 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Music className="w-10 h-10 text-gray-700 mx-auto mb-2" />
+              <Music className="w-10 h-10 text-gray-500 mx-auto mb-2" />
               <p className="text-gray-500 text-sm">
                 Les données de tendance apparaîtront ici
               </p>
