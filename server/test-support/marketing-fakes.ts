@@ -221,21 +221,53 @@ export class FakeDb {
 
     if (
       sql ===
-      "UPDATE orders SET status = 'paid', stripe_session_id = $1, paid_at = NOW(), updated_at = NOW() WHERE id = $2 AND user_id = $3 AND status = 'pending' RETURNING id, total_cents"
+      "SELECT status, total_cents, currency FROM orders WHERE id = $1 AND user_id = $2 FOR UPDATE"
     ) {
       const order = this.orders.find(
         (o) =>
-          o.id === Number(p[1]) &&
-          String(o.user_id) === String(p[2]) &&
-          o.status === "pending",
+          o.id === Number(p[0]) && String(o.user_id) === String(p[1]),
       );
+      return result(
+        order
+          ? [
+              {
+                status: order.status,
+                total_cents: order.total_cents,
+                currency: order.currency,
+              },
+            ]
+          : [],
+      );
+    }
+
+    if (
+      sql ===
+      "UPDATE orders SET status = 'paid', stripe_session_id = $1, paid_at = NOW(), updated_at = NOW() WHERE id = $2"
+    ) {
+      const order = this.orders.find((o) => o.id === Number(p[1]));
       if (!order) return result();
       const before = { ...order };
       order.status = "paid";
       order.stripe_session_id = p[0];
       order.paid_at = new Date().toISOString();
       undo?.push(() => Object.assign(order, before));
-      return result([{ id: order.id, total_cents: order.total_cents }]);
+      return result([{ id: order.id }]);
+    }
+
+    if (
+      sql ===
+      "UPDATE orders SET status = 'cancelled', notes = $3, updated_at = NOW() WHERE id = $1 AND user_id = $2 AND status = 'pending' RETURNING id"
+    ) {
+      const order = this.orders.find(
+        (o) =>
+          o.id === Number(p[0]) &&
+          String(o.user_id) === String(p[1]) &&
+          o.status === "pending",
+      );
+      if (!order) return result();
+      order.status = "cancelled";
+      order.notes = p[2];
+      return result([{ id: order.id }]);
     }
 
     if (

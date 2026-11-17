@@ -9,6 +9,7 @@ process.env.JWT_SECRET = "x".repeat(40);
 // keeps a local .env from pointing tests at real mail, payment or Zapier accounts.
 for (const name of [
   "SUPERADMIN_EMAIL",
+  "ADMIN_EMAIL",
   "SMTP_HOST",
   "SMTP_USER",
   "SMTP_PASS",

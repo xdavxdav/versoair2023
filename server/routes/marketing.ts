@@ -6,7 +6,10 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth, optionalAuth, requireOwner } from "../middleware/auth";
-import { newsletterLimiter } from "../middleware/rate-limiter";
+import {
+  marketingCheckoutLimiter,
+  newsletterLimiter,
+} from "../middleware/rate-limiter";
 import { queueNewsletterCampaign } from "../services/newsletter-delivery";
 import multer from "multer";
 import path from "path";
@@ -17,6 +20,12 @@ import {
   advancedValidation,
 } from "../services/print-validator";
 import { requireMarketingCheckout } from "../utils/commercial-gates";
+import {
+  ORDER_STATUSES,
+  allowedNextStatuses,
+  isOrderStatus,
+  statusesThatCanMoveTo,
+} from "../services/order-status";
 import { getPublicBaseUrl } from "../utils/base-url";
 import { getStripeClient } from "../utils/stripe-client";
 import { getPaymentsModeStatus } from "../utils/payments-mode";
@@ -1258,6 +1267,7 @@ router.post(
   "/cart/checkout",
   requireMarketingCheckout,
   requireAuth(),
+  marketingCheckoutLimiter,
   createMarketingCheckoutHandler({
     pool,
     getStripe: () => getStripeClient(),
@@ -1372,41 +1382,58 @@ router.get(
 
 /**
  * PATCH /api/marketing/orders/:id/status
- * Admin: Update order status
+ * Admin: move an order along its lifecycle (see services/order-status.ts).
+ * "paid" is never settable here: only the Stripe webhook can mark an order paid.
  */
 router.patch(
   "/orders/:id/status",
   requireAuth(["admin", "superuser"]),
   async (req: Request, res: Response) => {
     try {
-      const { status } = req.body;
-      const validStatuses = [
-        "pending",
-        "paid",
-        "processing",
-        "shipped",
-        "completed",
-        "cancelled",
-        "refunded",
-      ];
-      if (!validStatuses.includes(status)) {
+      // router.param("id") has already guaranteed a positive 32-bit integer.
+      const orderId = Number(req.params.id);
+
+      const status = req.body?.status;
+      if (!isOrderStatus(status)) {
         return res.status(400).json({
           success: false,
-          error: `Invalid status. Valid: ${validStatuses.join(", ")}`,
+          error: `Invalid status. Valid: ${ORDER_STATUSES.join(", ")}`,
         });
       }
 
+      // One guarded UPDATE, so two admins cannot both apply a change from the
+      // same starting status.
       const result = await pool.query(
-        `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-        [status, parseInt(req.params.id)],
+        `UPDATE orders SET status = $1, updated_at = NOW()
+          WHERE id = $2 AND status = ANY($3::text[])
+          RETURNING *`,
+        [status, orderId, statusesThatCanMoveTo(status)],
       );
+      if (result.rows.length > 0) {
+        return res.json({ success: true, data: result.rows[0] });
+      }
 
-      if (result.rows.length === 0) {
+      const current = await pool.query(`SELECT * FROM orders WHERE id = $1`, [
+        orderId,
+      ]);
+      const order = current.rows[0];
+      if (!order) {
         return res
           .status(404)
           .json({ success: false, error: "Order not found" });
       }
-      res.json({ success: true, data: result.rows[0] });
+      if (order.status === status) {
+        // A retried request: the order is already where the caller wants it.
+        return res.json({ success: true, data: order });
+      }
+      return res.status(409).json({
+        success: false,
+        code: "INVALID_ORDER_TRANSITION",
+        error: `An order that is ${order.status} cannot be changed to ${status}`,
+        from: order.status,
+        to: status,
+        allowed: allowedNextStatuses(order.status),
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
