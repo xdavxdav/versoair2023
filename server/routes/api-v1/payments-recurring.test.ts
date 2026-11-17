@@ -17,6 +17,10 @@ import {
   FakePlanDb,
   invoiceEvent,
 } from "../../test-support/plan-subscription-fakes";
+import {
+  billingPortalLimiter,
+  subscriptionCheckoutLimiter,
+} from "../../middleware/rate-limiter";
 import { setStripeClientFactory } from "../../utils/stripe-client";
 
 process.env.STRIPE_SECRET_KEY = `sk_test_${"x".repeat(24)}`;
@@ -43,6 +47,9 @@ beforeEach(() => {
   process.env.STRIPE_WEBHOOK_SECRET = SECRET;
   stub = createStubStripe();
   setStripeClientFactory(() => stub.client);
+  // These tests share one account, so start each with fresh per-user payment limits.
+  void subscriptionCheckoutLimiter.resetKey(`pay-subscription-checkout-user-${customer.id}`);
+  void billingPortalLimiter.resetKey(`pay-billing-portal-user-${customer.id}`);
 });
 
 afterEach(() => {
@@ -383,15 +390,18 @@ test("a subscription checkout and unrelated invoice events are acknowledged with
 // ─── customer portal ────────────────────────────────────────────────────────
 
 function scriptPortal(storedCustomerId: string | null) {
-  return scriptPool((sql) =>
-    sql === "SELECT email, stripe_customer_id FROM users WHERE id = $1"
-      ? {
-          rows: [
-            { email: "luq@example.com", stripe_customer_id: storedCustomerId },
-          ],
-        }
-      : undefined,
-  );
+  return scriptPool((sql, params) => {
+    if (sql === "SELECT email, username FROM users WHERE id = $1") {
+      return { rows: [{ email: "luq@example.com", username: "luq" }] };
+    }
+    if (sql === "SELECT stripe_customer_id FROM users WHERE id = $1") {
+      return { rows: [{ stripe_customer_id: storedCustomerId }] };
+    }
+    if (sql.startsWith("UPDATE users SET stripe_customer_id = $1")) {
+      return { rows: [{ stripe_customer_id: params[0] }] };
+    }
+    return undefined;
+  });
 }
 
 const portal = (origin: string, body: unknown = {}, signedIn = true) =>
@@ -417,15 +427,17 @@ test("the billing portal opens on the customer saved at checkout, not one found 
   assert.equal(stub.calls.customersCreate.length, 0);
 });
 
-test("without a saved customer the portal finds one by email", async () => {
+test("without a saved customer the portal adopts only one tagged with the user's id", async () => {
   scriptPortal(null);
-  stub = createStubStripe({ customersByEmail: [{ id: "cus_by_email" }] });
+  stub = createStubStripe({
+    customersByEmail: [{ id: "cus_lookalike" }, { id: "cus_by_email", metadata: { userId: "7" } }],
+  });
   setStripeClientFactory(() => stub.client);
   await serve(async (origin) => {
     assert.equal((await portal(origin)).status, 200);
   });
   assert.deepEqual(stub.calls.customersList, [
-    { email: "luq@example.com", limit: 1 },
+    { email: "luq@example.com", limit: 10 },
   ]);
   assert.equal(stub.calls.portalSessionsCreate[0].customer, "cus_by_email");
   assert.equal(stub.calls.customersCreate.length, 0);
@@ -437,7 +449,7 @@ test("without a saved or existing customer the portal creates one", async () => 
     assert.equal((await portal(origin)).status, 200);
   });
   assert.equal(stub.calls.customersCreate.length, 1);
-  assert.deepEqual(stub.calls.customersCreate[0].metadata, { userId: "7" });
+  assert.deepEqual(stub.calls.customersCreate[0].metadata, { userId: "7", source: "billing_portal" });
   assert.equal(stub.calls.portalSessionsCreate[0].customer, "cus_stub_1");
 });
 

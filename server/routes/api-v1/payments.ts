@@ -631,7 +631,7 @@ async function getOrCreateStripeCustomer(
   client: Stripe | null = stripe,
 ): Promise<string> {
   return ensureStripeCustomer(
-    { stripe: stripe!, db: pool },
+    { stripe: client!, db: pool },
     { userId, email, name, source: "ngo_pos" },
   );
 }

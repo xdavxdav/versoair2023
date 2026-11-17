@@ -365,7 +365,7 @@ export interface StubStripeOptions {
   /** payment_intent id -> invoice id, for payments made by a subscription. */
   paymentIntentInvoices?: Record<string, string>;
   /** Stripe customers returned for an email lookup (customers.list). */
-  customersByEmail?: Array<{ id: string }>;
+  customersByEmail?: Array<{ id: string; metadata?: Record<string, string> }>;
 }
 
 /** A Stripe client whose network-facing calls are recorded and never sent. */

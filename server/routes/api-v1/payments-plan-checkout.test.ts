@@ -7,6 +7,7 @@ import {
   withRouter,
 } from "../../test-support/route-harness";
 import { createStubStripe } from "../../test-support/marketing-fakes";
+import { subscriptionCheckoutLimiter } from "../../middleware/rate-limiter";
 import { setStripeClientFactory } from "../../utils/stripe-client";
 import paymentsRouter from "./payments";
 
@@ -26,6 +27,8 @@ beforeEach(() => {
   process.env.PUBLIC_BASE_URL = "https://www.versoair.com";
   stub = createStubStripe();
   setStripeClientFactory(() => stub.client);
+  // These tests share one account, so start each with fresh per-user payment limits.
+  void subscriptionCheckoutLimiter.resetKey(`pay-subscription-checkout-user-${customer.id}`);
 });
 
 afterEach(() => {
