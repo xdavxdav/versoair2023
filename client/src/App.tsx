@@ -259,6 +259,7 @@ const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
 const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
 const SessionsPage = lazy(() => import("@/pages/sessions"));
 const SessionDetailPage = lazy(() => import("@/pages/session-detail"));
+const MyLiveSessionsPage = lazy(() => import("@/pages/my-live-sessions"));
 const LibraryPage = lazy(() => import("@/pages/library"));
 const AnalyticsStreamingPage = lazy(
   () => import("@/pages/analytics-streaming"),
@@ -893,6 +894,9 @@ function Router() {
       {/* ═══════════════════════════════════════════════
           🎹 MUSICAL UNIVERSE — Creator ecosystem
           ═══════════════════════════════════════════════ */}
+      <Route path="/my-live-sessions">
+        {() => <ProtectedRoute component={MyLiveSessionsPage} />}
+      </Route>
       <Route path="/music">{() => <Redirect to="/music/dashboard" />}</Route>
       <Route path="/music/dashboard">
         {() => <ProtectedRoute component={MusicDashboard} />}

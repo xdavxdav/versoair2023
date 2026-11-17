@@ -1,10 +1,9 @@
 /**
- * Go Live Form — Modal for verified users to create listening sessions in TMU
+ * Go Live Form — Modal for verified artists to create listening sessions in TMU
  * Handles session title, description, start time, and track selection
  */
 
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -17,12 +16,20 @@ import {
   Music,
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { authenticatedFetch } from "@/lib/auth";
+import { useCreateSession, useHostEligibility } from "@/hooks/use-create-session";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrackSelector } from "@/components/TrackSelector";
+import { SESSION_LIMITS } from "@shared/listening-session";
+
+/** The value a datetime-local input expects: local time, one hour from now, to the minute. */
+function defaultStartTime(): string {
+  const date = new Date(Date.now() + 60 * 60 * 1000);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+}
 
 interface GoLiveFormProps {
   isOpen: boolean;
@@ -35,70 +42,50 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [startTime, setStartTime] = useState(new Date().toISOString().slice(0, 16));
+  const [startTime, setStartTime] = useState(defaultStartTime);
   const [selectedTracks, setSelectedTracks] = useState<number[]>([]);
   const [step, setStep] = useState<"details" | "tracks" | "confirm">("details");
 
-  // Check verification status
-  const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ["user-verification"],
-    queryFn: async () => {
-      const res = await authenticatedFetch("/api/account");
-      if (!res.ok) throw new Error("Failed to load user data");
-      return res.json();
-    },
-    enabled: isOpen && !!user,
-  });
+  const { data: eligibility, isLoading: eligibilityLoading } = useHostEligibility(isOpen && !!user);
+  const canHost = eligibility?.canHost ?? false;
+  const createSession = useCreateSession();
 
-  const isVerified = userData?.isVerified ?? false;
+  const submit = () => {
+    if (!title.trim()) return toast({ title: "Session title is required", variant: "destructive" });
+    if (selectedTracks.length === 0) {
+      return toast({ title: "Select at least one track", variant: "destructive" });
+    }
+    const startDate = new Date(startTime);
+    if (!Number.isFinite(startDate.getTime()) || startDate.getTime() < Date.now()) {
+      return toast({ title: "Start time must be in the future", variant: "destructive" });
+    }
 
-  // Create session mutation
-  const createSessionMutation = useMutation({
-    mutationFn: async () => {
-      if (!title.trim()) throw new Error("Session title is required");
-      if (selectedTracks.length === 0) throw new Error("Select at least one track");
-
-      const startDate = new Date(startTime);
-      if (startDate < new Date()) {
-        throw new Error("Start time must be in the future");
-      }
-
-      const response = await authenticatedFetch("/api/listening-sessions/user/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || null,
-          startsAt: startDate.toISOString(),
-          gapSeconds: 0,
-          tracks: selectedTracks,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error?.message || "Failed to create session");
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Live Session Created!",
-        description: `"${title}" will start at ${new Date(startTime).toLocaleTimeString()}`,
-        variant: "default",
-      });
-      onSuccess?.(data.session.id);
-      handleClose();
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to Create Session",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    },
-  });
+    createSession.mutate(
+      {
+        title: title.trim(),
+        description: description.trim() || null,
+        startsAt: startDate,
+        trackIds: selectedTracks,
+      },
+      {
+        onSuccess: (data) => {
+          toast({
+            title: "Live session scheduled",
+            description: `"${title.trim()}" starts ${startDate.toLocaleString()}`,
+          });
+          onSuccess?.(data.session.id);
+          handleClose();
+        },
+        onError: (error) => {
+          toast({
+            title: "Could not create the session",
+            description: error instanceof Error ? error.message : "Unknown error",
+            variant: "destructive",
+          });
+        },
+      },
+    );
+  };
 
   const handleClose = () => {
     setTitle("");
@@ -110,8 +97,15 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
 
   if (!isOpen) return null;
 
-  // Not verified state
-  if (!isVerified) {
+  if (eligibilityLoading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!canHost) {
     return (
       <AnimatePresence>
         <motion.div
@@ -202,10 +196,10 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Evening Jazz Session, Late Night Beats"
                     className="w-full px-3 py-2 bg-verso-navy/40 border border-white/10 rounded-lg text-white placeholder-white/40 focus:border-amber-500/50 focus:outline-none transition-colors"
-                    maxLength={1000}
+                    maxLength={SESSION_LIMITS.titleMax}
                   />
                   <p className="text-xs text-white/40 mt-1">
-                    {title.length}/1000
+                    {title.length}/{SESSION_LIMITS.titleMax}
                   </p>
                 </div>
 
@@ -220,16 +214,16 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                     placeholder="Tell your listeners what to expect..."
                     rows={3}
                     className="w-full px-3 py-2 bg-verso-navy/40 border border-white/10 rounded-lg text-white placeholder-white/40 focus:border-amber-500/50 focus:outline-none transition-colors resize-none"
-                    maxLength={10000}
+                    maxLength={SESSION_LIMITS.descriptionMax}
                   />
                   <p className="text-xs text-white/40 mt-1">
-                    {description.length}/10000
+                    {description.length}/{SESSION_LIMITS.descriptionMax}
                   </p>
                 </div>
 
                 {/* Start Time */}
                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+                  <label className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
                     <Calendar className="w-4 h-4" /> Start Time
                   </label>
                   <input
@@ -261,7 +255,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 <div>
                   <h3 className="text-white font-semibold mb-3">Select Tracks</h3>
                   <p className="text-white/60 text-sm mb-4">
-                    Add tracks from your library or search for specific songs to include in your session.
+                    Choose from your own published tracks.
                   </p>
                   <TrackSelector
                     selectedTracks={selectedTracks}
@@ -319,7 +313,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 {/* Verification Badge */}
                 <div className="flex items-center gap-2 text-sm text-green-500 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
                   <CheckCircle className="w-4 h-4" />
-                  Your account is verified and ready to broadcast
+                  Verified artist: ready to broadcast
                 </div>
 
                 {/* Action Buttons */}
@@ -327,20 +321,20 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                   <Button
                     onClick={() => setStep("details")}
                     variant="outline"
-                    disabled={createSessionMutation.isPending}
+                    disabled={createSession.isPending}
                     className="flex-1"
                   >
                     Back
                   </Button>
                   <Button
-                    onClick={() => createSessionMutation.mutate()}
-                    disabled={createSessionMutation.isPending}
+                    onClick={submit}
+                    disabled={createSession.isPending}
                     className="flex-1 bg-amber-500 hover:bg-amber-600 text-verso-navy font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {createSessionMutation.isPending && (
+                    {createSession.isPending && (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     )}
-                    {createSessionMutation.isPending ? "Creating..." : "Go Live"}
+                    {createSession.isPending ? "Creating..." : "Go Live"}
                   </Button>
                 </div>
               </motion.div>

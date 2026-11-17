@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_SIDEBAR_ITEMS } from "@/lib/music-routes";
 import GoLiveForm from "@/components/GoLiveForm";
+import { useHostEligibility } from "@/hooks/use-create-session";
 import { useMemo } from "react";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -238,6 +239,8 @@ export function MusicSidebar() {
   const collapsed = true;
 
   const [showGoLive, setShowGoLive] = useState(false);
+  const { data: hostEligibility } = useHostEligibility(!!user);
+  const canHostLive = hostEligibility?.canHost === true;
 
   const handleLogout = () => {
     logout();
@@ -489,24 +492,28 @@ export function MusicSidebar() {
             </Link>
           )}
 
-          {/* Go Live button - All verified users */}
-          <button
-            onClick={() => setShowGoLive(true)}
-            className="w-full flex items-center justify-center p-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/20 text-amber-300 hover:from-amber-600/30 hover:to-orange-600/30 transition-colors"
-            title="Go Live"
-          >
-            <Radio className="w-5 h-5" />
-          </button>
+          {canHostLive && (
+            <>
+              {/* Go Live and My Sessions - verified artists only */}
+              <button
+                onClick={() => setShowGoLive(true)}
+                className="w-full flex items-center justify-center p-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/20 text-amber-300 hover:from-amber-600/30 hover:to-orange-600/30 transition-colors"
+                title="Go Live"
+              >
+                <Radio className="w-5 h-5" />
+              </button>
 
-          {/* My Sessions - View and manage live sessions */}
-          <Link href="/my-live-sessions">
-            <div
-              className="flex items-center justify-center p-2.5 rounded-lg cursor-pointer text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
-              title="My Sessions"
-            >
-              <Music2 className="w-5 h-5" />
-            </div>
-          </Link>
+              {/* My Sessions - View and manage live sessions */}
+              <Link href="/my-live-sessions">
+                <div
+                  className="flex items-center justify-center p-2.5 rounded-lg cursor-pointer text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+                  title="My Sessions"
+                >
+                  <Music2 className="w-5 h-5" />
+                </div>
+              </Link>
+            </>
+          )}
 
           {/* Account - track referrer for proper back navigation */}
           <Link
@@ -552,7 +559,7 @@ export function MusicSidebar() {
         isOpen={showGoLive}
         onClose={() => setShowGoLive(false)}
         onSuccess={(sessionId) => {
-          navigate(`/stream/${sessionId}`);
+          navigate(`/sessions/${sessionId}`);
         }}
       />
     </>

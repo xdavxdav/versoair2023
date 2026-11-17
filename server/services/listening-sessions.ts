@@ -93,7 +93,7 @@ export interface SessionRow {
   gapSeconds: number;
 }
 
-const SESSION_SELECT = `SELECT ls.id, ls.title, ls.description, ls.host_user_id, ls.starts_at,
+export const SESSION_SELECT = `SELECT ls.id, ls.title, ls.description, ls.host_user_id, ls.starts_at,
        ls.ends_at, ls.playlist_id, ls.status, ls.set_tracks, ls.gap_seconds,
        u.display_name AS host_display_name, u.username AS host_username
   FROM listening_sessions ls

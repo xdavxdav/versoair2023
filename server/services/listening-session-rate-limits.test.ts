@@ -1,103 +1,72 @@
-/**
- * Tests for TMU listening session rate limiting
- */
-
-import { test } from "node:test";
-import { strict as assert } from "node:assert";
+import assert from "node:assert/strict";
+import test from "node:test";
 import {
-  checkUserRateLimit,
-  checkIpRateLimit,
-  recordSessionCreation,
-  recordIpSessionCreation,
-  getUserRateLimitStatus,
+  DEFAULT_RATE_LIMITS,
+  evaluateUserQuota,
+  releaseCreateLock,
+  releaseIpSlot,
+  reserveIpSlot,
+  resetRateLimitsForTests,
+  tryAcquireCreateLock,
 } from "./listening-session-rate-limits";
 
-test("user rate limit: allows first session", () => {
-  const userId = Math.floor(Math.random() * 1000000);
-  const result = checkUserRateLimit(userId);
-  assert.equal(result.allowed, true, "First session should be allowed");
+const NOW = new Date("2025-06-01T12:00:00.000Z");
+const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000);
+
+test("a user with no sessions may create one right away", () => {
+  const quota = evaluateUserQuota([], NOW);
+  assert.equal(quota.allowed, true);
+  assert.equal(quota.sessionsCreatedToday, 0);
+  assert.equal(quota.maxPerDay, DEFAULT_RATE_LIMITS.maxSessionsPer24h);
+  assert.equal(quota.nextSessionAvailableAt.getTime(), NOW.getTime());
 });
 
-test("user rate limit: enforces cooldown between sessions", () => {
-  const userId = Math.floor(Math.random() * 1000000);
-  
-  // First session allowed
-  let result = checkUserRateLimit(userId);
-  assert.equal(result.allowed, true);
-  
-  // Record creation
-  recordSessionCreation(userId);
-  
-  // Immediate second session should be blocked (cooldown)
-  result = checkUserRateLimit(userId);
-  assert.equal(result.allowed, false, "Second session too soon (cooldown)");
-  assert.match(result.reason || "", /Please wait/);
+test("the cooldown blocks a second session and says when the next one is possible", () => {
+  const quota = evaluateUserQuota([minutesAgo(10)], NOW);
+  assert.equal(quota.allowed, false);
+  assert.match(quota.reason ?? "", /wait 50 minutes/);
+  assert.equal(quota.nextSessionAvailableAt.getTime(), minutesAgo(10).getTime() + 60 * 60_000);
 });
 
-test("user rate limit: status tracks sessions created", () => {
-  const userId = Math.floor(Math.random() * 1000000);
-  
-  // Initial status shows 0 sessions
-  let status = getUserRateLimitStatus(userId);
-  assert.equal(status.sessionsCreatedToday, 0, "Should start at 0");
-  
-  // After recording one, status should show 1
-  recordSessionCreation(userId);
-  status = getUserRateLimitStatus(userId);
-  assert.equal(status.sessionsCreatedToday, 1, "Should show 1 after recording");
-  
-  // After recording two more, should show 3 (at daily limit)
-  recordSessionCreation(userId);
-  recordSessionCreation(userId);
-  status = getUserRateLimitStatus(userId);
-  assert.equal(status.sessionsCreatedToday, 3, "Should show 3 (at daily limit)");
-  assert.equal(status.maxPerDay, 3, "Max per day should be 3");
+test("after the cooldown the next session is allowed", () => {
+  const quota = evaluateUserQuota([minutesAgo(61)], NOW);
+  assert.equal(quota.allowed, true);
+  assert.equal(quota.sessionsCreatedToday, 1);
 });
 
-test("ip rate limit: allows first session from IP", () => {
-  const ip = `192.168.1.${Math.floor(Math.random() * 255)}`;
-  const result = checkIpRateLimit(ip);
-  assert.equal(result.allowed, true, "First session from IP should be allowed");
+test("the daily cap blocks until the oldest counted session leaves the 24h window", () => {
+  const created = [minutesAgo(23 * 60), minutesAgo(12 * 60), minutesAgo(2 * 60)];
+  const quota = evaluateUserQuota(created, NOW);
+  assert.equal(quota.allowed, false);
+  assert.match(quota.reason ?? "", /limit of 3/);
+  assert.equal(quota.nextSessionAvailableAt.getTime(), created[0].getTime() + 24 * 60 * 60_000);
 });
 
-test("ip rate limit: enforces max sessions per IP", () => {
-  const ip = `192.168.1.${Math.floor(Math.random() * 255)}`;
-  
-  // Record 10 sessions from this IP (the limit)
-  for (let i = 0; i < 10; i++) {
-    recordIpSessionCreation(ip);
-  }
-  
-  // 11th check should fail
-  const result = checkIpRateLimit(ip);
-  assert.equal(result.allowed, false, "Should hit IP limit at 11th check");
+test("sessions older than 24 hours are not counted", () => {
+  const quota = evaluateUserQuota([minutesAgo(25 * 60), minutesAgo(30 * 60)], NOW);
+  assert.equal(quota.allowed, true);
+  assert.equal(quota.sessionsCreatedToday, 0);
 });
 
-test("get user rate limit status returns current stats", () => {
-  const userId = Math.floor(Math.random() * 1000000);
-  
-  // Initial status
-  let status = getUserRateLimitStatus(userId);
-  assert.equal(status.sessionsCreatedToday, 0);
-  assert.equal(status.maxPerDay, 3);
-  
-  // Record one session
-  recordSessionCreation(userId);
-  status = getUserRateLimitStatus(userId);
-  assert.equal(status.sessionsCreatedToday, 1);
-  assert.ok(status.nextSessionAvailableAt);
+test("the create lock lets one request through at a time per user", () => {
+  resetRateLimitsForTests();
+  assert.equal(tryAcquireCreateLock(7), true);
+  assert.equal(tryAcquireCreateLock(7), false, "a parallel request for the same user is refused");
+  assert.equal(tryAcquireCreateLock(8), true, "other users are unaffected");
+  releaseCreateLock(7);
+  assert.equal(tryAcquireCreateLock(7), true);
+  resetRateLimitsForTests();
 });
 
-test("user rate limit status shows cooldown time", () => {
-  const userId = Math.floor(Math.random() * 1000000);
-  
-  recordSessionCreation(userId);
-  const status = getUserRateLimitStatus(userId);
-  
-  // Next available should be in the future
-  const now = new Date();
-  const nextAvailable = new Date(status.nextSessionAvailableAt);
-  assert.ok(nextAvailable > now, "Next session should be in the future");
+test("the ip cap reserves a slot atomically and gives it back on failure", () => {
+  resetRateLimitsForTests();
+  const cap = DEFAULT_RATE_LIMITS.maxSessionsPerIpPer24h;
+  for (let i = 0; i < cap; i += 1) assert.equal(reserveIpSlot("1.2.3.4", NOW), true);
+  assert.equal(reserveIpSlot("1.2.3.4", NOW), false);
+  assert.equal(reserveIpSlot("5.6.7.8", NOW), true, "another address has its own budget");
+  releaseIpSlot("1.2.3.4");
+  assert.equal(reserveIpSlot("1.2.3.4", NOW), true);
+  const nextDay = new Date(NOW.getTime() + 25 * 60 * 60_000);
+  assert.equal(reserveIpSlot("1.2.3.4", nextDay), true, "hits expire after 24 hours");
+  resetRateLimitsForTests();
 });
-
-console.log("✓ All rate limiting tests passed!");

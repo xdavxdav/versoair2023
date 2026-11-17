@@ -1,10 +1,9 @@
 /**
  * User Session Dashboard — View and manage user's live sessions
- * Shows active, upcoming, and past sessions with controls
+ * Shows live, scheduled, ended and cancelled sessions with controls
  */
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -15,102 +14,57 @@ import {
   Loader2,
   Music,
 } from "lucide-react";
-import { authenticatedFetch } from "@/lib/auth";
+import { Link } from "wouter";
+import { useCancelSession, useUserSessions, type ListeningSession } from "@/hooks/use-create-session";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-interface Session {
-  id: number;
-  title: string;
-  description?: string;
-  startsAt: string;
-  status: "upcoming" | "active" | "past";
-  trackCount?: number;
-  hostUserId: number;
-}
+type Filter = "all" | "scheduled" | "live" | "ended" | "cancelled";
+const FILTERS: readonly Filter[] = ["all", "scheduled", "live", "ended", "cancelled"];
 
 export function UserSessionDashboard() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "upcoming" | "active" | "past">("all");
+  const [filter, setFilter] = useState<Filter>("all");
 
-  // Fetch user's sessions
-  const { data: sessionsData, isLoading, error } = useQuery({
-    queryKey: ["user-sessions"],
-    queryFn: async () => {
-      const res = await authenticatedFetch("/api/listening-sessions/user/my-sessions");
-      if (!res.ok) throw new Error("Failed to load sessions");
-      return res.json();
-    },
-    refetchInterval: 30000, // Refetch every 30s to update statuses
-  });
+  const { data: sessionsData, isLoading, error } = useUserSessions();
+  const cancelSession = useCancelSession();
+  const cancelMutation = {
+    isPending: cancelSession.isPending,
+    mutate: (sessionId: number) =>
+      cancelSession.mutate(sessionId, {
+        onSuccess: () =>
+          toast({ title: "Session cancelled", description: "Your live session has been cancelled" }),
+        onError: (err) =>
+          toast({
+            title: "Failed to cancel",
+            description: err instanceof Error ? err.message : "Unknown error",
+            variant: "destructive",
+          }),
+      }),
+  };
 
-  // Cancel session mutation
-  const cancelMutation = useMutation({
-    mutationFn: async (sessionId: number) => {
-      const res = await authenticatedFetch(
-        `/api/listening-sessions/user/${sessionId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "cancel" }),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to cancel session");
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Session Cancelled",
-        description: "Your live session has been cancelled",
-        variant: "default",
-      });
-      queryClient.invalidateQueries({ queryKey: ["user-sessions"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to Cancel",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const sessions = sessionsData?.sessions || [];
-  
-  // Filter sessions
-  let filteredSessions = sessions;
-  if (filter !== "all") {
-    filteredSessions = sessions.filter((s: Session) => s.status === filter);
-  }
-
-  // Sort by date
-  filteredSessions.sort(
-    (a: Session, b: Session) =>
-      new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
-  );
+  const sessions: ListeningSession[] = sessionsData?.sessions ?? [];
+  const filteredSessions = sessions
+    .filter((s) => filter === "all" || s.status === filter)
+    .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
+      case "live":
         return (
-          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 animate-pulse">
-            🔴 LIVE
+          <Badge className="bg-green-500/20 text-green-300 border-green-500/30 animate-pulse">
+            LIVE
           </Badge>
         );
-      case "upcoming":
+      case "scheduled":
         return (
-          <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-            📅 UPCOMING
-          </Badge>
+          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">SCHEDULED</Badge>
         );
-      case "past":
-        return (
-          <Badge className="bg-white/10 text-white/60 border-white/20">
-            ✓ PAST
-          </Badge>
-        );
+      case "ended":
+        return <Badge className="bg-white/10 text-white/70 border-white/20">ENDED</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-500/10 text-red-300 border-red-500/30">CANCELLED</Badge>;
       default:
         return null;
     }
@@ -166,14 +120,15 @@ export function UserSessionDashboard() {
         <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 rounded-full border border-amber-500/30">
           <Music className="w-4 h-4 text-amber-500" />
           <span className="text-amber-500 font-semibold text-sm">
-            {sessions.length}/{sessionsData?.rateLimitStatus?.maxPerDay}
+            {sessionsData?.rateLimitStatus?.sessionsCreatedToday ?? 0}/
+            {sessionsData?.rateLimitStatus?.maxPerDay ?? 0} today
           </span>
         </div>
       </div>
 
       {/* Filter Buttons */}
       <div className="flex gap-2">
-        {(["all", "upcoming", "active", "past"] as const).map((f) => (
+        {FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -207,7 +162,7 @@ export function UserSessionDashboard() {
       ) : (
         <div className="space-y-3">
           <AnimatePresence>
-            {filteredSessions.map((session: Session, index: number) => (
+            {filteredSessions.map((session, index) => (
               <motion.div
                 key={session.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -236,7 +191,7 @@ export function UserSessionDashboard() {
                         <Calendar className="w-4 h-4" />
                         {formatTime(session.startsAt)}
                       </div>
-                      {session.trackCount && (
+                      {session.trackCount > 0 && (
                         <div className="flex items-center gap-1">
                           <Music className="w-4 h-4" />
                           {session.trackCount} track
@@ -247,17 +202,16 @@ export function UserSessionDashboard() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    {session.status === "active" && (
-                      <Button
-                        size="sm"
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        <Play className="w-4 h-4 mr-1" />
-                        Join
-                      </Button>
+                    {session.status === "live" && (
+                      <Link href={`/sessions/${session.id}`}>
+                        <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                          <Play className="w-4 h-4 mr-1" />
+                          Open
+                        </Button>
+                      </Link>
                     )}
 
-                    {session.status === "upcoming" && (
+                    {(session.status === "scheduled" || session.status === "live") && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -276,11 +230,11 @@ export function UserSessionDashboard() {
                       </Button>
                     )}
 
-                    {session.status === "past" && (
+                    {session.status === "ended" && (
                       <Button
                         size="sm"
                         disabled
-                        className="bg-white/10 text-white/40 cursor-default"
+                        className="bg-white/10 text-white/60 cursor-default"
                       >
                         Completed
                       </Button>
