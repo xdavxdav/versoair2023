@@ -6,6 +6,13 @@ import {
   invoiceEvent,
 } from "../test-support/plan-subscription-fakes";
 import {
+  REAL_INVOICE_ID,
+  REAL_INVOICE_PERIOD_END,
+  REAL_SUBSCRIPTION_ID,
+  realOpenInvoice,
+  realPaidInvoice,
+} from "../test-support/stripe-real-shapes";
+import {
   applyInvoicePaid,
   applyInvoicePaymentFailed,
   applyPlanSubscriptionEvent,
@@ -511,4 +518,62 @@ test("a database without the table has no subscribers; other errors surface", as
   const broken = new FakePlanDb();
   broken.failWhen = () => true;
   await assert.rejects(findBillingSubscription(broken, 7), /injected failure/);
+});
+
+test("a real invoice captured from Stripe (API 2026-09-30.preview) is fulfilled, failed and cancelled correctly", async () => {
+  const open = asInvoice(realOpenInvoice());
+  assert.equal(invoiceSubscriptionId(open), REAL_SUBSCRIPTION_ID);
+  assert.deepEqual(invoiceSubscriptionMetadata(open), {
+    billingCycle: "monthly",
+    targetTier: "verified",
+    type: "subscription_fee",
+    userId: "424242",
+  });
+  // Invoice.period_end is when the invoice was created; the plan must run to
+  // the end of the period its line item paid for.
+  assert.deepEqual(invoicePaidThrough(open), at(REAL_INVOICE_PERIOD_END));
+  assert.notEqual(open.period_end, REAL_INVOICE_PERIOD_END);
+
+  const db = new FakePlanDb();
+  db.addUser(424242);
+  const paid = asInvoice(realPaidInvoice());
+
+  assert.deepEqual(await applyInvoicePaid(db, paid), {
+    status: "processed",
+    userId: 424242,
+    tier: "verified",
+    periodEnd: at(REAL_INVOICE_PERIOD_END),
+  });
+  assert.deepEqual(
+    db.transactions.map(({ amount, reference }) => ({ amount, reference })),
+    [{ amount: "96.00", reference: `invoice:${REAL_INVOICE_ID}` }],
+  );
+  assert.equal(db.subscriptions.get(REAL_SUBSCRIPTION_ID)?.status, "active");
+  assert.equal(db.users.get(424242)?.subscription_tier, "verified");
+  assert.deepEqual(
+    db.users.get(424242)?.premium_expires_at,
+    at(REAL_INVOICE_PERIOD_END),
+  );
+
+  assert.deepEqual(await applyInvoicePaid(db, paid), { status: "duplicate" });
+  assert.equal(db.transactions.length, 1);
+
+  assert.deepEqual(
+    await applyPlanSubscriptionEvent(
+      db,
+      eventOf("invoice.payment_failed", realOpenInvoice()),
+    ),
+    { status: "recorded", userId: 424242 },
+  );
+  assert.equal(db.subscriptions.get(REAL_SUBSCRIPTION_ID)?.status, "past_due");
+
+  assert.deepEqual(
+    await applyPlanSubscriptionEvent(
+      db,
+      eventOf("customer.subscription.deleted", { id: REAL_SUBSCRIPTION_ID }),
+    ),
+    { status: "cancelled", userId: 424242 },
+  );
+  assert.equal(db.subscriptions.get(REAL_SUBSCRIPTION_ID)?.status, "cancelled");
+  assert.equal(db.users.get(424242)?.subscription_tier, "verified");
 });

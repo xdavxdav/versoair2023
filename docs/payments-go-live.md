@@ -142,6 +142,10 @@ on the production service: a sandbox purchase writes real `orders` and
      `setup_intent.succeeded`). To also test automatic-renewal plans (see
      "Recurring billing"), add `invoice.paid`, `invoice.payment_failed` and
      `customer.subscription.deleted`.
+   - API version: leave the Dashboard default. The handlers read the
+     2025-02-24 invoice shape and the newer one (subscription under
+     `parent.subscription_details`); a real 2026-09-30 invoice captured from a
+     Stripe sandbox is pinned in `server/test-support/stripe-real-shapes.ts`.
    - Copy the signing secret (`whsec_...`).
 4. Render (staging service) > Environment, set:
    - `STRIPE_SECRET_KEY` = test key
