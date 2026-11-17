@@ -58,12 +58,42 @@ export function resolvePlanSelection(
   };
 }
 
-export function buildPlanCheckoutParams(input: {
+interface PlanCheckoutInput {
   userId: number | string;
   selection: PlanSelection;
   customerId: string;
   baseUrl: string;
-}): Stripe.Checkout.SessionCreateParams {
+}
+
+// The webhook reads the plan from this; recurring checkouts put the same
+// metadata on the subscription so every renewal invoice carries it too.
+function planMetadata(input: PlanCheckoutInput): Record<string, string> {
+  return {
+    userId: String(input.userId),
+    targetTier: input.selection.tier,
+    billingCycle: input.selection.cycle,
+    type: "subscription_fee",
+  };
+}
+
+function planProduct(selection: PlanSelection) {
+  return {
+    name: `Verso Air — ${selection.name} (${selection.cycle})`,
+    description: `Business directory ${selection.name} tier subscription`,
+  };
+}
+
+function planUrls(input: PlanCheckoutInput) {
+  return {
+    success_url: `${input.baseUrl}/pricing?status=success&tier=${input.selection.tier}`,
+    cancel_url: `${input.baseUrl}/pricing?status=cancelled`,
+  };
+}
+
+/** One-time prepaid payment: the plan runs for one month or one year. */
+export function buildPlanCheckoutParams(
+  input: PlanCheckoutInput,
+): Stripe.Checkout.SessionCreateParams {
   const { selection } = input;
   return {
     payment_method_types: ["card"],
@@ -76,22 +106,46 @@ export function buildPlanCheckoutParams(input: {
       {
         price_data: {
           currency: PLAN_CURRENCY,
-          product_data: {
-            name: `Verso Air — ${selection.name} (${selection.cycle})`,
-            description: `Business directory ${selection.name} tier subscription`,
-          },
+          product_data: planProduct(selection),
           unit_amount: selection.amountCents,
         },
         quantity: 1,
       },
     ],
-    metadata: {
-      userId: String(input.userId),
-      targetTier: selection.tier,
-      billingCycle: selection.cycle,
-      type: "subscription_fee",
-    },
-    success_url: `${input.baseUrl}/pricing?status=success&tier=${selection.tier}`,
-    cancel_url: `${input.baseUrl}/pricing?status=cancelled`,
+    metadata: planMetadata(input),
+    ...planUrls(input),
+  };
+}
+
+/**
+ * Automatic renewal: a Stripe subscription charged every month or year. Plan
+ * access is granted by the invoice.paid webhook (services/plan-subscriptions),
+ * not by checkout.session.completed.
+ */
+export function buildRecurringPlanCheckoutParams(
+  input: PlanCheckoutInput,
+): Stripe.Checkout.SessionCreateParams {
+  const { selection } = input;
+  const metadata = planMetadata(input);
+  return {
+    payment_method_types: ["card"],
+    mode: "subscription",
+    customer: input.customerId,
+    line_items: [
+      {
+        price_data: {
+          currency: PLAN_CURRENCY,
+          product_data: planProduct(selection),
+          unit_amount: selection.amountCents,
+          recurring: {
+            interval: selection.cycle === "annual" ? "year" : "month",
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    metadata,
+    subscription_data: { metadata },
+    ...planUrls(input),
   };
 }

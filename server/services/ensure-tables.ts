@@ -358,6 +358,36 @@ export async function ensureAllTables(
       }
     }
 
+    // ── Recurring plan subscriptions ───────────────────────────────────────
+    // Only used once RECURRING_BILLING_ENABLED is switched on, so a failure is
+    // logged but must not stop boot. Kept in its own table (not users columns)
+    // so a failed repair can never break a users query.
+    const PLAN_SUBSCRIPTIONS_DDL = [
+      `CREATE TABLE IF NOT EXISTS plan_subscriptions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        stripe_subscription_id VARCHAR NOT NULL UNIQUE,
+        stripe_customer_id VARCHAR,
+        tier VARCHAR NOT NULL,
+        billing_cycle VARCHAR NOT NULL DEFAULT 'monthly',
+        status VARCHAR NOT NULL DEFAULT 'active',
+        current_period_end TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_plan_subscriptions_user ON plan_subscriptions(user_id)`,
+    ];
+    for (const ddl of PLAN_SUBSCRIPTIONS_DDL) {
+      try {
+        await client.query(ddl);
+      } catch (err) {
+        console.error(
+          `  ⚠️ Optional schema repair skipped (plan_subscriptions):`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
     try {
       await client.query(`
         INSERT INTO issued_cardholders (user_id, stripe_cardholder_id)

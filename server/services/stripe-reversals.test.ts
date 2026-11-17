@@ -162,6 +162,129 @@ test("an event that does not match a recorded checkout payment is left alone", a
   assert.deepEqual(noSession, { status: "unmatched" });
 });
 
+// A recurring plan payment is ledgered as `invoice:<id>` and has no order.
+function paidInvoice(extra: Parameters<typeof createStubStripe>[0] = {}) {
+  const db = new FakeDb();
+  db.transactions.push({
+    id: 900,
+    user_id: 7,
+    amount: "96.00",
+    type: "subscription_fee",
+    reference: "invoice:in_1",
+  });
+  const stub = createStubStripe({
+    paymentIntentInvoices: { pi_1: "in_1" },
+    chargePaymentIntents: { ch_1: "pi_1" },
+    ...extra,
+  });
+  return { db, ...stub };
+}
+
+test("refunds and disputes of a plan payment are found through its invoice", async () => {
+  const { db, client } = paidInvoice();
+
+  const refund = await applyReversalEvent(
+    db,
+    client,
+    refundEvent({ amount: 9600, amount_refunded: 9600, refunded: true }),
+  );
+  assert.deepEqual(refund, { status: "recorded", orderUpdated: false });
+  assert.deepEqual(
+    await applyReversalEvent(
+      db,
+      client,
+      refundEvent({ amount: 9600, amount_refunded: 9600, refunded: true }),
+    ),
+    { status: "duplicate" },
+  );
+
+  const dispute = await applyReversalEvent(
+    db,
+    client,
+    disputeEvent("charge.dispute.created", { amount: 9600 }, "evt_d9"),
+  );
+  assert.deepEqual(dispute, { status: "recorded", orderUpdated: false });
+
+  assert.deepEqual(
+    db.transactions
+      .filter((t) => t.type !== "subscription_fee")
+      .map(({ user_id, amount, type, reference }) => ({
+        user_id,
+        amount,
+        type,
+        reference,
+      })),
+    [
+      {
+        user_id: 7,
+        amount: "-96.00",
+        type: "refund",
+        reference: "stripe_event:evt_refund_1",
+      },
+      {
+        user_id: 7,
+        amount: "-96.00",
+        type: "dispute_opened",
+        reference: "stripe_event:evt_d9",
+      },
+    ],
+  );
+  assert.equal(db.userTiers.size, 0, "plan access is left to support");
+});
+
+test("a Checkout Session match still wins over an invoice", async () => {
+  const { db } = await paidOrder();
+  const { client, calls } = createStubStripe({
+    sessionsByPaymentIntent: { pi_1: SESSION },
+    paymentIntentInvoices: { pi_1: "in_1" },
+  });
+
+  const result = await applyReversalEvent(
+    db,
+    client,
+    refundEvent({ amount_refunded: 5000, refunded: true }),
+  );
+  assert.deepEqual(result, { status: "recorded", orderUpdated: true });
+  assert.equal(db.orders[0]?.status, "refunded");
+  assert.deepEqual(calls.paymentIntentsRetrieve, []);
+});
+
+test("a session that was never ledgered falls back to the invoice", async () => {
+  const { db, client } = paidInvoice({
+    sessionsByPaymentIntent: { pi_1: "cs_test_subscription" },
+  });
+  const result = await applyReversalEvent(
+    db,
+    client,
+    refundEvent({ amount: 9600, amount_refunded: 9600, refunded: true }),
+  );
+  assert.deepEqual(result, { status: "recorded", orderUpdated: false });
+  assert.equal(db.transactions.filter((t) => t.type === "refund").length, 1);
+});
+
+test("an invoice that was never ledgered, or no invoice at all, is left alone", async () => {
+  const unknown = paidInvoice({ paymentIntentInvoices: { pi_1: "in_other" } });
+  assert.deepEqual(
+    await applyReversalEvent(
+      unknown.db,
+      unknown.client,
+      refundEvent({ amount_refunded: 9600, refunded: true }),
+    ),
+    { status: "unmatched" },
+  );
+
+  const none = paidInvoice({ paymentIntentInvoices: {} });
+  assert.deepEqual(
+    await applyReversalEvent(
+      none.db,
+      none.client,
+      refundEvent({ amount_refunded: 9600, refunded: true }),
+    ),
+    { status: "unmatched" },
+  );
+  assert.equal(none.db.transactions.length, 1);
+});
+
 test("a database failure rolls the claim back so Stripe's retry is processed", async () => {
   const { db, stripe } = await paidOrder();
   const event = refundEvent({ amount_refunded: 5000, refunded: true });

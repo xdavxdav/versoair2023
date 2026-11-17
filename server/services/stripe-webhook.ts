@@ -16,7 +16,7 @@ export type CheckoutCompletion =
   | { status: "unhandled" }
   | { status: "ignored"; reason: string };
 
-function positiveInt(value: unknown): number | null {
+export function positiveInt(value: unknown): number | null {
   if (typeof value !== "string" && typeof value !== "number") return null;
   const text = String(value).trim();
   if (!/^\d+$/.test(text)) return null;
@@ -24,7 +24,7 @@ function positiveInt(value: unknown): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-async function inTransaction<T>(
+export async function inTransaction<T>(
   db: TxPool,
   work: (client: TxClient) => Promise<T>,
 ): Promise<T> {
@@ -62,7 +62,7 @@ function describeShipping(session: Stripe.Checkout.Session): string | null {
 }
 
 // Claims the session id. Zero rows means another delivery already did.
-async function claimSession(
+export async function claimSession(
   client: TxClient,
   userId: number,
   amount: string,
@@ -83,6 +83,16 @@ export async function applyCheckoutSessionCompleted(
   db: TxPool,
   session: Stripe.Checkout.Session,
 ): Promise<CheckoutCompletion> {
+  // Recurring plans are fulfilled by their invoices (services/plan-subscriptions).
+  // The session carries the same targetTier metadata as a prepaid one, so
+  // granting here too would apply and ledger the first payment twice.
+  if (session.mode === "subscription") {
+    console.log(
+      `ℹ️ Subscription checkout ${session.id} is fulfilled by its invoice.paid event`,
+    );
+    return { status: "ignored", reason: "recurring_subscription" };
+  }
+
   const { userId, targetTier, billingCycle, type, orderId } =
     session.metadata || {};
 
@@ -296,7 +306,32 @@ export async function applyPaymentReversal(
   });
 }
 
-type StripeLookup = Pick<Stripe, "checkout" | "charges">;
+type StripeLookup = Pick<Stripe, "checkout" | "charges" | "paymentIntents">;
+
+/** Stripe returns related objects as an id or, when expanded, the object. */
+export function stripeId(value: unknown): string | null {
+  if (typeof value === "string" && value) return value;
+  const id = (value as { id?: unknown } | null | undefined)?.id;
+  return typeof id === "string" && id ? id : null;
+}
+
+/** Ledger reference of a paid subscription invoice (see plan-subscriptions). */
+export function invoiceLedgerReference(invoiceId: string): string {
+  return `invoice:${invoiceId}`;
+}
+
+// Recurring plan payments have no Checkout Session of their own; the invoice
+// that charged them is found through the PaymentIntent. Our client is pinned to
+// an API version where PaymentIntent.invoice still exists.
+async function invoiceIdForPaymentIntent(
+  stripe: StripeLookup,
+  paymentIntent: string | { id: string } | null | undefined,
+): Promise<string | null> {
+  const id = stripeId(paymentIntent);
+  if (!id) return null;
+  const retrieved = await stripe.paymentIntents.retrieve(id);
+  return stripeId((retrieved as { invoice?: unknown }).invoice);
+}
 
 async function sessionIdForPaymentIntent(
   stripe: StripeLookup,
@@ -357,6 +392,24 @@ export async function applyReversalEvent(
   }
 
   const sessionId = await sessionIdForPaymentIntent(stripe, paymentIntent);
-  if (!sessionId) return { status: "unmatched" };
-  return applyPaymentReversal(db, event.id, sessionId, reversal);
+  if (sessionId) {
+    const outcome = await applyPaymentReversal(
+      db,
+      event.id,
+      sessionId,
+      reversal,
+    );
+    if (outcome.status !== "unmatched") return outcome;
+  }
+
+  const invoiceId = await invoiceIdForPaymentIntent(stripe, paymentIntent);
+  if (invoiceId) {
+    return applyPaymentReversal(
+      db,
+      event.id,
+      invoiceLedgerReference(invoiceId),
+      reversal,
+    );
+  }
+  return { status: "unmatched" };
 }

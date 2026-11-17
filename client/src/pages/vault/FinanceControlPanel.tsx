@@ -365,7 +365,7 @@ export default function FinanceControlPanel() {
           <InfoRow label="Checkout Mode" value="Not independently verified" />
           <InfoRow
             label="Webhook Events"
-            value="checkout.session.completed, payment_intent.payment_failed"
+            value="checkout.session.completed, setup_intent.succeeded, payment_intent.payment_failed, charge.refunded, charge.dispute.created, charge.dispute.closed, invoice.paid, invoice.payment_failed, customer.subscription.deleted"
           />
           <InfoRow
             label="Customer Portal"
@@ -633,7 +633,9 @@ export default function FinanceControlPanel() {
           <div className="ml-4">
             2. Server → Creates{" "}
             <span className="text-purple-400">Stripe Checkout Session</span>{" "}
-            (one-time payment mode)
+            (one-time payment mode; subscription mode only while{" "}
+            <span className="text-gray-500">RECURRING_BILLING_ENABLED</span> is
+            on)
           </div>
           <div className="ml-4">
             3. Client → Redirected to{" "}
@@ -657,6 +659,29 @@ export default function FinanceControlPanel() {
           <div className="ml-4">2. Server → Records failed transaction</div>
           <div className="ml-4">
             3. User tier unchanged, notified of failure
+          </div>
+          <div className="text-cyan-400 font-bold mt-3">
+            ▸ AUTOMATIC RENEWAL FLOW (flag off by default):
+          </div>
+          <div className="ml-4">
+            1. Stripe fires{" "}
+            <span className="text-amber-400">invoice.paid</span> for the first
+            payment and every renewal
+          </div>
+          <div className="ml-4">
+            2. Server → Records the invoice once, extends{" "}
+            <span className="text-gray-500">premiumExpiresAt</span> to the
+            paid-through date (never shortens it)
+          </div>
+          <div className="ml-4">
+            3. <span className="text-red-400">invoice.payment_failed</span> →
+            plan flagged <span className="text-gray-500">past_due</span>, user
+            notified; access continues through the 7-day grace period
+          </div>
+          <div className="ml-4">
+            4.{" "}
+            <span className="text-red-400">customer.subscription.deleted</span>{" "}
+            → renewal ends; the plan runs out with the period already paid
           </div>
           <div className="text-amber-400 font-bold mt-3">▸ EXPIRY FLOW:</div>
           <div className="ml-4">
@@ -685,11 +710,15 @@ export default function FinanceControlPanel() {
       >
         <DbTable
           name="transactions"
-          columns="id (uuid PK), business_id (FK → businesses), user_id (FK → users), amount (decimal 12,2), type (varchar: ad_topup | subscription_fee), status (varchar: pending | completed | failed), reference (varchar unique — Stripe session ID), created_at"
+          columns="id (uuid PK), business_id (FK → businesses), user_id (FK → users), amount (decimal 12,2), type (varchar: ad_topup | subscription_fee), status (varchar: pending | completed | failed), reference (varchar unique — Stripe session ID, or invoice: followed by the Stripe invoice ID for automatic renewals), created_at"
         />
         <DbTable
           name="users (financial fields)"
           columns="subscription_tier (free|essential|verified|max|enterprise), subscription_status (active|cancelled|past_due|trialing|expired), premium_expires_at (timestamp), trial_tier (varchar), trial_started_at (timestamp), trial_expires_at (timestamp)"
+        />
+        <DbTable
+          name="plan_subscriptions"
+          columns="id, user_id (FK → users), stripe_subscription_id (unique), stripe_customer_id, tier, billing_cycle (monthly | annual), status (active | past_due | cancelled), current_period_end, created_at, updated_at — only written while RECURRING_BILLING_ENABLED has created subscriptions"
         />
         <DbTable
           name="adCampaigns"

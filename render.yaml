@@ -29,6 +29,8 @@ services:
         value: "false"
       - key: FREE_TRIALS_ENABLED
         value: "false"
+      - key: RECURRING_BILLING_ENABLED
+        value: "false"
       - key: VITE_DIRECTORY_COUNTRY_CODE
         value: CA
       - key: VITE_DIRECTORY_MARKET_LABEL

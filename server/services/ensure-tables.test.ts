@@ -3,7 +3,7 @@ import test from "node:test";
 import { getTableColumns } from "drizzle-orm";
 import type { PoolClient } from "pg";
 
-import { printJobs } from "../../shared/schema";
+import { planSubscriptions, printJobs } from "../../shared/schema";
 import { ensureAllTables } from "./ensure-tables.ts";
 
 function restoreEnv(name: string, value: string | undefined) {
@@ -308,6 +308,118 @@ test("does not block startup when the optional print job column cannot be added"
   try {
     assert.equal(await ensureAllTables(async () => client), "verified");
     assert.equal(released, true);
+  } finally {
+    restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
+    restoreEnv("NODE_ENV", previousNodeEnv);
+  }
+});
+
+test("creates the recurring plan subscriptions table additively, matching the Drizzle model", async () => {
+  const previousDisableFlag = process.env.DISABLE_DB_CHECK;
+  const previousNodeEnv = process.env.NODE_ENV;
+  delete process.env.DISABLE_DB_CHECK;
+  process.env.NODE_ENV = "test";
+  const queries: string[] = [];
+  const client = {
+    async query(query: string) {
+      queries.push(query.replace(/\s+/g, " ").trim());
+      if (query.includes("information_schema.tables")) {
+        return { rows: [{ table_name: "users" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    },
+    release() {},
+  } as unknown as PoolClient;
+
+  try {
+    assert.equal(await ensureAllTables(async () => client), "verified");
+
+    const create = queries.find((query) =>
+      query.startsWith("CREATE TABLE IF NOT EXISTS plan_subscriptions"),
+    );
+    assert.ok(create, "expected the plan_subscriptions table to be created");
+    assert.ok(
+      queries.includes(
+        "CREATE INDEX IF NOT EXISTS idx_plan_subscriptions_user ON plan_subscriptions(user_id)",
+      ),
+      "expected the per-user lookup index",
+    );
+    assert.match(
+      create,
+      /stripe_subscription_id VARCHAR NOT NULL UNIQUE/,
+      "one row per Stripe subscription",
+    );
+
+    const ddlColumns = [
+      ...create.matchAll(/(?:\(|,)\s*([a-z_]+) (?:SERIAL|INTEGER|VARCHAR|TIMESTAMP)/g),
+    ]
+      .map((match) => match[1])
+      .sort();
+    const modelColumns = Object.values(getTableColumns(planSubscriptions))
+      .map((column) => column.name)
+      .sort();
+    assert.deepEqual(
+      ddlColumns,
+      modelColumns,
+      "the boot repair and the Drizzle model must describe the same columns",
+    );
+
+    assert.equal(
+      queries.filter(
+        (query) =>
+          /plan_subscriptions/.test(query) &&
+          /^(UPDATE|INSERT|DELETE|DROP|TRUNCATE|ALTER)\b/i.test(query),
+      ).length,
+      0,
+      "the repair must only create what is missing",
+    );
+    assert.equal(
+      queries.filter(
+        (query) =>
+          /^ALTER TABLE (IF EXISTS )?users\b/i.test(query) &&
+          /plan_subscriptions|recurring|stripe_subscription/i.test(query),
+      ).length,
+      0,
+      "recurring billing must not add columns to the users table",
+    );
+  } finally {
+    restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
+    restoreEnv("NODE_ENV", previousNodeEnv);
+  }
+});
+
+test("does not block startup when the optional plan subscriptions table cannot be created", async () => {
+  const previousDisableFlag = process.env.DISABLE_DB_CHECK;
+  const previousNodeEnv = process.env.NODE_ENV;
+  delete process.env.DISABLE_DB_CHECK;
+  process.env.NODE_ENV = "test";
+  const queries: string[] = [];
+  let released = false;
+  const client = {
+    async query(query: string) {
+      queries.push(query.replace(/\s+/g, " ").trim());
+      if (query.includes("information_schema.tables")) {
+        return { rows: [{ table_name: "users" }], rowCount: 1 };
+      }
+      if (query.includes("plan_subscriptions")) {
+        throw new Error("permission denied for schema public");
+      }
+      return { rows: [], rowCount: 0 };
+    },
+    release() {
+      released = true;
+    },
+  } as unknown as PoolClient;
+
+  try {
+    assert.equal(await ensureAllTables(async () => client), "verified");
+    assert.equal(released, true);
+    const failedAt = queries.findIndex((query) => query.includes("plan_subscriptions"));
+    assert.ok(failedAt >= 0, "the repair must have been attempted");
+    assert.ok(
+      queries.slice(failedAt + 1).some((query) => query.includes("INSERT INTO issued_cardholders")),
+      "later startup repairs must still run after the optional one fails",
+    );
   } finally {
     restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
     restoreEnv("NODE_ENV", previousNodeEnv);

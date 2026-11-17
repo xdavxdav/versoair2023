@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { FakeDb } from "../test-support/marketing-fakes";
 import {
   buildPlanCheckoutParams,
+  buildRecurringPlanCheckoutParams,
   resolvePlanSelection,
 } from "./plan-checkout";
 import { applyCheckoutSessionCompleted } from "./stripe-webhook";
@@ -122,4 +123,73 @@ test("a paid plan session grants exactly the bought tier and period through the 
     });
     assert.equal(db.transactions.length, 1, cycle);
   }
+});
+
+test("the recurring Checkout Session is a CAD subscription at the same price, with the plan on the subscription", () => {
+  for (const [cycle, interval, cents] of [
+    ["monthly", "month", 9600],
+    ["annual", "year", 96000],
+  ] as const) {
+    const input = {
+      userId: 7,
+      selection: select("verified", cycle),
+      customerId: "cus_123",
+      baseUrl: "https://www.versoair.com",
+    };
+    const params = buildRecurringPlanCheckoutParams(input);
+
+    assert.equal(params.mode, "subscription", cycle);
+    assert.equal(params.customer, "cus_123");
+    assert.equal(params.line_items?.length, 1);
+    const item = params.line_items![0];
+    assert.equal(item.quantity, 1);
+    assert.equal(item.price_data?.currency, "cad");
+    assert.equal(item.price_data?.unit_amount, cents, cycle);
+    assert.deepEqual(item.price_data?.recurring, { interval }, cycle);
+    assert.equal(
+      item.price_data?.unit_amount,
+      buildPlanCheckoutParams(input).line_items![0].price_data?.unit_amount,
+      "recurring and prepaid checkouts charge the same price",
+    );
+
+    const metadata = {
+      userId: "7",
+      targetTier: "verified",
+      billingCycle: cycle,
+      type: "subscription_fee",
+    };
+    assert.deepEqual(params.metadata, metadata);
+    assert.deepEqual(params.subscription_data?.metadata, metadata);
+    assert.equal(
+      params.success_url,
+      "https://www.versoair.com/pricing?status=success&tier=verified",
+    );
+    assert.equal(
+      params.cancel_url,
+      "https://www.versoair.com/pricing?status=cancelled",
+    );
+  }
+});
+
+test("only the recurring Checkout Session can renew; the prepaid one cannot", () => {
+  const input = {
+    userId: 7,
+    selection: select("essential", "annual"),
+    customerId: "cus_123",
+    baseUrl: "https://www.versoair.com",
+  };
+  const prepaid = buildPlanCheckoutParams(input);
+  const recurring = buildRecurringPlanCheckoutParams(input);
+
+  assert.equal(prepaid.mode, "payment");
+  assert.equal(prepaid.line_items![0].price_data?.recurring, undefined);
+  assert.equal(prepaid.subscription_data, undefined);
+
+  // setup_future_usage and payment_intent_data are rejected in subscription mode.
+  assert.equal(recurring.payment_intent_data, undefined);
+  assert.equal(
+    (recurring as { setup_future_usage?: unknown }).setup_future_usage,
+    undefined,
+  );
+  assert.deepEqual(recurring.payment_method_types, ["card"]);
 });

@@ -663,6 +663,30 @@ export const transactions = pgTable("transactions", {
   updatedAt: timestamp("updated_at"),
 });
 
+// Automatic-renewal plan subscriptions (Stripe subscriptions), written by
+// services/plan-subscriptions.ts. Created at boot by an optional repair in
+// ensure-tables.ts, which must stay in step with this definition.
+export const planSubscriptions = pgTable(
+  "plan_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id)
+      .notNull(),
+    stripeSubscriptionId: varchar("stripe_subscription_id").notNull().unique(),
+    stripeCustomerId: varchar("stripe_customer_id"),
+    tier: varchar("tier").notNull(),
+    billingCycle: varchar("billing_cycle").notNull().default("monthly"),
+    status: varchar("status").notNull().default("active"), // 'active', 'past_due', 'cancelled'
+    currentPeriodEnd: timestamp("current_period_end"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("idx_plan_subscriptions_user").on(t.userId),
+  }),
+);
+
 export const businessReviews = pgTable("business_reviews", {
   id: serial("id").primaryKey(),
   businessId: integer("business_id")

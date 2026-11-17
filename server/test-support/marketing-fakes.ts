@@ -323,18 +323,26 @@ export class FakeDb {
 
 export interface StubStripeOptions {
   failCreate?: boolean;
+  /** Make billingPortal.sessions.create fail like a bad API key. */
+  failPortal?: boolean;
   paymentIntentCustomer?: string | null;
   /** payment_intent id -> Checkout Session id, for refund/dispute lookups. */
   sessionsByPaymentIntent?: Record<string, string>;
   /** charge id -> payment_intent id. */
   chargePaymentIntents?: Record<string, string>;
+  /** payment_intent id -> invoice id, for payments made by a subscription. */
+  paymentIntentInvoices?: Record<string, string>;
+  /** Stripe customers returned for an email lookup (customers.list). */
+  customersByEmail?: Array<{ id: string }>;
 }
 
 /** A Stripe client whose network-facing calls are recorded and never sent. */
 export function createStubStripe(options: StubStripeOptions = {}) {
   const calls = {
     sessionsCreate: [] as Array<{ params: any; options: any }>,
+    customersList: [] as any[],
     customersCreate: [] as any[],
+    portalSessionsCreate: [] as any[],
     paymentIntentsRetrieve: [] as string[],
     setupIntentsRetrieve: [] as string[],
   };
@@ -342,7 +350,10 @@ export function createStubStripe(options: StubStripeOptions = {}) {
 
   const client = {
     customers: {
-      list: async () => ({ data: [] }),
+      list: async (params: any) => {
+        calls.customersList.push(params);
+        return { data: options.customersByEmail ?? [] };
+      },
       create: async (params: any) => {
         calls.customersCreate.push(params);
         return { id: `cus_stub_${++seq}` };
@@ -381,7 +392,23 @@ export function createStubStripe(options: StubStripeOptions = {}) {
           id,
           payment_method: "pm_stub_1",
           customer: options.paymentIntentCustomer ?? null,
+          invoice: options.paymentIntentInvoices?.[id] ?? null,
         };
+      },
+    },
+    billingPortal: {
+      sessions: {
+        create: async (params: any) => {
+          calls.portalSessionsCreate.push(params);
+          if (options.failPortal) {
+            const err: any = new Error(
+              "Invalid API Key provided: sk_test_" + "x".repeat(6) + "abcd",
+            );
+            err.type = "StripeAuthenticationError";
+            throw err;
+          }
+          return { url: `https://billing.stripe.test/p/session_${++seq}` };
+        },
       },
     },
     setupIntents: {
@@ -410,6 +437,20 @@ export function checkoutCompletedEvent(
     object: "event",
     type: "checkout.session.completed",
     data: { object: { object: "checkout.session", ...session } },
+  });
+}
+
+/** Any Stripe event, serialised the way the webhook endpoint receives it. */
+export function stripeEventPayload(
+  type: string,
+  object: Record<string, any>,
+  eventId = "evt_test_stub_1",
+): string {
+  return JSON.stringify({
+    id: eventId,
+    object: "event",
+    type,
+    data: { object },
   });
 }
 

@@ -15,6 +15,7 @@ import { publicTierPricing } from "@shared/plan-pricing";
 import { requireAuth } from "../../middleware/auth";
 import { resolveRequestActingUserId } from "../../utils/acting-user";
 import { getGeoAdminEntitlement } from "../../services/geoadmin-entitlement";
+import { findBillingSubscription } from "../../services/plan-subscriptions";
 import {
   freeTrialsEnabled,
   rejectUnavailablePayment,
@@ -410,6 +411,17 @@ router.post("/downgrade", requireAuth(), async (req: Request, res: Response) => 
       return res.status(400).json({
         success: false,
         error: "Target tier must be lower than current tier for a downgrade",
+      });
+    }
+
+    // A plan that renews automatically keeps being charged by Stripe, so it
+    // must be cancelled there first; the tier then runs out with the period.
+    if (await findBillingSubscription(pool, userId)) {
+      return res.status(409).json({
+        success: false,
+        code: "SUBSCRIPTION_BILLING_ACTIVE",
+        error:
+          "This plan renews automatically. Cancel it from your billing settings; your plan stays active until the end of the period you have paid for.",
       });
     }
 

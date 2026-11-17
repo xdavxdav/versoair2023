@@ -13,16 +13,28 @@ import { pool } from "../db";
 const EXPIRY_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 const INITIAL_DELAY = 60 * 1000; // 1 minute after startup
 const GRACE_PERIOD_DAYS = 7;
+// An automatic-renewal subscriber is renewed by Stripe webhooks a moment after
+// the period ends; the cron leaves them alone for this long before treating a
+// missing renewal as an expiry.
+const RENEWAL_SLACK_DAYS = 2;
+const AUTO_RENEWING = `EXISTS (SELECT 1 FROM plan_subscriptions ps WHERE ps.user_id = users.id AND ps.status = 'active')`;
 
 /**
  * Full subscription lifecycle processor.
  */
-async function processExpiredSubscriptions(): Promise<void> {
+export async function processExpiredSubscriptions(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
     let totalActions = 0;
+
+    // plan_subscriptions is created by an optional boot repair. Referencing a
+    // missing table would abort this whole transaction, so check first.
+    const planSubscriptionsTable = await client.query(
+      `SELECT to_regclass('public.plan_subscriptions') AS name`,
+    );
+    const hasPlanSubscriptions = planSubscriptionsTable.rows[0]?.name != null;
 
     // ═══════════════════════════════════════════════════════════════════════
     // 1. LISTENER / PLATFORM SUBS — 7-day grace period
@@ -35,7 +47,13 @@ async function processExpiredSubscriptions(): Promise<void> {
        WHERE premium_expires_at IS NOT NULL
          AND premium_expires_at < NOW()
          AND subscription_tier != 'free'
-         AND subscription_status = 'active'
+         AND subscription_status = 'active'${
+           hasPlanSubscriptions
+             ? `
+         AND (premium_expires_at < NOW() - INTERVAL '${RENEWAL_SLACK_DAYS} days'
+              OR NOT ${AUTO_RENEWING})`
+             : ""
+         }
        RETURNING id, username, subscription_tier, premium_expires_at`,
     );
 
@@ -234,7 +252,9 @@ async function processExpiredSubscriptions(): Promise<void> {
        WHERE premium_expires_at IS NOT NULL
          AND premium_expires_at BETWEEN NOW() AND NOW() + INTERVAL '7 days'
          AND subscription_status = 'active'
-         AND subscription_tier != 'free'
+         AND subscription_tier != 'free'${
+           hasPlanSubscriptions ? `\n         AND NOT ${AUTO_RENEWING}` : ""
+         }
          AND id NOT IN (
            SELECT user_id FROM notifications
            WHERE type = 'subscription' AND title = 'Renewal Reminder'

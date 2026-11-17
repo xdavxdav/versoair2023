@@ -33,6 +33,7 @@ import {
 import {
   commercialSubscriptionsEnabled,
   onlinePaymentsEnabled,
+  recurringBillingEnabled,
   rejectUnavailablePayment,
 } from "../../utils/commercial-gates";
 import { resolveRequestActingUserId } from "../../utils/acting-user";
@@ -46,7 +47,12 @@ import {
   applyReversalEvent,
 } from "../../services/stripe-webhook";
 import {
+  applyPlanSubscriptionEvent,
+  findBillingSubscription,
+} from "../../services/plan-subscriptions";
+import {
   buildPlanCheckoutParams,
+  buildRecurringPlanCheckoutParams,
   resolvePlanSelection,
 } from "../../services/plan-checkout";
 
@@ -93,7 +99,9 @@ function requireStripeClient(res: Response): Stripe | null {
 /**
  * POST /api/v1/payments/create-checkout
  * Creates a Stripe Checkout Session for a plan, charged in CAD (see
- * shared/plan-pricing.ts). Enterprise is quoted individually.
+ * shared/plan-pricing.ts). Enterprise is quoted individually. The plan is a
+ * one-time prepaid payment, or an automatically renewing subscription while
+ * RECURRING_BILLING_ENABLED is on.
  * Body: { targetTier: 'essential' | 'verified' | 'max', billingCycle?: 'monthly' | 'annual' }
  */
 router.post("/create-checkout", async (req: Request, res: Response) => {
@@ -143,6 +151,16 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
 
     const user = userResult.rows[0];
 
+    const recurring = recurringBillingEnabled();
+    if (recurring && (await findBillingSubscription(pool, Number(userId)))) {
+      return res.status(409).json({
+        success: false,
+        code: "SUBSCRIPTION_ALREADY_ACTIVE",
+        error:
+          "You already have a subscription that renews automatically. Manage it from your billing settings.",
+      });
+    }
+
     // Get or create Stripe customer so card is attached to their account
     const customerId = await getOrCreateStripeCustomer(
       Number(userId),
@@ -151,13 +169,16 @@ router.post("/create-checkout", async (req: Request, res: Response) => {
       stripeClient,
     );
 
+    const checkoutInput = {
+      userId,
+      selection: plan.selection,
+      customerId,
+      baseUrl: getPublicBaseUrl(),
+    };
     const session = await stripeClient.checkout.sessions.create(
-      buildPlanCheckoutParams({
-        userId,
-        selection: plan.selection,
-        customerId,
-        baseUrl: getPublicBaseUrl(),
-      }),
+      recurring
+        ? buildRecurringPlanCheckoutParams(checkoutInput)
+        : buildPlanCheckoutParams(checkoutInput),
     );
 
     res.json({
@@ -345,6 +366,30 @@ router.post("/webhook", async (req: Request, res: Response) => {
       break;
     }
 
+    case "invoice.paid":
+    case "invoice.payment_failed":
+    case "customer.subscription.deleted": {
+      // Automatic-renewal plans; see services/plan-subscriptions.
+      try {
+        const outcome = await applyPlanSubscriptionEvent(pool, event);
+        if (outcome.status === "duplicate") {
+          console.log(`ℹ️ Duplicate ${event.type} ${event.id} ignored`);
+        } else if (outcome.status === "ignored") {
+          console.log(
+            `ℹ️ ${event.type} ${event.id} not applied: ${outcome.reason}`,
+          );
+        }
+      } catch (planError: any) {
+        // Nothing was committed, so a 5xx lets Stripe retry safely.
+        console.error(
+          `❌ DB error processing ${event.type}:`,
+          redactStripeSecrets(planError?.message),
+        );
+        return res.status(500).json({ error: "Webhook processing failed" });
+      }
+      break;
+    }
+
     default:
       // Unhandled event type — log for visibility
       console.log(`ℹ️ Unhandled Stripe event: ${event.type}`);
@@ -439,7 +484,8 @@ router.get("/billing-history", async (req: Request, res: Response) => {
  * Body: { userId }
  */
 router.post("/create-portal", async (req: Request, res: Response) => {
-  if (!requireStripe(res)) return;
+  const stripeClient = requireStripeClient(res);
+  if (!stripeClient) return;
 
   try {
     const authenticatedUserId = req.user?.userId || (req as any).user?.id;
@@ -464,7 +510,7 @@ router.post("/create-portal", async (req: Request, res: Response) => {
     const userId = Number(authenticatedUserId);
 
     const userResult = await pool.query(
-      `SELECT email FROM users WHERE id = $1`,
+      `SELECT email, stripe_customer_id FROM users WHERE id = $1`,
       [userId],
     );
 
@@ -472,24 +518,28 @@ router.post("/create-portal", async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    // Find or create Stripe customer
-    const customers = await stripe!.customers.list({
-      email: userResult.rows[0].email,
-      limit: 1,
-    });
+    // The customer saved at checkout owns any automatic-renewal subscription;
+    // looking one up by email could pick a different customer with that address.
+    let customerId: string | undefined =
+      userResult.rows[0].stripe_customer_id || undefined;
 
-    let customerId: string;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
-      const customer = await stripe!.customers.create({
+    if (!customerId) {
+      const customers = await stripeClient.customers.list({
         email: userResult.rows[0].email,
-        metadata: { userId: String(userId) },
+        limit: 1,
       });
-      customerId = customer.id;
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+      } else {
+        const customer = await stripeClient.customers.create({
+          email: userResult.rows[0].email,
+          metadata: { userId: String(userId) },
+        });
+        customerId = customer.id;
+      }
     }
 
-    const portalSession = await stripe!.billingPortal.sessions.create({
+    const portalSession = await stripeClient.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${getPublicBaseUrl()}/pricing`,
     });
@@ -499,8 +549,9 @@ router.post("/create-portal", async (req: Request, res: Response) => {
       data: { url: portalSession.url },
     });
   } catch (error: any) {
-    console.error("❌ Portal session error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    const reason = redactStripeSecrets(error?.message);
+    console.error("❌ Portal session error:", reason);
+    res.status(500).json({ success: false, error: reason });
   }
 });
 

@@ -3,8 +3,8 @@
 Audience: the owner (Luq). Companion to
 [stripe-first-transaction.md](./payments/stripe-first-transaction.md).
 Nothing here is enabled by merging code: `render.yaml` keeps
-`ONLINE_PAYMENTS_ENABLED`, `MARKETING_CHECKOUT_ENABLED` and
-`FREE_TRIALS_ENABLED` at `"false"`.
+`ONLINE_PAYMENTS_ENABLED`, `MARKETING_CHECKOUT_ENABLED`, `FREE_TRIALS_ENABLED`
+and `RECURRING_BILLING_ENABLED` at `"false"`.
 
 **Never paste a Stripe key (test or live) into chat, tickets, commits or
 screenshots. Enter it only in the Render dashboard.**
@@ -19,7 +19,7 @@ it opens many other surfaces (table below) that are not ready.
 | Surface | Endpoint | Flags required | Notes |
 | --- | --- | --- | --- |
 | Marketing packs + print products | `POST /api/marketing/cart/checkout` | `MARKETING_CHECKOUT_ENABLED` **or** `ONLINE_PAYMENTS_ENABLED` | Stripe, CAD, price read from DB; request body ignored |
-| Business subscription (Stripe) | `POST /api/v1/payments/create-checkout` | `ONLINE_PAYMENTS_ENABLED` **and** `COMMERCIAL_SUBSCRIPTIONS_ENABLED` | Stripe, CAD, amounts server-side from `shared/plan-pricing.ts`; Enterprise is quote-only (400 `PLAN_QUOTE_ONLY`) |
+| Business subscription (Stripe) | `POST /api/v1/payments/create-checkout` | `ONLINE_PAYMENTS_ENABLED` **and** `COMMERCIAL_SUBSCRIPTIONS_ENABLED` | Stripe, CAD, amounts server-side from `shared/plan-pricing.ts`; Enterprise is quote-only (400 `PLAN_QUOTE_ONLY`). One-time prepaid unless `RECURRING_BILLING_ENABLED=true` (automatic renewal, see "Recurring billing"). No page calls it yet |
 | Business tier from wallet balance | `POST /api/payments/tier/upgrade` | same two flags | Wallet funds, no Stripe; own legacy prices (gap 7) |
 | Wallet deposit | `/api/wallet/deposit`, `/api/payments/wallet/deposit` | `ONLINE_PAYMENTS_ENABLED` | No Stripe top-up exists; first is a PayPal redirect preview, second always returns 503 |
 | PayPal, artist paid tiers, tips, withdraw, bank/Interac/crypto/mobile-money | `routes/paypal.ts`, `artist-subscriptions.ts`, `streamroyale.ts`, `payments.ts` | `ONLINE_PAYMENTS_ENABLED` | Not Stripe; out of scope for this go-live |
@@ -55,11 +55,35 @@ it opens many other surfaces (table below) that are not ready.
    turning on `COMMERCIAL_SUBSCRIPTIONS_ENABLED`, which stays `false`. The
    `/pricing` page converts FCFA at a live indicative rate, so its CA$ figure
    can differ from the charged price by about 1%.
-3. **Plans do not renew.** Plan checkout is `mode: "payment"` (one-time prepaid).
-   `subscription-expiry.ts` marks a plan `past_due` at expiry, allows a 7-day
-   grace, then downgrades it; nothing re-charges the card. Luq decides whether
-   plans should be one-time or recurring (recurring needs code changes).
+3. **Plans: prepaid today, recurring billing is built but switched off.** Plan
+   checkout is `mode: "payment"` (one-time prepaid) until
+   `RECURRING_BILLING_ENABLED` is `true`; then it creates a real Stripe
+   subscription that renews every month or year. The code is complete and
+   tested but off (`render.yaml` keeps it `"false"`), so nothing renews and
+   nothing recurring is charged. Turning it on is the checklist under
+   "Recurring billing" below. Public pages say nothing about automatic renewal;
+   keep it that way until the flag is on.
 4. GST/HST, receipts and print-order fulfilment: see Known gaps below.
+5. **Stripe's live account is paused until its photo-ID task is done.** At the
+   last check, Dashboard > Account status listed "Provide a photo ID" for the
+   account owner as past due, marked as impacting payments and payouts, with
+   payments paused. No charge or payout of any kind can succeed until the
+   account holder completes it. Nobody else should handle that document.
+6. **Decide where Stripe pays out.** The payout bank linked in Stripe
+   (Settings > Linked accounts) is a Tangerine CAD account, not the Airwallex
+   account. Airwallex is the company's bank account and has no code
+   integration here (it is not a payment processor). Change the Stripe payout
+   bank only after deciding which account should receive the money.
+
+### Charging a client before the shop is loaded
+
+Until the catalog is loaded (blocker 1) and a Subscribe button exists (no page
+calls plan checkout yet), the quickest way to take a real payment is Stripe
+itself, once blocker 5 is cleared: create an Invoice or a Payment Link in the
+Dashboard, in CAD. The webhook acknowledges those events and ignores them
+(they carry no plan or order metadata), so Stripe does not retry them. The
+site does not record them either: grant the plan or fulfil the order by hand
+and reconcile from the Dashboard.
 
 ## Known gaps (decide before or shortly after launch)
 
@@ -68,17 +92,20 @@ it opens many other surfaces (table below) that are not ready.
    must register (CRA small-supplier threshold) is a question for your
    accountant. Options: set prices tax-inclusive, or enable Stripe Tax and add
    `automatic_tax` to the Checkout session (code change).
-2. **Plans are one-time prepaid payments, not recurring** (they are charged in
-   CAD like the shop). Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED` off until the
-   owner has reviewed the plan prices (blocker 2) and decided whether plans
-   should recur (blocker 3).
+2. **Plans are one-time prepaid payments unless `RECURRING_BILLING_ENABLED` is
+   on** (charged in CAD like the shop). Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED`
+   off until the owner has reviewed the plan prices (blocker 2). No page starts
+   a plan checkout yet (`/pricing` is inquiry-only and the billing page only
+   opens the Stripe portal), so a purchase button still has to be built.
 3. **No customer receipt email.** The Checkout session does not pass an email.
    Stripe's own receipts (Dashboard > Settings > Customer emails) are only sent
    in **live** mode, so they cannot be seen in the sandbox test. Check one with
    your small real purchase (Part B step 5.2).
 4. **Refunds do not revoke subscription tiers automatically.** Marketing orders
    are marked `refunded` / `disputed` / `chargeback` automatically; a
-   subscription tier must be downgraded by support.
+   subscription tier must be downgraded by support. For an automatic-renewal
+   plan, support first cancels the subscription in Stripe (otherwise the next
+   invoice charges again and re-grants the plan), then downgrades the user.
 5. **Print products ship; orders have no address columns.** Checkout now
    collects a CA/US shipping address when the cart has print items and the
    webhook copies it into the order `notes` ("Ship to: ..."). Shipping is
@@ -112,7 +139,9 @@ on the production service: a sandbox purchase writes real `orders` and
    - Events: `checkout.session.completed`, `charge.refunded`,
      `charge.dispute.created`, `charge.dispute.closed`
      (optional, log/card-save only: `payment_intent.payment_failed`,
-     `setup_intent.succeeded`).
+     `setup_intent.succeeded`). To also test automatic-renewal plans (see
+     "Recurring billing"), add `invoice.paid`, `invoice.payment_failed` and
+     `customer.subscription.deleted`.
    - Copy the signing secret (`whsec_...`).
 4. Render (staging service) > Environment, set:
    - `STRIPE_SECRET_KEY` = test key
@@ -188,6 +217,99 @@ refused immediately (HTTP 503). Webhooks keep working on purpose, so payments
 already in flight, refunds and disputes are still recorded. To also stop all
 Stripe activity, remove `STRIPE_SECRET_KEY`.
 
+## Recurring billing (built, off)
+
+Plan checkout can create a real Stripe subscription (CAD, monthly or annual, the
+same prices as `shared/plan-pricing.ts`) instead of a one-time payment. It is
+switched by `RECURRING_BILLING_ENABLED` (`"false"` in `render.yaml`) and only
+matters inside the two existing plan flags (`ONLINE_PAYMENTS_ENABLED` and
+`COMMERCIAL_SUBSCRIPTIONS_ENABLED`), so while it is off nothing renews and
+nothing recurring is ever charged. The flag only decides which kind of Checkout
+Session is created; the webhook handlers below are always active but do nothing
+without subscription events.
+
+How it behaves:
+
+- **First payment and every renewal** arrive as `invoice.paid`. Each invoice is
+  recorded once (`transactions.reference` = `invoice:` + the invoice id, unique)
+  in the same database transaction that extends the plan, so Stripe retries and
+  replays change nothing. `premium_expires_at` only ever moves forward.
+- **Failed renewal** (`invoice.payment_failed`): the plan is flagged `past_due`
+  once and the user is notified. Access continues; the daily cron downgrades
+  7 days after the paid period ended if no retry has succeeded, and a later
+  successful retry restores the plan.
+- **Cancellation** (`customer.subscription.deleted`, e.g. from the Stripe
+  billing portal): renewal stops and the plan runs out with the period already
+  paid, then the normal expiry flow applies.
+- **Expiry cron:** an active subscriber gets 2 days of slack after the period
+  end for Stripe's renewal to arrive before being treated as expired, and gets
+  no "renew now" reminder. Prepaid users are unchanged. A database without the
+  `plan_subscriptions` table behaves exactly as before.
+- **Guards:** a user with an active or `past_due` subscription cannot start a
+  second one (409 `SUBSCRIPTION_ALREADY_ACTIVE`), and
+  `POST /api/v1/subscription/downgrade` refuses (409
+  `SUBSCRIPTION_BILLING_ACTIVE`) until the subscription is cancelled.
+- **Storage:** a separate `plan_subscriptions` table, created by the boot
+  repair in `server/services/ensure-tables.ts` (`CREATE TABLE IF NOT EXISTS`).
+  That repair is non-fatal: if it cannot run, the server still starts and
+  recurring plans simply stay unavailable. Nothing was added to `users`.
+
+Before turning it on (staging with test keys first):
+
+1. Check the table exists in the database the service uses (read-only):
+   `SELECT to_regclass('public.plan_subscriptions');` must not return null. It
+   is created at the first server start after this code is deployed.
+2. Webhook endpoint: add `invoice.paid`, `invoice.payment_failed` and
+   `customer.subscription.deleted` to the events of Part A step 3. Live and
+   test endpoints are separate; do both.
+3. Stripe Dashboard > Settings > Billing > Customer portal: allow cancelling
+   subscriptions and updating payment methods. Set the failed-payment retry
+   schedule (Settings > Billing > Revenue recovery) to finish within about 7
+   days so it matches the grace period. Portal and retry settings are separate
+   in test and live mode.
+4. Run the whole cycle in test mode with the three flags on:
+   1. Subscribe with `4242 4242 4242 4242`. Expect the CAD total, a
+      `plan_subscriptions` row, an `invoice:` row in `transactions`, the user on
+      the chosen tier, and `invoice.paid` answered `200`.
+   2. **Resend** the event: still `200`, no second row.
+   3. Renewal: put the test customer in a Stripe **test clock** (Dashboard >
+      Billing > Test clocks), store its `cus_...` id in that staging user's
+      `users.stripe_customer_id` before subscribing (checkout reuses the stored
+      customer), then advance the clock one cycle. A second invoice must extend
+      `premium_expires_at`.
+   4. Failure: in the billing portal change the card to
+      `4000 0000 0000 0341` (it attaches but charges fail) and advance the clock
+      again. Expect `invoice.payment_failed`, the plan `past_due`, and the
+      "Payment Failed" notification with access unchanged.
+   5. Cancel in the billing portal: the status becomes `cancelled` and the plan
+      stays active until the paid period ends.
+5. Search the logs for lines containing `not applied:` (`unknown_subscription`,
+   `invalid_plan`); there should be none for your test subscription.
+6. Only then set `RECURRING_BILLING_ENABLED=true` in production, and only
+   after `COMMERCIAL_SUBSCRIPTIONS_ENABLED` is a deliberate decision. Roll back
+   by setting it to `false`: new plan checkouts are prepaid again, but
+   subscriptions that already exist keep renewing and extending access until
+   they are cancelled in Stripe.
+
+Known limits (decide or handle through support):
+
+- The Stripe billing portal cannot switch plans (prices are created inline), so
+  a plan change for a subscriber is cancel, then subscribe again.
+- The recurring checkout does not copy the card into the in-app saved cards.
+- Two subscriptions started within seconds of each other (before the first
+  `invoice.paid` is processed) are possible; cancel the duplicate in Stripe.
+- A prepaid remainder plus a new subscription does not stack; access runs to
+  whichever end is later.
+- `customer.subscription.updated` is not handled, so a subscription set to cancel
+  at period end only shows as cancelled when it actually ends.
+- Refunds and disputes of a renewal are recorded but do not revoke the plan
+  (gap 4).
+- Refund and dispute events find a renewal through the payment's invoice id,
+  which the pinned API version (`STRIPE_API_VERSION` in
+  `server/routes/api-v1/payments.ts`) returns. If that version is ever raised,
+  re-test refunds of a renewal.
+- Nothing in the client starts a plan checkout yet (gap 2).
+
 ## What the code guarantees (audited)
 
 - The webhook reads the raw request body and verifies Stripe's signature. A
@@ -199,7 +321,12 @@ Stripe activity, remove `STRIPE_SECRET_KEY`.
   back and returns 500 so Stripe retries.
 - Refund and dispute events are claimed per event id (`stripe_event:<id>`) and
   never grant anything.
+- Automatic renewals (only when `RECURRING_BILLING_ENABLED` created a
+  subscription) are claimed per Stripe invoice (`invoice:<id>`, unique) in the
+  same database transaction as the plan update; access only moves forward, and a
+  failure rolls back and returns 500 so Stripe retries.
 - Amounts are integer cents read from the database at checkout; currency is
   fixed to CAD for marketing orders. The request body is ignored.
 
-Tests: `JWT_SECRET=local-test-only-secret-0123456789abcdef node --import tsx --test server/routes/api-v1/payments-webhook.test.ts server/services/stripe-reversals.test.ts server/services/stripe-webhook.test.ts server/services/marketing-checkout.test.ts`
+Tests: `npm run test:payments` runs the whole payment set (checkout, webhook, reversals, plan pricing, and the recurring-billing files `plan-subscriptions`, `payments-recurring`, `subscription-downgrade`, `subscription-expiry`). The original webhook subset:
+`JWT_SECRET=local-test-only-secret-0123456789abcdef node --import tsx --test server/routes/api-v1/payments-webhook.test.ts server/services/stripe-reversals.test.ts server/services/stripe-webhook.test.ts server/services/marketing-checkout.test.ts`

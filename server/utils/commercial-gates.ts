@@ -20,6 +20,16 @@ export function commercialSubscriptionsEnabled(): boolean {
   return process.env.COMMERCIAL_SUBSCRIPTIONS_ENABLED === "true";
 }
 
+/**
+ * Plan checkout creates a Stripe subscription (automatic renewals) instead of
+ * a one-time prepaid payment. Read only when a plan checkout is created, which
+ * already requires the payments and subscriptions flags; the webhook handlers
+ * for existing subscriptions stay active whatever this is set to.
+ */
+export function recurringBillingEnabled(): boolean {
+  return process.env.RECURRING_BILLING_ENABLED === "true";
+}
+
 export function freeTrialsEnabled(): boolean {
   return process.env.FREE_TRIALS_ENABLED === "true";
 }
