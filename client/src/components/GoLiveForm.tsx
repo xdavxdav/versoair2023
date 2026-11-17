@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TrackSelector } from "@/components/TrackSelector";
 
 interface GoLiveFormProps {
   isOpen: boolean;
@@ -257,21 +258,19 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-4"
               >
-                <div className="text-center py-8">
-                  <Music className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                  <p className="text-white/60">
-                    Track selection interface coming soon.
+                <div>
+                  <h3 className="text-white font-semibold mb-3">Select Tracks</h3>
+                  <p className="text-white/60 text-sm mb-4">
+                    Add tracks from your library or search for specific songs to include in your session.
                   </p>
-                  <p className="text-sm text-white/40 mt-2">
-                    For now, select your favorite tracks from your library.
-                  </p>
+                  <TrackSelector
+                    selectedTracks={selectedTracks}
+                    onTracksChange={setSelectedTracks}
+                    maxTracks={50}
+                  />
                 </div>
 
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-sm text-amber-500/80">
-                  <p>Demo: Session will use your most recent 5 liked tracks</p>
-                </div>
-
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-4 border-t border-white/10">
                   <Button
                     onClick={() => setStep("details")}
                     variant="outline"
@@ -281,7 +280,8 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                   </Button>
                   <Button
                     onClick={() => setStep("confirm")}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-verso-navy font-semibold"
+                    disabled={selectedTracks.length === 0}
+                    className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-white/20 disabled:text-white/40 text-verso-navy font-semibold"
                   >
                     Continue
                   </Button>

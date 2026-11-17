@@ -498,6 +498,16 @@ export function MusicSidebar() {
             <Radio className="w-5 h-5" />
           </button>
 
+          {/* My Sessions - View and manage live sessions */}
+          <Link href="/my-live-sessions">
+            <div
+              className="flex items-center justify-center p-2.5 rounded-lg cursor-pointer text-amber-300/70 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+              title="My Sessions"
+            >
+              <Music2 className="w-5 h-5" />
+            </div>
+          </Link>
+
           {/* Account - track referrer for proper back navigation */}
           <Link
             href="/profile"
