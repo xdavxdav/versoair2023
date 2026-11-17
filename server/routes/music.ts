@@ -549,8 +549,21 @@ router.post(
         if (artistRow.rows.length) {
           artistId = artistRow.rows[0].id;
         } else {
-          // No artist profile yet — auto-create a minimal one so uploads
-          // from device are never blocked for authenticated users.
+          // Only registered artists may upload: an artist account, an artist
+          // profile, or an approved contract. Everyone else is refused.
+          const registered = await pool.query(
+            `SELECT 1 WHERE EXISTS (SELECT 1 FROM users WHERE id = $1 AND LOWER(COALESCE(role,'')) = 'artist')
+                OR EXISTS (SELECT 1 FROM artist_profiles WHERE user_id = $1)
+                OR EXISTS (SELECT 1 FROM artist_contracts WHERE user_id = $1 AND status = 'approved')`,
+            [parseInt(req.user.userId)],
+          );
+          if (!registered.rows.length) {
+            return res.status(403).json({
+              success: false,
+              error:
+                "Only registered artists can upload music. Register as an artist first.",
+            });
+          }
           const fallbackName =
             req.user.email?.split("@")[0] || `Artist${req.user.userId}`;
           const created = await pool.query(
@@ -559,9 +572,6 @@ router.post(
             [parseInt(req.user.userId), fallbackName],
           );
           artistId = created.rows[0].id;
-          console.log(
-            `🎤 [MUSIC] Auto-created artist profile "${fallbackName}" (id ${artistId}) for user ${req.user.userId}`,
-          );
         }
       }
 
