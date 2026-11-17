@@ -232,7 +232,7 @@ export default function DatabaseResults() {
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+                        <h3 className="notranslate text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
                           {result.name || `Business #${result.id}`}
                         </h3>
                         <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-400">

@@ -1214,7 +1214,7 @@ export default function BusinessesDirectory() {
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                               <h3 className="text-lg font-bold text-gray-900 group-hover:text-sky-700 transition-colors mb-2 line-clamp-1">
-                                {business.title}
+                                <span className="notranslate">{business.title}</span>
                               </h3>
                               <div className="flex items-center gap-2 text-gray-600 mb-2">
                                 <MapPin className="w-4 h-4" />

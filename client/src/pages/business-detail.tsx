@@ -683,7 +683,7 @@ export default function BusinessDetailPage() {
               </>
             )}
             <span aria-hidden="true" className="opacity-50">/</span>
-            <span aria-current="page" className="font-medium text-[#4C5A63]">{biz.name}</span>
+            <span aria-current="page" className="notranslate font-medium text-[#4C5A63]">{biz.name}</span>
           </nav>
           <Button
             type="button"
@@ -838,7 +838,7 @@ export default function BusinessDetailPage() {
               <div className="flex-1 min-w-0 space-y-3">
                 {/* Name + badges */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="font-fraunces text-[clamp(1.7rem,4.4vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.025em] text-[#1E2A32]">
+                  <h1 className="notranslate font-fraunces text-[clamp(1.7rem,4.4vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.025em] text-[#1E2A32]">
                     {biz.name}
                   </h1>
                   {isVerified && (
@@ -1569,7 +1569,7 @@ export default function BusinessDetailPage() {
                             {bizUI.icon}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-slate-700 truncate text-sm group-hover:text-fiche-accent transition-colors">
+                            <h3 className="notranslate font-semibold text-slate-700 truncate text-sm group-hover:text-fiche-accent transition-colors">
                               {biz.name}
                             </h3>
                             {biz.address && (
@@ -1659,7 +1659,7 @@ export default function BusinessDetailPage() {
             <CardContent className="space-y-6 text-sm text-slate-700">
               <p className="leading-relaxed bg-white/5 p-4 rounded-xl border border-slate-200">
                 💎 This profit window is the revenue hub for{" "}
-                <span className="text-fiche-accent font-semibold">{biz.name}</span>
+                <span className="notranslate text-fiche-accent font-semibold">{biz.name}</span>
                 . Use it to configure offers, track conversion funnels, and
                 manage sponsorship placements that turn page views into
                 measurable revenue.

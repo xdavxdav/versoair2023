@@ -2302,7 +2302,7 @@ export default function Home() {
                                   className="inline-flex items-center gap-1 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-white text-xs font-medium transition-colors"
                                 >
                                   <CheckCircle className="w-3 h-3" />
-                                  {b.name}
+                                  <span className="notranslate">{b.name}</span>
                                 </a>
                               ))}
                           </div>
@@ -2746,7 +2746,7 @@ export default function Home() {
                               <div className="flex items-start justify-between mb-4 md:mb-6">
                                 <div className="flex-1">
                                   <h4 className="text-lg md:text-2xl font-bold text-gray-900 mb-2 md:mb-3 line-clamp-1">
-                                    {business.title}
+                                    <span className="notranslate">{business.title}</span>
                                   </h4>
                                   <div className="flex items-center gap-2 md:gap-3 text-gray-600">
                                     <MapPin className="h-4 w-4 md:h-5 md:w-5 text-amber-500" />

@@ -174,7 +174,7 @@ export default function SectorBusinessCard({
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h4
-              className={`text-sm sm:text-base md:text-lg font-bold text-white ${t.titleHover} transition-colors mb-2 line-clamp-1`}
+              className={`notranslate text-sm sm:text-base md:text-lg font-bold text-white ${t.titleHover} transition-colors mb-2 line-clamp-1`}
             >
               {business.title}
             </h4>
