@@ -143,9 +143,9 @@ export default function PacksPage() {
                     </CardTitle>
                     <div className="mt-2">
                       <span className="text-4xl font-bold text-white">
-                        ${(pack.price_cents / 100).toFixed(0)}
+                        ${(pack.price_cents / 100).toFixed(2)}
                       </span>
-                      <span className="text-gray-400 text-sm">/pack</span>
+                      <span className="text-gray-400 text-sm"> CAD /pack</span>
                     </div>
                     <p className="text-gray-400 text-sm mt-2">
                       {pack.description}

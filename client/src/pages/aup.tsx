@@ -176,14 +176,14 @@ export default function AcceptableUsePolicy() {
 
         <h3 className="text-lg font-semibold mt-6">3.5 Appeal Process</h3>
         <p>
-          If your account is suspended or terminated, you may appeal within 30 days by contacting support@verso-air.com. Verso Air will review your appeal and respond within 10 business days.
+          If your account is suspended or terminated, you may appeal within 30 days by contacting support@versoair.com. Verso Air will review your appeal and respond within 10 business days.
         </p>
       </section>
 
       <section className="mb-8">
         <h2>4. Reporting Violations</h2>
         <p>
-          If you believe a user, listing or content violates this AUP, please report it to support@verso-air.com with details and evidence. Include:
+          If you believe a user, listing or content violates this AUP, please report it to support@versoair.com with details and evidence. Include:
         </p>
         <ul>
           <li>Business or user ID</li>
@@ -217,8 +217,8 @@ export default function AcceptableUsePolicy() {
         </p>
         <p className="mt-4">
           <strong>Verso Air Inc.</strong><br />
-          Email: support@verso-air.com<br />
-          Address: [To be provided by legal team]
+          Email: support@versoair.com<br />
+          Location: Toronto, Ontario, Canada
         </p>
       </section>
 
