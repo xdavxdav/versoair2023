@@ -12,6 +12,8 @@ import { redactStripeSecrets } from "../utils/stripe-client";
 export const MARKETING_CURRENCY = "cad";
 export const MARKETING_ORDER_CURRENCY = "CAD";
 
+export const SHIPPING_COUNTRIES: Array<"CA" | "US"> = ["CA", "US"];
+
 export const MAX_LINE_QUANTITY = 1000;
 // Stripe's minimum charge for CAD and its maximum amount per charge.
 export const MIN_CHARGE_CENTS = 50;
@@ -240,9 +242,17 @@ export function buildCheckoutSessionParams(input: {
   userId: string | number;
   baseUrl: string;
 }): Stripe.Checkout.SessionCreateParams {
+  const shipsPhysicalGoods = input.lines.some(
+    (line) => line.itemType === "print_product",
+  );
   return {
     payment_method_types: ["card"],
     mode: "payment",
+    // Print products ship, and orders have no address columns of their own;
+    // the webhook copies the collected address into the order notes.
+    ...(shipsPhysicalGoods
+      ? { shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES } }
+      : {}),
     line_items: input.lines.map((line) => ({
       price_data: {
         currency: MARKETING_CURRENCY,

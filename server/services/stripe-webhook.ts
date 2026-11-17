@@ -42,6 +42,25 @@ async function inTransaction<T>(
   }
 }
 
+// The field moved between Stripe API versions, so accept either location.
+function describeShipping(session: Stripe.Checkout.Session): string | null {
+  const details =
+    (session as any).collected_information?.shipping_details ??
+    (session as any).shipping_details;
+  const address = details?.address;
+  if (!address) return null;
+  const parts = [
+    details.name,
+    address.line1,
+    address.line2,
+    address.city,
+    address.state,
+    address.postal_code,
+    address.country,
+  ].filter((part) => typeof part === "string" && part.trim() !== "");
+  return parts.length ? `Ship to: ${parts.join(", ")}` : null;
+}
+
 // Claims the session id. Zero rows means another delivery already did.
 async function claimSession(
   client: TxClient,
@@ -159,6 +178,14 @@ export async function applyCheckoutSessionCompleted(
       ) {
         console.error(
           `❌ Marketing order ${orderIdNumber}: Stripe charged ${session.amount_total} but the order total is ${storedCents} cents`,
+        );
+      }
+
+      const shipping = describeShipping(session);
+      if (shipping) {
+        await client.query(
+          `UPDATE orders SET notes = COALESCE(notes || E'\\n', '') || $2 WHERE id = $1`,
+          [orderIdNumber, shipping],
         );
       }
 

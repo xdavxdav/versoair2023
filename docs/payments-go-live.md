@@ -38,15 +38,23 @@ it opens many other surfaces (table below) that are not ready.
    `automatic_tax` to the Checkout session (code change).
 2. **Subscription checkout charges USD.** Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED`
    off until the currency and prices are decided.
-3. **No customer receipt email.** The Checkout session does not pass an email, so
-   Stripe may not send receipts. Send receipts from the Stripe Dashboard
-   (Settings > Customer emails) or ask for a code change.
+3. **No customer receipt email.** The Checkout session does not pass an email.
+   Stripe's own receipts (Dashboard > Settings > Customer emails) are only sent
+   in **live** mode, so they cannot be seen in the sandbox test. Check one with
+   your small real purchase (Part B step 5.2).
 4. **Refunds do not revoke subscription tiers automatically.** Marketing orders
    are marked `refunded` / `disputed` / `chargeback` automatically; a
    subscription tier must be downgraded by support.
-5. **Wallet-funded tier upgrade is not atomic** (`BEGIN` on the shared pool, no
+5. **Print products ship; orders have no address columns.** Checkout now
+   collects a CA/US shipping address when the cart has print items and the
+   webhook copies it into the order `notes` ("Ship to: ..."). Shipping is
+   "Free" in the cart; there is no shipping fee or tax logic. If you do not
+   want to fulfil print orders at launch, deactivate the print products first.
+6. **The cart does not say tax is included or excluded.** Do not describe prices
+   as "tax included" until gap 1 is decided.
+7. **Wallet-funded tier upgrade is not atomic** (`BEGIN` on the shared pool, no
    row lock). It is behind two closed flags; fix before opening wallets.
-6. Pending orders from abandoned checkouts are never expired (harmless; they are
+8. Pending orders from abandoned checkouts are never expired (harmless; they are
    not counted as revenue).
 
 ## Part A: test mode (no real money)
@@ -78,7 +86,9 @@ on the production service: a sandbox purchase writes real `orders` and
 ### First sandbox purchase (5 steps)
 
 1. Sign in as a normal user, add one active pack to the cart, press checkout.
-   Stripe Checkout must show **CAD** and the same total as the cart.
+   Stripe Checkout must show **CAD** and the same total as the cart. Use one
+   print product in this test: Checkout must ask for a CA/US shipping address,
+   and after payment the order notes must show "Ship to: ...".
 2. Pay with card `4242 4242 4242 4242`, any future expiry, any CVC/postal code.
 3. Dashboard > Developers > Webhooks: the `checkout.session.completed` delivery
    must be `200`. In the app the order must be `paid` and the cart empty. Click
