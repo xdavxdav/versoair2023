@@ -237,6 +237,56 @@ export class FakeDb {
       return result([{ id: order.id, total_cents: order.total_cents }]);
     }
 
+    if (
+      sql ===
+      "UPDATE orders SET notes = COALESCE(notes || E'\\n', '') || $2 WHERE id = $1"
+    ) {
+      const order = this.orders.find((o) => o.id === Number(p[0]));
+      if (order) {
+        const before = { ...order };
+        order.notes = `${order.notes ? `${order.notes}\n` : ""}${p[1]}`;
+        undo?.push(() => Object.assign(order, before));
+      }
+      return result();
+    }
+
+    if (sql === "SELECT user_id FROM transactions WHERE reference = $1") {
+      return result(
+        this.transactions
+          .filter((t) => t.reference === p[0])
+          .map((t) => ({ user_id: t.user_id })),
+      );
+    }
+
+    if (
+      sql ===
+      "UPDATE orders SET notes = COALESCE(notes || E'\\n', '') || $2, updated_at = NOW() WHERE stripe_session_id = $1 RETURNING id"
+    ) {
+      const rows = this.orders.filter((o) => o.stripe_session_id === p[0]);
+      for (const order of rows) {
+        const before = { ...order };
+        order.notes = `${order.notes ? `${order.notes}\n` : ""}${p[1]}`;
+        undo?.push(() => Object.assign(order, before));
+      }
+      return result(rows.map((o) => ({ id: o.id })));
+    }
+
+    if (
+      sql ===
+      "UPDATE orders SET status = $2, notes = COALESCE(notes || E'\\n', '') || $3, updated_at = NOW() WHERE stripe_session_id = $1 AND status = ANY($4) RETURNING id"
+    ) {
+      const rows = this.orders.filter(
+        (o) => o.stripe_session_id === p[0] && p[3].includes(o.status),
+      );
+      for (const order of rows) {
+        const before = { ...order };
+        order.status = p[1];
+        order.notes = `${order.notes ? `${order.notes}\n` : ""}${p[2]}`;
+        undo?.push(() => Object.assign(order, before));
+      }
+      return result(rows.map((o) => ({ id: o.id })));
+    }
+
     if (sql === "DELETE FROM cart_items WHERE user_id = $1") {
       const removed = this.cart.filter(
         (r) => String(r.user_id) === String(p[0]),
@@ -269,6 +319,10 @@ export class FakeDb {
 export interface StubStripeOptions {
   failCreate?: boolean;
   paymentIntentCustomer?: string | null;
+  /** payment_intent id -> Checkout Session id, for refund/dispute lookups. */
+  sessionsByPaymentIntent?: Record<string, string>;
+  /** charge id -> payment_intent id. */
+  chargePaymentIntents?: Record<string, string>;
 }
 
 /** A Stripe client whose network-facing calls are recorded and never sent. */
@@ -295,7 +349,17 @@ export function createStubStripe(options: StubStripeOptions = {}) {
           const id = `cs_test_stub_${++seq}`;
           return { id, url: `https://checkout.stripe.test/c/pay/${id}` };
         },
+        list: async (params: any) => {
+          const id = options.sessionsByPaymentIntent?.[params.payment_intent];
+          return { data: id ? [{ id }] : [] };
+        },
       },
+    },
+    charges: {
+      retrieve: async (id: string) => ({
+        id,
+        payment_intent: options.chargePaymentIntents?.[id] ?? null,
+      }),
     },
     paymentIntents: {
       retrieve: async (id: string) => {

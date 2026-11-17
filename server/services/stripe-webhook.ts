@@ -42,6 +42,25 @@ async function inTransaction<T>(
   }
 }
 
+// The field moved between Stripe API versions, so accept either location.
+function describeShipping(session: Stripe.Checkout.Session): string | null {
+  const details =
+    (session as any).collected_information?.shipping_details ??
+    (session as any).shipping_details;
+  const address = details?.address;
+  if (!address) return null;
+  const parts = [
+    details.name,
+    address.line1,
+    address.line2,
+    address.city,
+    address.state,
+    address.postal_code,
+    address.country,
+  ].filter((part) => typeof part === "string" && part.trim() !== "");
+  return parts.length ? `Ship to: ${parts.join(", ")}` : null;
+}
+
 // Claims the session id. Zero rows means another delivery already did.
 async function claimSession(
   client: TxClient,
@@ -162,6 +181,14 @@ export async function applyCheckoutSessionCompleted(
         );
       }
 
+      const shipping = describeShipping(session);
+      if (shipping) {
+        await client.query(
+          `UPDATE orders SET notes = COALESCE(notes || E'\\n', '') || $2 WHERE id = $1`,
+          [orderIdNumber, shipping],
+        );
+      }
+
       await client.query(`DELETE FROM cart_items WHERE user_id = $1`, [
         userIdNumber,
       ]);
@@ -174,4 +201,162 @@ export async function applyCheckoutSessionCompleted(
   }
 
   return { status: "unhandled" };
+}
+
+/**
+ * Refunds and disputes.
+ *
+ * Money moved back out of a payment we fulfilled. The original payment is found
+ * through its Checkout Session (transactions.reference); the event itself is
+ * claimed under "stripe_event:<id>" so a replay changes nothing. Orders move to
+ * refunded / disputed / chargeback so revenue reports stop counting them.
+ * Subscription tiers are NOT revoked automatically: that is a support decision.
+ */
+export type PaymentReversal =
+  | { kind: "refund"; amountCents: number; full: boolean }
+  | { kind: "dispute_opened"; amountCents: number }
+  | { kind: "dispute_won"; amountCents: number }
+  | { kind: "dispute_lost"; amountCents: number };
+
+export type ReversalOutcome =
+  | { status: "recorded"; orderUpdated: boolean }
+  | { status: "duplicate" }
+  | { status: "unmatched" }
+  | { status: "ignored"; reason: string };
+
+const LIVE_ORDER_STATUSES = ["paid", "processing", "shipped", "completed"];
+
+function ledgerAmount(reversal: PaymentReversal): string {
+  const cents = reversal.amountCents;
+  switch (reversal.kind) {
+    case "refund":
+    case "dispute_opened":
+      return (-cents / 100).toFixed(2);
+    case "dispute_won":
+      return (cents / 100).toFixed(2);
+    case "dispute_lost":
+      return "0.00";
+  }
+}
+
+export async function applyPaymentReversal(
+  db: TxPool,
+  eventId: string,
+  sessionId: string,
+  reversal: PaymentReversal,
+): Promise<ReversalOutcome> {
+  return inTransaction<ReversalOutcome>(db, async (client) => {
+    const original = await client.query(
+      `SELECT user_id FROM transactions WHERE reference = $1`,
+      [sessionId],
+    );
+    if (original.rows.length === 0) return { status: "unmatched" };
+
+    const claimed = await claimSession(
+      client,
+      Number(original.rows[0].user_id),
+      ledgerAmount(reversal),
+      reversal.kind,
+      `stripe_event:${eventId}`,
+    );
+    if (!claimed) return { status: "duplicate" };
+
+    const note = `${reversal.kind} ${(reversal.amountCents / 100).toFixed(2)} (${eventId})`;
+    let updated;
+    if (reversal.kind === "refund" && !reversal.full) {
+      updated = await client.query(
+        `UPDATE orders
+            SET notes = COALESCE(notes || E'\\n', '') || $2, updated_at = NOW()
+          WHERE stripe_session_id = $1
+          RETURNING id`,
+        [sessionId, note],
+      );
+    } else {
+      const [status, from] =
+        reversal.kind === "dispute_won"
+          ? ["paid", ["disputed"]]
+          : reversal.kind === "dispute_opened"
+            ? ["disputed", LIVE_ORDER_STATUSES]
+            : reversal.kind === "dispute_lost"
+              ? ["chargeback", ["disputed", ...LIVE_ORDER_STATUSES]]
+              : ["refunded", ["disputed", ...LIVE_ORDER_STATUSES]];
+      updated = await client.query(
+        `UPDATE orders
+            SET status = $2, notes = COALESCE(notes || E'\\n', '') || $3, updated_at = NOW()
+          WHERE stripe_session_id = $1 AND status = ANY($4)
+          RETURNING id`,
+        [sessionId, status, note, from],
+      );
+    }
+
+    console.log(
+      `↩️ ${note} for session ${sessionId}; order rows updated: ${updated.rows.length}`,
+    );
+    return { status: "recorded", orderUpdated: updated.rows.length > 0 };
+  });
+}
+
+type StripeLookup = Pick<Stripe, "checkout" | "charges">;
+
+async function sessionIdForPaymentIntent(
+  stripe: StripeLookup,
+  paymentIntent: string | { id: string } | null | undefined,
+): Promise<string | null> {
+  const id =
+    typeof paymentIntent === "string" ? paymentIntent : paymentIntent?.id;
+  if (!id) return null;
+  const sessions = await stripe.checkout.sessions.list({
+    payment_intent: id,
+    limit: 1,
+  });
+  return sessions.data[0]?.id ?? null;
+}
+
+/** charge.refunded, charge.dispute.created and charge.dispute.closed. */
+export async function applyReversalEvent(
+  db: TxPool,
+  stripe: StripeLookup,
+  event: Stripe.Event,
+): Promise<ReversalOutcome> {
+  let paymentIntent: string | { id: string } | null | undefined;
+  let reversal: PaymentReversal;
+
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+    const previous = (event.data.previous_attributes as any)?.amount_refunded;
+    const delta =
+      charge.amount_refunded - (typeof previous === "number" ? previous : 0);
+    reversal = {
+      kind: "refund",
+      amountCents: delta > 0 ? delta : charge.amount_refunded,
+      full: charge.refunded === true,
+    };
+    paymentIntent = charge.payment_intent;
+  } else if (
+    event.type === "charge.dispute.created" ||
+    event.type === "charge.dispute.closed"
+  ) {
+    const dispute = event.data.object as Stripe.Dispute;
+    if (event.type === "charge.dispute.created") {
+      reversal = { kind: "dispute_opened", amountCents: dispute.amount };
+    } else if (dispute.status === "lost") {
+      reversal = { kind: "dispute_lost", amountCents: dispute.amount };
+    } else if (dispute.status === "won" || dispute.status === "warning_closed") {
+      reversal = { kind: "dispute_won", amountCents: dispute.amount };
+    } else {
+      return { status: "ignored", reason: `dispute_status_${dispute.status}` };
+    }
+    paymentIntent = dispute.payment_intent;
+    if (!paymentIntent && dispute.charge) {
+      const chargeId =
+        typeof dispute.charge === "string" ? dispute.charge : dispute.charge.id;
+      paymentIntent = (await stripe.charges.retrieve(chargeId)).payment_intent;
+    }
+  } else {
+    return { status: "ignored", reason: "not_a_reversal_event" };
+  }
+
+  const sessionId = await sessionIdForPaymentIntent(stripe, paymentIntent);
+  if (!sessionId) return { status: "unmatched" };
+  return applyPaymentReversal(db, event.id, sessionId, reversal);
 }
