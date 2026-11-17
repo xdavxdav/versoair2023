@@ -6,6 +6,8 @@ type SeoHeadProps = {
   canonicalPath?: string;
   image?: string;
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
+  /** Set when the title contains a proper name browser translation must not rewrite. */
+  noTranslateTitle?: boolean;
 };
 
 const SITE_URL = "https://www.versoair.com";
@@ -22,12 +24,20 @@ export function SeoHead({
   canonicalPath = "/",
   image = DEFAULT_IMAGE,
   jsonLd,
+  noTranslateTitle = false,
 }: SeoHeadProps) {
   const canonicalUrl = toAbsoluteUrl(canonicalPath);
   const imageUrl = toAbsoluteUrl(image);
 
   return (
-    <Helmet defer={false}>
+    <Helmet
+      defer={false}
+      titleAttributes={
+        noTranslateTitle
+          ? { translate: "no", class: "notranslate" }
+          : undefined
+      }
+    >
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonicalUrl} />

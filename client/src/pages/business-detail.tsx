@@ -642,6 +642,7 @@ export default function BusinessDetailPage() {
         description={metaDescription}
         canonicalPath={canonicalPath}
         jsonLd={businessJsonLd}
+        noTranslateTitle
       />
       <GraffitiBackground isDark={isDark} />
       {(biz.phone || biz.email || mapsLink) && (
