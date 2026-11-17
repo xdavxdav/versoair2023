@@ -16,7 +16,14 @@ import {
   type SupportTicket, type TicketActor, type TicketLink, type TicketLinks, type TicketStatus,
 } from "@shared/ticket-policy";
 
-const selectClass = "min-h-11 rounded-md border border-slate-400 bg-white px-3 text-slate-900 max-w-full";
+const selectClass = "min-h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-900 max-w-full";
+const statusEdge: Record<string, string> = {
+  open: "border-l-amber-500",
+  in_progress: "border-l-teal-600",
+  pending: "border-l-slate-400",
+  resolved: "border-l-emerald-600",
+  closed: "border-l-slate-300",
+};
 
 export function Tickets() {
   const { user } = useAuthContext();
@@ -70,9 +77,18 @@ export function Tickets() {
     ? (tickets.data ?? []).filter((ticket) => ticket.ticket_type === "problem" && !TERMINAL_STATUSES.includes(ticket.status))
     : [];
 
-  return <main className="min-h-screen bg-slate-50 px-4 pb-24 pt-24 text-slate-900" data-testid="ticket-workspace">
+  const all = tickets.data ?? [];
+  const now = Date.now();
+  const kpi = {
+    open: all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status)).length,
+    unassigned: all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status) && !ticket.assignee_id).length,
+    late: all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status) && ticket.sla_due_at && new Date(ticket.sla_due_at).getTime() < now).length,
+    closed: all.filter((ticket) => TERMINAL_STATUSES.includes(ticket.status)).length,
+  };
+
+  return <main className="min-h-screen bg-[#F6F1E9] px-4 pb-24 pt-24 text-slate-900" data-testid="ticket-workspace">
     <div className="mx-auto max-w-6xl space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-[#0b1f3a] p-6 text-white">
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[#152238] p-6 text-white shadow-md">
         <div><h1 className="text-2xl font-bold">{staff ? t("workspace") : t("tickets")}</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-200">{staff ? t("scope") : t("policy")}</p></div>
         <div className="flex flex-wrap gap-2">
@@ -81,7 +97,12 @@ export function Tickets() {
           <Button className="bg-amber-400 text-slate-950 hover:bg-amber-300" onClick={() => setCreating(true)}>{t("create")}</Button>
         </div>
       </header>
-      {staff && <TicketSlaReport userId={actor.id} onOpen={setSelectedId} />}
+      {staff && <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-[#D8CDBE] md:grid-cols-4" aria-label="queue summary">
+        {([["Open", kpi.open], ["Unassigned", kpi.unassigned], ["Past target", kpi.late], ["Closed", kpi.closed]] as const).map(([label, value]) =>
+          <div key={label} className="bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{label}</p><p className="text-2xl font-bold text-[#152238]">{value}</p></div>)}
+      </div>}
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="min-w-0 space-y-6">
       <div className="flex flex-wrap gap-3">
         <Input aria-label={t("search")} placeholder={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-0 flex-1 bg-white" />
         <select className={selectClass} aria-label={t("status")} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -96,7 +117,7 @@ export function Tickets() {
       {tickets.isSuccess && !visible.length && <p>{t("empty")}</p>}
       <div className="grid gap-4 md:grid-cols-2">
         {visible.map((ticket) => <button key={ticket.id} onClick={() => setSelectedId(ticket.id)}
-          className="min-w-0 rounded-xl border border-slate-300 bg-white p-5 text-left shadow-sm hover:border-amber-500">
+          className={`min-w-0 rounded-xl border border-l-4 border-slate-200 bg-white p-5 text-left shadow-sm hover:border-[#E0A008] ${statusEdge[ticket.status] ?? "border-l-slate-300"}`}>
           <div className="flex flex-wrap justify-between gap-2 text-sm">
             <span>#{ticket.id} · {t(ticket.ticket_type ?? "incident")} · {t(ticket.status)}</span><span>{t(ticket.priority)}</span>
           </div>
@@ -107,11 +128,16 @@ export function Tickets() {
           {ticket.sla_due_at && <p className={`mt-2 text-xs ${ticket.sla_breached ? "text-red-700" : "text-slate-600"}`}>{t("target")}: {new Date(ticket.sla_due_at).toLocaleString()}</p>}
         </button>)}
       </div>
-      {staff && <section className="rounded-xl border bg-white p-5"><h2 className="font-bold">{t("alerts")}</h2>
-        {alerts.isError && <p role="alert">{errorText(alerts.error)}</p>}
-        <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto">{alerts.data?.map((alert) =>
-          <li key={alert.id} className="border-b pb-2 text-sm"><button className="underline" onClick={() => setSelectedId(alert.ticket_id)}>#{alert.ticket_id}</button> · {alert.message}</li>,
-        )}</ul></section>}
+      </div>
+      {staff && <aside className="min-w-0 space-y-6">
+        <TicketSlaReport userId={actor.id} onOpen={setSelectedId} />
+        <section className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="font-bold text-[#152238]">{t("alerts")}</h2>
+          {alerts.isError && <p role="alert">{errorText(alerts.error)}</p>}
+          <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto">{alerts.data?.map((alert) =>
+            <li key={alert.id} className="border-b pb-2 text-sm"><button className="underline" onClick={() => setSelectedId(alert.ticket_id)}>#{alert.ticket_id}</button> · {alert.message}</li>,
+          )}</ul></section>
+      </aside>}
+      </div>
     </div>
     <Dialog open={creating} onOpenChange={setCreating}>
       <DialogContent className="max-h-[90vh] overflow-y-auto bg-white text-slate-900">
