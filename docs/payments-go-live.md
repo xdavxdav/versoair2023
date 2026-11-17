@@ -36,8 +36,10 @@ it opens many other surfaces (table below) that are not ready.
    must register (CRA small-supplier threshold) is a question for your
    accountant. Options: set prices tax-inclusive, or enable Stripe Tax and add
    `automatic_tax` to the Checkout session (code change).
-2. **Subscription checkout charges USD.** Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED`
-   off until the currency and prices are decided.
+2. **Subscription checkout charges USD** (the shop charges CAD) and plans are
+   one-time prepaid payments, not recurring. Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED`
+   off; the owner decides currency, prices and whether plans should recur
+   before it is touched.
 3. **No customer receipt email.** The Checkout session does not pass an email.
    Stripe's own receipts (Dashboard > Settings > Customer emails) are only sent
    in **live** mode, so they cannot be seen in the sandbox test. Check one with
@@ -83,6 +85,12 @@ on the production service: a sandbox purchase writes real `orders` and
    `publicBaseUrl`, and all flags false.
 6. Set `MARKETING_CHECKOUT_ENABLED=true` on staging only.
 
+The production catalog is empty (`marketing_packs` and `print_products` have no
+rows) and no admin screen can add items, so the cart has nothing to sell. For
+the sandbox, seed a $1 test pack into the **staging/local disposable** database
+with `ALLOW_TEST_PACK_SEED=true npm run seed:test-pack` (the script refuses
+production and non-loopback databases). Never seed production with test data.
+
 ### First sandbox purchase (5 steps)
 
 1. Sign in as a normal user, add one active pack to the cart, press checkout.
@@ -105,8 +113,11 @@ Only continue if every step matched.
 
 ## Part B: live (real money)
 
-Prerequisites: Part A passed, the business bank account is open, and you have an
-answer on GST/HST (gap 1).
+Prerequisites: Part A passed, the business bank account is open, you have an
+answer on GST/HST (gap 1), and **the owner-approved catalog (products and CAD
+prices) is loaded in the production database**. Production is empty today; the
+owner chooses the products and prices, and they must be loaded through a
+reviewed, deliberate step before `MARKETING_CHECKOUT_ENABLED` is turned on.
 
 1. Stripe: complete **Activate account**, add the business bank account for
    payouts, confirm default currency is CAD.
