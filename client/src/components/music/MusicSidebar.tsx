@@ -37,6 +37,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MUSIC_SIDEBAR_ITEMS } from "@/lib/music-routes";
+import GoLiveForm from "@/components/GoLiveForm";
 import { useMemo } from "react";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -235,6 +236,8 @@ export function MusicSidebar() {
 
   // Always collapsed for fixed 64px sidebar
   const collapsed = true;
+
+  const [showGoLive, setShowGoLive] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -486,6 +489,15 @@ export function MusicSidebar() {
             </Link>
           )}
 
+          {/* Go Live button - All verified users */}
+          <button
+            onClick={() => setShowGoLive(true)}
+            className="w-full flex items-center justify-center p-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/20 text-amber-300 hover:from-amber-600/30 hover:to-orange-600/30 transition-colors"
+            title="Go Live"
+          >
+            <Radio className="w-5 h-5" />
+          </button>
+
           {/* Account - track referrer for proper back navigation */}
           <Link
             href="/profile"
@@ -524,6 +536,15 @@ export function MusicSidebar() {
           <NotificationCenter />
         </div>
       )}
+      
+      {/* Go Live Form Modal */}
+      <GoLiveForm
+        isOpen={showGoLive}
+        onClose={() => setShowGoLive(false)}
+        onSuccess={(sessionId) => {
+          navigate(`/stream/${sessionId}`);
+        }}
+      />
     </>
   );
 }

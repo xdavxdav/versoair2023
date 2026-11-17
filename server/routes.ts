@@ -113,6 +113,7 @@ import adCampaignsRouter from "./routes/ad-campaigns";
 import adminRouter from "./routes/admin";
 import automationRouter from "./routes/automation";
 import listeningSessionsRouter from "./routes/listening-sessions";
+import userSessionsRouter from "./routes/listening-sessions-user";
 import profilesRouter from "./routes/profiles";
 import artisanCommunitiesRouter from "./routes/artisan-communities";
 import eventsRouter from "./routes/events";
@@ -139,6 +140,8 @@ export async function registerRoutes(app: Express) {
   app.use("/api/automation", automationRouter);
   // Live listening sessions: public reads plus an owner-only admin sub-router
   app.use("/api/listening-sessions", listeningSessionsRouter);
+  // User-facing live session creation
+  app.use("/api/listening-sessions/user", userSessionsRouter);
   app.get("/auth/signup", (_req, res) => {
     res.redirect(302, "/auth/signin?mode=register");
   });
