@@ -77,11 +77,13 @@ export default function OrderTrackingPage() {
               <CheckCircle className="h-6 w-6 text-green-400" />
               <div>
                 <p className="text-green-400 font-semibold">
-                  Payment successful!
+                  Order received
                 </p>
                 <p className="text-green-300/70 text-sm">
-                  Your order #{highlightOrderId} has been confirmed. We'll start
-                  processing it shortly.
+                  Your order #{highlightOrderId} is listed below and is
+                  confirmed once Stripe confirms your payment. For charge or
+                  refund questions, email support@versoair.com with your order
+                  number.
                 </p>
               </div>
             </CardContent>
@@ -176,7 +178,7 @@ export default function OrderTrackingPage() {
                           {order.status}
                         </Badge>
                         <p className="text-amber-400 font-bold mt-1">
-                          ${(order.total_cents / 100).toFixed(2)}
+                          ${(order.total_cents / 100).toFixed(2)} CAD
                         </p>
                       </div>
                     </div>

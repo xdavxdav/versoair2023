@@ -205,8 +205,8 @@ export default function CartPage() {
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-700">
-                    <span>Shipping</span>
-                    <span className="text-green-700">Free</span>
+                    <span>Shipping and taxes</span>
+                    <span className="text-slate-900">Not calculated</span>
                   </div>
                   <hr className="border-gray-700" />
                   <div className="flex justify-between text-lg font-bold">
@@ -227,8 +227,11 @@ export default function CartPage() {
                   </Button>
 
                   <p className="text-slate-700 text-xs text-center">
-                    Prices are in CAD. Secure checkout is available when online
-                    payments are enabled.
+                    Prices are in CAD. Shipping and taxes are not calculated at
+                    checkout; the total shown is the amount charged. Secure
+                    checkout is available when online payments are enabled.
+                    For charge or refund questions, email support@versoair.com
+                    with your order number.
                   </p>
                 </CardContent>
               </Card>

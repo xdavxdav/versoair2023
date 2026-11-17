@@ -30,14 +30,15 @@ export default function DeliveryHelp() {
           </div>
           <div className="space-y-4 text-sm leading-relaxed text-gray-600">
             <p>
-              Verso Air does not currently offer physical product delivery,
-              hardware installation, or guaranteed shipping timelines through
-              this page.
+              Verso Air does not offer hardware installation or guaranteed
+              shipping timelines. Online checkout for Marketing packs and print
+              products does not collect a shipping address or calculate
+              shipping.
             </p>
             <p>
-              Any future fulfillment service, delivery area, fees, and
-              estimated dates will be confirmed in writing before an order is
-              accepted. A directory-listing inquiry does not create an order.
+              Delivery or pickup arrangements, any fees, and estimated dates for
+              printed products are confirmed with you by email after your
+              order. A directory-listing inquiry does not create an order.
             </p>
           </div>
           <Link href="/contact?subject=Delivery%20availability">
