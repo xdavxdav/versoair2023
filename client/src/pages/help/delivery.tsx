@@ -31,9 +31,9 @@ export default function DeliveryHelp() {
           <div className="space-y-4 text-sm leading-relaxed text-gray-600">
             <p>
               Verso Air does not offer hardware installation or guaranteed
-              shipping timelines. Online checkout for Marketing packs and print
-              products does not collect a shipping address or calculate
-              shipping.
+              shipping timelines. Checkout for print products collects a
+              shipping address (Canada and the United States) but does not
+              calculate shipping; Marketing packs are digital and need none.
             </p>
             <p>
               Delivery or pickup arrangements, any fees, and estimated dates for
