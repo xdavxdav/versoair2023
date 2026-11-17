@@ -472,7 +472,7 @@ async function assertFicheSectorPalette(business, expected) {
     const pageBackground = await page.$eval('[data-testid="business-fiche"]', (el) =>
       getComputedStyle(el).backgroundColor,
     );
-    assert.equal(pageBackground, "rgb(246, 241, 233)");
+    assert.equal(pageBackground, "rgb(255, 248, 238)");
 
     const borderColours = await page.$$eval('[data-testid="business-fiche"] .border-fiche-border', (els) =>
       els.map((el) => getComputedStyle(el).borderTopColor),

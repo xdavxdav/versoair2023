@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { PORTALS } from "@/components/TopNav";
+import ThemeToggle from "@/components/ThemeToggle";
 import { CountryProvider } from "@/contexts/CountryContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AudioProvider, useAudio } from "@/lib/audio-context";
@@ -1253,7 +1254,7 @@ function AppContent() {
           style={{ overflow: "visible" }}
         >
             {/* Top Banner */}
-            <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white h-7 px-2 flex items-center">
+            <div className="bg-gradient-to-r from-amber-700 to-amber-800 text-white h-7 px-2 flex items-center">
               <div
                 className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
                 style={{ overflow: "visible" }}
@@ -1323,6 +1324,7 @@ function AppContent() {
                     <span>📍</span>
                     <span className="hidden sm:inline">GPS Services</span>
                   </button>
+                  <ThemeToggle />
                 </div>
               </div>
             </div>

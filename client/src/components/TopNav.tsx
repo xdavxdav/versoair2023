@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronDown, Home, LogOut } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { getDashboardDestination } from "@/lib/dashboard-routes";
@@ -123,6 +124,7 @@ export default function TopNav() {
           ))}
         </Menu>
         <div className="flex-1" />
+        <ThemeToggle className="text-slate-600 hover:text-amber-600" />
         <GlobalSearch />
         {user ? (
         <Menu

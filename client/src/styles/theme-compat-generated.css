@@ -1,0 +1,2623 @@
+/*
+ * Companion to theme-compat.css: dark-mode remaps for pastel gradient stops,
+ * opacity variants and the cream arbitrary-hex palette (bg-[#f3efe9], ...).
+ * Same rules as theme-compat.css: :where(.dark) keeps single-class
+ * specificity so explicit dark: variants still win.
+ */
+
+/* Light mode: brighter, warmer cream than the original #f3efe9 family */
+.bg-\[\#f3efe9\] {
+  background-color: #fff7ec;
+}
+.from-\[\#f3efe9\] {
+  --tw-gradient-from: #fff7ec var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fff7ec 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#f3efe9\] {
+  --tw-gradient-to: color-mix(in srgb, #fff7ec 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fff7ec var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#f3efe9\] {
+  --tw-gradient-to: #fff7ec var(--tw-gradient-to-position);
+}
+.bg-\[\#f8f5f1\] {
+  background-color: #fffbf5;
+}
+.from-\[\#f8f5f1\] {
+  --tw-gradient-from: #fffbf5 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fffbf5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#f8f5f1\] {
+  --tw-gradient-to: color-mix(in srgb, #fffbf5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fffbf5 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#f8f5f1\] {
+  --tw-gradient-to: #fffbf5 var(--tw-gradient-to-position);
+}
+.bg-\[\#FBF7F1\] {
+  background-color: #fffbf5;
+}
+.from-\[\#FBF7F1\] {
+  --tw-gradient-from: #fffbf5 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fffbf5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#FBF7F1\] {
+  --tw-gradient-to: color-mix(in srgb, #fffbf5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fffbf5 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#FBF7F1\] {
+  --tw-gradient-to: #fffbf5 var(--tw-gradient-to-position);
+}
+.bg-\[\#fbf8f3\] {
+  background-color: #fffbf5;
+}
+.from-\[\#fbf8f3\] {
+  --tw-gradient-from: #fffbf5 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fffbf5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#fbf8f3\] {
+  --tw-gradient-to: color-mix(in srgb, #fffbf5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fffbf5 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#fbf8f3\] {
+  --tw-gradient-to: #fffbf5 var(--tw-gradient-to-position);
+}
+.bg-\[\#efe7dd\] {
+  background-color: #ffecd0;
+}
+.from-\[\#efe7dd\] {
+  --tw-gradient-from: #ffecd0 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #ffecd0 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#efe7dd\] {
+  --tw-gradient-to: color-mix(in srgb, #ffecd0 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #ffecd0 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#efe7dd\] {
+  --tw-gradient-to: #ffecd0 var(--tw-gradient-to-position);
+}
+.bg-\[\#f6f1ea\] {
+  background-color: #fff8ee;
+}
+.from-\[\#f6f1ea\] {
+  --tw-gradient-from: #fff8ee var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fff8ee 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#f6f1ea\] {
+  --tw-gradient-to: color-mix(in srgb, #fff8ee 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fff8ee var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#f6f1ea\] {
+  --tw-gradient-to: #fff8ee var(--tw-gradient-to-position);
+}
+.bg-\[\#F6F1E9\] {
+  background-color: #fff8ee;
+}
+.from-\[\#F6F1E9\] {
+  --tw-gradient-from: #fff8ee var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fff8ee 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#F6F1E9\] {
+  --tw-gradient-to: color-mix(in srgb, #fff8ee 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fff8ee var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#F6F1E9\] {
+  --tw-gradient-to: #fff8ee var(--tw-gradient-to-position);
+}
+.bg-\[\#f4efe9\] {
+  background-color: #fff8ee;
+}
+.from-\[\#f4efe9\] {
+  --tw-gradient-from: #fff8ee var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fff8ee 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#f4efe9\] {
+  --tw-gradient-to: color-mix(in srgb, #fff8ee 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fff8ee var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#f4efe9\] {
+  --tw-gradient-to: #fff8ee var(--tw-gradient-to-position);
+}
+.bg-\[\#f7f4f0\] {
+  background-color: #fffaf3;
+}
+.from-\[\#f7f4f0\] {
+  --tw-gradient-from: #fffaf3 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fffaf3 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#f7f4f0\] {
+  --tw-gradient-to: color-mix(in srgb, #fffaf3 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fffaf3 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#f7f4f0\] {
+  --tw-gradient-to: #fffaf3 var(--tw-gradient-to-position);
+}
+.bg-\[\#f7f5f1\] {
+  background-color: #fffaf3;
+}
+.from-\[\#f7f5f1\] {
+  --tw-gradient-from: #fffaf3 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fffaf3 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#f7f5f1\] {
+  --tw-gradient-to: color-mix(in srgb, #fffaf3 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fffaf3 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#f7f5f1\] {
+  --tw-gradient-to: #fffaf3 var(--tw-gradient-to-position);
+}
+.bg-\[\#F3EBDF\] {
+  background-color: #fff1de;
+}
+.from-\[\#F3EBDF\] {
+  --tw-gradient-from: #fff1de var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fff1de 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#F3EBDF\] {
+  --tw-gradient-to: color-mix(in srgb, #fff1de 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fff1de var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#F3EBDF\] {
+  --tw-gradient-to: #fff1de var(--tw-gradient-to-position);
+}
+.bg-\[\#eee5d8\] {
+  background-color: #ffeedd;
+}
+.from-\[\#eee5d8\] {
+  --tw-gradient-from: #ffeedd var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #ffeedd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-\[\#eee5d8\] {
+  --tw-gradient-to: color-mix(in srgb, #ffeedd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #ffeedd var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+.to-\[\#eee5d8\] {
+  --tw-gradient-to: #ffeedd var(--tw-gradient-to-position);
+}
+
+/* Pastel gradient stops (generated from the hue table above) */
+:where(.dark) .from-red-50 {
+  --tw-gradient-from: color-mix(in srgb, #ef4444 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ef4444 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-red-100 {
+  --tw-gradient-from: color-mix(in srgb, #ef4444 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ef4444 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-red-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ef4444 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #ef4444 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-red-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ef4444 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #ef4444 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-red-50 {
+  --tw-gradient-to: color-mix(in srgb, #ef4444 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-red-100 {
+  --tw-gradient-to: color-mix(in srgb, #ef4444 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-orange-50 {
+  --tw-gradient-from: color-mix(in srgb, #f97316 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f97316 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-orange-100 {
+  --tw-gradient-from: color-mix(in srgb, #f97316 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f97316 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-orange-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f97316 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f97316 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-orange-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f97316 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f97316 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-orange-50 {
+  --tw-gradient-to: color-mix(in srgb, #f97316 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-orange-100 {
+  --tw-gradient-to: color-mix(in srgb, #f97316 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-amber-50 {
+  --tw-gradient-from: color-mix(in srgb, #f59e0b 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-amber-100 {
+  --tw-gradient-from: color-mix(in srgb, #f59e0b 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-amber-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f59e0b 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-amber-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f59e0b 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-amber-50 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-amber-100 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-yellow-50 {
+  --tw-gradient-from: color-mix(in srgb, #eab308 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #eab308 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-yellow-100 {
+  --tw-gradient-from: color-mix(in srgb, #eab308 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #eab308 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-yellow-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #eab308 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #eab308 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-yellow-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #eab308 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #eab308 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-yellow-50 {
+  --tw-gradient-to: color-mix(in srgb, #eab308 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-yellow-100 {
+  --tw-gradient-to: color-mix(in srgb, #eab308 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-green-50 {
+  --tw-gradient-from: color-mix(in srgb, #22c55e 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #22c55e 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-green-100 {
+  --tw-gradient-from: color-mix(in srgb, #22c55e 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #22c55e 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-green-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #22c55e 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #22c55e 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-green-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #22c55e 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #22c55e 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-green-50 {
+  --tw-gradient-to: color-mix(in srgb, #22c55e 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-green-100 {
+  --tw-gradient-to: color-mix(in srgb, #22c55e 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-emerald-50 {
+  --tw-gradient-from: color-mix(in srgb, #10b981 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #10b981 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-emerald-100 {
+  --tw-gradient-from: color-mix(in srgb, #10b981 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #10b981 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-emerald-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #10b981 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #10b981 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-emerald-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #10b981 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #10b981 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-emerald-50 {
+  --tw-gradient-to: color-mix(in srgb, #10b981 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-emerald-100 {
+  --tw-gradient-to: color-mix(in srgb, #10b981 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-teal-50 {
+  --tw-gradient-from: color-mix(in srgb, #14b8a6 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #14b8a6 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-teal-100 {
+  --tw-gradient-from: color-mix(in srgb, #14b8a6 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #14b8a6 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-teal-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #14b8a6 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #14b8a6 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-teal-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #14b8a6 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #14b8a6 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-teal-50 {
+  --tw-gradient-to: color-mix(in srgb, #14b8a6 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-teal-100 {
+  --tw-gradient-to: color-mix(in srgb, #14b8a6 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-cyan-50 {
+  --tw-gradient-from: color-mix(in srgb, #06b6d4 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #06b6d4 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-cyan-100 {
+  --tw-gradient-from: color-mix(in srgb, #06b6d4 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #06b6d4 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-cyan-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #06b6d4 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #06b6d4 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-cyan-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #06b6d4 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #06b6d4 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-cyan-50 {
+  --tw-gradient-to: color-mix(in srgb, #06b6d4 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-cyan-100 {
+  --tw-gradient-to: color-mix(in srgb, #06b6d4 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-sky-50 {
+  --tw-gradient-from: color-mix(in srgb, #0ea5e9 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #0ea5e9 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-sky-100 {
+  --tw-gradient-from: color-mix(in srgb, #0ea5e9 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #0ea5e9 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-sky-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #0ea5e9 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #0ea5e9 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-sky-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #0ea5e9 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #0ea5e9 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-sky-50 {
+  --tw-gradient-to: color-mix(in srgb, #0ea5e9 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-sky-100 {
+  --tw-gradient-to: color-mix(in srgb, #0ea5e9 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-blue-50 {
+  --tw-gradient-from: color-mix(in srgb, #3b82f6 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #3b82f6 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-blue-100 {
+  --tw-gradient-from: color-mix(in srgb, #3b82f6 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #3b82f6 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-blue-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #3b82f6 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #3b82f6 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-blue-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #3b82f6 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #3b82f6 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-blue-50 {
+  --tw-gradient-to: color-mix(in srgb, #3b82f6 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-blue-100 {
+  --tw-gradient-to: color-mix(in srgb, #3b82f6 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-indigo-50 {
+  --tw-gradient-from: color-mix(in srgb, #6366f1 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #6366f1 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-indigo-100 {
+  --tw-gradient-from: color-mix(in srgb, #6366f1 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #6366f1 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-indigo-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #6366f1 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #6366f1 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-indigo-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #6366f1 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #6366f1 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-indigo-50 {
+  --tw-gradient-to: color-mix(in srgb, #6366f1 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-indigo-100 {
+  --tw-gradient-to: color-mix(in srgb, #6366f1 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-violet-50 {
+  --tw-gradient-from: color-mix(in srgb, #8b5cf6 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #8b5cf6 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-violet-100 {
+  --tw-gradient-from: color-mix(in srgb, #8b5cf6 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #8b5cf6 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-violet-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #8b5cf6 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #8b5cf6 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-violet-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #8b5cf6 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #8b5cf6 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-violet-50 {
+  --tw-gradient-to: color-mix(in srgb, #8b5cf6 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-violet-100 {
+  --tw-gradient-to: color-mix(in srgb, #8b5cf6 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-purple-50 {
+  --tw-gradient-from: color-mix(in srgb, #a855f7 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #a855f7 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-purple-100 {
+  --tw-gradient-from: color-mix(in srgb, #a855f7 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #a855f7 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-purple-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #a855f7 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #a855f7 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-purple-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #a855f7 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #a855f7 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-purple-50 {
+  --tw-gradient-to: color-mix(in srgb, #a855f7 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-purple-100 {
+  --tw-gradient-to: color-mix(in srgb, #a855f7 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-fuchsia-50 {
+  --tw-gradient-from: color-mix(in srgb, #d946ef 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #d946ef 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-fuchsia-100 {
+  --tw-gradient-from: color-mix(in srgb, #d946ef 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #d946ef 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-fuchsia-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #d946ef 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #d946ef 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-fuchsia-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #d946ef 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #d946ef 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-fuchsia-50 {
+  --tw-gradient-to: color-mix(in srgb, #d946ef 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-fuchsia-100 {
+  --tw-gradient-to: color-mix(in srgb, #d946ef 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-pink-50 {
+  --tw-gradient-from: color-mix(in srgb, #ec4899 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ec4899 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-pink-100 {
+  --tw-gradient-from: color-mix(in srgb, #ec4899 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ec4899 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-pink-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ec4899 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #ec4899 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-pink-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #ec4899 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #ec4899 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-pink-50 {
+  --tw-gradient-to: color-mix(in srgb, #ec4899 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-pink-100 {
+  --tw-gradient-to: color-mix(in srgb, #ec4899 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-rose-50 {
+  --tw-gradient-from: color-mix(in srgb, #f43f5e 10%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f43f5e 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .from-rose-100 {
+  --tw-gradient-from: color-mix(in srgb, #f43f5e 16%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f43f5e 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-rose-50 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f43f5e 10%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f43f5e 10%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .via-rose-100 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f43f5e 16%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f43f5e 16%, var(--c-surface))
+      var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-rose-50 {
+  --tw-gradient-to: color-mix(in srgb, #f43f5e 10%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-rose-100 {
+  --tw-gradient-to: color-mix(in srgb, #f43f5e 16%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) :is(.from-stone-100, .from-zinc-100) {
+  --tw-gradient-from: var(--c-surface-3) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-3) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) :is(.via-stone-100, .via-zinc-100) {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-3) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-3) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) :is(.to-stone-100, .to-zinc-100) {
+  --tw-gradient-to: var(--c-surface-3) var(--tw-gradient-to-position);
+}
+
+/* Opacity variants of pastel and neutral utilities */
+:where(.dark) .bg-gray-50\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 10%, transparent);
+}
+:where(.dark) .bg-gray-50\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 20%, transparent);
+}
+:where(.dark) .bg-gray-50\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 30%, transparent);
+}
+:where(.dark) .bg-gray-50\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 40%, transparent);
+}
+:where(.dark) .bg-gray-50\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 50%, transparent);
+}
+:where(.dark) .bg-gray-50\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 60%, transparent);
+}
+:where(.dark) .bg-gray-50\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 70%, transparent);
+}
+:where(.dark) .bg-gray-50\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 80%, transparent);
+}
+:where(.dark) .bg-gray-50\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 90%, transparent);
+}
+:where(.dark) .bg-gray-100\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 10%, transparent);
+}
+:where(.dark) .bg-gray-100\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 20%, transparent);
+}
+:where(.dark) .bg-gray-100\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 30%, transparent);
+}
+:where(.dark) .bg-gray-100\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 40%, transparent);
+}
+:where(.dark) .bg-gray-100\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 50%, transparent);
+}
+:where(.dark) .bg-gray-100\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 60%, transparent);
+}
+:where(.dark) .bg-gray-100\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 70%, transparent);
+}
+:where(.dark) .bg-gray-100\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 80%, transparent);
+}
+:where(.dark) .bg-gray-100\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 90%, transparent);
+}
+:where(.dark) .bg-gray-200\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 10%, transparent);
+}
+:where(.dark) .bg-gray-200\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 20%, transparent);
+}
+:where(.dark) .bg-gray-200\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 30%, transparent);
+}
+:where(.dark) .bg-gray-200\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 40%, transparent);
+}
+:where(.dark) .bg-gray-200\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 50%, transparent);
+}
+:where(.dark) .bg-gray-200\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 60%, transparent);
+}
+:where(.dark) .bg-gray-200\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 70%, transparent);
+}
+:where(.dark) .bg-gray-200\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 80%, transparent);
+}
+:where(.dark) .bg-gray-200\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 90%, transparent);
+}
+:where(.dark) .bg-slate-50\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 10%, transparent);
+}
+:where(.dark) .bg-slate-50\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 20%, transparent);
+}
+:where(.dark) .bg-slate-50\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 30%, transparent);
+}
+:where(.dark) .bg-slate-50\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 40%, transparent);
+}
+:where(.dark) .bg-slate-50\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 50%, transparent);
+}
+:where(.dark) .bg-slate-50\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 60%, transparent);
+}
+:where(.dark) .bg-slate-50\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 70%, transparent);
+}
+:where(.dark) .bg-slate-50\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 80%, transparent);
+}
+:where(.dark) .bg-slate-50\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 90%, transparent);
+}
+:where(.dark) .bg-slate-100\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 10%, transparent);
+}
+:where(.dark) .bg-slate-100\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 20%, transparent);
+}
+:where(.dark) .bg-slate-100\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 30%, transparent);
+}
+:where(.dark) .bg-slate-100\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 40%, transparent);
+}
+:where(.dark) .bg-slate-100\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 50%, transparent);
+}
+:where(.dark) .bg-slate-100\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 60%, transparent);
+}
+:where(.dark) .bg-slate-100\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 70%, transparent);
+}
+:where(.dark) .bg-slate-100\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 80%, transparent);
+}
+:where(.dark) .bg-slate-100\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 90%, transparent);
+}
+:where(.dark) .bg-slate-200\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 10%, transparent);
+}
+:where(.dark) .bg-slate-200\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 20%, transparent);
+}
+:where(.dark) .bg-slate-200\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 30%, transparent);
+}
+:where(.dark) .bg-slate-200\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 40%, transparent);
+}
+:where(.dark) .bg-slate-200\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 50%, transparent);
+}
+:where(.dark) .bg-slate-200\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 60%, transparent);
+}
+:where(.dark) .bg-slate-200\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 70%, transparent);
+}
+:where(.dark) .bg-slate-200\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 80%, transparent);
+}
+:where(.dark) .bg-slate-200\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 90%, transparent);
+}
+:where(.dark) .bg-stone-50\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 10%, transparent);
+}
+:where(.dark) .bg-stone-50\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 20%, transparent);
+}
+:where(.dark) .bg-stone-50\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 30%, transparent);
+}
+:where(.dark) .bg-stone-50\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 40%, transparent);
+}
+:where(.dark) .bg-stone-50\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 50%, transparent);
+}
+:where(.dark) .bg-stone-50\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 60%, transparent);
+}
+:where(.dark) .bg-stone-50\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 70%, transparent);
+}
+:where(.dark) .bg-stone-50\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 80%, transparent);
+}
+:where(.dark) .bg-stone-50\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 90%, transparent);
+}
+:where(.dark) .bg-stone-100\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 10%, transparent);
+}
+:where(.dark) .bg-stone-100\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 20%, transparent);
+}
+:where(.dark) .bg-stone-100\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 30%, transparent);
+}
+:where(.dark) .bg-stone-100\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 40%, transparent);
+}
+:where(.dark) .bg-stone-100\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 50%, transparent);
+}
+:where(.dark) .bg-stone-100\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 60%, transparent);
+}
+:where(.dark) .bg-stone-100\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 70%, transparent);
+}
+:where(.dark) .bg-stone-100\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 80%, transparent);
+}
+:where(.dark) .bg-stone-100\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 90%, transparent);
+}
+:where(.dark) .bg-stone-200\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 10%, transparent);
+}
+:where(.dark) .bg-stone-200\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 20%, transparent);
+}
+:where(.dark) .bg-stone-200\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 30%, transparent);
+}
+:where(.dark) .bg-stone-200\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 40%, transparent);
+}
+:where(.dark) .bg-stone-200\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 50%, transparent);
+}
+:where(.dark) .bg-stone-200\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 60%, transparent);
+}
+:where(.dark) .bg-stone-200\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 70%, transparent);
+}
+:where(.dark) .bg-stone-200\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 80%, transparent);
+}
+:where(.dark) .bg-stone-200\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 90%, transparent);
+}
+:where(.dark) .bg-zinc-50\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 10%, transparent);
+}
+:where(.dark) .bg-zinc-50\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 20%, transparent);
+}
+:where(.dark) .bg-zinc-50\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 30%, transparent);
+}
+:where(.dark) .bg-zinc-50\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 40%, transparent);
+}
+:where(.dark) .bg-zinc-50\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 50%, transparent);
+}
+:where(.dark) .bg-zinc-50\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 60%, transparent);
+}
+:where(.dark) .bg-zinc-50\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 70%, transparent);
+}
+:where(.dark) .bg-zinc-50\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 80%, transparent);
+}
+:where(.dark) .bg-zinc-50\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 90%, transparent);
+}
+:where(.dark) .bg-zinc-100\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 10%, transparent);
+}
+:where(.dark) .bg-zinc-100\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 20%, transparent);
+}
+:where(.dark) .bg-zinc-100\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 30%, transparent);
+}
+:where(.dark) .bg-zinc-100\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 40%, transparent);
+}
+:where(.dark) .bg-zinc-100\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 50%, transparent);
+}
+:where(.dark) .bg-zinc-100\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 60%, transparent);
+}
+:where(.dark) .bg-zinc-100\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 70%, transparent);
+}
+:where(.dark) .bg-zinc-100\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 80%, transparent);
+}
+:where(.dark) .bg-zinc-100\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 90%, transparent);
+}
+:where(.dark) .bg-zinc-200\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 10%, transparent);
+}
+:where(.dark) .bg-zinc-200\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 20%, transparent);
+}
+:where(.dark) .bg-zinc-200\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 30%, transparent);
+}
+:where(.dark) .bg-zinc-200\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 40%, transparent);
+}
+:where(.dark) .bg-zinc-200\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 50%, transparent);
+}
+:where(.dark) .bg-zinc-200\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 60%, transparent);
+}
+:where(.dark) .bg-zinc-200\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 70%, transparent);
+}
+:where(.dark) .bg-zinc-200\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 80%, transparent);
+}
+:where(.dark) .bg-zinc-200\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 90%, transparent);
+}
+:where(.dark) .bg-neutral-50\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 10%, transparent);
+}
+:where(.dark) .bg-neutral-50\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 20%, transparent);
+}
+:where(.dark) .bg-neutral-50\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 30%, transparent);
+}
+:where(.dark) .bg-neutral-50\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 40%, transparent);
+}
+:where(.dark) .bg-neutral-50\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 50%, transparent);
+}
+:where(.dark) .bg-neutral-50\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 60%, transparent);
+}
+:where(.dark) .bg-neutral-50\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 70%, transparent);
+}
+:where(.dark) .bg-neutral-50\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 80%, transparent);
+}
+:where(.dark) .bg-neutral-50\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-2) 90%, transparent);
+}
+:where(.dark) .bg-neutral-100\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 10%, transparent);
+}
+:where(.dark) .bg-neutral-100\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 20%, transparent);
+}
+:where(.dark) .bg-neutral-100\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 30%, transparent);
+}
+:where(.dark) .bg-neutral-100\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 40%, transparent);
+}
+:where(.dark) .bg-neutral-100\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 50%, transparent);
+}
+:where(.dark) .bg-neutral-100\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 60%, transparent);
+}
+:where(.dark) .bg-neutral-100\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 70%, transparent);
+}
+:where(.dark) .bg-neutral-100\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 80%, transparent);
+}
+:where(.dark) .bg-neutral-100\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-3) 90%, transparent);
+}
+:where(.dark) .bg-neutral-200\/10 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 10%, transparent);
+}
+:where(.dark) .bg-neutral-200\/20 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 20%, transparent);
+}
+:where(.dark) .bg-neutral-200\/30 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 30%, transparent);
+}
+:where(.dark) .bg-neutral-200\/40 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 40%, transparent);
+}
+:where(.dark) .bg-neutral-200\/50 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 50%, transparent);
+}
+:where(.dark) .bg-neutral-200\/60 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 60%, transparent);
+}
+:where(.dark) .bg-neutral-200\/70 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 70%, transparent);
+}
+:where(.dark) .bg-neutral-200\/80 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 80%, transparent);
+}
+:where(.dark) .bg-neutral-200\/90 {
+  background-color: color-mix(in srgb, var(--c-surface-4) 90%, transparent);
+}
+:where(.dark) .bg-green-50\/60 {
+  background-color: color-mix(in srgb, #22c55e 12%, transparent);
+}
+:where(.dark) .bg-red-50\/60 {
+  background-color: color-mix(in srgb, #ef4444 12%, transparent);
+}
+:where(.dark) .bg-amber-50\/60 {
+  background-color: color-mix(in srgb, #f59e0b 12%, transparent);
+}
+:where(.dark) .bg-yellow-50\/60 {
+  background-color: color-mix(in srgb, #eab308 12%, transparent);
+}
+:where(.dark) .bg-sky-50\/60 {
+  background-color: color-mix(in srgb, #0ea5e9 12%, transparent);
+}
+:where(.dark) .bg-orange-50\/60 {
+  background-color: color-mix(in srgb, #f97316 12%, transparent);
+}
+:where(.dark) .bg-purple-50\/60 {
+  background-color: color-mix(in srgb, #a855f7 12%, transparent);
+}
+:where(.dark) .bg-blue-50\/60 {
+  background-color: color-mix(in srgb, #3b82f6 12%, transparent);
+}
+:where(.dark) .bg-blue-50\/30 {
+  background-color: color-mix(in srgb, #3b82f6 12%, transparent);
+}
+:where(.dark) .border-gray-200\/80 {
+  border-color: color-mix(in srgb, var(--c-line) 80%, transparent);
+}
+:where(.dark) .border-gray-200\/60 {
+  border-color: color-mix(in srgb, var(--c-line) 60%, transparent);
+}
+:where(.dark) .border-gray-200\/50 {
+  border-color: color-mix(in srgb, var(--c-line) 50%, transparent);
+}
+:where(.dark) .border-gray-300\/50 {
+  border-color: color-mix(in srgb, var(--c-line) 50%, transparent);
+}
+:where(.dark) .border-slate-300\/60 {
+  border-color: color-mix(in srgb, var(--c-line) 60%, transparent);
+}
+:where(.dark) .border-slate-300\/50 {
+  border-color: color-mix(in srgb, var(--c-line) 50%, transparent);
+}
+:where(.dark) .border-slate-300\/30 {
+  border-color: color-mix(in srgb, var(--c-line) 30%, transparent);
+}
+:where(.dark) .border-slate-300\/20 {
+  border-color: color-mix(in srgb, var(--c-line) 20%, transparent);
+}
+:where(.dark) .border-slate-200\/80 {
+  border-color: color-mix(in srgb, var(--c-line) 80%, transparent);
+}
+:where(.dark) .border-slate-200\/50 {
+  border-color: color-mix(in srgb, var(--c-line) 50%, transparent);
+}
+:where(.dark) .to-amber-100\/50 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-amber-100\/20 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-amber-50\/40 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-amber-50\/30 {
+  --tw-gradient-from: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 12%, transparent) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-amber-50\/30 {
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 12%, transparent) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from),
+    color-mix(in srgb, #f59e0b 12%, transparent) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-amber-50\/30 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-amber-50\/50 {
+  --tw-gradient-from: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 12%, transparent) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .to-amber-50\/50 {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-orange-50\/20 {
+  --tw-gradient-to: color-mix(in srgb, #f97316 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-orange-50\/50 {
+  --tw-gradient-to: color-mix(in srgb, #f97316 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-blue-50\/40 {
+  --tw-gradient-to: color-mix(in srgb, #3b82f6 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-blue-50\/20 {
+  --tw-gradient-to: color-mix(in srgb, #3b82f6 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-blue-50\/50 {
+  --tw-gradient-from: color-mix(in srgb, #3b82f6 12%, transparent)
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #3b82f6 12%, transparent) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .to-blue-50\/50 {
+  --tw-gradient-to: color-mix(in srgb, #3b82f6 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .from-indigo-50\/50 {
+  --tw-gradient-from: color-mix(in srgb, #6366f1 12%, transparent)
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #6366f1 12%, transparent) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .to-indigo-50\/50 {
+  --tw-gradient-to: color-mix(in srgb, #6366f1 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-indigo-100\/50 {
+  --tw-gradient-to: color-mix(in srgb, #6366f1 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-cyan-50\/50 {
+  --tw-gradient-to: color-mix(in srgb, #06b6d4 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-cyan-50\/30 {
+  --tw-gradient-to: color-mix(in srgb, #06b6d4 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-violet-50\/40 {
+  --tw-gradient-to: color-mix(in srgb, #8b5cf6 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-purple-50\/50 {
+  --tw-gradient-to: color-mix(in srgb, #a855f7 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-teal-100\/20 {
+  --tw-gradient-to: color-mix(in srgb, #14b8a6 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+:where(.dark) .to-rose-100\/50 {
+  --tw-gradient-to: color-mix(in srgb, #f43f5e 12%, transparent)
+    var(--tw-gradient-to-position);
+}
+
+/* Cream page palette used through arbitrary hex values */
+:where(.dark) .bg-\[\#F3EBDF\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#F6F1E9\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#eee5d8\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#f4efe9\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#f7f4f0\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#f7f5f1\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#f9f7f4\] {
+  background-color: var(--c-surface);
+}
+:where(.dark) .bg-\[\#DFF1E9\] {
+  background-color: color-mix(in srgb, #22c55e 16%, var(--c-surface));
+}
+:where(.dark) .bg-\[\#f3efe9\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#f3efe9\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#f3efe9\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#f3efe9\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-\[\#f8f5f1\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#f8f5f1\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#f8f5f1\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#f8f5f1\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-\[\#efe7dd\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#efe7dd\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#efe7dd\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#efe7dd\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-\[\#FBF7F1\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#FBF7F1\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#FBF7F1\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#FBF7F1\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-\[\#fbf8f3\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#fbf8f3\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#fbf8f3\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#fbf8f3\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-\[\#f6f1ea\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#f6f1ea\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#f6f1ea\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#f6f1ea\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-\[\#edfaf3\] {
+  background-color: var(--c-surface-2);
+}
+:where(.dark) .from-\[\#edfaf3\] {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-\[\#edfaf3\] {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#edfaf3\] {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) :is(.divide-\[\#ece3db\]) > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--c-line);
+}
+:where(.dark) :is(.bg-gray-300, .bg-slate-300) {
+  background-color: color-mix(in srgb, var(--c-text-3) 45%, var(--c-surface));
+}
+:where(.dark)
+  :is(
+    .text-slate-950,
+    .text-gray-950,
+    .text-zinc-950,
+    .text-neutral-950,
+    .text-stone-950
+  ) {
+  color: var(--c-text-1);
+}
+:where(.dark) .text-amber-700\/80 {
+  color: color-mix(in srgb, #fcd34d 80%, transparent);
+}
+:where(.dark) .text-red-950 {
+  color: color-mix(in srgb, #ef4444 25%, #ffffff);
+}
+:where(.dark) .text-red-950:is(.bg-red-300, .bg-red-400, .bg-red-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-orange-950 {
+  color: color-mix(in srgb, #f97316 25%, #ffffff);
+}
+:where(.dark)
+  .text-orange-950:is(.bg-orange-300, .bg-orange-400, .bg-orange-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-amber-950 {
+  color: color-mix(in srgb, #f59e0b 25%, #ffffff);
+}
+:where(.dark) .text-amber-950:is(.bg-amber-300, .bg-amber-400, .bg-amber-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-yellow-950 {
+  color: color-mix(in srgb, #eab308 25%, #ffffff);
+}
+:where(.dark)
+  .text-yellow-950:is(.bg-yellow-300, .bg-yellow-400, .bg-yellow-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-green-950 {
+  color: color-mix(in srgb, #22c55e 25%, #ffffff);
+}
+:where(.dark) .text-green-950:is(.bg-green-300, .bg-green-400, .bg-green-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-emerald-950 {
+  color: color-mix(in srgb, #10b981 25%, #ffffff);
+}
+:where(.dark)
+  .text-emerald-950:is(.bg-emerald-300, .bg-emerald-400, .bg-emerald-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-teal-950 {
+  color: color-mix(in srgb, #14b8a6 25%, #ffffff);
+}
+:where(.dark) .text-teal-950:is(.bg-teal-300, .bg-teal-400, .bg-teal-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-cyan-950 {
+  color: color-mix(in srgb, #06b6d4 25%, #ffffff);
+}
+:where(.dark) .text-cyan-950:is(.bg-cyan-300, .bg-cyan-400, .bg-cyan-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-sky-950 {
+  color: color-mix(in srgb, #0ea5e9 25%, #ffffff);
+}
+:where(.dark) .text-sky-950:is(.bg-sky-300, .bg-sky-400, .bg-sky-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-blue-950 {
+  color: color-mix(in srgb, #3b82f6 25%, #ffffff);
+}
+:where(.dark) .text-blue-950:is(.bg-blue-300, .bg-blue-400, .bg-blue-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-indigo-950 {
+  color: color-mix(in srgb, #6366f1 25%, #ffffff);
+}
+:where(.dark)
+  .text-indigo-950:is(.bg-indigo-300, .bg-indigo-400, .bg-indigo-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-violet-950 {
+  color: color-mix(in srgb, #8b5cf6 25%, #ffffff);
+}
+:where(.dark)
+  .text-violet-950:is(.bg-violet-300, .bg-violet-400, .bg-violet-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-purple-950 {
+  color: color-mix(in srgb, #a855f7 25%, #ffffff);
+}
+:where(.dark)
+  .text-purple-950:is(.bg-purple-300, .bg-purple-400, .bg-purple-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-fuchsia-950 {
+  color: color-mix(in srgb, #d946ef 25%, #ffffff);
+}
+:where(.dark)
+  .text-fuchsia-950:is(.bg-fuchsia-300, .bg-fuchsia-400, .bg-fuchsia-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-pink-950 {
+  color: color-mix(in srgb, #ec4899 25%, #ffffff);
+}
+:where(.dark) .text-pink-950:is(.bg-pink-300, .bg-pink-400, .bg-pink-500) {
+  color: #0f172a;
+}
+:where(.dark) .text-rose-950 {
+  color: color-mix(in srgb, #f43f5e 25%, #ffffff);
+}
+:where(.dark) .text-rose-950:is(.bg-rose-300, .bg-rose-400, .bg-rose-500) {
+  color: #0f172a;
+}
+
+/* Dark text that sits on a saturated brand fill must stay dark in dark mode */
+:where(.dark)
+  :is(
+    .bg-amber-300,
+    .from-amber-300,
+    .bg-amber-400,
+    .from-amber-400,
+    .bg-amber-500,
+    .from-amber-500,
+    .bg-amber-600,
+    .from-amber-600,
+    .bg-yellow-300,
+    .from-yellow-300,
+    .bg-yellow-400,
+    .from-yellow-400,
+    .bg-yellow-500,
+    .from-yellow-500,
+    .bg-yellow-600,
+    .from-yellow-600,
+    .bg-orange-300,
+    .from-orange-300,
+    .bg-orange-400,
+    .from-orange-400,
+    .bg-orange-500,
+    .from-orange-500,
+    .bg-orange-600,
+    .from-orange-600,
+    .bg-lime-300,
+    .from-lime-300,
+    .bg-lime-400,
+    .from-lime-400,
+    .bg-lime-500,
+    .from-lime-500,
+    .bg-lime-600,
+    .from-lime-600,
+    .bg-green-300,
+    .from-green-300,
+    .bg-green-400,
+    .from-green-400,
+    .bg-green-500,
+    .from-green-500,
+    .bg-green-600,
+    .from-green-600,
+    .bg-emerald-300,
+    .from-emerald-300,
+    .bg-emerald-400,
+    .from-emerald-400,
+    .bg-emerald-500,
+    .from-emerald-500,
+    .bg-emerald-600,
+    .from-emerald-600,
+    .bg-teal-300,
+    .from-teal-300,
+    .bg-teal-400,
+    .from-teal-400,
+    .bg-teal-500,
+    .from-teal-500,
+    .bg-teal-600,
+    .from-teal-600,
+    .bg-cyan-300,
+    .from-cyan-300,
+    .bg-cyan-400,
+    .from-cyan-400,
+    .bg-cyan-500,
+    .from-cyan-500,
+    .bg-cyan-600,
+    .from-cyan-600,
+    .bg-sky-300,
+    .from-sky-300,
+    .bg-sky-400,
+    .from-sky-400,
+    .bg-sky-500,
+    .from-sky-500,
+    .bg-sky-600,
+    .from-sky-600,
+    .bg-\[\#bf831c\],
+    .from-\[\#bf831c\],
+    .bg-\[\#d4941f\],
+    .from-\[\#d4941f\],
+    .bg-\[\#c0841c\],
+    .from-\[\#c0841c\],
+    .bg-\[\#a6701a\],
+    .from-\[\#a6701a\],
+    .bg-\[\#f4a028\],
+    .from-\[\#f4a028\],
+    .bg-\[\#d4a037\],
+    .from-\[\#d4a037\],
+    .bg-\[\#f0c060\],
+    .from-\[\#f0c060\]
+  ):is(
+    .text-slate-900,
+    .text-slate-800,
+    .text-gray-900,
+    .text-gray-800,
+    .text-zinc-900,
+    .text-neutral-900,
+    .text-stone-900
+  ) {
+  color: #0f172a;
+}
+
+/* Gradient-clipped headline text: dark stops step up so the text stays readable */
+:where(.dark)
+  .bg-clip-text:is(
+    .from-slate-900,
+    .from-slate-800,
+    .from-slate-700,
+    .from-gray-900,
+    .from-gray-800,
+    .from-gray-700,
+    .from-zinc-900,
+    .from-zinc-800,
+    .from-zinc-700,
+    .from-neutral-900,
+    .from-neutral-800,
+    .from-neutral-700,
+    .from-stone-900,
+    .from-stone-800,
+    .from-stone-700
+  ) {
+  --tw-gradient-from: var(--c-text-1) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-text-1) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark)
+  .bg-clip-text:is(
+    .via-slate-900,
+    .via-slate-800,
+    .via-slate-700,
+    .via-gray-900,
+    .via-gray-800,
+    .via-gray-700,
+    .via-zinc-900,
+    .via-zinc-800,
+    .via-zinc-700,
+    .via-neutral-900,
+    .via-neutral-800,
+    .via-neutral-700,
+    .via-stone-900,
+    .via-stone-800,
+    .via-stone-700
+  ) {
+  --tw-gradient-to: color-mix(in srgb, var(--c-text-1) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-text-1) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark)
+  .bg-clip-text:is(
+    .to-slate-900,
+    .to-slate-800,
+    .to-slate-700,
+    .to-gray-900,
+    .to-gray-800,
+    .to-gray-700,
+    .to-zinc-900,
+    .to-zinc-800,
+    .to-zinc-700,
+    .to-neutral-900,
+    .to-neutral-800,
+    .to-neutral-700,
+    .to-stone-900,
+    .to-stone-800,
+    .to-stone-700
+  ) {
+  --tw-gradient-to: var(--c-text-1) var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-amber-800 {
+  --tw-gradient-from: #fcd34d var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fcd34d 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-amber-800 {
+  --tw-gradient-to: color-mix(in srgb, #fcd34d 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fcd34d var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-amber-800 {
+  --tw-gradient-to: #fcd34d var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-amber-700 {
+  --tw-gradient-from: #fcd34d var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fcd34d 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-amber-700 {
+  --tw-gradient-to: color-mix(in srgb, #fcd34d 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fcd34d var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-amber-700 {
+  --tw-gradient-to: #fcd34d var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-amber-600 {
+  --tw-gradient-from: #fbbf24 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fbbf24 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-amber-600 {
+  --tw-gradient-to: color-mix(in srgb, #fbbf24 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fbbf24 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-amber-600 {
+  --tw-gradient-to: #fbbf24 var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-blue-800 {
+  --tw-gradient-from: #93c5fd var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #93c5fd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-blue-800 {
+  --tw-gradient-to: color-mix(in srgb, #93c5fd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #93c5fd var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-blue-800 {
+  --tw-gradient-to: #93c5fd var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-blue-700 {
+  --tw-gradient-from: #93c5fd var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #93c5fd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-blue-700 {
+  --tw-gradient-to: color-mix(in srgb, #93c5fd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #93c5fd var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-blue-700 {
+  --tw-gradient-to: #93c5fd var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-blue-600 {
+  --tw-gradient-from: #60a5fa var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #60a5fa 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-blue-600 {
+  --tw-gradient-to: color-mix(in srgb, #60a5fa 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #60a5fa var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-blue-600 {
+  --tw-gradient-to: #60a5fa var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-orange-700 {
+  --tw-gradient-from: #fb923c var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fb923c 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-orange-700 {
+  --tw-gradient-to: color-mix(in srgb, #fb923c 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fb923c var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-orange-700 {
+  --tw-gradient-to: #fb923c var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-orange-600 {
+  --tw-gradient-from: #fb923c var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fb923c 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-orange-600 {
+  --tw-gradient-to: color-mix(in srgb, #fb923c 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fb923c var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-orange-600 {
+  --tw-gradient-to: #fb923c var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-cyan-600 {
+  --tw-gradient-from: #67e8f9 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #67e8f9 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-cyan-600 {
+  --tw-gradient-to: color-mix(in srgb, #67e8f9 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #67e8f9 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-cyan-600 {
+  --tw-gradient-to: #67e8f9 var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-teal-700 {
+  --tw-gradient-from: #5eead4 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #5eead4 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-teal-700 {
+  --tw-gradient-to: color-mix(in srgb, #5eead4 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #5eead4 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-teal-700 {
+  --tw-gradient-to: #5eead4 var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-purple-700 {
+  --tw-gradient-from: #d8b4fe var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #d8b4fe 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-purple-700 {
+  --tw-gradient-to: color-mix(in srgb, #d8b4fe 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #d8b4fe var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-purple-700 {
+  --tw-gradient-to: #d8b4fe var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-violet-700 {
+  --tw-gradient-from: #c4b5fd var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #c4b5fd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-violet-700 {
+  --tw-gradient-to: color-mix(in srgb, #c4b5fd 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #c4b5fd var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-violet-700 {
+  --tw-gradient-to: #c4b5fd var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-indigo-700 {
+  --tw-gradient-from: #a5b4fc var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #a5b4fc 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-indigo-700 {
+  --tw-gradient-to: color-mix(in srgb, #a5b4fc 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #a5b4fc var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-indigo-700 {
+  --tw-gradient-to: #a5b4fc var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-emerald-700 {
+  --tw-gradient-from: #6ee7b7 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #6ee7b7 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-emerald-700 {
+  --tw-gradient-to: color-mix(in srgb, #6ee7b7 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #6ee7b7 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-emerald-700 {
+  --tw-gradient-to: #6ee7b7 var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-green-700 {
+  --tw-gradient-from: #86efac var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #86efac 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-green-700 {
+  --tw-gradient-to: color-mix(in srgb, #86efac 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #86efac var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-green-700 {
+  --tw-gradient-to: #86efac var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-red-700 {
+  --tw-gradient-from: #fca5a5 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fca5a5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-red-700 {
+  --tw-gradient-to: color-mix(in srgb, #fca5a5 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fca5a5 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-red-700 {
+  --tw-gradient-to: #fca5a5 var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-rose-700 {
+  --tw-gradient-from: #fda4af var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #fda4af 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-rose-700 {
+  --tw-gradient-to: color-mix(in srgb, #fda4af 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #fda4af var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-rose-700 {
+  --tw-gradient-to: #fda4af var(--tw-gradient-to-position);
+}
+:where(.dark) .bg-clip-text.from-pink-700 {
+  --tw-gradient-from: #f9a8d4 var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, #f9a8d4 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.via-pink-700 {
+  --tw-gradient-to: color-mix(in srgb, #f9a8d4 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), #f9a8d4 var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .bg-clip-text.to-pink-700 {
+  --tw-gradient-to: #f9a8d4 var(--tw-gradient-to-position);
+}
+
+/* Active tab states that hard-code light colours */
+:where(.dark) .data-\[state\=active\]\:bg-white[data-state="active"] {
+  background-color: var(--c-surface-4);
+}
+:where(.dark) .data-\[state\=active\]\:text-slate-900[data-state="active"] {
+  color: var(--c-text-1);
+}
+:where(.dark) .data-\[state\=active\]\:text-amber-900[data-state="active"] {
+  color: #fde68a;
+}
+:where(.dark) .data-\[state\=active\]\:text-purple-700[data-state="active"] {
+  color: #d8b4fe;
+}
+:where(.dark) .data-\[state\=active\]\:text-red-600[data-state="active"] {
+  color: #fca5a5;
+}
+:where(.dark) .data-\[state\=active\]\:text-red-700[data-state="active"] {
+  color: #fca5a5;
+}
+:where(.dark) .data-\[state\=active\]\:text-orange-600[data-state="active"] {
+  color: #fdba74;
+}
+:where(.dark) .data-\[state\=active\]\:text-orange-700[data-state="active"] {
+  color: #fdba74;
+}
+:where(.dark) .data-\[state\=active\]\:text-amber-600[data-state="active"] {
+  color: #fcd34d;
+}
+:where(.dark) .data-\[state\=active\]\:text-amber-700[data-state="active"] {
+  color: #fcd34d;
+}
+:where(.dark) .data-\[state\=active\]\:text-yellow-600[data-state="active"] {
+  color: #fde047;
+}
+:where(.dark) .data-\[state\=active\]\:text-yellow-700[data-state="active"] {
+  color: #fde047;
+}
+:where(.dark) .data-\[state\=active\]\:text-green-600[data-state="active"] {
+  color: #86efac;
+}
+:where(.dark) .data-\[state\=active\]\:text-green-700[data-state="active"] {
+  color: #86efac;
+}
+:where(.dark) .data-\[state\=active\]\:text-emerald-600[data-state="active"] {
+  color: #6ee7b7;
+}
+:where(.dark) .data-\[state\=active\]\:text-emerald-700[data-state="active"] {
+  color: #6ee7b7;
+}
+:where(.dark) .data-\[state\=active\]\:text-teal-600[data-state="active"] {
+  color: #5eead4;
+}
+:where(.dark) .data-\[state\=active\]\:text-teal-700[data-state="active"] {
+  color: #5eead4;
+}
+:where(.dark) .data-\[state\=active\]\:text-cyan-600[data-state="active"] {
+  color: #67e8f9;
+}
+:where(.dark) .data-\[state\=active\]\:text-cyan-700[data-state="active"] {
+  color: #67e8f9;
+}
+:where(.dark) .data-\[state\=active\]\:text-sky-600[data-state="active"] {
+  color: #7dd3fc;
+}
+:where(.dark) .data-\[state\=active\]\:text-sky-700[data-state="active"] {
+  color: #7dd3fc;
+}
+:where(.dark) .data-\[state\=active\]\:text-blue-600[data-state="active"] {
+  color: #93c5fd;
+}
+:where(.dark) .data-\[state\=active\]\:text-blue-700[data-state="active"] {
+  color: #93c5fd;
+}
+:where(.dark) .data-\[state\=active\]\:text-indigo-600[data-state="active"] {
+  color: #a5b4fc;
+}
+:where(.dark) .data-\[state\=active\]\:text-indigo-700[data-state="active"] {
+  color: #a5b4fc;
+}
+:where(.dark) .data-\[state\=active\]\:text-violet-600[data-state="active"] {
+  color: #c4b5fd;
+}
+:where(.dark) .data-\[state\=active\]\:text-violet-700[data-state="active"] {
+  color: #c4b5fd;
+}
+:where(.dark) .data-\[state\=active\]\:text-purple-600[data-state="active"] {
+  color: #d8b4fe;
+}
+:where(.dark) .data-\[state\=active\]\:text-purple-700[data-state="active"] {
+  color: #d8b4fe;
+}
+:where(.dark) .data-\[state\=active\]\:text-fuchsia-600[data-state="active"] {
+  color: #f0abfc;
+}
+:where(.dark) .data-\[state\=active\]\:text-fuchsia-700[data-state="active"] {
+  color: #f0abfc;
+}
+:where(.dark) .data-\[state\=active\]\:text-pink-600[data-state="active"] {
+  color: #f9a8d4;
+}
+:where(.dark) .data-\[state\=active\]\:text-pink-700[data-state="active"] {
+  color: #f9a8d4;
+}
+:where(.dark) .data-\[state\=active\]\:text-rose-600[data-state="active"] {
+  color: #fda4af;
+}
+:where(.dark) .data-\[state\=active\]\:text-rose-700[data-state="active"] {
+  color: #fda4af;
+}
+:where(.dark) .from-\[\#fff9e5\] {
+  --tw-gradient-from: color-mix(in srgb, #f59e0b 14%, var(--c-surface))
+    var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(
+      in srgb,
+      color-mix(in srgb, #f59e0b 14%, var(--c-surface)) 0%,
+      transparent
+    )
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .to-\[\#fff9e5\] {
+  --tw-gradient-to: color-mix(in srgb, #f59e0b 14%, var(--c-surface))
+    var(--tw-gradient-to-position);
+}
+:where(.dark) :is(.text-\[\#1E2A32\]) {
+  color: var(--c-text-1);
+}
+:where(.dark) :is(.text-\[\#4C5A63\], .text-\[\#7C878E\]) {
+  color: var(--c-text-2);
+}
+:where(.dark)
+  :is(
+    .border-\[\#DCCFBC\],
+    .border-\[\#e7dfd7\],
+    .border-\[\#d9d0c6\],
+    .border-\[\#BFE3D3\],
+    .border-\[\#dcd4cb\],
+    .border-\[\#e0d5cc\]
+  ) {
+  border-color: var(--c-line);
+}

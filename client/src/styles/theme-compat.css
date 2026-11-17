@@ -1,0 +1,564 @@
+/*
+ * Dark-mode layer for pages that hard-code light Tailwind palette classes
+ * (bg-white, text-gray-700, border-slate-200, pastel bg-*-50 chips, ...).
+ *
+ * Loaded after Tailwind's utilities (see main.tsx). Every selector uses
+ * :where(.dark), so a rule keeps the specificity of one utility class: it
+ * replaces the light utility, but an explicit dark: variant still wins.
+ *
+ * Wrap a region in .keep-light to keep it light in dark mode (previews of
+ * printed or emailed documents, QR codes, embedded light widgets).
+ */
+
+:root {
+  --c-surface: #ffffff;
+  --c-surface-2: #f8fafc;
+  --c-surface-3: #f1f5f9;
+  --c-surface-4: #e2e8f0;
+  --c-text-1: #0f172a;
+  --c-text-2: #475569;
+  --c-text-3: #94a3b8;
+  --c-line: #e2e8f0;
+}
+
+.dark {
+  --c-surface: var(--card);
+  --c-surface-2: var(--background);
+  --c-surface-3: var(--muted);
+  --c-surface-4: var(--accent);
+  --c-text-1: var(--foreground);
+  --c-text-2: #b6c2d4;
+  --c-text-3: #8d9bb3;
+  --c-line: var(--border);
+}
+
+.dark .keep-light {
+  --c-surface: #ffffff;
+  --c-surface-2: #f8fafc;
+  --c-surface-3: #f1f5f9;
+  --c-surface-4: #e2e8f0;
+  --c-text-1: #0f172a;
+  --c-text-2: #475569;
+  --c-text-3: #94a3b8;
+  --c-line: #e2e8f0;
+  color-scheme: light;
+}
+
+/* Typography plugin (.prose) hard-codes light-theme colours */
+.dark .prose {
+  --tw-prose-body: var(--c-text-2);
+  --tw-prose-headings: var(--c-text-1);
+  --tw-prose-lead: var(--c-text-2);
+  --tw-prose-bold: var(--c-text-1);
+  --tw-prose-counters: var(--c-text-3);
+  --tw-prose-bullets: var(--c-text-3);
+  --tw-prose-hr: var(--c-line);
+  --tw-prose-quotes: var(--c-text-1);
+  --tw-prose-quote-borders: var(--c-line);
+  --tw-prose-captions: var(--c-text-3);
+  --tw-prose-code: var(--c-text-1);
+  --tw-prose-th-borders: var(--c-line);
+  --tw-prose-td-borders: var(--c-line);
+}
+
+/* Surfaces */
+:where(.dark) .bg-white {
+  background-color: var(--c-surface);
+}
+:where(.dark)
+  :is(.bg-gray-50, .bg-slate-50, .bg-stone-50, .bg-neutral-50, .bg-zinc-50) {
+  background-color: var(--c-surface-2);
+}
+:where(.dark)
+  :is(
+    .bg-gray-100,
+    .bg-slate-100,
+    .bg-stone-100,
+    .bg-neutral-100,
+    .bg-zinc-100
+  ) {
+  background-color: var(--c-surface-3);
+}
+:where(.dark)
+  :is(
+    .bg-gray-200,
+    .bg-slate-200,
+    .bg-stone-200,
+    .bg-neutral-200,
+    .bg-zinc-200
+  ) {
+  background-color: var(--c-surface-4);
+}
+:where(.dark) .bg-white\/95 {
+  background-color: color-mix(in srgb, var(--c-surface) 95%, transparent);
+}
+:where(.dark) .bg-white\/90 {
+  background-color: color-mix(in srgb, var(--c-surface) 90%, transparent);
+}
+:where(.dark) .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--c-surface) 80%, transparent);
+}
+:where(.dark) .bg-white\/70 {
+  background-color: color-mix(in srgb, var(--c-surface) 70%, transparent);
+}
+:where(.dark) .bg-white\/60 {
+  background-color: color-mix(in srgb, var(--c-surface) 60%, transparent);
+}
+:where(.dark) .bg-white\/50 {
+  background-color: color-mix(in srgb, var(--c-surface) 50%, transparent);
+}
+
+/* Text */
+:where(.dark)
+  :is(
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-zinc-900,
+    .text-zinc-800,
+    .text-zinc-700,
+    .text-neutral-900,
+    .text-neutral-800,
+    .text-neutral-700,
+    .text-stone-900,
+    .text-stone-800,
+    .text-stone-700
+  ) {
+  color: var(--c-text-1);
+}
+:where(.dark)
+  :is(
+    .text-gray-600,
+    .text-gray-500,
+    .text-slate-600,
+    .text-slate-500,
+    .text-zinc-600,
+    .text-zinc-500,
+    .text-neutral-600,
+    .text-neutral-500,
+    .text-stone-600,
+    .text-stone-500
+  ) {
+  color: var(--c-text-2);
+}
+:where(.dark)
+  :is(
+    .text-gray-400,
+    .text-slate-400,
+    .text-zinc-400,
+    .text-neutral-400,
+    .text-stone-400
+  ) {
+  color: var(--c-text-3);
+}
+
+/* Borders and dividers */
+:where(.dark)
+  :is(
+    .border-gray-100,
+    .border-gray-200,
+    .border-gray-300,
+    .border-slate-100,
+    .border-slate-200,
+    .border-slate-300,
+    .border-zinc-200,
+    .border-zinc-300,
+    .border-neutral-200,
+    .border-neutral-300,
+    .border-stone-200,
+    .border-stone-300
+  ) {
+  border-color: var(--c-line);
+}
+:where(.dark)
+  :is(.divide-gray-100, .divide-gray-200, .divide-slate-100, .divide-slate-200)
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-color: var(--c-line);
+}
+
+/* Hover states */
+:where(.dark)
+  :is(
+    .hover\:bg-gray-50,
+    .hover\:bg-slate-50,
+    .hover\:bg-gray-100,
+    .hover\:bg-slate-100
+  ):hover {
+  background-color: var(--c-surface-3);
+}
+:where(.dark) :is(.hover\:bg-gray-200, .hover\:bg-slate-200):hover {
+  background-color: var(--c-surface-4);
+}
+:where(.dark)
+  :is(
+    .hover\:text-gray-900,
+    .hover\:text-gray-800,
+    .hover\:text-gray-700,
+    .hover\:text-slate-900,
+    .hover\:text-slate-800,
+    .hover\:text-slate-700
+  ):hover {
+  color: var(--c-text-1);
+}
+
+/* Gradient stops that fade to white / near-white */
+:where(.dark) .from-white {
+  --tw-gradient-from: var(--c-surface) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) .via-white {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) .to-white {
+  --tw-gradient-to: var(--c-surface) var(--tw-gradient-to-position);
+}
+:where(.dark) :is(.from-gray-50, .from-slate-50, .from-stone-50) {
+  --tw-gradient-from: var(--c-surface-2) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) :is(.via-gray-50, .via-slate-50, .via-stone-50) {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-2) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-2) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) :is(.to-gray-50, .to-slate-50, .to-stone-50) {
+  --tw-gradient-to: var(--c-surface-2) var(--tw-gradient-to-position);
+}
+:where(.dark) :is(.from-gray-100, .from-slate-100) {
+  --tw-gradient-from: var(--c-surface-3) var(--tw-gradient-from-position);
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-3) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+:where(.dark) :is(.via-gray-100, .via-slate-100) {
+  --tw-gradient-to: color-mix(in srgb, var(--c-surface-3) 0%, transparent)
+    var(--tw-gradient-to-position);
+  --tw-gradient-stops:
+    var(--tw-gradient-from), var(--c-surface-3) var(--tw-gradient-via-position),
+    var(--tw-gradient-to);
+}
+:where(.dark) :is(.to-gray-100, .to-slate-100) {
+  --tw-gradient-to: var(--c-surface-3) var(--tw-gradient-to-position);
+}
+
+/*
+ * Pastel status colours (alerts, chips, callouts). Light backgrounds become a
+ * tint of the hue over the card colour; dark text shades step up to lighter
+ * shades so they stay readable.
+ */
+:where(.dark) :is(.bg-red-50, .bg-red-100) {
+  background-color: color-mix(in srgb, #ef4444 12%, var(--c-surface));
+}
+:where(.dark) .bg-red-200 {
+  background-color: color-mix(in srgb, #ef4444 22%, var(--c-surface));
+}
+:where(.dark) .text-red-600 {
+  color: #f87171;
+}
+:where(.dark) .text-red-700 {
+  color: #fca5a5;
+}
+:where(.dark) :is(.text-red-800, .text-red-900) {
+  color: #fecaca;
+}
+:where(.dark) :is(.border-red-100, .border-red-200, .border-red-300) {
+  border-color: color-mix(in srgb, #ef4444 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-orange-50, .bg-orange-100) {
+  background-color: color-mix(in srgb, #f97316 12%, var(--c-surface));
+}
+:where(.dark) .bg-orange-200 {
+  background-color: color-mix(in srgb, #f97316 22%, var(--c-surface));
+}
+:where(.dark) .text-orange-600 {
+  color: #fb923c;
+}
+:where(.dark) .text-orange-700 {
+  color: #fdba74;
+}
+:where(.dark) :is(.text-orange-800, .text-orange-900) {
+  color: #fed7aa;
+}
+:where(.dark) :is(.border-orange-100, .border-orange-200, .border-orange-300) {
+  border-color: color-mix(in srgb, #f97316 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-amber-50, .bg-amber-100) {
+  background-color: color-mix(in srgb, #f59e0b 12%, var(--c-surface));
+}
+:where(.dark) .bg-amber-200 {
+  background-color: color-mix(in srgb, #f59e0b 22%, var(--c-surface));
+}
+:where(.dark) .text-amber-600 {
+  color: #fbbf24;
+}
+:where(.dark) .text-amber-700 {
+  color: #fcd34d;
+}
+:where(.dark) :is(.text-amber-800, .text-amber-900) {
+  color: #fde68a;
+}
+:where(.dark) :is(.border-amber-100, .border-amber-200, .border-amber-300) {
+  border-color: color-mix(in srgb, #f59e0b 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-yellow-50, .bg-yellow-100) {
+  background-color: color-mix(in srgb, #eab308 12%, var(--c-surface));
+}
+:where(.dark) .bg-yellow-200 {
+  background-color: color-mix(in srgb, #eab308 22%, var(--c-surface));
+}
+:where(.dark) .text-yellow-600 {
+  color: #facc15;
+}
+:where(.dark) .text-yellow-700 {
+  color: #fde047;
+}
+:where(.dark) :is(.text-yellow-800, .text-yellow-900) {
+  color: #fef08a;
+}
+:where(.dark) :is(.border-yellow-100, .border-yellow-200, .border-yellow-300) {
+  border-color: color-mix(in srgb, #eab308 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-green-50, .bg-green-100) {
+  background-color: color-mix(in srgb, #22c55e 12%, var(--c-surface));
+}
+:where(.dark) .bg-green-200 {
+  background-color: color-mix(in srgb, #22c55e 22%, var(--c-surface));
+}
+:where(.dark) .text-green-600 {
+  color: #4ade80;
+}
+:where(.dark) .text-green-700 {
+  color: #86efac;
+}
+:where(.dark) :is(.text-green-800, .text-green-900) {
+  color: #bbf7d0;
+}
+:where(.dark) :is(.border-green-100, .border-green-200, .border-green-300) {
+  border-color: color-mix(in srgb, #22c55e 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-emerald-50, .bg-emerald-100) {
+  background-color: color-mix(in srgb, #10b981 12%, var(--c-surface));
+}
+:where(.dark) .bg-emerald-200 {
+  background-color: color-mix(in srgb, #10b981 22%, var(--c-surface));
+}
+:where(.dark) .text-emerald-600 {
+  color: #34d399;
+}
+:where(.dark) .text-emerald-700 {
+  color: #6ee7b7;
+}
+:where(.dark) :is(.text-emerald-800, .text-emerald-900) {
+  color: #a7f3d0;
+}
+:where(.dark)
+  :is(.border-emerald-100, .border-emerald-200, .border-emerald-300) {
+  border-color: color-mix(in srgb, #10b981 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-teal-50, .bg-teal-100) {
+  background-color: color-mix(in srgb, #14b8a6 12%, var(--c-surface));
+}
+:where(.dark) .bg-teal-200 {
+  background-color: color-mix(in srgb, #14b8a6 22%, var(--c-surface));
+}
+:where(.dark) .text-teal-600 {
+  color: #2dd4bf;
+}
+:where(.dark) .text-teal-700 {
+  color: #5eead4;
+}
+:where(.dark) :is(.text-teal-800, .text-teal-900) {
+  color: #99f6e4;
+}
+:where(.dark) :is(.border-teal-100, .border-teal-200, .border-teal-300) {
+  border-color: color-mix(in srgb, #14b8a6 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-cyan-50, .bg-cyan-100) {
+  background-color: color-mix(in srgb, #06b6d4 12%, var(--c-surface));
+}
+:where(.dark) .bg-cyan-200 {
+  background-color: color-mix(in srgb, #06b6d4 22%, var(--c-surface));
+}
+:where(.dark) .text-cyan-600 {
+  color: #22d3ee;
+}
+:where(.dark) .text-cyan-700 {
+  color: #67e8f9;
+}
+:where(.dark) :is(.text-cyan-800, .text-cyan-900) {
+  color: #a5f3fc;
+}
+:where(.dark) :is(.border-cyan-100, .border-cyan-200, .border-cyan-300) {
+  border-color: color-mix(in srgb, #06b6d4 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-sky-50, .bg-sky-100) {
+  background-color: color-mix(in srgb, #0ea5e9 12%, var(--c-surface));
+}
+:where(.dark) .bg-sky-200 {
+  background-color: color-mix(in srgb, #0ea5e9 22%, var(--c-surface));
+}
+:where(.dark) .text-sky-600 {
+  color: #38bdf8;
+}
+:where(.dark) .text-sky-700 {
+  color: #7dd3fc;
+}
+:where(.dark) :is(.text-sky-800, .text-sky-900) {
+  color: #bae6fd;
+}
+:where(.dark) :is(.border-sky-100, .border-sky-200, .border-sky-300) {
+  border-color: color-mix(in srgb, #0ea5e9 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-blue-50, .bg-blue-100) {
+  background-color: color-mix(in srgb, #3b82f6 12%, var(--c-surface));
+}
+:where(.dark) .bg-blue-200 {
+  background-color: color-mix(in srgb, #3b82f6 22%, var(--c-surface));
+}
+:where(.dark) .text-blue-600 {
+  color: #60a5fa;
+}
+:where(.dark) .text-blue-700 {
+  color: #93c5fd;
+}
+:where(.dark) :is(.text-blue-800, .text-blue-900) {
+  color: #bfdbfe;
+}
+:where(.dark) :is(.border-blue-100, .border-blue-200, .border-blue-300) {
+  border-color: color-mix(in srgb, #3b82f6 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-indigo-50, .bg-indigo-100) {
+  background-color: color-mix(in srgb, #6366f1 12%, var(--c-surface));
+}
+:where(.dark) .bg-indigo-200 {
+  background-color: color-mix(in srgb, #6366f1 22%, var(--c-surface));
+}
+:where(.dark) .text-indigo-600 {
+  color: #818cf8;
+}
+:where(.dark) .text-indigo-700 {
+  color: #a5b4fc;
+}
+:where(.dark) :is(.text-indigo-800, .text-indigo-900) {
+  color: #c7d2fe;
+}
+:where(.dark) :is(.border-indigo-100, .border-indigo-200, .border-indigo-300) {
+  border-color: color-mix(in srgb, #6366f1 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-violet-50, .bg-violet-100) {
+  background-color: color-mix(in srgb, #8b5cf6 12%, var(--c-surface));
+}
+:where(.dark) .bg-violet-200 {
+  background-color: color-mix(in srgb, #8b5cf6 22%, var(--c-surface));
+}
+:where(.dark) .text-violet-600 {
+  color: #a78bfa;
+}
+:where(.dark) .text-violet-700 {
+  color: #c4b5fd;
+}
+:where(.dark) :is(.text-violet-800, .text-violet-900) {
+  color: #ddd6fe;
+}
+:where(.dark) :is(.border-violet-100, .border-violet-200, .border-violet-300) {
+  border-color: color-mix(in srgb, #8b5cf6 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-purple-50, .bg-purple-100) {
+  background-color: color-mix(in srgb, #a855f7 12%, var(--c-surface));
+}
+:where(.dark) .bg-purple-200 {
+  background-color: color-mix(in srgb, #a855f7 22%, var(--c-surface));
+}
+:where(.dark) .text-purple-600 {
+  color: #c084fc;
+}
+:where(.dark) .text-purple-700 {
+  color: #d8b4fe;
+}
+:where(.dark) :is(.text-purple-800, .text-purple-900) {
+  color: #e9d5ff;
+}
+:where(.dark) :is(.border-purple-100, .border-purple-200, .border-purple-300) {
+  border-color: color-mix(in srgb, #a855f7 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-fuchsia-50, .bg-fuchsia-100) {
+  background-color: color-mix(in srgb, #d946ef 12%, var(--c-surface));
+}
+:where(.dark) .text-fuchsia-600 {
+  color: #e879f9;
+}
+:where(.dark) .text-fuchsia-700 {
+  color: #f0abfc;
+}
+:where(.dark) :is(.text-fuchsia-800, .text-fuchsia-900) {
+  color: #f5d0fe;
+}
+:where(.dark)
+  :is(.border-fuchsia-100, .border-fuchsia-200, .border-fuchsia-300) {
+  border-color: color-mix(in srgb, #d946ef 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-pink-50, .bg-pink-100) {
+  background-color: color-mix(in srgb, #ec4899 12%, var(--c-surface));
+}
+:where(.dark) .bg-pink-200 {
+  background-color: color-mix(in srgb, #ec4899 22%, var(--c-surface));
+}
+:where(.dark) .text-pink-600 {
+  color: #f472b6;
+}
+:where(.dark) .text-pink-700 {
+  color: #f9a8d4;
+}
+:where(.dark) :is(.text-pink-800, .text-pink-900) {
+  color: #fbcfe8;
+}
+:where(.dark) :is(.border-pink-100, .border-pink-200, .border-pink-300) {
+  border-color: color-mix(in srgb, #ec4899 38%, var(--c-surface));
+}
+
+:where(.dark) :is(.bg-rose-50, .bg-rose-100) {
+  background-color: color-mix(in srgb, #f43f5e 12%, var(--c-surface));
+}
+:where(.dark) .bg-rose-200 {
+  background-color: color-mix(in srgb, #f43f5e 22%, var(--c-surface));
+}
+:where(.dark) .text-rose-600 {
+  color: #fb7185;
+}
+:where(.dark) .text-rose-700 {
+  color: #fda4af;
+}
+:where(.dark) :is(.text-rose-800, .text-rose-900) {
+  color: #fecdd3;
+}
+:where(.dark) :is(.border-rose-100, .border-rose-200, .border-rose-300) {
+  border-color: color-mix(in srgb, #f43f5e 38%, var(--c-surface));
+}

@@ -33,9 +33,9 @@
   --verso-danger: #ef4444;
   --verso-text: #f8fafc;
   --verso-text-muted: #94a3b8;
-  --background: #f8f5f1;
+  --background: #fffaf3;
   --foreground: #0f172a;
-  --muted: #f1ece5;
+  --muted: #fdf1e1;
   --muted-foreground: #475569;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
@@ -56,25 +56,25 @@
 }
 
 .dark {
-  --background: hsl(240, 10%, 3.9%);
-  --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 3.9%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 3.9%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(36, 82%, 43%);
-  --primary-foreground: hsl(60, 9.1%, 97.8%);
-  --secondary: hsl(240, 3.7%, 15.9%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(240, 3.7%, 15.9%);
-  --accent-foreground: hsl(0, 0%, 98%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
+  --background: #0b1220;
+  --foreground: #f1f5f9;
+  --muted: #172036;
+  --muted-foreground: #a3b1c6;
+  --popover: #111a2c;
+  --popover-foreground: #f1f5f9;
+  --card: #111a2c;
+  --card-foreground: #f1f5f9;
+  --border: #26344f;
+  --input: #26344f;
+  --primary: #d97706;
+  --primary-foreground: #ffffff;
+  --secondary: #0e7490;
+  --secondary-foreground: #ffffff;
+  --accent: #1d2b46;
+  --accent-foreground: #f1f5f9;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --ring: var(--verso-amber-bright);
   --radius: 0.5rem;
 }
 
@@ -82,7 +82,9 @@
   color-scheme: light;
 }
 
-.service-light-portal :is(input, textarea, [role="combobox"], .bg-background) {
+:root:not(.dark)
+  .service-light-portal
+  :is(input, textarea, [role="combobox"], .bg-background) {
   background-color: #ffffff;
   color: #0f172a;
 }

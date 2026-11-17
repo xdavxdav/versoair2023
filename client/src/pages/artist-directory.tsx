@@ -360,7 +360,7 @@ export default function ArtistDirectory() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                      className="border-purple-600 bg-slate-800 text-white hover:bg-slate-700 hover:text-white w-full md:w-[300px] justify-between"
                     >
                       <span className="text-sm">
                         {selectedGenre
@@ -425,7 +425,7 @@ export default function ArtistDirectory() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full md:w-[300px] justify-between"
+                      className="border-purple-600 bg-slate-800 text-white hover:bg-slate-700 hover:text-white w-full md:w-[300px] justify-between"
                     >
                       <span className="text-sm">
                         {selectedArtistCountry
@@ -503,7 +503,7 @@ export default function ArtistDirectory() {
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="outline"
-                            className="border-purple-600 bg-slate-800 hover:bg-slate-700 w-full justify-between"
+                            className="border-purple-600 bg-slate-800 text-white hover:bg-slate-700 hover:text-white w-full justify-between"
                           >
                             <span className="text-sm">
                               {SORT_OPTIONS.find((s) => s.value === sortBy)

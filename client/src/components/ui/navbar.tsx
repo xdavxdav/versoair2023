@@ -210,7 +210,7 @@ export default function Navbar({
 
   const isPanelOpen = isLocationPanelOpen || mobileMenuOpen;
 
-  const navbarClasses = `sticky top-[4.5rem] z-[51] border-b border-slate-200/80 bg-[#f7f5f1]/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-300 ${
+  const navbarClasses = `sticky top-[4.5rem] z-[51] border-b border-slate-200/80 bg-[#fffaf3]/90 dark:border-slate-700/70 dark:bg-[#0b1220]/90 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all duration-300 ${
     isPanelOpen ? "opacity-60" : "opacity-100"
   } ${
     isMobile
@@ -253,7 +253,7 @@ export default function Navbar({
                 alt="Verso Air Logo"
                 className="
                   relative h-14 md:h-16 xl:h-20 w-auto
-                  brightness-0
+                  brightness-0 dark:invert
                   transition-all duration-500
                   group-hover:brightness-110
                   group-hover:scale-110
@@ -301,10 +301,10 @@ export default function Navbar({
             ) : (
               <Link
                 href="/geo-admin"
-                className="text-gray-400 px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 group relative cursor-pointer"
+                className="text-gray-500 px-2 py-1 text-sm whitespace-nowrap flex items-center gap-1 group relative cursor-pointer"
               >
-                <Lock className="h-3 w-3 text-gray-400" />
-                <span className="text-gray-400">Géo Admin</span>
+                <Lock className="h-3 w-3 text-gray-500" />
+                <span className="text-gray-500">Géo Admin</span>
                 <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
                   {isAuthenticated
                     ? "Abonnement premium requis"
