@@ -16,13 +16,24 @@ import {
   type SupportTicket, type TicketActor, type TicketLink, type TicketLinks, type TicketStatus,
 } from "@shared/ticket-policy";
 
+import "./tickets-workspace.css";
+
 const selectClass = "min-h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-900 max-w-full";
-const statusEdge: Record<string, string> = {
-  open: "border-l-amber-500",
-  in_progress: "border-l-teal-600",
-  pending: "border-l-slate-400",
-  resolved: "border-l-emerald-600",
-  closed: "border-l-slate-300",
+const SORTS = ["target", "newest", "openFirst"] as const;
+type Sort = (typeof SORTS)[number];
+
+function Icon({ d, className }: { d: string; className?: string }) {
+  return <svg viewBox="0 0 24 24" aria-hidden="true" className={className}><path d={d} /></svg>;
+}
+const ICONS = {
+  search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3",
+  clear: "M18 6 6 18M6 6l12 12",
+  chevron: "m6 9 6 6 6-6",
+  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
+  check: "M20 6 9 17l-5-5",
+  refresh: "M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5",
+  plus: "M12 5v14M5 12h14",
+  user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
 };
 
 export function Tickets() {
@@ -35,6 +46,8 @@ export function Tickets() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [sort, setSort] = useState<Sort>("target");
+  const [mineOnly, setMineOnly] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(() => {
     const value = new URLSearchParams(window.location.search).get("ticket");
     return value && /^[1-9]\d{0,8}$/.test(value) ? Number(value) : null;
@@ -67,75 +80,136 @@ export function Tickets() {
     onSuccess: (ticket) => { setCreating(false); setTitle(""); setDescription(""); setTicketType("incident"); setSelectedId(ticket.id); refresh(); },
   });
   const selected = tickets.data?.find((ticket) => ticket.id === selectedId);
-  const visible = tickets.data?.filter((ticket) =>
+  const now = Date.now();
+  const isLate = (ticket: SupportTicket) => !TERMINAL_STATUSES.includes(ticket.status) &&
+    (ticket.sla_breached === true || (!!ticket.sla_due_at && new Date(ticket.sla_due_at).getTime() < now));
+  const dueTime = (ticket: SupportTicket) => ticket.sla_due_at ? new Date(ticket.sla_due_at).getTime() : Number.MAX_SAFE_INTEGER;
+  const visible = (tickets.data?.filter((ticket) =>
     (status === "all" || ticket.status === status) &&
     (priorityFilter === "all" || ticket.priority === priorityFilter) &&
+    (!mineOnly || ticket.assignee_id === actor.id) &&
     `${ticket.id} ${ticket.title} ${ticket.description || ""}`.toLowerCase().includes(search.toLowerCase()),
-  ) || [];
+  ) || []).sort((a, b) => {
+    const aDone = TERMINAL_STATUSES.includes(a.status) ? 1 : 0;
+    const bDone = TERMINAL_STATUSES.includes(b.status) ? 1 : 0;
+    if (sort === "newest") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime() || b.id - a.id;
+    if (aDone !== bDone) return aDone - bDone;
+    return sort === "target" ? dueTime(a) - dueTime(b) || a.id - b.id : b.id - a.id;
+  });
   // Staff can only link to problems they can read, which is exactly what their own list contains.
   const openProblems = staff
     ? (tickets.data ?? []).filter((ticket) => ticket.ticket_type === "problem" && !TERMINAL_STATUSES.includes(ticket.status))
     : [];
 
   const all = tickets.data ?? [];
-  const now = Date.now();
+  const live = all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status));
   const kpi = {
-    open: all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status)).length,
-    unassigned: all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status) && !ticket.assignee_id).length,
-    late: all.filter((ticket) => !TERMINAL_STATUSES.includes(ticket.status) && ticket.sla_due_at && new Date(ticket.sla_due_at).getTime() < now).length,
-    closed: all.filter((ticket) => TERMINAL_STATUSES.includes(ticket.status)).length,
+    open: live.length,
+    unassigned: live.filter((ticket) => !ticket.assignee_id).length,
+    late: live.filter(isLate).length,
+    closed: all.length - live.length,
   };
+  const dateText = (value: string) => new Date(value).toLocaleString();
+  const alerted = new Set((alerts.data ?? []).map((alert) => alert.ticket_id));
+  const staffTickets = [...live].filter((ticket) => !alerted.has(ticket.id)).sort((a, b) => dueTime(a) - dueTime(b) || a.id - b.id).slice(0, 5);
 
-  return <main className="min-h-screen bg-[#F6F1E9] px-4 pb-24 pt-24 text-slate-900" data-testid="ticket-workspace">
-    <div className="mx-auto max-w-6xl space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-[#152238] p-6 text-white shadow-md">
-        <div><h1 className="text-2xl font-bold">{staff ? t("workspace") : t("tickets")}</h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-200">{staff ? t("scope") : t("policy")}</p></div>
-        <div className="flex flex-wrap gap-2">
-          {(actor.owner || actor.role === "admin") && <Link href="/geo-admin/dashboard"><Button variant="secondary">{t(actor.owner ? "ownerPanel" : "adminPanel")}</Button></Link>}
-          <Button variant="secondary" onClick={refresh}>{t("refresh")}</Button>
-          <Button className="bg-amber-400 text-slate-950 hover:bg-amber-300" onClick={() => setCreating(true)}>{t("create")}</Button>
+  return <main className="sw" data-testid="ticket-workspace">
+    <div className="sw-shell">
+      <header className="sw-hero">
+        <div className="sw-hero-in">
+          <div><h1>{staff ? t("workspace") : t("tickets")}</h1>
+            <p className="sw-hero-sub">{staff ? t("scope") : t("policy")}</p></div>
+          <div className="sw-hero-actions">
+            {(actor.owner || actor.role === "admin") && <Link href="/geo-admin/dashboard" className="sw-btn sw-btn-ghost">{t(actor.owner ? "ownerPanel" : "adminPanel")}</Link>}
+            <button type="button" className="sw-btn sw-btn-teal" onClick={refresh}><Icon d={ICONS.refresh} />{t("refresh")}</button>
+            <button type="button" className="sw-btn sw-btn-amber" onClick={() => setCreating(true)}><Icon d={ICONS.plus} />{t("create")}</button>
+          </div>
         </div>
       </header>
-      {staff && <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-[#D8CDBE] md:grid-cols-4" aria-label="queue summary">
-        {([["Open", kpi.open], ["Unassigned", kpi.unassigned], ["Past target", kpi.late], ["Closed", kpi.closed]] as const).map(([label, value]) =>
-          <div key={label} className="bg-white p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{label}</p><p className="text-2xl font-bold text-[#152238]">{value}</p></div>)}
+      {staff && <div className="sw-kpis" aria-label="queue summary">
+        {([
+          ["open", t("open"), kpi.open, t("kpiOpenNote"), ""],
+          ["unassigned", t("unassigned"), kpi.unassigned, t("kpiUnassignedNote"), kpi.unassigned ? "is-warn" : ""],
+          ["late", t("pastTarget"), kpi.late, t("kpiLateNote"), kpi.late ? "is-alert" : "is-ok"],
+          ["closed", t("closed"), kpi.closed, t("kpiClosedNote"), ""],
+        ] as const).map(([key, label, value, note, tone]) =>
+          <div key={key} className={`sw-kpi ${tone}`}><span className="sw-kpi-k">{label}</span><span className="sw-kpi-v">{value}</span><span className="sw-kpi-n">{note}</span></div>)}
       </div>}
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-      <div className="min-w-0 space-y-6">
-      <div className="flex flex-wrap gap-3">
-        <Input aria-label={t("search")} placeholder={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-0 flex-1 bg-white" />
-        <select className={selectClass} aria-label={t("status")} value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="all">{t("all")}</option>{TICKET_STATUSES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
-        </select>
-        <select className={selectClass} aria-label={t("priority")} value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
-          <option value="all">{t("all")}</option>{TICKET_PRIORITIES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
-        </select>
+      <div className="sw-toolbar">
+        <div className={`sw-search${search ? " has" : ""}`}>
+          <Icon d={ICONS.search} />
+          <input type="search" aria-label={t("search")} placeholder={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} />
+          <button type="button" className="sw-clr" aria-label={t("clearSearch")} onClick={() => setSearch("")}><Icon d={ICONS.clear} /></button>
+        </div>
+        <div className="sw-selwrap">
+          <select aria-label={t("status")} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="all">{t("all")}</option>{TICKET_STATUSES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+          </select><Icon d={ICONS.chevron} />
+        </div>
+        <div className="sw-selwrap">
+          <select aria-label={t("priority")} value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+            <option value="all">{t("all")}</option>{TICKET_PRIORITIES.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+          </select><Icon d={ICONS.chevron} />
+        </div>
+        <div className="sw-selwrap">
+          <select aria-label={t("sort")} value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+            <option value="target">{t("sortTarget")}</option><option value="newest">{t("sortNewest")}</option><option value="openFirst">{t("sortOpenFirst")}</option>
+          </select><Icon d={ICONS.chevron} />
+        </div>
+        {staff && <button type="button" className={`sw-mini sw-mine${mineOnly ? " is-on" : ""}`} aria-pressed={mineOnly} onClick={() => setMineOnly(!mineOnly)}><Icon d={ICONS.user} />{t("mine")}</button>}
+        <span className="sw-count" aria-live="polite"><b>{visible.length}</b> {t("of")} {all.length} {t("ticketCount")}</span>
       </div>
-      {tickets.isPending && <p>{t("loading")}</p>}
-      {tickets.isError && <p role="alert">{errorText(tickets.error)} <Button onClick={() => void tickets.refetch()}>{t("retry")}</Button></p>}
-      {tickets.isSuccess && !visible.length && <p>{t("empty")}</p>}
-      <div className="grid gap-4 md:grid-cols-2">
-        {visible.map((ticket) => <button key={ticket.id} onClick={() => setSelectedId(ticket.id)}
-          className={`min-w-0 rounded-xl border border-l-4 border-slate-200 bg-white p-5 text-left shadow-sm hover:border-[#E0A008] ${statusEdge[ticket.status] ?? "border-l-slate-300"}`}>
-          <div className="flex flex-wrap justify-between gap-2 text-sm">
-            <span>#{ticket.id} · {t(ticket.ticket_type ?? "incident")} · {t(ticket.status)}</span><span>{t(ticket.priority)}</span>
-          </div>
-          <h2 className="mt-2 break-words font-bold">{ticket.title}</h2>
-          <p className="mt-2 break-words text-sm text-slate-600">{ticket.description?.slice(0, 180)}</p>
-          <p className="mt-3 text-sm">{t("assignee")}: {ticket.assignee_id || t("unassigned")}</p>
-          {ticket.abandonment_proposed_at && staff && <p className="mt-2 font-semibold text-amber-800">{t("abandonment")}</p>}
-          {ticket.sla_due_at && <p className={`mt-2 text-xs ${ticket.sla_breached ? "text-red-700" : "text-slate-600"}`}>{t("target")}: {new Date(ticket.sla_due_at).toLocaleString()}</p>}
-        </button>)}
+      <div className={`sw-layout${staff ? "" : " is-solo"}`}>
+      <div className="sw-main">
+      {tickets.isPending && <p className="sw-note">{t("loading")}</p>}
+      {tickets.isError && <p role="alert" className="sw-note">{errorText(tickets.error)} <button type="button" className="sw-btn" onClick={() => void tickets.refetch()}>{t("retry")}</button></p>}
+      {tickets.isSuccess && !visible.length && <div className="sw-empty"><b>{t("empty")}</b></div>}
+      <div className="sw-cards">
+        {visible.map((ticket) => {
+          const done = TERMINAL_STATUSES.includes(ticket.status);
+          const late = isLate(ticket);
+          return <article key={ticket.id} className="sw-ticket" data-state={done ? "closed" : late ? "breach" : "open"}>
+            <div className="sw-t-head">
+              <span className="sw-tid">#{ticket.id}</span>
+              <span className="sw-tag sw-tag-teal">{t(ticket.ticket_type ?? "incident")}</span>
+              <span className={`sw-tag ${done ? "sw-tag-closed" : "sw-tag-open"}`}>{t(ticket.status)}</span>
+              <span className={`sw-tag sw-spacer ${ticket.priority === "critical" || ticket.priority === "high" ? "sw-tag-red" : "sw-tag-med"}`}>{t(ticket.priority)}</span>
+            </div>
+            <h2 className="sw-t-title"><button type="button" onClick={() => setSelectedId(ticket.id)}>{ticket.title}</button></h2>
+            {ticket.description && <p className="sw-t-desc">{ticket.description.slice(0, 180)}</p>}
+            <dl className="sw-t-fields">
+              <div className="sw-f"><dt>{t("category")}</dt><dd>{ticket.category}</dd></div>
+              {ticket.team && <div className="sw-f"><dt>{t("team")}</dt><dd>{ticket.team}</dd></div>}
+              <div className="sw-f"><dt>{t("assignee")}</dt><dd>{ticket.assignee_id ? (ticket.assignee_id === actor.id ? t("you") : `#${ticket.assignee_id}`) : t("unassigned")}</dd></div>
+            </dl>
+            <div className="sw-t-foot">
+              {ticket.reporter && <p className="sw-submitter">{t("reporter")} <b>{ticket.reporter}</b></p>}
+              {ticket.abandonment_proposed_at && staff && <p className="sw-warn">{t("abandonment")}</p>}
+              <div className="sw-t-actions">
+                {done ? <span className="sw-sla sw-sla-done"><Icon d={ICONS.check} />{t(ticket.status)}</span>
+                  : ticket.sla_due_at ? <span className={`sw-sla ${late ? "sw-sla-late" : "sw-sla-ok"}`}><Icon d={ICONS.clock} />{late ? `${t("pastTarget")} · ` : `${t("dueIn")} `}{dateText(ticket.sla_due_at)}</span>
+                    : <span className="sw-sla sw-sla-done"><Icon d={ICONS.clock} />{t("noTarget")}</span>}
+                <button type="button" className="sw-mini sw-spacer" onClick={() => setSelectedId(ticket.id)}>{t("openDetails")}</button>
+              </div>
+            </div>
+          </article>;
+        })}
       </div>
       </div>
-      {staff && <aside className="min-w-0 space-y-6">
+      {staff && <aside className="sw-rail">
         <TicketSlaReport userId={actor.id} onOpen={setSelectedId} />
-        <section className="rounded-xl border border-slate-200 bg-white p-5"><h2 className="font-bold text-[#152238]">{t("alerts")}</h2>
-          {alerts.isError && <p role="alert">{errorText(alerts.error)}</p>}
-          <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto">{alerts.data?.map((alert) =>
-            <li key={alert.id} className="border-b pb-2 text-sm"><button className="underline" onClick={() => setSelectedId(alert.ticket_id)}>#{alert.ticket_id}</button> · {alert.message}</li>,
-          )}</ul></section>
+        <section className="sw-panel"><div className="sw-p-head"><h2>{t("alerts")}</h2></div>
+          <div className="sw-p-body">
+            {alerts.isError && <p role="alert" className="sw-note">{errorText(alerts.error)}</p>}
+            {alerts.isSuccess && !alerts.data.length && !staffTickets.length && <p className="sw-meta">{t("noAlerts")}</p>}
+            {alerts.data?.map((alert) =>
+              <div key={alert.id} className="sw-esc"><p className="sw-esc-t"><button type="button" className="sw-link" onClick={() => setSelectedId(alert.ticket_id)}>#{alert.ticket_id}</button> · {alert.message}</p></div>,
+            )}
+            {staffTickets.map((ticket) =>
+              <div key={`due-${ticket.id}`} className="sw-esc"><p className="sw-esc-t"><button type="button" className="sw-link" onClick={() => setSelectedId(ticket.id)}>#{ticket.id}</button> · {ticket.title}
+                {ticket.sla_due_at && <span className="sw-meta"> · {isLate(ticket) ? `${t("pastTarget")} · ` : `${t("dueIn")} `}{dateText(ticket.sla_due_at)}</span>}</p></div>,
+            )}
+          </div></section>
       </aside>}
       </div>
     </div>
