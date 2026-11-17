@@ -2705,6 +2705,7 @@ export const printJobs = pgTable(
     status: varchar("status", { length: 30 }).default("received"), // 'received' | 'layout' | 'sent_to_printer' | 'printing' | 'printed' | 'distributed' | 'complete'
     quantity: integer("quantity").default(1),
     notes: text("notes"),
+    trackingNumber: text("tracking_number"), // set by the admin shipping update
     assignedAt: timestamp("assigned_at"),
     completedAt: timestamp("completed_at"),
     createdAt: timestamp("created_at").defaultNow(),

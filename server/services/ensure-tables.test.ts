@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { getTableColumns } from "drizzle-orm";
 import type { PoolClient } from "pg";
 
+import { printJobs } from "../../shared/schema";
 import { ensureAllTables } from "./ensure-tables.ts";
 
 function restoreEnv(name: string, value: string | undefined) {
@@ -230,6 +232,82 @@ test("adds the message send key column and its partial unique index idempotently
       0,
       "the key column must not be backfilled or rewritten",
     );
+  } finally {
+    restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
+    restoreEnv("NODE_ENV", previousNodeEnv);
+  }
+});
+
+test("adds the print job tracking number column the shipping update writes", async () => {
+  const previousDisableFlag = process.env.DISABLE_DB_CHECK;
+  const previousNodeEnv = process.env.NODE_ENV;
+  delete process.env.DISABLE_DB_CHECK;
+  process.env.NODE_ENV = "test";
+  const queries: string[] = [];
+  const client = {
+    async query(query: string) {
+      queries.push(query.replace(/\s+/g, " ").trim());
+      if (query.includes("information_schema.tables")) {
+        return { rows: [{ table_name: "users" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    },
+    release() {},
+  } as unknown as PoolClient;
+
+  try {
+    assert.equal(await ensureAllTables(async () => client), "verified");
+
+    assert.ok(
+      queries.includes(
+        "ALTER TABLE IF EXISTS print_jobs ADD COLUMN IF NOT EXISTS tracking_number TEXT",
+      ),
+      "expected an additive, nullable tracking_number repair for older databases",
+    );
+    assert.equal(
+      getTableColumns(printJobs).trackingNumber.name,
+      "tracking_number",
+      "the Drizzle model must use the same column name as the repair",
+    );
+    assert.equal(
+      queries.filter(
+        (query) =>
+          /print_jobs/.test(query) &&
+          /^(UPDATE|INSERT|DELETE|DROP|TRUNCATE)\b/i.test(query),
+      ).length,
+      0,
+      "the repair must not rewrite or drop print job rows",
+    );
+  } finally {
+    restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
+    restoreEnv("NODE_ENV", previousNodeEnv);
+  }
+});
+
+test("does not block startup when the optional print job column cannot be added", async () => {
+  const previousDisableFlag = process.env.DISABLE_DB_CHECK;
+  const previousNodeEnv = process.env.NODE_ENV;
+  delete process.env.DISABLE_DB_CHECK;
+  process.env.NODE_ENV = "test";
+  let released = false;
+  const client = {
+    async query(query: string) {
+      if (query.includes("information_schema.tables")) {
+        return { rows: [{ table_name: "users" }], rowCount: 1 };
+      }
+      if (query.includes("print_jobs ADD COLUMN")) {
+        throw new Error("must be owner of table print_jobs");
+      }
+      return { rows: [], rowCount: 0 };
+    },
+    release() {
+      released = true;
+    },
+  } as unknown as PoolClient;
+
+  try {
+    assert.equal(await ensureAllTables(async () => client), "verified");
+    assert.equal(released, true);
   } finally {
     restoreEnv("DISABLE_DB_CHECK", previousDisableFlag);
     restoreEnv("NODE_ENV", previousNodeEnv);

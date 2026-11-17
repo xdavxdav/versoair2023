@@ -340,6 +340,24 @@ export async function ensureAllTables(
       }
     }
 
+    // ── Column drift: print_jobs shipping ──────────────────────────────────
+    // The admin shipping update writes print_jobs.tracking_number, but the
+    // original table has no such column, so that update fails on existing
+    // databases. Optional feature: a failure is logged but must not stop boot.
+    const PRINT_JOBS_ADDITIONS = [
+      `ALTER TABLE IF EXISTS print_jobs ADD COLUMN IF NOT EXISTS tracking_number TEXT`,
+    ];
+    for (const alt of PRINT_JOBS_ADDITIONS) {
+      try {
+        await client.query(alt);
+      } catch (err) {
+        console.error(
+          `  ⚠️ Optional schema repair skipped (${alt}):`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
     try {
       await client.query(`
         INSERT INTO issued_cardholders (user_id, stripe_cardholder_id)
