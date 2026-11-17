@@ -1,6 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
+import {
+  CHARGE_CURRENCIES,
+  amountInputProps,
+  attemptFor,
+  checkChargeAmount,
+  formatMoney,
+  interpretChargeResponse,
+  interpretRefundResponse,
+  type ChargeAttempt,
+  type ChargeOutcome,
+  type RefundOutcome,
+} from "@/lib/charge-form";
 import { useSubscription } from "@/hooks/use-subscription";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -224,6 +236,19 @@ export default function CardVaultPage() {
     currency: "USD",
   });
   const [chargeLoading, setChargeLoading] = useState(false);
+  // The charge being tried. Kept while it is unknown whether the card was
+  // charged, so pressing Charge again retries it instead of charging twice.
+  const chargeAttempt = useRef<ChargeAttempt | null>(null);
+  const amountCheck = checkChargeAmount(
+    chargeForm.amount,
+    chargeForm.currency,
+  );
+
+  function closeChargeDialog() {
+    chargeAttempt.current = null;
+    setChargeTarget(null);
+    setChargeForm({ amount: "", description: "", currency: "USD" });
+  }
 
   // Charge history
   const [charges, setCharges] = useState<ChargeRecord[]>([]);
@@ -344,60 +369,79 @@ export default function CardVaultPage() {
 
   async function handleCharge() {
     if (!chargeTarget) return;
-    const amt = parseFloat(chargeForm.amount);
-    if (!amt || amt <= 0) {
+    const check = checkChargeAmount(chargeForm.amount, chargeForm.currency);
+    if (!check.ok) {
       toast({
         title: "Invalid amount",
-        description: "Enter a valid charge amount.",
+        description: check.error,
         variant: "destructive",
       });
       return;
     }
 
+    const attempt = attemptFor(chargeAttempt.current, {
+      cardId: chargeTarget.cardId,
+      amount: check.amount,
+      currency: chargeForm.currency,
+      description:
+        chargeForm.description.trim() || `Charge for ${chargeTarget.username}`,
+      category: "admin_charge",
+    });
+    chargeAttempt.current = attempt;
+
+    setChargeLoading(true);
+    let outcome: ChargeOutcome;
     try {
-      setChargeLoading(true);
       const res = await authenticatedFetch("/api/v1/payments/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cardId: chargeTarget.cardId,
-          amount: amt,
-          currency: chargeForm.currency,
-          description:
-            chargeForm.description || `Charge for ${chargeTarget.username}`,
-          category: "admin_charge",
-          processedBy: user?.id,
+          ...attempt.request,
+          idempotencyKey: attempt.key,
         }),
       });
+      outcome = interpretChargeResponse(
+        res.status,
+        await res.json().catch(() => null),
+      );
+    } catch {
+      outcome = interpretChargeResponse(null, null);
+    }
+    setChargeLoading(false);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Charge failed");
-
-      toast({
-        title: "Charge successful",
-        description: `$${amt.toFixed(2)} charged to ${chargeTarget.brand.toUpperCase()} ****${chargeTarget.last4} (${chargeTarget.username})`,
-      });
-      setChargeTarget(null);
-      setChargeForm({ amount: "", description: "", currency: "USD" });
-      fetchStats();
-      if (activeTab === "history") fetchCharges(chargesPage);
-    } catch (err: any) {
+    if (!outcome.keepAttempt) chargeAttempt.current = null;
+    if (!outcome.ok) {
       toast({
         title: "Charge failed",
-        description: err.message,
+        description: outcome.message,
         variant: "destructive",
       });
-    } finally {
-      setChargeLoading(false);
+      return;
     }
+
+    const charged = formatMoney(
+      attempt.request.amount,
+      attempt.request.currency,
+    );
+    const card = `${chargeTarget.brand.toUpperCase()} ****${chargeTarget.last4} (${chargeTarget.username})`;
+    toast({
+      title: outcome.replayed ? "Charge already processed" : "Charge successful",
+      description: outcome.replayed
+        ? `${charged} was already charged to ${card}. The card was not charged again.`
+        : `${charged} charged to ${card}`,
+    });
+    closeChargeDialog();
+    fetchStats();
+    if (activeTab === "history") fetchCharges(chargesPage);
   }
 
   // ─── Refund Charge ──────────────────────────────────────────────────────────
 
   async function handleRefund() {
     if (!refundTarget) return;
+    setRefundLoading(true);
+    let outcome: RefundOutcome;
     try {
-      setRefundLoading(true);
       const res = await authenticatedFetch("/api/v1/payments/refund", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -406,26 +450,36 @@ export default function CardVaultPage() {
           reason: "requested_by_customer",
         }),
       });
+      outcome = interpretRefundResponse(
+        res.status,
+        await res.json().catch(() => null),
+      );
+    } catch {
+      outcome = interpretRefundResponse(null, null);
+    }
+    setRefundLoading(false);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Refund failed");
-
+    if (outcome.ok) {
       toast({
         title: "Refund processed",
-        description: `$${parseFloat(refundTarget.amount).toFixed(2)} refunded to ${refundTarget.username}`,
+        description: `${formatMoney(refundTarget.amount, refundTarget.currency)} refunded to ${refundTarget.username}`,
       });
-      setRefundTarget(null);
-      fetchCharges(chargesPage);
-      fetchStats();
-    } catch (err: any) {
+    } else if (outcome.alreadyRefunded) {
+      toast({
+        title: "Already refunded",
+        description: outcome.message,
+      });
+    } else {
       toast({
         title: "Refund failed",
-        description: err.message,
+        description: outcome.message,
         variant: "destructive",
       });
-    } finally {
-      setRefundLoading(false);
+      return;
     }
+    setRefundTarget(null);
+    fetchCharges(chargesPage);
+    fetchStats();
   }
 
   // ─── Delete Card ────────────────────────────────────────────────────────────
@@ -927,8 +981,7 @@ export default function CardVaultPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className="font-bold text-gray-900 dark:text-white">
-                                {charge.currency}{" "}
-                                {parseFloat(charge.amount).toFixed(2)}
+                                {formatMoney(charge.amount, charge.currency)}
                               </span>
                             </td>
                             <td className="px-4 py-3">
@@ -1165,10 +1218,7 @@ export default function CardVaultPage() {
       <Dialog
         open={!!chargeTarget}
         onOpenChange={(v) => {
-          if (!v) {
-            setChargeTarget(null);
-            setChargeForm({ amount: "", description: "", currency: "USD" });
-          }
+          if (!v && !chargeLoading) closeChargeDialog();
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -1201,19 +1251,24 @@ export default function CardVaultPage() {
                   <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative mt-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-400">
+                    {chargeForm.currency}
+                  </span>
                   <Input
                     value={chargeForm.amount}
                     onChange={(e) =>
                       setChargeForm({ ...chargeForm, amount: e.target.value })
                     }
-                    placeholder="0.00"
                     type="number"
-                    step="0.01"
-                    min="0.50"
-                    className="pl-10 text-lg font-mono"
+                    {...amountInputProps(chargeForm.currency)}
+                    className="pl-14 text-lg font-mono"
                   />
                 </div>
+                {chargeForm.amount && !amountCheck.ok && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {amountCheck.error}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1240,11 +1295,11 @@ export default function CardVaultPage() {
                   }
                   className="w-full h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm dark:bg-gray-900 dark:border-gray-700 mt-1"
                 >
-                  <option value="USD">USD — US Dollar</option>
-                  <option value="EUR">EUR — Euro</option>
-                  <option value="GBP">GBP — British Pound</option>
-                  <option value="CAD">CAD — Canadian Dollar</option>
-                  <option value="CHF">CHF — Swiss Franc</option>
+                  {CHARGE_CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -1262,16 +1317,14 @@ export default function CardVaultPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => {
-                setChargeTarget(null);
-                setChargeForm({ amount: "", description: "", currency: "USD" });
-              }}
+              disabled={chargeLoading}
+              onClick={closeChargeDialog}
             >
               Cancel
             </Button>
             <Button
               onClick={handleCharge}
-              disabled={chargeLoading || !chargeForm.amount}
+              disabled={chargeLoading || !amountCheck.ok}
               className="gap-2 bg-amber-600 hover:bg-amber-700"
             >
               {chargeLoading ? (
@@ -1280,8 +1333,8 @@ export default function CardVaultPage() {
                 <Zap className="h-4 w-4" />
               )}
               Charge{" "}
-              {chargeForm.amount
-                ? `$${parseFloat(chargeForm.amount || "0").toFixed(2)}`
+              {amountCheck.ok
+                ? formatMoney(amountCheck.amount, chargeForm.currency)
                 : ""}
             </Button>
           </DialogFooter>
@@ -1315,8 +1368,7 @@ export default function CardVaultPage() {
                   <div>
                     <span className="text-gray-400">Amount</span>
                     <p className="font-bold text-gray-900 dark:text-white">
-                      {refundTarget.currency}{" "}
-                      {parseFloat(refundTarget.amount).toFixed(2)}
+                      {formatMoney(refundTarget.amount, refundTarget.currency)}
                     </p>
                   </div>
                   <div>

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import {
@@ -13,12 +14,83 @@ import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  ORDER_POLL_WINDOW_MS,
+  checkoutBanner,
+  findOrder,
+  nextOrderPoll,
+  type CheckoutBanner,
+} from "@/lib/order-tracking";
+
+const SUPPORT_EMAIL = "support@versoair.com";
+
+const BANNER_COPY: Record<
+  CheckoutBanner,
+  {
+    icon: any;
+    card: string;
+    title: string;
+    titleColor: string;
+    body: (orderId: string | null) => string;
+  }
+> = {
+  confirmed: {
+    icon: CheckCircle,
+    card: "bg-green-900/20 border-green-500/30",
+    title: "Payment successful!",
+    titleColor: "text-green-400",
+    body: (id) =>
+      `Your order #${id} has been confirmed. We'll start processing it shortly. For charge or refund questions, email ${SUPPORT_EMAIL} with your order number.`,
+  },
+  confirming: {
+    icon: Clock,
+    card: "bg-amber-900/20 border-amber-500/30",
+    title: "Confirming your payment…",
+    titleColor: "text-amber-400",
+    body: (id) =>
+      `We're waiting for the payment provider to confirm order #${id}. This page updates by itself.`,
+  },
+  delayed: {
+    icon: AlertCircle,
+    card: "bg-amber-900/20 border-amber-500/30",
+    title: "Your payment hasn't been confirmed yet",
+    titleColor: "text-amber-400",
+    body: (id) =>
+      `It may still be processing. If you were charged and order #${id} doesn't update, email ${SUPPORT_EMAIL} with your order number.`,
+  },
+  cancelled: {
+    icon: AlertCircle,
+    card: "bg-red-900/20 border-red-500/30",
+    title: "This order was cancelled",
+    titleColor: "text-red-400",
+    body: (id) =>
+      `Order #${id} is cancelled. If you were charged, email ${SUPPORT_EMAIL} with your order number.`,
+  },
+  refunded: {
+    icon: AlertCircle,
+    card: "bg-orange-900/20 border-orange-500/30",
+    title: "This order was refunded",
+    titleColor: "text-orange-400",
+    body: (id) =>
+      `Order #${id} has been refunded. For charge or refund questions, email ${SUPPORT_EMAIL} with your order number.`,
+  },
+};
 
 export default function OrderTrackingPage() {
   const search = useSearch();
   const params = new URLSearchParams(search);
   const status = params.get("status");
   const highlightOrderId = params.get("orderId");
+  const returnedFromCheckout = status === "success";
+
+  // Landing on the success URL does not prove the payment went through, so the
+  // page keeps checking the order for a while before saying it is taking long.
+  const [waitedLong, setWaitedLong] = useState(false);
+  useEffect(() => {
+    if (!returnedFromCheckout) return;
+    const timer = setTimeout(() => setWaitedLong(true), ORDER_POLL_WINDOW_MS);
+    return () => clearTimeout(timer);
+  }, [returnedFromCheckout]);
 
   const token =
     localStorage.getItem("auth_token") || localStorage.getItem("authToken");
@@ -34,7 +106,24 @@ export default function OrderTrackingPage() {
       return json.data || [];
     },
     enabled: !!token,
+    refetchInterval: (query) =>
+      nextOrderPoll({
+        returnedFromCheckout,
+        orders: query.state.data,
+        orderId: highlightOrderId,
+        waitedLong,
+      }),
   });
+
+  const banner = token
+    ? checkoutBanner({
+        returnedFromCheckout,
+        orderStatus: findOrder(orders, highlightOrderId)?.status,
+        waitedLong,
+      })
+    : null;
+  const bannerCopy = banner ? BANNER_COPY[banner] : null;
+  const BannerIcon = bannerCopy?.icon;
 
   const statusConfig: Record<string, { icon: any; color: string; bg: string }> =
     {
@@ -65,25 +154,32 @@ export default function OrderTrackingPage() {
         color: "text-orange-400",
         bg: "bg-orange-500/20",
       },
+      disputed: {
+        icon: AlertCircle,
+        color: "text-orange-400",
+        bg: "bg-orange-500/20",
+      },
+      chargeback: {
+        icon: AlertCircle,
+        color: "text-red-400",
+        bg: "bg-red-500/20",
+      },
     };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Success banner */}
-        {status === "success" && (
-          <Card className="bg-green-900/20 border-green-500/30 mb-6">
+        {/* Checkout result banner */}
+        {bannerCopy && BannerIcon && (
+          <Card className={`${bannerCopy.card} mb-6`} role="status">
             <CardContent className="p-4 flex items-center gap-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+              <BannerIcon className={`h-6 w-6 shrink-0 ${bannerCopy.titleColor}`} />
               <div>
-                <p className="text-green-400 font-semibold">
-                  Order received
+                <p className={`${bannerCopy.titleColor} font-semibold`}>
+                  {bannerCopy.title}
                 </p>
-                <p className="text-green-300/70 text-sm">
-                  Your order #{highlightOrderId} is listed below and is
-                  confirmed once Stripe confirms your payment. For charge or
-                  refund questions, email support@versoair.com with your order
-                  number.
+                <p className="text-gray-300/80 text-sm">
+                  {bannerCopy.body(highlightOrderId)}
                 </p>
               </div>
             </CardContent>
