@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 type SeoHeadProps = {
@@ -28,6 +29,24 @@ export function SeoHead({
 }: SeoHeadProps) {
   const canonicalUrl = toAbsoluteUrl(canonicalPath);
   const imageUrl = toAbsoluteUrl(image);
+
+  useEffect(() => {
+    if (!noTranslateTitle) return;
+
+    const preserveTitle = () => {
+      if (document.title !== title) document.title = title;
+    };
+
+    preserveTitle();
+    const observer = new MutationObserver(preserveTitle);
+    observer.observe(document.head, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [noTranslateTitle, title]);
 
   return (
     <Helmet
