@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   canManageArtist,
   collaborationParty,
+  hasApprovedArtistUploadContract,
   isMusicStaff,
   mayChangeCollaborationStatus,
   userOwnsArtist,
@@ -64,6 +65,35 @@ test("userOwnsArtist never queries for ids it cannot parse", async () => {
     assert.equal(await userOwnsArtist(db, user as never, artist), false);
   }
   assert.equal(calls.length, 0);
+});
+
+test("artist upload eligibility requires a valid user and an approved, active contract", async () => {
+  const calls: Array<{ text: string; params: unknown[] }> = [];
+  const db: QueryRunner = {
+    async query(text, params = []) {
+      calls.push({ text, params });
+      return { rows: [{ "?column?": 1 }] };
+    },
+  };
+
+  assert.equal(await hasApprovedArtistUploadContract(db, "7"), true);
+  assert.deepEqual(calls[0].params, [7]);
+  assert.match(calls[0].text, /status = 'approved'/);
+  assert.match(calls[0].text, /agreed_to_terms IS TRUE/);
+  assert.match(calls[0].text, /agreed_to_rev_share IS TRUE/);
+  assert.match(calls[0].text, /contract_end_date > NOW\(\)/);
+  assert.match(calls[0].text, /artist_profiles ap/);
+  assert.match(calls[0].text, /ap\.evaluation_status = 'approved'/);
+
+  assert.equal(await hasApprovedArtistUploadContract(db, "not-a-user"), false);
+  assert.equal(calls.length, 1);
+
+  const noApprovalDb: QueryRunner = {
+    async query() {
+      return { rows: [] };
+    },
+  };
+  assert.equal(await hasApprovedArtistUploadContract(noApprovalDb, 7), false);
 });
 
 test("canManageArtist lets staff through without a lookup and keeps orphans staff-only", async () => {

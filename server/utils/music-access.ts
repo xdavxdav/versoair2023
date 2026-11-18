@@ -39,6 +39,32 @@ export async function userOwnsArtist(
   return result.rows.length > 0;
 }
 
+export async function hasApprovedArtistUploadContract(
+  db: QueryRunner,
+  userId: unknown,
+): Promise<boolean> {
+  const id = positiveInt(userId);
+  if (!id) return false;
+
+  const result = await db.query(
+    `SELECT 1 FROM artist_contracts
+      WHERE user_id = $1
+        AND status = 'approved'
+        AND agreed_to_terms IS TRUE
+        AND agreed_to_rev_share IS TRUE
+        AND (contract_end_date IS NULL OR contract_end_date > NOW())
+        AND EXISTS (
+          SELECT 1 FROM artist_profiles ap
+           WHERE ap.user_id = artist_contracts.user_id
+             AND ap.is_active IS TRUE
+             AND ap.evaluation_status = 'approved'
+        )
+      LIMIT 1`,
+    [id],
+  );
+  return result.rows.length > 0;
+}
+
 // Content with no artist (orphans) can only be managed by staff.
 export async function canManageArtist(
   db: QueryRunner,

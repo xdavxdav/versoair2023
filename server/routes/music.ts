@@ -14,8 +14,10 @@ import { onlinePaymentsEnabled } from "../utils/commercial-gates";
 import {
   canManageArtist,
   collaborationParty,
+  hasApprovedArtistUploadContract,
   isMusicStaff,
   mayChangeCollaborationStatus,
+  userOwnsArtist,
 } from "../utils/music-access";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
@@ -23,6 +25,30 @@ import { numericRouteParam } from "../middleware/numeric-route-param";
 const router = Router();
 router.param("id", numericRouteParam);
 // Mounted at /api/music
+
+const requireApprovedArtistUploadContract: RequestHandler = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    if (!(await hasApprovedArtistUploadContract(pool, req.user?.userId))) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "An approved artist registration and contract are required before uploading tracks.",
+        code: "ARTIST_CONTRACT_REQUIRED",
+      });
+    }
+    next();
+  } catch (error) {
+    console.error("[MUSIC] Artist upload eligibility check failed:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Could not verify artist upload eligibility",
+    });
+  }
+};
 
 // Writes to a track are limited to the artist who owns it and to staff.
 const requireTrackAccess: RequestHandler = async (req, res, next) => {
@@ -483,6 +509,7 @@ router.get("/my-artist", requireAuth(), async (req, res) => {
 router.post(
   "/tracks/upload",
   requireAuth(),
+  requireApprovedArtistUploadContract,
   (req, res, next) => {
     const handler = upload.fields([
       { name: "audio", maxCount: 1 },
@@ -527,13 +554,12 @@ router.post(
         bpm,
         musicalKey,
         mood,
-        status = "published",
       } = req.body;
 
       // Resolve artistId: use provided value, or auto-resolve from authenticated user
       if (
         rawArtistId &&
-        !(await canManageArtist(pool, req.user, rawArtistId))
+        !(await userOwnsArtist(pool, req.user, rawArtistId))
       ) {
         return res.status(403).json({
           success: false,
@@ -594,7 +620,7 @@ router.post(
         bpm ? parseInt(bpm) : null,
         musicalKey || null,
         mood || null,
-        status,
+        "pending_review",
       ];
       const insertSQL = `INSERT INTO music_tracks
         (title, artist_id, genre, description, price, file_path, file_name, file_size, mime_type,
@@ -672,7 +698,11 @@ router.post(
           details: persistErr.message,
         });
       }
-      res.json({ success: true, data: result.rows[0] });
+      res.status(201).json({
+        success: true,
+        message: "Track uploaded and submitted for review",
+        data: result.rows[0],
+      });
     } catch (error: any) {
       console.error("❌ Track upload error:", error);
       res.status(500).json({
