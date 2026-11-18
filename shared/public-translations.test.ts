@@ -175,6 +175,32 @@ test("fillTemplate fills known placeholders and leaves unknown ones visible", ()
   assert.equal(fillTemplate("{count} countries", {}), "{count} countries");
 });
 
+test("AI search copy and intent labels stay localized with interpolation intact", () => {
+  const templates = [
+    "AI found {count} businesses in {sector}.",
+    "No businesses found in {sector}. Try another sector or city.",
+  ];
+
+  for (const language of BUNDLED_LANGUAGES) {
+    const dictionary = nativeDictionary(language);
+    for (const template of templates) {
+      const id = getPublicCopyId(template);
+      assert.notEqual(id, undefined, `missing translation for ${template}`);
+      const translated = dictionary[id!];
+      assert.deepEqual(
+        (translated.match(/\{\w+\}/g) ?? []).sort(),
+        (template.match(/\{\w+\}/g) ?? []).sort(),
+        `${language} must preserve AI search placeholders`,
+      );
+    }
+  }
+
+  const hospitalityId = getPublicCopyId("Hôtellerie / Tourisme");
+  assert.notEqual(hospitalityId, undefined);
+  assert.equal(nativeDictionary("en")[hospitalityId!], "Hospitality / Tourism");
+  assert.equal(nativeDictionary("es")[hospitalityId!], "Hostelería / Turismo");
+});
+
 test("picker and notice copy reads naturally in each bundled language", () => {
   const dictionaries = Object.fromEntries(BUNDLED_LANGUAGES.map(l => [l, nativeDictionary(l)]));
   const text = (language: (typeof BUNDLED_LANGUAGES)[number], source: string) =>

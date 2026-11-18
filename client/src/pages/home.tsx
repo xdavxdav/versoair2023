@@ -1252,6 +1252,10 @@ export default function Home() {
   const [searchMode, setSearchMode] = useState<"classic" | "ai">("ai");
   const [aiResults, setAiResults] = useState<any>(null);
   const [isAiSearching, setIsAiSearching] = useState(false);
+  const aiResultCount = aiResults?.results?.totalMatches || 0;
+  const aiSectorLabel = aiResults?.intent?.sectorLabel
+    ? translateText(aiResults.intent.sectorLabel)
+    : "";
 
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -2210,11 +2214,11 @@ export default function Home() {
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <Sparkles className="w-4 h-4 text-purple-400" />
                       <span className="text-purple-300 font-medium">
-                        IA détecte:
+                        {translateText("AI detects:")}
                       </span>
                       {aiResults.intent.sectorLabel && (
                         <span className="px-2 py-0.5 bg-purple-500/20 text-purple-200 rounded-full text-xs">
-                          {aiResults.intent.sectorLabel}
+                          {aiSectorLabel}
                         </span>
                       )}
                       {aiResults.intent.location && (
@@ -2228,7 +2232,7 @@ export default function Home() {
                         </span>
                       )}
                       <span className="text-slate-400 text-xs ml-auto">
-                        {aiResults.meta?.elapsed} • confiance{" "}
+                        {aiResults.meta?.elapsed} • {translateText("confidence")}{" "}
                         {Math.round((aiResults.intent.confidence || 0) * 100)}%
                       </span>
                     </div>
@@ -2246,24 +2250,27 @@ export default function Home() {
                       : "border-amber-400/30 bg-amber-500/10 text-amber-100"
                   }`}
                 >
-                  {(aiResults.results?.totalMatches || 0) > 0 ? (
-                    <>
-                      L'IA a trouvé {aiResults.results.totalMatches} entreprise
-                      {aiResults.results.totalMatches > 1 ? "s" : ""}
-                      {aiResults.intent.sectorLabel
-                        ? ` en ${aiResults.intent.sectorLabel.toLowerCase()}`
-                        : " correspondant à votre recherche"}
-                      .
-                    </>
-                  ) : (
-                    <>
-                      Aucune entreprise trouvée
-                      {aiResults.intent.sectorLabel
-                        ? ` en ${aiResults.intent.sectorLabel.toLowerCase()}`
-                        : " pour cette recherche"}
-                      . Essayez un autre secteur ou une autre ville.
-                    </>
-                  )}
+                  {aiResultCount > 0
+                    ? fillTemplate(
+                        translateText(
+                          aiSectorLabel
+                            ? aiResultCount === 1
+                              ? "AI found {count} business in {sector}."
+                              : "AI found {count} businesses in {sector}."
+                            : aiResultCount === 1
+                              ? "AI found {count} business for this search."
+                              : "AI found {count} businesses for this search.",
+                        ),
+                        { count: aiResultCount, sector: aiSectorLabel },
+                      )
+                    : fillTemplate(
+                        translateText(
+                          aiSectorLabel
+                            ? "No businesses found in {sector}. Try another sector or city."
+                            : "No businesses found for this search. Try another sector or city.",
+                        ),
+                        { sector: aiSectorLabel },
+                      )}
                   {aiResults.discovery?.needsClarification &&
                     aiResults.discovery.clarification && (
                       <p className="mt-2 text-amber-200/90">
