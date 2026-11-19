@@ -283,11 +283,11 @@ export class FakeDb {
       return result();
     }
 
-    if (sql === "SELECT user_id FROM transactions WHERE reference = $1") {
+    if (sql === "SELECT user_id, type FROM transactions WHERE reference = $1") {
       return result(
         this.transactions
           .filter((t) => t.reference === p[0])
-          .map((t) => ({ user_id: t.user_id })),
+          .map((t) => ({ user_id: t.user_id, type: t.type })),
       );
     }
 

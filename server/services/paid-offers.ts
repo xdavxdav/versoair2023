@@ -121,6 +121,55 @@ export async function getPaidOffer(
   return result.rows[0] ? toOffer(result.rows[0]) : null;
 }
 
+/** True when the user already holds the offer; for a ticket, for that event. */
+export async function hasPurchasedOffer(
+  db: QueryRunner,
+  userId: number,
+  offerKey: string,
+  eventId: number | null = null,
+): Promise<boolean> {
+  await ensurePaidOffersReady(db);
+  const params: unknown[] = [userId, offerKey];
+  let sql = `SELECT 1 FROM paid_offer_purchases WHERE user_id = $1 AND offer_key = $2`;
+  if (eventId !== null) {
+    params.push(eventId);
+    sql += ` AND event_id = $3`;
+  }
+  const result = await db.query(`${sql} LIMIT 1`, params);
+  return result.rows.length > 0;
+}
+
+/**
+ * Withdraws what a refunded or charged-back payment bought: the purchase and,
+ * for a ticket, the attendance it paid for. A second payment for the same
+ * ticket keeps the attendance. The purchase table must already exist, which
+ * holds for any session recorded as a paid offer.
+ */
+export async function revokePaidOfferPurchase(
+  db: QueryRunner,
+  sessionId: string,
+): Promise<boolean> {
+  const removed = await db.query(
+    `DELETE FROM paid_offer_purchases WHERE stripe_session_id = $1
+     RETURNING user_id, offer_key, event_id`,
+    [sessionId],
+  );
+  const purchase = removed.rows[0];
+  if (!purchase) return false;
+  if (purchase.offer_key === "activity_ticket" && purchase.event_id != null) {
+    await db.query(
+      `UPDATE event_attendees SET status = 'CANCELLED', updated_at = NOW()
+        WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'
+          AND NOT EXISTS (
+            SELECT 1 FROM paid_offer_purchases
+             WHERE user_id = $2 AND offer_key = 'activity_ticket' AND event_id = $1
+          )`,
+      [purchase.event_id, purchase.user_id],
+    );
+  }
+  return true;
+}
+
 export type OfferUpdate = { amountCents?: unknown; active?: unknown };
 
 export function validateOfferUpdate(

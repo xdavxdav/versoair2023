@@ -33,6 +33,7 @@ import {
 import {
   billingPortalLimiter,
   cardSetupLimiter,
+  offerCheckoutLimiter,
   subscriptionCheckoutLimiter,
 } from "../../middleware/rate-limiter";
 import {
@@ -71,6 +72,7 @@ import {
 } from "../../services/ngo-charges";
 import {
   getPaidOffer,
+  hasPurchasedOffer,
   isPaidOfferKey,
   listPaidOffers,
   updatePaidOffer,
@@ -325,101 +327,148 @@ router.put("/offers/:key", requireSuperuser(), async (req, res) => {
 /**
  * POST /api/v1/payments/create-offer-checkout
  * Body: { offerKey, eventId? }. The amount always comes from the database.
+ * Answers 409 when the buyer already holds the offer, so a second Checkout
+ * Session (a second charge) is never opened for something already paid for.
  */
-router.post("/create-offer-checkout", async (req: Request, res: Response) => {
-  if (!onlinePaymentsEnabled()) {
-    rejectUnavailablePayment(res);
-    return;
-  }
-  if (!requireStripe(res)) return;
+router.post(
+  "/create-offer-checkout",
+  offerCheckoutLimiter,
+  async (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
+    }
+    const stripeClient = requireStripeClient(res);
+    if (!stripeClient) return;
 
-  try {
-    const userId = req.user?.userId || (req as any).user?.id;
-    if (!userId) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Authentication required" });
-    }
-    const { offerKey, eventId } = req.body || {};
-    if (!isPaidOfferKey(offerKey)) {
-      return res.status(400).json({ success: false, error: "Invalid offer" });
-    }
-    const offer = await getPaidOffer(pool, offerKey);
-    if (!offer || !offer.active) {
-      return res
-        .status(400)
-        .json({ success: false, error: "This offer is not available" });
-    }
-
-    let returnPath = "/community";
-    const metadata: Record<string, string> = {
-      userId: String(userId),
-      type: "paid_offer",
-      offerKey,
-    };
-    if (offerKey === "activity_ticket") {
-      const id = Number(eventId);
-      if (!Number.isInteger(id) || id <= 0) {
+    try {
+      const userId = req.user?.userId || (req as any).user?.id;
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, error: "Authentication required" });
+      }
+      const { offerKey, eventId } = req.body || {};
+      if (!isPaidOfferKey(offerKey)) {
+        return res.status(400).json({ success: false, error: "Invalid offer" });
+      }
+      const offer = await getPaidOffer(pool, offerKey);
+      if (!offer || !offer.active) {
         return res
           .status(400)
-          .json({ success: false, error: "eventId is required" });
+          .json({ success: false, error: "This offer is not available" });
       }
-      const ev = await pool.query(
-        `SELECT id FROM events WHERE id = $1 AND status = 'PUBLISHED'`,
-        [id],
+
+      let returnPath = "/community";
+      const metadata: Record<string, string> = {
+        userId: String(userId),
+        type: "paid_offer",
+        offerKey,
+      };
+      if (offerKey === "activity_ticket") {
+        const id = Number(eventId);
+        if (!Number.isInteger(id) || id <= 0) {
+          return res
+            .status(400)
+            .json({ success: false, error: "eventId is required" });
+        }
+        const ev = await pool.query(
+          `SELECT id, (COALESCE(ends_at, starts_at) < NOW()) AS ended
+             FROM events WHERE id = $1 AND status = 'PUBLISHED'`,
+          [id],
+        );
+        if (!ev.rows.length) {
+          return res
+            .status(404)
+            .json({ success: false, error: "Published event not found" });
+        }
+        if (ev.rows[0].ended) {
+          return res.status(409).json({
+            success: false,
+            code: "EVENT_ENDED",
+            error: "This activity has already taken place.",
+          });
+        }
+        if (await hasPurchasedOffer(pool, Number(userId), offerKey, id)) {
+          return res.status(409).json({
+            success: false,
+            code: "ALREADY_PURCHASED",
+            error: "You already have a ticket for this activity.",
+          });
+        }
+        const going = await pool.query(
+          `SELECT 1 FROM event_attendees
+            WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'`,
+          [id, userId],
+        );
+        if (going.rows.length) {
+          return res.status(409).json({
+            success: false,
+            code: "ALREADY_ATTENDING",
+            error: "You are already registered for this activity.",
+          });
+        }
+        metadata.eventId = String(id);
+        returnPath = `/events/${id}`;
+      } else if (await hasPurchasedOffer(pool, Number(userId), offerKey)) {
+        return res.status(409).json({
+          success: false,
+          code: "ALREADY_PURCHASED",
+          error: "You are already a community member.",
+        });
+      }
+
+      const userResult = await pool.query(
+        `SELECT id, email, username FROM users WHERE id = $1`,
+        [userId],
       );
-      if (!ev.rows.length) {
-        return res
-          .status(404)
-          .json({ success: false, error: "Published event not found" });
+      if (!userResult.rows.length) {
+        return res.status(404).json({ success: false, error: "User not found" });
       }
-      metadata.eventId = String(id);
-      returnPath = `/events/${id}`;
-    }
+      const user = userResult.rows[0];
+      const customerId = await getOrCreateStripeCustomer(
+        Number(userId),
+        user.email,
+        user.username,
+        stripeClient,
+      );
 
-    const userResult = await pool.query(
-      `SELECT id, email, username FROM users WHERE id = $1`,
-      [userId],
-    );
-    if (!userResult.rows.length) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-    const user = userResult.rows[0];
-    const customerId = await getOrCreateStripeCustomer(
-      Number(userId),
-      user.email,
-      user.username,
-    );
-
-    const origin = getPublicBaseUrl();
-    const session = await stripe!.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      customer: customerId,
-      line_items: [
-        {
-          price_data: {
-            currency: "cad",
-            product_data: {
-              name: `Verso Air — ${offer.name}`,
-              description: offer.description || undefined,
+      const origin = getPublicBaseUrl();
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        customer: customerId,
+        line_items: [
+          {
+            price_data: {
+              currency: "cad",
+              product_data: {
+                name: `Verso Air — ${offer.name}`,
+                description: offer.description || undefined,
+              },
+              unit_amount: offer.amountCents,
             },
-            unit_amount: offer.amountCents,
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      metadata,
-      success_url: `${origin}${returnPath}?status=success`,
-      cancel_url: `${origin}${returnPath}?status=cancelled`,
-    });
+        ],
+        metadata,
+        success_url: `${origin}${returnPath}?status=success`,
+        cancel_url: `${origin}${returnPath}?status=cancelled`,
+      });
 
-    res.json({ success: true, data: { sessionId: session.id, url: session.url } });
-  } catch (error: any) {
-    console.error("❌ Offer checkout error:", error);
-    res.status(500).json({ success: false, error: "Could not start checkout" });
-  }
-});
+      res.json({
+        success: true,
+        data: { sessionId: session.id, url: session.url },
+      });
+    } catch (error: any) {
+      console.error(
+        "❌ Offer checkout error:",
+        redactStripeSecrets(error?.message),
+      );
+      res.status(500).json({ success: false, error: "Could not start checkout" });
+    }
+  },
+);
 
 // ─── STRIPE WEBHOOK ─────────────────────────────────────────────────────────────
 
@@ -501,6 +550,21 @@ router.post("/webhook", async (req: Request, res: Response) => {
           },
         });
         break;
+      }
+      if (outcome.status === "processed" && outcome.repeatPurchase) {
+        // Both payments are recorded; the second one is a refund candidate.
+        await raisePaymentAlert({
+          kind: "paid_offer_paid_twice",
+          summary:
+            "A customer paid twice for the same offer; one payment should be refunded",
+          details: {
+            checkoutSessionId: session.id,
+            userId,
+            offerKey: session.metadata?.offerKey,
+            eventId: session.metadata?.eventId,
+            paidCents: session.amount_total,
+          },
+        });
       }
 
       try {
