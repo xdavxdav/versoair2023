@@ -7,6 +7,7 @@
  * Endpoints:
  *   GET  /api/purgatoire/queue         → List all pending_review tracks
  *   GET  /api/purgatoire/stats         → Moderation stats (pending, approved today, rejected today)
+ *   GET  /api/purgatoire/:trackId/audio    → Audition a track in any status (Range supported)
  *   POST /api/purgatoire/:trackId/approve  → Approve track → status = 'published'
  *   POST /api/purgatoire/:trackId/reject   → Reject track → status = 'rejected' + reason
  *   POST /api/purgatoire/:trackId/flag     → Moderator flag (marks note without changing status)
@@ -16,6 +17,8 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { notificationEmitter } from "../services/notification-service";
+import { parseByteRange } from "../utils/byte-range";
+import { parsePositiveInt } from "../utils/positive-int";
 
 const router = Router();
 
@@ -57,7 +60,8 @@ router.get("/queue", requireAuth(["admin"]), async (req: Request, res: Response)
       pool.query(
         `SELECT mt.id, mt.title, mt.genre, mt.mood, mt.bpm, mt.musical_key,
                 mt.duration, mt.is_explicit, mt.description, mt.lyrics,
-                mt.audio_url, mt.cover_art, mt.file_name, mt.file_size, mt.mime_type,
+                mt.audio_url, (mt.audio_data IS NOT NULL) AS has_audio_data,
+                mt.cover_art, mt.file_name, mt.file_size, mt.mime_type,
                 mt.status, mt.created_at, mt.moderation_notes, mt.rejection_reason,
                 mt.reviewed_at, mt.reviewed_by,
                 COALESCE(ma.name, ap.stage_name) as artist_name,
@@ -127,6 +131,89 @@ router.get("/stats", requireAuth(["admin"]), async (req: Request, res: Response)
     res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 });
+
+// ─── GET /:trackId/audio — Audition a track, whatever its status ────────────────
+// The public stream route only serves published tracks, and uploads keep their
+// audio in the database with no audio_url, so a reviewer had nothing to play.
+
+router.get(
+  "/:trackId/audio",
+  requireAuth(["admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const role = await getUserRole(parseInt(req.user!.userId));
+      if (!role || !FLAG_ROLES.includes(role)) {
+        return res
+          .status(403)
+          .json({ success: false, error: "Admin access required" });
+      }
+
+      const trackId = parsePositiveInt(req.params.trackId);
+      if (!trackId) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Invalid track id" });
+      }
+
+      const meta = await pool.query(
+        `SELECT mime_type, octet_length(audio_data) AS audio_size
+           FROM music_tracks WHERE id = $1`,
+        [trackId],
+      );
+      const size = Number(meta.rows[0]?.audio_size || 0);
+      if (!size) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Audio file not found" });
+      }
+
+      const headers = {
+        "Content-Type": meta.rows[0].mime_type || "audio/mpeg",
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "private, no-store",
+      };
+
+      const range = parseByteRange(req.headers.range, size);
+      if (range === "unsatisfiable") {
+        res.setHeader("Content-Range", `bytes */${size}`);
+        return res.status(416).end();
+      }
+
+      if (range) {
+        // Slice inside Postgres so only the requested bytes travel.
+        // substring() on bytea is 1-indexed.
+        const slice = await pool.query(
+          `SELECT substring(audio_data from $2 for $3) AS chunk
+             FROM music_tracks WHERE id = $1`,
+          [trackId, range.start + 1, range.end - range.start + 1],
+        );
+        const chunk: Buffer = slice.rows[0]?.chunk ?? Buffer.alloc(0);
+        res.writeHead(206, {
+          ...headers,
+          "Content-Range": `bytes ${range.start}-${range.end}/${size}`,
+          "Content-Length": chunk.length,
+        });
+        return res.end(chunk);
+      }
+
+      const full = await pool.query(
+        `SELECT audio_data FROM music_tracks WHERE id = $1`,
+        [trackId],
+      );
+      const audio: Buffer | undefined = full.rows[0]?.audio_data;
+      if (!audio) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Audio file not found" });
+      }
+      res.writeHead(200, { ...headers, "Content-Length": audio.length });
+      res.end(audio);
+    } catch (err: any) {
+      console.error("[PURGATOIRE] Audio error:", err);
+      res.status(500).json({ success: false, error: "Failed to load audio" });
+    }
+  },
+);
 
 // ─── POST /:trackId/approve — Approve track → published ─────────────────────────
 
