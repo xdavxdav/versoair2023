@@ -63,6 +63,7 @@ const ROUTES: Array<{
   { method: "GET", path: "/api/v1/email-subscriptions/stats" },
   { method: "GET", path: "/api/purgatoire/queue" },
   { method: "GET", path: "/api/purgatoire/stats" },
+  { method: "GET", path: "/api/purgatoire/1/audio" },
   { method: "GET", path: "/api/settings/commerce" },
   {
     method: "POST",

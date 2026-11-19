@@ -356,8 +356,8 @@ export default function PurgatoirePage() {
                 {/* ── Expanded Detail Panel ── */}
                 {expandedTrack === track.id && (
                   <div className="border-t border-white/5 p-5 space-y-4 bg-white/[0.01]">
-                    {/* Audio preview */}
-                    {track.audio_url && (
+                    {/* Audio preview — DB-stored uploads have no audio_url */}
+                    {(track.has_audio_data || track.audio_url) && (
                       <div className="flex items-center gap-3">
                         <Play className="w-4 h-4 text-amber-400" />
                         <audio
@@ -366,7 +366,11 @@ export default function PurgatoirePage() {
                           className="flex-1 h-10 [&::-webkit-media-controls-panel]:bg-gray-800 rounded-lg"
                         >
                           <source
-                            src={track.audio_url}
+                            src={
+                              track.has_audio_data
+                                ? `/api/purgatoire/${track.id}/audio`
+                                : track.audio_url
+                            }
                             type={track.mime_type || "audio/mpeg"}
                           />
                         </audio>

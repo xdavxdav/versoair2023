@@ -290,11 +290,11 @@ export class FakeDb {
       return result();
     }
 
-    if (sql === "SELECT user_id, currency FROM transactions WHERE reference = $1") {
+    if (sql === "SELECT user_id, currency, type FROM transactions WHERE reference = $1") {
       return result(
         this.transactions
           .filter((t) => t.reference === p[0])
-          .map((t) => ({ user_id: t.user_id, currency: t.currency })),
+          .map((t) => ({ user_id: t.user_id, currency: t.currency, type: t.type })),
       );
     }
 

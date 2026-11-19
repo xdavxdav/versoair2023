@@ -31,13 +31,15 @@ export default function PaymentsHelp() {
               <h2 className="text-xl font-semibold">Online payment availability</h2>
             </div>
             <p className="text-sm leading-relaxed text-gray-600">
-              Subscription billing and GeoAdmin plan payments are not available
-              online. Where online checkout is offered, it is limited to Verso
-              Air Marketing packs and print products, charged in Canadian
-              dollars (CAD) through Stripe. Shipping and taxes are not
-              calculated at checkout, and the total shown at checkout is the
-              amount charged. For anything else, we confirm current options,
-              fees, and terms directly before accepting any payment.
+              Where online checkout is offered, it covers the self-serve
+              GeoAdmin plans (Essentiel, Pro Vérifié, and Pro Max), community
+              membership, activity tickets, and Verso Air Marketing packs and
+              print products. Payment is charged in Canadian dollars (CAD)
+              through Stripe only when you press a Pay button and complete
+              checkout. Shipping and taxes are not calculated at checkout, and
+              the total shown at checkout is the amount charged. For Premium,
+              Enterprise, and anything else, we confirm current options, fees,
+              and terms directly before accepting any payment.
             </p>
           </div>
 

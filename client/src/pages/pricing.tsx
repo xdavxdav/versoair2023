@@ -1,7 +1,8 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import CheckoutReturnNotice from "@/components/CheckoutReturnNotice";
 import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { Button } from "@/components/ui/button";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -9,42 +10,71 @@ import { SeoHead } from "@/components/seo/SeoHead";
 import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
 import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
 import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
-import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
+import BusinessPlanPriceSummary from "@/components/BusinessPlanPriceSummary";
+import PlanCheckoutButton from "@/components/PlanCheckoutButton";
+import { isSelfServePlanTier, type BillingCycle } from "@shared/plan-pricing";
 import {
   GEOADMIN_OFFER_NAMES,
-  type GeoAdminOfferKey,
-  GEOADMIN_OFFER_PRICES_XOF,
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_OFFER_ORDER,
-  formatMarketXofPrice,
+  type GeoAdminOfferKey,
   isGeoAdminComingSoonCountry,
+  getMarketAvailability,
 } from "@/lib/geoadmin-pricing";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useCountry } from "@/contexts/CountryContext";
+import { useCheckoutReturn } from "@/hooks/use-checkout-return";
+
+/** True once the webhook has put the bought plan on the buyer's account. */
+async function planIsActive(params: URLSearchParams): Promise<boolean> {
+  const response = await fetch("/auth/session", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) return false;
+  const current = (await response.json())?.user?.subscriptionTier;
+  const bought = params.get("tier");
+  return isSelfServePlanTier(bought)
+    ? current === bought
+    : typeof current === "string" && current !== "free";
+}
 
 export default function Pricing() {
   const localize = useLocalizedContent();
   const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey>("verified");
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const { currency, rates, selectedCountry, marketAvailability } =
-    useGeoAdminPricing();
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+  const { selectedCountry } = useCountry();
+  const { user, restoreAuth } = useAuthContext();
+  const checkout = useCheckoutReturn({ ready: !!user, isFulfilled: planIsActive });
+  const marketAvailability = getMarketAvailability(selectedCountry ?? "");
+  const boughtTier = checkout.params?.get("tier");
 
-  const formatAnnualPrice = (tier: GeoAdminOfferKey) => {
-    return formatMarketXofPrice(
-      GEOADMIN_OFFER_PRICES_XOF[tier],
-      selectedCountry ?? "",
-      currency,
-      rates,
-    );
-  };
+  // Bring the navbar and account state up to date with the new plan.
+  useEffect(() => {
+    if (checkout.phase === "confirmed") void restoreAuth();
+  }, [checkout.phase, restoreAuth]);
 
   return localize((
     <div className="flex min-h-screen flex-col bg-[#f3efe9] pb-24 text-slate-900">
       <SeoHead
-        title="GeoAdmin Plans and Annual Reference Pricing | VersoAir"
-        description="Review GeoAdmin annual plan reference prices, benefits, market availability, and request a tailored proposal from VersoAir."
+        title="GeoAdmin Business Plan Prices | VersoAir"
+        description="Review approved CAD business-plan prices, the FCFA annual base schedule, and derived EUR reference amounts."
         canonicalPath="/pricing"
       />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-12 sm:py-16">
+        <CheckoutReturnNotice
+          phase={checkout.phase}
+          purchase="plan"
+          planName={
+            isSelfServePlanTier(boughtTier)
+              ? GEOADMIN_OFFER_NAMES[boughtTier]
+              : undefined
+          }
+          onCheckAgain={checkout.checkAgain}
+          onDismiss={checkout.dismiss}
+        />
         <Link
           href="/geo-admin"
           className="mb-5 inline-flex w-fit items-center gap-2 rounded-md text-sm font-semibold text-amber-900 hover:text-amber-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700"
@@ -56,15 +86,15 @@ export default function Pricing() {
           <GeoAdminPromoCard />
           <section>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-amber-900">
-              Annual plan reference prices
+              Business plan prices · CAD, FCFA, EUR
             </p>
             <h1 className="mb-4 text-4xl font-bold md:text-5xl">
               Choose the visibility that fits your business
             </h1>
             <p className="mb-6 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Prices are shown in Canadian dollars in Canada, euros in France,
-              and FCFA in Côte d’Ivoire. Availability in other markets is
-              confirmed individually.
+              CAD is the approved price, and FCFA is the annual base schedule.
+              EUR amounts are derived from the fixed peg (1 EUR = 655.957 FCFA)
+              and are not approved prices.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_OFFER_ORDER.map((tier) => (
@@ -82,17 +112,8 @@ export default function Pricing() {
                   }`}
                 >
                   <span className="block font-semibold">{GEOADMIN_OFFER_NAMES[tier]}</span>
-                  <span
-                    className="mt-1 block text-lg font-bold text-amber-900"
-                  >
-                    {formatAnnualPrice(tier)}
-                    {GEOADMIN_OFFER_PRICES_XOF[tier] !== null &&
-                      marketAvailability !== false && (
-                      <span className="text-sm font-normal text-slate-700">
-                        {" "}
-                        / year
-                      </span>
-                    )}
+                  <span className="mt-2 block text-slate-800">
+                    <BusinessPlanPriceSummary offer={tier} />
                   </span>
                   <span className="mt-2 block text-sm text-slate-600">
                     {tier === "free"
@@ -110,12 +131,11 @@ export default function Pricing() {
             </div>
 
             <p className="mt-4 text-xs leading-relaxed text-slate-700">
-              Prices in CAD and EUR are indicative conversions from the FCFA
-              reference schedule; the written offer confirms the final amount.
-              Availability, deliverables, taxes, and terms are confirmed
-              directly. This page does not offer checkout or activate a plan,
-              and it does not promise a free listing, a trial, or a specific
-              placement.
+              CAD amounts are approved. FCFA amounts are the annual base
+              schedule. EUR amounts are calculated from the fixed peg and are
+              not approved prices. Availability, deliverables, taxes, and terms
+              are confirmed directly. Payment is only taken in CAD when you
+              press a Pay button and complete secure Stripe checkout.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
@@ -147,6 +167,19 @@ export default function Pricing() {
               your priorities.
             </p>
           </div>
+          <div className="mb-5 flex justify-center gap-2" role="group" aria-label="Billing cycle">
+            {(["monthly", "annual"] as const).map((value) => (
+              <Button
+                key={value}
+                type="button"
+                variant={cycle === value ? "default" : "outline"}
+                aria-pressed={cycle === value}
+                onClick={() => setCycle(value)}
+              >
+                {value === "monthly" ? "Monthly" : "Annual"}
+              </Button>
+            ))}
+          </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {GEOADMIN_OFFER_ORDER.map((tier) => {
               return (
@@ -163,6 +196,13 @@ export default function Pricing() {
                     </div>
                   </div>
                   <GeoAdminOfferDetails offer={tier} />
+                  {isSelfServePlanTier(tier) ? (
+                    <PlanCheckoutButton
+                      tier={tier}
+                      cycle={cycle}
+                      disabled={checkout.awaitingPayment}
+                    />
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
@@ -188,12 +228,12 @@ export default function Pricing() {
           <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
             <h2 className="text-2xl font-bold">How to interpret these prices</h2>
             <p className="mt-3 leading-relaxed text-slate-600">
-              These are annual reference prices—not a checkout offer or a final
-              quote. Canada prices are displayed in CAD, France prices in EUR,
-              and Côte d’Ivoire prices in FCFA. CAD and EUR amounts are
-              indicative conversions from the FCFA reference schedule; taxes,
-              eligibility, final inclusions, and contract terms are confirmed
-              in writing before purchase.
+              CAD is the approved price. FCFA is the annual base schedule. EUR
+              amounts are derived using the fixed 1 EUR = 655.957 FCFA peg and
+              are not approved prices. Enterprise is quote-only in all three
+              currencies. Taxes, availability, inclusions, and contract terms
+              are confirmed in writing; payment is only taken in CAD through
+              the Pay buttons on the self-serve plans.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
               Essentiel proposes initial
@@ -223,10 +263,11 @@ export default function Pricing() {
         </section>
 
         <p className="mt-6 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
-          <strong>Before you commit:</strong> no payment is taken and no plan is
-          activated from this page. Request a written proposal and review its
-          market availability, deliverables, term, taxes, exclusions, renewal,
-          and cancellation conditions before accepting.
+          <strong>Before you commit:</strong> nothing is charged until you press
+          a Pay button and complete Stripe checkout. For Premium or Enterprise,
+          request a written proposal and review its market availability,
+          deliverables, term, taxes, exclusions, renewal, and cancellation
+          conditions before accepting.
         </p>
 
         <GeoAdminPlanDetailsDialog

@@ -291,6 +291,7 @@ export const subscriptionCheckoutLimiter = paymentSessionLimiter(
   "subscription-checkout",
   10,
 );
+export const offerCheckoutLimiter = paymentSessionLimiter("offer-checkout", 10);
 export const cardSetupLimiter = paymentSessionLimiter("card-setup", 10);
 export const billingPortalLimiter = paymentSessionLimiter("billing-portal", 10);
 

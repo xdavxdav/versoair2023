@@ -33,8 +33,9 @@ export default function GeoAdminPromoCard() {
       </h2>
       <p className="mt-6 max-w-3xl text-sm leading-relaxed text-[#c5d0df]">
         Explore the available plans, market pricing, and plan details below.
-        Availability and final terms are confirmed directly; no online checkout
-        is offered.
+        Availability and final terms are confirmed directly; payment is only
+        taken in CAD when you press a Pay button and complete secure Stripe
+        checkout.
       </p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#d7b652]/45 bg-[#050e1d]/55 p-4">
         <GeoAdminContacts />

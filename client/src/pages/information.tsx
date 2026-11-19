@@ -421,12 +421,15 @@ function TermsTab() {
 
       <SectionHeading number="9" title="Paiement & Remboursements" />
       <p className="text-slate-700 leading-relaxed">
-        Subscription billing and GeoAdmin plan payments are not available
-        online. Where online checkout is offered, it is limited to Verso Air
-        Marketing packs and print products, charged in Canadian dollars (CAD)
-        through Stripe; shipping and taxes are not calculated at checkout. No
-        general billing schedule, refund window, or marketplace refund policy
-        is offered here. To ask about a charge or request a refund, email
+        Where online checkout is offered, it covers the self-serve GeoAdmin
+        plans (Essentiel, Pro Vérifié, and Pro Max), community membership,
+        activity tickets, and Verso Air Marketing packs and print products.
+        Payment is charged in Canadian dollars (CAD) through Stripe only when
+        you press a Pay button and complete checkout; shipping and taxes are
+        not calculated at checkout. Premium and Enterprise plans are provided
+        by written offer only and are not paid online. No general billing
+        schedule, refund window, or marketplace refund policy is offered
+        here. To ask about a charge or request a refund, email
         support@versoair.com with your order number. Any other fees and
         transaction terms will be provided in writing before an order is
         accepted. Existing transactions remain subject to their agreed terms

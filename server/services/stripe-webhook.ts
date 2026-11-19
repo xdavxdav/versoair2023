@@ -14,6 +14,7 @@
  */
 import type Stripe from "stripe";
 import { inTransaction } from "./db-transaction";
+import { ensurePaidOfferTables, revokePaidOfferPurchase } from "./paid-offers";
 import type { Queryable, TxClient, TxPool } from "./marketing-checkout";
 
 export type CheckoutReviewReason =
@@ -37,7 +38,12 @@ export interface CheckoutReview {
 }
 
 export type CheckoutCompletion =
-  | { status: "processed"; kind: "subscription" | "marketing_order" }
+  | {
+      status: "processed";
+      kind: "subscription" | "marketing_order" | "paid_offer";
+      /** The buyer already held this offer, so one payment should be refunded. */
+      repeatPurchase?: true;
+    }
   | CheckoutReview
   | { status: "duplicate" }
   | { status: "unhandled" }
@@ -170,6 +176,57 @@ export async function applyCheckoutSessionCompleted(
     });
   }
 
+  if (type === "paid_offer" && session.metadata?.offerKey) {
+    const offerKey = session.metadata.offerKey;
+    const eventIdRaw = session.metadata.eventId;
+    const eventId = eventIdRaw ? positiveInt(eventIdRaw) : null;
+    if (offerKey === "activity_ticket" && eventId === null) {
+      console.error("⚠️ Activity ticket without a valid eventId:", session.id);
+      return { status: "ignored", reason: "invalid_event_id" };
+    }
+
+    return inTransaction<CheckoutCompletion>(db, async (client) => {
+      const claimed = await claimSession(
+        client,
+        userIdNumber,
+        amount,
+        "paid_offer",
+        session.id,
+      );
+      if (!claimed) return { status: "duplicate" };
+
+      await ensurePaidOfferTables(client);
+      const prior = await client.query(
+        `SELECT 1 FROM paid_offer_purchases
+          WHERE user_id = $1 AND offer_key = $2
+            AND event_id IS NOT DISTINCT FROM $3::int
+          LIMIT 1`,
+        [userIdNumber, offerKey, eventId],
+      );
+      await client.query(
+        `INSERT INTO paid_offer_purchases (user_id, offer_key, event_id, stripe_session_id, amount_cents)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (stripe_session_id) DO NOTHING`,
+        [userIdNumber, offerKey, eventId, session.id, session.amount_total || 0],
+      );
+
+      if (offerKey === "activity_ticket" && eventId !== null) {
+        await client.query(
+          `INSERT INTO event_attendees (event_id, user_id, status, updated_at)
+           VALUES ($1, $2, 'GOING', NOW())
+           ON CONFLICT (event_id, user_id)
+           DO UPDATE SET status = 'GOING', updated_at = NOW()`,
+          [eventId, userIdNumber],
+        );
+      }
+
+      console.log(`✅ Paid offer ${offerKey} bought by user ${userIdNumber}`);
+      return prior.rows.length > 0
+        ? { status: "processed", kind: "paid_offer", repeatPurchase: true }
+        : { status: "processed", kind: "paid_offer" };
+    });
+  }
+
   if (type === "marketing_order" && orderId) {
     const orderIdNumber = positiveInt(orderId);
     if (orderIdNumber === null) {
@@ -282,6 +339,8 @@ export async function applyCheckoutSessionCompleted(
  * claimed under "stripe_event:<id>" so a replay changes nothing. Orders move to
  * refunded / disputed / chargeback so revenue reports stop counting them.
  * Subscription tiers are NOT revoked automatically: that is a support decision.
+ * Paid offers (activity tickets, community membership) are withdrawn on a full
+ * refund or a lost dispute, because the access is all the payment bought.
  */
 export type PaymentReversal =
   | { kind: "refund"; amountCents: number; full: boolean }
@@ -318,7 +377,7 @@ export async function applyPaymentReversal(
 ): Promise<ReversalOutcome> {
   return inTransaction<ReversalOutcome>(db, async (client) => {
     const original = await client.query(
-      `SELECT user_id, currency FROM transactions WHERE reference = $1`,
+      `SELECT user_id, currency, type FROM transactions WHERE reference = $1`,
       [sessionId],
     );
     if (original.rows.length === 0) return { status: "unmatched" };
@@ -359,6 +418,14 @@ export async function applyPaymentReversal(
           RETURNING id`,
         [sessionId, status, note, from],
       );
+    }
+
+    const withdrawsAccess =
+      reversal.kind === "dispute_lost" ||
+      (reversal.kind === "refund" && reversal.full);
+    if (withdrawsAccess && original.rows[0].type === "paid_offer") {
+      const revoked = await revokePaidOfferPurchase(client, sessionId);
+      console.log(`↩️ Paid offer for session ${sessionId} withdrawn: ${revoked}`);
     }
 
     console.log(

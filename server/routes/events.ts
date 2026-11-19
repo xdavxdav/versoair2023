@@ -2,6 +2,8 @@ import { Router } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { generateUniqueSlug } from "../services/profile-migration";
+import { onlinePaymentsEnabled } from "../utils/commercial-gates";
+import { getPaidOffer, hasPurchasedOffer } from "../services/paid-offers";
 import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
@@ -225,6 +227,11 @@ router.post("/:id/submit", requireAuth(), async (req, res) => {
 });
 
 router.get("/:id/rsvp/status", requireAuth(), async (req, res) => {
+  const eventId = Number(req.params.id);
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ error: "Invalid event id" });
+  }
   try {
     const result = await pool.query(
       `SELECT EXISTS(
@@ -233,9 +240,16 @@ router.get("/:id/rsvp/status", requireAuth(), async (req, res) => {
        ) AS attending,
        (SELECT COUNT(*)::int FROM event_attendees
         WHERE event_id = $1 AND status = 'GOING') AS attendee_count`,
-      [Number(req.params.id), Number(req.user?.userId)],
+      [eventId, userId],
     );
-    res.json({ success: true, data: result.rows[0] });
+    // A paid ticket is not cancelled from the page; it goes through support.
+    const ticketPaid = await hasPurchasedOffer(
+      pool,
+      userId,
+      "activity_ticket",
+      eventId,
+    );
+    res.json({ success: true, data: { ...result.rows[0], ticketPaid } });
   } catch (error) {
     console.error("[events:rsvp-status]", error);
     res.status(500).json({ error: "Failed to load RSVP status" });
@@ -249,6 +263,28 @@ router.post("/:id/rsvp", requireAuth(), async (req, res) => {
     return res.status(400).json({ error: "Invalid event id" });
   }
   try {
+    // Once activity tickets are on sale, joining requires a paid ticket; the
+    // Stripe webhook adds paid attendees directly. Someone who already paid
+    // (and was taken off the list since) may rejoin without paying again.
+    if (onlinePaymentsEnabled()) {
+      const ticket = await getPaidOffer(pool, "activity_ticket");
+      if (ticket?.active) {
+        const already = await pool.query(
+          `SELECT 1 FROM event_attendees
+            WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'`,
+          [eventId, userId],
+        );
+        if (
+          !already.rowCount &&
+          !(await hasPurchasedOffer(pool, userId, "activity_ticket", eventId))
+        ) {
+          return res.status(402).json({
+            error: "A ticket is required to join this activity",
+            code: "PAYMENT_REQUIRED",
+          });
+        }
+      }
+    }
     const result = await pool.query(
       `INSERT INTO event_attendees (event_id, user_id, status, updated_at)
        SELECT id, $2, 'GOING', NOW() FROM events
@@ -268,12 +304,24 @@ router.post("/:id/rsvp", requireAuth(), async (req, res) => {
 });
 
 router.delete("/:id/rsvp", requireAuth(), async (req, res) => {
+  const eventId = Number(req.params.id);
+  const userId = Number(req.user?.userId);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ error: "Invalid event id" });
+  }
   try {
+    if (await hasPurchasedOffer(pool, userId, "activity_ticket", eventId)) {
+      return res.status(409).json({
+        error:
+          "This ticket was paid for. Contact support to cancel it and request a refund.",
+        code: "TICKET_PAID",
+      });
+    }
     const result = await pool.query(
       `UPDATE event_attendees SET status = 'CANCELLED', updated_at = NOW()
        WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'
        RETURNING event_id`,
-      [Number(req.params.id), Number(req.user?.userId)],
+      [eventId, userId],
     );
     if (!result.rowCount)
       return res.status(404).json({ error: "RSVP not found" });

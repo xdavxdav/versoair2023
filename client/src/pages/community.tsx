@@ -1,4 +1,5 @@
 import {
+  Check,
   MapPin,
   Users,
   TrendingUp,
@@ -12,7 +13,11 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
+import CheckoutReturnNotice from "@/components/CheckoutReturnNotice";
+import OfferCheckoutButton, { useActiveOffer } from "@/components/OfferCheckoutButton";
 import { useAuth } from "@/hooks/use-auth";
+import { useCheckoutReturn } from "@/hooks/use-checkout-return";
+import { useTranslate } from "@/hooks/use-translate";
 
 type Pool = "all" | "mudp" | "cdp" | "crossdp";
 
@@ -241,6 +246,28 @@ export default function CommunityDetail() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [activePool, setActivePool] = useState<Pool>("all");
   const [poolOpen, setPoolOpen] = useState(false);
+  const joinOffer = useActiveOffer("community_join");
+  const tr = useTranslate();
+  const { user: viewer } = useAuth();
+  const {
+    data: purchased,
+    isLoading: membershipLoading,
+    refetch: refetchPurchased,
+  } = useQuery<string[]>({
+    queryKey: ["paid-offers-mine"],
+    enabled: !!viewer,
+    queryFn: async () => {
+      const res = await authenticatedFetch("/api/v1/payments/offers/mine");
+      const body = res.ok ? await res.json() : null;
+      return body?.data ?? [];
+    },
+  });
+  const isMember = !!purchased?.includes("community_join");
+  const checkout = useCheckoutReturn({
+    ready: !!viewer,
+    isFulfilled: async () =>
+      !!(await refetchPurchased()).data?.includes("community_join"),
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -266,6 +293,30 @@ export default function CommunityDetail() {
               </Button>
             </Link>
           </div>
+
+          <CheckoutReturnNotice
+            phase={checkout.phase}
+            purchase="community"
+            onCheckAgain={checkout.checkAgain}
+            onDismiss={checkout.dismiss}
+          />
+
+          {isMember ? (
+            <div className="mb-6">
+              <span className="inline-flex items-center gap-2 rounded-md bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-300">
+                <Check className="h-4 w-4" aria-hidden="true" />
+                {tr("Community Member")}
+              </span>
+            </div>
+          ) : joinOffer && !membershipLoading && !checkout.awaitingPayment ? (
+            <div className="mb-6">
+              <OfferCheckoutButton
+                offer={joinOffer}
+                label="Join the community"
+                onOwned={() => void refetchPurchased()}
+              />
+            </div>
+          ) : null}
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">

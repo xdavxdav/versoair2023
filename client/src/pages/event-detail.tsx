@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import CheckoutReturnNotice from "@/components/CheckoutReturnNotice";
+import OfferCheckoutButton, { useActiveOffer } from "@/components/OfferCheckoutButton";
 import { CalendarDays, Check, Loader2, MapPin } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useCheckoutReturn } from "@/hooks/use-checkout-return";
+import { useTranslate } from "@/hooks/use-translate";
 import { authenticatedFetch } from "@/lib/auth";
 
 interface EventRecord {
@@ -19,14 +23,26 @@ interface EventRecord {
   attendee_count: number;
 }
 
+interface RsvpStatus {
+  attending: boolean;
+  ticketPaid: boolean;
+  attendeeCount: number;
+}
+
 export default function EventDetailPage() {
+  const ticket = useActiveOffer("activity_ticket");
+  const tr = useTranslate();
   const [, params] = useRoute("/events/:slug");
   const [event, setEvent] = useState<EventRecord | null>(null);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [rsvpError, setRsvpError] = useState("");
   const { user } = useAuthContext();
   const [attending, setAttending] = useState(false);
+  const [ticketPaid, setTicketPaid] = useState(false);
+  const [statusReady, setStatusReady] = useState(false);
   const [attendeeCount, setAttendeeCount] = useState(0);
   const [rsvpLoading, setRsvpLoading] = useState(false);
+  const eventId = event?.id;
 
   useEffect(() => {
     if (!params?.slug) return;
@@ -37,28 +53,59 @@ export default function EventDetailPage() {
         setEvent(payload.data);
         setAttendeeCount(Number(payload.data.attendee_count || 0));
       })
-      .catch((loadError) =>
-        setError(
-          loadError instanceof Error ? loadError.message : "Event not found",
+      .catch((loadFailure) =>
+        setLoadError(
+          loadFailure instanceof Error ? loadFailure.message : "Event not found",
         ),
       );
   }, [params?.slug]);
 
+  const refreshStatus = useCallback(async (): Promise<RsvpStatus | null> => {
+    if (!user || eventId === undefined) return null;
+    const response = await authenticatedFetch(
+      `/api/events/${eventId}/rsvp/status`,
+    );
+    if (!response.ok) return null;
+    const { data } = await response.json();
+    const status = {
+      attending: Boolean(data?.attending),
+      ticketPaid: Boolean(data?.ticketPaid),
+      attendeeCount: Number(data?.attendee_count ?? 0),
+    };
+    setAttending(status.attending);
+    setTicketPaid(status.ticketPaid);
+    setAttendeeCount(status.attendeeCount);
+    return status;
+  }, [user, eventId]);
+
   useEffect(() => {
-    if (!user || !event) return;
-    authenticatedFetch(`/api/events/${event.id}/rsvp/status`)
-      .then(async (response) => {
-        if (!response.ok) return;
-        const payload = await response.json();
-        setAttending(Boolean(payload.data?.attending));
-        setAttendeeCount(Number(payload.data?.attendee_count || attendeeCount));
-      })
-      .catch(() => undefined);
-  }, [user, event, attendeeCount]);
+    setStatusReady(false);
+    if (!user) {
+      setAttending(false);
+      setTicketPaid(false);
+      return;
+    }
+    if (eventId === undefined) return;
+    let active = true;
+    refreshStatus()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setStatusReady(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user, eventId, refreshStatus]);
+
+  const checkout = useCheckoutReturn({
+    ready: !!user && eventId !== undefined,
+    isFulfilled: async () => (await refreshStatus())?.ticketPaid === true,
+  });
 
   const toggleRsvp = async () => {
     if (!event || !user) return;
     setRsvpLoading(true);
+    setRsvpError("");
     try {
       const response = await authenticatedFetch(
         `/api/events/${event.id}/rsvp`,
@@ -66,40 +113,102 @@ export default function EventDetailPage() {
           method: attending ? "DELETE" : "POST",
         },
       );
-      const payload = await response.json();
-      if (!response.ok)
-        throw new Error(payload.error || "Could not update RSVP");
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        // The server may know something the page does not: a paid or required ticket.
+        void refreshStatus().catch(() => undefined);
+        setRsvpError(payload?.error || "Could not update RSVP");
+        return;
+      }
       setAttending(!attending);
       setAttendeeCount((count) => Math.max(0, count + (attending ? -1 : 1)));
-    } catch (rsvpError) {
-      setError(
-        rsvpError instanceof Error
-          ? rsvpError.message
-          : "Could not update RSVP",
-      );
+    } catch {
+      setRsvpError("Could not update RSVP");
     } finally {
       setRsvpLoading(false);
     }
   };
 
-  if (error)
+  if (loadError)
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <p className="text-rose-600">{error}</p>
+        <p className="text-rose-600">{tr(loadError)}</p>
         <Button asChild className="mt-4">
-          <Link href="/events">Back to events</Link>
+          <Link href="/events">{tr("Back to events")}</Link>
         </Button>
       </div>
     );
   if (!event)
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center text-slate-500">
-        Loading event...
+        {tr("Loading event...")}
       </div>
     );
 
+  // Hold the buttons until we know what is on sale and what this visitor already has.
+  const controlsReady = ticket !== undefined && (!user || statusReady);
+  let controls: ReactNode = null;
+  if (controlsReady && !checkout.awaitingPayment) {
+    if (ticketPaid && attending) {
+      controls = (
+        <span className="inline-flex items-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white">
+          <Check className="h-4 w-4" aria-hidden="true" />
+          {tr("Going (ticket paid)")}
+        </span>
+      );
+    } else if (ticket && !attending && !ticketPaid) {
+      controls = (
+        <OfferCheckoutButton
+          offer={ticket}
+          label="Buy ticket"
+          eventId={event.id}
+          onOwned={() => void refreshStatus().catch(() => undefined)}
+        />
+      );
+    } else if (user) {
+      controls = (
+        <Button
+          onClick={() => void toggleRsvp()}
+          disabled={rsvpLoading}
+          className={
+            attending ? "bg-amber-700" : "bg-amber-600 hover:bg-amber-700"
+          }
+        >
+          {rsvpLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : attending ? (
+            <Check className="mr-2 h-4 w-4" />
+          ) : null}
+          {attending
+            ? tr("Going")
+            : ticketPaid
+              ? tr("Join (ticket paid)")
+              : tr("Join for free")}
+        </Button>
+      );
+    } else {
+      controls = (
+        <Button asChild>
+          <Link
+            href={`/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`}
+          >
+            {tr("Sign in to join for free")}
+          </Link>
+        </Button>
+      );
+    }
+  }
+
   return (
     <main className="min-h-screen bg-amber-50/30 px-4 py-12">
+      <div className="mx-auto max-w-3xl">
+        <CheckoutReturnNotice
+          phase={checkout.phase}
+          purchase="activity"
+          onCheckAgain={checkout.checkAgain}
+          onDismiss={checkout.dismiss}
+        />
+      </div>
       <Card className="mx-auto max-w-3xl border-slate-200">
         <CardHeader>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600">
@@ -123,42 +232,42 @@ export default function EventDetailPage() {
               </span>
             )}
             {event.community_name && (
-              <span>Hosted with {event.community_name}</span>
+              <span>
+                {tr("Hosted with {name}", { name: event.community_name })}
+              </span>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3 border-y border-slate-100 py-4">
             <span className="text-sm font-medium text-slate-700">
-              {attendeeCount} {attendeeCount === 1 ? "person" : "people"} going
+              {tr(
+                attendeeCount === 1
+                  ? "{count} person going"
+                  : "{count} people going",
+                { count: attendeeCount },
+              )}
             </span>
-            {user ? (
-              <Button
-                onClick={() => void toggleRsvp()}
-                disabled={rsvpLoading}
-                className={
-                  attending
-                    ? "bg-amber-700"
-                    : "bg-amber-600 hover:bg-amber-700"
-                }
-              >
-                {rsvpLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : attending ? (
-                  <Check className="mr-2 h-4 w-4" />
-                ) : null}
-                {attending ? "Going" : "Join for free"}
-              </Button>
-            ) : (
-              <Button asChild>
-                <Link
-                  href={`/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`}
-                >
-                  Sign in to join for free
-                </Link>
-              </Button>
-            )}
+            {controls}
           </div>
+          {rsvpError ? (
+            <p role="alert" className="text-sm text-rose-600">
+              {tr(rsvpError)}
+            </p>
+          ) : null}
+          {ticketPaid && attending ? (
+            <p className="text-sm text-slate-500">
+              {tr(
+                "Your ticket is paid. To cancel it and request a refund, contact support.",
+              )}{" "}
+              <a
+                href="mailto:support@versoair.com"
+                className="font-medium underline underline-offset-2"
+              >
+                support@versoair.com
+              </a>
+            </p>
+          ) : null}
           <Button asChild variant="outline">
-            <Link href="/events">Back to events</Link>
+            <Link href="/events">{tr("Back to events")}</Link>
           </Button>
         </CardContent>
       </Card>

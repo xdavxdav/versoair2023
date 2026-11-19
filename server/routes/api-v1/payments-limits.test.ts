@@ -41,6 +41,19 @@ test("subscription checkout is limited per user", async () => {
   });
 });
 
+test("offer checkout is limited per user, separately from plan checkout", async () => {
+  await serve(async (origin) => {
+    const headers = signIn({ id: 831, role: "user" });
+    await exhaust(origin, "/create-offer-checkout", headers, 10);
+
+    const blocked = await post(origin, "/create-offer-checkout", headers);
+    assert.equal(blocked.status, 429);
+    assert.equal(blocked.body.code, "PAYMENT_RATE_LIMITED");
+
+    assert.notEqual((await post(origin, "/create-checkout", headers)).status, 429);
+  });
+});
+
 test("billing portal sessions are limited per user", async () => {
   await serve(async (origin) => {
     const headers = signIn({ id: 811, role: "user" });
