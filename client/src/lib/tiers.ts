@@ -1,3 +1,5 @@
+import { BUSINESS_PLAN_PRICE_SCHEDULE } from "@shared/plan-pricing";
+
 /**
  * 🛸 Business Growth Engine - Subscription Truth Table
  * Central config driving all tier logic, feature flags, ranking weights, and visibility narratives.
@@ -40,7 +42,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "red",
     meterPercent: 15,
     icon: "📋",
-    annualPriceXof: 0,
+    annualPriceXof: BUSINESS_PLAN_PRICE_SCHEDULE.free.fcfaAnnual,
   },
   essential: {
     key: "essential",
@@ -54,7 +56,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "yellow",
     meterPercent: 35,
     icon: "⚡",
-    annualPriceXof: 180_000,
+    annualPriceXof: BUSINESS_PLAN_PRICE_SCHEDULE.essential.fcfaAnnual,
   },
   verified: {
     key: "verified",
@@ -68,7 +70,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "green",
     meterPercent: 60,
     icon: "✅",
-    annualPriceXof: 400_000,
+    annualPriceXof: BUSINESS_PLAN_PRICE_SCHEDULE.verified.fcfaAnnual,
     popular: true,
   },
   max: {
@@ -83,7 +85,7 @@ export const TIERS: Record<TierKey, TierDefinition> = {
     meterZone: "purple",
     meterPercent: 85,
     icon: "🚀",
-    annualPriceXof: 780_000,
+    annualPriceXof: BUSINESS_PLAN_PRICE_SCHEDULE.max.fcfaAnnual,
   },
   enterprise: {
     key: "enterprise",

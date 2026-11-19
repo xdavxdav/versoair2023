@@ -1,5 +1,6 @@
 import type { TierKey } from "@/lib/tiers";
 import { TIERS } from "@/lib/tiers";
+import { BUSINESS_PLAN_PRICE_SCHEDULE } from "@shared/plan-pricing";
 export {
   calculateGeoAdminFeeXof,
   calculateGeoAdminTotalXof,
@@ -42,14 +43,14 @@ export const GEOADMIN_OFFER_NAMES: Record<GeoAdminOfferKey, string> = {
 
 export const GEOADMIN_OFFER_PRICES_XOF: Record<GeoAdminOfferKey, number | null> = {
   ...GEOADMIN_ANNUAL_PRICES_XOF,
-  premium: 300_000,
+  premium: BUSINESS_PLAN_PRICE_SCHEDULE.premium.fcfaAnnual,
 };
 
 export const GEOADMIN_REFERENCE_NOTICE =
-  "Non-final annual reference prices; market research is ongoing. Platform availability and all proposed services must be confirmed in a written offer before any commitment. No payment, subscription activation, advertising budget or managed social campaign is included here. Standard is the only permanently free business plan, at 0 FCFA per year. Other plans are paid; any free trial is temporary, subject to eligibility, with duration and terms confirmed before activation.";
+  "CAD is the approved price; FCFA is the annual base schedule. EUR amounts are derived at the fixed 1 EUR = 655.957 FCFA peg and are not approved prices. Standard is free everywhere. Enterprise is quote-only in all currencies. No payment or plan activation occurs on this page.";
 
 export const GEOADMIN_PREMIUM_NOTICE =
-  "Premium is available by inquiry only. It uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions.";
+  "Premium has a published price but is handled by inquiry; it uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions.";
 
 export const GEOADMIN_MARKETS = {
   CA: { currency: "CAD", locale: "en-US" },

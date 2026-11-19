@@ -1,13 +1,57 @@
 /**
- * Self-serve plan prices charged by POST /api/v1/payments/create-checkout.
- *
- * Plans are charged in CAD, like the shop. client/src/lib/tiers.ts keeps the
- * FCFA reference schedule shown on screen; these figures are that schedule at
- * 0.0024 CAD per XOF, rounded to the nearest CA$10 per year, with the monthly
- * price at a tenth of the annual one. Enterprise has no self-serve price: the
- * public schedule shows "custom quote". Change prices in this file only.
+ * Business-plan prices. CAD is the approved price and the only checkout
+ * currency; FCFA is the annual base schedule. EUR is derived for display only
+ * at the fixed CFA franc peg and is not an approved price.
  */
 export const PLAN_CURRENCY = "cad";
+export const FCFA_PER_EUR = 655.957;
+
+export const BUSINESS_PLAN_PRICE_SCHEDULE = {
+  free: {
+    name: "Standard",
+    cadMonthlyCents: 0,
+    cadAnnualCents: 0,
+    fcfaAnnual: 0,
+  },
+  essential: {
+    name: "Essentiel",
+    cadMonthlyCents: 4_300,
+    cadAnnualCents: 43_000,
+    fcfaAnnual: 180_000,
+  },
+  premium: {
+    name: "Premium",
+    cadMonthlyCents: 6_000,
+    cadAnnualCents: 72_000,
+    fcfaAnnual: 300_000,
+  },
+  verified: {
+    name: "Pro Vérifié",
+    cadMonthlyCents: 9_600,
+    cadAnnualCents: 96_000,
+    fcfaAnnual: 400_000,
+  },
+  max: {
+    name: "Pro Max",
+    cadMonthlyCents: 18_700,
+    cadAnnualCents: 187_000,
+    fcfaAnnual: 780_000,
+  },
+  enterprise: {
+    name: "Enterprise",
+    quoteOnly: true,
+  },
+} as const;
+
+export function deriveEurPlanPrice(fcfaAnnual: number): {
+  monthlyCents: number;
+  annualCents: number;
+} {
+  return {
+    monthlyCents: Math.round((fcfaAnnual / 10 / FCFA_PER_EUR) * 100),
+    annualCents: Math.round((fcfaAnnual / FCFA_PER_EUR) * 100),
+  };
+}
 
 export type BillingCycle = "monthly" | "annual";
 export type SelfServePlanTier = "essential" | "verified" | "max";
@@ -19,9 +63,21 @@ export interface PlanPrice {
 }
 
 export const PLAN_PRICES: Record<SelfServePlanTier, PlanPrice> = {
-  essential: { name: "Essential", monthlyCents: 4_300, annualCents: 43_000 },
-  verified: { name: "Pro Verified", monthlyCents: 9_600, annualCents: 96_000 },
-  max: { name: "Pro Max", monthlyCents: 18_700, annualCents: 187_000 },
+  essential: {
+    name: "Essential",
+    monthlyCents: BUSINESS_PLAN_PRICE_SCHEDULE.essential.cadMonthlyCents,
+    annualCents: BUSINESS_PLAN_PRICE_SCHEDULE.essential.cadAnnualCents,
+  },
+  verified: {
+    name: "Pro Verified",
+    monthlyCents: BUSINESS_PLAN_PRICE_SCHEDULE.verified.cadMonthlyCents,
+    annualCents: BUSINESS_PLAN_PRICE_SCHEDULE.verified.cadAnnualCents,
+  },
+  max: {
+    name: "Pro Max",
+    monthlyCents: BUSINESS_PLAN_PRICE_SCHEDULE.max.cadMonthlyCents,
+    annualCents: BUSINESS_PLAN_PRICE_SCHEDULE.max.cadAnnualCents,
+  },
 };
 
 export const SELF_SERVE_PLAN_TIERS = Object.keys(
@@ -53,7 +109,7 @@ export interface PublicTierPricing {
   quoteOnly?: true;
 }
 
-/** Whole-currency amounts for display; null when a plan has no self-serve price. */
+/** CAD amounts used by the self-serve subscription API. */
 export function publicTierPricing(tier: string): PublicTierPricing {
   if (isSelfServePlanTier(tier)) {
     const { monthlyCents, annualCents } = PLAN_PRICES[tier];
@@ -65,6 +121,14 @@ export function publicTierPricing(tier: string): PublicTierPricing {
   }
   if (tier === "free") {
     return { currency: PLAN_CURRENCY, monthly: 0, annual: 0 };
+  }
+  if (tier === "premium") {
+    const price = BUSINESS_PLAN_PRICE_SCHEDULE.premium;
+    return {
+      currency: PLAN_CURRENCY,
+      monthly: price.cadMonthlyCents / 100,
+      annual: price.cadAnnualCents / 100,
+    };
   }
   return {
     currency: PLAN_CURRENCY,
