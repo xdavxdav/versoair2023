@@ -1,9 +1,5 @@
 /**
- * Who may host a TMU live session, and which tracks a host may put in a set.
- *
- * Hosting is for verified artists only: a registered artist (artist account, artist profile or
- * approved contract) whose artist record is flagged verified. S and A grades are verified when
- * their contract is approved. Email verification is not enough, every user who can log in has it.
+ * Artist attributes for session display and published tracks available to signed-in hosts.
  */
 import type { SetTrack } from "../../shared/listening-session";
 
@@ -44,25 +40,25 @@ export interface HostTrackOption {
   durationSec: number;
 }
 
-const OWN_TRACKS = `FROM music_tracks mt
-  JOIN artists art ON art.id = mt.artist_id AND art.user_id = $1
+const PUBLISHED_TRACKS = `FROM music_tracks mt
+  LEFT JOIN music_artists ma ON ma.id = mt.artist_id
+  LEFT JOIN artists art ON art.id = mt.artist_id
  WHERE mt.status = 'published' AND COALESCE(mt.duration, 0) > 0`;
 
-/** The host's own published tracks with a known length, optionally filtered by title. */
-export async function searchHostTracks(
+/** Published tracks with a known length, optionally filtered by title. */
+export async function searchPublishedTracks(
   db: HostDb,
-  userId: number,
   q: string,
   limit: number,
 ): Promise<HostTrackOption[]> {
   const term = q.trim().replace(/[\\%_]/g, (char) => `\\${char}`);
   const result = await db.query(
-    `SELECT mt.id, mt.title, art.stage_name AS artist_name, mt.duration
-       ${OWN_TRACKS}
-        AND ($2::text = '' OR mt.title ILIKE $3)
+    `SELECT mt.id, mt.title, COALESCE(ma.name, art.stage_name) AS artist_name, mt.duration
+       ${PUBLISHED_TRACKS}
+        AND ($1::text = '' OR mt.title ILIKE $2)
       ORDER BY mt.id DESC
-      LIMIT $4`,
-    [userId, q.trim(), `%${term}%`, Math.min(Math.max(limit, 1), 50)],
+      LIMIT $3`,
+    [q.trim(), `%${term}%`, Math.min(Math.max(limit, 1), 50)],
   );
   return result.rows.map((row) => ({
     id: Number(row.id),
@@ -74,28 +70,27 @@ export async function searchHostTracks(
 
 export type HostTracksResult =
   | { ok: true; tracks: SetTrack[] }
-  | { ok: false; code: "track_not_owned"; message: string; trackIds: number[] };
+  | { ok: false; code: "track_unavailable"; message: string; trackIds: number[] };
 
 /**
  * Turns the chosen track ids into set entries. Lengths come from the stored track, never from the
- * request, and every track must be a published one of the host's own.
+ * request, and every track must be published.
  */
-export async function resolveHostTracks(
+export async function resolvePublishedTracks(
   db: HostDb,
-  userId: number,
   trackIds: readonly number[],
 ): Promise<HostTracksResult> {
   const result = await db.query(
-    `SELECT mt.id, mt.duration ${OWN_TRACKS} AND mt.id = ANY($2::int[])`,
-    [userId, trackIds],
+    `SELECT mt.id, mt.duration ${PUBLISHED_TRACKS} AND mt.id = ANY($1::int[])`,
+    [trackIds],
   );
   const durations = new Map(result.rows.map((row) => [Number(row.id), Number(row.duration)]));
   const missing = trackIds.filter((id) => !durations.has(id));
   if (missing.length > 0) {
     return {
       ok: false,
-      code: "track_not_owned",
-      message: "You can only add your own published tracks to a live session.",
+      code: "track_unavailable",
+      message: "You can only add published tracks to a live session.",
       trackIds: missing,
     };
   }

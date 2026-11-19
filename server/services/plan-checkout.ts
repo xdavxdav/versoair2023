@@ -62,6 +62,7 @@ interface PlanCheckoutInput {
   userId: number | string;
   selection: PlanSelection;
   customerId: string;
+  customerEmail: string;
   baseUrl: string;
 }
 
@@ -99,6 +100,7 @@ export function buildPlanCheckoutParams(
     payment_method_types: ["card"],
     mode: "payment",
     customer: input.customerId,
+    customer_email: input.customerEmail,
     payment_intent_data: {
       setup_future_usage: "off_session",
     },
@@ -131,6 +133,7 @@ export function buildRecurringPlanCheckoutParams(
     payment_method_types: ["card"],
     mode: "subscription",
     customer: input.customerId,
+    customer_email: input.customerEmail,
     line_items: [
       {
         price_data: {

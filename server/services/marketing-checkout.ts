@@ -240,6 +240,7 @@ export function buildCheckoutSessionParams(input: {
   lines: PricedCartLine[];
   orderId: number;
   userId: string | number;
+  customerEmail: string;
   baseUrl: string;
 }): Stripe.Checkout.SessionCreateParams {
   const shipsPhysicalGoods = input.lines.some(
@@ -248,6 +249,7 @@ export function buildCheckoutSessionParams(input: {
   return {
     payment_method_types: ["card"],
     mode: "payment",
+    customer_email: input.customerEmail,
     // Print products ship, and orders have no address columns of their own;
     // the webhook copies the collected address into the order notes.
     ...(shipsPhysicalGoods
@@ -308,6 +310,20 @@ export function createMarketingCheckoutHandler(
       }
 
       const userId = req.user!.userId;
+      const user = await deps.pool.query(
+        "SELECT email FROM users WHERE id = $1",
+        [userId],
+      );
+      const customerEmail = user.rows[0]?.email;
+      if (typeof customerEmail !== "string" || !customerEmail.trim()) {
+        res.status(400).json({
+          success: false,
+          error: "An email address is required for Checkout.",
+          code: "CHECKOUT_EMAIL_REQUIRED",
+        });
+        return;
+      }
+
       const pricing = await priceCart(deps.pool, userId);
       if (!pricing.ok) {
         res.status(pricing.status).json({
@@ -333,6 +349,7 @@ export function createMarketingCheckoutHandler(
             lines: pricing.lines,
             orderId: order.id,
             userId,
+            customerEmail: customerEmail.trim(),
             baseUrl: deps.getBaseUrl(),
           }),
           { idempotencyKey: `marketing-order-${order.id}` },

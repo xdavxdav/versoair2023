@@ -148,6 +148,7 @@ export async function applyInvoicePaid(
       ((invoice.amount_paid ?? 0) / 100).toFixed(2),
       "subscription_fee",
       invoiceLedgerReference(invoiceId),
+      invoice.currency?.toUpperCase() || "CAD",
     );
     if (!claimed) return { status: "duplicate" };
 

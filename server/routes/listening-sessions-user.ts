@@ -1,11 +1,11 @@
 /**
  * User-facing listening session endpoints (TMU)
- * Verified artists create and manage their own live sessions.
+ * Signed-in users can create and manage their live sessions.
  *
  * Routes (all require a signed-in user):
  *   GET  /eligibility         Whether the caller may host, and the quota status
- *   GET  /tracks              The caller's own published tracks (for the set picker)
- *   POST /create              Create a session (verified artists only, own tracks only)
+ *   GET  /tracks              Published tracks for the set picker
+ *   POST /create              Create a session using published tracks
  *   GET  /my-sessions         The caller's sessions
  *   POST /:id/cancel          Cancel one of the caller's sessions before it ends
  */
@@ -40,8 +40,8 @@ import {
 } from "../services/listening-session-rate-limits";
 import {
   getHostEligibility,
-  resolveHostTracks,
-  searchHostTracks,
+  resolvePublishedTracks,
+  searchPublishedTracks,
 } from "../services/tmu-host";
 
 const MAX_INT4 = 2_147_483_647;
@@ -80,11 +80,6 @@ function getCurrentUserId(req: Request): number | null {
 function getClientIp(req: Request): string {
   return req.ip || "unknown";
 }
-
-const NOT_VERIFIED_ARTIST = {
-  code: "verified_artist_required",
-  message: "Only verified artists can host a live session.",
-};
 
 // ─── Validation Schemas ──────────────────────────────────────────────
 
@@ -196,13 +191,13 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
         success: true,
         registeredArtist: eligibility.registered,
         verifiedArtist: eligibility.verified,
-        canHost: eligibility.verified,
+        canHost: true,
         rateLimitStatus: quotaView(quota),
       });
     }),
   );
 
-  // GET /tracks - The caller's own published tracks
+  // GET /tracks - Any published track may be added to a session set
   router.get(
     "/tracks",
     asyncHandler(async (req, res) => {
@@ -211,13 +206,9 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
       const db = await withDb(res);
       if (!db) return;
 
-      const eligibility = await getHostEligibility(db, userId);
-      if (!eligibility.verified) {
-        return sendError(res, 403, NOT_VERIFIED_ARTIST.code, NOT_VERIFIED_ARTIST.message);
-      }
       const q = typeof req.query.q === "string" ? req.query.q.slice(0, 100) : "";
       const limit = Number.parseInt(String(req.query.limit ?? "20"), 10) || 20;
-      res.json({ success: true, tracks: await searchHostTracks(db, userId, q, limit) });
+      res.json({ success: true, tracks: await searchPublishedTracks(db, q, limit) });
     }),
   );
 
@@ -233,11 +224,6 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
       const db = await withDb(res);
       if (!db) return;
 
-      const eligibility = await getHostEligibility(db, userId);
-      if (!eligibility.verified) {
-        return sendError(res, 403, NOT_VERIFIED_ARTIST.code, NOT_VERIFIED_ARTIST.message);
-      }
-
       const parsed = userCreateSessionSchema.safeParse(req.body ?? {});
       if (!parsed.success) return sendInvalid(res, parsed.error);
 
@@ -246,12 +232,14 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
         return sendError(res, 400, "starts_too_far", "The start time is more than a year away.");
       }
 
-      // Lengths come from the stored tracks, and each track must be the caller's own.
-      const owned = await resolveHostTracks(db, userId, parsed.data.trackIds);
-      if (!owned.ok) {
-        return sendError(res, 403, owned.code, owned.message, { trackIds: owned.trackIds });
+      // Lengths come from the stored tracks, and every selected track must be published.
+      const published = await resolvePublishedTracks(db, parsed.data.trackIds);
+      if (!published.ok) {
+        return sendError(res, 400, published.code, published.message, {
+          trackIds: published.trackIds,
+        });
       }
-      const set = validateSetTracks(owned.tracks);
+      const set = validateSetTracks(published.tracks);
       if (!set.ok) return sendError(res, 400, set.code, set.message);
 
       // One creation at a time per user, so two parallel requests cannot both pass the quota check.

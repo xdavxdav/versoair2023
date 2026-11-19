@@ -45,6 +45,12 @@
       "problemMatcher": []
     },
     {
+      "label": "List Agent Task Claims",
+      "type": "shell",
+      "command": "node scripts/agent-task-lock.cjs list",
+      "problemMatcher": []
+    },
+    {
       "label": "Run SEO Route Tests",
       "type": "npm",
       "script": "test:route-seo",

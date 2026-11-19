@@ -84,13 +84,14 @@ export async function claimSession(
   amount: string,
   type: string,
   sessionId: string,
+  currency = "CAD",
 ): Promise<boolean> {
   const claim = await client.query(
-    `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
-     VALUES (NULL, $1, $2, $3, 'completed', $4)
+    `INSERT INTO transactions (business_id, user_id, amount, currency, type, status, reference)
+     VALUES (NULL, $1, $2, $3, $4, 'completed', $5)
      ON CONFLICT DO NOTHING
      RETURNING id`,
-    [userId, amount, type, sessionId],
+    [userId, amount, currency.toUpperCase(), type, sessionId],
   );
   return claim.rows.length > 0;
 }
@@ -129,6 +130,10 @@ export async function applyCheckoutSessionCompleted(
   }
 
   const amount = ((session.amount_total || 0) / 100).toFixed(2);
+  const currency =
+    typeof session.currency === "string" && session.currency.trim()
+      ? session.currency.toUpperCase()
+      : "CAD";
 
   if (targetTier) {
     return inTransaction<CheckoutCompletion>(db, async (client) => {
@@ -138,6 +143,7 @@ export async function applyCheckoutSessionCompleted(
         amount,
         type || "subscription_fee",
         session.id,
+        currency,
       );
       if (!claimed) return { status: "duplicate" };
 
@@ -178,6 +184,7 @@ export async function applyCheckoutSessionCompleted(
         amount,
         "marketing_order",
         session.id,
+        currency,
       );
       if (!claimed) return { status: "duplicate" };
 
@@ -311,7 +318,7 @@ export async function applyPaymentReversal(
 ): Promise<ReversalOutcome> {
   return inTransaction<ReversalOutcome>(db, async (client) => {
     const original = await client.query(
-      `SELECT user_id FROM transactions WHERE reference = $1`,
+      `SELECT user_id, currency FROM transactions WHERE reference = $1`,
       [sessionId],
     );
     if (original.rows.length === 0) return { status: "unmatched" };
@@ -322,6 +329,7 @@ export async function applyPaymentReversal(
       ledgerAmount(reversal),
       reversal.kind,
       `stripe_event:${eventId}`,
+      String(original.rows[0].currency || "CAD"),
     );
     if (!claimed) return { status: "duplicate" };
 

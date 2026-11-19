@@ -37,6 +37,7 @@ function row(over: Partial<SessionRow> = {}): SessionRow {
     description: null,
     hostUserId: 7,
     hostName: "Luq",
+    featured: false,
     startsAt: T0,
     endsAt: at(130),
     playlistId: 9,
@@ -112,10 +113,12 @@ test("mapSessionRow: types are normalised and a host whose name is an email gets
     gap_seconds: "5",
     host_display_name: null,
     host_username: "listener@example.com",
+    host_featured: true,
   };
   const mapped = mapSessionRow(raw);
   assert.equal(mapped.id, 3);
   assert.equal(mapped.hostName, null);
+  assert.equal(mapped.featured, true);
   assert.equal(mapped.playlistId, null);
   assert.equal(mapped.storedStatus, "live");
   assert.equal(mapped.gapSeconds, 5);
@@ -154,9 +157,9 @@ test("public views never carry the host's account id or the playlist id", () => 
   assert.deepEqual(publicDetail.tracks, []);
 });
 
-test("presentPublicList: live first, then upcoming by start, then ended newest first; cancelled hidden", () => {
+test("presentPublicList: live first, featured upcoming first, then replays newest first; cancelled hidden", () => {
   const rows = [
-    row({ id: 1, startsAt: at(3600), endsAt: at(3730) }),
+    row({ id: 1, startsAt: at(3600), endsAt: at(3730), featured: true }),
     row({ id: 2, startsAt: at(600), endsAt: at(730) }),
     row({ id: 3, startsAt: at(-60), endsAt: at(70), storedStatus: "scheduled" }),
     row({ id: 4, startsAt: at(-7200), endsAt: at(-7070), storedStatus: "ended" }),
@@ -165,7 +168,7 @@ test("presentPublicList: live first, then upcoming by start, then ended newest f
   ];
   assert.deepEqual(
     presentPublicList(rows, at(0)).map((s) => s.id),
-    [3, 2, 1, 5, 4],
+    [3, 1, 2, 5, 4],
   );
 });
 

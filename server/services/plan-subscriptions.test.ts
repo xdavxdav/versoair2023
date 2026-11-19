@@ -89,9 +89,10 @@ test("the first paid invoice grants the plan, ledgers the payment and records th
       periodEnd: at(FIRST_PERIOD_END),
     });
     assert.deepEqual(
-      db.transactions.map(({ user_id, amount, type, reference }) => ({
+      db.transactions.map(({ user_id, amount, currency, type, reference }) => ({
         user_id,
         amount,
+        currency,
         type,
         reference,
       })),
@@ -99,6 +100,7 @@ test("the first paid invoice grants the plan, ledgers the payment and records th
         {
           user_id: 7,
           amount: "96.00",
+          currency: "CAD",
           type: "subscription_fee",
           reference: "invoice:in_1",
         },

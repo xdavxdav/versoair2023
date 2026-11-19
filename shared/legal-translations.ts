@@ -2,6 +2,7 @@
 export const LEGAL_COPY = [
   ["Terms of Service", "Conditions d'utilisation"],
   ["Privacy Policy", "Politique de confidentialité"],
+  ["Acceptable Use Policy", "Politique d'utilisation acceptable"],
   ["Cookie Policy", "Politique relative aux cookies"],
   ["Acceptable Use Policy", "Politique d'utilisation acceptable"],
   ["Last updated: March 13, 2026", "Dernière mise à jour : 13 mars 2026"],

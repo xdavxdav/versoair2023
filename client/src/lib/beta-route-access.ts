@@ -39,6 +39,7 @@ const BETA_ROUTE_PREFIXES = [
   "/news",
   "/privacy",
   "/terms",
+  "/aup",
   "/cookies",
   "/gdpr",
   "/aup",

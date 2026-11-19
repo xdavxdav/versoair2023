@@ -88,7 +88,17 @@ function SessionCard({
             : "border-gray-800 bg-gray-900/60 hover:border-gray-700 hover:bg-gray-900",
         )}
       >
-        <StatusPill status={status} copy={copy} />
+        <div className="flex flex-wrap gap-2">
+          <StatusPill status={status} copy={copy} />
+          {session.featured && status !== "ended" && (
+            <Badge
+              variant="outline"
+              className="border-amber-400/40 bg-amber-400/10 text-amber-200"
+            >
+              {copy.featured}
+            </Badge>
+          )}
+        </div>
         <h3 className="mt-3 break-words text-base font-semibold leading-snug text-white">{session.title}</h3>
         <ul className="mt-2 space-y-1 text-sm text-gray-400">
           {session.hostName && (

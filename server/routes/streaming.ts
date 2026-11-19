@@ -587,7 +587,7 @@ async function getStreamBudget(userId: number | null): Promise<{
 
 // POST /api/streaming/record-play — Record a stream play (must be ≥30 seconds)
 // Enforces weekly stream caps per listener subscription tier.
-router.post("/record-play", async (req: Request, res: Response) => {
+const recordPlayHandler = async (req: Request, res: Response) => {
   try {
     const { trackId, duration, sessionId } = req.body;
     if (!trackId || !duration) {
@@ -735,7 +735,9 @@ router.post("/record-play", async (req: Request, res: Response) => {
     console.error("[Streaming] record-play error:", err.message);
     res.status(500).json({ error: "Failed to record play" });
   }
-});
+};
+
+router.post("/record-play", recordPlayHandler);
 
 // ═══════════════════════════════════════════════════════════
 // PREVIEW MODE + PAYLIST SYSTEM
@@ -2637,61 +2639,8 @@ router.get("/search", async (req: Request, res: Response) => {
 // SIMPLIFIED ENDPOINTS (aliases for cleaner API)
 // ═══════════════════════════════════════════════════════════
 
-// POST /api/streaming/play — Alias for /record-play
-router.post("/play", async (req: Request, res: Response) => {
-  try {
-    const { trackId, duration, sessionId } = req.body;
-    if (!trackId || !duration) {
-      return res.status(400).json({ error: "trackId and duration required" });
-    }
-    if (duration < 30) {
-      return res.json({
-        recorded: false,
-        reason: "Must listen at least 30 seconds",
-      });
-    }
-
-    // Get artist for this track
-    const trackRow = await pool.query(
-      `SELECT artist_id FROM music_tracks WHERE id = $1`,
-      [trackId],
-    );
-    const artistId = trackRow.rows[0]?.artist_id;
-
-    // Insert stream play
-    await pool.query(
-      `INSERT INTO stream_plays (track_id, artist_id, user_id, duration, session_id, played_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())`,
-      [
-        trackId,
-        artistId || null,
-        (req as any).user?.id || null,
-        duration,
-        sessionId || null,
-      ],
-    );
-
-    // Increment play count
-    await pool.query(
-      `UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1 WHERE id = $1`,
-      [trackId],
-    );
-
-    // $0.007 flat revenue per stream
-    const RATE = 0.007;
-    if (artistId) {
-      await pool.query(
-        `UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1, revenue = COALESCE(revenue, 0) + $1 WHERE id = $2`,
-        [RATE, artistId],
-      );
-    }
-
-    res.json({ recorded: true, revenue: RATE });
-  } catch (err: any) {
-    console.error("[STREAMING] Play error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+// POST /api/streaming/play — Legacy alias for the validated record-play handler.
+router.post("/play", recordPlayHandler);
 
 // GET /api/streaming/stats/:artistId — Artist streaming stats
 router.get(

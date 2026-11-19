@@ -23,7 +23,7 @@ it opens many other surfaces (table below) that are not ready.
 | Business tier from wallet balance | `POST /api/payments/tier/upgrade` | same two flags | Wallet funds, no Stripe; own legacy prices (gap 7) |
 | Wallet deposit | `/api/wallet/deposit`, `/api/payments/wallet/deposit` | `ONLINE_PAYMENTS_ENABLED` | No Stripe top-up exists; first is a PayPal redirect preview, second always returns 503 |
 | PayPal, artist paid tiers, tips, withdraw, bank/Interac/crypto/mobile-money | `routes/paypal.ts`, `artist-subscriptions.ts`, `streamroyale.ts`, `payments.ts` | `ONLINE_PAYMENTS_ENABLED` | Not Stripe; out of scope for this go-live |
-| NGO POS charge | `POST /api/v1/payments/charge` | `ONLINE_PAYMENTS_ENABLED`, superuser | Admin types the amount; default currency USD |
+| NGO POS charge | `POST /api/v1/payments/charge` | `ONLINE_PAYMENTS_ENABLED`, superuser | Admin types the amount; default currency CAD (explicit other currencies remain supported) |
 | Save card / setup intent / billing portal | `/api/v1/payments/*` | Stripe key only | Charges nothing |
 | Journal listings | `/api/marketing/journal/*` | n/a | No purchase path (free listings, admin-generated PDFs) |
 | Listener subscription | `services/listener-subscription.ts` | n/a | Reads a table only; nothing creates a Stripe subscription |
@@ -97,15 +97,19 @@ and reconcile from the Dashboard.
    off until the owner has reviewed the plan prices (blocker 2). No page starts
    a plan checkout yet (`/pricing` is inquiry-only and the billing page only
    opens the Stripe portal), so a purchase button still has to be built.
-3. **No customer receipt email.** The Checkout session does not pass an email.
-   Stripe's own receipts (Dashboard > Settings > Customer emails) are only sent
-   in **live** mode, so they cannot be seen in the sandbox test. Check one with
-   your small real purchase (Part B step 5.2).
+3. **Receipt delivery must be confirmed.** Checkout now receives the user's
+   account email for both the marketing and plan flows. Stripe sends its own
+   receipts only when customer receipts are enabled in Dashboard > Settings >
+   Customer emails, and Stripe receipts are only sent in **live** mode. Verify
+   receipt delivery on the first small real purchase (Part B step 5.2).
 4. **Refunds do not revoke subscription tiers automatically.** Marketing orders
    are marked `refunded` / `disputed` / `chargeback` automatically; a
-   subscription tier must be downgraded by support. For an automatic-renewal
-   plan, support first cancels the subscription in Stripe (otherwise the next
-   invoice charges again and re-grants the plan), then downgrades the user.
+   subscription tier must be downgraded by support. For a full plan refund,
+   verify the refund in Stripe, cancel any recurring subscription in Stripe
+   first, then use the authorized account-support process to downgrade the
+   user's tier and clear its expiry. Cancelling first prevents the next invoice
+   from charging and re-granting the plan. Confirm the user's access is
+   downgraded and the subscription is no longer active.
 5. **Print products ship; orders have no address columns.** Checkout now
    collects a CA/US shipping address when the cart has print items and the
    webhook copies it into the order `notes` ("Ship to: ..."). Shipping is
@@ -121,10 +125,11 @@ and reconcile from the Dashboard.
 8. Pending orders from abandoned checkouts are cancelled only if the webhook
    endpoint is subscribed to `checkout.session.expired` (Part A step 3);
    otherwise they stay `pending` (harmless; they are not counted as revenue).
-9. **Billing history shows no currency code.** Ledger rows do not store the
-   currency (`transactions.currency` is never written), so amounts appear with
-   a `$` and nothing else. Everything Stripe charges for the shop and plans is
-   CAD.
+9. **Billing history does not display a currency code.** Stripe-originated
+   ledger rows now store the transaction currency, but the billing-history API
+   and page do not return or display it yet. Shop and plan Checkout amounts are
+   CAD; NGO POS charges default to CAD and retain any explicitly selected
+   currency.
 
 ## Part A: test mode (no real money)
 
@@ -161,10 +166,15 @@ on the production service: a sandbox purchase writes real `orders` and
    test key is active).
 
 The production catalog is empty (`marketing_packs` and `print_products` have no
-rows) and no admin screen can add items, so the cart has nothing to sell. For
-the sandbox, seed a $1 test pack into the **staging/local disposable** database
-with `ALLOW_TEST_PACK_SEED=true npm run seed:test-pack` (the script refuses
-production and non-loopback databases). Never seed production with test data.
+rows) and no admin screen can add items, so the cart has nothing to sell. For a
+local sandbox, seed the $1 test pack with
+`ALLOW_TEST_PACK_SEED=true npm run seed:test-pack`; this accepts loopback
+databases only. For Render staging, the database must be named
+`versoair_staging`, and the one-off seed command must explicitly opt into the
+staging target:
+`ALLOW_TEST_PACK_SEED=true TEST_PACK_TARGET=staging npm run seed:test-pack`.
+The seeder rejects other remote database names, including the production
+database. Never seed production with test data.
 
 ### First sandbox purchase (5 steps)
 

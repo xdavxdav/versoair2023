@@ -6,11 +6,12 @@ import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function AcceptableUsePolicy() {
   const localize = useLocalizedContent();
+
   return (
     <>
       <SeoHead
         title="Acceptable Use Policy | Verso Air"
-        description="Verso Air's Acceptable Use Policy outlines prohibited conduct, content guidelines, and enforcement measures."
+        description="Review the rules for using Verso Air, including prohibited conduct, business listings, and user content."
         canonicalPath="/aup"
       />
       {localize((
@@ -246,7 +247,6 @@ export default function AcceptableUsePolicy() {
         <strong>Last Reviewed:</strong> November 15, 2026<br />
         <strong>Next Review:</strong> May 15, 2027
       </p>
-
       </div>
       </div>
     </div>

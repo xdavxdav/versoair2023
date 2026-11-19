@@ -188,11 +188,11 @@ test("an XOF charge is sent whole, never multiplied by 100", async () => {
   assert.equal(insert?.params[3], "XOF");
 });
 
-test("currency defaults to USD when omitted", async () => {
+test("currency defaults to CAD when omitted", async () => {
   const { calls, deps } = setup(recordingHandler);
   const result = await chargeSavedCard(deps, BASE);
   assert.equal(result.ok, true);
-  assert.equal(calls.intents[0].params.currency, "usd");
+  assert.equal(calls.intents[0].params.currency, "cad");
 });
 
 test("a non-succeeded PaymentIntent is recorded as pending", async () => {
@@ -204,7 +204,8 @@ test("a non-succeeded PaymentIntent is recorded as pending", async () => {
   const charge = db.log.find((e) => e.sql.startsWith("INSERT INTO ngo_charges"));
   assert.equal(charge?.params[7], "pending");
   const txn = db.log.find((e) => e.sql.startsWith("INSERT INTO transactions"));
-  assert.equal(txn?.params[2], "pending");
+  assert.equal(txn?.params[2], "CAD");
+  assert.equal(txn?.params[3], "pending");
 });
 
 test("a client idempotency key is forwarded to Stripe with a stable prefix", async () => {

@@ -78,6 +78,11 @@ export const ROUTE_SEO_META: Readonly<Record<string, RouteMeta>> = {
     description:
       "Review the terms governing use of Verso Air Inc.'s business directory, platform tools, and creative services.",
   },
+  "/aup": {
+    title: "Acceptable Use Policy | Verso Air",
+    description:
+      "Review the rules for using Verso Air, including prohibited conduct, business listings, and user content.",
+  },
   "/cookies": {
     title: "Cookie Policy | Verso Air",
     description:

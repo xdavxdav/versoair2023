@@ -1,6 +1,5 @@
 /**
- * Track Selector — pick tracks for a live session from the host's own published tracks.
- * Only tracks the host owns can be hosted, so there is no cross-catalogue search.
+ * Track Selector — pick any published track for a live session.
  */
 
 import { useState } from "react";
@@ -41,7 +40,7 @@ export function TrackSelector({ selectedTracks, onTracksChange, maxTracks = 50 }
       <div className="relative">
         <Search className="absolute left-3 top-3 w-4 h-4 text-white/40" />
         <Input
-          placeholder="Filter your tracks by title..."
+          placeholder="Search published tracks by title..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-10 bg-verso-navy/50 border-verso-navy text-white placeholder:text-white/40"
@@ -63,8 +62,8 @@ export function TrackSelector({ selectedTracks, onTracksChange, maxTracks = 50 }
       {!isLoading && !error && tracks.length === 0 && (
         <div className="text-center py-8 text-white/70 text-sm">
           {query.trim()
-            ? "None of your published tracks match."
-            : "You have no published tracks yet. Upload a track first, then you can put it in a live session."}
+            ? "No published tracks match."
+            : "No published tracks are available yet."}
         </div>
       )}
 

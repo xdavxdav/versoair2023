@@ -13,13 +13,15 @@
 
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { parseUserIntent } from "../services/intent-parser";
+import {
+  parseUserIntent,
+  resolveIntentCountryCode,
+} from "../services/intent-parser";
 import { searchRelevantBusinesses } from "../services/knowledge-injector";
 import { optionalAuth, requireAuth } from "../middleware/auth";
 import { pool } from "../db";
 import {
   getDirectoryCountryCode,
-  normalizeCountryCode,
   publicBusinessVisibilitySql,
 } from "../utils/business-visibility";
 
@@ -59,10 +61,13 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
 
     // Step 1: Parse intent from natural language
     const intent = await parseUserIntent(query, language);
-    // Discovery is scoped to the visitor's selected country (validated as a
-    // two-letter code); anything else falls back to the configured market.
-    intent.countryCode =
-      normalizeCountryCode(parsed.data.countryCode) ?? getDirectoryCountryCode();
+    // An explicitly detected query location takes precedence over the visitor's
+    // country scope; otherwise keep that scope or use the configured market.
+    intent.countryCode = resolveIntentCountryCode(
+      intent.countryCode,
+      parsed.data.countryCode,
+      getDirectoryCountryCode(),
+    );
 
     // Step 2: Search database with grounded knowledge
     const results = await searchRelevantBusinesses(intent, limit);

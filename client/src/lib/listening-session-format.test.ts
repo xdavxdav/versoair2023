@@ -94,11 +94,13 @@ const summary = (
   startsAt: string,
   endsAt: string,
   status: SessionSummary["status"] = "scheduled",
+  featured = false,
 ): SessionSummary => ({
   id,
   title: `Session ${id}`,
   description: null,
   hostName: "Luq",
+  featured,
   startsAt,
   endsAt,
   status,
@@ -126,7 +128,7 @@ test("sessions are grouped live, upcoming and replays, and cancelled ones are le
   const groups = groupSessions(
     [
       summary(1, "2026-11-08T20:00:00.000Z", "2026-11-08T20:10:00.000Z"),
-      summary(2, "2026-11-15T20:00:00.000Z", "2026-11-15T21:00:00.000Z"),
+      summary(2, "2026-11-15T20:00:00.000Z", "2026-11-15T21:00:00.000Z", "scheduled", true),
       summary(3, "2026-11-10T20:00:00.000Z", "2026-11-10T21:00:00.000Z"),
       summary(4, "2026-11-01T20:00:00.000Z", "2026-11-01T21:00:00.000Z", "ended"),
       summary(5, "2026-10-25T20:00:00.000Z", "2026-10-25T21:00:00.000Z", "ended"),
@@ -135,7 +137,7 @@ test("sessions are grouped live, upcoming and replays, and cancelled ones are le
     NOW,
   );
   assert.deepEqual(groups.live.map((s) => s.id), [1]);
-  assert.deepEqual(groups.upcoming.map((s) => s.id), [3, 2], "soonest first");
+  assert.deepEqual(groups.upcoming.map((s) => s.id), [2, 3], "featured before soonest first");
   assert.deepEqual(groups.replays.map((s) => s.id), [4, 5], "newest first");
 });
 

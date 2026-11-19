@@ -1,5 +1,5 @@
 /**
- * React Query hooks for TMU live sessions hosted by verified artists.
+ * React Query hooks for TMU live sessions hosted by signed-in users.
  * Statuses are the stored ones: scheduled, live, ended, cancelled.
  */
 
@@ -71,7 +71,7 @@ export function useHostEligibility(enabled = true) {
   });
 }
 
-/** The host's own published tracks, optionally filtered by title. */
+/** Published tracks available for a session set, optionally filtered by title. */
 export function useHostTracks(query: string, enabled = true) {
   return useQuery<{ tracks: HostTrack[] }>({
     queryKey: ["tmu-host-tracks", query],

@@ -1,5 +1,5 @@
 /**
- * Go Live Form — Modal for verified artists to create listening sessions in TMU
+ * Go Live Form — Modal for signed-in users to create listening sessions in TMU
  * Handles session title, description, start time, and track selection
  */
 
@@ -46,7 +46,12 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
   const [selectedTracks, setSelectedTracks] = useState<number[]>([]);
   const [step, setStep] = useState<"details" | "tracks" | "confirm">("details");
 
-  const { data: eligibility, isLoading: eligibilityLoading } = useHostEligibility(isOpen && !!user);
+  const {
+    data: eligibility,
+    isLoading: eligibilityLoading,
+    error: eligibilityError,
+    refetch: refetchEligibility,
+  } = useHostEligibility(isOpen && !!user);
   const canHost = eligibility?.canHost ?? false;
   const createSession = useCreateSession();
 
@@ -127,17 +132,18 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 <AlertCircle className="w-6 h-6 text-amber-500" />
               </div>
               <h2 className="text-xl font-bold text-white mb-2">
-                Account Verification Required
+                Could Not Confirm Session Access
               </h2>
               <p className="text-white/60 mb-6">
-                Your account must be verified before you can create live sessions. 
-                Check your email for verification instructions.
+                {eligibilityError instanceof Error
+                  ? eligibilityError.message
+                  : "Session hosting is temporarily unavailable. Please try again."}
               </p>
               <Button
-                onClick={handleClose}
+                onClick={() => void refetchEligibility()}
                 className="bg-amber-500/20 border border-amber-500/30 text-amber-500 hover:bg-amber-500/30"
               >
-                Got it
+                Try again
               </Button>
             </div>
           </motion.div>
@@ -255,7 +261,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 <div>
                   <h3 className="text-white font-semibold mb-3">Select Tracks</h3>
                   <p className="text-white/60 text-sm mb-4">
-                    Choose from your own published tracks.
+                    Choose from any published track in the catalog.
                   </p>
                   <TrackSelector
                     selectedTracks={selectedTracks}

@@ -268,61 +268,24 @@ installed Chrome and checks rendered geometry, including resizing while pinned
 and reaching the final panel. A frontend-only server is sufficient for this
 layout check; it does not validate API data or authentication.
 
-## SEO prerender route list
+## SEO metadata validation
 
-Generate the route list for prerender tools (the shared public static routes in
-`server/utils/seo-routes.ts`; no database required):
+The server injects route-specific title, description, canonical, Open Graph, and
+Twitter metadata into the initial HTML response. The public route registry in
+`server/utils/seo-routes.ts` is shared with the sitemap; this is runtime
+metadata injection, not static React Snap prerendering.
 
-```bash
-npm run seo:routes
-```
-
-This command writes:
-
-- `client/public/prerender-routes.json`
-- `client/public/prerender-routes.txt`
-
-Dynamic `/business/:id` pages are intentionally **not** prerendered: react-snap has
-no API/database behind it, so they would snapshot as error pages. In production,
-the server looks up public businesses and injects route-specific metadata and
-`LocalBusiness` JSON-LD into the initial HTML; the client page also renders its
-`<SeoHead>` metadata. This server-rendered behavior requires a database and is
-not covered by the static prerender build.
-
-This workflow does not run on pull requests. The full prerender pipeline runs
-after changes reach `main`, or can be started manually from the GitHub Actions
-tab with **Run workflow**. Run the relevant tests and type check locally before
-merging a pull request.
-
-Run the full prerender pipeline locally (route list → build → react-snap):
+Run the local checks used by SEO CI:
 
 ```bash
-npm run build:prerender
-```
-
-This now also runs a post-prerender SEO validation pass that checks each
-generated route for:
-
-- `<title>`
-- `<meta name="description">`
-- `<link rel="canonical">` (matching `https://www.versoair.com/<route>`), with no
-  conflicting duplicates
-- `og:title`, `og:description`, `og:url`, `twitter:card`
-- JSON-LD (`LocalBusiness` or subtype) on `/business/:id` routes, if any are present
-- duplicate titles / canonicals across routes
-
-The build fails (non-zero exit) if any check fails.
-
-Or run react-snap directly after a normal build:
-
-```bash
+npm run check
 npm run build
-npm run prerender:snap
-npm run seo:validate-prerender
+npm run test:route-seo
 ```
 
-`prerender:snap` reads `dist/public/prerender-routes.json` and uses it as the
-exact include list (`crawl: false`).
+`test:route-seo` verifies that every public sitemap route has unique metadata
+and that canonical and social tags are complete. The separate business-route
+tests cover metadata generated from a business record.
 
 ## Sitemap
 

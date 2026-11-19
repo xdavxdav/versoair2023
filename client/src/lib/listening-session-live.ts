@@ -147,6 +147,7 @@ export function parseSessionResponse(
       title: textOrEmpty(session.title),
       description: textOrNull(session.description),
       hostName: textOrNull(session.hostName),
+      featured: session.featured === true,
       startsAt,
       endsAt,
       status: status as SessionStatus,

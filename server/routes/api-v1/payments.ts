@@ -211,6 +211,7 @@ router.post("/create-checkout", subscriptionCheckoutLimiter, async (req: Request
       userId,
       selection: plan.selection,
       customerId,
+      customerEmail: user.email,
       baseUrl: getPublicBaseUrl(),
     };
     const session = await stripeClient.checkout.sessions.create(

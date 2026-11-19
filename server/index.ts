@@ -91,11 +91,11 @@ if (isProd && !process.env.PRODUCTION_URL) {
 
 import express, { Request, Response, NextFunction } from "express";
 import http from "http";
+import { pathToFileURL } from "node:url";
 // @ts-ignore
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./prod-static";
 import { setupCategoryIntegrityCheck } from "./services/category-integrity-check";
 import { initializeSocket } from "./websocket/socket-config";
@@ -122,19 +122,9 @@ import {
   startStatsReporter,
 } from "./utils/performance-monitor";
 
-const app = express();
+export const app = express();
 // Render terminates TLS in front of us; trust one proxy hop so req.ip is the client
 app.set("trust proxy", 1);
-
-process.on("unhandledRejection", (reason) => {
-  serverLog.error("Unhandled promise rejection:", reason);
-  process.exit(1);
-});
-
-process.on("uncaughtException", (error) => {
-  serverLog.error("Uncaught exception:", error);
-  process.exit(1);
-});
 
 // ─── Security headers (helmet) ────────────────────────────────────────────────
 const isDev = process.env.NODE_ENV !== "production";
@@ -281,7 +271,7 @@ app.use((req, res, next) => {
 });
 
 // ---------- MAIN SERVER BOOTSTRAP ----------
-(async () => {
+const bootstrap = async () => {
   serverLog.info("Starting server initialization...");
 
   if (process.env.NODE_ENV === "test") {
@@ -317,6 +307,9 @@ app.use((req, res, next) => {
         serverLog.error("Profile sync failed (non-fatal):", err.message),
       );
   }
+
+  // Import routes only during startup; route modules can perform setup work.
+  const { registerRoutes } = await import("./routes");
 
   // Register all API routes FIRST (handles /api/* and POST /auth/*)
   await registerRoutes(app);
@@ -437,7 +430,24 @@ app.use((req, res, next) => {
       }
     },
   );
-})().catch((err) => {
-  serverLog.error("FATAL: Server failed to start:", err);
-  process.exit(1);
-});
+};
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  process.on("unhandledRejection", (reason) => {
+    serverLog.error("Unhandled promise rejection:", reason);
+    process.exit(1);
+  });
+
+  process.on("uncaughtException", (error) => {
+    serverLog.error("Uncaught exception:", error);
+    process.exit(1);
+  });
+
+  void bootstrap().catch((err) => {
+    serverLog.error("FATAL: Server failed to start:", err);
+    process.exit(1);
+  });
+}

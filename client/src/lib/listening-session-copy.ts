@@ -15,6 +15,7 @@ export interface SessionCopy {
   loadingList: string;
   loadError: string;
   retry: string;
+  featured: string;
   hostedBy: (host: string) => string;
   trackCount: (count: number) => string;
   cardJoin: string;
@@ -98,6 +99,7 @@ const en: SessionCopy = {
   loadingList: "Loading sessions…",
   loadError: "We couldn't load the sessions.",
   retry: "Try again",
+  featured: "Featured",
   hostedBy: (host) => `Hosted by ${host}`,
   trackCount: (count) => (count === 1 ? "1 track" : `${count} tracks`),
   cardJoin: "Join",
@@ -178,6 +180,7 @@ const fr: SessionCopy = {
   loadingList: "Chargement des sessions…",
   loadError: "Impossible de charger les sessions.",
   retry: "Réessayer",
+  featured: "À la une",
   hostedBy: (host) => `Animé par ${host}`,
   trackCount: (count) => (count <= 1 ? `${count} titre` : `${count} titres`),
   cardJoin: "Rejoindre",

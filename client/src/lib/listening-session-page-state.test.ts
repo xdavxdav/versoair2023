@@ -501,6 +501,7 @@ function summaryJson(overrides: Record<string, unknown> = {}) {
     title: "Friday listening session",
     description: "Slow records.",
     hostName: "Luq",
+    featured: false,
     startsAt: new Date(T0).toISOString(),
     endsAt: new Date(T0 + 470_000).toISOString(),
     status: "scheduled",
@@ -512,17 +513,21 @@ function summaryJson(overrides: Record<string, unknown> = {}) {
 }
 
 test("a list answer gives its sessions and the server clock", () => {
-  const parsed = parseSessionList({ success: true, serverTime: "2026-11-08T19:00:00.000Z", sessions: [summaryJson()] });
+  const parsed = parseSessionList({
+    success: true,
+    serverTime: "2026-11-08T19:00:00.000Z",
+    sessions: [summaryJson({ featured: true })],
+  });
   assert.deepEqual(parsed, {
     serverTime: "2026-11-08T19:00:00.000Z",
-    sessions: [summaryJson()],
+    sessions: [summaryJson({ featured: true })],
   });
 });
 
 test("missing optional fields are filled in, not refused", () => {
   const parsed = parseSessionList({
     serverTime: "2026-11-08T19:00:00.000Z",
-    sessions: [summaryJson({ title: undefined, description: "", hostName: null, gapSeconds: "x", trackCount: undefined })],
+    sessions: [summaryJson({ title: undefined, description: "", hostName: null, featured: undefined, gapSeconds: "x", trackCount: undefined })],
   });
   assert.ok(parsed);
   assert.deepEqual(parsed.sessions[0], summaryJson({ title: "", description: null, hostName: null, gapSeconds: 0, trackCount: 0 }));

@@ -67,6 +67,7 @@ test("checkout creates a CAD session using server prices and order idempotency",
   const [call] = stripe.calls.sessionsCreate;
   assert.equal(call.params.line_items[0].price_data.currency, "cad");
   assert.equal(call.params.line_items[0].price_data.unit_amount, 2_499);
+  assert.equal(call.params.customer_email, "user7@example.com");
   assert.deepEqual(call.options, { idempotencyKey: "marketing-order-1" });
   assert.deepEqual(body, {
     success: true,
@@ -90,9 +91,43 @@ test("checkout creates a CAD session using server prices and order idempotency",
     ],
     orderId: 1,
     userId: 7,
+    customerEmail: "user7@example.com",
     baseUrl: "https://www.versoair.com",
   });
   assert.equal(params.success_url?.startsWith("https://www.versoair.com/"), true);
+});
+
+test("checkout refuses to create an order when the account has no email", async () => {
+  const db = new FakeDb();
+  db.userEmails.delete(7);
+  db.addPack({ id: 3, price_cents: 500 });
+  db.addCartItem(7, "pack", 3);
+  let status = 200;
+  let body: Record<string, unknown> | undefined;
+  const response = {
+    status(code: number) {
+      status = code;
+      return this;
+    },
+    json(value: Record<string, unknown>) {
+      body = value;
+      return this;
+    },
+  } as Response;
+
+  await createMarketingCheckoutHandler({
+    pool: db,
+    getStripe: () => createStubStripe().client,
+    getBaseUrl: () => "https://www.versoair.com",
+  })({ user: { userId: 7 } } as Request, response, () => undefined);
+
+  assert.equal(status, 400);
+  assert.equal(db.orders.length, 0);
+  assert.deepEqual(body, {
+    success: false,
+    error: "An email address is required for Checkout.",
+    code: "CHECKOUT_EMAIL_REQUIRED",
+  });
 });
 
 test("checkout cancels the pending order when Stripe cannot create a session", async () => {

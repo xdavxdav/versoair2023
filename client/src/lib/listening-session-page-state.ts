@@ -420,6 +420,7 @@ function parseSummary(value: unknown): SessionSummary | null {
     title: typeof title === "string" ? title : "",
     description: textOrNull(value.description),
     hostName: textOrNull(value.hostName),
+    featured: value.featured === true,
     startsAt,
     endsAt,
     status: status as SessionStatus,
