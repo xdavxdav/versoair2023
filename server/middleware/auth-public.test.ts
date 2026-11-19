@@ -14,6 +14,12 @@ test("anonymous public reads work through the global auth gate without exposing 
   const { default: notifications } = await import("../routes/notifications");
   const app = express();
   app.use(globalAuthGate);
+  app.get("/api/v1/payments/availability", (_req, res) =>
+    res.json({ success: true }),
+  );
+  app.post("/api/v1/payments/create-checkout", (_req, res) =>
+    res.json({ reached: true }),
+  );
   app.use("/api/translations", translations);
   app.use("/api/music", music);
   app.use("/api/notifications", notifications);
@@ -73,6 +79,11 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`, { method: "POST" })).status, 404);
     assert.equal((await fetch(`${origin}/api/v1/admin/users`)).status, 401);
+    assert.equal((await fetch(`${origin}/api/v1/payments/availability`)).status, 200);
+    assert.equal(
+      (await fetch(`${origin}/api/v1/payments/create-checkout`, { method: "POST" })).status,
+      401,
+    );
     // Listening sessions: only the read-only listener endpoints are public.
     for (const path of [
       "/api/listening-sessions",
