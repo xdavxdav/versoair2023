@@ -33,6 +33,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { PaymentTopBanner } from "@/components/PaymentTopBanner";
+import { StripeBuyButton } from "@/components/StripeBuyButton";
 import { PaymentLogo, PayPalLogo } from "@/components/PaymentLogos";
 import { usePaymentCountry } from "@/hooks/usePaymentCountry";
 import { type PaymentMethodId, PAYMENT_METHODS } from "@/lib/payment-methods";
@@ -70,9 +71,23 @@ export default function BillingPage() {
     (a, b) => a.priority - b.priority,
   );
 
+  const [cardCheckoutOpen, setCardCheckoutOpen] = useState(false);
+
   useEffect(() => {
     fetchBillingHistory();
+    fetchAvailability();
   }, []);
+
+  async function fetchAvailability() {
+    try {
+      const res = await authenticatedFetch("/api/v1/payments/availability");
+      if (!res.ok) return;
+      const body = await res.json();
+      setCardCheckoutOpen(body?.data?.cardCheckout === true);
+    } catch {
+      setCardCheckoutOpen(false);
+    }
+  }
 
   async function fetchBillingHistory() {
     try {
@@ -127,7 +142,7 @@ export default function BillingPage() {
         const msg =
           err?.error ||
           (res.status === 503
-            ? "Stripe is not yet configured — billing portal unavailable until Q2 2026."
+            ? "Card checkout is not open yet, so the billing portal is unavailable."
             : `Billing portal error (${res.status})`);
         throw new Error(msg);
       }
@@ -144,8 +159,6 @@ export default function BillingPage() {
       setPortalLoading(false);
     }
   }
-
-  const stripeReady = false; // flip to true when STRIPE_SECRET_KEY is live
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -207,7 +220,8 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {/* ═══ STRIPE PENDING BANNER ═══ */}
+        {/* ═══ CARD CHECKOUT NOT OPEN YET ═══ */}
+        {!cardCheckoutOpen && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -221,22 +235,19 @@ export default function BillingPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-bold text-amber-200 text-lg">
-                  Stripe — Pending Legal Documents
+                  Card payments — opening soon
                 </h3>
                 <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
-                  PENDING
+                  COMING SOON
                 </Badge>
               </div>
               <p className="text-sm text-amber-200/70 leading-relaxed">
                 Credit/debit card payments via Stripe are{" "}
-                <strong>not yet available</strong>. We are waiting for legal
-                documents to be processed. Once approved, you'll be able to pay
-                with Visa, Mastercard, and Amex.
+                <strong>not open yet</strong>. Our payment account is verified
+                and we are finishing final checks. Once open, you'll be able to
+                pay with Visa, Mastercard, and Amex.
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-amber-300/60">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Estimated: Q2 2026
-                </span>
                 <span className="flex items-center gap-1">
                   <CreditCard className="w-3 h-3" /> Visa, Mastercard, Amex
                 </span>
@@ -247,6 +258,9 @@ export default function BillingPage() {
             </div>
           </div>
         </motion.div>
+        )}
+
+        <StripeBuyButton />
 
         {/* ═══ QUICK STATS ═══ */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

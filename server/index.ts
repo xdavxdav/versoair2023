@@ -158,6 +158,7 @@ if (!isDev) {
             "https://translate.google.com",
             "https://translate.googleapis.com",
             "https://translate-pa.googleapis.com",
+            "https://js.stripe.com",
           ],
           styleSrc: [
             "'self'",
@@ -181,6 +182,9 @@ if (!isDev) {
             "'self'",
             "https://www.gstatic.com",
             "https://translate.google.com",
+            "https://js.stripe.com",
+            "https://buy.stripe.com",
+            "https://checkout.stripe.com",
           ],
           mediaSrc: ["'self'", "data:", "blob:", "https://videos.pexels.com"],
         },
