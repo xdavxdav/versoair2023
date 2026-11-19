@@ -63,10 +63,11 @@ test("every bundled language covers the whole current catalogue without ordinal 
   assert.equal(isBundledLanguage("../private"), false);
 });
 
-test("Spanish critical commercial and legal copy preserves no-payment and no-entitlement terms", () => {
+test("Spanish critical commercial and legal copy keeps online-payment scope and written-offer terms", () => {
   assert.equal(SPANISH_COPY["Custom quote"], "Presupuesto personalizado");
-  assert.match(SPANISH_COPY["GeoAdmin pricing is provided for reference and inquiry only. No payment is taken and no plan is activated from the pricing page. Availability, deliverables, taxes, billing, renewal, cancellation, and any refund conditions must be confirmed in a written offer before you accept."],
-    /No se cobra ningún pago ni se activa ningún plan/);
+  const termsPayments = SPANISH_COPY["GeoAdmin pricing is provided for reference. The Essentiel, Pro Vérifié, and Pro Max plans, community membership, and activity tickets can be paid online in Canadian dollars (CAD) through Stripe. Payment is only taken when you press a Pay button and complete checkout, and the amount, billing period, and any automatic renewal are shown at checkout before you confirm. Premium and Enterprise are provided by written offer only, and no payment is taken for them online; their availability, deliverables, taxes, billing, renewal, cancellation, and any refund conditions must be confirmed in a written offer before you accept."];
+  assert.match(termsPayments, /El pago solo se cobra cuando pulsas un botón Pagar/);
+  assert.match(termsPayments, /Premium y Enterprise se ofrecen únicamente mediante oferta escrita y no se cobra ningún pago en línea por ellos/);
   assert.match(SPANISH_COPY["Premium has a published price but is handled by inquiry; it uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions."],
     /No concede permisos adicionales/);
 });

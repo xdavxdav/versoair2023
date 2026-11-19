@@ -32,12 +32,14 @@ export default function ReturnsHelp() {
             <p>
               A self-service return portal is not available, and we are not
               publishing a general refund window, processing time, or hardware
-              return policy here. Where online checkout is offered (Verso Air
-              Marketing packs and print products, charged in CAD through
-              Stripe), email support@versoair.com with your order number to
-              request a refund or ask about a charge. Each request is reviewed
-              and the outcome is confirmed to you in writing. You may also
-              dispute a charge with your card issuer.
+              return policy here. Where online checkout is offered (GeoAdmin
+              self-serve plans, community membership, activity tickets, and
+              Verso Air Marketing packs and print products, charged in CAD
+              through Stripe), email support@versoair.com with your order
+              number or the email address you paid with to request a refund or
+              ask about a charge. Each request is reviewed and the outcome is
+              confirmed to you in writing. You may also dispute a charge with
+              your card issuer.
             </p>
             <p>
               Terms for any other purchase must be provided in writing

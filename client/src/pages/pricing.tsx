@@ -224,9 +224,10 @@ export default function Pricing() {
 
         <p className="mt-6 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
           <strong>Before you commit:</strong> nothing is charged until you press
-          a Pay button and complete Stripe checkout. Request a written proposal and review its
-          market availability, deliverables, term, taxes, exclusions, renewal,
-          and cancellation conditions before accepting.
+          a Pay button and complete Stripe checkout. For Premium or Enterprise,
+          request a written proposal and review its market availability,
+          deliverables, term, taxes, exclusions, renewal, and cancellation
+          conditions before accepting.
         </p>
 
         <GeoAdminPlanDetailsDialog
