@@ -1,4 +1,5 @@
 import { APPLY_COPY } from "./apply-translations";
+import { CHECKOUT_COPY } from "./checkout-translations";
 import { CHROME_COPY } from "./chrome-translations";
 import { FOOTER_COPY } from "./footer-translations";
 import { GEO_ADMIN_COPY } from "./geo-admin-translations";
@@ -493,6 +494,7 @@ export const PUBLIC_COPY = [
   ["New notification", "Nouvelle notification"],
   ["Explore the available plans, market pricing, and plan details below. Availability and final terms are confirmed directly; payment is only taken in CAD when you press a Pay button and complete secure Stripe checkout.", "Découvrez les offres disponibles, les tarifs par marché et le détail des offres ci-dessous. La disponibilité et les conditions définitives sont confirmées directement ; le paiement n'est prélevé en CAD que lorsque vous cliquez sur un bouton Payer et terminez le paiement sécurisé Stripe."],
   ["See plans and pay", "Voir les offres et payer"],
+  ...CHECKOUT_COPY,
 ] as const;
 
 export const BUNDLED_LANGUAGES = ["fr", "en", "es"] as const;

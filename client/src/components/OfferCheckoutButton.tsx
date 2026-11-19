@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useTranslate } from "@/hooks/use-translate";
 
 export interface PublicOffer {
   key: string;
@@ -10,30 +11,48 @@ export interface PublicOffer {
   amountCents: number;
 }
 
-/** The active offer for a key, or null while loading or when not on sale. */
-export function useActiveOffer(offerKey: string): PublicOffer | null {
-  const [offer, setOffer] = useState<PublicOffer | null>(null);
+const OFFER_LOAD_TIMEOUT_MS = 8_000;
+
+/**
+ * The active offer for a key: undefined while it is still loading, null when it
+ * is not on sale (or could not be loaded in time).
+ */
+export function useActiveOffer(
+  offerKey: string,
+): PublicOffer | null | undefined {
+  const [offer, setOffer] = useState<PublicOffer | null | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), OFFER_LOAD_TIMEOUT_MS);
+    const { signal } = controller;
     Promise.all([
-      authenticatedFetch("/api/v1/payments/availability").then((r) =>
-        r.ok ? r.json() : null,
+      authenticatedFetch("/api/v1/payments/availability", { signal }).then(
+        (r) => (r.ok ? r.json() : null),
       ),
-      authenticatedFetch("/api/v1/payments/offers").then((r) =>
+      authenticatedFetch("/api/v1/payments/offers", { signal }).then((r) =>
         r.ok ? r.json() : null,
       ),
     ])
       .then(([availability, offers]) => {
-        if (!active || availability?.data?.cardCheckout !== true) return;
-        const found = (offers?.data as PublicOffer[] | undefined)?.find(
-          (o) => o.key === offerKey,
-        );
+        if (!active) return;
+        const found =
+          availability?.data?.cardCheckout === true
+            ? (offers?.data as PublicOffer[] | undefined)?.find(
+                (o) => o.key === offerKey,
+              )
+            : undefined;
         setOffer(found ?? null);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setOffer(null);
+      })
+      .finally(() => clearTimeout(timer));
     return () => {
       active = false;
+      clearTimeout(timer);
+      controller.abort();
     };
   }, [offerKey]);
 
@@ -45,7 +64,11 @@ interface OfferCheckoutButtonProps {
   label: string;
   eventId?: number;
   className?: string;
+  /** Called when the server says the buyer already has this offer. */
+  onOwned?: () => void;
 }
+
+const ALREADY_OWNED = new Set(["ALREADY_PURCHASED", "ALREADY_ATTENDING"]);
 
 /** Starts a one-time Stripe Checkout for an admin-priced offer. */
 export default function OfferCheckoutButton({
@@ -53,8 +76,10 @@ export default function OfferCheckoutButton({
   label,
   eventId,
   className,
+  onOwned,
 }: OfferCheckoutButtonProps) {
   const { user } = useAuthContext();
+  const tr = useTranslate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +101,7 @@ export default function OfferCheckoutButton({
       );
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.data?.url) {
+        if (res.status === 409 && ALREADY_OWNED.has(body?.code)) onOwned?.();
         setError(body?.error ?? "Checkout could not start. Please try again.");
         return;
       }
@@ -96,11 +122,11 @@ export default function OfferCheckoutButton({
         className={className ?? "bg-amber-600 text-white hover:bg-amber-700"}
       >
         {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {label} — CA${(offer.amountCents / 100).toFixed(2)}
+        {tr(label)} — CA${(offer.amountCents / 100).toFixed(2)}
       </Button>
       {error ? (
         <p role="alert" className="mt-2 text-sm text-red-600">
-          {error}
+          {tr(error)}
         </p>
       ) : null}
     </div>
