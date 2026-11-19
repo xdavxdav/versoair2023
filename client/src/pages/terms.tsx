@@ -135,11 +135,17 @@ export default function TermsOfService() {
               </div>
             </div>
             <p className="text-slate-700 leading-relaxed mt-3">
-              GeoAdmin pricing is provided for reference and inquiry only.
-              No payment is taken and no plan is activated from the pricing page.
-              Availability, deliverables, taxes, billing, renewal, cancellation,
-              and any refund conditions must be confirmed in a written offer
-              before you accept.
+              GeoAdmin pricing is provided for reference. The Essentiel, Pro
+              Vérifié, and Pro Max plans, community membership, and activity
+              tickets can be paid online in Canadian dollars (CAD) through
+              Stripe. Payment is only taken when you press a Pay button and
+              complete checkout, and the amount, billing period, and any
+              automatic renewal are shown at checkout before you confirm.
+              Premium and Enterprise are provided by written offer only, and no
+              payment is taken for them online; their availability,
+              deliverables, taxes, billing, renewal, cancellation, and any
+              refund conditions must be confirmed in a written offer before you
+              accept.
             </p>
             <p className="text-slate-700 leading-relaxed mt-3">
               Marketing packs and print products can be purchased online where

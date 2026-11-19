@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowRight, Info, X } from "lucide-react";
+import { Link } from "wouter";
 import { type TierKey } from "@/lib/tiers";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import {
@@ -92,8 +93,9 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
         </div>
         <p className="mt-5 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
           CAD is approved, FCFA is the annual base schedule, and EUR is a
-          derived reference only—not an approved price. No online checkout is
-          available here.
+          derived reference only—not an approved price. Payment is only taken
+          in CAD when you press a Pay button on the pricing page and complete
+          secure Stripe checkout.
         </p>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
@@ -103,6 +105,13 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
           >
             Close
           </button>
+          <Link
+            href="/pricing"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-lg border border-indigo-300 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+          >
+            See plans and pay
+          </Link>
           <a
             href={`mailto:support@versoair.com?subject=${encodeURIComponent(`GeoAdmin ${GEOADMIN_OFFER_NAMES[currentTier]} plan inquiry`)}`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
