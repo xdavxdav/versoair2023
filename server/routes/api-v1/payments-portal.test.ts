@@ -183,3 +183,33 @@ test("anonymous callers and unknown users get no portal", async () => {
   assert.equal(stripe.create.length, 0);
   assert.equal(stripe.portal.length, 0);
 });
+
+test("availability reports card checkout closed until both payment switches are on", async () => {
+  const saved = {
+    pay: process.env.ONLINE_PAYMENTS_ENABLED,
+    subs: process.env.COMMERCIAL_SUBSCRIPTIONS_ENABLED,
+  };
+  try {
+    process.env.ONLINE_PAYMENTS_ENABLED = "false";
+    process.env.COMMERCIAL_SUBSCRIPTIONS_ENABLED = "true";
+    await serve(async (origin) => {
+      const closed = await call(origin, "GET", "/availability");
+      assert.equal(closed.status, 200);
+      assert.equal(closed.body.data.cardCheckout, false);
+    });
+
+    process.env.ONLINE_PAYMENTS_ENABLED = "true";
+    await serve(async (origin) => {
+      const open = await call(origin, "GET", "/availability");
+      assert.equal(open.body.data.cardCheckout, true);
+    });
+  } finally {
+    for (const [key, value] of [
+      ["ONLINE_PAYMENTS_ENABLED", saved.pay],
+      ["COMMERCIAL_SUBSCRIPTIONS_ENABLED", saved.subs],
+    ] as const) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});

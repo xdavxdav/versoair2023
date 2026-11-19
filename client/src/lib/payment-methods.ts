@@ -172,7 +172,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodId, PaymentMethod> = {
     id: "stripe",
     name: "Credit/Debit Card",
     icon: "💳",
-    description: "Visa, Mastercard, Amex (Legal documents pending)",
+    description: "Visa, Mastercard, Amex (opening soon)",
     available: false,
     comingSoon: true,
     estimatedLaunch: "Q2 2026",

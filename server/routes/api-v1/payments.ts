@@ -43,6 +43,7 @@ import {
 } from "../../utils/commercial-gates";
 import { resolveRequestActingUserId } from "../../utils/acting-user";
 import { getPublicBaseUrl } from "../../utils/base-url";
+import { getPaymentsModeStatus } from "../../utils/payments-mode";
 import {
   getStripeClient,
   redactStripeSecrets,
@@ -131,6 +132,20 @@ function sendServiceFailure(res: Response, failure: ServiceFailure) {
 
 // Same per-request lookup under the name the plan-checkout routes use.
 const requireStripeClient = stripeForRequest;
+
+/**
+ * GET /api/v1/payments/availability
+ * Tells the billing page whether card checkout is open, so it never shows a
+ * stale "pending" notice. Reports the switch result only, no key or mode.
+ */
+router.get("/availability", (_req: Request, res: Response) => {
+  const { open } = getPaymentsModeStatus();
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    success: true,
+    data: { cardCheckout: open.subscriptionCheckout },
+  });
+});
 
 // ─── CREATE CHECKOUT SESSION ────────────────────────────────────────────────────
 
