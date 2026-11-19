@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import OfferCheckoutButton, { useActiveOffer } from "@/components/OfferCheckoutButton";
 import { CalendarDays, Check, Loader2, MapPin } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface EventRecord {
 }
 
 export default function EventDetailPage() {
+  const ticket = useActiveOffer("activity_ticket");
   const [, params] = useRoute("/events/:slug");
   const [event, setEvent] = useState<EventRecord | null>(null);
   const [error, setError] = useState("");
@@ -130,7 +132,13 @@ export default function EventDetailPage() {
             <span className="text-sm font-medium text-slate-700">
               {attendeeCount} {attendeeCount === 1 ? "person" : "people"} going
             </span>
-            {user ? (
+            {ticket && !attending ? (
+              <OfferCheckoutButton
+                offer={ticket}
+                label="Buy ticket"
+                eventId={event.id}
+              />
+            ) : user ? (
               <Button
                 onClick={() => void toggleRsvp()}
                 disabled={rsvpLoading}

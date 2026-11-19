@@ -69,6 +69,13 @@ import {
   refundNgoCharge,
   type ServiceFailure,
 } from "../../services/ngo-charges";
+import {
+  getPaidOffer,
+  isPaidOfferKey,
+  listPaidOffers,
+  updatePaidOffer,
+  validateOfferUpdate,
+} from "../../services/paid-offers";
 
 const router = Router();
 
@@ -249,6 +256,168 @@ router.post("/create-checkout", subscriptionCheckoutLimiter, async (req: Request
       requestId: error?.requestId,
     });
     res.status(500).json({ success: false, error: reason });
+  }
+});
+
+// ─── PAID OFFERS (community join, activity tickets) ────────────────────────────
+
+/** GET /api/v1/payments/offers — active offers and their admin-set prices. */
+router.get("/offers", async (_req: Request, res: Response) => {
+  try {
+    res.json({ success: true, data: await listPaidOffers(pool) });
+  } catch (error) {
+    console.error("❌ Load offers failed:", error);
+    res.status(500).json({ success: false, error: "Failed to load offers" });
+  }
+});
+
+/** GET /api/v1/payments/offers/mine — offer keys the signed-in user already bought. */
+router.get("/offers/mine", async (req: Request, res: Response) => {
+  const userId = req.user?.userId || (req as any).user?.id;
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ success: false, error: "Authentication required" });
+  }
+  try {
+    await listPaidOffers(pool); // ensures the tables exist
+    const result = await pool.query(
+      `SELECT DISTINCT offer_key FROM paid_offer_purchases WHERE user_id = $1`,
+      [userId],
+    );
+    res.json({ success: true, data: result.rows.map((r) => r.offer_key) });
+  } catch (error) {
+    console.error("❌ Load purchases failed:", error);
+    res.status(500).json({ success: false, error: "Failed to load purchases" });
+  }
+});
+
+/** GET /api/v1/payments/offers/admin — every offer, including inactive ones. */
+router.get("/offers/admin", requireSuperuser(), async (_req, res) => {
+  try {
+    const data = await listPaidOffers(pool, { includeInactive: true });
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error("❌ Load admin offers failed:", error);
+    res.status(500).json({ success: false, error: "Failed to load offers" });
+  }
+});
+
+/** PUT /api/v1/payments/offers/:key — body { amountCents?, active? }. */
+router.put("/offers/:key", requireSuperuser(), async (req, res) => {
+  const key = String(req.params.key);
+  if (!isPaidOfferKey(key)) {
+    return res.status(404).json({ success: false, error: "Unknown offer" });
+  }
+  const parsed = validateOfferUpdate(req.body || {});
+  if (!parsed.ok) {
+    return res.status(400).json({ success: false, error: parsed.error });
+  }
+  try {
+    const offer = await updatePaidOffer(pool, key, parsed);
+    res.json({ success: true, data: offer });
+  } catch (error) {
+    console.error("❌ Update offer failed:", error);
+    res.status(500).json({ success: false, error: "Failed to update offer" });
+  }
+});
+
+/**
+ * POST /api/v1/payments/create-offer-checkout
+ * Body: { offerKey, eventId? }. The amount always comes from the database.
+ */
+router.post("/create-offer-checkout", async (req: Request, res: Response) => {
+  if (!onlinePaymentsEnabled()) {
+    rejectUnavailablePayment(res);
+    return;
+  }
+  if (!requireStripe(res)) return;
+
+  try {
+    const userId = req.user?.userId || (req as any).user?.id;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
+    const { offerKey, eventId } = req.body || {};
+    if (!isPaidOfferKey(offerKey)) {
+      return res.status(400).json({ success: false, error: "Invalid offer" });
+    }
+    const offer = await getPaidOffer(pool, offerKey);
+    if (!offer || !offer.active) {
+      return res
+        .status(400)
+        .json({ success: false, error: "This offer is not available" });
+    }
+
+    let returnPath = "/community";
+    const metadata: Record<string, string> = {
+      userId: String(userId),
+      type: "paid_offer",
+      offerKey,
+    };
+    if (offerKey === "activity_ticket") {
+      const id = Number(eventId);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res
+          .status(400)
+          .json({ success: false, error: "eventId is required" });
+      }
+      const ev = await pool.query(
+        `SELECT id FROM events WHERE id = $1 AND status = 'PUBLISHED'`,
+        [id],
+      );
+      if (!ev.rows.length) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Published event not found" });
+      }
+      metadata.eventId = String(id);
+      returnPath = `/events/${id}`;
+    }
+
+    const userResult = await pool.query(
+      `SELECT id, email, username FROM users WHERE id = $1`,
+      [userId],
+    );
+    if (!userResult.rows.length) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+    const user = userResult.rows[0];
+    const customerId = await getOrCreateStripeCustomer(
+      Number(userId),
+      user.email,
+      user.username,
+    );
+
+    const origin = getPublicBaseUrl();
+    const session = await stripe!.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer: customerId,
+      line_items: [
+        {
+          price_data: {
+            currency: "cad",
+            product_data: {
+              name: `Verso Air — ${offer.name}`,
+              description: offer.description || undefined,
+            },
+            unit_amount: offer.amountCents,
+          },
+          quantity: 1,
+        },
+      ],
+      metadata,
+      success_url: `${origin}${returnPath}?status=success`,
+      cancel_url: `${origin}${returnPath}?status=cancelled`,
+    });
+
+    res.json({ success: true, data: { sessionId: session.id, url: session.url } });
+  } catch (error: any) {
+    console.error("❌ Offer checkout error:", error);
+    res.status(500).json({ success: false, error: "Could not start checkout" });
   }
 });
 

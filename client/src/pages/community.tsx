@@ -12,6 +12,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
+import OfferCheckoutButton, { useActiveOffer } from "@/components/OfferCheckoutButton";
 import { useAuth } from "@/hooks/use-auth";
 
 type Pool = "all" | "mudp" | "cdp" | "crossdp";
@@ -241,6 +242,18 @@ export default function CommunityDetail() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [activePool, setActivePool] = useState<Pool>("all");
   const [poolOpen, setPoolOpen] = useState(false);
+  const joinOffer = useActiveOffer("community_join");
+  const { user: viewer } = useAuth();
+  const { data: purchased } = useQuery<string[]>({
+    queryKey: ["paid-offers-mine"],
+    enabled: !!viewer,
+    queryFn: async () => {
+      const res = await authenticatedFetch("/api/v1/payments/offers/mine");
+      const body = res.ok ? await res.json() : null;
+      return body?.data ?? [];
+    },
+  });
+  const isMember = !!purchased?.includes("community_join");
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -266,6 +279,12 @@ export default function CommunityDetail() {
               </Button>
             </Link>
           </div>
+
+          {joinOffer && !isMember ? (
+            <div className="mb-6">
+              <OfferCheckoutButton offer={joinOffer} label="Join the community" />
+            </div>
+          ) : null}
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">

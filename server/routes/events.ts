@@ -2,6 +2,8 @@ import { Router } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { generateUniqueSlug } from "../services/profile-migration";
+import { onlinePaymentsEnabled } from "../utils/commercial-gates";
+import { getPaidOffer } from "../services/paid-offers";
 import { notifyZapier } from "../services/zapier-notify";
 
 const router = Router();
@@ -249,6 +251,24 @@ router.post("/:id/rsvp", requireAuth(), async (req, res) => {
     return res.status(400).json({ error: "Invalid event id" });
   }
   try {
+    // Once activity tickets are on sale, joining requires a paid ticket; the
+    // Stripe webhook adds paid attendees directly.
+    if (onlinePaymentsEnabled()) {
+      const ticket = await getPaidOffer(pool, "activity_ticket");
+      if (ticket?.active) {
+        const already = await pool.query(
+          `SELECT 1 FROM event_attendees
+            WHERE event_id = $1 AND user_id = $2 AND status = 'GOING'`,
+          [eventId, userId],
+        );
+        if (!already.rowCount) {
+          return res.status(402).json({
+            error: "A ticket is required to join this activity",
+            code: "PAYMENT_REQUIRED",
+          });
+        }
+      }
+    }
     const result = await pool.query(
       `INSERT INTO event_attendees (event_id, user_id, status, updated_at)
        SELECT id, $2, 'GOING', NOW() FROM events
