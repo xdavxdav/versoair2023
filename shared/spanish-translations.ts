@@ -1,4 +1,5 @@
 import { APPLY_ES } from "./apply-translations";
+import { CHECKOUT_ES } from "./checkout-translations";
 import { CHROME_ES } from "./chrome-translations";
 import { FOOTER_ES } from "./footer-translations";
 import { GEO_ADMIN_ES } from "./geo-admin-translations";
@@ -655,4 +656,5 @@ export const SPANISH_COPY = {
   "Platform scope and services are presented separately. All availability, deliverables and service volumes require written confirmation. Premium is a commercial inquiry, not a new subscription entitlement. No managed social campaign or advertising spend is included automatically.": "El alcance de la plataforma y los servicios se presentan por separado. La disponibilidad, los entregables y los volúmenes de servicios requieren confirmación escrita. Premium es una consulta comercial, no un nuevo derecho de suscripción. No se incluye automáticamente ninguna campaña social gestionada ni gasto publicitario.",
   "Explore the available plans, market pricing, and plan details below. Availability and final terms are confirmed directly; payment is only taken in CAD when you press a Pay button and complete secure Stripe checkout.": "Explora los planes disponibles, los precios por mercado y los detalles de cada plan a continuación. La disponibilidad y las condiciones finales se confirman directamente; el pago solo se cobra en CAD cuando pulsas un botón Pagar y completas el pago seguro de Stripe.",
   "See plans and pay": "Ver planes y pagar",
+  ...CHECKOUT_ES,
 } satisfies Record<(typeof PUBLIC_COPY)[number][0], string>;

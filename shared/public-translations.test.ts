@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 import { APPLY_COPY, APPLY_ES } from "./apply-translations";
+import { CHECKOUT_COPY, CHECKOUT_ES } from "./checkout-translations";
 import { CHROME_COPY, CHROME_ES } from "./chrome-translations";
 import { GEO_ADMIN_COPY, GEO_ADMIN_ES } from "./geo-admin-translations";
 import { ONBOARDING_COPY, ONBOARDING_ES } from "./onboarding-translations";
@@ -151,6 +152,7 @@ const AUTHORED_MODULES: Array<{
   { name: "onboarding", rows: ONBOARDING_COPY, es: ONBOARDING_ES },
   { name: "geo-admin", rows: GEO_ADMIN_COPY, es: GEO_ADMIN_ES },
   { name: "recovery", rows: RECOVERY_COPY, es: RECOVERY_ES },
+  { name: "checkout", rows: CHECKOUT_COPY, es: CHECKOUT_ES },
 ];
 
 test("authored interface modules own their lookups and keep placeholders intact in every language", () => {

@@ -1,7 +1,8 @@
 import { useLocalizedContent } from "@/hooks/use-localized-content";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import CheckoutReturnNotice from "@/components/CheckoutReturnNotice";
 import GeoAdminContacts from "@/components/GeoAdminContacts";
 import { Button } from "@/components/ui/button";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -20,7 +21,23 @@ import {
   isGeoAdminComingSoonCountry,
   getMarketAvailability,
 } from "@/lib/geoadmin-pricing";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useCountry } from "@/contexts/CountryContext";
+import { useCheckoutReturn } from "@/hooks/use-checkout-return";
+
+/** True once the webhook has put the bought plan on the buyer's account. */
+async function planIsActive(params: URLSearchParams): Promise<boolean> {
+  const response = await fetch("/auth/session", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) return false;
+  const current = (await response.json())?.user?.subscriptionTier;
+  const bought = params.get("tier");
+  return isSelfServePlanTier(bought)
+    ? current === bought
+    : typeof current === "string" && current !== "free";
+}
 
 export default function Pricing() {
   const localize = useLocalizedContent();
@@ -28,7 +45,15 @@ export default function Pricing() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const { selectedCountry } = useCountry();
+  const { user, restoreAuth } = useAuthContext();
+  const checkout = useCheckoutReturn({ ready: !!user, isFulfilled: planIsActive });
   const marketAvailability = getMarketAvailability(selectedCountry ?? "");
+  const boughtTier = checkout.params?.get("tier");
+
+  // Bring the navbar and account state up to date with the new plan.
+  useEffect(() => {
+    if (checkout.phase === "confirmed") void restoreAuth();
+  }, [checkout.phase, restoreAuth]);
 
   return localize((
     <div className="flex min-h-screen flex-col bg-[#f3efe9] pb-24 text-slate-900">
@@ -39,6 +64,17 @@ export default function Pricing() {
       />
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-12 sm:py-16">
+        <CheckoutReturnNotice
+          phase={checkout.phase}
+          purchase="plan"
+          planName={
+            isSelfServePlanTier(boughtTier)
+              ? GEOADMIN_OFFER_NAMES[boughtTier]
+              : undefined
+          }
+          onCheckAgain={checkout.checkAgain}
+          onDismiss={checkout.dismiss}
+        />
         <Link
           href="/geo-admin"
           className="mb-5 inline-flex w-fit items-center gap-2 rounded-md text-sm font-semibold text-amber-900 hover:text-amber-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700"
@@ -161,7 +197,11 @@ export default function Pricing() {
                   </div>
                   <GeoAdminOfferDetails offer={tier} />
                   {isSelfServePlanTier(tier) ? (
-                    <PlanCheckoutButton tier={tier} cycle={cycle} />
+                    <PlanCheckoutButton
+                      tier={tier}
+                      cycle={cycle}
+                      disabled={checkout.awaitingPayment}
+                    />
                   ) : null}
                   <button
                     type="button"
