@@ -233,6 +233,7 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/v1/email-subscriptions/available",
       // Boolean only; lets logged-out visitors see the pricing Pay buttons
       "/api/v1/payments/availability",
+      "/api/v1/payments/offers",
       "/api/social/posts",
       "/api/arena/active",
       "/api/arena/history",

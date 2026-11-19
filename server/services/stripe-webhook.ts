@@ -14,6 +14,7 @@
  */
 import type Stripe from "stripe";
 import { inTransaction } from "./db-transaction";
+import { ensurePaidOfferTables } from "./paid-offers";
 import type { Queryable, TxClient, TxPool } from "./marketing-checkout";
 
 export type CheckoutReviewReason =
@@ -37,7 +38,7 @@ export interface CheckoutReview {
 }
 
 export type CheckoutCompletion =
-  | { status: "processed"; kind: "subscription" | "marketing_order" }
+  | { status: "processed"; kind: "subscription" | "marketing_order" | "paid_offer" }
   | CheckoutReview
   | { status: "duplicate" }
   | { status: "unhandled" }
@@ -161,6 +162,48 @@ export async function applyCheckoutSessionCompleted(
         `✅ Payment processed: User ${userIdNumber} → ${targetTier} (expires ${expiresAt.toISOString()})`,
       );
       return { status: "processed", kind: "subscription" };
+    });
+  }
+
+  if (type === "paid_offer" && session.metadata?.offerKey) {
+    const offerKey = session.metadata.offerKey;
+    const eventIdRaw = session.metadata.eventId;
+    const eventId = eventIdRaw ? positiveInt(eventIdRaw) : null;
+    if (offerKey === "activity_ticket" && eventId === null) {
+      console.error("⚠️ Activity ticket without a valid eventId:", session.id);
+      return { status: "ignored", reason: "invalid_event_id" };
+    }
+
+    return inTransaction<CheckoutCompletion>(db, async (client) => {
+      const claimed = await claimSession(
+        client,
+        userIdNumber,
+        amount,
+        "paid_offer",
+        session.id,
+      );
+      if (!claimed) return { status: "duplicate" };
+
+      await ensurePaidOfferTables(client);
+      await client.query(
+        `INSERT INTO paid_offer_purchases (user_id, offer_key, event_id, stripe_session_id, amount_cents)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (stripe_session_id) DO NOTHING`,
+        [userIdNumber, offerKey, eventId, session.id, session.amount_total || 0],
+      );
+
+      if (offerKey === "activity_ticket" && eventId !== null) {
+        await client.query(
+          `INSERT INTO event_attendees (event_id, user_id, status, updated_at)
+           VALUES ($1, $2, 'GOING', NOW())
+           ON CONFLICT (event_id, user_id)
+           DO UPDATE SET status = 'GOING', updated_at = NOW()`,
+          [eventId, userIdNumber],
+        );
+      }
+
+      console.log(`✅ Paid offer ${offerKey} bought by user ${userIdNumber}`);
+      return { status: "processed", kind: "paid_offer" };
     });
   }
 
