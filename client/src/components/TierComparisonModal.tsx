@@ -4,11 +4,9 @@ import { type TierKey } from "@/lib/tiers";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import {
   GEOADMIN_OFFER_NAMES,
-  GEOADMIN_OFFER_PRICES_XOF,
   GEOADMIN_OFFER_ORDER,
-  formatMarketXofPrice,
 } from "@/lib/geoadmin-pricing";
-import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
+import BusinessPlanPriceSummary from "@/components/BusinessPlanPriceSummary";
 import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 
@@ -27,8 +25,6 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
 }) => {
   const localize = useLocalizedContent();
   useScrollLock(isOpen);
-  const { currency, rates, selectedCountry, marketAvailability } =
-    useGeoAdminPricing();
 
   if (!isOpen) return null;
 
@@ -62,11 +58,12 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
           id="plan-availability-title"
           className="mb-3 pr-8 text-2xl font-bold text-gray-900"
         >
-          GeoAdmin plans and annual reference prices
+          GeoAdmin business plan prices
         </h2>
         <p className="mb-5 text-sm leading-relaxed text-gray-600">
-          Prices are shown in CAD in Canada, EUR in France, and FCFA in Côte
-          d’Ivoire. Availability in other markets is confirmed individually.
+          CAD is the approved price, FCFA is the annual base schedule, and EUR
+          is derived from the fixed 1 EUR = 655.957 FCFA peg; EUR is not an
+          approved price.
         </p>
         <p className="mb-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
           Your current access level is{" "}
@@ -86,27 +83,17 @@ export const TierComparisonModal: React.FC<TierComparisonModalProps> = ({
               <h3 className="font-semibold text-gray-900">
                 {GEOADMIN_OFFER_NAMES[tier]}
               </h3>
-              <p className="mt-1 font-bold text-indigo-800">
-                {formatMarketXofPrice(
-                  GEOADMIN_OFFER_PRICES_XOF[tier],
-                  selectedCountry ?? "",
-                  currency,
-                  rates,
-                )}
-                {GEOADMIN_OFFER_PRICES_XOF[tier] !== null &&
-                  marketAvailability !== false && (
-                  <span className="font-normal text-gray-500"> / year</span>
-                )}
-              </p>
+              <div className="mt-2 text-indigo-900">
+                <BusinessPlanPriceSummary offer={tier} />
+              </div>
               <GeoAdminOfferDetails offer={tier} />
             </article>
           ))}
         </div>
         <p className="mt-5 rounded-xl bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
-          Prices are annual references, not a monthly billing offer. Local
-          CAD and EUR amounts are indicative conversions from the FCFA
-          reference schedule; final availability, deliverables, and terms are
-          confirmed directly. No online checkout is available here.
+          CAD is approved, FCFA is the annual base schedule, and EUR is a
+          derived reference only—not an approved price. No online checkout is
+          available here.
         </p>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button

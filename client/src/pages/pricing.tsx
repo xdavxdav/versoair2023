@@ -9,38 +9,29 @@ import { SeoHead } from "@/components/seo/SeoHead";
 import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
 import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
 import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
-import { useGeoAdminPricing } from "@/hooks/use-geoadmin-pricing";
+import BusinessPlanPriceSummary from "@/components/BusinessPlanPriceSummary";
 import {
   GEOADMIN_OFFER_NAMES,
-  type GeoAdminOfferKey,
-  GEOADMIN_OFFER_PRICES_XOF,
   GEOADMIN_PLAN_DETAILS,
   GEOADMIN_OFFER_ORDER,
-  formatMarketXofPrice,
+  type GeoAdminOfferKey,
   isGeoAdminComingSoonCountry,
+  getMarketAvailability,
 } from "@/lib/geoadmin-pricing";
+import { useCountry } from "@/contexts/CountryContext";
 
 export default function Pricing() {
   const localize = useLocalizedContent();
   const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey>("verified");
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const { currency, rates, selectedCountry, marketAvailability } =
-    useGeoAdminPricing();
-
-  const formatAnnualPrice = (tier: GeoAdminOfferKey) => {
-    return formatMarketXofPrice(
-      GEOADMIN_OFFER_PRICES_XOF[tier],
-      selectedCountry ?? "",
-      currency,
-      rates,
-    );
-  };
+  const { selectedCountry } = useCountry();
+  const marketAvailability = getMarketAvailability(selectedCountry ?? "");
 
   return localize((
     <div className="flex min-h-screen flex-col bg-[#f3efe9] pb-24 text-slate-900">
       <SeoHead
-        title="GeoAdmin Plans and Annual Reference Pricing | VersoAir"
-        description="Review GeoAdmin annual plan reference prices, benefits, market availability, and request a tailored proposal from VersoAir."
+        title="GeoAdmin Business Plan Prices | VersoAir"
+        description="Review approved CAD business-plan prices, the FCFA annual base schedule, and derived EUR reference amounts."
         canonicalPath="/pricing"
       />
 
@@ -56,15 +47,15 @@ export default function Pricing() {
           <GeoAdminPromoCard />
           <section>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-amber-900">
-              Annual plan reference prices
+              Business plan prices · CAD, FCFA, EUR
             </p>
             <h1 className="mb-4 text-4xl font-bold md:text-5xl">
               Choose the visibility that fits your business
             </h1>
             <p className="mb-6 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Prices are shown in Canadian dollars in Canada, euros in France,
-              and FCFA in Côte d’Ivoire. Availability in other markets is
-              confirmed individually.
+              CAD is the approved price, and FCFA is the annual base schedule.
+              EUR amounts are derived from the fixed peg (1 EUR = 655.957 FCFA)
+              and are not approved prices.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {GEOADMIN_OFFER_ORDER.map((tier) => (
@@ -82,17 +73,8 @@ export default function Pricing() {
                   }`}
                 >
                   <span className="block font-semibold">{GEOADMIN_OFFER_NAMES[tier]}</span>
-                  <span
-                    className="mt-1 block text-lg font-bold text-amber-900"
-                  >
-                    {formatAnnualPrice(tier)}
-                    {GEOADMIN_OFFER_PRICES_XOF[tier] !== null &&
-                      marketAvailability !== false && (
-                      <span className="text-sm font-normal text-slate-700">
-                        {" "}
-                        / year
-                      </span>
-                    )}
+                  <span className="mt-2 block text-slate-800">
+                    <BusinessPlanPriceSummary offer={tier} />
                   </span>
                   <span className="mt-2 block text-sm text-slate-600">
                     {tier === "free"
@@ -110,12 +92,11 @@ export default function Pricing() {
             </div>
 
             <p className="mt-4 text-xs leading-relaxed text-slate-700">
-              Prices in CAD and EUR are indicative conversions from the FCFA
-              reference schedule; the written offer confirms the final amount.
-              Availability, deliverables, taxes, and terms are confirmed
-              directly. This page does not offer checkout or activate a plan,
-              and it does not promise a free listing, a trial, or a specific
-              placement.
+              CAD amounts are approved. FCFA amounts are the annual base
+              schedule. EUR amounts are calculated from the fixed peg and are
+              not approved prices. Availability, deliverables, taxes, and terms
+              are confirmed directly. This page does not offer checkout or
+              activate a plan.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
@@ -188,12 +169,12 @@ export default function Pricing() {
           <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
             <h2 className="text-2xl font-bold">How to interpret these prices</h2>
             <p className="mt-3 leading-relaxed text-slate-600">
-              These are annual reference prices—not a checkout offer or a final
-              quote. Canada prices are displayed in CAD, France prices in EUR,
-              and Côte d’Ivoire prices in FCFA. CAD and EUR amounts are
-              indicative conversions from the FCFA reference schedule; taxes,
-              eligibility, final inclusions, and contract terms are confirmed
-              in writing before purchase.
+              CAD is the approved price. FCFA is the annual base schedule. EUR
+              amounts are derived using the fixed 1 EUR = 655.957 FCFA peg and
+              are not approved prices. Enterprise is quote-only in all three
+              currencies. Taxes, availability, inclusions, and contract terms
+              are confirmed in writing; this page does not accept payment or
+              activate a plan.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
               Essentiel proposes initial

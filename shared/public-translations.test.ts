@@ -67,7 +67,7 @@ test("Spanish critical commercial and legal copy preserves no-payment and no-ent
   assert.equal(SPANISH_COPY["Custom quote"], "Presupuesto personalizado");
   assert.match(SPANISH_COPY["GeoAdmin pricing is provided for reference and inquiry only. No payment is taken and no plan is activated from the pricing page. Availability, deliverables, taxes, billing, renewal, cancellation, and any refund conditions must be confirmed in a written offer before you accept."],
     /No se cobra ningún pago ni se activa ningún plan/);
-  assert.match(SPANISH_COPY["Premium is available by inquiry only. It uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions."],
+  assert.match(SPANISH_COPY["Premium has a published price but is handled by inquiry; it uses the same platform scope as Essentiel and adds proposed content-preparation services, subject to written confirmation. It does not grant additional account permissions."],
     /No concede permisos adicionales/);
 });
 

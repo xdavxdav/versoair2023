@@ -38,10 +38,11 @@ test("Premium has concrete proposed services unlike Essentiel, and Enterprise is
   assert.ok(GEOADMIN_PLAN_DETAILS.premium.services.includes("Preparation of five product or service sheets"));
   assert.ok(GEOADMIN_PLAN_DETAILS.premium.services.includes("One round of corrections"));
   assert.ok(GEOADMIN_PLAN_DETAILS.enterprise.services.includes("No automatic entitlement to every Pro Max service"));
-  assert.match(GEOADMIN_REFERENCE_NOTICE, /Non-final annual reference/);
-  assert.match(GEOADMIN_REFERENCE_NOTICE, /written offer/);
-  assert.match(GEOADMIN_REFERENCE_NOTICE, /Standard is the only permanently free business plan, at 0 FCFA per year/);
-  assert.match(GEOADMIN_REFERENCE_NOTICE, /duration and terms confirmed before activation/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /CAD is the approved price/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /annual base schedule/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /655\.957 FCFA peg/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /not approved prices/);
+  assert.match(GEOADMIN_REFERENCE_NOTICE, /Standard is free everywhere/);
   assert.notEqual(getPublicCopyId(GEOADMIN_REFERENCE_NOTICE), undefined);
 });
 
