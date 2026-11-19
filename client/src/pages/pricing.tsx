@@ -10,6 +10,8 @@ import GeoAdminPlanDetailsDialog from "@/components/GeoAdminPlanDetailsDialog";
 import GeoAdminPromoCard from "@/components/GeoAdminPromoCard";
 import GeoAdminOfferDetails from "@/components/GeoAdminOfferDetails";
 import BusinessPlanPriceSummary from "@/components/BusinessPlanPriceSummary";
+import PlanCheckoutButton from "@/components/PlanCheckoutButton";
+import { isSelfServePlanTier, type BillingCycle } from "@shared/plan-pricing";
 import {
   GEOADMIN_OFFER_NAMES,
   GEOADMIN_PLAN_DETAILS,
@@ -24,6 +26,7 @@ export default function Pricing() {
   const localize = useLocalizedContent();
   const [selectedTier, setSelectedTier] = useState<GeoAdminOfferKey>("verified");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const { selectedCountry } = useCountry();
   const marketAvailability = getMarketAvailability(selectedCountry ?? "");
 
@@ -95,8 +98,8 @@ export default function Pricing() {
               CAD amounts are approved. FCFA amounts are the annual base
               schedule. EUR amounts are calculated from the fixed peg and are
               not approved prices. Availability, deliverables, taxes, and terms
-              are confirmed directly. This page does not offer checkout or
-              activate a plan.
+              are confirmed directly. Payment is only taken in CAD when you
+              press a Pay button and complete secure Stripe checkout.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
@@ -128,6 +131,19 @@ export default function Pricing() {
               your priorities.
             </p>
           </div>
+          <div className="mb-5 flex justify-center gap-2" role="group" aria-label="Billing cycle">
+            {(["monthly", "annual"] as const).map((value) => (
+              <Button
+                key={value}
+                type="button"
+                variant={cycle === value ? "default" : "outline"}
+                aria-pressed={cycle === value}
+                onClick={() => setCycle(value)}
+              >
+                {value === "monthly" ? "Monthly" : "Annual"}
+              </Button>
+            ))}
+          </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {GEOADMIN_OFFER_ORDER.map((tier) => {
               return (
@@ -144,6 +160,9 @@ export default function Pricing() {
                     </div>
                   </div>
                   <GeoAdminOfferDetails offer={tier} />
+                  {isSelfServePlanTier(tier) ? (
+                    <PlanCheckoutButton tier={tier} cycle={cycle} />
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
@@ -173,8 +192,8 @@ export default function Pricing() {
               amounts are derived using the fixed 1 EUR = 655.957 FCFA peg and
               are not approved prices. Enterprise is quote-only in all three
               currencies. Taxes, availability, inclusions, and contract terms
-              are confirmed in writing; this page does not accept payment or
-              activate a plan.
+              are confirmed in writing; payment is only taken in CAD through
+              the Pay buttons on the self-serve plans.
             </p>
             <p className="mt-3 leading-relaxed text-slate-600">
               Essentiel proposes initial
@@ -204,8 +223,8 @@ export default function Pricing() {
         </section>
 
         <p className="mt-6 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
-          <strong>Before you commit:</strong> no payment is taken and no plan is
-          activated from this page. Request a written proposal and review its
+          <strong>Before you commit:</strong> nothing is charged until you press
+          a Pay button and complete Stripe checkout. Request a written proposal and review its
           market availability, deliverables, term, taxes, exclusions, renewal,
           and cancellation conditions before accepting.
         </p>
