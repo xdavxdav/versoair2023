@@ -27,6 +27,15 @@ services:
         value: "false"
       - key: MARKETING_CHECKOUT_ENABLED
         value: "false"
+      # Go-live: set the two Stripe secrets below in the Render dashboard, run
+      # one test payment, then switch ONLINE_PAYMENTS_ENABLED and
+      # COMMERCIAL_SUBSCRIPTIONS_ENABLED to "true" together.
+      - key: COMMERCIAL_SUBSCRIPTIONS_ENABLED
+        value: "false"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: FREE_TRIALS_ENABLED
         value: "false"
       - key: RECURRING_BILLING_ENABLED
