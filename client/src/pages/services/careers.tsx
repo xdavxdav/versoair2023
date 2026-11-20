@@ -1493,20 +1493,20 @@ export default function Careers() {
             <div className="lg:w-3/4">
               {/* Search Bar — right above job results */}
               <div className="mb-5">
-                <div className="relative">
+                <div className="flex flex-col gap-2 sm:block sm:relative">
                   <div className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
+                    <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
                     <Input
                       placeholder="Search jobs, companies, or skills…"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-11 pr-28 py-6 text-base border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
+                      className="pl-11 sm:pr-28 py-6 text-base border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
                     />
-                    <Button className="absolute right-2 top-1/2 -translate-y-1/2 py-2.5 px-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-sm text-sm">
-                      <Search className="h-4 w-4 mr-1.5" />
-                      Search
-                    </Button>
                   </div>
+                  <Button className="hero-search-cta w-full sm:w-auto sm:absolute sm:right-2 sm:top-1/2 sm:-translate-y-1/2 py-2.5 px-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-sm text-sm">
+                    <Search className="h-4 w-4 mr-1.5" />
+                    Search
+                  </Button>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2.5">
                   {[

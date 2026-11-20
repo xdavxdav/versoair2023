@@ -997,20 +997,20 @@ export default function Contractors() {
 
               {/* search */}
               <div className="max-w-3xl mx-auto scroll-fade-in opacity-0 translate-y-4 transition-all duration-700 delay-300">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-50" />
+                <div className="relative flex flex-col gap-2 sm:block">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-50 pointer-events-none" />
                   <div className="relative bg-white/95 backdrop-blur-sm border border-gray-300/50 rounded-2xl shadow-xl overflow-hidden">
-                    <Search className="absolute left-5 top-5 h-5 w-5 text-gray-600" />
+                    <Search className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
                     <Input
                       placeholder="Search contracts, companies, or skills..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-24 py-7 text-lg border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
+                      className="pl-12 sm:pr-32 py-7 text-lg border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
                     />
-                    <Button className="absolute right-2.5 top-2.5 py-5 px-6 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-md">
-                      <Search className="h-5 w-5 mr-2" /> Search
-                    </Button>
                   </div>
+                  <Button className="hero-search-cta relative z-10 w-full sm:w-auto sm:absolute sm:right-2.5 sm:top-1/2 sm:-translate-y-1/2 py-5 px-6 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-md">
+                    <Search className="h-5 w-5 mr-2" /> Search
+                  </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-6 justify-center">
                   {[
