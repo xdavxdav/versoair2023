@@ -1,0 +1,73 @@
+/*
+ * Sector-themed footer. footer.tsx sets data-footer-tone and the accent
+ * variables on pages whose sector theme is listed in lib/footer-theme.ts;
+ * every other page keeps the cream/amber footer from its Tailwind classes.
+ * Surface and line values mirror the playful tokens in
+ * sector-directory/sector-directory.css.
+ *
+ * The block is all-or-nothing: without color-mix support the default footer
+ * is kept rather than a half-themed one.
+ */
+@supports (color: color-mix(in srgb, red 50%, white)) {
+  .site-footer[data-footer-tone="playful"] {
+    --ft-surface: #ffe8f4;
+    --ft-line: #f0c3df;
+    --ft-accent-fg: var(--ft-accent);
+    --ft-ink: color-mix(in srgb, var(--ft-accent) 68%, #000);
+    --ft-glow-a: color-mix(in srgb, var(--ft-accent) 30%, transparent);
+    --ft-glow-b: color-mix(in srgb, var(--ft-accent) 22%, transparent);
+    --ft-ring-line: color-mix(in srgb, var(--ft-accent) 24%, transparent);
+
+    background-color: var(--ft-surface);
+    border-top-color: var(--ft-line);
+  }
+
+  .dark .site-footer[data-footer-tone="playful"] {
+    --ft-surface: #231629;
+    --ft-line: #43284f;
+    --ft-accent-fg: var(--ft-accent-dark);
+    --ft-ink: color-mix(in srgb, var(--ft-accent-dark) 62%, #fff);
+    --ft-glow-a: color-mix(in srgb, var(--ft-accent-dark) 22%, transparent);
+    --ft-glow-b: color-mix(in srgb, var(--ft-accent-dark) 16%, transparent);
+    --ft-ring-line: color-mix(in srgb, var(--ft-accent-dark) 22%, transparent);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-glow {
+    background-image:
+      radial-gradient(ellipse at 15% 0%, var(--ft-glow-a), transparent 48%),
+      radial-gradient(ellipse at 88% 100%, var(--ft-glow-b), transparent 40%);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-ring {
+    border-color: var(--ft-ring-line);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-eyebrow {
+    color: var(--ft-ink);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-arrow {
+    color: var(--ft-accent-fg);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-divider {
+    border-color: var(--ft-line);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-link:hover {
+    color: var(--ft-ink);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-cta {
+    border-color: color-mix(in srgb, var(--ft-ink) 55%, transparent);
+    color: var(--ft-ink);
+  }
+
+  .site-footer[data-footer-tone="playful"] .ft-cta:hover {
+    background-color: color-mix(in srgb, var(--ft-accent-fg) 12%, transparent);
+  }
+
+  .site-footer[data-footer-tone="playful"] a:focus-visible {
+    --tw-ring-color: var(--ft-accent-fg);
+  }
+}
