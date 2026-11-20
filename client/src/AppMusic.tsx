@@ -300,34 +300,56 @@ function AppContent() {
           className="sticky top-0 left-0 right-0 z-[60] flex flex-col"
           style={{ overflow: "visible" }}
         >
-          <div className="bg-gradient-to-r from-purple-900 to-pink-900 text-white h-7 px-2 flex items-center">
+          <div className="bg-gradient-to-r from-purple-900 via-fuchsia-950 to-pink-900 text-white h-8 sm:h-7 px-1.5 sm:px-3 flex items-center border-b border-white/10">
             <div
-              className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
+              className="topbar-nowrap max-w-7xl mx-auto w-full min-w-0 flex flex-nowrap items-center justify-between gap-1 sm:gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-3 text-[10px]"
               style={{ overflow: "visible" }}
             >
-              <span className="font-medium notranslate" translate="no">
-                🎵 Verso Air Musical Universe
-              </span>
-              <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+              <div className="flex items-center min-w-0 shrink-0 sm:shrink">
+                <span
+                  className="sm:hidden inline-flex items-center gap-1 rounded-full bg-black/30 border border-fuchsia-300/30 px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase text-fuchsia-100 shrink-0 notranslate"
+                  translate="no"
+                >
+                  <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+                    <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-fuchsia-300 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-fuchsia-200" />
+                  </span>
+                  <span className="animate-bip-blink motion-reduce:animate-none">TMU</span>
+                </span>
+                <span
+                  className="hidden sm:inline-block font-medium truncate min-w-0 notranslate"
+                  translate="no"
+                >
+                  🎵 Verso Air Musical Universe
+                </span>
+              </div>
+              <div
+                className="min-w-0 flex items-center justify-center"
+                style={{ overflow: "visible" }}
+              >
                 <CountryDropdown />
               </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 justify-end">
+              <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
                 <button
                   onClick={() => {
                     window.location.href = mainSiteUrl;
                   }}
-                  className="hover:text-purple-200 transition-colors flex items-center space-x-1 text-[10px]"
+                  aria-label="Open Business Platform"
+                  title="Business Platform"
+                  className="mobile-compact-btn inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 px-1.5 md:px-2 py-0.5 text-white hover:text-purple-100 transition-colors text-[10px] shrink-0"
                 >
-                  <span>🏢</span>
-                  <span className="hidden sm:inline">Business Platform</span>
-                  <span className="sm:hidden">FSA</span>
+                  <span className="leading-none">🏢</span>
+                  <span className="hidden md:inline whitespace-nowrap">Business Platform</span>
+                  <span className="hidden min-[420px]:inline md:hidden">BIP</span>
                 </button>
                 <button
                   onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
-                  className="hover:text-purple-200 transition-colors flex items-center space-x-1"
+                  aria-label="Open GPS Services"
+                  title="GPS Services"
+                  className="mobile-compact-btn inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 px-1.5 md:px-2 py-0.5 text-white hover:text-purple-100 transition-colors shrink-0"
                 >
-                  <span>📍</span>
-                  <span className="hidden sm:inline">GPS Services</span>
+                  <span className="leading-none">📍</span>
+                  <span className="hidden md:inline whitespace-nowrap">GPS Services</span>
                 </button>
               </div>
             </div>

@@ -1193,8 +1193,8 @@
 
 /* ── GLOBAL: Header bars — wrap on mobile ── */
 @media (max-width: 768px) {
-  /* Sticky page headers with flex justify-between → allow wrapping */
-  .sticky .flex.items-center.justify-between {
+  /* Sticky page headers with flex justify-between → allow wrapping, except compact single-row utility bars */
+  .sticky .flex.items-center.justify-between:not(.topbar-nowrap) {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
@@ -2059,6 +2059,27 @@ html {
 
   [class~="max-h-[80vh]"] {
     max-height: 80dvh;
+  }
+}
+
+/* Top utility bar mobile BIP live indicator blink */
+.animate-bip-blink {
+  animation: bip-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes bip-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bip-blink {
+    animation: none;
   }
 }
 

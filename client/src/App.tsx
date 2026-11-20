@@ -1261,78 +1261,97 @@ function AppContent() {
           }`}
           style={{ overflow: "visible" }}
         >
-            {/* Top Banner */}
-            <div className="bg-gradient-to-r from-amber-700 to-amber-800 text-white h-7 px-2 flex items-center">
+            {/* Top Utility Bar */}
+            <div
+              data-testid="top-utility-bar"
+              className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-700 text-white h-8 sm:h-7 px-1.5 sm:px-3 flex items-center border-b border-amber-950/25 shadow-[inset_0_-1px_0_rgba(255,255,255,0.08)]"
+            >
               <div
-                className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
+                className="topbar-nowrap max-w-7xl mx-auto w-full min-w-0 flex flex-nowrap items-center justify-between gap-1 sm:gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-3 text-[10px]"
                 style={{ overflow: "visible" }}
               >
-                {/* Left: Platform label — Dynamic based on current page */}
-                <span
-                  className="font-medium flex-1 min-w-0 text-center notranslate"
-                  translate="no"
-                >
-                  <span className="hidden md:inline notranslate" translate="no">
-                    {pageTitle === "Verso Air"
-                      ? isFr
-                        ? "Verso Air"
-                        : "Verso Air"
-                      : isFr
-                        ? pageTitle === "Verso Air Business" ||
-                          pageTitle === "Community Hub"
-                          ? pageTitle
-                          : `Plateforme ${pageTitle}`
-                        : pageTitle}
-                    {pageTitle === "Verso Air" && (
-                      <>
-                        <sup className="ml-0.5 align-super text-[7px]">™</sup>
-                        <span className="mx-1">
-                          {translateText("Business Intelligence Platform")}
-                        </span>
-                      </>
-                    )}
-                  </span>
+                {/* Left: Platform label — Blinking BIP pill on mobile, full title on larger screens */}
+                <div className="flex items-center min-w-0 shrink-0 sm:shrink">
                   <span
-                    className="hidden sm:inline md:hidden notranslate"
+                    data-testid="topbar-bip-badge"
+                    className="sm:hidden inline-flex items-center gap-1 rounded-full bg-amber-950/35 border border-amber-300/35 px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase text-amber-50 shrink-0 notranslate"
                     translate="no"
                   >
-                    {pageTitle === "Verso Air"
-                      ? translateText("Business Intelligence Platform")
-                      : isFr
-                        ? pageTitle.substring(0, 3)
+                    <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+                      <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-200" />
+                    </span>
+                    <span className="animate-bip-blink motion-reduce:animate-none">BIP</span>
+                  </span>
+                  <span
+                    className="hidden sm:inline-block font-medium truncate min-w-0 text-left notranslate"
+                    translate="no"
+                  >
+                    <span className="hidden md:inline notranslate" translate="no">
+                      {pageTitle === "Verso Air"
+                        ? "Verso Air"
+                        : isFr
+                          ? pageTitle === "Verso Air Business" ||
+                            pageTitle === "Community Hub"
+                            ? pageTitle
+                            : `Plateforme ${pageTitle}`
+                          : pageTitle}
+                      {pageTitle === "Verso Air" && (
+                        <>
+                          <sup className="ml-0.5 relative -top-0.5 text-[7px] leading-none">™</sup>
+                          <span className="mx-1">
+                            {translateText("Business Intelligence Platform")}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                    <span
+                      className="sm:inline md:hidden notranslate"
+                      translate="no"
+                    >
+                      {pageTitle === "Verso Air"
+                        ? translateText("Business Intelligence Platform")
                         : pageTitle.substring(0, 3)}
+                    </span>
                   </span>
-                  <span className="sm:hidden notranslate" translate="no">
-                    BIP
-                  </span>
-                </span>
+                </div>
 
-                {/* Center: Country filter dropdown */}
-                <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+                {/* Center: Country & Language pill */}
+                <div
+                  className="min-w-0 flex items-center justify-center"
+                  style={{ overflow: "visible" }}
+                >
                   <CountryDropdown />
                 </div>
 
-                {/* Right: Action buttons */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 justify-end">
+                {/* Right: Compact utility actions */}
+                <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
                   <button
                     onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
                     aria-label="Open Verso Air Music Portal"
                     title="Verso Air Music Portal"
-                    className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
+                    className="mobile-compact-btn inline-flex items-center justify-center gap-1 h-5 w-5 min-[260px]:h-6 min-[260px]:w-6 md:h-5 md:w-auto rounded-full bg-white/10 hover:bg-white/20 px-0 md:px-2 text-white hover:text-amber-100 transition-colors shrink-0"
                   >
-                    <span>🎵</span>
-                    <span className="hidden sm:inline notranslate">Verso Air</span>
+                    <span className="leading-none">🎵</span>
+                    <span className="hidden md:inline notranslate whitespace-nowrap">
+                      Verso Air
+                    </span>
                   </button>
                   <button
                     onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
                     aria-label="Open GPS Services"
                     title="GPS Services"
-                    className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
+                    className="mobile-compact-btn inline-flex items-center justify-center gap-1 h-5 w-5 min-[260px]:h-6 min-[260px]:w-6 md:h-5 md:w-auto rounded-full bg-white/10 hover:bg-white/20 px-0 md:px-2 text-white hover:text-amber-100 transition-colors shrink-0"
                   >
-                    <span>📍</span>
-                    <span className="hidden sm:inline">GPS Services</span>
+                    <span className="leading-none">📍</span>
+                    <span className="hidden md:inline whitespace-nowrap">
+                      GPS Services
+                    </span>
                   </button>
-                  <ThemeToggle />
+                  <ThemeToggle
+                    className="mobile-compact-btn h-5 w-5 min-[260px]:h-6 min-[260px]:w-6 md:h-5 md:w-5 p-0.5 min-[260px]:p-1 bg-white/10 hover:bg-white/20 shrink-0"
+                    iconClassName="h-3 w-3 min-[260px]:h-3.5 min-[260px]:w-3.5 md:h-3 md:w-3"
+                  />
                 </div>
               </div>
             </div>
