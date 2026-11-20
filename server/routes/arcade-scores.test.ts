@@ -288,3 +288,20 @@ test("GeoAdmin arcade config & custom questions require owner role and block dis
     else process.env.SUPERADMIN_EMAIL = prevOwnerEmail;
   }
 });
+
+test("POST /runs rate-limits a user who farms run tokens", async () => {
+  scriptedArcadeDb();
+  const farmer = { id: 99, role: "user" };
+  await withRouter(arcadeScoresRouter, async (origin) => {
+    let lastStatus = 0;
+    for (let i = 0; i < 61; i += 1) {
+      const res = await call(origin, "POST", "/runs", {
+        headers: signIn(farmer),
+        body: { game: "snake" },
+      });
+      lastStatus = res.status;
+      if (i < 60) assert.equal(res.status, 201);
+    }
+    assert.equal(lastStatus, 429);
+  });
+});
