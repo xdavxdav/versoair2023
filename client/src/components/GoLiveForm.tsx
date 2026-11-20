@@ -1,6 +1,6 @@
 /**
- * Go Live Form — Modal for verified artists to create listening sessions in TMU
- * Handles session title, description, start time, and track selection
+ * Go Live Form — Modal for any signed-in user to host a listening session in TMU
+ * Handles session title, description, start time, and published track selection
  */
 
 import { useState } from "react";
@@ -47,7 +47,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
   const [step, setStep] = useState<"details" | "tracks" | "confirm">("details");
 
   const { data: eligibility, isLoading: eligibilityLoading } = useHostEligibility(isOpen && !!user);
-  const canHost = eligibility?.canHost ?? false;
+  const canHost = !!user && (eligibility?.canHost ?? true);
   const createSession = useCreateSession();
 
   const submit = () => {
@@ -127,11 +127,10 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 <AlertCircle className="w-6 h-6 text-fuchsia-300" />
               </div>
               <h2 className="text-xl font-bold text-white mb-2">
-                Account Verification Required
+                Sign In Required
               </h2>
               <p className="text-slate-300 text-sm mb-6">
-                Your account must be verified before you can create live sessions. 
-                Check your email for verification instructions.
+                Sign in to your VersoAir account to host a live listening session with any published track on TMU.
               </p>
               <Button
                 onClick={handleClose}
@@ -255,7 +254,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 <div>
                   <h3 className="text-white font-semibold mb-3">Select Tracks</h3>
                   <p className="text-slate-300 text-sm mb-4">
-                    Choose from your own published tracks.
+                    Choose from any published track in the TMU catalogue.
                   </p>
                   <TrackSelector
                     selectedTracks={selectedTracks}
@@ -310,10 +309,10 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                   </div>
                 </Card>
 
-                {/* Verification Badge */}
+                {/* Ready Badge */}
                 <div className="flex items-center gap-2 text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3">
                   <CheckCircle className="w-4 h-4" />
-                  Verified artist: ready to broadcast
+                  Listening party ready to broadcast
                 </div>
 
                 {/* Action Buttons */}

@@ -240,7 +240,7 @@ export function MusicSidebar() {
 
   const [showGoLive, setShowGoLive] = useState(false);
   const { data: hostEligibility } = useHostEligibility(!!user);
-  const canHostLive = hostEligibility?.canHost === true;
+  const canHostLive = !!user && (hostEligibility?.canHost ?? true);
 
   const handleLogout = () => {
     logout();
@@ -494,7 +494,7 @@ export function MusicSidebar() {
 
           {canHostLive && (
             <>
-              {/* Go Live and My Sessions - verified artists only */}
+              {/* Go Live and My Sessions - any signed-in user */}
               <button
                 onClick={() => setShowGoLive(true)}
                 className="w-full flex items-center justify-center p-2.5 rounded-lg cursor-pointer bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/20 text-amber-300 hover:from-amber-600/30 hover:to-orange-600/30 transition-colors"
