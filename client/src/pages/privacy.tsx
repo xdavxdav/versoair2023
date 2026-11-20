@@ -2,6 +2,7 @@ import { useLocalizedContent } from "@/hooks/use-localized-content";
 import { Link } from "wouter";
 import { Shield, ArrowLeft } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
+import BackLink from "@/components/BackLink";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 export default function PrivacyPolicy() {
@@ -18,12 +19,10 @@ export default function PrivacyPolicy() {
       <ScrollableNavbar isAuthenticated={false} />
       <div className="mx-auto max-w-4xl px-4 py-16">
         {/* Back link */}
-        <Link href="/">
-          <a className="mb-8 inline-flex items-center gap-2 text-amber-800 transition-colors hover:text-amber-700">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </a>
-        </Link>
+        <BackLink className="mb-8 inline-flex items-center gap-2 text-amber-800 transition-colors hover:text-amber-700">
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </BackLink>
 
         {/* Header */}
         <div className="mb-10 flex items-center gap-4">

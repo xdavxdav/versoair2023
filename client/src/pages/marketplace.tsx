@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -7,6 +8,7 @@ import ViewOnlyGate from "@/components/ViewOnlyGate";
 import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch, checkAuth } from "@/lib/auth";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
   nextSendAttempt,
   settleSendAttempt,
@@ -164,6 +166,7 @@ const conditionStyle = (c: string) => {
 export default function MarketplacePage() {
   // ═══ UNIFIED AUTH — AuthContext (main/artist/geo-admin) OR community session ═══
   const { user: globalUser, login: setGlobalLogin, logout: globalLogout } = useAuthContext();
+  const [, navigate] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("blog_community_auth") === "true";
   });
@@ -743,7 +746,7 @@ export default function MarketplacePage() {
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
           showProfessionalSSO={false}
-          onBack={() => window.location.assign("/")}
+          onBack={() => navigateBackSafely(navigate, "/")}
         />
         <AuthModal
           isOpen={isAuthModalOpen}

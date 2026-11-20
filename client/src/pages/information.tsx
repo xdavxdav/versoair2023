@@ -9,7 +9,8 @@
  */
 
 import { useState, useRef, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
+import BackLink from "@/components/BackLink";
 import { motion, AnimatePresence } from "framer-motion";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
 import {
@@ -1460,12 +1461,10 @@ export default function InformationHub() {
 
       <div className="max-w-5xl mx-auto px-4 py-16">
         {/* Back link */}
-        <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-800 hover:text-amber-700 text-sm mb-8 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Retour à l'Accueil
-          </a>
-        </Link>
+        <BackLink className="inline-flex items-center gap-2 text-amber-800 hover:text-amber-700 text-sm mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </BackLink>
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">

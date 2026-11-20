@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import BackLink from "@/components/BackLink";
 import { Link } from "wouter";
 import { ArrowLeft, Info } from "lucide-react";
 
@@ -8,12 +9,12 @@ export default function GuaranteeHelp() {
       <div className="border-b bg-white shadow-sm">
         <div className="mx-auto max-w-4xl px-4 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm">
+              <BackLink>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Button>
-            </Link>
+                Back
+              </BackLink>
+            </Button>
             <div className="h-6 border-l border-gray-300" />
             <h1 className="text-2xl font-bold text-gray-800">
               Service Terms & Availability

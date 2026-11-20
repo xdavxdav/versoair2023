@@ -11,6 +11,8 @@ import PostCard from "@/components/PostCard";
 import CreatePostModal from "@/components/CreatePostModal";
 import AuthModal from "@/components/AuthModal";
 import ViewOnlyGate from "@/components/ViewOnlyGate";
+import BackLink from "@/components/BackLink";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import AdBanner from "@/components/AdBanner";
 import { useSocialFeed } from "@/hooks/use-social-feed";
 import { authenticatedFetch } from "@/lib/auth";
@@ -372,7 +374,7 @@ export default function BlogPage() {
         <ViewOnlyGate
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
-          onBack={() => setLocation("/")}
+          onBack={() => navigateBackSafely(setLocation, "/")}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
@@ -399,12 +401,10 @@ export default function BlogPage() {
       <ScrollToTop />
       {isContentNavPath(currentPath) && (
         <div className="px-4 pt-4">
-          <Link href="/">
-            <button className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-500/15">
-              <span aria-hidden="true">←</span>
-              Back to home
-            </button>
-          </Link>
+          <BackLink className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-500/15">
+            <span aria-hidden="true">←</span>
+            Back
+          </BackLink>
         </div>
       )}
 

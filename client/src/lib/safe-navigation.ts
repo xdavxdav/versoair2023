@@ -1,33 +1,46 @@
-const AUTH_PATH_PREFIX = "/auth/";
+type Navigate = (path: string) => void;
 
-export function getSafeReturnPath(fallback = "/"): string {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return fallback;
-  }
-
-  try {
-    const referrer = document.referrer
-      ? new URL(document.referrer, window.location.origin)
-      : null;
-
-    if (
-      referrer &&
-      referrer.origin === window.location.origin &&
-      !referrer.pathname.startsWith(AUTH_PATH_PREFIX) &&
-      referrer.pathname !== window.location.pathname
-    ) {
-      return `${referrer.pathname}${referrer.search}${referrer.hash}`;
-    }
-  } catch {
-    // Use the public fallback when the browser referrer is unavailable.
-  }
-
-  return fallback;
+// The Navigation API only lists entries from this site, so it never treats
+// another site as "the previous page". Other browsers fall back to history length.
+export function canGoBackInApp(): boolean {
+  if (typeof window === "undefined") return false;
+  const navigation: { canGoBack?: unknown } | undefined = Reflect.get(
+    window,
+    "navigation",
+  );
+  if (typeof navigation?.canGoBack === "boolean") return navigation.canGoBack;
+  return window.history.length > 1;
 }
 
-export function navigateBackSafely(
-  navigate: (path: string) => void,
+// document.referrer is frozen at page load, so it cannot describe an in-app
+// navigation. Use the real history stack and only use the fallback when it is empty.
+export function navigateBackSafely(navigate: Navigate, fallback = "/"): void {
+  if (canGoBackInApp()) {
+    window.history.back();
+    return;
+  }
+  navigate(fallback);
+}
+
+export interface BackClickEvent {
+  defaultPrevented: boolean;
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  preventDefault(): void;
+}
+
+// Plain clicks go back. Modified clicks keep the browser default, which opens
+// the link's fallback href in a new tab or window.
+export function handleBackClick(
+  event: BackClickEvent,
+  navigate: Navigate,
   fallback = "/",
 ): void {
-  navigate(getSafeReturnPath(fallback));
+  if (event.defaultPrevented || event.button !== 0) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  navigateBackSafely(navigate, fallback);
 }
