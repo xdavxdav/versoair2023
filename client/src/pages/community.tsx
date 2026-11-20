@@ -8,6 +8,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BackLink from "@/components/BackLink";
 import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useState, useMemo } from "react";
@@ -284,14 +285,13 @@ export default function CommunityDetail() {
                 Global Community
               </p>
             </div>
-            <Link href="/">
-              <Button
-                variant="outline"
-                className="border-slate-600 text-slate-300"
-              >
-                ← Back
-              </Button>
-            </Link>
+            <Button
+              asChild
+              variant="outline"
+              className="border-slate-600 text-slate-300"
+            >
+              <BackLink>← Back</BackLink>
+            </Button>
           </div>
 
           <CheckoutReturnNotice

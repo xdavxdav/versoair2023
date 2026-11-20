@@ -137,7 +137,7 @@ export default function ViewOnlyGate({
           className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-slate-900/70 px-3 py-2 text-sm font-medium text-cyan-300 transition-colors hover:bg-cyan-400/10 hover:text-cyan-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Return Home
+          Back
         </button>
       )}
       <div className="max-w-2xl w-full">
