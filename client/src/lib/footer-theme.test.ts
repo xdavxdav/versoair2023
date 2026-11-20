@@ -1,44 +1,19 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { SECTOR_CONFIGS } from "../components/sector-directory/sector-configs";
-import { getFooterTheme } from "./footer-theme";
+import { FOOTER_THEME } from "./footer-theme";
 
-test("the entertainment directory gets the playful footer", () => {
-  const theme = getFooterTheme("/divertissement");
-  assert.equal(theme?.tone, "playful");
+test("the footer accents stay in sync with the entertainment theme", () => {
+  const config = SECTOR_CONFIGS.divertissement;
+  assert.equal(config.tone, "playful");
+  assert.equal(FOOTER_THEME.tone, "playful");
+  assert.equal(FOOTER_THEME.accent, config.accent);
+  assert.equal(FOOTER_THEME.accentDark, config.accentDark);
 });
 
-test("matching ignores case, trailing slashes, query strings and hashes", () => {
-  for (const path of ["/Divertissement", "/divertissement/", "/divertissement?city=Toronto", "/divertissement#top"]) {
-    assert.equal(getFooterTheme(path)?.tone, "playful", path);
-  }
-});
-
-test("other pages keep the default footer", () => {
-  for (const path of [
-    "/",
-    "",
-    "/commerce",
-    "/hotellerie",
-    "/businesses-directory",
-    "/divertissement/extra",
-    "/events/divertissement",
-    "/constructor",
-    "/__proto__",
-  ]) {
-    assert.equal(getFooterTheme(path), null, path);
-  }
-});
-
-test("footer accents stay in sync with the sector configs", () => {
-  for (const [key, config] of Object.entries(SECTOR_CONFIGS)) {
-    const theme = getFooterTheme(`/${key}`);
-    if (config.tone === "playful") {
-      assert.ok(theme, `${key} is playful but has no footer theme`);
-      assert.equal(theme.accent, config.accent, `${key} accent`);
-      assert.equal(theme.accentDark, config.accentDark, `${key} accentDark`);
-    } else {
-      assert.equal(theme, null, `${key} is ${config.tone} and should keep the default footer`);
-    }
-  }
+test("the footer applies the theme on every page instead of per route", () => {
+  const source = readFileSync(new URL("../components/ui/footer.tsx", import.meta.url), "utf8");
+  assert.match(source, /data-footer-tone=\{FOOTER_THEME\.tone\}/);
+  assert.doesNotMatch(source, /useLocation/);
 });

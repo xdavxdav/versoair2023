@@ -1,7 +1,7 @@
 /*
- * Sector-themed footer. footer.tsx sets data-footer-tone and the accent
- * variables on pages whose sector theme is listed in lib/footer-theme.ts;
- * every other page keeps the cream/amber footer from its Tailwind classes.
+ * Themed footer. footer.tsx sets data-footer-tone and the accent variables
+ * from lib/footer-theme.ts on every page; browsers without color-mix keep the
+ * cream/amber footer from its Tailwind classes.
  * Surface and line values mirror the playful tokens in
  * sector-directory/sector-directory.css.
  *
