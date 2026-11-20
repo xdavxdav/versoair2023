@@ -764,7 +764,7 @@ export default function ArcadePage() {
                 {!isAuthenticated && (
                   <Badge className="bg-[#180d34]/80 text-slate-200 border-purple-500/25 text-xs">
                     <Gamepad2 className="w-3 h-3 mr-1 text-purple-300" />
-                    Connectez-vous pour miser
+                    Connectez-vous pour enregistrer vos scores
                   </Badge>
                 )}
               </div>

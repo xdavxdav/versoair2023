@@ -19,7 +19,7 @@ it opens many other surfaces (table below) that are not ready.
 | Surface | Endpoint | Flags required | Notes |
 | --- | --- | --- | --- |
 | Marketing packs + print products | `POST /api/marketing/cart/checkout` | `MARKETING_CHECKOUT_ENABLED` **or** `ONLINE_PAYMENTS_ENABLED` | Stripe, CAD, price read from DB; request body ignored |
-| Business subscription (Stripe) | `POST /api/v1/payments/create-checkout` | `ONLINE_PAYMENTS_ENABLED` **and** `COMMERCIAL_SUBSCRIPTIONS_ENABLED` | Stripe, CAD, amounts server-side from `shared/plan-pricing.ts`; Enterprise is quote-only (400 `PLAN_QUOTE_ONLY`). One-time prepaid unless `RECURRING_BILLING_ENABLED=true` (automatic renewal, see "Recurring billing"). No page calls it yet |
+| Business subscription (Stripe) | `POST /api/v1/payments/create-checkout` | `ONLINE_PAYMENTS_ENABLED` **and** `COMMERCIAL_SUBSCRIPTIONS_ENABLED` | Stripe, CAD, amounts server-side from `shared/plan-pricing.ts`; Standard is free, Premium is inquiry-only, Enterprise is quote-only (400 `PLAN_QUOTE_ONLY`). Self-serve Pay buttons are live on `/pricing` for Essential, Pro Verified, and Pro Max (`ONLINE_PAYMENTS_ENABLED` and `COMMERCIAL_SUBSCRIPTIONS_ENABLED` are enabled on production). One-time prepaid unless `RECURRING_BILLING_ENABLED=true` (automatic renewal, see "Recurring billing") |
 | Business tier from wallet balance | `POST /api/payments/tier/upgrade` | same two flags | Wallet funds, no Stripe; own legacy prices (gap 7) |
 | Wallet deposit | `/api/wallet/deposit`, `/api/payments/wallet/deposit` | `ONLINE_PAYMENTS_ENABLED` | No Stripe top-up exists; first is a PayPal redirect preview, second always returns 503 |
 | PayPal, artist paid tiers, tips, withdraw, bank/Interac/crypto/mobile-money | `routes/paypal.ts`, `artist-subscriptions.ts`, `streamroyale.ts`, `payments.ts` | `ONLINE_PAYMENTS_ENABLED` | Not Stripe; out of scope for this go-live |
@@ -64,23 +64,24 @@ it opens many other surfaces (table below) that are not ready.
    "Recurring billing" below. Public pages say nothing about automatic renewal;
    keep it that way until the flag is on.
 4. GST/HST, receipts and print-order fulfilment: see Known gaps below.
-5. **Stripe's live account is paused until its photo-ID task is done.** At the
-   last check, Dashboard > Account status listed "Provide a photo ID" for the
-   account owner as past due, marked as impacting payments and payouts, with
-   payments paused. No charge or payout of any kind can succeed until the
-   account holder completes it. Nobody else should handle that document.
-6. **Decide where Stripe pays out.** The payout bank linked in Stripe
-   (Settings > Linked accounts) is a Tangerine CAD account, not the Airwallex
-   account. Airwallex is the company's bank account and has no code
-   integration here (it is not a payment processor). Change the Stripe payout
-   bank only after deciding which account should receive the money.
+5. **Stripe live account verification — RESOLVED.** Photo-ID verification is
+   complete on live Stripe account `acct_1TAMOmARcKPnBUjj` (VERSO AIR INC.):
+   `charges_enabled: true`, `payouts_enabled: true`, `requirements.past_due: []`,
+   and live webhook `we_1UcpnCARcKPnBUjjiXbb3fA2`
+   (`https://www.versoair.com/api/v1/payments/webhook`) is enabled across all 10
+   checkout, reversal, and subscription events.
+6. **Stripe payout bank — RESOLVED.** Stripe payouts are routed to the company's
+   CAD Airwallex partner bank account (Digital Commerce Bank `••••6759`, routing
+   `10009-352`).
 
-### Charging a client before the shop is loaded
+### Charging a custom or catalog client before the shop is loaded
 
-Until the catalog is loaded (blocker 1) and a Subscribe button exists (no page
-calls plan checkout yet), the quickest way to take a real payment is Stripe
-itself, once blocker 5 is cleared: create an Invoice or a Payment Link in the
-Dashboard, in CAD. The webhook acknowledges those events and ignores them
+Self-serve plan checkout is live on `/pricing` for Essential, Pro Verified, and
+Pro Max (`ONLINE_PAYMENTS_ENABLED=true` and
+`COMMERCIAL_SUBSCRIPTIONS_ENABLED=true`). Until the marketing shop catalog is
+loaded (blocker 1), or for custom-quoted offers (Premium content preparation or
+Enterprise), you can create an Invoice or a Payment Link in the Stripe
+Dashboard in CAD. The webhook acknowledges those events and ignores them
 (they carry no plan or order metadata), so Stripe does not retry them. The
 site does not record them either: grant the plan or fulfil the order by hand
 and reconcile from the Dashboard.
@@ -93,10 +94,10 @@ and reconcile from the Dashboard.
    accountant. Options: set prices tax-inclusive, or enable Stripe Tax and add
    `automatic_tax` to the Checkout session (code change).
 2. **Plans are one-time prepaid payments unless `RECURRING_BILLING_ENABLED` is
-   on** (charged in CAD like the shop). Leave `COMMERCIAL_SUBSCRIPTIONS_ENABLED`
-   off until the owner has reviewed the plan prices (blocker 2). No page starts
-   a plan checkout yet (`/pricing` is inquiry-only and the billing page only
-   opens the Stripe portal), so a purchase button still has to be built.
+   on** (charged in CAD like the shop). `/pricing` starts self-serve plan
+   checkout for Essential, Pro Verified, and Pro Max when
+   `ONLINE_PAYMENTS_ENABLED` and `COMMERCIAL_SUBSCRIPTIONS_ENABLED` are enabled,
+   and the billing page opens the Stripe customer portal.
 3. **No customer receipt email.** The Checkout session does not pass an email.
    Stripe's own receipts (Dashboard > Settings > Customer emails) are only sent
    in **live** mode, so they cannot be seen in the sandbox test. Check one with
@@ -315,7 +316,6 @@ Known limits (decide or handle through support):
   which the pinned API version (`STRIPE_API_VERSION` in
   `server/routes/api-v1/payments.ts`) returns. If that version is ever raised,
   re-test refunds of a renewal.
-- Nothing in the client starts a plan checkout yet (gap 2).
 
 ## What the code guarantees (audited)
 

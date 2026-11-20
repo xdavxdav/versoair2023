@@ -142,89 +142,95 @@ export function GameFrame({
 
             {/* Pause Overlay */}
             {paused && !gameOver && (
-              <div className="absolute inset-0 bg-[#06020f]/80 backdrop-blur-sm flex flex-col items-center justify-center p-5 text-center z-20">
-                <p className="text-xl font-extrabold text-white mb-1">
-                  {title} — Pause
-                </p>
-                <p className="text-xs text-slate-300 mb-5">
-                  Appuyez sur Reprendre pour continuer
-                </p>
-                <div className="flex gap-3">
-                  <Button
-                    onClick={onTogglePause}
-                    className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
-                  >
-                    <Play className="w-4 h-4 mr-1.5" /> Reprendre
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={onRestart}
-                    className="border-purple-500/35 bg-[#180d34] text-slate-100"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-1.5" /> Rejouer
-                  </Button>
+              <div className="absolute inset-0 bg-[#06020f]/80 backdrop-blur-sm overflow-y-auto p-3 sm:p-5 text-center z-20 flex">
+                <div className="m-auto flex flex-col items-center justify-center">
+                  <p className="text-lg sm:text-xl font-extrabold text-white mb-1">
+                    {title} — Pause
+                  </p>
+                  <p className="text-xs text-slate-300 mb-4 sm:mb-5">
+                    Appuyez sur Reprendre pour continuer
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={onTogglePause}
+                      className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                    >
+                      <Play className="w-4 h-4 mr-1.5" /> Reprendre
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={onRestart}
+                      className="border-purple-500/35 bg-[#180d34] text-slate-100"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1.5" /> Rejouer
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Game Over Overlay */}
             {gameOver && (
-              <div className="absolute inset-0 bg-[#06020f]/88 backdrop-blur-md flex flex-col items-center justify-center p-5 text-center z-20">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center mb-3 shadow-lg shadow-purple-500/35">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-extrabold text-white">
-                  Partie terminée
-                </h3>
-                <p className="text-3xl font-black text-cyan-300 tabular-nums mt-1">
-                  {score.toLocaleString()} pts
-                </p>
+              <div className="absolute inset-0 bg-[#06020f]/90 backdrop-blur-md overflow-y-auto p-3 sm:p-5 text-center z-20 flex">
+                <div className="m-auto flex flex-col items-center justify-center w-full">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center mb-2 sm:mb-3 shadow-lg shadow-purple-500/35 shrink-0">
+                    <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-extrabold text-white leading-tight">
+                    Partie terminée
+                  </h3>
+                  <p className="text-2xl sm:text-3xl font-black text-cyan-300 tabular-nums mt-0.5 sm:mt-1 leading-tight">
+                    {score.toLocaleString()} pts
+                  </p>
 
-                {savedInfo?.isPersonalBest && (
-                  <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-3 py-0.5 text-xs font-bold text-amber-200">
-                    Nouveau record personnel !
-                  </span>
-                )}
-
-                <div className="mt-3 text-xs text-slate-300">
-                  {submittingScore ? (
-                    "Enregistrement du score…"
-                  ) : !isAuthenticated ? (
-                    <div className="space-y-2">
-                      <p className="text-slate-300">
-                        Connectez-vous pour enregistrer votre score au classement.
-                      </p>
-                      <Button
-                        size="sm"
-                        onClick={onRequireSignIn}
-                        className="bg-purple-600 hover:bg-purple-500 text-white"
-                      >
-                        Se connecter
-                      </Button>
-                    </div>
-                  ) : savedInfo?.saved ? (
-                    <span className="text-emerald-300">
-                      Score enregistré au classement
+                  {savedInfo?.isPersonalBest && (
+                    <span className="mt-1.5 sm:mt-2 inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-amber-200">
+                      Nouveau record personnel !
                     </span>
-                  ) : savedInfo?.error ? (
-                    <span className="text-amber-300">{savedInfo.error}</span>
-                  ) : null}
-                </div>
+                  )}
 
-                <div className="mt-5 flex gap-3 w-full max-w-[260px]">
-                  <Button
-                    onClick={onRestart}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-1.5" /> Rejouer
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={onQuit}
-                    className="border-purple-500/35 bg-[#180d34] text-slate-100 hover:bg-purple-500/20"
-                  >
-                    Quitter
-                  </Button>
+                  <div className="mt-2 sm:mt-3 text-xs text-slate-300">
+                    {submittingScore ? (
+                      "Enregistrement du score…"
+                    ) : !isAuthenticated ? (
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <p className="text-slate-300 leading-snug">
+                          Connectez-vous pour enregistrer votre score au classement.
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={onRequireSignIn}
+                          className="h-8 bg-purple-600 hover:bg-purple-500 text-white"
+                        >
+                          Se connecter
+                        </Button>
+                      </div>
+                    ) : savedInfo?.saved ? (
+                      <span className="text-emerald-300">
+                        Score enregistré au classement
+                      </span>
+                    ) : savedInfo?.error ? (
+                      <span className="text-amber-300">{savedInfo.error}</span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-3 sm:mt-5 flex gap-2.5 sm:gap-3 w-full max-w-[260px]">
+                    <Button
+                      size="sm"
+                      onClick={onRestart}
+                      className="flex-1 h-9 sm:h-10 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1.5" /> Rejouer
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onQuit}
+                      className="h-9 sm:h-10 border-purple-500/35 bg-[#180d34] text-slate-100 hover:bg-purple-500/20"
+                    >
+                      Quitter
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -251,10 +257,10 @@ export function DpadControls({
   hint?: string;
 }) {
   const btnCls =
-    "h-13 w-14 min-h-[52px] min-w-[56px] rounded-xl bg-[#180d34] border border-purple-500/30 text-slate-100 active:bg-fuchsia-500/35 active:border-fuchsia-400 flex items-center justify-center shadow-inner transition-colors";
+    "h-12 w-14 min-h-[48px] min-w-[54px] sm:h-13 sm:min-h-[52px] sm:min-w-[56px] rounded-xl bg-[#180d34] border border-purple-500/30 text-slate-100 active:bg-fuchsia-500/35 active:border-fuchsia-400 flex items-center justify-center shadow-inner transition-colors";
 
   return (
-    <div className="flex flex-col items-center gap-1.5 py-1">
+    <div className="flex flex-col items-center gap-1 sm:gap-1.5 py-0.5 sm:py-1">
       <button
         type="button"
         aria-label="Haut"
