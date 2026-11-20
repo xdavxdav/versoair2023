@@ -48,20 +48,45 @@ interface ArcadeRunTokenPayload {
 
 const SCORE_RATE_WINDOW_MS = 5 * 60 * 1000;
 const SCORE_RATE_MAX = 25;
+const RUN_RATE_MAX = 60;
 const userSubmitBuckets = new Map<number, number[]>();
+const userRunBuckets = new Map<number, number[]>();
 
-function checkUserRateLimit(userId: number, nowMs: number): boolean {
-  const recent = (userSubmitBuckets.get(userId) || []).filter(
+function checkBucket(
+  buckets: Map<number, number[]>,
+  max: number,
+  userId: number,
+  nowMs: number,
+): boolean {
+  if (buckets.size > 5000) {
+    for (const [id, times] of buckets) {
+      if (!times.some((t) => nowMs - t < SCORE_RATE_WINDOW_MS)) {
+        buckets.delete(id);
+      }
+    }
+  }
+  const recent = (buckets.get(userId) || []).filter(
     (t) => nowMs - t < SCORE_RATE_WINDOW_MS,
   );
-  if (recent.length >= SCORE_RATE_MAX) {
-    userSubmitBuckets.set(userId, recent);
+  if (recent.length >= max) {
+    buckets.set(userId, recent);
     return false;
   }
   recent.push(nowMs);
-  userSubmitBuckets.set(userId, recent);
+  buckets.set(userId, recent);
   return true;
 }
+
+function checkUserRateLimit(userId: number, nowMs: number): boolean {
+  return checkBucket(userSubmitBuckets, SCORE_RATE_MAX, userId, nowMs);
+}
+
+function checkRunRateLimit(userId: number, nowMs: number): boolean {
+  return checkBucket(userRunBuckets, RUN_RATE_MAX, userId, nowMs);
+}
+
+const LEADERBOARD_CACHE_TTL_MS = 30_000;
+const leaderboardCache = new Map<string, { at: number; body: unknown }>();
 
 function getRunSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -130,6 +155,11 @@ router.post("/runs", requireAuth(), async (req: Request, res: Response) => {
   const userId = Number(req.user?.id);
   if (!Number.isInteger(userId) || userId <= 0) {
     return res.status(401).json({ error: "Authentification requise" });
+  }
+  if (!checkRunRateLimit(userId, Date.now())) {
+    return res
+      .status(429)
+      .json({ error: "Trop de parties démarrées, réessayez dans un moment." });
   }
   const game = req.body?.game;
   if (!isCasualArcadeGameId(game)) {
@@ -237,6 +267,7 @@ router.post("/scores", requireAuth(), async (req: Request, res: Response) => {
       });
     }
 
+    leaderboardCache.clear();
     return res.status(201).json({
       duplicate: false,
       entry: inserted.rows[0],
@@ -271,20 +302,30 @@ router.get("/leaderboard", async (req: Request, res: Response) => {
         ? "AND s.created_at >= NOW() - INTERVAL '30 days'"
         : "";
 
+  const cacheKey = `${game}:${period}:${limit}`;
+  const cached = leaderboardCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < LEADERBOARD_CACHE_TTL_MS) {
+    return res.json(cached.body);
+  }
+
   try {
     await ensureArcadeScoresSchema(pool);
     const result = await pool.query(
-      `SELECT DISTINCT ON (s.user_id)
-         s.user_id,
-         COALESCE(NULLIF(u.display_name, ''), NULLIF(u.username, ''), 'Joueur #' || s.user_id) AS display_name,
-         s.score,
-         s.level,
-         s.created_at
-       FROM arcade_scores s
-       LEFT JOIN users u ON u.id = s.user_id
-       WHERE s.game = $1 ${periodClause}
-       ORDER BY s.user_id, s.score DESC, s.created_at ASC`,
-      [game],
+      `SELECT best.user_id,
+         COALESCE(NULLIF(u.display_name, ''), NULLIF(u.username, ''), 'Joueur #' || best.user_id) AS display_name,
+         best.score,
+         best.level,
+         best.created_at
+       FROM (
+         SELECT DISTINCT ON (s.user_id) s.user_id, s.score, s.level, s.created_at
+         FROM arcade_scores s
+         WHERE s.game = $1 ${periodClause}
+         ORDER BY s.user_id, s.score DESC, s.created_at ASC
+       ) best
+       LEFT JOIN users u ON u.id = best.user_id
+       ORDER BY best.score DESC, best.created_at ASC
+       LIMIT $2`,
+      [game, limit],
     );
 
     const sorted = [...result.rows]
@@ -303,7 +344,9 @@ router.get("/leaderboard", async (req: Request, res: Response) => {
         createdAt: row.created_at,
       }));
 
-    return res.json({ game, period, entries: sorted });
+    const body = { game, period, entries: sorted };
+    leaderboardCache.set(cacheKey, { at: Date.now(), body });
+    return res.json(body);
   } catch (error) {
     console.error("[ArcadeScores] GET /leaderboard failed:", error);
     return res.status(500).json({ error: "Impossible de charger le classement" });
@@ -481,6 +524,7 @@ router.delete(
       if (deleted.rows.length === 0) {
         return res.status(404).json({ error: "Score introuvable" });
       }
+      leaderboardCache.clear();
       return res.json({ success: true, deletedId: scoreId });
     } catch (error) {
       console.error("[ArcadeAdmin] DELETE /admin/scores/:id failed:", error);
@@ -505,6 +549,7 @@ router.delete(
         "DELETE FROM arcade_scores WHERE game = $1",
         [game],
       );
+      leaderboardCache.clear();
       return res.json({
         success: true,
         game,
