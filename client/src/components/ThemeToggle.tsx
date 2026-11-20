@@ -1,7 +1,13 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-export default function ThemeToggle({ className = "" }: { className?: string }) {
+export default function ThemeToggle({
+  className = "",
+  iconClassName = "h-4 w-4",
+}: {
+  className?: string;
+  iconClassName?: string;
+}) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const label = isDark ? "Switch to light theme" : "Switch to dark theme";
@@ -16,9 +22,9 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
       className={`inline-flex items-center justify-center rounded-full p-1.5 transition-colors hover:text-amber-200 ${className}`}
     >
       {isDark ? (
-        <Sun className="h-4 w-4" aria-hidden="true" />
+        <Sun className={iconClassName} aria-hidden="true" />
       ) : (
-        <Moon className="h-4 w-4" aria-hidden="true" />
+        <Moon className={iconClassName} aria-hidden="true" />
       )}
     </button>
   );
