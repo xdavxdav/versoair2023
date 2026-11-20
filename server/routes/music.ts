@@ -554,6 +554,7 @@ router.post(
         bpm,
         musicalKey,
         mood,
+        importTrackId,
       } = req.body;
 
       // Resolve artistId: use provided value, or auto-resolve from authenticated user
@@ -698,6 +699,34 @@ router.post(
           details: persistErr.message,
         });
       }
+
+      // Optional: attach an awaiting-audio staged import draft owned by this artist
+      const parsedImportId = Number(importTrackId);
+      if (Number.isInteger(parsedImportId) && parsedImportId > 0 && req.user?.userId) {
+        try {
+          const attached = await pool.query(
+            `UPDATE profile_import_tracks
+             SET status = 'attached',
+                 attached_track_id = $1,
+                 updated_at = NOW()
+             WHERE id = $2
+               AND artist_user_id = $3
+               AND status = 'awaiting_audio'
+             RETURNING artwork_url`,
+            [result.rows[0].id, parsedImportId, parseInt(req.user.userId)],
+          );
+          const importedArtwork = attached.rows[0]?.artwork_url;
+          if (importedArtwork && !coverImgFile) {
+            await pool.query(
+              `UPDATE music_tracks SET cover_art = COALESCE(cover_art, $1) WHERE id = $2`,
+              [importedArtwork, result.rows[0].id],
+            );
+          }
+        } catch (attachErr: any) {
+          console.warn(`⚠️ [MUSIC] Import draft attach skipped: ${attachErr.message}`);
+        }
+      }
+
       res.status(201).json({
         success: true,
         message: "Track uploaded and submitted for review",

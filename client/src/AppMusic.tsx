@@ -39,6 +39,10 @@ const TicketWorkspace = lazy(() => import("@/pages/tickets"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
+const ProfileRequestPage = lazy(() => import("@/pages/profile-request"));
+const ProfileRequestsAdmin = lazy(
+  () => import("@/pages/admin/profile-requests"),
+);
 const Profile = lazy(() => import("@/pages/profile"));
 const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
 const AuthRecoveryPage = lazy(() => import("@/pages/auth-recovery"));
@@ -104,6 +108,10 @@ function Router() {
       <Route path="/signin">{() => <Redirect to="/auth/signin" />}</Route>
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>
       <Route path="/apply" component={ApplyPage} />
+      <Route path="/apply/profile" component={ProfileRequestPage} />
+      <Route path="/admin/profile-requests">
+        {() => <ProtectedRoute component={ProfileRequestsAdmin} ownerOnly />}
+      </Route>
       <Route path="/geo-admin">
         <Suspense fallback={<PageLoader />}>
           <GeoAdminPage />

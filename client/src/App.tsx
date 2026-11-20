@@ -170,6 +170,7 @@ const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
 const BusinessRequestPage = lazy(() => import("@/pages/business-request"));
+const ProfileRequestPage = lazy(() => import("@/pages/profile-request"));
 
 // ─────────────────────────────────────────────────────
 // 🌍 Geo Admin Portal (lazy-loaded)
@@ -200,6 +201,9 @@ const StreamRoyaleReview = lazy(() => import("@/pages/streamroyale-review"));
 const PurgatoireAdmin = lazy(() => import("@/pages/admin/purgatoire"));
 const ArtistContractsAdmin = lazy(
   () => import("@/pages/admin/artist-contracts"),
+);
+const ProfileRequestsAdmin = lazy(
+  () => import("@/pages/admin/profile-requests"),
 );
 const InventoryDashboard = lazy(() => import("@/pages/inventory-dashboard"));
 
@@ -703,6 +707,7 @@ function Router() {
           🎯 UNIFIED APPLY PAGE — Portal selection & registration
           ═══════════════════════════════════════════════ */}
       <Route path="/apply" component={ApplyPage} />
+      <Route path="/apply/profile" component={ProfileRequestPage} />
       <Route path="/apply/business">
         {() => <ProtectedRoute component={BusinessRequestPage} />}
       </Route>
@@ -781,6 +786,9 @@ function Router() {
         {() => (
           <ProtectedRoute component={ArtistContractsAdmin} ownerOnly />
         )}
+      </Route>
+      <Route path="/admin/profile-requests">
+        {() => <ProtectedRoute component={ProfileRequestsAdmin} ownerOnly />}
       </Route>
       {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
       <Route path="/sys/0x7f3a9c">

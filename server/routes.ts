@@ -44,6 +44,7 @@ import revenuePulseRouter from "./routes/revenue-pulse";
 import walletRouter from "./routes/wallet";
 import gamesRouter from "./routes/games";
 import arcadeScoresRouter from "./routes/arcade-scores";
+import profileRequestsRouter from "./routes/profile-requests";
 import paypalRouter from "./routes/paypal";
 import listenerRouter from "./routes/listener";
 import beatmakerRouter from "./routes/beatmaker";
@@ -313,6 +314,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/wallet", walletRouter); // Credits wallet (balance, deposit, game rewards)
   app.use("/api/games", gamesRouter); // PvP skill games (trivia, prediction, card battle)
   app.use("/api/arcade", arcadeScoresRouter); // Casual arcade scores (no money/credits)
+  app.use("/api/profile-requests", profileRequestsRouter); // Drop-a-link artist account requests + import staging
   app.use("/api/paypal", paypalRouter); // PayPal checkout (create order, capture, config)
   app.use("/api/listener", listenerRouter); // Listener Portal — stats, bonuses, XP tracking
   app.use("/api/beatmaker", beatmakerRouter); // Beatmaker Studio — production requests & briefs
