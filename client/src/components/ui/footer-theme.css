@@ -1,73 +1,87 @@
 /*
- * Themed footer. footer.tsx sets data-footer-tone and the accent variables
- * from lib/footer-theme.ts on every page; browsers without color-mix keep the
- * cream/amber footer from its Tailwind classes.
- * Surface and line values mirror the playful tokens in
- * sector-directory/sector-directory.css.
+ * Page-themed footer. footer.tsx sets data-footer-themed="true" and the
+ * --ft-accent / --ft-accent-dark variables on pages whose theme color differs
+ * from the default warm cream/amber house palette; warm cream/amber pages omit
+ * data-footer-themed and keep their Tailwind house classes.
  *
- * The block is all-or-nothing: without color-mix support the default footer
- * is kept rather than a half-themed one.
+ * Surface, border, ink, glow and ring colors derive directly from the page's
+ * accent via color-mix() in both light and dark modes so every sector/page hue
+ * (blue, cyan, emerald, violet, copper, gold, red, pink, etc.) gets a matching
+ * tinted footer while maintaining >= 4.5:1 text contrast.
  */
 @supports (color: color-mix(in srgb, red 50%, white)) {
-  .site-footer[data-footer-tone="playful"] {
-    --ft-surface: #ffe8f4;
-    --ft-line: #f0c3df;
+  .site-footer[data-footer-themed="true"] {
+    --ft-surface: color-mix(in srgb, var(--ft-accent) 11%, #ffffff);
+    --ft-line: color-mix(in srgb, var(--ft-accent) 24%, #ffffff);
     --ft-accent-fg: var(--ft-accent);
-    --ft-ink: color-mix(in srgb, var(--ft-accent) 68%, #000);
-    --ft-glow-a: color-mix(in srgb, var(--ft-accent) 30%, transparent);
-    --ft-glow-b: color-mix(in srgb, var(--ft-accent) 22%, transparent);
-    --ft-ring-line: color-mix(in srgb, var(--ft-accent) 24%, transparent);
+    --ft-ink: color-mix(in srgb, var(--ft-accent) 68%, #000000);
+    --ft-glow-a: color-mix(in srgb, var(--ft-accent) 28%, transparent);
+    --ft-glow-b: color-mix(in srgb, var(--ft-accent) 20%, transparent);
+    --ft-ring-line: color-mix(in srgb, var(--ft-accent) 22%, transparent);
 
     background-color: var(--ft-surface);
     border-top-color: var(--ft-line);
   }
 
-  .dark .site-footer[data-footer-tone="playful"] {
-    --ft-surface: #231629;
-    --ft-line: #43284f;
+  .site-footer[data-footer-tone="playful"] {
+    --ft-surface: #ffe8f4;
+    --ft-line: #f0c3df;
+    --ft-glow-a: color-mix(in srgb, var(--ft-accent) 30%, transparent);
+    --ft-glow-b: color-mix(in srgb, var(--ft-accent) 22%, transparent);
+    --ft-ring-line: color-mix(in srgb, var(--ft-accent) 24%, transparent);
+  }
+
+  .dark .site-footer[data-footer-themed="true"] {
+    --ft-surface: color-mix(in srgb, var(--ft-accent-dark) 13%, #0e1017);
+    --ft-line: color-mix(in srgb, var(--ft-accent-dark) 26%, #0e1017);
     --ft-accent-fg: var(--ft-accent-dark);
-    --ft-ink: color-mix(in srgb, var(--ft-accent-dark) 62%, #fff);
+    --ft-ink: color-mix(in srgb, var(--ft-accent-dark) 62%, #ffffff);
     --ft-glow-a: color-mix(in srgb, var(--ft-accent-dark) 22%, transparent);
     --ft-glow-b: color-mix(in srgb, var(--ft-accent-dark) 16%, transparent);
     --ft-ring-line: color-mix(in srgb, var(--ft-accent-dark) 22%, transparent);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-glow {
+  .dark .site-footer[data-footer-tone="playful"] {
+    --ft-surface: #231629;
+    --ft-line: #43284f;
+  }
+
+  .site-footer[data-footer-themed="true"] .ft-glow {
     background-image:
       radial-gradient(ellipse at 15% 0%, var(--ft-glow-a), transparent 48%),
       radial-gradient(ellipse at 88% 100%, var(--ft-glow-b), transparent 40%);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-ring {
+  .site-footer[data-footer-themed="true"] .ft-ring {
     border-color: var(--ft-ring-line);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-eyebrow {
+  .site-footer[data-footer-themed="true"] .ft-eyebrow {
     color: var(--ft-ink);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-arrow {
+  .site-footer[data-footer-themed="true"] .ft-arrow {
     color: var(--ft-accent-fg);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-divider {
+  .site-footer[data-footer-themed="true"] .ft-divider {
     border-color: var(--ft-line);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-link:hover {
+  .site-footer[data-footer-themed="true"] .ft-link:hover {
     color: var(--ft-ink);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-cta {
+  .site-footer[data-footer-themed="true"] .ft-cta {
     border-color: color-mix(in srgb, var(--ft-ink) 55%, transparent);
     color: var(--ft-ink);
   }
 
-  .site-footer[data-footer-tone="playful"] .ft-cta:hover {
+  .site-footer[data-footer-themed="true"] .ft-cta:hover {
     background-color: color-mix(in srgb, var(--ft-accent-fg) 12%, transparent);
   }
 
-  .site-footer[data-footer-tone="playful"] a:focus-visible {
+  .site-footer[data-footer-themed="true"] a:focus-visible {
     --tw-ring-color: var(--ft-accent-fg);
   }
 }
