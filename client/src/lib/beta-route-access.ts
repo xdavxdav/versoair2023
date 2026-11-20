@@ -12,6 +12,7 @@ const BETA_ROUTE_PREFIXES = [
   "/music",
   "/stream",
   "/sessions",
+  "/my-live-sessions",
   "/track/",
   "/artist-catalogue/",
   "/library",

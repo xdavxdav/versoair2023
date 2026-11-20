@@ -51,6 +51,7 @@ const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
 const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
 const SessionsPage = lazy(() => import("@/pages/sessions"));
 const SessionDetailPage = lazy(() => import("@/pages/session-detail"));
+const MyLiveSessionsPage = lazy(() => import("@/pages/my-live-sessions"));
 const LibraryPage = lazy(() => import("@/pages/library"));
 const AnalyticsStreamingPage = lazy(
   () => import("@/pages/analytics-streaming"),
@@ -138,6 +139,9 @@ function Router() {
       <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
       <Route path="/sessions/:id" component={SessionDetailPage} />
       <Route path="/sessions" component={SessionsPage} />
+      <Route path="/my-live-sessions">
+        {() => <ProtectedRoute component={MyLiveSessionsPage} />}
+      </Route>
       <Route path="/library">
         {() => <ProtectedRoute component={LibraryPage} />}
       </Route>

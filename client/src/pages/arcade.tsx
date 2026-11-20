@@ -48,6 +48,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import { TmuHubNav } from "@/components/music/TmuHubNav";
+import { TmuShell } from "@/components/music/TmuShell";
 import QuickSignIn from "@/components/QuickSignIn";
 import {
   fadeInUp,
@@ -618,10 +620,12 @@ export default function ArcadePage() {
   // ── Loading state while portal/music access resolves ──
   if (portalLoading || musicLoading) {
     return (
-      <div className="min-h-screen bg-[#06020f] flex flex-col items-center justify-center p-4 gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
-        <p className="text-gray-500 text-sm">Loading arcade...</p>
-      </div>
+      <TmuShell chrome="music">
+        <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
+          <p className="text-slate-400 text-sm">Loading arcade...</p>
+        </div>
+      </TmuShell>
     );
   }
 
@@ -629,134 +633,100 @@ export default function ArcadePage() {
   // Auth checks happen when user tries to PLAY
 
   return (
-    <div className="min-h-screen bg-[#06020f] text-white">
+    <TmuShell chrome="music">
       {/* ── Hero Header ── */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-fuchsia-900/20 to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4 pt-8 pb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/stream?from=arcade")}
-              className={
-                fromPage === "stream"
-                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
-                  : "text-gray-400 hover:text-white"
-              }
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" /> Stream
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/artist-portal?from=arcade")}
-              className={
-                fromPage === "artist-portal"
-                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
-                  : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-              }
-            >
-              Portail Artiste
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/arena?from=arcade")}
-              className={
-                fromPage === "arena"
-                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
-                  : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-              }
-            >
-              Arena
-            </Button>
-          </div>
+        <div className="relative max-w-7xl mx-auto px-4 pt-5 pb-6">
+          <TmuHubNav currentSurface="arcade" className="mb-5" />
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3">
-                <Gamepad2 className="w-8 h-8 text-purple-400" />
-                Arcade
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight flex items-center gap-3">
+                <Gamepad2 className="w-8 h-8 text-fuchsia-400 shrink-0" />
+                <span className="tmu-hero-title">Arcade</span>
               </h1>
-              <p className="text-gray-400 mt-1">
-                Duels musicaux PvP • Misez vos crédits • Grimpez le classement
+              <p className="text-slate-300 text-sm sm:text-base mt-1">
+                Duels musicaux PvP • Jeux classiques gratuits • Grimpez le classement
               </p>
-              {isAuthenticated && isArtist && (
-                <Badge className="mt-2 bg-amber-600/20 text-amber-300 border-amber-500/30 text-xs">
-                  <Star className="w-3 h-3 mr-1" />
-                  Inclus dans votre abonnement {artistTier}
-                </Badge>
-              )}
-              {isAuthenticated && !isArtist && canPlay && (
-                <Badge className="mt-2 bg-purple-600/20 text-purple-300 border-purple-500/30 text-xs">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Accès{" "}
-                  {streamerTier.charAt(0).toUpperCase() + streamerTier.slice(1)}
-                </Badge>
-              )}
-              {!canPlay && (
-                <Badge className="mt-2 bg-gray-600/20 text-gray-400 border-gray-500/30 text-xs">
-                  <Gamepad2 className="w-3 h-3 mr-1" />
-                  Connectez-vous pour jouer
-                </Badge>
-              )}
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                {isAuthenticated && isArtist && (
+                  <Badge className="bg-amber-500/15 text-amber-200 border-amber-400/35 text-xs">
+                    <Star className="w-3 h-3 mr-1" />
+                    Inclus dans votre abonnement {artistTier}
+                  </Badge>
+                )}
+                {isAuthenticated && !isArtist && canPlay && (
+                  <Badge className="bg-purple-500/20 text-purple-200 border-purple-400/35 text-xs">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Accès{" "}
+                    {streamerTier.charAt(0).toUpperCase() + streamerTier.slice(1)}
+                  </Badge>
+                )}
+                {!isAuthenticated && (
+                  <Badge className="bg-[#180d34]/80 text-slate-200 border-purple-500/25 text-xs">
+                    <Gamepad2 className="w-3 h-3 mr-1 text-purple-300" />
+                    Connectez-vous pour miser
+                  </Badge>
+                )}
+              </div>
             </div>
 
-            {/* Wallet stats strip - always visible */}
-            <div className="flex items-center gap-4 bg-slate-900/50 border border-purple-500/30 rounded-xl px-5 py-3">
-              <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  PAY
-                </p>
-                <p className="text-xl font-bold text-amber-400">
-                  {isAuthenticated ? balance.toLocaleString() : "—"}
-                </p>
+            {/* Wallet stats strip - responsive so it never overflows 375px */}
+            <div className="tmu-glass-elevated w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 rounded-2xl p-3.5 sm:px-5 sm:py-3">
+              <div className="grid grid-cols-3 divide-x divide-purple-500/25 text-center sm:flex sm:items-center sm:gap-4 sm:divide-x-0 tabular-nums">
+                <div className="px-2 sm:px-0">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider">
+                    PAY
+                  </p>
+                  <p className="text-lg sm:text-xl font-bold text-amber-300">
+                    {isAuthenticated ? balance.toLocaleString() : "—"}
+                  </p>
+                </div>
+                <Separator
+                  orientation="vertical"
+                  className="hidden sm:block h-8 bg-purple-500/30"
+                />
+                <div className="px-2 sm:px-0">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider">
+                    STAKE
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold text-rose-300">
+                    {isAuthenticated ? frozenBalance.toLocaleString() : "—"}
+                  </p>
+                </div>
+                <Separator
+                  orientation="vertical"
+                  className="hidden sm:block h-8 bg-purple-500/30"
+                />
+                <div className="px-2 sm:px-0">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider">
+                    WIN%
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold text-emerald-300">
+                    {isAuthenticated ? `${winRate}%` : "—"}
+                  </p>
+                </div>
               </div>
               <Separator
                 orientation="vertical"
-                className="h-8 bg-purple-500/30"
-              />
-              <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  STAKE
-                </p>
-                <p className="text-lg font-semibold text-red-400">
-                  {isAuthenticated ? frozenBalance.toLocaleString() : "—"}
-                </p>
-              </div>
-              <Separator
-                orientation="vertical"
-                className="h-8 bg-purple-500/30"
-              />
-              <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  WIN%
-                </p>
-                <p className="text-lg font-semibold text-green-400">
-                  {isAuthenticated ? `${winRate}%` : "—"}
-                </p>
-              </div>
-              <Separator
-                orientation="vertical"
-                className="h-8 bg-purple-500/30"
+                className="hidden sm:block h-8 bg-purple-500/30"
               />
               {isAuthenticated ? (
                 <Button
                   size="sm"
                   disabled
-                  className="bg-gray-700 text-gray-300"
+                  className="w-full sm:w-auto bg-[#180d34] border border-purple-500/25 text-slate-300 text-xs"
                 >
-                  <CircleDollarSign className="w-4 h-4 mr-1" />
-                  Dépôts désactivés en bêta
+                  <CircleDollarSign className="w-4 h-4 mr-1.5 shrink-0" />
+                  <span className="truncate">Dépôts désactivés en bêta</span>
                 </Button>
               ) : (
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+                  className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white"
                   onClick={() => setShowQuickSignIn(true)}
                 >
-                  <Music className="w-4 h-4 mr-1" />
+                  <Music className="w-4 h-4 mr-1.5 shrink-0" />
                   Se connecter
                 </Button>
               )}
@@ -1012,8 +982,8 @@ export default function ArcadePage() {
                                       className={`text-xs mt-0.5 line-clamp-2 ${
                                         selectedGame === game.id &&
                                         game.available
-                                          ? "text-white/80"
-                                          : "text-gray-500"
+                                          ? "text-white/85"
+                                          : "text-slate-300"
                                       }`}
                                     >
                                       {game.description}
@@ -1021,22 +991,22 @@ export default function ArcadePage() {
                                   </div>
                                 </div>
                                 <div
-                                  className={`flex items-center gap-2 mt-3 text-[10px] ${
+                                  className={`flex flex-wrap items-center gap-1.5 mt-3 text-[11px] tabular-nums ${
                                     selectedGame === game.id && game.available
-                                      ? "text-white/70"
-                                      : "text-gray-600"
+                                      ? "text-white/90"
+                                      : "text-slate-300"
                                   }`}
                                 >
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     {game.format}
                                   </span>
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     {game.rounds} rounds
                                   </span>
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     {game.timePerRound}s
                                   </span>
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     Min {game.minWager} cr
                                   </span>
                                 </div>
@@ -1624,6 +1594,6 @@ export default function ArcadePage() {
         onClose={() => setShowQuickSignIn(false)}
         onSuccess={() => window.location.reload()}
       />
-    </div>
+    </TmuShell>
   );
 }
