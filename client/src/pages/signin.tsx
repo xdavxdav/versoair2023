@@ -2087,7 +2087,7 @@ export default function SignIn() {
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
                     <input
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
@@ -2100,7 +2100,9 @@ export default function SignIn() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                      className="mobile-compact-btn absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -2641,7 +2643,7 @@ export default function SignIn() {
                       Password
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
                       <input
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
@@ -2654,7 +2656,9 @@ export default function SignIn() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-pressed={showPassword}
+                        className="mobile-compact-btn absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-400 hover:text-gray-600"
                       >
                         {showPassword ? (
                           <EyeOff className="h-5 w-5" />
