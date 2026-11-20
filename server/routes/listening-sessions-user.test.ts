@@ -70,7 +70,10 @@ async function post(origin: string, path: string, body: unknown, user = "5") {
 }
 
 const isEligibility = (call: Call) => call.text.includes("AS registered");
-const isOwnTracks = (call: Call) => call.text.includes("JOIN artists art ON art.id = mt.artist_id");
+const isPublishedTrackSearch = (call: Call) =>
+  call.text.includes("FROM music_tracks mt") && call.text.includes("LEFT JOIN music_artists ma");
+const isPublishedTrackResolve = (call: Call) =>
+  call.text.includes("SELECT mt.id, mt.duration") && call.text.includes("mt.status = 'published'");
 const isQuota = (call: Call) => call.text.includes("SELECT created_at FROM listening_sessions");
 
 test("a signed-out caller is refused on every route", async () => {
@@ -91,50 +94,58 @@ test("a signed-out caller is refused on every route", async () => {
   }
 });
 
-test("a registered but unverified artist cannot create a session", async () => {
-  const app = await start((call) => (isEligibility(call) ? eligible(false, true) : undefined));
-  try {
-    const res = await post(app.origin, "/create", goodBody());
-    assert.equal(res.status, 403);
-    assert.equal((await res.json()).error.code, "verified_artist_required");
-    assert.equal(app.calls.some((c) => c.text.includes("INSERT INTO listening_sessions")), false);
-  } finally {
-    await app.close();
-  }
-});
-
-test("a plain user, whose email is verified, cannot create a session either", async () => {
+test("any signed-in user is eligible to host a listening session", async () => {
   const app = await start((call) => (isEligibility(call) ? eligible(false, false) : undefined));
   try {
-    const res = await post(app.origin, "/create", goodBody());
-    assert.equal(res.status, 403);
-    assert.equal((await res.json()).error.code, "verified_artist_required");
+    const res = await fetch(`${app.origin}/eligibility`, { headers: { "x-test-user": "5" } });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.canHost, true);
+    assert.equal(body.registeredArtist, false);
+    assert.equal(body.verifiedArtist, false);
   } finally {
     await app.close();
   }
 });
 
-test("the track picker is closed to anyone who is not a verified artist", async () => {
-  const app = await start((call) => (isEligibility(call) ? eligible(false, true) : undefined));
-  try {
-    const res = await fetch(`${app.origin}/tracks?q=a`, { headers: { "x-test-user": "5" } });
-    assert.equal(res.status, 403);
-  } finally {
-    await app.close();
-  }
-});
-
-test("tracks that are not the caller's own are refused", async () => {
+test("any signed-in user can search published tracks across artists", async () => {
   const app = await start((call) => {
-    if (isEligibility(call)) return eligible(true);
-    if (isOwnTracks(call)) return { rows: [{ id: 1, duration: 200 }] };
+    if (isPublishedTrackSearch(call)) {
+      return {
+        rows: [
+          { id: 10, title: "Midnight Pulse", artist_name: "Artist A", duration: 215 },
+          { id: 11, title: "Midnight Drive", artist_name: "Artist B", duration: 190 },
+        ],
+      };
+    }
+    return undefined;
+  });
+  try {
+    const res = await fetch(`${app.origin}/tracks?q=midnight`, { headers: { "x-test-user": "5" } });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.tracks.length, 2);
+    assert.deepEqual(body.tracks[0], {
+      id: 10,
+      title: "Midnight Pulse",
+      artistName: "Artist A",
+      durationSec: 215,
+    });
+  } finally {
+    await app.close();
+  }
+});
+
+test("missing or unpublished tracks are refused", async () => {
+  const app = await start((call) => {
+    if (isPublishedTrackResolve(call)) return { rows: [{ id: 1, duration: 200 }] };
     return undefined;
   });
   try {
     const res = await post(app.origin, "/create", goodBody());
-    assert.equal(res.status, 403);
+    assert.equal(res.status, 400);
     const body = await res.json();
-    assert.equal(body.error.code, "track_not_owned");
+    assert.equal(body.error.code, "track_unavailable");
     assert.deepEqual(body.error.details.trackIds, [2]);
     assert.equal(app.calls.some((c) => c.text.includes("INSERT INTO listening_sessions")), false);
   } finally {
@@ -143,7 +154,7 @@ test("tracks that are not the caller's own are refused", async () => {
 });
 
 test("a client cannot choose track lengths: only trackIds are accepted", async () => {
-  const app = await start((call) => (isEligibility(call) ? eligible(true) : undefined));
+  const app = await start(() => undefined);
   try {
     const res = await post(
       app.origin,
@@ -158,8 +169,7 @@ test("a client cannot choose track lengths: only trackIds are accepted", async (
 
 test("the stored quota blocks a host who is in cooldown", async () => {
   const app = await start((call) => {
-    if (isEligibility(call)) return eligible(true);
-    if (isOwnTracks(call)) {
+    if (isPublishedTrackResolve(call)) {
       return { rows: [{ id: 1, duration: 200 }, { id: 2, duration: 180 }] };
     }
     if (isQuota(call)) return { rows: [{ created_at: new Date(NOW.getTime() - 5 * 60_000) }] };
@@ -194,8 +204,10 @@ function createdRow() {
 }
 
 function happyPath(call: Call) {
-  if (isEligibility(call)) return eligible(true);
-  if (isOwnTracks(call)) return { rows: [{ id: 1, duration: 200 }, { id: 2, duration: 180 }] };
+  if (isEligibility(call)) return eligible(false, false);
+  if (isPublishedTrackResolve(call)) {
+    return { rows: [{ id: 1, duration: 200 }, { id: 2, duration: 180 }] };
+  }
   if (call.text.includes("SELECT id FROM music_tracks")) return { rows: [{ id: 1 }, { id: 2 }] };
   if (call.text.includes("SELECT 1 FROM users")) return { rows: [{ "?column?": 1 }] };
   if (call.text.includes("INSERT INTO playlists")) return { rows: [{ id: 9 }] };
@@ -204,7 +216,7 @@ function happyPath(call: Call) {
   return undefined;
 }
 
-test("a verified artist creates a session from their own tracks, with stored lengths", async () => {
+test("any signed-in user can create a listening session from any published tracks, with stored lengths", async () => {
   resetRateLimitsForTests();
   const app = await start(happyPath);
   try {

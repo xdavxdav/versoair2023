@@ -1,6 +1,5 @@
 /**
- * Track Selector — pick tracks for a live session from the host's own published tracks.
- * Only tracks the host owns can be hosted, so there is no cross-catalogue search.
+ * Track Selector — pick tracks for a live listening session from any published TMU tracks.
  */
 
 import { useState } from "react";
@@ -39,9 +38,9 @@ export function TrackSelector({ selectedTracks, onTracksChange, maxTracks = 50 }
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-3 top-3 w-4 h-4 text-white/40" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
         <Input
-          placeholder="Filter your tracks by title..."
+          placeholder="Search published tracks by title or artist..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-10 bg-verso-navy/50 border-verso-navy text-white placeholder:text-white/40"
@@ -56,15 +55,15 @@ export function TrackSelector({ selectedTracks, onTracksChange, maxTracks = 50 }
 
       {error && (
         <div className="text-center py-6 text-red-300 text-sm">
-          {error instanceof Error ? error.message : "Could not load your tracks."}
+          {error instanceof Error ? error.message : "Could not load published tracks."}
         </div>
       )}
 
       {!isLoading && !error && tracks.length === 0 && (
         <div className="text-center py-8 text-white/70 text-sm">
           {query.trim()
-            ? "None of your published tracks match."
-            : "You have no published tracks yet. Upload a track first, then you can put it in a live session."}
+            ? "No published tracks match your search."
+            : "No published tracks are available in the catalogue yet."}
         </div>
       )}
 

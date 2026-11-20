@@ -1,11 +1,11 @@
 /**
  * User-facing listening session endpoints (TMU)
- * Verified artists create and manage their own live sessions.
+ * Any signed-in user can create and manage listening parties using any published TMU tracks.
  *
  * Routes (all require a signed-in user):
  *   GET  /eligibility         Whether the caller may host, and the quota status
- *   GET  /tracks              The caller's own published tracks (for the set picker)
- *   POST /create              Create a session (verified artists only, own tracks only)
+ *   GET  /tracks              Published TMU tracks (for the listening-party set picker)
+ *   POST /create              Create a listening session (any signed-in user, any published tracks)
  *   GET  /my-sessions         The caller's sessions
  *   POST /:id/cancel          Cancel one of the caller's sessions before it ends
  */
@@ -80,11 +80,6 @@ function getCurrentUserId(req: Request): number | null {
 function getClientIp(req: Request): string {
   return req.ip || "unknown";
 }
-
-const NOT_VERIFIED_ARTIST = {
-  code: "verified_artist_required",
-  message: "Only verified artists can host a live session.",
-};
 
 // ─── Validation Schemas ──────────────────────────────────────────────
 
@@ -196,13 +191,13 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
         success: true,
         registeredArtist: eligibility.registered,
         verifiedArtist: eligibility.verified,
-        canHost: eligibility.verified,
+        canHost: eligibility.canHost,
         rateLimitStatus: quotaView(quota),
       });
     }),
   );
 
-  // GET /tracks - The caller's own published tracks
+  // GET /tracks - Any published TMU tracks
   router.get(
     "/tracks",
     asyncHandler(async (req, res) => {
@@ -211,17 +206,13 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
       const db = await withDb(res);
       if (!db) return;
 
-      const eligibility = await getHostEligibility(db, userId);
-      if (!eligibility.verified) {
-        return sendError(res, 403, NOT_VERIFIED_ARTIST.code, NOT_VERIFIED_ARTIST.message);
-      }
       const q = typeof req.query.q === "string" ? req.query.q.slice(0, 100) : "";
       const limit = Number.parseInt(String(req.query.limit ?? "20"), 10) || 20;
       res.json({ success: true, tracks: await searchHostTracks(db, userId, q, limit) });
     }),
   );
 
-  // POST /create - Create a new live session
+  // POST /create - Create a new live listening session
   router.post(
     "/create",
     asyncHandler(async (req, res) => {
@@ -233,11 +224,6 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
       const db = await withDb(res);
       if (!db) return;
 
-      const eligibility = await getHostEligibility(db, userId);
-      if (!eligibility.verified) {
-        return sendError(res, 403, NOT_VERIFIED_ARTIST.code, NOT_VERIFIED_ARTIST.message);
-      }
-
       const parsed = userCreateSessionSchema.safeParse(req.body ?? {});
       if (!parsed.success) return sendInvalid(res, parsed.error);
 
@@ -246,12 +232,12 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
         return sendError(res, 400, "starts_too_far", "The start time is more than a year away.");
       }
 
-      // Lengths come from the stored tracks, and each track must be the caller's own.
-      const owned = await resolveHostTracks(db, userId, parsed.data.trackIds);
-      if (!owned.ok) {
-        return sendError(res, 403, owned.code, owned.message, { trackIds: owned.trackIds });
+      // Lengths come from the stored tracks, and every track must be published.
+      const resolved = await resolveHostTracks(db, userId, parsed.data.trackIds);
+      if (!resolved.ok) {
+        return sendError(res, 400, resolved.code, resolved.message, { trackIds: resolved.trackIds });
       }
-      const set = validateSetTracks(owned.tracks);
+      const set = validateSetTracks(resolved.tracks);
       if (!set.ok) return sendError(res, 400, set.code, set.message);
 
       // One creation at a time per user, so two parallel requests cannot both pass the quota check.
