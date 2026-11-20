@@ -157,6 +157,9 @@ const PUBLIC_PATHS: string[] = [
   "/api/request/business",
   "/api/request/artist",
   "/api/request/job",
+  // Drop-a-link artist account request & public preview (pending only, staff-approved)
+  "/api/profile-requests/preview",
+  "/api/profile-requests",
   // Public beta contact & newsletter endpoints
   "/api/contact",
   "/api/marketing/newsletters/subscribe",
@@ -240,6 +243,7 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/arena/summary",
       "/api/revenue-pulse/pool",
       "/api/revenue-pulse/leaderboard",
+      "/api/arcade/leaderboard",
       "/api/page-readiness",
       "/api/notifications",
       "/api/notifications/unread-count",

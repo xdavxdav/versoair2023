@@ -99,8 +99,8 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
 
   if (eligibilityLoading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+        <Loader2 className="w-8 h-8 text-fuchsia-400 animate-spin" />
       </div>
     );
   }
@@ -112,7 +112,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
           onClick={handleClose}
         >
           <motion.div
@@ -120,22 +120,22 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
             animate={{ scale: 1 }}
             exit={{ scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-verso-navy rounded-lg shadow-xl max-w-md w-full overflow-hidden"
+            className="bg-[#180d34]/95 border border-purple-500/30 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden backdrop-blur-xl"
           >
             <div className="p-6 flex flex-col items-center text-center">
-              <div className="mb-4 p-3 bg-amber-500/20 rounded-full">
-                <AlertCircle className="w-6 h-6 text-amber-500" />
+              <div className="mb-4 p-3 bg-purple-500/20 border border-purple-400/30 rounded-full">
+                <AlertCircle className="w-6 h-6 text-fuchsia-300" />
               </div>
               <h2 className="text-xl font-bold text-white mb-2">
                 Account Verification Required
               </h2>
-              <p className="text-white/60 mb-6">
+              <p className="text-slate-300 text-sm mb-6">
                 Your account must be verified before you can create live sessions. 
                 Check your email for verification instructions.
               </p>
               <Button
                 onClick={handleClose}
-                className="bg-amber-500/20 border border-amber-500/30 text-amber-500 hover:bg-amber-500/30"
+                className="bg-purple-500/20 border border-purple-400/35 text-purple-100 hover:bg-purple-500/30"
               >
                 Got it
               </Button>
@@ -152,7 +152,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
         onClick={handleClose}
       >
         <motion.div
@@ -160,17 +160,17 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
           animate={{ scale: 1 }}
           exit={{ scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-verso-navy rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          className="bg-[#130928]/95 border border-purple-500/30 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[88dvh] overflow-y-auto backdrop-blur-2xl"
         >
           {/* Header */}
-          <div className="sticky top-0 bg-verso-navy/95 backdrop-blur border-b border-amber-500/20 px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 bg-[#130928]/95 backdrop-blur border-b border-purple-500/25 px-6 py-4 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
-              <Mic2 className="w-5 h-5 text-amber-500" />
+              <Mic2 className="w-5 h-5 text-fuchsia-400" />
               <h2 className="text-xl font-bold text-white">Go Live on TMU</h2>
             </div>
             <button
               onClick={handleClose}
-              className="text-white/40 hover:text-white/80 transition-colors"
+              className="text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -187,7 +187,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
               >
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
                     Session Title
                   </label>
                   <input
@@ -195,17 +195,17 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Evening Jazz Session, Late Night Beats"
-                    className="w-full px-3 py-2 bg-verso-navy/40 border border-white/10 rounded-lg text-white placeholder-white/40 focus:border-amber-500/50 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2 bg-[#090418] border border-purple-500/25 rounded-xl text-white placeholder-slate-500 focus:border-fuchsia-400/60 focus:outline-none transition-colors"
                     maxLength={SESSION_LIMITS.titleMax}
                   />
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-slate-400 mt-1 tabular-nums">
                     {title.length}/{SESSION_LIMITS.titleMax}
                   </p>
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
                     Description (optional)
                   </label>
                   <textarea
@@ -213,24 +213,24 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tell your listeners what to expect..."
                     rows={3}
-                    className="w-full px-3 py-2 bg-verso-navy/40 border border-white/10 rounded-lg text-white placeholder-white/40 focus:border-amber-500/50 focus:outline-none transition-colors resize-none"
+                    className="w-full px-3 py-2 bg-[#090418] border border-purple-500/25 rounded-xl text-white placeholder-slate-500 focus:border-fuchsia-400/60 focus:outline-none transition-colors resize-none"
                     maxLength={SESSION_LIMITS.descriptionMax}
                   />
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-xs text-slate-400 mt-1 tabular-nums">
                     {description.length}/{SESSION_LIMITS.descriptionMax}
                   </p>
                 </div>
 
                 {/* Start Time */}
                 <div>
-                  <label className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" /> Start Time
+                  <label className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-purple-300" /> Start Time
                   </label>
                   <input
                     type="datetime-local"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-verso-navy/40 border border-white/10 rounded-lg text-white focus:border-amber-500/50 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2 bg-[#090418] border border-purple-500/25 rounded-xl text-white focus:border-fuchsia-400/60 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -238,7 +238,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 <Button
                   onClick={() => setStep("tracks")}
                   disabled={!title.trim()}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-verso-navy font-semibold py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue to Music
                 </Button>
@@ -254,7 +254,7 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
               >
                 <div>
                   <h3 className="text-white font-semibold mb-3">Select Tracks</h3>
-                  <p className="text-white/60 text-sm mb-4">
+                  <p className="text-slate-300 text-sm mb-4">
                     Choose from your own published tracks.
                   </p>
                   <TrackSelector
@@ -264,18 +264,18 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                   />
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t border-white/10">
+                <div className="flex gap-3 pt-4 border-t border-purple-500/20">
                   <Button
                     onClick={() => setStep("details")}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 border-purple-500/30 bg-transparent text-slate-200 hover:bg-purple-500/15"
                   >
                     Back
                   </Button>
                   <Button
                     onClick={() => setStep("confirm")}
                     disabled={selectedTracks.length === 0}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-white/20 disabled:text-white/40 text-verso-navy font-semibold"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 disabled:bg-white/20 disabled:text-white/40 text-white font-semibold"
                   >
                     Continue
                   </Button>
@@ -291,27 +291,27 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                 className="space-y-4"
               >
                 {/* Summary */}
-                <Card className="bg-verso-navy/40 border-white/10 p-4 space-y-3">
+                <Card className="bg-[#090418]/80 border-purple-500/25 p-4 space-y-3">
                   <div>
-                    <p className="text-xs text-white/40 uppercase tracking-wide">Title</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide">Title</p>
                     <p className="text-white font-semibold">{title}</p>
                   </div>
                   {description && (
                     <div>
-                      <p className="text-xs text-white/40 uppercase tracking-wide">Description</p>
-                      <p className="text-white/80 text-sm">{description}</p>
+                      <p className="text-xs text-slate-400 uppercase tracking-wide">Description</p>
+                      <p className="text-slate-200 text-sm">{description}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-white/40 uppercase tracking-wide">Starts</p>
-                    <p className="text-white">
+                    <p className="text-xs text-slate-400 uppercase tracking-wide">Starts</p>
+                    <p className="text-white tabular-nums">
                       {new Date(startTime).toLocaleString()}
                     </p>
                   </div>
                 </Card>
 
                 {/* Verification Badge */}
-                <div className="flex items-center gap-2 text-sm text-green-500 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3">
                   <CheckCircle className="w-4 h-4" />
                   Verified artist: ready to broadcast
                 </div>
@@ -322,14 +322,14 @@ export function GoLiveForm({ isOpen, onClose, onSuccess }: GoLiveFormProps) {
                     onClick={() => setStep("details")}
                     variant="outline"
                     disabled={createSession.isPending}
-                    className="flex-1"
+                    className="flex-1 border-purple-500/30 bg-transparent text-slate-200 hover:bg-purple-500/15"
                   >
                     Back
                   </Button>
                   <Button
                     onClick={submit}
                     disabled={createSession.isPending}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-verso-navy font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {createSession.isPending && (
                       <Loader2 className="w-4 h-4 animate-spin" />

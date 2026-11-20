@@ -28,7 +28,7 @@ export function MusicShell({
 
           {/* Purple accent - left */}
           <div
-            className="absolute -left-40 top-1/4 w-96 h-96 rounded-full bg-purple-600/10 blur-[120px]"
+            className="tmu-ambient-blob absolute -left-40 top-1/4 w-96 h-96 rounded-full bg-purple-600/10 blur-[120px]"
             style={{
               willChange: "transform, opacity",
               animation: "ambientFloat1 8s ease-in-out infinite",
@@ -37,7 +37,7 @@ export function MusicShell({
 
           {/* Magenta accent - right */}
           <div
-            className="absolute -right-40 top-2/3 w-80 h-80 rounded-full bg-fuchsia-600/10 blur-[100px]"
+            className="tmu-ambient-blob absolute -right-40 top-2/3 w-80 h-80 rounded-full bg-fuchsia-600/10 blur-[100px]"
             style={{
               willChange: "transform, opacity",
               animation: "ambientFloat2 10s ease-in-out 2s infinite",
@@ -46,7 +46,7 @@ export function MusicShell({
 
           {/* Pink accent - bottom */}
           <div
-            className="absolute left-1/3 -bottom-20 w-72 h-72 rounded-full bg-pink-600/[0.08] blur-[80px]"
+            className="tmu-ambient-blob absolute left-1/3 -bottom-20 w-72 h-72 rounded-full bg-pink-600/[0.08] blur-[80px]"
             style={{
               willChange: "transform, opacity",
               animation: "ambientFloat3 12s ease-in-out 4s infinite",
@@ -68,6 +68,9 @@ export function MusicShell({
         @keyframes ambientFloat3 {
           0%, 100% { transform: translateX(0); opacity: 0.15; }
           50% { transform: translateX(20px); opacity: 0.25; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tmu-ambient-blob { animation: none !important; }
         }
       `}</style>
 

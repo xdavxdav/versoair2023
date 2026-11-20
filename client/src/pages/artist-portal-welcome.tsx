@@ -3109,6 +3109,13 @@ export default function ArtistPortalWelcome() {
           </motion.div>
 
           {/* Tab Switcher */}
+          <div className="mb-4 flex justify-center">
+            <Link href="/apply/profile">
+              <span className="inline-flex items-center gap-2 rounded-full border border-purple-400/35 bg-purple-500/15 px-4 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-500/25 hover:text-white transition-colors cursor-pointer">
+                🔗 Déposer un lien SoundCloud / Spotify et demander un compte
+              </span>
+            </Link>
+          </div>
           <motion.div
             className="flex rounded-xl bg-white/[0.04] border border-white/[0.06] p-1 mb-8"
             variants={{

@@ -39,6 +39,10 @@ const TicketWorkspace = lazy(() => import("@/pages/tickets"));
 const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
+const ProfileRequestPage = lazy(() => import("@/pages/profile-request"));
+const ProfileRequestsAdmin = lazy(
+  () => import("@/pages/admin/profile-requests"),
+);
 const Profile = lazy(() => import("@/pages/profile"));
 const GeoAdminPage = lazy(() => import("@/pages/geo-admin"));
 const AuthRecoveryPage = lazy(() => import("@/pages/auth-recovery"));
@@ -51,6 +55,7 @@ const TrackDetailPage = lazy(() => import("@/pages/track-detail"));
 const ArtistCataloguePage = lazy(() => import("@/pages/artist-catalogue"));
 const SessionsPage = lazy(() => import("@/pages/sessions"));
 const SessionDetailPage = lazy(() => import("@/pages/session-detail"));
+const MyLiveSessionsPage = lazy(() => import("@/pages/my-live-sessions"));
 const LibraryPage = lazy(() => import("@/pages/library"));
 const AnalyticsStreamingPage = lazy(
   () => import("@/pages/analytics-streaming"),
@@ -103,6 +108,10 @@ function Router() {
       <Route path="/signin">{() => <Redirect to="/auth/signin" />}</Route>
       <Route path="/signin-simple">{() => <Redirect to="/auth/login" />}</Route>
       <Route path="/apply" component={ApplyPage} />
+      <Route path="/apply/profile" component={ProfileRequestPage} />
+      <Route path="/admin/profile-requests">
+        {() => <ProtectedRoute component={ProfileRequestsAdmin} ownerOnly />}
+      </Route>
       <Route path="/geo-admin">
         <Suspense fallback={<PageLoader />}>
           <GeoAdminPage />
@@ -138,6 +147,9 @@ function Router() {
       <Route path="/artist-catalogue/:id" component={ArtistCataloguePage} />
       <Route path="/sessions/:id" component={SessionDetailPage} />
       <Route path="/sessions" component={SessionsPage} />
+      <Route path="/my-live-sessions">
+        {() => <ProtectedRoute component={MyLiveSessionsPage} />}
+      </Route>
       <Route path="/library">
         {() => <ProtectedRoute component={LibraryPage} />}
       </Route>

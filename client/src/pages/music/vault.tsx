@@ -333,6 +333,30 @@ export default function MusicVault() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeImportTrackId, setActiveImportTrackId] = useState<number | null>(null);
+
+  const { data: importDraftsData, refetch: refetchImportDrafts } = useQuery<{
+    importTracks: Array<{
+      id: number;
+      title: string;
+      description: string | null;
+      genre: string | null;
+      artwork_url: string | null;
+      status: string;
+    }>;
+  }>({
+    queryKey: ["vault-import-drafts", user?.id],
+    queryFn: async () => {
+      const res = await fetch("/api/profile-requests/mine", { credentials: "include" });
+      if (!res.ok) return { importTracks: [] };
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  const awaitingAudioDrafts = (importDraftsData?.importTracks || []).filter(
+    (d) => d.status === "awaiting_audio",
+  );
 
   // Upload form
   const [uploadForm, setUploadForm] = useState({
@@ -349,6 +373,29 @@ export default function MusicVault() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const openDraftUpload = useCallback(
+    (draft: { id: number; title: string; genre: string | null; description: string | null }) => {
+      setActiveImportTrackId(draft.id);
+      setUploadForm((prev) => ({
+        ...prev,
+        title: draft.title || prev.title,
+        genre: draft.genre || prev.genre,
+        description: draft.description || prev.description,
+      }));
+      setShowUploadModal(true);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const paramId = Number(new URLSearchParams(window.location.search).get("importTrackId"));
+    if (!Number.isInteger(paramId) || paramId <= 0 || awaitingAudioDrafts.length === 0) return;
+    const match = awaitingAudioDrafts.find((d) => d.id === paramId);
+    if (match && activeImportTrackId !== match.id) {
+      openDraftUpload(match);
+    }
+  }, [awaitingAudioDrafts, activeImportTrackId, openDraftUpload]);
 
   const tracks: Track[] = tracksData?.tracks || [];
   const totalTracks = tracksData?.total || 0;
@@ -412,6 +459,7 @@ export default function MusicVault() {
         formData.append("musicalKey", uploadForm.musical_key);
       if (uploadForm.mood) formData.append("mood", uploadForm.mood);
       if (coverFile) formData.append("pochette", coverFile);
+      if (activeImportTrackId) formData.append("importTrackId", String(activeImportTrackId));
 
       setUploadProgress(30);
 
@@ -430,6 +478,7 @@ export default function MusicVault() {
         mood: "",
         releaseType: "single",
       });
+      setActiveImportTrackId(null);
       setUploadFile(null);
       setCoverFile(null);
       setShowUploadModal(false);
@@ -437,6 +486,7 @@ export default function MusicVault() {
       // Refresh tracks
       invalidateTracks();
       refetchTracks();
+      refetchImportDrafts();
     } catch (error: any) {
       console.error("Upload failed:", error);
       alert(error.message || "Upload failed");
@@ -543,6 +593,55 @@ export default function MusicVault() {
             </Button>
           </div>
         </div>
+
+        {/* Awaiting-audio staged drafts from profile import */}
+        {awaitingAudioDrafts.length > 0 && (
+          <div className="rounded-2xl border border-cyan-400/30 bg-[#0f0822]/90 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-cyan-200">
+                  Pistes importées — En attente de fichier audio ({awaitingAudioDrafts.length})
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Déposez votre audio pour finaliser l'envoi en modération (Purgatoire).
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {awaitingAudioDrafts.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-purple-500/20 bg-[#180d34]/75 p-3"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {draft.artwork_url ? (
+                      <img
+                        src={draft.artwork_url}
+                        alt=""
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                        <Music2 className="w-4 h-4 text-purple-300" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{draft.title}</p>
+                      <p className="text-xs text-slate-400 truncate">{draft.genre || "—"}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => openDraftUpload(draft)}
+                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs shrink-0"
+                  >
+                    <Upload className="w-3.5 h-3.5 mr-1" /> Audio
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
