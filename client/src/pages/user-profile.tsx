@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import FollowButton from "@/components/FollowButton";
+import { TmuShell } from "@/components/music/TmuShell";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/auth";
@@ -261,28 +262,28 @@ export default function UserProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f3efe9]">
-      <div className="relative h-40 md:h-56 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-700/20 via-violet-600/15 to-[#efe7dd]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#efe7dd]" />
+    <TmuShell chrome="site">
+      <div className="relative h-36 md:h-48 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-700/35 via-fuchsia-600/20 to-[#06020f]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#06020f]" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-20 relative z-10 pb-16">
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 transition-all text-slate-900 mb-6"
+          className="flex items-center gap-2 p-2.5 rounded-xl bg-[#180d34]/80 hover:bg-purple-500/20 backdrop-blur-md border border-purple-500/25 transition-all text-white mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6 md:p-8 mb-6"
+          className="tmu-glass-elevated rounded-2xl p-6 md:p-8 mb-6"
         >
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-slate-900 bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-slate-900 text-3xl font-bold shrink-0 ring-2 ring-amber-500/50 overflow-hidden">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-[#06020f] bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center text-white text-3xl font-bold shrink-0 ring-2 ring-purple-400/50 overflow-hidden">
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
@@ -298,28 +299,28 @@ export default function UserProfilePage() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+              <h1 className="tmu-hero-title text-2xl md:text-3xl font-extrabold mb-1">
                 {profile.name}
               </h1>
-              <p className="text-slate-700 text-sm mb-3">@{profile.username}</p>
+              <p className="text-purple-200 text-sm mb-3">@{profile.username}</p>
 
               {profile.bio && (
-                <p className="text-slate-700 text-sm mb-4 max-w-xl">
+                <p className="text-slate-200 text-sm mb-4 max-w-xl">
                   {profile.bio}
                 </p>
               )}
 
               <div className="flex flex-wrap gap-2 mb-4">
                 {profile.isArtist && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-violet-500/20 border border-violet-500/30 text-violet-700">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 border border-purple-400/35 text-purple-200">
                     <Music className="w-3 h-3" /> Artist
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-slate-700">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[#180d34] border border-purple-500/25 text-slate-200">
                   {profile.role}
                 </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-slate-700">
-                  <Calendar className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[#180d34] border border-purple-500/25 text-slate-200">
+                  <Calendar className="w-3 h-3 text-purple-300" />
                   Joined{" "}
                   {profile.joinedAt
                     ? new Date(profile.joinedAt).toLocaleDateString()
@@ -327,10 +328,10 @@ export default function UserProfilePage() {
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-4 text-sm text-slate-700 mb-5">
+              <div className="flex flex-wrap gap-4 text-sm text-slate-300 mb-5">
                 {profile.location && (
                   <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" /> {profile.location}
+                    <MapPin className="w-3.5 h-3.5 text-fuchsia-300" /> {profile.location}
                   </span>
                 )}
                 {profile.website && (
@@ -338,7 +339,7 @@ export default function UserProfilePage() {
                     href={profile.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-amber-800 hover:text-amber-800 transition-colors"
+                    className="flex items-center gap-1 text-fuchsia-300 hover:text-fuchsia-200 transition-colors"
                   >
                     <LinkIcon className="w-3.5 h-3.5" /> Website
                   </a>
@@ -368,7 +369,7 @@ export default function UserProfilePage() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleMessage}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 text-slate-900 border border-white/10 hover:bg-white/10 transition-all text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-500/20 text-white border border-purple-400/35 hover:bg-purple-500/30 transition-all text-sm font-medium"
                   >
                     <MessageCircle className="w-4 h-4" />
                     Message
@@ -383,20 +384,20 @@ export default function UserProfilePage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6"
+          className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6 tabular-nums"
         >
           {statItems.map((stat) => {
             const Icon = stat.icon;
             return (
               <div
                 key={stat.label}
-                className="bg-white/[0.03] backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center hover:border-amber-500/30 transition-colors"
+                className="tmu-glass tmu-interactive-card rounded-xl p-4 text-center"
               >
-                <Icon className="w-4 h-4 text-amber-800 mx-auto mb-2" />
-                <p className="text-lg font-bold text-slate-900">
+                <Icon className="w-4 h-4 text-fuchsia-300 mx-auto mb-2" />
+                <p className="text-lg font-bold text-white">
                   {formatCompact(stat.value)}
                 </p>
-                <p className="text-[10px] text-slate-700 uppercase tracking-wider">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider">
                   {stat.label}
                 </p>
               </div>
@@ -404,7 +405,7 @@ export default function UserProfilePage() {
           })}
         </motion.div>
 
-        <div className="flex gap-1 bg-white/[0.03] backdrop-blur-xl rounded-xl border border-white/10 p-1 mb-6">
+        <div className="tmu-glass flex gap-1 rounded-xl p-1 mb-6">
           {[
             { id: "overview" as const, label: "Overview", icon: User },
             { id: "tracks" as const, label: "Tracks", icon: Music },
@@ -418,8 +419,8 @@ export default function UserProfilePage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? "bg-amber-500/15 text-amber-800 border border-amber-500/20"
-                    : "text-slate-700 hover:text-slate-900 hover:bg-white/5"
+                    ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                    : "text-slate-300 hover:text-white hover:bg-purple-500/15"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -433,31 +434,31 @@ export default function UserProfilePage() {
           key={activeTab}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6 min-h-[200px]"
+          className="tmu-glass-elevated rounded-2xl p-6 min-h-[200px]"
         >
           {tabLoading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-amber-800 animate-spin" />
+              <Loader2 className="w-6 h-6 text-fuchsia-300 animate-spin" />
             </div>
           ) : activeTab === "overview" ? (
             <div className="space-y-4">
-              <h3 className="text-slate-900 font-semibold">About</h3>
-              <p className="text-slate-700 text-sm">
+              <h3 className="text-white font-semibold">About</h3>
+              <p className="text-slate-300 text-sm">
                 {profile.bio || "No bio yet."}
               </p>
               {tracks.length > 0 && profile.isArtist && (
                 <>
-                  <h3 className="text-slate-900 font-semibold pt-4">
+                  <h3 className="text-white font-semibold pt-4">
                     Latest Track
                   </h3>
                   <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-colors cursor-pointer"
+                    whileHover={{ scale: 1.01 }}
+                    className="tmu-glass flex items-center gap-3 p-3 rounded-xl hover:border-purple-400/40 transition-colors cursor-pointer"
                     onClick={() =>
                       navigate(`/streaming/${tracks[0].id}`)
                     }
                   >
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500/20 to-violet-600/20 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600/30 to-fuchsia-600/30 flex items-center justify-center overflow-hidden shrink-0">
                       {tracks[0].coverArt ? (
                         <img
                           src={tracks[0].coverArt}
@@ -469,18 +470,18 @@ export default function UserProfilePage() {
                           }}
                         />
                       ) : (
-                        <Music className="w-5 h-5 text-amber-800" />
+                        <Music className="w-5 h-5 text-fuchsia-300" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-slate-900 text-sm font-medium truncate">
+                      <p className="text-white text-sm font-medium truncate">
                         {tracks[0].title}
                       </p>
-                      <p className="text-slate-700 text-xs">
+                      <p className="text-slate-400 text-xs">
                         {tracks[0].genre || "Music"}
                       </p>
                     </div>
-                    <Play className="w-4 h-4 text-amber-800" />
+                    <Play className="w-4 h-4 text-fuchsia-300" />
                   </motion.div>
                 </>
               )}
@@ -488,8 +489,8 @@ export default function UserProfilePage() {
           ) : activeTab === "tracks" ? (
             tracks.length === 0 ? (
               <div className="text-center py-12">
-                <Music className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-700 text-sm">
+                <Music className="w-12 h-12 text-purple-400/35 mx-auto mb-3" />
+                <p className="text-slate-300 text-sm">
                   No tracks published yet.
                 </p>
               </div>
@@ -500,14 +501,13 @@ export default function UserProfilePage() {
                     key={track.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileHover={{ scale: 1.01, x: 4 }}
-                    className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-all group cursor-pointer"
+                    transition={{ delay: idx * 0.04 }}
+                    className="tmu-glass flex items-center gap-4 p-3 rounded-xl hover:border-purple-400/40 transition-all group cursor-pointer"
                     onClick={() =>
                       navigate(`/streaming/${track.id}`)
                     }
                   >
-                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-500/20 to-violet-600/20 flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-purple-600/25 to-fuchsia-600/25 flex items-center justify-center shrink-0 overflow-hidden">
                       {track.coverArt ? (
                         <img
                           src={track.coverArt}
@@ -519,25 +519,25 @@ export default function UserProfilePage() {
                           }}
                         />
                       ) : (
-                        <Music className="w-6 h-6 text-amber-800" />
+                        <Music className="w-6 h-6 text-fuchsia-300" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-slate-900 font-medium text-sm truncate group-hover:text-amber-800 transition-colors">
+                      <h4 className="text-white font-medium text-sm truncate group-hover:text-fuchsia-300 transition-colors">
                         {track.title}
                       </h4>
-                      <p className="text-slate-700 text-xs">
+                      <p className="text-slate-400 text-xs tabular-nums">
                         {track.genre || "Music"} · {track.playCount || 0} plays
                       </p>
                     </div>
-                    <div className="text-slate-700 text-xs shrink-0">
+                    <div className="text-slate-400 text-xs shrink-0 tabular-nums">
                       {track.duration
                         ? `${Math.floor(track.duration / 60)}:${String(
                             track.duration % 60,
                           ).padStart(2, "0")}`
                         : "--:--"}
                     </div>
-                    <Play className="w-4 h-4 text-amber-800 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Play className="w-4 h-4 text-fuchsia-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </motion.div>
                 ))}
               </div>
@@ -545,8 +545,8 @@ export default function UserProfilePage() {
           ) : activeTab === "posts" ? (
             posts.length === 0 ? (
               <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-700 text-sm">No posts yet.</p>
+                <FileText className="w-12 h-12 text-purple-400/35 mx-auto mb-3" />
+                <p className="text-slate-300 text-sm">No posts yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -555,12 +555,11 @@ export default function UserProfilePage() {
                     key={post.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileHover={{ scale: 1.01 }}
-                    className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-500/30 transition-all"
+                    transition={{ delay: idx * 0.04 }}
+                    className="tmu-glass p-4 rounded-xl"
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-violet-600 flex items-center justify-center text-slate-900 text-xs font-bold overflow-hidden shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
                         {profile?.avatar ? (
                           <img
                             src={profile.avatar}
@@ -576,10 +575,10 @@ export default function UserProfilePage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-slate-900 text-sm font-medium truncate">
+                        <p className="text-white text-sm font-medium truncate">
                           {profile?.name}
                         </p>
-                        <p className="text-slate-700 text-[11px]">
+                        <p className="text-slate-400 text-[11px]">
                           {new Date(post.createdAt).toLocaleDateString(
                             "en-US",
                             {
@@ -591,11 +590,11 @@ export default function UserProfilePage() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                    <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">
                       {post.content}
                     </p>
                     {post.mediaUrl && (
-                      <div className="mt-3 rounded-lg overflow-hidden border border-white/10">
+                      <div className="mt-3 rounded-lg overflow-hidden border border-purple-500/20">
                         <img
                           src={post.mediaUrl}
                           alt="Post media"
@@ -608,23 +607,23 @@ export default function UserProfilePage() {
                       </div>
                     )}
                     {post.track && (
-                      <div className="mt-3 p-3 rounded-lg bg-white/[0.05] border border-amber-500/20 flex items-center gap-3">
-                        <Music className="w-5 h-5 text-amber-800 shrink-0" />
+                      <div className="mt-3 p-3 rounded-lg bg-[#180d34] border border-purple-500/25 flex items-center gap-3">
+                        <Music className="w-5 h-5 text-fuchsia-300 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-slate-900 text-sm font-medium truncate">
+                          <p className="text-white text-sm font-medium truncate">
                             {post.track.title}
                           </p>
-                          <p className="text-slate-700 text-xs">
+                          <p className="text-slate-400 text-xs">
                             Attached Track
                           </p>
                         </div>
                       </div>
                     )}
-                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5">
-                      <span className="text-slate-700 text-xs flex items-center gap-1.5">
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-purple-500/15 tabular-nums">
+                      <span className="text-slate-400 text-xs flex items-center gap-1.5">
                         <Heart className="w-3.5 h-3.5" /> {post.likeCount || 0}
                       </span>
-                      <span className="text-slate-700 text-xs flex items-center gap-1.5">
+                      <span className="text-slate-400 text-xs flex items-center gap-1.5">
                         <MessageCircle className="w-3.5 h-3.5" />
                         {post.commentCount || 0}
                       </span>
@@ -636,6 +635,6 @@ export default function UserProfilePage() {
           ) : null}
         </motion.div>
       </div>
-    </div>
+    </TmuShell>
   );
 }

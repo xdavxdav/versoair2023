@@ -7,6 +7,8 @@ import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAudio } from "@/lib/audio-context";
 import ThreadFeedWidget from "@/components/ThreadFeedWidget";
+import { TmuHubNav } from "@/components/music/TmuHubNav";
+import { TmuShell } from "@/components/music/TmuShell";
 import {
   Sheet,
   SheetContent,
@@ -110,27 +112,31 @@ export default function ArtistCataloguePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-2 border-amber-500/30 border-t-amber-500 rounded-full"
-        />
-      </div>
+      <TmuShell chrome="site">
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-2 border-purple-500/30 border-t-fuchsia-400 rounded-full"
+          />
+        </div>
+      </TmuShell>
     );
   }
 
   if (!artist) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex flex-col items-center justify-center text-white">
-        <Mic2 className="w-16 h-16 text-gray-400 mb-4" />
-        <p className="text-gray-400">Artiste introuvable</p>
-        <Link href="/stream">
-          <button className="mt-4 px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm">
-            Retour au catalogue
-          </button>
-        </Link>
-      </div>
+      <TmuShell chrome="site">
+        <div className="min-h-[70vh] flex flex-col items-center justify-center text-white p-4">
+          <Mic2 className="w-16 h-16 text-purple-300/40 mb-4" />
+          <p className="text-slate-300">Artiste introuvable</p>
+          <Link href="/stream">
+            <button className="mt-4 px-4 py-2 bg-purple-600/25 border border-purple-400/35 text-purple-200 rounded-xl text-sm hover:bg-purple-600/35">
+              Retour au catalogue
+            </button>
+          </Link>
+        </div>
+      </TmuShell>
     );
   }
 
@@ -224,37 +230,37 @@ export default function ArtistCataloguePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-28">
+    <TmuShell chrome="site">
       {/* ═══════════════════════════════════════════ */}
       {/* HERO BANNER */}
       {/* ═══════════════════════════════════════════ */}
       <section className="relative overflow-hidden">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-900/20 via-gray-900/90 to-gray-950" />
         {artist.cover_image_url && (
           <div className="absolute inset-0">
             <img
               src={artist.cover_image_url}
               alt=""
-              className="w-full h-full object-cover opacity-20 blur-xl"
+              className="w-full h-full object-cover opacity-25 blur-xl"
             />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#06020f]/60 via-[#06020f]/80 to-[#06020f]" />
           </div>
         )}
 
-        <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-8">
+        <div className="relative max-w-6xl mx-auto px-4 pt-6 pb-8">
+          <TmuHubNav currentSurface="stream" className="mb-5" />
           <Link href="/stream">
-            <button className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors mb-8">
+            <button className="inline-flex items-center gap-1.5 rounded-xl border border-purple-500/25 bg-[#180d34]/75 px-3 py-1.5 text-slate-200 hover:text-white hover:border-purple-400/45 text-sm transition-colors mb-6">
               <ChevronLeft className="w-4 h-4" />
               Retour
             </button>
           </Link>
 
-          <div className="flex flex-col md:flex-row items-start gap-6">
+          <div className="tmu-glass-elevated rounded-3xl p-5 sm:p-7 flex flex-col md:flex-row items-start gap-6">
             {/* Artist Photo */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-40 h-40 md:w-48 md:h-48 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 flex-shrink-0 shadow-2xl ring-2 ring-amber-500/20 mx-auto md:mx-0"
+              className="w-36 h-36 md:w-44 md:h-44 rounded-2xl overflow-hidden bg-[#180d34] flex-shrink-0 shadow-2xl ring-2 ring-purple-400/35 mx-auto md:mx-0"
             >
               {artist.image_url ? (
                 <img
@@ -263,8 +269,8 @@ export default function ArtistCataloguePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                  <span className="text-5xl font-bold text-white/50">
+                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
+                  <span className="text-5xl font-bold text-white uppercase">
                     {artist.name?.[0]}
                   </span>
                 </div>
@@ -272,45 +278,45 @@ export default function ArtistCataloguePage() {
             </motion.div>
 
             {/* Artist Info */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
+            <div className="flex-1 text-center md:text-left min-w-0">
+              <div className="flex flex-wrap items-center gap-2 justify-center md:justify-start mb-1.5">
                 {artist.verified && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] rounded-full">
-                    <Star className="w-2.5 h-2.5" /> Artiste Vérifié
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-500/20 border border-purple-400/35 text-purple-200 text-xs rounded-full font-semibold">
+                    <Star className="w-3 h-3 fill-fuchsia-400 text-fuchsia-400" /> Artiste Vérifié
                   </span>
                 )}
                 {artist.label_status && (
-                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] rounded-full">
+                  <span className="px-2.5 py-0.5 bg-[#180d34] border border-purple-500/25 text-slate-200 text-xs rounded-full">
                     {artist.label_status}
                   </span>
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <h1 className="tmu-hero-title text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
                 {artist.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start text-gray-400 text-sm mb-4">
+              <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start text-slate-300 text-sm mb-4">
                 {artist.genre && (
-                  <span className="flex items-center gap-1">
-                    <Music className="w-3.5 h-3.5" /> {artist.genre}
+                  <span className="flex items-center gap-1.5">
+                    <Music className="w-3.5 h-3.5 text-fuchsia-300" /> {artist.genre}
                   </span>
                 )}
                 {artist.country && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-purple-300" />
                     {getFlag(artist.country_code)} {artist.country}
                   </span>
                 )}
               </div>
 
               {/* Stats row */}
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start mb-5">
+              <div className="flex flex-wrap gap-5 justify-center md:justify-start mb-5 tabular-nums">
                 <div className="text-center">
                   <p className="text-white font-bold text-lg">
                     {formatStreams(artist.monthly_listeners || 0)}
                   </p>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
+                  <p className="text-slate-400 text-[10px] uppercase tracking-wider">
                     Auditeurs/mois
                   </p>
                 </div>
@@ -318,7 +324,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {formatStreams(artist.total_streams || 0)}
                   </p>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
+                  <p className="text-slate-400 text-[10px] uppercase tracking-wider">
                     Écoutes totales
                   </p>
                 </div>
@@ -326,7 +332,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {artist.followers || 0}
                   </p>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
+                  <p className="text-slate-400 text-[10px] uppercase tracking-wider">
                     Abonnés
                   </p>
                 </div>
@@ -334,7 +340,7 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-bold text-lg">
                     {artist.total_tracks || topTracks.length}
                   </p>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
+                  <p className="text-slate-400 text-[10px] uppercase tracking-wider">
                     Titres
                   </p>
                 </div>
@@ -345,7 +351,7 @@ export default function ArtistCataloguePage() {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={playAllTracks}
-                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl flex items-center gap-2 transition-colors"
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-purple-500/30"
                 >
                   <Shuffle className="w-4 h-4" />
                   Écouter
@@ -355,8 +361,8 @@ export default function ArtistCataloguePage() {
                   onClick={handleFollow}
                   className={`px-4 py-2.5 rounded-xl flex items-center gap-1.5 border transition-all ${
                     isFollowing
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                      : "bg-gray-800/50 text-gray-400 border-gray-700 hover:border-amber-500/30"
+                      ? "bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-400/45"
+                      : "bg-[#180d34]/80 text-slate-200 border-purple-500/25 hover:border-purple-400/50"
                   }`}
                 >
                   {isFollowing ? (
@@ -443,8 +449,8 @@ export default function ArtistCataloguePage() {
       {/* ═══════════════════════════════════════════ */}
       {/* TABS */}
       {/* ═══════════════════════════════════════════ */}
-      <div className="max-w-[95vw] mx-auto px-4 mt-6 mb-6">
-        <div className="flex gap-1 bg-gray-800/30 rounded-lg p-1 w-fit">
+      <div className="max-w-6xl mx-auto px-4 mt-6 mb-6">
+        <div className="tmu-glass flex gap-1 rounded-xl p-1 w-fit">
           {[
             { key: "discography" as const, label: "Discographie" },
             { key: "about" as const, label: "À propos" },
@@ -452,10 +458,10 @@ export default function ArtistCataloguePage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 rounded-md text-sm transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.key
-                  ? "bg-amber-500/20 text-amber-400"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
               {tab.label}
@@ -468,30 +474,30 @@ export default function ArtistCataloguePage() {
       {/* DISCOGRAPHY TAB */}
       {/* ═══════════════════════════════════════════ */}
       {activeTab === "discography" && (
-        <div className="max-w-[95vw] mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Top Tracks */}
           <div className="mb-10">
-            <h3 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-amber-400" />
+            <h3 className="text-sm font-semibold text-slate-100 mb-3 flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-fuchsia-300" />
               Titres populaires
             </h3>
-            <div className="space-y-0.5">
+            <div className="tmu-glass rounded-2xl overflow-hidden divide-y divide-purple-500/15">
               {topTracks.map((track: any, i: number) => {
                 const isCurrent = audio.currentTrack?.id === track.id;
                 return (
                   <div
                     key={track.id}
                     onClick={() => audio.playTrack(track)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer group transition-all ${
-                      isCurrent ? "bg-amber-500/10" : "hover:bg-gray-800/50"
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer group transition-all ${
+                      isCurrent ? "bg-purple-500/15" : "hover:bg-purple-500/10"
                     }`}
                   >
                     <span
-                      className={`w-6 text-center text-sm ${isCurrent ? "text-amber-400 font-bold" : "text-gray-400"}`}
+                      className={`w-6 text-center text-sm tabular-nums ${isCurrent ? "text-fuchsia-300 font-bold" : "text-slate-400"}`}
                     >
                       {i + 1}
                     </span>
-                    <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#180d34]">
                       {track.cover_art || track.album_cover ? (
                         <img
                           src={track.cover_art || track.album_cover}
@@ -499,25 +505,25 @@ export default function ArtistCataloguePage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                          <Music className="w-4 h-4 text-white/50" />
+                        <div className="w-full h-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
+                          <Music className="w-4 h-4 text-white/70" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`text-sm font-medium truncate ${isCurrent ? "text-amber-400" : "text-white"}`}
+                        className={`text-sm font-medium truncate ${isCurrent ? "text-fuchsia-300" : "text-white"}`}
                       >
                         {track.title}
                       </p>
-                      <p className="text-gray-400 text-xs truncate">
+                      <p className="text-slate-400 text-xs truncate">
                         {track.album_title}
                       </p>
                     </div>
-                    <span className="text-gray-400 text-xs hidden sm:inline">
+                    <span className="text-slate-400 text-xs hidden sm:inline tabular-nums">
                       {formatStreams(track.streams || 0)}
                     </span>
-                    <span className="text-gray-400 text-xs w-10 text-right">
+                    <span className="text-slate-400 text-xs w-10 text-right tabular-nums">
                       {formatDuration(track.duration)}
                     </span>
                     <button
@@ -525,7 +531,7 @@ export default function ArtistCataloguePage() {
                         e.stopPropagation();
                         audio.addToQueue(track);
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-amber-400 transition-all"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-slate-300 hover:text-fuchsia-300 transition-all"
                     >
                       <Heart className="w-3.5 h-3.5" />
                     </button>
@@ -538,8 +544,8 @@ export default function ArtistCataloguePage() {
           {/* Albums */}
           {albums.length > 0 && (
             <div className="mb-10">
-              <h3 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-1.5">
-                <Disc3 className="w-4 h-4 text-amber-400" />
+              <h3 className="text-sm font-semibold text-slate-100 mb-3 flex items-center gap-1.5">
+                <Disc3 className="w-4 h-4 text-fuchsia-300" />
                 Albums & Singles
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -548,8 +554,8 @@ export default function ArtistCataloguePage() {
                     key={album.id}
                     href={`/track/${album.tracks?.[0]?.id || album.id}`}
                   >
-                    <div className="group cursor-pointer">
-                      <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-800 mb-2 shadow-lg">
+                    <div className="tmu-glass tmu-interactive-card rounded-2xl p-3 group cursor-pointer">
+                      <div className="relative aspect-square rounded-xl overflow-hidden bg-[#180d34] mb-2 shadow-lg">
                         {album.cover_art ? (
                           <img
                             src={album.cover_art}
@@ -557,20 +563,20 @@ export default function ArtistCataloguePage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                            <Disc3 className="w-10 h-10 text-white/50" />
+                          <div className="w-full h-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
+                            <Disc3 className="w-10 h-10 text-white/60" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
-                          <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                            <Play className="w-4 h-4 text-black ml-0.5" />
+                        <div className="absolute inset-0 bg-[#06020f]/45 opacity-0 group-hover:opacity-100 transition-all flex items-end justify-end p-2">
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-fuchsia-600 rounded-full flex items-center justify-center shadow-lg">
+                            <Play className="w-4 h-4 text-white ml-0.5" />
                           </div>
                         </div>
                       </div>
                       <p className="text-white text-sm font-medium truncate">
                         {album.title}
                       </p>
-                      <p className="text-gray-400 text-xs">
+                      <p className="text-slate-400 text-xs tabular-nums">
                         {album.release_year ||
                           new Date(album.release_date).getFullYear()}{" "}
                         • {album.album_type || "Album"}
@@ -585,11 +591,11 @@ export default function ArtistCataloguePage() {
           {/* Stream Trend mini chart */}
           {streamTrend.length > 0 && (
             <div className="mb-10">
-              <h3 className="text-sm font-semibold text-gray-200 mb-3 flex items-center gap-1.5">
-                <BarChart3 className="w-4 h-4 text-amber-400" />
+              <h3 className="text-sm font-semibold text-slate-100 mb-3 flex items-center gap-1.5">
+                <BarChart3 className="w-4 h-4 text-fuchsia-300" />
                 Tendance des écoutes (30 jours)
               </h3>
-              <div className="bg-gray-800/30 rounded-xl p-4 h-32 flex items-end gap-1">
+              <div className="tmu-glass rounded-2xl p-4 h-32 flex items-end gap-1">
                 {streamTrend.map((d: any, i: number) => {
                   const maxVal = Math.max(
                     ...streamTrend.map((s: any) => s.streams || s.count || 1),
@@ -598,7 +604,7 @@ export default function ArtistCataloguePage() {
                   return (
                     <div
                       key={i}
-                      className="flex-1 bg-gradient-to-t from-amber-600 to-amber-400 rounded-t opacity-60 hover:opacity-100 transition-opacity cursor-default"
+                      className="flex-1 bg-gradient-to-t from-purple-600 to-fuchsia-400 rounded-t opacity-70 hover:opacity-100 transition-opacity cursor-default"
                       style={{ height: `${Math.max(height, 2)}%` }}
                       title={`${d.date}: ${d.streams || d.count} streams`}
                     />
@@ -800,9 +806,9 @@ export default function ArtistCataloguePage() {
       {/* ═══════════════════════════════════════════════════════════ */}
       {showMessageModal && (
         <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-[#efe7dd] border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="w-full max-w-md tmu-glass-modal rounded-2xl shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-purple-500/20">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
                   <MessageCircle className="w-4 h-4 text-white" />
@@ -811,14 +817,14 @@ export default function ArtistCataloguePage() {
                   <p className="text-white font-semibold text-sm truncate">
                     Message {artist.name}
                   </p>
-                  <p className="text-white/50 text-[10px]">
+                  <p className="text-slate-400 text-[11px]">
                     Direct message — free for all fans
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowMessageModal(false)}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-purple-500/20 text-slate-300 transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -829,18 +835,18 @@ export default function ArtistCataloguePage() {
             <div className="px-5 py-4">
               {messageState === "sent" ? (
                 <div className="text-center py-6">
-                  <div className="w-12 h-12 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
-                    <Send className="w-5 h-5 text-amber-400" />
+                  <div className="w-12 h-12 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center mb-3">
+                    <Send className="w-5 h-5 text-fuchsia-300" />
                   </div>
                   <p className="text-white font-semibold">Message sent!</p>
-                  <p className="text-white/50 text-xs mt-1">
+                  <p className="text-slate-300 text-xs mt-1">
                     You&apos;ll see the reply in your inbox.
                   </p>
                 </div>
               ) : (
                 <>
                   {messageError && (
-                    <div className="mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs">
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs">
                       {messageError}
                     </div>
                   )}
@@ -851,11 +857,11 @@ export default function ArtistCataloguePage() {
                     }
                     placeholder="Write a message…"
                     rows={5}
-                    className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-white/30 focus:outline-none focus:border-purple-500/50 resize-none"
+                    className="w-full bg-[#090418] border border-purple-500/25 rounded-xl px-3 py-2.5 text-white text-sm placeholder-slate-400 focus:outline-none focus:border-fuchsia-400 resize-none"
                     disabled={messageState === "sending"}
                   />
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-white/50 text-[10px]">
+                    <span className="text-slate-400 text-[11px] tabular-nums">
                       {messageText.length}/1000
                     </span>
                     <button
@@ -863,7 +869,7 @@ export default function ArtistCataloguePage() {
                       disabled={
                         !messageText.trim() || messageState === "sending"
                       }
-                      className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       {messageState === "sending" ? "Sending…" : "Send"}
@@ -874,8 +880,8 @@ export default function ArtistCataloguePage() {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-2.5 bg-[#f3efe9] border-t border-slate-200">
-              <p className="text-gray-200 text-[10px] text-center">
+            <div className="px-5 py-2.5 bg-[#090418] border-t border-purple-500/20">
+              <p className="text-slate-400 text-[11px] text-center">
                 Direct messaging is free for all fans · Rate-limited to prevent
                 spam
               </p>
@@ -883,6 +889,6 @@ export default function ArtistCataloguePage() {
           </div>
         </div>
       )}
-    </div>
+    </TmuShell>
   );
 }
