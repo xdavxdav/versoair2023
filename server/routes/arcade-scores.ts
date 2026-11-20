@@ -1,17 +1,43 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import { pool } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { isOwner, requireAdminPanel, requireAuth } from "../middleware/auth";
+import { canAccessAdminPanelSection } from "@shared/admin-panel-access";
 import { ensureArcadeScoresSchema } from "../services/arcade-scores-schema";
 import {
+  addCustomArcadeQuestion,
+  createCustomQuestionSchema,
+  deleteCustomArcadeQuestion,
+  getArcadeGamesConfig,
+  getCustomArcadeQuestions,
+  saveArcadeGamesConfig,
+  updateArcadeConfigSchema,
+} from "../services/arcade-admin-config";
+import { BUILTIN_MUSIC_QUESTION_COUNTS } from "./games";
+import {
   ARCADE_RUN_TOKEN_TTL_MS,
+  CASUAL_ARCADE_GAMES,
   CASUAL_ARCADE_GAME_IDS,
+  MUSIC_ARCADE_GAMES,
   isCasualArcadeGameId,
   isScorePlausible,
   type CasualArcadeGameId,
 } from "@shared/arcade-games";
 
 const router = Router();
+
+function requireArcadeAdminSection(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (canAccessAdminPanelSection("arcade-games", isOwner(req.user))) {
+    return next();
+  }
+  return res.status(403).json({
+    error: "Accès réservé au propriétaire GeoAdmin.",
+  });
+}
 
 interface ArcadeRunTokenPayload {
   runId: string;
@@ -88,6 +114,17 @@ function verifyRunToken(token: string): ArcadeRunTokenPayload | null {
   }
 }
 
+/** GET /api/arcade/config — public enabled/disabled game switches + maintenance notice */
+router.get("/config", async (_req: Request, res: Response) => {
+  try {
+    const config = await getArcadeGamesConfig();
+    return res.json(config);
+  } catch (error) {
+    console.error("[ArcadeScores] GET /config failed:", error);
+    return res.status(500).json({ error: "Impossible de charger la configuration arcade" });
+  }
+});
+
 /** POST /api/arcade/runs — issue an HMAC-signed run token before a game starts */
 router.post("/runs", requireAuth(), async (req: Request, res: Response) => {
   const userId = Number(req.user?.id);
@@ -97,6 +134,14 @@ router.post("/runs", requireAuth(), async (req: Request, res: Response) => {
   const game = req.body?.game;
   if (!isCasualArcadeGameId(game)) {
     return res.status(400).json({ error: "Jeu invalide" });
+  }
+  const config = await getArcadeGamesConfig();
+  if (!config.enabledGames[game]) {
+    return res.status(403).json({
+      error:
+        config.maintenanceMessage ||
+        "Ce jeu est temporairement désactivé par l'administration.",
+    });
   }
   const payload: ArcadeRunTokenPayload = {
     runId: randomUUID(),
@@ -128,6 +173,14 @@ router.post("/scores", requireAuth(), async (req: Request, res: Response) => {
   const { runToken, game, score, level } = req.body ?? {};
   if (!isCasualArcadeGameId(game)) {
     return res.status(400).json({ error: "Jeu invalide" });
+  }
+  const config = await getArcadeGamesConfig();
+  if (!config.enabledGames[game]) {
+    return res.status(403).json({
+      error:
+        config.maintenanceMessage ||
+        "Ce jeu est temporairement désactivé par l'administration.",
+    });
   }
   const claims = verifyRunToken(runToken);
   if (!claims) {
@@ -290,5 +343,234 @@ router.get("/my-best", requireAuth(), async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Impossible de charger vos records" });
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// GEOADMIN OWNER CONTROLS — /api/arcade/admin/*
+// ═══════════════════════════════════════════════════════════════════
+
+/** GET /api/arcade/admin/overview — full game config, leaderboard stats, recent scores, custom questions */
+router.get(
+  "/admin/overview",
+  requireAdminPanel,
+  requireArcadeAdminSection,
+  async (_req: Request, res: Response) => {
+    try {
+      await ensureArcadeScoresSchema(pool);
+      const [config, customQuestions, casualStatsRes, recentScoresRes, musicStatsRes] =
+        await Promise.all([
+          getArcadeGamesConfig(),
+          getCustomArcadeQuestions(),
+          pool.query(
+            `SELECT game, COUNT(*)::int AS runs_count, COUNT(DISTINCT user_id)::int AS players_count, COALESCE(MAX(score), 0)::int AS top_score
+             FROM arcade_scores
+             GROUP BY game`,
+          ),
+          pool.query(
+            `SELECT s.id, s.game, s.user_id, s.score, s.level, s.duration_ms, s.created_at,
+                    COALESCE(NULLIF(u.display_name, ''), NULLIF(u.username, ''), 'Joueur #' || s.user_id) AS display_name
+             FROM arcade_scores s
+             LEFT JOIN users u ON u.id = s.user_id
+             ORDER BY s.created_at DESC
+             LIMIT 40`,
+          ),
+          pool
+            .query(
+              `SELECT game_type, COUNT(*)::int AS total_matches,
+                      COUNT(*) FILTER (WHERE status = 'completed')::int AS completed_matches
+               FROM game_matches
+               GROUP BY game_type`,
+            )
+            .catch(() => ({ rows: [] as any[] })),
+        ]);
+
+      const casualStats: Record<
+        string,
+        { runsCount: number; playersCount: number; topScore: number }
+      > = {};
+      for (const id of CASUAL_ARCADE_GAME_IDS) {
+        casualStats[id] = { runsCount: 0, playersCount: 0, topScore: 0 };
+      }
+      for (const row of casualStatsRes.rows) {
+        casualStats[String(row.game)] = {
+          runsCount: Number(row.runs_count || 0),
+          playersCount: Number(row.players_count || 0),
+          topScore: Number(row.top_score || 0),
+        };
+      }
+
+      const musicStats: Record<
+        string,
+        { totalMatches: number; completedMatches: number }
+      > = {};
+      for (const row of musicStatsRes.rows) {
+        musicStats[String(row.game_type)] = {
+          totalMatches: Number(row.total_matches || 0),
+          completedMatches: Number(row.completed_matches || 0),
+        };
+      }
+
+      return res.json({
+        config,
+        casualGames: CASUAL_ARCADE_GAMES,
+        musicGames: MUSIC_ARCADE_GAMES,
+        casualStats,
+        musicStats,
+        recentScores: recentScoresRes.rows.map((r: any) => ({
+          id: Number(r.id),
+          game: String(r.game),
+          userId: Number(r.user_id),
+          displayName: String(r.display_name || `Joueur #${r.user_id}`),
+          score: Number(r.score),
+          level: Number(r.level || 1),
+          durationMs: Number(r.duration_ms || 0),
+          createdAt: r.created_at,
+        })),
+        customQuestions,
+        builtinQuestionCounts: BUILTIN_MUSIC_QUESTION_COUNTS,
+      });
+    } catch (error) {
+      console.error("[ArcadeAdmin] GET /admin/overview failed:", error);
+      return res.status(500).json({ error: "Impossible de charger le panneau arcade" });
+    }
+  },
+);
+
+/** PUT /api/arcade/admin/config — toggle games on/off and set maintenance notice */
+router.put(
+  "/admin/config",
+  requireAdminPanel,
+  requireArcadeAdminSection,
+  async (req: Request, res: Response) => {
+    const parsed = updateArcadeConfigSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Configuration invalide",
+        details: parsed.error.flatten(),
+      });
+    }
+    try {
+      const userId = Number(req.user?.id);
+      const updated = await saveArcadeGamesConfig(
+        parsed.data,
+        Number.isInteger(userId) && userId > 0 ? userId : null,
+      );
+      return res.json({ success: true, config: updated });
+    } catch (error) {
+      console.error("[ArcadeAdmin] PUT /admin/config failed:", error);
+      return res.status(500).json({ error: "Impossible d'enregistrer la configuration" });
+    }
+  },
+);
+
+/** DELETE /api/arcade/admin/scores/:id — moderate/delete a single arcade score entry */
+router.delete(
+  "/admin/scores/:id",
+  requireAdminPanel,
+  requireArcadeAdminSection,
+  async (req: Request, res: Response) => {
+    const scoreId = Number(req.params.id);
+    if (!Number.isInteger(scoreId) || scoreId <= 0) {
+      return res.status(400).json({ error: "Identifiant de score invalide" });
+    }
+    try {
+      await ensureArcadeScoresSchema(pool);
+      const deleted = await pool.query(
+        "DELETE FROM arcade_scores WHERE id = $1 RETURNING id",
+        [scoreId],
+      );
+      if (deleted.rows.length === 0) {
+        return res.status(404).json({ error: "Score introuvable" });
+      }
+      return res.json({ success: true, deletedId: scoreId });
+    } catch (error) {
+      console.error("[ArcadeAdmin] DELETE /admin/scores/:id failed:", error);
+      return res.status(500).json({ error: "Impossible de supprimer le score" });
+    }
+  },
+);
+
+/** DELETE /api/arcade/admin/leaderboard/:game — reset all scores for a casual game */
+router.delete(
+  "/admin/leaderboard/:game",
+  requireAdminPanel,
+  requireArcadeAdminSection,
+  async (req: Request, res: Response) => {
+    const { game } = req.params;
+    if (!isCasualArcadeGameId(game)) {
+      return res.status(400).json({ error: "Jeu invalide" });
+    }
+    try {
+      await ensureArcadeScoresSchema(pool);
+      const result = await pool.query(
+        "DELETE FROM arcade_scores WHERE game = $1",
+        [game],
+      );
+      return res.json({
+        success: true,
+        game,
+        deletedCount: result.rowCount ?? 0,
+      });
+    } catch (error) {
+      console.error("[ArcadeAdmin] DELETE /admin/leaderboard/:game failed:", error);
+      return res.status(500).json({ error: "Impossible de réinitialiser le classement" });
+    }
+  },
+);
+
+/** POST /api/arcade/admin/questions — add a custom Lyrics/Trivia/Guess/Decade question */
+router.post(
+  "/admin/questions",
+  requireAdminPanel,
+  requireArcadeAdminSection,
+  async (req: Request, res: Response) => {
+    const parsed = createCustomQuestionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Question invalide (4 choix et une bonne réponse requis).",
+        details: parsed.error.flatten(),
+      });
+    }
+    try {
+      const userId = Number(req.user?.id);
+      const created = await addCustomArcadeQuestion(
+        parsed.data,
+        Number.isInteger(userId) && userId > 0 ? userId : null,
+      );
+      return res.status(201).json({ success: true, question: created });
+    } catch (error: any) {
+      console.error("[ArcadeAdmin] POST /admin/questions failed:", error);
+      return res.status(400).json({
+        error: error?.message || "Impossible d'ajouter la question",
+      });
+    }
+  },
+);
+
+/** DELETE /api/arcade/admin/questions/:id — remove a custom question */
+router.delete(
+  "/admin/questions/:id",
+  requireAdminPanel,
+  requireArcadeAdminSection,
+  async (req: Request, res: Response) => {
+    const id = String(req.params.id || "").trim();
+    if (!id) {
+      return res.status(400).json({ error: "Identifiant requis" });
+    }
+    try {
+      const userId = Number(req.user?.id);
+      const removed = await deleteCustomArcadeQuestion(
+        id,
+        Number.isInteger(userId) && userId > 0 ? userId : null,
+      );
+      if (!removed) {
+        return res.status(404).json({ error: "Question introuvable" });
+      }
+      return res.json({ success: true, deletedId: id });
+    } catch (error) {
+      console.error("[ArcadeAdmin] DELETE /admin/questions/:id failed:", error);
+      return res.status(500).json({ error: "Impossible de supprimer la question" });
+    }
+  },
+);
 
 export default router;

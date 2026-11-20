@@ -64,6 +64,9 @@ import { XensiaGame } from "@/components/arcade/games/XensiaGame";
 import {
   CASUAL_ARCADE_GAMES,
   CASUAL_ARCADE_GAME_IDS,
+  createDefaultArcadeGamesConfig,
+  type AllArcadeGameId,
+  type ArcadeGamesAdminConfig,
   type CasualArcadeGameId,
 } from "@shared/arcade-games";
 import {
@@ -220,7 +223,30 @@ export default function ArcadePage() {
   const [answerResult, setAnswerResult] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const questionStartedAtRef = useRef<number>(Date.now());
   const [showAgeModal, setShowAgeModal] = useState(false);
+
+  // Public GeoAdmin arcade configuration (game toggles + maintenance notice)
+  const { data: arcadeConfig = createDefaultArcadeGamesConfig() } =
+    useQuery<ArcadeGamesAdminConfig>({
+      queryKey: ["/api/arcade/config"],
+      queryFn: async () => {
+        const res = await fetch("/api/arcade/config", {
+          credentials: "include",
+        });
+        if (!res.ok) return createDefaultArcadeGamesConfig();
+        return res.json();
+      },
+      staleTime: 15_000,
+    });
+
+  const isGameEnabled = useCallback(
+    (gameId: string) => {
+      const enabledMap = arcadeConfig.enabledGames as Record<string, boolean>;
+      return enabledMap[gameId as AllArcadeGameId] !== false;
+    },
+    [arcadeConfig],
+  );
   const [dob, setDob] = useState("");
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState("10");
@@ -444,17 +470,19 @@ export default function ArcadePage() {
   // ── Load current question when match is active ──
   useEffect(() => {
     if (activeMatch?.status === "active" && activeMatch.game_state?.questions) {
-      const q = activeMatch.game_state.questions.find(
-        (q: TriviaQuestion) => q.round === activeMatch.current_round,
-      );
+      const q =
+        activeMatch.game_state.questions.find(
+          (item: TriviaQuestion) => item.round === activeMatch.current_round,
+        ) ?? activeMatch.game_state.questions[activeMatch.current_round];
       if (q) {
         setCurrentQuestion(q);
-        setCountdown(q.time_limit);
+        setCountdown(q.time_limit || 20);
+        questionStartedAtRef.current = Date.now();
         setSelectedAnswer(null);
         setAnswerResult(null);
       }
     }
-  }, [activeMatch?.current_round, activeMatch?.status]);
+  }, [activeMatch?.id, activeMatch?.current_round, activeMatch?.status]);
 
   // ── Create challenge ──
   const createChallenge = useCallback(async () => {
@@ -467,6 +495,16 @@ export default function ArcadePage() {
         variant: "destructive",
       });
       navigate("/artist-portal");
+      return;
+    }
+    if (!isGameEnabled(selectedGame)) {
+      toast({
+        title: "Jeu en pause",
+        description:
+          arcadeConfig.maintenanceMessage ||
+          "Ce jeu est temporairement désactivé depuis GeoAdmin.",
+        variant: "destructive",
+      });
       return;
     }
     const gameTypeMapping: Record<string, string> = {
@@ -511,6 +549,8 @@ export default function ArcadePage() {
   }, [
     user,
     isAuthenticated,
+    isGameEnabled,
+    arcadeConfig.maintenanceMessage,
     selectedGame,
     currentGame.rounds,
     wagerAmount,
@@ -559,13 +599,18 @@ export default function ArcadePage() {
       setSelectedAnswer(answerIndex);
       if (countdownRef.current) clearInterval(countdownRef.current);
 
+      const responseTimeMs = Math.max(
+        0,
+        Math.min(30_000, Date.now() - questionStartedAtRef.current),
+      );
       const res = await authJson(`/api/games/${activeMatch.id}/answer`, {
         round: activeMatch.current_round,
         answerIndex,
-        responseTimeMs: 0,
+        responseTimeMs,
       });
       const data = await res.json();
       if (!res.ok) {
+        setSelectedAnswer(null);
         toast({
           title: "Erreur",
           description: data.error || "Échec",
@@ -574,9 +619,18 @@ export default function ArcadePage() {
         return;
       }
 
-      setAnswerResult(data);
+      const normalizedResult = {
+        ...data,
+        is_correct: Boolean(data.is_correct ?? data.isCorrect),
+        points_earned: Number(data.points_earned ?? data.points ?? 0),
+        correct_index:
+          data.correct_index ?? data.correctAnswer ?? undefined,
+        your_score: Number(data.your_score ?? data.newScore ?? 0),
+        opponent_score: Number(data.opponent_score ?? 0),
+      };
+      setAnswerResult(normalizedResult);
 
-      // Auto-advance to next round after 2.5s
+      // Auto-advance to next round after 2.2s
       setTimeout(() => {
         if (data.matchComplete || data.match_status === "completed") {
           setActiveMatch(null);
@@ -586,15 +640,28 @@ export default function ArcadePage() {
           toast({
             title: isWinner ? "🏆 Victoire!" : "Match terminé",
             description: isWinner
-              ? "Vous gagnez des points!"
+              ? `Score final : ${normalizedResult.your_score} pts!`
               : "Bien joué! Retentez votre chance.",
           });
           refetchWallet();
           refetchMy();
         } else if (data.match) {
           setActiveMatch(normalizeMatch(data.match));
+        } else if (typeof data.currentRound === "number") {
+          setActiveMatch((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  current_round: data.currentRound,
+                  player1_score:
+                    data.player1Score ?? prev.player1_score,
+                  player2_score:
+                    data.player2Score ?? prev.player2_score,
+                }
+              : null,
+          );
         }
-      }, 2500);
+      }, 2200);
     },
     [activeMatch, selectedAnswer, user, toast, refetchWallet, refetchMy],
   );
@@ -817,7 +884,7 @@ export default function ArcadePage() {
                   <Card className="bg-slate-900/50 border-purple-500/30">
                     <CardHeader className="text-center">
                       <Badge className="mx-auto mb-2 bg-fuchsia-600/30 text-fuchsia-300 border-fuchsia-500/40">
-                        Round {activeMatch.current_round} /{" "}
+                        Round {Math.min(activeMatch.current_round + 1, activeMatch.round_count)} /{" "}
                         {activeMatch.round_count}
                       </Badge>
                       <CardTitle className="text-xl text-white">
@@ -950,6 +1017,14 @@ export default function ArcadePage() {
                   animate="visible"
                   className="space-y-6"
                 >
+                  {/* ═══════════ MAINTENANCE BANNER (IF SET IN GEOADMIN) ═══════════ */}
+                  {arcadeConfig.maintenanceMessage && (
+                    <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-amber-300 shrink-0" />
+                      <span>{arcadeConfig.maintenanceMessage}</span>
+                    </div>
+                  )}
+
                   {/* ═══════════ CASUAL ARCADE GAMES (NO CREDITS) ═══════════ */}
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -965,6 +1040,7 @@ export default function ArcadePage() {
                       {CASUAL_ARCADE_GAME_IDS.map((gameId) => {
                         const meta = CASUAL_ARCADE_GAMES[gameId];
                         const best = casualMyBest[gameId]?.score ?? 0;
+                        const enabled = isGameEnabled(gameId);
                         const GameIcon =
                           gameId === "snake"
                             ? Zap
@@ -976,16 +1052,25 @@ export default function ArcadePage() {
                         return (
                           <div
                             key={gameId}
-                            className="tmu-glass tmu-interactive-card rounded-2xl p-4 flex flex-col justify-between gap-3"
+                            className={`tmu-glass tmu-interactive-card rounded-2xl p-4 flex flex-col justify-between gap-3 ${
+                              enabled ? "" : "opacity-60"
+                            }`}
                           >
                             <div className="flex items-start gap-3">
                               <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
                                 <GameIcon className="w-5 h-5 text-cyan-300" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h4 className="font-bold text-slate-50 text-base truncate">
-                                  {meta.name}
-                                </h4>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-slate-50 text-base truncate">
+                                    {meta.name}
+                                  </h4>
+                                  {!enabled && (
+                                    <Badge className="bg-slate-700/80 text-slate-200 text-[10px]">
+                                      Pause
+                                    </Badge>
+                                  )}
+                                </div>
                                 <p className="text-xs text-slate-300 line-clamp-2 mt-0.5">
                                   {meta.tagline}
                                 </p>
@@ -1001,12 +1086,13 @@ export default function ArcadePage() {
                               </span>
                               <Button
                                 size="sm"
+                                disabled={!enabled}
                                 data-testid={`play-casual-${gameId}`}
-                                onClick={() => setActiveCasualGame(gameId)}
-                                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold h-9 px-3.5 rounded-xl"
+                                onClick={() => enabled && setActiveCasualGame(gameId)}
+                                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold h-9 px-3.5 rounded-xl disabled:opacity-50"
                               >
                                 <Play className="w-3.5 h-3.5 mr-1" />
-                                Jouer
+                                {enabled ? "Jouer" : "En pause"}
                               </Button>
                             </div>
                           </div>
@@ -1023,32 +1109,34 @@ export default function ArcadePage() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {ARCADE_GAMES.filter((game) => game.available).map(
-                        (game) => (
+                        (game) => {
+                          const enabled = isGameEnabled(game.id);
+                          return (
                           <motion.div
                             key={game.id}
-                            whileHover={{ scale: game.available ? 1.02 : 1 }}
-                            whileTap={{ scale: game.available ? 0.98 : 1 }}
+                            whileHover={{ scale: enabled ? 1.02 : 1 }}
+                            whileTap={{ scale: enabled ? 0.98 : 1 }}
                           >
                             <Card
-                              className={`relative overflow-hidden cursor-pointer transition-all ${
-                                selectedGame === game.id && game.available
-                                  ? `bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
-                                  : game.available
-                                    ? "bg-slate-900/40 border-purple-500/20 hover:border-purple-500/50"
-                                    : "bg-slate-900/20 border-gray-700/30 opacity-60"
+                              className={`relative overflow-hidden transition-all ${
+                                !enabled
+                                  ? "bg-slate-900/20 border-gray-700/30 opacity-60 cursor-not-allowed"
+                                  : selectedGame === game.id
+                                    ? `cursor-pointer bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
+                                    : "cursor-pointer bg-slate-900/40 border-purple-500/20 hover:border-purple-500/50"
                               }`}
                               onClick={() =>
-                                game.available && setSelectedGame(game.id)
+                                enabled && setSelectedGame(game.id)
                               }
                             >
-                              {game.comingSoon && (
+                              {!enabled && (
                                 <div className="absolute top-2 right-2">
-                                  <Badge className="bg-gray-600/80 text-gray-300 text-[10px] border-gray-500/40">
-                                    Bientôt
+                                  <Badge className="bg-slate-700/80 text-slate-200 text-[10px] border-slate-500/40">
+                                    En pause
                                   </Badge>
                                 </div>
                               )}
-                              {selectedGame === game.id && game.available && (
+                              {selectedGame === game.id && enabled && (
                                 <div className="absolute top-2 right-2">
                                   <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                                     <CheckCircle2 className="w-4 h-4 text-white" />
@@ -1110,7 +1198,8 @@ export default function ArcadePage() {
                               </CardContent>
                             </Card>
                           </motion.div>
-                        ),
+                          );
+                        },
                       )}
                     </div>
                   </div>
@@ -1162,17 +1251,21 @@ export default function ArcadePage() {
 
                       <Button
                         onClick={createChallenge}
-                        disabled={!currentGame.available}
+                        disabled={
+                          !currentGame.available || !isGameEnabled(currentGame.id)
+                        }
                         className={`w-full py-3 text-lg ${
-                          currentGame.available
+                          currentGame.available && isGameEnabled(currentGame.id)
                             ? `bg-gradient-to-r ${currentGame.color} hover:opacity-90`
                             : "bg-gray-700 cursor-not-allowed"
                         } text-white`}
                       >
                         <Swords className="w-5 h-5 mr-2" />
-                        {currentGame.available
-                          ? "Jouer gratuitement"
-                          : "Bientôt disponible"}
+                        {!currentGame.available
+                          ? "Bientôt disponible"
+                          : !isGameEnabled(currentGame.id)
+                            ? "Temporairement en pause"
+                            : "Jouer gratuitement"}
                       </Button>
                     </CardContent>
                   </Card>

@@ -31,6 +31,8 @@ test("anonymous public reads work through the global auth gate without exposing 
     res.json({ eligiblePaths: ["/get-involved"] }),
   );
   app.post("/api/page-readiness", (_req, res) => res.sendStatus(204));
+  app.get("/api/arcade/config", (_req, res) => res.json({ enabledGames: {} }));
+  app.use("/api/arcade/admin", (_req, res) => res.json({ reached: true }));
   // Stands in for the listening-sessions router: only the gate's decision is under test here.
   app.use("/api/listening-sessions", (_req, res) => res.json({ reached: true }));
   // Stands in for the business-logo router: only the gate's decision is under test here.
@@ -74,6 +76,12 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await fetch(`${origin}/api/page-readiness/admin`)).status, 401);
     assert.equal(
       (await fetch(`${origin}/api/page-readiness`, { method: "POST" })).status,
+      401,
+    );
+    assert.equal((await fetch(`${origin}/api/arcade/config`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/arcade/admin/overview`)).status, 401);
+    assert.equal(
+      (await fetch(`${origin}/api/arcade/admin/config`, { method: "PUT" })).status,
       401,
     );
     assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
