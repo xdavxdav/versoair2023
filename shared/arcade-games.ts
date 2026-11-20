@@ -7,6 +7,127 @@ export const CASUAL_ARCADE_GAME_IDS = [
 
 export type CasualArcadeGameId = (typeof CASUAL_ARCADE_GAME_IDS)[number];
 
+export const MUSIC_ARCADE_GAME_IDS = [
+  "trivia",
+  "lyrics",
+  "guess",
+  "decade",
+  "artist",
+] as const;
+
+export type MusicArcadeGameId = (typeof MUSIC_ARCADE_GAME_IDS)[number];
+
+export const ALL_ARCADE_GAME_IDS = [
+  ...CASUAL_ARCADE_GAME_IDS,
+  ...MUSIC_ARCADE_GAME_IDS,
+] as const;
+
+export type AllArcadeGameId = (typeof ALL_ARCADE_GAME_IDS)[number];
+
+export const CUSTOM_QUESTION_CATEGORIES = [
+  "lyrics",
+  "trivia",
+  "guess",
+  "decade",
+] as const;
+
+export type CustomQuestionCategory =
+  (typeof CUSTOM_QUESTION_CATEGORIES)[number];
+
+export interface CustomArcadeQuestion {
+  id: string;
+  category: CustomQuestionCategory;
+  q: string;
+  options: [string, string, string, string];
+  answer: 0 | 1 | 2 | 3;
+  createdAt: string;
+}
+
+export interface ArcadeGamesAdminConfig {
+  enabledGames: Record<AllArcadeGameId, boolean>;
+  maintenanceMessage: string;
+}
+
+export const MUSIC_ARCADE_GAMES: Record<
+  MusicArcadeGameId,
+  { id: MusicArcadeGameId; name: string; tagline: string; backendType: string }
+> = {
+  trivia: {
+    id: "trivia",
+    name: "Music Trivia Duel",
+    tagline: "Culture musicale • Quiz rapide",
+    backendType: "music_trivia",
+  },
+  lyrics: {
+    id: "lyrics",
+    name: "Lyrics Challenge",
+    tagline: "Complète les paroles • Texte (aucun téléchargement)",
+    backendType: "lyrics",
+  },
+  guess: {
+    id: "guess",
+    name: "Name That Track",
+    tagline: "Identifie les hits & créateurs",
+    backendType: "guess",
+  },
+  decade: {
+    id: "decade",
+    name: "Decade Dash",
+    tagline: "Devine la décennie de sortie",
+    backendType: "decade",
+  },
+  artist: {
+    id: "artist",
+    name: "Artist Showdown",
+    tagline: "Relie les albums & titres aux artistes",
+    backendType: "artist",
+  },
+};
+
+export function createDefaultArcadeGamesConfig(): ArcadeGamesAdminConfig {
+  return {
+    enabledGames: {
+      snake: true,
+      tetris: true,
+      brick_ball: true,
+      xensia: true,
+      trivia: true,
+      lyrics: true,
+      guess: true,
+      decade: true,
+      artist: true,
+    },
+    maintenanceMessage: "",
+  };
+}
+
+export function normalizeMusicGameTypeToId(
+  gameType: string,
+): MusicArcadeGameId | null {
+  if (gameType === "music_trivia" || gameType === "trivia") return "trivia";
+  if (gameType === "lyrics") return "lyrics";
+  if (gameType === "guess") return "guess";
+  if (gameType === "decade") return "decade";
+  if (gameType === "artist") return "artist";
+  return null;
+}
+
+export function isAllArcadeGameId(value: unknown): value is AllArcadeGameId {
+  return (
+    typeof value === "string" &&
+    (ALL_ARCADE_GAME_IDS as readonly string[]).includes(value)
+  );
+}
+
+export function isCustomQuestionCategory(
+  value: unknown,
+): value is CustomQuestionCategory {
+  return (
+    typeof value === "string" &&
+    (CUSTOM_QUESTION_CATEGORIES as readonly string[]).includes(value)
+  );
+}
+
 export interface CasualArcadeGameMeta {
   id: CasualArcadeGameId;
   name: string;

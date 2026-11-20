@@ -4,19 +4,19 @@ export interface PageReadinessConfig {
   blockedPaths: string[];
 }
 
-export const PAGE_READINESS_CONFIG_VERSION = 9;
+export const PAGE_READINESS_CONFIG_VERSION = 10;
 
 export const LOCAL_PREVIEW_ONLY_PATHS = [
-  "/arcade",
   "/programs",
   "/sponsorship",
 ] as const;
 
 // Launched from the preview gate: the business directory and featured category
-// pages (version 8), then the in-development community pages (version 9). Saved
-// configs from earlier versions still list them as blocked, so the migration
-// below strips them.
+// pages (version 8), the in-development community pages (version 9), and the
+// Arcade page (version 10). Saved configs from earlier versions still list them
+// as blocked, so the migration below strips them.
 export const RELEASED_PAGE_PATHS = [
+  "/arcade",
   "/businesses-directory",
   "/commerce",
   "/hotellerie",

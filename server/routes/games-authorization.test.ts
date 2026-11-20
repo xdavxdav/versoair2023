@@ -116,3 +116,93 @@ test("someone who is not in the match cannot answer in it", async () => {
   });
   assert.equal(changes(db).length, 0);
 });
+
+test("solo lyrics/trivia match returns next round match state and caps round_count to question bank", async () => {
+  const soloMatch: Record<string, any> = {
+    id: 10,
+    game_type: "lyrics",
+    player1_id: 7,
+    player2_id: null,
+    wager_amount: "0",
+    round_count: 2,
+    current_round: 0,
+    player1_score: 0,
+    player2_score: 0,
+    status: "active",
+    game_state: {
+      questions: [
+        { q: "Lyrics 1", options: ["A", "B", "C", "D"], _answer: 1 },
+        { q: "Lyrics 2", options: ["A", "B", "C", "D"], _answer: 3 },
+      ],
+    },
+  };
+
+  scriptPool((sql, params) => {
+    if (sql.includes("SELECT value FROM system_settings")) return { rows: [] };
+    if (sql.includes("INSERT INTO game_matches")) {
+      const [gameType, , wager, roundCount, status] = params;
+      return {
+        rows: [
+          {
+            id: 11,
+            game_type: gameType,
+            wager_amount: wager,
+            round_count: roundCount,
+            status,
+            created_at: new Date().toISOString(),
+          },
+        ],
+      };
+    }
+    if (sql.startsWith("SELECT * FROM game_matches WHERE id = $1")) {
+      return { rows: Number(params[0]) === 10 ? [soloMatch] : [] };
+    }
+    if (sql.startsWith("SELECT 1 FROM game_moves")) return { rows: [] };
+    if (sql.startsWith("SELECT id FROM game_moves")) return { rows: [] };
+    if (sql.startsWith("UPDATE game_matches SET player1_score = $1, current_round = $2")) {
+      soloMatch.player1_score = Number(params[0]);
+      soloMatch.current_round = Number(params[1]);
+      return { rows: [] };
+    }
+    if (sql.startsWith("UPDATE game_matches SET status = 'completed'")) {
+      soloMatch.status = "completed";
+      soloMatch.winner_id = Number(params[0]);
+      return { rows: [] };
+    }
+    return { rows: [] };
+  });
+
+  await withRouter(gamesRouter, async (origin) => {
+    // Creating a lyrics challenge with rounds: 10 caps round_count to the actual questions length (6 built-in)
+    const created = await call(origin, "POST", "/challenge", {
+      headers: signIn(host),
+      body: { game_type: "lyrics", wager_amount: 0, round_count: 10 },
+    });
+    assert.equal(created.status, 200, JSON.stringify(created.body));
+    assert.equal(
+      created.body.match.roundCount,
+      created.body.match.gameState.questions.length,
+    );
+
+    // Round 0 answer returns updated match with current_round = 1 and snake_case + camelCase fields
+    const r0 = await answer(origin, host, 10, { answerIndex: 1, responseTimeMs: 1000 });
+    assert.equal(r0.status, 200, JSON.stringify(r0.body));
+    assert.equal(r0.body.isCorrect, true);
+    assert.equal(r0.body.is_correct, true);
+    assert.equal(r0.body.correct_index, 1);
+    assert.equal(r0.body.matchComplete, false);
+    assert.equal(r0.body.match?.current_round, 1);
+    assert.equal(r0.body.your_score > 0, true);
+    // Server answers must never leak in match payload
+    for (const q of r0.body.match.game_state.questions) {
+      assert.equal("_answer" in q, false);
+    }
+
+    // Final round completes the match
+    const r1 = await answer(origin, host, 10, { answerIndex: 3, responseTimeMs: 1500 });
+    assert.equal(r1.status, 200, JSON.stringify(r1.body));
+    assert.equal(r1.body.matchComplete, true);
+    assert.equal(r1.body.match?.status, "completed");
+    assert.equal(r1.body.winner, 7);
+  });
+});

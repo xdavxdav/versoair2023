@@ -36,3 +36,10 @@ test("listening sessions are scheduled by the owner only, never by an invited Ad
   assert.ok((OWNER_ONLY_ADMIN_PANEL_SECTIONS as readonly string[]).includes("listening-sessions"));
   assert.ok(!(DELEGATED_ADMIN_PANEL_SECTIONS as readonly string[]).includes("listening-sessions"));
 });
+
+test("arcade games controls are owner-only in GeoAdmin", () => {
+  assert.equal(canAccessAdminPanelSection("arcade-games", true), true);
+  assert.equal(canAccessAdminPanelSection("arcade-games", false), false);
+  assert.ok((OWNER_ONLY_ADMIN_PANEL_SECTIONS as readonly string[]).includes("arcade-games"));
+  assert.ok(!(DELEGATED_ADMIN_PANEL_SECTIONS as readonly string[]).includes("arcade-games"));
+});

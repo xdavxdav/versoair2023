@@ -7,6 +7,14 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../middleware/auth";
 import { getIO } from "../websocket/socket-config";
+import {
+  normalizeMusicGameTypeToId,
+  type CustomQuestionCategory,
+} from "@shared/arcade-games";
+import {
+  getArcadeGamesConfig,
+  getCustomArcadeQuestions,
+} from "../services/arcade-admin-config";
 
 const router = Router();
 
@@ -217,17 +225,39 @@ const DECADE_QUESTIONS = [
 const TRIVIA_TEST_ROUNDS = 10;
 const TRIVIA_MAX_ROUNDS = 10;
 
-function pickRandomQuestions(
+export const BUILTIN_MUSIC_QUESTION_COUNTS: Record<
+  CustomQuestionCategory,
+  number
+> = {
+  trivia: TRIVIA_QUESTIONS.length,
+  lyrics: LYRICS_QUESTIONS.length,
+  guess: GUESS_QUESTIONS.length,
+  decade: DECADE_QUESTIONS.length,
+};
+
+async function pickRandomQuestions(
   gameType: string = "music_trivia",
   count: number = 5,
 ) {
-  let pool = TRIVIA_QUESTIONS;
-  if (gameType === "lyrics") pool = LYRICS_QUESTIONS;
-  else if (gameType === "guess" || gameType === "artist")
-    pool = GUESS_QUESTIONS;
-  else if (gameType === "decade") pool = DECADE_QUESTIONS;
+  let category: CustomQuestionCategory = "trivia";
+  let builtin = TRIVIA_QUESTIONS;
+  if (gameType === "lyrics") {
+    category = "lyrics";
+    builtin = LYRICS_QUESTIONS;
+  } else if (gameType === "guess" || gameType === "artist") {
+    category = "guess";
+    builtin = GUESS_QUESTIONS;
+  } else if (gameType === "decade") {
+    category = "decade";
+    builtin = DECADE_QUESTIONS;
+  }
 
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const custom = await getCustomArcadeQuestions(category);
+  const combined = [
+    ...custom.map((c) => ({ q: c.q, options: [...c.options], answer: c.answer })),
+    ...builtin,
+  ];
+  const shuffled = [...combined].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
@@ -385,6 +415,16 @@ router.post("/challenge", requireAuth(), async (req: Request, res: Response) => 
       return res.status(400).json({ error: "Invalid game type" });
     }
 
+    const arcadeConfig = await getArcadeGamesConfig();
+    const musicGameId = normalizeMusicGameTypeToId(gameType);
+    if (musicGameId && !arcadeConfig.enabledGames[musicGameId]) {
+      return res.status(403).json({
+        error:
+          arcadeConfig.maintenanceMessage ||
+          "Ce jeu est temporairement désactivé par l'administration.",
+      });
+    }
+
     // Validate wager
     const wager = parseFloat(wagerAmount) || 0;
     if (wager < 0 || wager > 100) {
@@ -400,7 +440,7 @@ router.post("/challenge", requireAuth(), async (req: Request, res: Response) => 
     }
 
     // Generate questions for trivia & skill games
-    const roundCount = Math.min(
+    let roundCount = Math.min(
       Math.max(parseInt(rounds) || TRIVIA_TEST_ROUNDS, 3),
       TRIVIA_MAX_ROUNDS,
     );
@@ -416,7 +456,8 @@ router.post("/challenge", requireAuth(), async (req: Request, res: Response) => 
     ];
 
     if (questionBasedGames.includes(gameType)) {
-      const questions = pickRandomQuestions(gameType, roundCount);
+      const questions = await pickRandomQuestions(gameType, roundCount);
+      roundCount = questions.length;
       gameState = {
         questions: questions.map((q) => ({
           q: q.q,
@@ -704,6 +745,34 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
     );
 
     const advanceRound = !m.player2_id || otherAnswered.rows.length > 0;
+    const updatedPlayer1Score = isPlayer1 ? newScore : Number(m.player1_score || 0);
+    const updatedPlayer2Score = isPlayer1 ? Number(m.player2_score || 0) : newScore;
+    const yourScore = isPlayer1 ? updatedPlayer1Score : updatedPlayer2Score;
+    const opponentScore = isPlayer1 ? updatedPlayer2Score : updatedPlayer1Score;
+    const safeQuestions = (gameState.questions || []).map((q: any) => ({
+      q: q.q,
+      options: q.options,
+    }));
+
+    const buildClientMatch = (
+      nextRound: number,
+      status: string,
+      winnerId: number | null = m.winner_id ?? null,
+    ) => ({
+      id: m.id,
+      game_type: m.game_type,
+      player1_id: m.player1_id,
+      player2_id: m.player2_id,
+      wager_amount: m.wager_amount,
+      round_count: m.round_count,
+      current_round: nextRound,
+      player1_score: updatedPlayer1Score,
+      player2_score: updatedPlayer2Score,
+      status,
+      winner_id: winnerId,
+      created_at: m.created_at,
+      game_state: { questions: safeQuestions },
+    });
 
     if (advanceRound) {
       const nextRound = currentRound + 1;
@@ -747,14 +816,21 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
           return res.json({
             success: true,
             isCorrect,
+            is_correct: isCorrect,
             points,
+            points_earned: points,
             newScore,
+            correctAnswer: question._answer,
+            correct_index: question._answer,
             roundComplete: true,
             matchComplete: true,
             winner,
             player1Score: p1Score,
             player2Score: p2Score,
+            your_score: isPlayer1 ? p1Score : p2Score,
+            opponent_score: isPlayer1 ? p2Score : p1Score,
             prize: result.winnerPrize,
+            match: buildClientMatch(nextRound, "completed", winner),
           });
         } else {
           // Solo or free match — just complete
@@ -772,17 +848,43 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
           return res.json({
             success: true,
             isCorrect,
+            is_correct: isCorrect,
             points,
+            points_earned: points,
             newScore,
+            correctAnswer: question._answer,
+            correct_index: question._answer,
             roundComplete: true,
             matchComplete: true,
             winner: winnerId,
             player1Score: p1Score,
             player2Score: p2Score,
+            your_score: isPlayer1 ? p1Score : p2Score,
+            opponent_score: isPlayer1 ? p2Score : p1Score,
             prize: 0,
+            match: buildClientMatch(nextRound, "completed", winnerId),
           });
         }
       }
+
+      return res.json({
+        success: true,
+        isCorrect,
+        is_correct: isCorrect,
+        points,
+        points_earned: points,
+        newScore,
+        correctAnswer: question._answer,
+        correct_index: question._answer,
+        roundComplete: true,
+        matchComplete: false,
+        currentRound: nextRound,
+        player1Score: updatedPlayer1Score,
+        player2Score: updatedPlayer2Score,
+        your_score: yourScore,
+        opponent_score: opponentScore,
+        match: buildClientMatch(nextRound, m.status),
+      });
     } else {
       // Just update this player's score, wait for opponent
       await pool.query(
@@ -808,11 +910,20 @@ router.post("/:id/answer", requireAuth(), async (req: Request, res: Response) =>
     res.json({
       success: true,
       isCorrect,
+      is_correct: isCorrect,
       points,
+      points_earned: points,
       newScore,
       correctAnswer: question._answer,
+      correct_index: question._answer,
       roundComplete: advanceRound,
       matchComplete: false,
+      currentRound,
+      player1Score: updatedPlayer1Score,
+      player2Score: updatedPlayer2Score,
+      your_score: yourScore,
+      opponent_score: opponentScore,
+      match: buildClientMatch(currentRound, m.status),
     });
   } catch (err: any) {
     console.error("[GAMES] Answer error:", err);

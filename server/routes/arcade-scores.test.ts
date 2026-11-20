@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import test from "node:test";
+import jwt from "jsonwebtoken";
 import {
   call,
   scriptPool,
@@ -189,4 +190,101 @@ test("GET /leaderboard is public with display names only, and GET /my-best requi
     assert.equal(myAuthed.body?.bestByGame?.snake?.score, 420);
     assert.equal(myAuthed.body?.bestByGame?.xensia?.score, 980);
   });
+});
+
+test("GeoAdmin arcade config & custom questions require owner role and block disabled games", async () => {
+  const settings = new Map<string, unknown>();
+  scriptPool((sql, params) => {
+    if (sql.includes("SELECT value FROM system_settings WHERE key = $1")) {
+      const key = String(params[0]);
+      return { rows: settings.has(key) ? [{ value: settings.get(key) }] : [] };
+    }
+    if (sql.includes("INSERT INTO system_settings")) {
+      settings.set(String(params[0]), JSON.parse(String(params[1])));
+      return { rows: [] };
+    }
+    return { rows: [] };
+  });
+
+  const prevOwnerEmail = process.env.SUPERADMIN_EMAIL;
+  const owner = { id: 18, role: "superuser", email: "superadmin@versoair.com" };
+  process.env.SUPERADMIN_EMAIL = owner.email;
+  const delegatedAdmin = { id: 23, role: "admin", email: "admin@versoair.com" };
+  const signInGeoAdmin = (account: { id: number; role: string; email: string }) => {
+    signIn(account);
+    const token = jwt.sign(
+      {
+        userId: account.id,
+        email: account.email,
+        role: account.role,
+        ownerMfa: account.role === "superuser",
+        geoAdminCodeAuthenticated: true,
+      },
+      process.env.JWT_SECRET!,
+    );
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  try {
+    await withRouter(arcadeScoresRouter, async (origin) => {
+    // Public config defaults to all games enabled
+    const pub = await call(origin, "GET", "/config");
+    assert.equal(pub.status, 200);
+    assert.equal(pub.body?.enabledGames?.snake, true);
+    assert.equal(pub.body?.enabledGames?.lyrics, true);
+
+    // Non-owner and delegated admin cannot access GeoAdmin arcade routes
+    assert.equal(
+      (await call(origin, "GET", "/admin/overview", { headers: signIn(player1) })).status,
+      403,
+    );
+    assert.equal(
+      (await call(origin, "GET", "/admin/overview", { headers: signInGeoAdmin(delegatedAdmin) })).status,
+      403,
+    );
+
+    // Owner pauses snake and sets maintenance banner
+    const update = await call(origin, "PUT", "/admin/config", {
+      headers: signInGeoAdmin(owner),
+      body: { enabledGames: { snake: false }, maintenanceMessage: "Tournoi en préparation" },
+    });
+    assert.equal(update.status, 200);
+    assert.equal(update.body?.config?.enabledGames?.snake, false);
+
+    // Starting a paused game is rejected
+    const blockedRun = await call(origin, "POST", "/runs", {
+      headers: signIn(player1),
+      body: { game: "snake" },
+    });
+    assert.equal(blockedRun.status, 403);
+
+    // Owner can add and delete a custom lyrics question
+    const added = await call(origin, "POST", "/admin/questions", {
+      headers: signInGeoAdmin(owner),
+      body: {
+        category: "lyrics",
+        q: "Complétez : 'Verso Air ____ all night'",
+        options: ["grooves", "sleeps", "stops", "fades"],
+        answer: 0,
+      },
+    });
+    assert.equal(added.status, 201);
+    const questionId = added.body?.question?.id;
+    assert.ok(typeof questionId === "string" && questionId.length > 0);
+
+    const overview = await call(origin, "GET", "/admin/overview", {
+      headers: signInGeoAdmin(owner),
+    });
+    assert.equal(overview.status, 200);
+    assert.equal(overview.body?.customQuestions?.length, 1);
+
+    const removed = await call(origin, "DELETE", `/admin/questions/${questionId}`, {
+      headers: signInGeoAdmin(owner),
+    });
+    assert.equal(removed.status, 200);
+  });
+  } finally {
+    if (prevOwnerEmail === undefined) delete process.env.SUPERADMIN_EMAIL;
+    else process.env.SUPERADMIN_EMAIL = prevOwnerEmail;
+  }
 });

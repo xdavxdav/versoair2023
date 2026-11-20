@@ -244,6 +244,7 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/revenue-pulse/pool",
       "/api/revenue-pulse/leaderboard",
       "/api/arcade/leaderboard",
+      "/api/arcade/config",
       "/api/page-readiness",
       "/api/notifications",
       "/api/notifications/unread-count",

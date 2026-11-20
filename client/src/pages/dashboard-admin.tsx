@@ -125,6 +125,7 @@ import {
   Map,
   Navigation,
   Compass,
+  Gamepad2,
   Pin,
   Navigation2,
   MapPin as MapPinIcon,
@@ -232,6 +233,7 @@ import { CommunityOperationsSection } from "@/components/sections/CommunityOpera
 import { ArtisanProfilesSection } from "@/components/sections/ArtisanProfilesSection";
 import { EventsModerationSection } from "@/components/sections/EventsModerationSection";
 import { ListeningSessionsSection } from "@/components/sections/ListeningSessionsSection";
+import { ArcadeAdminSection } from "@/components/sections/ArcadeAdminSection";
 import { BusinessClaimsSection } from "@/components/sections/BusinessClaimsSection";
 import { useCountry } from "@/contexts/CountryContext";
 import { useOpenRequest } from "@/hooks/use-open-request";
@@ -516,6 +518,12 @@ const MAIN_SECTIONS = [
     label: "Listening Sessions",
     icon: Headphones,
     description: "Schedule live listening sessions",
+  },
+  {
+    id: "arcade-games",
+    label: "Arcade & Games",
+    icon: Gamepad2,
+    description: "Manage games, leaderboards & lyrics/trivia",
   },
 ];
 
@@ -7497,6 +7505,9 @@ export default function AdminDashboard() {
             )}
             {sectionAllowed && activeSection === "listening-sessions" && (
               <ListeningSessionsSection />
+            )}
+            {sectionAllowed && activeSection === "arcade-games" && (
+              <ArcadeAdminSection />
             )}
 
             {/* Dashboard Stats - shown at the bottom for reference */}
