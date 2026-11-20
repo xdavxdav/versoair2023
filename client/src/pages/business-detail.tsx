@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/tooltip";
 import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
 import { BusinessClaimAction } from "@/components/BusinessClaimAction";
+import { BusinessOwnersPanel } from "@/components/BusinessOwnersPanel";
 import { UNCLAIMED_NOTICE, parseClaimed } from "@/lib/business-status";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
@@ -1081,6 +1082,11 @@ export default function BusinessDetailPage() {
             <FicheTechnique
               business={biz}
               onEdit={canEditFiche ? () => setFicheEditorOpen(true) : undefined}
+            />
+            <BusinessOwnersPanel
+              businessId={biz.id}
+              currentUserId={auth?.user?.id}
+              isOwner={isOwner}
             />
             {canEditFiche && (
               <FicheEditor

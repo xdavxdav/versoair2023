@@ -368,6 +368,41 @@ export const businessClaims = pgTable(
   }),
 );
 
+export const businessOwners = pgTable(
+  "business_owners",
+  {
+    id: serial("id").primaryKey(),
+    businessId: integer("business_id")
+      .references(() => businesses.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("active"),
+    invitedBy: integer("invited_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    invitedAt: timestamp("invited_at").notNull().defaultNow(),
+    acceptedAt: timestamp("accepted_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    businessUser: uniqueIndex("business_owners_business_user_unique").on(
+      table.businessId,
+      table.userId,
+    ),
+    userStatus: index("business_owners_user_status_idx").on(
+      table.userId,
+      table.status,
+    ),
+    statusCheck: check(
+      "business_owners_status_check",
+      sql`${table.status} IN ('invited', 'active')`,
+    ),
+  }),
+);
+
 // --- 3. MUSIC & JOBS EXTENSIONS ---
 export const artists = pgTable("artists", {
   id: serial("id").primaryKey(),
@@ -956,6 +991,12 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 // --- 8. RELATION MAPS (Drizzle Query API) ---
 export const userRelations = relations(users, ({ many }) => ({
   businessesOwned: many(businesses),
+  businessOwnerships: many(businessOwners, {
+    relationName: "businessOwnerUser",
+  }),
+  invitedBusinessOwnerships: many(businessOwners, {
+    relationName: "businessOwnerInviter",
+  }),
   requestedGeoAdminAddons: many(geoAdminAddons, {
     relationName: "geoAdminAddonUser",
   }),
@@ -985,6 +1026,7 @@ export const geoAdminAddonRelations = relations(
 
 export const businessRelations = relations(businesses, ({ one, many }) => ({
   owner: one(users, { fields: [businesses.ownerId], references: [users.id] }),
+  owners: many(businessOwners),
   category: one(businessCategories, {
     fields: [businesses.categoryId],
     references: [businessCategories.id],
@@ -992,6 +1034,23 @@ export const businessRelations = relations(businesses, ({ one, many }) => ({
   jobs: many(jobs),
   artists: many(artists),
   reviews: many(businessReviews),
+}));
+
+export const businessOwnerRelations = relations(businessOwners, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessOwners.businessId],
+    references: [businesses.id],
+  }),
+  user: one(users, {
+    fields: [businessOwners.userId],
+    references: [users.id],
+    relationName: "businessOwnerUser",
+  }),
+  inviter: one(users, {
+    fields: [businessOwners.invitedBy],
+    references: [users.id],
+    relationName: "businessOwnerInviter",
+  }),
 }));
 
 export const connectionsRelations = relations(connections, ({ one }) => ({

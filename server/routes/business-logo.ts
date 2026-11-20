@@ -146,8 +146,13 @@ router.post(
       const ownerCheck = await pool.query(
         `SELECT b.id, b.tier, b.name, u.subscription_tier
          FROM businesses b
-         LEFT JOIN users u ON u.id = b.owner_id
-         WHERE b.id = $1 AND b.owner_id = $2`,
+         LEFT JOIN users u ON u.id = $2
+         WHERE b.id = $1
+           AND (b.owner_id = $2 OR EXISTS (
+             SELECT 1 FROM business_owners bo
+              WHERE bo.business_id = b.id AND bo.user_id = $2
+                AND bo.status = 'active'
+           ))`,
         [businessId, userId],
       );
 
@@ -235,7 +240,13 @@ router.delete(
 
       // Verify ownership
       const ownerCheck = await pool.query(
-        `SELECT logo_url FROM businesses WHERE id = $1 AND owner_id = $2`,
+        `SELECT logo_url FROM businesses b
+          WHERE b.id = $1
+            AND (b.owner_id = $2 OR EXISTS (
+              SELECT 1 FROM business_owners bo
+               WHERE bo.business_id = b.id AND bo.user_id = $2
+                 AND bo.status = 'active'
+            ))`,
         [businessId, userId],
       );
 
@@ -307,7 +318,22 @@ async function serveStoredLogo(
     if (!logo.is_public) {
       const user = await identify(req, res);
       if (user === null) return;
-      if (!user || (String(logo.owner_id) !== user.id && !isStaff(user.role))) {
+      const membership = user
+        ? await pool.query(
+            `SELECT EXISTS (
+               SELECT 1 FROM business_owners bo
+                WHERE bo.business_id = $1 AND bo.user_id = $2
+                  AND bo.status = 'active'
+             ) AS is_owner`,
+            [businessId, Number(user.id)],
+          )
+        : null;
+      if (
+        !user ||
+        (String(logo.owner_id) !== user.id &&
+          membership?.rows[0]?.is_owner !== true &&
+          !isStaff(user.role))
+      ) {
         return notFound();
       }
     }
