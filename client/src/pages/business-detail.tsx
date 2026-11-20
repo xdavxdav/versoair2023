@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -70,6 +70,10 @@ import {
   ficheSectorStyle,
   getFicheSectorPalette,
 } from "@/lib/fiche-sector-theme";
+import {
+  getFooterThemeForSectorSlug,
+  setDynamicFooterTheme,
+} from "@/lib/footer-theme";
 import { SeoHead } from "@/components/seo/SeoHead";
 import { useTheme } from "@/contexts/ThemeContext";
 import "./business-detail-theme.css";
@@ -455,6 +459,16 @@ export default function BusinessDetailPage() {
   const metaTitle = business?.name
     ? `${business.name} | VersoAir`
     : "Business Profile | VersoAir";
+
+  useEffect(() => {
+    if (!businessId) return;
+    const path = `/business/${businessId}`;
+    const sectorTheme = getFooterThemeForSectorSlug(business?.sector_slug);
+    setDynamicFooterTheme(path, sectorTheme);
+    return () => {
+      setDynamicFooterTheme(path, null);
+    };
+  }, [businessId, business?.sector_slug]);
   const metaDescription = (() => {
     const baseDescription =
       business?.description?.trim() ||

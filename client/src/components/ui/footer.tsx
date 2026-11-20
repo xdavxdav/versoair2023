@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 import { ArrowUpRight, Flag } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { NativeLabel } from "@/components/NativeLabel";
 import { FEEDBACK_FORM_URL } from "@/lib/feedback";
-import { FOOTER_THEME } from "@/lib/footer-theme";
+import { useResolvedFooterTheme } from "@/lib/footer-theme";
 import { FOOTER_COLUMNS, FOOTER_SOCIAL_LINKS } from "@shared/footer-links";
 import "./footer-theme.css";
 
@@ -13,21 +13,34 @@ const linkClass =
 
 export default function Footer() {
   const { translateText } = useLanguage();
+  const [pathname] = useLocation();
+  const theme = useResolvedFooterTheme(pathname);
 
   return (
     <footer
       className="site-footer relative isolate overflow-hidden border-t border-amber-500/20 bg-[#f3efe9] text-slate-900"
-      data-footer-tone={FOOTER_THEME.tone}
+      data-footer-themed={theme ? "true" : undefined}
+      data-footer-tone={theme?.tone}
       style={
-        {
-          "--ft-accent": FOOTER_THEME.accent,
-          "--ft-accent-dark": FOOTER_THEME.accentDark,
-        } as CSSProperties
+        theme
+          ? ({
+              "--ft-accent": theme.accent,
+              "--ft-accent-dark": theme.accentDark,
+            } as CSSProperties)
+          : undefined
       }
     >
       <div
         aria-hidden="true"
         className="ft-glow pointer-events-none absolute inset-0 -z-10 opacity-40"
+        style={
+          theme
+            ? undefined
+            : {
+                backgroundImage:
+                  "radial-gradient(ellipse at 15% 0%, rgba(31, 132, 99, .12), transparent 48%), radial-gradient(ellipse at 88% 100%, rgba(190, 128, 51, .10), transparent 40%)",
+              }
+        }
       />
       <div
         aria-hidden="true"
