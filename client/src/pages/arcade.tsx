@@ -31,6 +31,11 @@ import {
   XCircle,
   Loader2,
   Clock,
+  Grid2X2,
+  LayoutGrid,
+  Play,
+  Compass,
+  Blocks,
 } from "lucide-react";
 import {
   Card,
@@ -51,6 +56,16 @@ import { useMusicAccess } from "@/hooks/useMusicAccess";
 import { TmuHubNav } from "@/components/music/TmuHubNav";
 import { TmuShell } from "@/components/music/TmuShell";
 import QuickSignIn from "@/components/QuickSignIn";
+import { useCasualArcadeData } from "@/hooks/use-arcade-run";
+import { SnakeGame } from "@/components/arcade/games/SnakeGame";
+import { TetrisGame } from "@/components/arcade/games/TetrisGame";
+import { BrickBallGame } from "@/components/arcade/games/BrickBallGame";
+import { XensiaGame } from "@/components/arcade/games/XensiaGame";
+import {
+  CASUAL_ARCADE_GAMES,
+  CASUAL_ARCADE_GAME_IDS,
+  type CasualArcadeGameId,
+} from "@shared/arcade-games";
 import {
   fadeInUp,
   staggerContainer,
@@ -610,6 +625,23 @@ export default function ArcadePage() {
   const balance = parseFloat(wallet?.balance || "0");
   const frozenBalance = parseFloat(wallet?.frozen_balance || "0");
 
+  // Casual arcade games state (no money or credits attached)
+  const [activeCasualGame, setActiveCasualGame] =
+    useState<CasualArcadeGameId | null>(null);
+  const [leaderboardMode, setLeaderboardMode] = useState<"casual" | "pvp">(
+    "casual",
+  );
+  const [leaderboardGame, setLeaderboardGame] =
+    useState<CasualArcadeGameId>("snake");
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<
+    "all" | "7d" | "30d"
+  >("all");
+  const {
+    leaderboard: casualLeaderboard,
+    leaderboardLoading: casualLeaderboardLoading,
+    myBest: casualMyBest,
+  } = useCasualArcadeData(leaderboardGame, leaderboardPeriod);
+
   // Determine if user can actually play (not just view)
   const canPlay =
     isAuthenticated &&
@@ -918,11 +950,76 @@ export default function ArcadePage() {
                   animate="visible"
                   className="space-y-6"
                 >
+                  {/* ═══════════ CASUAL ARCADE GAMES (NO CREDITS) ═══════════ */}
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                      <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Gamepad2 className="w-5 h-5 text-cyan-300" />
+                        Jeux classiques · Score libre
+                      </h3>
+                      <Badge className="bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 text-xs">
+                        Gratuit • Sans crédits • Classement Points
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                      {CASUAL_ARCADE_GAME_IDS.map((gameId) => {
+                        const meta = CASUAL_ARCADE_GAMES[gameId];
+                        const best = casualMyBest[gameId]?.score ?? 0;
+                        const GameIcon =
+                          gameId === "snake"
+                            ? Zap
+                            : gameId === "tetris"
+                              ? Blocks
+                              : gameId === "brick_ball"
+                                ? LayoutGrid
+                                : Compass;
+                        return (
+                          <div
+                            key={gameId}
+                            className="tmu-glass tmu-interactive-card rounded-2xl p-4 flex flex-col justify-between gap-3"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
+                                <GameIcon className="w-5 h-5 text-cyan-300" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-bold text-slate-50 text-base truncate">
+                                  {meta.name}
+                                </h4>
+                                <p className="text-xs text-slate-300 line-clamp-2 mt-0.5">
+                                  {meta.tagline}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-purple-500/15">
+                              <span className="text-xs text-slate-300 tabular-nums">
+                                Record:{" "}
+                                <strong className="text-cyan-300">
+                                  {best > 0 ? `${best.toLocaleString()} pts` : "—"}
+                                </strong>
+                              </span>
+                              <Button
+                                size="sm"
+                                data-testid={`play-casual-${gameId}`}
+                                onClick={() => setActiveCasualGame(gameId)}
+                                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold h-9 px-3.5 rounded-xl"
+                              >
+                                <Play className="w-3.5 h-3.5 mr-1" />
+                                Jouer
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* ═══════════ AVAILABLE GAMES GRID ═══════════ */}
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <Gamepad2 className="w-5 h-5 text-purple-400" />
-                      Jeux Disponibles
+                      <Swords className="w-5 h-5 text-purple-400" />
+                      Duels Musicaux PvP
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {ARCADE_GAMES.filter((game) => game.available).map(
@@ -1278,11 +1375,143 @@ export default function ArcadePage() {
 
           {/* ═══════════ LEADERBOARD TAB ═══════════ */}
           <TabsContent value="leaderboard" className="space-y-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              Top Joueurs
-            </h3>
-            {leaderboard.length === 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                Classement
+              </h3>
+              <div className="inline-flex rounded-xl border border-purple-500/25 bg-[#0f0822] p-1">
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardMode("casual")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    leaderboardMode === "casual"
+                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Classiques (Points)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardMode("pvp")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    leaderboardMode === "pvp"
+                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Duels PvP (Crédits)
+                </button>
+              </div>
+            </div>
+
+            {leaderboardMode === "casual" ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+                    {CASUAL_ARCADE_GAME_IDS.map((gameId) => (
+                      <button
+                        key={gameId}
+                        type="button"
+                        onClick={() => setLeaderboardGame(gameId)}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                          leaderboardGame === gameId
+                            ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
+                            : "bg-[#180d34]/75 border-purple-500/20 text-slate-300 hover:text-white"
+                        }`}
+                      >
+                        {CASUAL_ARCADE_GAMES[gameId].name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {(
+                      [
+                        { id: "all", label: "Tout" },
+                        { id: "30d", label: "30j" },
+                        { id: "7d", label: "7j" },
+                      ] as const
+                    ).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setLeaderboardPeriod(p.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
+                          leaderboardPeriod === p.id
+                            ? "bg-purple-600/40 text-white border border-purple-400/40"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {isAuthenticated && (
+                  <div className="tmu-glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3 tabular-nums">
+                    <span className="text-sm text-slate-200">
+                      Votre meilleur score ({CASUAL_ARCADE_GAMES[leaderboardGame].name})
+                    </span>
+                    <span className="text-lg font-extrabold text-cyan-300">
+                      {(casualMyBest[leaderboardGame]?.score ?? 0).toLocaleString()} pts
+                    </span>
+                  </div>
+                )}
+
+                {casualLeaderboardLoading ? (
+                  <Card className="bg-slate-900/40 border-purple-500/20 py-10 text-center">
+                    <Loader2 className="w-8 h-8 mx-auto text-purple-400 animate-spin" />
+                  </Card>
+                ) : casualLeaderboard.length === 0 ? (
+                  <Card className="tmu-glass py-12 text-center">
+                    <Trophy className="w-12 h-12 mx-auto text-purple-400/40 mb-3" />
+                    <p className="text-slate-200 font-medium">
+                      Aucun score enregistré pour {CASUAL_ARCADE_GAMES[leaderboardGame].name}
+                    </p>
+                    <p className="text-slate-400 text-sm mt-1">
+                      Lancez une partie pour établir le premier record !
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-2.5">
+                    {casualLeaderboard.map((entry) => (
+                      <Card key={entry.userId} className="tmu-glass">
+                        <CardContent className="flex items-center justify-between py-3.5">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                                entry.rank === 1
+                                  ? "bg-gradient-to-br from-amber-500 to-yellow-600 text-white"
+                                  : entry.rank === 2
+                                    ? "bg-gradient-to-br from-slate-300 to-slate-400 text-slate-900"
+                                    : entry.rank === 3
+                                      ? "bg-gradient-to-br from-amber-700 to-amber-800 text-white"
+                                      : "bg-[#180d34] text-slate-300 border border-purple-500/20"
+                              }`}
+                            >
+                              {entry.rank}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white font-semibold truncate">
+                                {entry.displayName}
+                              </p>
+                              <p className="text-slate-400 text-xs tabular-nums">
+                                Niveau {entry.level}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-cyan-300 font-extrabold text-lg tabular-nums shrink-0">
+                            {entry.score.toLocaleString()} pts
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : leaderboard.length === 0 ? (
               <Card className="bg-slate-900/40 border-purple-500/20 py-12 text-center">
                 <Crown className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Le classement est vide</p>
@@ -1328,7 +1557,7 @@ export default function ArcadePage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-amber-400 font-bold text-lg">
+                        <p className="text-amber-400 font-bold text-lg tabular-nums">
                           {parseFloat(entry.total_winnings).toLocaleString()} cr
                         </p>
                       </div>
@@ -1594,6 +1823,48 @@ export default function ArcadePage() {
         onClose={() => setShowQuickSignIn(false)}
         onSuccess={() => window.location.reload()}
       />
+
+      {/* Casual Full-Viewport Arcade Games */}
+      {activeCasualGame === "snake" && (
+        <SnakeGame
+          bestScore={casualMyBest.snake?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+      {activeCasualGame === "tetris" && (
+        <TetrisGame
+          bestScore={casualMyBest.tetris?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+      {activeCasualGame === "brick_ball" && (
+        <BrickBallGame
+          bestScore={casualMyBest.brick_ball?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+      {activeCasualGame === "xensia" && (
+        <XensiaGame
+          bestScore={casualMyBest.xensia?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
     </TmuShell>
   );
 }
