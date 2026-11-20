@@ -33,10 +33,13 @@ it opens many other surfaces (table below) that are not ready.
 
 1. **The shop catalog is empty.** `marketing_packs` and `print_products` have 0
    rows in production, `/api/marketing/packs` and `/api/marketing/print/products`
-   return `[]`, nothing seeds production, and there is no admin screen to create
-   or edit items. Nothing can be sold until Luq supplies the product **names and
-   CAD prices** (and which print products to launch), and they are loaded through
-   a reviewed, deliberate step. Do not seed production with test or invented data.
+   return `[]`, and nothing auto-seeds production with test or invented data.
+   The owner can now create, price (in CAD), and activate/deactivate Marketing
+   Packs and Print Products directly from the Vault Finance panel
+   (`MarketingCatalogPanel`, backed by `requireOwner` endpoints under
+   `/api/marketing/admin/catalog`, `/api/marketing/admin/packs`, and
+   `/api/marketing/admin/print-products`) whenever final product names and CAD
+   prices are ready.
 2. **Plan prices: currency decided, figures need your review.** Plans are
    charged in **CAD** (the company is Canadian; FCFA stays the on-screen
    reference on `client/src/lib/tiers.ts`). The single price table is
