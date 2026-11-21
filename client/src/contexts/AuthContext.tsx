@@ -8,6 +8,10 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { setAuthToken, clearCachedUser } from "@/lib/auth";
+import {
+  fetchAuthSession,
+  invalidateAuthSessionCache,
+} from "@/lib/session-fetch";
 import { queryClient } from "@/lib/queryClient";
 import { normalizeAccountRoleFromEmail } from "@/lib/dashboard-routes";
 
@@ -100,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const restoreAuth = useCallback(async () => {
+  const restoreSession = useCallback(async (force: boolean) => {
     setAuthError(null);
     setLoading(true);
     const cachedRaw = localStorage.getItem(USER_CACHE_KEY);
@@ -134,24 +138,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const abortCtrl = new AbortController();
     const abortTimer = setTimeout(() => abortCtrl.abort(), 8000);
     try {
-      const response = await fetch("/auth/session", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
+      const response = await fetchAuthSession({
+        force,
         signal: abortCtrl.signal,
       });
       clearTimeout(abortTimer);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = response.data ?? {};
         if (data.success && data.user) {
           const normalized = normalizeUser(
             data.user as Record<string, unknown>,
           );
           setUser(normalized);
           setAuthError(null);
-          setToken(data.token ?? null);
-          if (data.token) setAuthToken(data.token);
+          const sessionToken =
+            typeof data.token === "string" ? data.token : null;
+          setToken(sessionToken);
+          if (sessionToken) setAuthToken(sessionToken);
           localStorage.setItem(USER_CACHE_KEY, JSON.stringify(normalized));
         } else if (data.authenticated === false) {
           // Definitive unauthenticated response — safe to clear
@@ -168,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // Any other status (5xx, 502, 503 during deploy) → keep cached user
     } catch {
+      clearTimeout(abortTimer);
       // Network error, abort, or timeout — keep cached display state.
       // Heartbeat will re-verify. DO NOT clearSession here (that was causing the
       // "logged in but pages think I'm not" bug on cold starts).
@@ -177,9 +182,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const restoreAuth = useCallback(
+    () => restoreSession(true),
+    [restoreSession],
+  );
+
   useEffect(() => {
-    restoreAuth();
-  }, [restoreAuth]);
+    void restoreSession(false);
+  }, [restoreSession]);
 
   // Heartbeat: re-verify via cookie every 5 min
   useEffect(() => {
@@ -232,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (newToken: string, newUser: AuthUser) => {
+    invalidateAuthSessionCache();
     // Token lives in-memory only — httpOnly cookie is the persistent auth mechanism
     setAuthToken(newToken);
     // Commit synchronously: callers navigate right after login(), and a protected
@@ -246,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    invalidateAuthSessionCache();
     const target = portalHomeForLogout();
     fullClearOnLogout();
     try {

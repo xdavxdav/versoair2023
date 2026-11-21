@@ -158,6 +158,93 @@ function addDeclaredRoutes(src, routerVar, prefix) {
 }
 
 /**
+ * Find every `target.use("/prefix", ...args)` mount in a file and yield
+ * `{ prefix, identifiers }` where `identifiers` are the top-level bare
+ * identifier arguments after the path prefix. This handles routers mounted
+ * behind middleware such as:
+ *   router.use("/business-claims", requireAuth(["admin"]), businessClaimsRouter)
+ */
+function extractMountedUses(src, targetName) {
+  const results = [];
+  const callRe = new RegExp(`\\b${targetName}\\.use\\(`, "g");
+  for (const m of src.matchAll(callRe)) {
+    const start = m.index + m[0].length;
+    let depth = 1;
+    let quote = null;
+    let escaped = false;
+    let end = start;
+    for (let i = start; i < src.length && depth > 0; i++) {
+      const ch = src[i];
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (ch === "\\") {
+          escaped = true;
+        } else if (ch === quote) {
+          quote = null;
+        }
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === "`") {
+        quote = ch;
+      } else if (ch === "(") {
+        depth++;
+      } else if (ch === ")") {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (depth !== 0) continue;
+
+    // Split top-level comma-separated arguments inside target.use(...)
+    const argsText = src.slice(start, end);
+    const args = [];
+    let argStart = 0;
+    let nestedDepth = 0;
+    quote = null;
+    escaped = false;
+    for (let i = 0; i < argsText.length; i++) {
+      const ch = argsText[i];
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (ch === "\\") {
+          escaped = true;
+        } else if (ch === quote) {
+          quote = null;
+        }
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === "`") {
+        quote = ch;
+      } else if (ch === "(" || ch === "[" || ch === "{") {
+        nestedDepth++;
+      } else if (ch === ")" || ch === "]" || ch === "}") {
+        nestedDepth--;
+      } else if (ch === "," && nestedDepth === 0) {
+        args.push(argsText.slice(argStart, i).trim());
+        argStart = i + 1;
+      }
+    }
+    const last = argsText.slice(argStart).trim();
+    if (last) args.push(last);
+
+    if (args.length < 2) continue;
+    const prefixMatch = args[0].match(/^["']([^"']+)["']$/);
+    if (!prefixMatch) continue;
+
+    const identifiers = args.slice(1).filter((arg) => /^[A-Za-z_$]\w*$/.test(arg));
+    if (identifiers.length > 0) {
+      results.push({ prefix: prefixMatch[1], identifiers });
+    }
+  }
+  return results;
+}
+
+/**
  * Walk a router file, recording its routes and recursing into any sub-routers
  * it mounts. Routers are frequently directories with an index.ts that only
  * does `router.use("/x", subRouter)` (see server/routes/api-v1), so this must
@@ -172,23 +259,29 @@ function collectRoutes(file, prefix, visited = new Set()) {
 
   addDeclaredRoutes(src, "router", prefix);
 
-  // Sub-routers: router.use("/x", subRouter)
-  for (const nested of src.matchAll(
-    /router\.use\(\s*["']([^"']+)["']\s*,\s*(\w+)/g,
+  // Sub-routers: router.use("/x", ...middleware, subRouter)
+  for (const { prefix: subPrefix, identifiers } of extractMountedUses(
+    src,
+    "router",
   )) {
-    const [, subPrefix, subVar] = nested;
-    const imp = src.match(
-      new RegExp(`import\\s+${subVar}\\s+from\\s+["']([^"']+)["']`),
-    );
-    if (!imp) {
-      // A sub-router built in this same file: const admin = Router();
-      if (new RegExp(`\\b(?:const|let)\\s+${subVar}\\s*=\\s*Router\\(`).test(src)) {
-        addDeclaredRoutes(src, subVar, joinPrefix(prefix, subPrefix));
+    for (const subVar of identifiers) {
+      const imp = src.match(
+        new RegExp(`import\\s+${subVar}\\s+from\\s+["']([^"']+)["']`),
+      );
+      if (!imp) {
+        // A sub-router built in this same file: const admin = Router();
+        if (
+          new RegExp(`\\b(?:const|let)\\s+${subVar}\\s*=\\s*Router\\(`).test(
+            src,
+          )
+        ) {
+          addDeclaredRoutes(src, subVar, joinPrefix(prefix, subPrefix));
+        }
+        continue;
       }
-      continue;
+      const subFile = resolveRouter(imp[1], path.dirname(file));
+      if (subFile) collectRoutes(subFile, joinPrefix(prefix, subPrefix), visited);
     }
-    const subFile = resolveRouter(imp[1], path.dirname(file));
-    if (subFile) collectRoutes(subFile, joinPrefix(prefix, subPrefix), visited);
   }
 
   // A router mounted without a path inherits its parent's prefix.
@@ -219,11 +312,10 @@ for (const m of indexSrc.matchAll(
 }
 
 // ── 3. Expand every mounted router tree ──────────────────────────────────────
-for (const m of indexSrc.matchAll(
-  /app\.use\(\s*["']([^"']+)["']\s*,\s*(\w+)/g,
-)) {
-  const [, prefix, varName] = m;
-  if (varToFile[varName]) collectRoutes(varToFile[varName], prefix);
+for (const { prefix, identifiers } of extractMountedUses(indexSrc, "app")) {
+  for (const varName of identifiers) {
+    if (varToFile[varName]) collectRoutes(varToFile[varName], prefix);
+  }
 }
 
 // ── 4. Collect client-side API paths ─────────────────────────────────────────
