@@ -96,41 +96,81 @@ export default function Pricing() {
               EUR amounts are derived from the fixed peg (1 EUR = 655.957 FCFA)
               and are not approved prices.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {GEOADMIN_OFFER_ORDER.map((tier) => (
-                <button
-                  key={tier}
+            <div className="mb-5 flex justify-center gap-2" role="group" aria-label="Billing cycle">
+              {(["monthly", "annual"] as const).map((value) => (
+                <Button
+                  key={value}
                   type="button"
-                  onClick={() => {
-                    setSelectedTier(tier);
-                    setDetailsOpen(true);
-                  }}
-                  className={`rounded-xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  variant={cycle === value ? "default" : "outline"}
+                  aria-pressed={cycle === value}
+                  onClick={() => setCycle(value)}
+                >
+                  {value === "monthly" ? "Monthly" : "Annual"}
+                </Button>
+              ))}
+            </div>
+            <p className="mb-6 text-center text-sm text-slate-600">
+              {cycle === "annual"
+                ? "Showing annual billing: self-serve CAD plans include two months free compared with twelve monthly payments (CA$430/yr, CA$960/yr, CA$1,870/yr)."
+                : "Showing monthly billing: self-serve CAD plans renew monthly (CA$43/mo, CA$96/mo, CA$187/mo); switch to Annual to view full-year rates."}
+            </p>
+            <div
+              className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+              aria-label="Clear plan comparison"
+            >
+              {GEOADMIN_OFFER_ORDER.map((tier) => (
+                <article
+                  key={tier}
+                  className={`flex flex-col rounded-2xl border bg-white p-6 shadow-sm transition ${
                     selectedTier === tier
                       ? "border-amber-700 ring-1 ring-amber-700"
                       : "border-slate-200"
                   }`}
                 >
-                  <span className="block font-semibold">{GEOADMIN_OFFER_NAMES[tier]}</span>
-                  <span className="mt-2 block text-slate-800">
-                    <BusinessPlanPriceSummary offer={tier} />
-                  </span>
-                  <span className="mt-2 block text-sm text-slate-600">
-                    {tier === "free"
-                      ? "Start with a basic directory presence."
-                      : tier === "enterprise"
-                        ? "Discuss a package tailored to your needs."
-                        : marketAvailability === false
-                          ? isGeoAdminComingSoonCountry(selectedCountry ?? "")
-                            ? "GeoAdmin is coming soon in Côte d’Ivoire."
-                            : "GeoAdmin availability is not confirmed in your selected country."
-                          : GEOADMIN_PLAN_DETAILS[tier].shortDescription}
-                  </span>
-                </button>
+                  <div>
+                    <h2 className="text-xl font-bold">{GEOADMIN_OFFER_NAMES[tier]}</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {tier === "free"
+                        ? "Start with a basic directory presence."
+                        : tier === "enterprise"
+                          ? "Discuss a package tailored to your needs."
+                          : marketAvailability === false
+                            ? isGeoAdminComingSoonCountry(selectedCountry ?? "")
+                              ? "GeoAdmin is coming soon in Côte d’Ivoire."
+                              : "GeoAdmin availability is not confirmed in your selected country."
+                            : GEOADMIN_PLAN_DETAILS[tier].shortDescription}
+                    </p>
+                  </div>
+                  <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/80 p-3.5 text-slate-800">
+                    <BusinessPlanPriceSummary offer={tier} cycle={cycle} />
+                  </div>
+                  <GeoAdminOfferDetails offer={tier} />
+                  <div className="mt-auto pt-2">
+                    {isSelfServePlanTier(tier) ? (
+                      <PlanCheckoutButton
+                        tier={tier}
+                        cycle={cycle}
+                        disabled={checkout.awaitingPayment}
+                      />
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTier(tier);
+                        setDetailsOpen(true);
+                      }}
+                      className="mt-4 inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-950"
+                    >
+                      <span>Discuss</span>
+                      <span>{GEOADMIN_OFFER_NAMES[tier]}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </article>
               ))}
             </div>
 
-            <p className="mt-4 text-xs leading-relaxed text-slate-700">
+            <p className="mt-5 text-xs leading-relaxed text-slate-700">
               CAD amounts are approved. FCFA amounts are the annual base
               schedule. EUR amounts are calculated from the fixed peg and are
               not approved prices. Availability, deliverables, taxes, and terms
@@ -150,83 +190,17 @@ export default function Pricing() {
           </section>
         </div>
 
-        <section className="mt-14" aria-labelledby="plan-inclusions-heading">
-          <div className="mx-auto mb-7 max-w-3xl text-center">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-900">
-              Clear plan comparison
-            </p>
-            <h2
-              id="plan-inclusions-heading"
-              className="text-3xl font-bold sm:text-4xl"
-            >
-              What each plan is designed to include
-            </h2>
-            <p className="mt-3 leading-relaxed text-slate-600">
-              Compare the intended listing, visibility, and support benefits
-              before you contact us. Select any plan to build an inquiry around
-              your priorities.
-            </p>
-          </div>
-          <div className="mb-5 flex justify-center gap-2" role="group" aria-label="Billing cycle">
-            {(["monthly", "annual"] as const).map((value) => (
-              <Button
-                key={value}
-                type="button"
-                variant={cycle === value ? "default" : "outline"}
-                aria-pressed={cycle === value}
-                onClick={() => setCycle(value)}
-              >
-                {value === "monthly" ? "Monthly" : "Annual"}
-              </Button>
-            ))}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {GEOADMIN_OFFER_ORDER.map((tier) => {
-              return (
-                <article
-                  key={tier}
-                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-xl font-bold">{GEOADMIN_OFFER_NAMES[tier]}</h3>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {GEOADMIN_PLAN_DETAILS[tier].shortDescription}
-                      </p>
-                    </div>
-                  </div>
-                  <GeoAdminOfferDetails offer={tier} />
-                  {isSelfServePlanTier(tier) ? (
-                    <PlanCheckoutButton
-                      tier={tier}
-                      cycle={cycle}
-                      disabled={checkout.awaitingPayment}
-                    />
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedTier(tier);
-                      setDetailsOpen(true);
-                    }}
-                    className="mt-6 inline-flex items-center gap-2 font-semibold text-amber-900 hover:text-amber-950"
-                  >
-                    <span>Discuss</span>
-                    <span>{GEOADMIN_OFFER_NAMES[tier]}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
         <section
           className="mt-12 grid gap-5 lg:grid-cols-2"
           aria-label="Pricing and service scope"
         >
           <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
             <h2 className="text-2xl font-bold">How to interpret these prices</h2>
+            <p className="mt-3 leading-relaxed text-slate-600">
+              {cycle === "annual"
+                ? "Annual view selected: self-serve CAD plans are billed once per year at ten times the monthly rate (CA$430/yr for Essentiel, CA$960/yr for Pro Vérifié, and CA$1,870/yr for Pro Max), while Premium shows its CA$720/yr inquiry reference."
+                : "Monthly view selected: self-serve CAD plans are billed month-to-month (CA$43/mo for Essentiel, CA$96/mo for Pro Vérifié, and CA$187/mo for Pro Max), while Premium shows its CA$60/mo inquiry reference."}
+            </p>
             <p className="mt-3 leading-relaxed text-slate-600">
               CAD is the approved price. FCFA is the annual base schedule. EUR
               amounts are derived using the fixed 1 EUR = 655.957 FCFA peg and

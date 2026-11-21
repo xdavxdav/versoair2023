@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useTranslate } from "@/hooks/use-translate";
+import { isBundledLanguage } from "@shared/public-translations";
 
 export interface PublicOffer {
   key: string;
@@ -79,9 +81,11 @@ export default function OfferCheckoutButton({
   onOwned,
 }: OfferCheckoutButtonProps) {
   const { user } = useAuthContext();
+  const { currentLang } = useLanguage();
   const tr = useTranslate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const native = isBundledLanguage(currentLang);
 
   async function start() {
     if (!user) {
@@ -122,7 +126,15 @@ export default function OfferCheckoutButton({
         className={className ?? "bg-amber-600 text-white hover:bg-amber-700"}
       >
         {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {tr(label)} — CA${(offer.amountCents / 100).toFixed(2)}
+        <span
+          key={`${offer.key}-${offer.amountCents}-${currentLang}`}
+          lang={native ? currentLang : undefined}
+          dir="auto"
+          translate={native ? "no" : undefined}
+          className={native ? "notranslate" : undefined}
+        >
+          {tr(label)} — CA${(offer.amountCents / 100).toFixed(2)}
+        </span>
       </Button>
       {error ? (
         <p role="alert" className="mt-2 text-sm text-red-600">

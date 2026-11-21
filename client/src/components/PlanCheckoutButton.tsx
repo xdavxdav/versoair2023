@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -10,6 +11,7 @@ import {
   type BillingCycle,
   type SelfServePlanTier,
 } from "@shared/plan-pricing";
+import { isBundledLanguage } from "@shared/public-translations";
 
 interface PlanCheckoutButtonProps {
   tier: SelfServePlanTier;
@@ -25,6 +27,7 @@ export default function PlanCheckoutButton({
   disabled = false,
 }: PlanCheckoutButtonProps) {
   const { user } = useAuthContext();
+  const { currentLang } = useLanguage();
   const tr = useTranslate();
   const [open, setOpen] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,6 +54,7 @@ export default function PlanCheckoutButton({
   const label = tr(cycle === "annual" ? "Pay {price}/yr" : "Pay {price}/mo", {
     price: `CA$${amount}`,
   });
+  const native = isBundledLanguage(currentLang);
 
   async function startCheckout() {
     if (!user) {
@@ -91,7 +95,15 @@ export default function PlanCheckoutButton({
         })}
       >
         {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {label}
+        <span
+          key={`${tier}-${cycle}-${currentLang}`}
+          lang={native ? currentLang : undefined}
+          dir="auto"
+          translate={native ? "no" : undefined}
+          className={native ? "notranslate" : undefined}
+        >
+          {label}
+        </span>
       </Button>
       {error ? (
         <p role="alert" className="mt-2 text-sm text-red-700">
