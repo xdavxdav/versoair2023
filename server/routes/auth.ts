@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -1229,10 +1229,21 @@ router.get(
 
 /**
  * GET /auth/session
- * Return current user info from token (JWT only — base64 geo-admin tokens removed)
+ * Return current user info from token (JWT only — base64 geo-admin tokens removed).
+ * Signed-out visitors without credentials receive 200 { authenticated: false, user: null }
+ * so initial page hydration does not spam browser console 401 errors, while any request
+ * carrying a token still runs through requireAuth() (JWT, revocation, verification, MFA).
  */
 router.get(
   "/session",
+  (req: Request, res: Response, next: NextFunction) => {
+    res.set("Cache-Control", "no-store");
+    if (!getTokenFromRequest(req)) {
+      res.json({ success: true, authenticated: false, user: null });
+      return;
+    }
+    next();
+  },
   requireAuth(),
   asyncHandler(async (req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");

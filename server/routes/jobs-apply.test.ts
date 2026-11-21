@@ -517,7 +517,21 @@ test("a CV is private to its applicant, the posting's owner and the team", async
     assert.equal(other.status, 404);
     assert.ok(!other.bytes.toString("latin1").includes("%PDF"));
   });
-  assert.deepEqual(db.matching("a.resume_data")[0].params, [APPLICATION, JOB]);
+  assert.deepEqual(db.matching("a.resume_data")[0].params, [
+    APPLICATION,
+    JOB,
+    applicant.id,
+  ]);
+});
+
+test("an active business co-owner can download the applicant's CV", async () => {
+  const coOwner = { id: 88, role: "user" };
+  scriptedDb({ application: { ...storedResume, is_owner: true } });
+  await withRouter(jobsRouter, async (origin) => {
+    const res = await download(origin, RESUME_PATH, signIn(coOwner));
+    assert.equal(res.status, 200);
+    assert.ok(res.bytes.equals(PDF));
+  });
 });
 
 test("a posting without a business has no owner who could read its CVs", async () => {

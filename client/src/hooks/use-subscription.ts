@@ -15,6 +15,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { TierKey } from "@/lib/tiers";
 import { TIERS, TIER_ORDER, getTierIndex } from "@/lib/tiers";
 import { useOptionalAuthContext } from "@/contexts/AuthContext";
+import {
+  fetchAuthSession,
+  invalidateAuthSessionCache,
+} from "@/lib/session-fetch";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────────
 
@@ -78,7 +82,7 @@ export function useSubscription(): UseSubscriptionReturn {
   const authLoading = auth?.loading ?? false;
   const latestRequest = useRef(0);
 
-  const fetchUser = useCallback(async () => {
+  const fetchUser = useCallback(async (force = false) => {
     // Only the newest request may update state: a slow answer for a previous
     // account must not overwrite the one for the account signed in now.
     const requestId = ++latestRequest.current;
@@ -87,13 +91,7 @@ export function useSubscription(): UseSubscriptionReturn {
       setLoading(true);
       const token = getStoredToken();
 
-      const res = await fetch("/auth/session", {
-        credentials: "include",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetchAuthSession({ force, token });
 
       if (!isLatest()) return;
 
@@ -103,10 +101,12 @@ export function useSubscription(): UseSubscriptionReturn {
         return;
       }
 
-      const data = await res.json();
-      if (!isLatest()) return;
+      const data = res.data as {
+        success?: boolean;
+        user?: Record<string, any> | null;
+      } | null;
 
-      if (data.success && data.user) {
+      if (data?.success && data.user) {
         const u = data.user;
         setUser({
           id: u.id,
@@ -138,6 +138,8 @@ export function useSubscription(): UseSubscriptionReturn {
       if (isLatest()) setLoading(false);
     }
   }, []);
+
+  const refetch = useCallback(() => fetchUser(true), [fetchUser]);
 
   // Fetch on mount.
   useEffect(() => {
@@ -195,6 +197,7 @@ export function useSubscription(): UseSubscriptionReturn {
   );
 
   const signOut = useCallback(() => {
+    invalidateAuthSessionCache();
     clearStoredTokens();
     setUser(null);
   }, []);
@@ -206,7 +209,7 @@ export function useSubscription(): UseSubscriptionReturn {
     tier,
     tierName,
     hasTierAccess,
-    refetch: fetchUser,
+    refetch,
     signOut,
   };
 }

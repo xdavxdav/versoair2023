@@ -168,3 +168,35 @@ test("anonymous public reads work through the global auth gate without exposing 
     else process.env.DATABASE_URL = previousUrl;
   }
 });
+
+test("GET /auth/session returns 200 unauthenticated for anonymous visitors and 401 for invalid tokens", async () => {
+  const { globalAuthGate } = await import("./auth");
+  const { default: authRouter } = await import("../routes/auth");
+  const app = express();
+  app.use(globalAuthGate);
+  app.use("/auth", authRouter);
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const origin = `http://127.0.0.1:${address.port}`;
+  try {
+    const anon = await fetch(`${origin}/auth/session`);
+    assert.equal(anon.status, 200);
+    assert.equal(anon.headers.get("cache-control"), "no-store");
+    assert.deepEqual(await anon.json(), {
+      success: true,
+      authenticated: false,
+      user: null,
+    });
+
+    const badToken = await fetch(`${origin}/auth/session`, {
+      headers: { Authorization: "Bearer not-a-valid-jwt" },
+    });
+    assert.equal(badToken.status, 401);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
