@@ -16,13 +16,13 @@ import {
 
 test("unfinished public pages start eligible and blocked for deployment", () => {
   assert.deepEqual(DEFAULT_PAGE_READINESS_CONFIG, {
-    version: 10,
+    version: 11,
     eligiblePaths: LOCAL_PREVIEW_ONLY_PATHS,
     blockedPaths: LOCAL_PREVIEW_ONLY_PATHS,
   });
 });
 
-test("released pages (directory, categories, community pages) are no longer gated", () => {
+test("released pages (directory, categories, community, arcade, programs, sponsorship) are no longer gated", () => {
   for (const path of RELEASED_PAGE_PATHS) {
     assert.equal(isLocalPreviewOnlyPath(path), false, `${path} should be open`);
     assert.equal(isLocalPreviewOnlyPath(`${path}/child`), false);
@@ -61,7 +61,7 @@ test("migration releases the directory and category pages from a saved version 7
     ],
   };
   const migrated = migratePageReadinessConfig(saved);
-  assert.equal(migrated.version, 10);
+  assert.equal(migrated.version, 11);
   for (const path of RELEASED_PAGE_PATHS) {
     assert.equal(migrated.eligiblePaths.includes(path), false, `${path} still eligible`);
     assert.equal(migrated.blockedPaths.includes(path), false, `${path} still blocked`);
@@ -75,7 +75,7 @@ test("migration releases the directory and category pages from a saved version 7
   assert.deepEqual(migratePageReadinessConfig(migrated), migrated);
 });
 
-test("migration releases the community pages and arcade from saved version 8/9 configs", () => {
+test("migration releases community pages, arcade, programs, and sponsorship from saved v8/v9/v10 configs", () => {
   const community = [
     "/get-involved",
     "/ong-culturelle",
@@ -89,38 +89,40 @@ test("migration releases the community pages and arcade from saved version 8/9 c
     eligiblePaths: [...community, "/arcade", "/programs", "/sponsorship", "/about"],
     blockedPaths: [...community, "/arcade", "/programs", "/sponsorship"],
   });
-  assert.equal(migratedFromEight.version, 10);
-  for (const path of [...community, "/arcade"]) {
+  assert.equal(migratedFromEight.version, 11);
+  for (const path of [...community, "/arcade", "/programs", "/sponsorship"]) {
     assert.equal(migratedFromEight.eligiblePaths.includes(path), false, `${path} still eligible`);
     assert.equal(migratedFromEight.blockedPaths.includes(path), false, `${path} still blocked`);
   }
-  assert.deepEqual(
-    new Set(migratedFromEight.blockedPaths),
-    new Set(["/programs", "/sponsorship"]),
-  );
+  assert.ok(migratedFromEight.eligiblePaths.includes("/about"));
+  assert.deepEqual(migratedFromEight.blockedPaths, []);
 
   const migratedFromNine = migratePageReadinessConfig({
     version: 9,
     eligiblePaths: ["/arcade", "/programs", "/sponsorship", "/about"],
     blockedPaths: ["/arcade", "/programs", "/sponsorship"],
   });
-  assert.equal(migratedFromNine.version, 10);
-  assert.equal(migratedFromNine.eligiblePaths.includes("/arcade"), false);
-  assert.equal(migratedFromNine.blockedPaths.includes("/arcade"), false);
-  assert.ok(migratedFromNine.eligiblePaths.includes("/about"));
-  assert.deepEqual(
-    new Set(migratedFromNine.blockedPaths),
-    new Set(["/programs", "/sponsorship"]),
-  );
+  assert.equal(migratedFromNine.version, 11);
+  assert.deepEqual(migratedFromNine.eligiblePaths, ["/about"]);
+  assert.deepEqual(migratedFromNine.blockedPaths, []);
+
+  const migratedFromTen = migratePageReadinessConfig({
+    version: 10,
+    eligiblePaths: ["/programs", "/sponsorship", "/about"],
+    blockedPaths: ["/programs", "/sponsorship"],
+  });
+  assert.equal(migratedFromTen.version, 11);
+  assert.deepEqual(migratedFromTen.eligiblePaths, ["/about"]);
+  assert.deepEqual(migratedFromTen.blockedPaths, []);
 });
 
-test("settings migration gates unfinished pages and removes the mistaken docs gate", () => {
+test("settings migration strips retired gates and preserves manual operator gates", () => {
   const migratedVersionOne = migratePageReadinessConfig({
     version: 1,
     eligiblePaths: ["/programs"],
     blockedPaths: ["/programs"],
   });
-  assert.equal(migratedVersionOne.version, 10);
+  assert.equal(migratedVersionOne.version, 11);
   assert.deepEqual(
     new Set(migratedVersionOne.eligiblePaths),
     new Set(LOCAL_PREVIEW_ONLY_PATHS),
@@ -134,11 +136,10 @@ test("settings migration gates unfinished pages and removes the mistaken docs ga
     eligiblePaths: ["/programs", "/docs", "/about"],
     blockedPaths: ["/programs", "/docs"],
   });
-  assert.equal(migratedVersionThree.version, 10);
+  assert.equal(migratedVersionThree.version, 11);
   assert.deepEqual(migratedVersionThree.eligiblePaths, [
-    "/programs",
     "/about",
-    ...LOCAL_PREVIEW_ONLY_PATHS.filter((path) => path !== "/programs"),
+    ...LOCAL_PREVIEW_ONLY_PATHS,
   ]);
   assert.deepEqual(
     new Set(migratedVersionThree.blockedPaths),
@@ -148,16 +149,12 @@ test("settings migration gates unfinished pages and removes the mistaken docs ga
     migratePageReadinessConfig({
       version: 5,
       eligiblePaths: ["/programs", "/vheartz", "/commerce", "/about"],
-      blockedPaths: ["/programs", "/vheartz", "/commerce"],
+      blockedPaths: ["/programs", "/vheartz", "/commerce", "/about"],
     }),
     {
-      version: 10,
-      eligiblePaths: [
-        "/programs",
-        "/about",
-        ...LOCAL_PREVIEW_ONLY_PATHS.filter((path) => path !== "/programs"),
-      ],
-      blockedPaths: [...new Set(["/programs", ...LOCAL_PREVIEW_ONLY_PATHS])],
+      version: 11,
+      eligiblePaths: ["/about", ...LOCAL_PREVIEW_ONLY_PATHS],
+      blockedPaths: ["/about", ...LOCAL_PREVIEW_ONLY_PATHS],
     },
   );
 
@@ -166,9 +163,11 @@ test("settings migration gates unfinished pages and removes the mistaken docs ga
     eligiblePaths: ["/about"],
     blockedPaths: ["/about"],
   });
-  assert.equal(migratedVersionSix.version, 10);
+  assert.equal(migratedVersionSix.version, 11);
   assert.equal(migratedVersionSix.eligiblePaths.includes("/arcade"), false);
   assert.equal(migratedVersionSix.blockedPaths.includes("/arcade"), false);
+  assert.equal(migratedVersionSix.eligiblePaths.includes("/programs"), false);
+  assert.equal(migratedVersionSix.eligiblePaths.includes("/sponsorship"), false);
 });
 
 test("a blocked page also blocks descendant routes but not similarly named siblings", () => {
@@ -177,8 +176,8 @@ test("a blocked page also blocks descendant routes but not similarly named sibli
   assert.equal(isPageBlocked("/get-involved-old", ["/get-involved"]), false);
   assert.equal(isPageBlocked("/arcade", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), false);
   assert.equal(isPageBlocked("/arcade/matches/1", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), false);
-  assert.equal(isPageBlocked("/programs/summer", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), true);
-  assert.equal(isPageBlocked("/sponsorship", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), true);
+  assert.equal(isPageBlocked("/programs/summer", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), false);
+  assert.equal(isPageBlocked("/sponsorship", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), false);
   assert.equal(isPageBlocked("/vheartz", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), false);
   assert.equal(isPageBlocked("/vheatrz", DEFAULT_PAGE_READINESS_CONFIG.blockedPaths), false);
   assert.equal(
@@ -225,30 +224,40 @@ test("preview-only pages open only on a local development host", () => {
   assert.equal(isLocalDevelopmentHost("192.168.1.20"), false);
   assert.equal(isLocalPreviewOnlyPath("/vheartz/team"), false);
   assert.equal(isLocalPreviewOnlyPath("/arcade/matches/1"), false);
-  assert.equal(isLocalPreviewOnlyPath("/programs/summer"), true);
+  assert.equal(isLocalPreviewOnlyPath("/programs/summer"), false);
+  assert.equal(isLocalPreviewOnlyPath("/sponsorship"), false);
   assert.equal(isLocalPreviewOnlyPath("/about"), false);
+  assert.equal(isLocalPreviewOnlyPath("/preview/child", ["/preview"]), true);
 
-  const configuredGates = [...LOCAL_PREVIEW_ONLY_PATHS, "/about"];
-  assert.deepEqual(getEffectiveBlockedPaths(configuredGates, true), ["/about"]);
-  assert.deepEqual(getEffectiveBlockedPaths(configuredGates, false), configuredGates);
+  const samplePreviewPaths = ["/preview"];
+  const configuredGates = [...samplePreviewPaths, "/about"];
+  assert.deepEqual(
+    getEffectiveBlockedPaths(configuredGates, true, samplePreviewPaths),
+    ["/about"],
+  );
+  assert.deepEqual(
+    getEffectiveBlockedPaths(configuredGates, false, samplePreviewPaths),
+    configuredGates,
+  );
 });
 
 test("production always forces local-preview-only pages to remain blocked", () => {
+  const samplePreviewPaths = ["/preview", "/tour"];
   const manuallyOpenedConfig = {
-    version: 10,
-    eligiblePaths: ["/programs", "/about"],
+    version: 11,
+    eligiblePaths: ["/preview", "/about"],
     blockedPaths: ["/about"],
   };
   assert.deepEqual(
-    enforceProductionPreviewGates(manuallyOpenedConfig, true),
+    enforceProductionPreviewGates(manuallyOpenedConfig, true, samplePreviewPaths),
     {
-      version: 10,
-      eligiblePaths: ["/programs", "/about", "/sponsorship"],
-      blockedPaths: ["/about", "/programs", "/sponsorship"],
+      version: 11,
+      eligiblePaths: ["/preview", "/about", "/tour"],
+      blockedPaths: ["/about", "/preview", "/tour"],
     },
   );
   assert.deepEqual(
-    enforceProductionPreviewGates(manuallyOpenedConfig, false),
+    enforceProductionPreviewGates(manuallyOpenedConfig, false, samplePreviewPaths),
     manuallyOpenedConfig,
   );
 });

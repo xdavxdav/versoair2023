@@ -2,8 +2,6 @@
 
 import { motion } from "framer-motion";
 import {
-  Zap,
-  Target,
   Users,
   TrendingUp,
   Award,
@@ -11,7 +9,6 @@ import {
   Globe,
   Briefcase,
   CheckCircle,
-  Star,
   ArrowRight,
   Building2,
   Megaphone,
@@ -20,13 +17,13 @@ import {
   Gift,
   Handshake,
   Mail,
-  Phone,
   MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import ScrollToTop from "@/components/ScrollToTop";
 import SponsorSlotMachine from "@/components/SponsorSlotMachine";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -197,9 +194,9 @@ const SPONSORSHIP_OPTIONS = [
     title: "Scholarship Sponsorship",
     desc: "Scholarships, apprenticeships, and exchanges are ideas only; none are currently available.",
     examples: [
-      "100 Artisan Training Scholarships",
-      "Youth Leadership Program",
-      "International Exchange",
+      "Artisan Training Scholarship Concept",
+      "Youth Leadership Concept",
+      "International Exchange Concept",
     ],
     icon: Award,
     color: "from-amber-500 to-orange-600",
@@ -256,33 +253,14 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    quote: "Sponsor testimonial pending confirmation.",
-    author: "Testimonial pending approval",
-    role: "",
-    org: "",
-    color: "from-indigo-500 to-purple-600",
-  },
-  {
-    quote: "Sponsor testimonial pending confirmation.",
-    author: "Testimonial pending approval",
-    role: "",
-    org: "",
-    color: "from-amber-500 to-orange-500",
-  },
-  {
-    quote: "Sponsor testimonial pending confirmation.",
-    author: "Testimonial pending approval",
-    role: "",
-    org: "",
-    color: "from-amber-500 to-teal-600",
-  },
-];
-
 export default function Sponsorship() {
   return (
     <div className="flex flex-col min-h-screen bg-white overflow-x-hidden">
+      <SeoHead
+        title="Illustrative Sponsorship Concepts | Verso Air"
+        description="Explore illustrative future sponsorship concepts in preparation with vHeartz and VERSO AIR INC. No sponsorship program or tier pricing is currently open."
+        canonicalPath="/sponsorship"
+      />
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900">
         <div
@@ -670,78 +648,6 @@ export default function Sponsorship() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ──────────────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(16,185,129,0.6) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        <div className="max-w-[95vw] mx-auto px-6 relative z-10">
-          <motion.div
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewport}
-            className="text-center mb-14"
-          >
-            <span className="text-amber-400 font-semibold text-sm uppercase tracking-widest mb-3 block">
-              From Our Sponsors
-            </span>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-              Why They Sponsor
-            </h2>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewport}
-            className="grid md:grid-cols-3 gap-6"
-          >
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={i}
-                variants={fadeInUp}
-                whileHover={{ y: -6 }}
-                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:border-amber-500/30 transition-all"
-              >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, j) => (
-                    <Star
-                      key={j}
-                      className="w-4 h-4 fill-amber-400 text-amber-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-slate-300 text-sm leading-relaxed mb-6 italic">
-                  "{t.quote}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-black flex-shrink-0`}
-                  >
-                    {t.author.split(" ")[0][0]}
-                    {t.author.split(" ")[1][0]}
-                  </div>
-                  <div>
-                    <div className="font-bold text-white text-sm">
-                      {t.author}
-                    </div>
-                    <div className="text-amber-400 text-xs">{t.role}</div>
-                    <div className="text-slate-400 text-xs">{t.org}</div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
       {/* ── CONTACT CTA ───────────────────────────────────────── */}
       <section className="py-20 bg-gradient-to-r from-amber-600 via-teal-600 to-amber-700 relative overflow-hidden">
         <div
@@ -763,18 +669,27 @@ export default function Sponsorship() {
               <Handshake className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-              Ready to Make a Difference?
+              Ready to Start a Conversation?
             </h2>
             <p className="text-white/85 text-lg mb-8 max-w-2xl mx-auto">
               The concepts on this page are not active offers. Contact VERSO
-              AIR INC. to ask about confirmed company information; future
-              vHeartz programs will be announced when ready.
+              AIR INC. to ask about confirmed company information or active
+              partnership discussions; future vHeartz programs will be announced
+              when ready.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <Link to="/contact">
+              <Link to="/contact?subject=Sponsorship%20concept%20inquiry">
                 <Button className="bg-white text-amber-700 hover:bg-amber-50 font-black px-8 py-6 rounded-2xl text-lg shadow-2xl hover:scale-105 transition-all">
                   Contact VERSO AIR INC.
                   <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/partners">
+                <Button
+                  variant="outline"
+                  className="border-white/40 bg-white/10 text-white hover:bg-white/20 font-bold px-8 py-6 rounded-2xl text-lg"
+                >
+                  View Partnership Approach
                 </Button>
               </Link>
             </div>
@@ -782,9 +697,6 @@ export default function Sponsorship() {
               <span className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 Use our contact form for inquiries
-              </span>
-              <span className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
               </span>
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />

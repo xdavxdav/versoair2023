@@ -1,5 +1,8 @@
 import type { RequestHandler } from "express";
-import { isLocalPreviewOnlyPath } from "@shared/page-readiness";
+import {
+  isLocalPreviewOnlyPath,
+  LOCAL_PREVIEW_ONLY_PATHS,
+} from "@shared/page-readiness";
 
 export type NoticeLanguage = "en" | "fr" | "es";
 
@@ -183,12 +186,13 @@ function renderPageReadinessNotice(pageTitle: string, language: NoticeLanguage):
 
 export function pageReadinessNotFound(
   isProduction = process.env.NODE_ENV === "production",
+  previewOnlyPaths: readonly string[] = LOCAL_PREVIEW_ONLY_PATHS,
 ): RequestHandler {
   return (req, res, next) => {
     if (
       isProduction &&
       ["GET", "HEAD"].includes(req.method) &&
-      isLocalPreviewOnlyPath(req.path)
+      isLocalPreviewOnlyPath(req.path, previewOnlyPaths)
     ) {
       const language = pickNoticeLanguage(req.get("accept-language"));
       res.set("Cache-Control", "no-store");
