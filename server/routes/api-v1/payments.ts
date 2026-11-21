@@ -78,6 +78,8 @@ import {
   updatePaidOffer,
   validateOfferUpdate,
 } from "../../services/paid-offers";
+import { createArsenalCheckoutSchema } from "@shared/event-arsenal";
+import { prepareArsenalOrder } from "../../services/event-arsenal";
 
 const router = Router();
 
@@ -410,6 +412,38 @@ router.post(
         }
         metadata.eventId = String(id);
         returnPath = `/events/${id}`;
+      } else if (offerKey === "event_host_fee") {
+        const id = Number(eventId);
+        if (!Number.isInteger(id) || id <= 0) {
+          return res
+            .status(400)
+            .json({ success: false, error: "eventId is required" });
+        }
+        const ev = await pool.query(
+          `SELECT id, organizer_id, status FROM events WHERE id = $1`,
+          [id],
+        );
+        if (!ev.rows.length || Number(ev.rows[0].organizer_id) !== Number(userId)) {
+          return res
+            .status(404)
+            .json({ success: false, error: "Draft event not found" });
+        }
+        if (ev.rows[0].status === "PENDING" || ev.rows[0].status === "PUBLISHED") {
+          return res.status(409).json({
+            success: false,
+            code: "ALREADY_SUBMITTED",
+            error: "Your event has already been submitted.",
+          });
+        }
+        if (await hasPurchasedOffer(pool, Number(userId), offerKey, id)) {
+          return res.status(409).json({
+            success: false,
+            code: "ALREADY_PURCHASED",
+            error: "The hosting fee for this event has already been paid.",
+          });
+        }
+        metadata.eventId = String(id);
+        returnPath = `/events?hostedEvent=${id}`;
       } else if (await hasPurchasedOffer(pool, Number(userId), offerKey)) {
         return res.status(409).json({
           success: false,
@@ -434,6 +468,7 @@ router.post(
       );
 
       const origin = getPublicBaseUrl();
+      const sep = returnPath.includes("?") ? "&" : "?";
       const session = await stripeClient.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
@@ -452,8 +487,8 @@ router.post(
           },
         ],
         metadata,
-        success_url: `${origin}${returnPath}?status=success`,
-        cancel_url: `${origin}${returnPath}?status=cancelled`,
+        success_url: `${origin}${returnPath}${sep}status=success`,
+        cancel_url: `${origin}${returnPath}${sep}status=cancelled`,
       });
 
       res.json({
@@ -466,6 +501,129 @@ router.post(
         redactStripeSecrets(error?.message),
       );
       res.status(500).json({ success: false, error: "Could not start checkout" });
+    }
+  },
+);
+
+/**
+ * POST /api/v1/payments/create-arsenal-checkout
+ * Multi-item checkout for an event's Ticket Tiers, Merch Drops, and VIP Add-ons.
+ * CA$0.00 orders complete immediately and issue a Digital Door Pass; paid orders
+ * open a Stripe Checkout Session in CAD.
+ */
+router.post(
+  "/create-arsenal-checkout",
+  offerCheckoutLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.userId || (req as any).user?.id;
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, error: "Authentication required" });
+      }
+      const parsed = createArsenalCheckoutSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        const msg = parsed.error.issues[0]?.message || "Invalid checkout basket";
+        return res.status(400).json({ success: false, error: msg });
+      }
+
+      const prepared = await prepareArsenalOrder(pool, {
+        userId: Number(userId),
+        eventId: parsed.data.eventId,
+        lines: parsed.data.lines,
+        allowPaidCheckout: onlinePaymentsEnabled(),
+      });
+      if (!prepared.ok) {
+        if (prepared.code === "ONLINE_PAYMENTS_UNAVAILABLE") {
+          rejectUnavailablePayment(res);
+          return;
+        }
+        return res.status(prepared.status).json({
+          success: false,
+          code: prepared.code,
+          error: prepared.error,
+        });
+      }
+
+      if (prepared.mode === "free_completed") {
+        return res.json({
+          success: true,
+          data: {
+            mode: "free_completed",
+            order: prepared.order,
+          },
+        });
+      }
+
+      const stripeClient = requireStripeClient(res);
+      if (!stripeClient) return;
+
+      const userResult = await pool.query(
+        `SELECT id, email, username FROM users WHERE id = $1`,
+        [userId],
+      );
+      if (!userResult.rows.length) {
+        return res.status(404).json({ success: false, error: "User not found" });
+      }
+      const user = userResult.rows[0];
+      const customerId = await getOrCreateStripeCustomer(
+        Number(userId),
+        user.email,
+        user.username,
+        stripeClient,
+      );
+
+      const origin = getPublicBaseUrl();
+      const encodedSlug = encodeURIComponent(prepared.eventSlug);
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        customer: customerId,
+        line_items: prepared.stripeLineItems,
+        ...(prepared.needsShipping
+          ? {
+              shipping_address_collection: {
+                allowed_countries: ["CA", "US", "GB", "FR", "DE", "AU"],
+              },
+            }
+          : {}),
+        metadata: {
+          userId: String(userId),
+          type: "event_arsenal_order",
+          eventId: String(prepared.eventId),
+          arsenalOrderId: String(prepared.orderId),
+          passCode: prepared.passCode,
+        },
+        success_url: `${origin}/events/${encodedSlug}?arsenalOrder=${prepared.orderId}&status=success`,
+        cancel_url: `${origin}/events/${encodedSlug}?arsenalOrder=${prepared.orderId}&status=cancelled`,
+      });
+
+      await pool.query(
+        `UPDATE event_arsenal_orders
+            SET stripe_session_id = $1, updated_at = NOW()
+          WHERE id = $2`,
+        [session.id, prepared.orderId],
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          mode: "stripe_checkout",
+          sessionId: session.id,
+          url: session.url,
+          orderId: prepared.orderId,
+          passCode: prepared.passCode,
+        },
+      });
+    } catch (error: any) {
+      console.error(
+        "❌ Arsenal checkout error:",
+        redactStripeSecrets(error?.message),
+      );
+      return res
+        .status(500)
+        .json({ success: false, error: "Could not start checkout" });
     }
   },
 );

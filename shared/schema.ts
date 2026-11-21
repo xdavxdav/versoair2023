@@ -1555,6 +1555,10 @@ export const events = pgTable(
     venue: varchar("venue", { length: 220 }),
     city: varchar("city", { length: 120 }),
     imageUrl: text("image_url"),
+    themeAccent: varchar("theme_accent", { length: 24 })
+      .default("amber")
+      .notNull(),
+    capacity: integer("capacity"),
     status: varchar("status", { length: 30 }).default("DRAFT").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -1606,6 +1610,106 @@ export const eventAttendees = pgTable(
     eventIdx: index("event_attendees_event_idx").on(t.eventId),
     userIdx: index("event_attendees_user_idx").on(t.userId),
     uniqueAttendance: unique("event_attendees_unique").on(t.eventId, t.userId),
+  }),
+);
+
+export const eventArsenalItems = pgTable(
+  "event_arsenal_items",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .references(() => events.id, { onDelete: "cascade" })
+      .notNull(),
+    kind: varchar("kind", { length: 20 }).default("TICKET").notNull(),
+    name: varchar("name", { length: 160 }).notNull(),
+    description: text("description").default("").notNull(),
+    priceCents: integer("price_cents").default(0).notNull(),
+    stockLimit: integer("stock_limit"),
+    soldCount: integer("sold_count").default(0).notNull(),
+    maxPerOrder: smallint("max_per_order").default(6).notNull(),
+    imageUrl: text("image_url"),
+    badge: varchar("badge", { length: 60 }),
+    variants: jsonb("variants").notNull().default(sql`'[]'::jsonb`),
+    fulfillmentNote: varchar("fulfillment_note", { length: 220 }),
+    sortOrder: smallint("sort_order").default(0).notNull(),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    eventSortIdx: index("event_arsenal_items_event_sort_idx").on(
+      t.eventId,
+      t.sortOrder,
+      t.id,
+    ),
+  }),
+);
+
+export const eventArsenalOrders = pgTable(
+  "event_arsenal_orders",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .references(() => events.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    passCode: varchar("pass_code", { length: 32 }).unique().notNull(),
+    status: varchar("status", { length: 20 }).default("pending").notNull(),
+    totalCents: integer("total_cents").default(0).notNull(),
+    currency: varchar("currency", { length: 8 }).default("CAD").notNull(),
+    hasTicket: boolean("has_ticket").default(false).notNull(),
+    ticketQty: integer("ticket_qty").default(0).notNull(),
+    merchQty: integer("merch_qty").default(0).notNull(),
+    stripeSessionId: text("stripe_session_id").unique(),
+    checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
+    merchFulfilledAt: timestamp("merch_fulfilled_at", { withTimezone: true }),
+    notes: text("notes"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    eventStatusIdx: index("event_arsenal_orders_event_status_idx").on(
+      t.eventId,
+      t.status,
+      t.createdAt,
+    ),
+    userEventIdx: index("event_arsenal_orders_user_event_idx").on(
+      t.userId,
+      t.eventId,
+    ),
+  }),
+);
+
+export const eventArsenalOrderItems = pgTable(
+  "event_arsenal_order_items",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .references(() => eventArsenalOrders.id, { onDelete: "cascade" })
+      .notNull(),
+    itemId: integer("item_id").references(() => eventArsenalItems.id, {
+      onDelete: "set null",
+    }),
+    kind: varchar("kind", { length: 20 }).notNull(),
+    itemName: varchar("item_name", { length: 160 }).notNull(),
+    variant: varchar("variant", { length: 60 }),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    lineTotalCents: integer("line_total_cents").notNull(),
+  },
+  (t) => ({
+    orderIdx: index("event_arsenal_order_items_order_idx").on(t.orderId),
   }),
 );
 

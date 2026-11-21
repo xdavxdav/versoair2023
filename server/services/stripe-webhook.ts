@@ -14,6 +14,10 @@
  */
 import type Stripe from "stripe";
 import { inTransaction } from "./db-transaction";
+import {
+  fulfillArsenalOrderInTx,
+  reverseArsenalOrderInTx,
+} from "./event-arsenal";
 import { ensurePaidOfferTables, revokePaidOfferPurchase } from "./paid-offers";
 import type { Queryable, TxClient, TxPool } from "./marketing-checkout";
 
@@ -40,7 +44,11 @@ export interface CheckoutReview {
 export type CheckoutCompletion =
   | {
       status: "processed";
-      kind: "subscription" | "marketing_order" | "paid_offer";
+      kind:
+        | "subscription"
+        | "marketing_order"
+        | "paid_offer"
+        | "event_arsenal_order";
       /** The buyer already held this offer, so one payment should be refunded. */
       repeatPurchase?: true;
     }
@@ -174,8 +182,11 @@ export async function applyCheckoutSessionCompleted(
     const offerKey = session.metadata.offerKey;
     const eventIdRaw = session.metadata.eventId;
     const eventId = eventIdRaw ? positiveInt(eventIdRaw) : null;
-    if (offerKey === "activity_ticket" && eventId === null) {
-      console.error("⚠️ Activity ticket without a valid eventId:", session.id);
+    if (
+      (offerKey === "activity_ticket" || offerKey === "event_host_fee") &&
+      eventId === null
+    ) {
+      console.error(`⚠️ ${offerKey} without a valid eventId:`, session.id);
       return { status: "ignored", reason: "invalid_event_id" };
     }
 
@@ -214,10 +225,58 @@ export async function applyCheckoutSessionCompleted(
         );
       }
 
+      if (offerKey === "event_host_fee" && eventId !== null) {
+        await client.query(
+          `UPDATE events
+              SET status = CASE WHEN status = 'DRAFT' THEN 'PENDING' ELSE status END,
+                  updated_at = NOW()
+            WHERE id = $1 AND organizer_id = $2`,
+          [eventId, userIdNumber],
+        );
+      }
+
       console.log(`✅ Paid offer ${offerKey} bought by user ${userIdNumber}`);
       return prior.rows.length > 0
         ? { status: "processed", kind: "paid_offer", repeatPurchase: true }
         : { status: "processed", kind: "paid_offer" };
+    });
+  }
+
+  if (type === "event_arsenal_order" && session.metadata?.arsenalOrderId) {
+    const arsenalOrderId = positiveInt(session.metadata.arsenalOrderId);
+    if (arsenalOrderId === null) {
+      console.error("⚠️ Invalid arsenalOrderId in checkout session:", session.id);
+      return { status: "ignored", reason: "invalid_arsenal_order_id" };
+    }
+
+    return inTransaction<CheckoutCompletion>(db, async (client) => {
+      const claimed = await claimSession(
+        client,
+        userIdNumber,
+        amount,
+        "event_arsenal_order",
+        session.id,
+      );
+      if (!claimed) return { status: "duplicate" };
+
+      const shipping = describeShipping(session);
+      const outcome = await fulfillArsenalOrderInTx(client, {
+        userId: userIdNumber,
+        arsenalOrderId,
+        sessionId: session.id,
+        paidCents: typeof session.amount_total === "number" ? session.amount_total : 0,
+        shippingNote: shipping,
+      });
+      if (!outcome.fulfilled) {
+        console.error(
+          `⚠️ Event arsenal order ${arsenalOrderId} requires review (${outcome.mismatch})`,
+        );
+      } else {
+        console.log(
+          `✅ Event arsenal order ${arsenalOrderId} fulfilled for user ${userIdNumber}`,
+        );
+      }
+      return { status: "processed", kind: "event_arsenal_order" };
     });
   }
 
@@ -419,6 +478,25 @@ export async function applyPaymentReversal(
       const revoked = await revokePaidOfferPurchase(client, sessionId);
       console.log(`↩️ Paid offer for session ${sessionId} withdrawn: ${revoked}`);
     }
+    if (original.rows[0].type === "event_arsenal_order") {
+      const arsenalStatus =
+        reversal.kind === "dispute_won"
+          ? "paid"
+          : reversal.kind === "dispute_opened"
+            ? "disputed"
+            : reversal.kind === "dispute_lost"
+              ? "chargeback"
+              : "refunded";
+      if (!(reversal.kind === "refund" && !reversal.full)) {
+        await reverseArsenalOrderInTx(
+          client,
+          sessionId,
+          arsenalStatus,
+          note,
+          withdrawsAccess,
+        );
+      }
+    }
 
     console.log(
       `↩️ ${note} for session ${sessionId}; order rows updated: ${updated.rows.length}`,
@@ -545,6 +623,23 @@ export async function applyCheckoutSessionExpired(
   session: Stripe.Checkout.Session,
 ): Promise<CheckoutExpiry> {
   const { userId, orderId, type } = session.metadata || {};
+  if (type === "event_arsenal_order" && session.metadata?.arsenalOrderId) {
+    const uid = positiveInt(userId);
+    const aid = positiveInt(session.metadata.arsenalOrderId);
+    if (uid === null || aid === null) {
+      return { status: "ignored", reason: "invalid_metadata" };
+    }
+    const cancelled = await db.query(
+      `UPDATE event_arsenal_orders
+          SET status = 'cancelled', notes = $3, updated_at = NOW()
+        WHERE id = $1 AND user_id = $2 AND status = 'pending'
+        RETURNING id`,
+      [aid, uid, `Checkout session ${session.id} expired`],
+    );
+    return cancelled.rows.length > 0
+      ? { status: "cancelled", orderId: aid }
+      : { status: "ignored", reason: "order_not_pending" };
+  }
   if (type !== "marketing_order" || !orderId) {
     return { status: "ignored", reason: "not_marketing_order" };
   }
