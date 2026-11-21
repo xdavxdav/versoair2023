@@ -221,7 +221,7 @@ export default function HubPage() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
           >
-            <span className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
+            <span className="notranslate bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 bg-clip-text text-transparent">
               Verso Air
             </span>
             <br />

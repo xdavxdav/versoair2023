@@ -885,7 +885,7 @@ export default function BusinessesDirectory() {
                 <Globe className="w-5 h-5 text-white" />
               </div>
               <div>
-                <span className="text-xl font-bold tracking-tight">
+                <span className="text-xl font-bold tracking-tight notranslate" translate="no">
                   Verso Air
                 </span>
                 <span className="hidden sm:inline text-sky-700 ml-2 text-sm font-medium">
@@ -1510,7 +1510,7 @@ export default function BusinessesDirectory() {
               <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">
                 <Globe className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">Verso Air</span>
+              <span className="text-xl font-bold notranslate" translate="no">Verso Air</span>
             </div>
 
             <p className="text-slate-700 text-sm text-center">

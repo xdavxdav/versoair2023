@@ -1046,7 +1046,7 @@ export default function SignIn() {
             style={{ animation: "fade-up 0.5s ease-out 0.5s both" }}
           >
             Welcome to{" "}
-            <span className="text-[#d4a037] font-semibold">Verso Air</span>,{" "}
+            <span className="text-[#d4a037] font-semibold notranslate">Verso Air</span>,{" "}
             {verifiedName}!
           </p>
           <p
@@ -1098,7 +1098,7 @@ export default function SignIn() {
 
         {/* Footer */}
         <div className="absolute bottom-6 text-center text-xs text-[#40407a]">
-          🦅 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+          🦅 <strong className="text-[#bf831c] notranslate">Verso Air</strong> — Your
           business, amplified
         </div>
       </div>
@@ -1286,7 +1286,7 @@ export default function SignIn() {
 
               {/* Footer strip */}
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
-                🌍 <strong className="text-[#bf831c]">Verso Air</strong> —
+                🌍 <strong className="text-[#bf831c] notranslate">Verso Air</strong> —
                 Business Intelligence Platform
               </div>
             </div>
@@ -1523,7 +1523,7 @@ export default function SignIn() {
 
               {/* Footer */}
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
-                🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+                🌍 <strong className="text-[#bf831c] notranslate">Verso Air</strong> — Your
                 identity, your way
               </div>
             </div>
@@ -1677,7 +1677,7 @@ export default function SignIn() {
               </div>
 
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
-                🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+                🌍 <strong className="text-[#bf831c] notranslate">Verso Air</strong> — Your
                 identity, your way
               </div>
             </div>

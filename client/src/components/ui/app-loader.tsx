@@ -17,7 +17,7 @@ function EagleContent() {
   return (
     <div className="text-center">
       <LoadingEagle className="w-44 h-44 mb-2 mx-auto" />
-      <p className="text-white/90 text-sm font-medium tracking-wide mt-3 animate-pulse">
+      <p className="text-white/90 text-sm font-medium tracking-wide mt-3 animate-pulse notranslate">
         Verso Air
       </p>
     </div>

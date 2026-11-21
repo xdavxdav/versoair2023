@@ -59,7 +59,7 @@ export default function BetaBanner() {
           </span>
 
           <p className="min-w-0 flex-1 truncate text-left text-[13px] font-semibold sm:text-center sm:text-sm">
-            <span className="font-black">Verso Air</span>
+            <span className="font-black notranslate">Verso Air</span>
             <span className="mx-1.5 text-[#3a2b14] max-[360px]:hidden">—</span>
             <span className="max-[360px]:hidden">
               Production hardening in progress • Share feedback
