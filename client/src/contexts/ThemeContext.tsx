@@ -55,6 +55,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
+    // An explicit choice made on this device (toggle or account settings) wins;
+    // the saved account theme only seeds devices that never chose one.
+    if (localStorage.getItem(THEME_KEY) !== null) return;
     const token =
       localStorage.getItem("auth_token") ||
       localStorage.getItem("authToken") ||
@@ -66,16 +69,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
+        if (localStorage.getItem(THEME_KEY) !== null) return;
         const savedTheme = payload?.preferences?.theme;
         if (
           savedTheme === "light" ||
           savedTheme === "dark" ||
           savedTheme === "system"
         ) {
-          setTheme(savedTheme);
+          setThemeState(savedTheme);
+          setResolvedTheme(applyTheme(savedTheme));
         }
       })
       .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    // Keep every open tab on the same theme when one of them switches.
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== THEME_KEY) return;
+      const next =
+        event.newValue === "dark" || event.newValue === "system"
+          ? event.newValue
+          : "light";
+      setThemeState(next);
+      setResolvedTheme(applyTheme(next));
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   useEffect(() => {
