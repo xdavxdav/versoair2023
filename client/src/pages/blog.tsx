@@ -9,6 +9,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
 import CreatePostModal from "@/components/CreatePostModal";
+import GuestFeedPreview from "@/components/community/GuestFeedPreview";
 import CommunityStrip from "@/components/community/CommunityStrip";
 import AuthModal from "@/components/AuthModal";
 import VxppGuestIntro from "@/components/vxpp/VxppGuestIntro";
@@ -442,6 +443,7 @@ export default function BlogPage() {
           onSignUp={() => setIsAuthModalOpen(true)}
           onBack={() => navigateBackSafely(setLocation, "/")}
         />
+        <GuestFeedPreview onJoin={() => setIsAuthModalOpen(true)} />
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => {
