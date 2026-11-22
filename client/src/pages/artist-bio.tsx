@@ -227,30 +227,79 @@ export default function ArtistBioPage() {
               </div>
 
               <div className="divide-y divide-purple-500/15">
-                {artist.discography.map((release) => (
-                  <div
-                    key={`${release.year}-${release.title}`}
-                    className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
-                  >
-                    <span className="inline-flex w-14 flex-shrink-0 items-center justify-center rounded-lg border border-purple-400/25 bg-purple-500/15 px-2 py-1 text-xs font-bold tabular-nums text-fuchsia-200">
-                      {release.year}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white">{release.title}</p>
-                      <p className="text-xs text-slate-300 mt-0.5">{release.note[lang]}</p>
+                {artist.discography.map((release) => {
+                  const primaryLink = release.mediaLinks[0];
+                  return (
+                    <div
+                      key={`${release.year}-${release.title}`}
+                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4"
+                    >
+                      <span
+                        translate="no"
+                        className="notranslate inline-flex w-14 flex-shrink-0 items-center justify-center rounded-lg border border-purple-400/25 bg-purple-500/15 px-2 py-1 text-xs font-bold tabular-nums text-fuchsia-200"
+                      >
+                        {release.year}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        {primaryLink ? (
+                          <a
+                            href={primaryLink.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            translate="no"
+                            className="notranslate inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:text-fuchsia-300 transition-colors"
+                          >
+                            <span>{release.title}</span>
+                            <ExternalLink className="h-3.5 w-3.5 text-fuchsia-300/80 flex-shrink-0" />
+                          </a>
+                        ) : (
+                          <p translate="no" className="notranslate text-sm font-semibold text-white">
+                            {release.title}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-300 mt-0.5">{release.note[lang]}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                        <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
+                          {KIND_LABELS[release.kind]?.[lang] ?? release.kind}
+                        </span>
+                        {release.mediaLinks.map((media) => (
+                          <a
+                            key={`${release.title}-${media.url}-${media.label}`}
+                            href={media.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            translate="no"
+                            className={`notranslate inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors ${
+                              media.platform === "spotify"
+                                ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"
+                                : media.platform === "youtube" || media.platform === "youtube_music"
+                                  ? "border-rose-400/35 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25"
+                                  : "border-purple-400/35 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25"
+                            }`}
+                          >
+                            {media.platform === "spotify" ? (
+                              <Headphones className="h-3 w-3" />
+                            ) : media.platform === "youtube" || media.platform === "youtube_music" ? (
+                              <Youtube className="h-3 w-3" />
+                            ) : (
+                              <Globe className="h-3 w-3" />
+                            )}
+                            {media.label}
+                            <ExternalLink className="h-2.5 w-2.5 opacity-80" />
+                          </a>
+                        ))}
+                      </div>
                     </div>
-                    <span className="self-start sm:self-center rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
-                      {KIND_LABELS[release.kind]?.[lang] ?? release.kind}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Honest empty state for audio streaming on Verso Air */}
+              {/* Direct hosting roadmap notice */}
               <div className="mt-5 rounded-xl border border-purple-400/25 bg-[#0c0520]/80 p-4 text-xs sm:text-sm text-slate-300">
                 {isFr
-                  ? "Écoute sur Verso Air : aucun audio n'est importé sans autorisation. Les titres officiels de Nooka seront disponibles en streaming ici dès leur dépôt direct avec les ayants droit."
-                  : "Streaming on Verso Air: no audio is scraped or hosted without clearance. Official Nooka tracks will appear here as soon as they are supplied directly with rights holders."}
+                  ? "En attendant l'hébergement direct des médias sur Verso Air, chaque titre redirige vers la plateforme officielle où il est disponible (YouTube, Spotify, YouTube Music)."
+                  : "While direct media hosting on Verso Air is being prepared, each release routes directly to the official platform where it is currently available (YouTube, Spotify, YouTube Music)."}
               </div>
             </section>
           </div>

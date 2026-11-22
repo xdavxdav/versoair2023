@@ -323,10 +323,14 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
             className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 rounded-lg"
           >
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-600 to-amber-800 text-white font-black text-base tracking-tight shadow-sm notranslate"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 p-1 shadow-sm shrink-0 overflow-hidden notranslate"
               translate="no"
             >
-              vx
+              <img
+                src="/Logo-page.png"
+                alt="Verso Air"
+                className="h-full w-full object-contain"
+              />
             </span>
             <div className="leading-tight">
               <span
@@ -497,10 +501,14 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
           </button>
           <Link href="/blog" className="flex items-center gap-2 min-w-0">
             <span
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 text-white font-black text-sm shadow-sm shrink-0 notranslate"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 p-0.5 shadow-sm shrink-0 overflow-hidden notranslate"
               translate="no"
             >
-              vx
+              <img
+                src="/Logo-page.png"
+                alt="Verso Air"
+                className="h-full w-full object-contain"
+              />
             </span>
             <span
               className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white notranslate"
@@ -576,8 +584,12 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
           <div className="relative z-10 w-72 max-w-[85vw] bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col">
             <div className="px-4 py-3.5 border-b border-stone-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 text-white font-black text-sm notranslate" translate="no">
-                  vx
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 p-0.5 shadow-sm shrink-0 overflow-hidden notranslate" translate="no">
+                  <img
+                    src="/Logo-page.png"
+                    alt="Verso Air"
+                    className="h-full w-full object-contain"
+                  />
                 </span>
                 <div>
                   <span className="block text-sm font-extrabold text-slate-900 dark:text-white notranslate" translate="no">

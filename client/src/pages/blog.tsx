@@ -256,6 +256,36 @@ export default function BlogPage() {
     );
   }, []);
 
+  const handleEditPost = async (postId: number, content: string) => {
+    const response = await authenticatedFetch(`/api/social/posts/${postId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) throw new Error("Post could not be updated");
+    setPosts((current) =>
+      current.map((p) => (p.id === postId ? { ...p, content, isEdited: true } : p)),
+    );
+    const { dismiss } = toast({
+      title: "Post updated",
+      duration: 2000,
+    });
+    window.setTimeout(() => dismiss(), 2000);
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    const response = await authenticatedFetch(`/api/social/posts/${postId}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) throw new Error("Post could not be deleted");
+    setPosts((current) => current.filter((p) => p.id !== postId));
+    const { dismiss } = toast({
+      title: "Post deleted",
+      duration: 2000,
+    });
+    window.setTimeout(() => dismiss(), 2000);
+  };
+
   const handleComment = async (postId: number, content: string) => {
     const response = await authenticatedFetch(
       `/api/social/posts/${postId}/comments`,
@@ -480,6 +510,16 @@ export default function BlogPage() {
             {/* Posts */}
             {displayPosts.map((post, idx) => {
               const author = post.author || {};
+              const isStaff =
+                Boolean(globalUser?.isAdmin) ||
+                ["admin", "superadmin", "superuser", "moderator"].includes(
+                  String(globalUser?.role || "").toLowerCase(),
+                );
+              const canEdit =
+                Boolean(globalUser?.id) &&
+                (isStaff ||
+                  (author.userId != null &&
+                    Number(author.userId) === Number(globalUser?.id)));
               const cardPost = {
                 id: post.id,
                 author: {
@@ -512,6 +552,9 @@ export default function BlogPage() {
                 >
                   <PostCard
                     post={cardPost}
+                    canEdit={canEdit}
+                    onEditPost={handleEditPost}
+                    onDeletePost={handleDeletePost}
                     liked={likedPosts.includes(post.id)}
                     onLike={() => {
                       if (likedPosts.includes(post.id)) {

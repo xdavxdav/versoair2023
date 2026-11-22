@@ -4,6 +4,7 @@ import { once } from "node:events";
 import test from "node:test";
 import express from "express";
 import music from "../routes/music";
+import musicGenres from "../routes/music-genres";
 import translations from "../routes/translations";
 
 test("anonymous public reads work through the global auth gate without exposing protected routes", async () => {
@@ -21,6 +22,7 @@ test("anonymous public reads work through the global auth gate without exposing 
     res.json({ reached: true }),
   );
   app.use("/api/translations", translations);
+  app.use("/api/music-genres", musicGenres);
   app.use("/api/music", music);
   app.use("/api/notifications", notifications);
   app.get("/auth/oauth/providers", (_req, res) => res.json({ providers: [] }));
@@ -52,6 +54,9 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await response.json()).language, "en");
     assert.equal((await fetch(`${origin}/api/translations/not-a-language`)).status, 400);
     assert.equal((await fetch(`${origin}/api/translations/en?text=private`)).status, 400);
+    assert.equal((await fetch(`${origin}/api/music-genres`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/music-genres/countries`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/music-genres`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/api/music/analytics`)).status, 401);
     const publicNotifications = await fetch(`${origin}/api/notifications`);
     assert.equal(publicNotifications.status, 200);

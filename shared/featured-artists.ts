@@ -3,11 +3,18 @@ export interface LocalizedText {
   en: string;
 }
 
+export interface FeaturedArtistMediaLink {
+  platform: "youtube" | "spotify" | "youtube_music" | "reference";
+  label: string;
+  url: string;
+}
+
 export interface FeaturedArtistRelease {
   year: string;
   title: string;
   kind: "album" | "single" | "compilation" | "clips";
   note: LocalizedText;
+  mediaLinks: readonly FeaturedArtistMediaLink[];
 }
 
 export interface FeaturedArtistLink {
@@ -72,48 +79,129 @@ export const NOOKA_PROFILE: FeaturedArtistProfile = {
       title: "Djôlô (Remix)",
       kind: "single",
       note: { fr: "Sortie single (décembre 2024)", en: "Single release (December 2024)" },
+      mediaLinks: [
+        {
+          platform: "youtube",
+          label: "YouTube",
+          url: "https://www.youtube.com/watch?v=jZxnZGITKkc",
+        },
+      ],
     },
     {
       year: "2024",
       title: "Yékélé (feat. Djo Lango)",
       kind: "single",
       note: { fr: "Collaboration avec Djo Lango", en: "Collaboration with Djo Lango" },
+      mediaLinks: [
+        {
+          platform: "youtube_music",
+          label: "YouTube Music",
+          url: "https://music.youtube.com/channel/UCprAGdmBxQRe18PstYN934g",
+        },
+        {
+          platform: "spotify",
+          label: "Spotify",
+          url: "https://open.spotify.com/artist/2qtdNMrGdvad9V1ERBOpct",
+        },
+      ],
     },
     {
       year: "2023",
       title: "Faut te rada",
       kind: "single",
       note: { fr: "Paru sur Génération Hip Hop 225", en: "Featured on Génération Hip Hop 225" },
+      mediaLinks: [
+        {
+          platform: "youtube",
+          label: "YouTube",
+          url: "https://www.youtube.com/watch?v=WMvgNiSqDwg",
+        },
+      ],
     },
     {
       year: "2023",
       title: "Gbiyahe",
       kind: "single",
       note: { fr: "Clip officiel — prod. Azaia", en: "Official video — prod. Azaia" },
+      mediaLinks: [
+        {
+          platform: "youtube",
+          label: "YouTube",
+          url: "https://www.youtube.com/watch?v=bfNaeTwO9Tk",
+        },
+      ],
     },
     {
       year: "2021",
       title: "Gbiyahée",
       kind: "album",
       note: { fr: "Album 13 titres (juillet 2021)", en: "13-track album (July 2021)" },
+      mediaLinks: [
+        {
+          platform: "spotify",
+          label: "Spotify",
+          url: "https://open.spotify.com/artist/2qtdNMrGdvad9V1ERBOpct",
+        },
+        {
+          platform: "youtube_music",
+          label: "YouTube Music",
+          url: "https://music.youtube.com/channel/UCprAGdmBxQRe18PstYN934g",
+        },
+      ],
     },
     {
       year: "2020",
       title: "Makiwara",
       kind: "single",
       note: { fr: "Single — prod. Kyo Itachi", en: "Single — prod. Kyo Itachi" },
+      mediaLinks: [
+        {
+          platform: "spotify",
+          label: "Spotify",
+          url: "https://open.spotify.com/track/5vMJX3flzqszxzPQD3N48c",
+        },
+        {
+          platform: "youtube_music",
+          label: "YouTube Music",
+          url: "https://music.youtube.com/channel/UCprAGdmBxQRe18PstYN934g",
+        },
+      ],
     },
     {
       year: "2014",
       title: "Cicatrices · Blê Blê · Trop Fly · On s'enjaille",
       kind: "clips",
       note: { fr: "Série de clips diffusés en 2014", en: "Series of 2014 music videos" },
+      mediaLinks: [
+        {
+          platform: "youtube",
+          label: "Cicatrices (YouTube)",
+          url: "https://www.youtube.com/watch?v=3_Fvdu2Lhh0",
+        },
+        {
+          platform: "youtube",
+          label: "Clips (YouTube)",
+          url: "https://www.youtube.com/@nookawansh/videos",
+        },
+      ],
     },
     {
       year: "2012",
       title: "Abidjan rap tour",
       kind: "compilation",
       note: { fr: "Compilation Coro'sol productions", en: "Coro'sol productions compilation" },
+      mediaLinks: [
+        {
+          platform: "reference",
+          label: "Music In Africa",
+          url: "https://musicinafrica.net/node/9251",
+        },
+        {
+          platform: "youtube",
+          label: "YouTube",
+          url: "https://www.youtube.com/@nookawansh/videos",
+        },
+      ],
     },
   ],
   officialLinks: [

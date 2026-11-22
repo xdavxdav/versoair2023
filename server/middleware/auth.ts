@@ -189,6 +189,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/profiles/", // Public artisan and unified profile directory
   "/api/faq", // FAQ browsing — GET only (list/search/detail)
   "/api/artists/", // Artist directory (search, genres, countries)
+  "/api/music-genres", // Public read-only canonical music genre taxonomy
   "/api/music/", // Music artists, tracks, analytics (home page carousel)
   "/api/businesses", // Business listing & search (home page, directory)
   "/api/business/search", // Business search (legacy)

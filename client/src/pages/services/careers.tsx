@@ -665,10 +665,14 @@ export default function Careers() {
   // Refresh the published job list.
   const refreshJobs = () => {
     refetchJobs();
-    toast({
+    const { dismiss } = toast({
       title: "Jobs refreshed!",
       description: "The latest published job listings have been loaded.",
+      duration: 2000,
     });
+    window.setTimeout(() => {
+      dismiss();
+    }, 2000);
   };
 
   // TRACE: Filter jobs based on search criteria

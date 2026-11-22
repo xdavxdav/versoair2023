@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
@@ -7,6 +7,8 @@ import {
   MoreHorizontal,
   Zap,
   TrendingUp,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 interface Post {
@@ -43,6 +45,9 @@ interface PostComment {
 
 interface PostCardProps {
   post: Post;
+  canEdit?: boolean;
+  onEditPost?: (postId: number, content: string) => Promise<void> | void;
+  onDeletePost?: (postId: number) => Promise<void> | void;
   onLike?: (postId: number) => void;
   onComment?: (postId: number, content: string) => Promise<void> | void;
   onEditComment?: (
@@ -58,6 +63,9 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({
   post,
+  canEdit = false,
+  onEditPost,
+  onDeletePost,
   onLike,
   onComment,
   onEditComment,
@@ -70,6 +78,14 @@ const PostCard: React.FC<PostCardProps> = ({
   const [likeCount, setLikeCount] = useState(post.likes);
   const [commentCount, setCommentCount] = useState(post.comments);
   const [shareCount, setShareCount] = useState(post.shares);
+  const [postContent, setPostContent] = useState(post.content);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [editingPostText, setEditingPostText] = useState(post.content);
+  const [isSavingPost, setIsSavingPost] = useState(false);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [postActionError, setPostActionError] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
   const [showParticles, setShowParticles] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [comment, setComment] = useState("");
@@ -184,7 +200,66 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  useEffect(() => {
+    setPostContent(post.content);
+  }, [post.content]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [menuOpen]);
+
+  const startEditingPost = () => {
+    setMenuOpen(false);
+    setPostActionError("");
+    setEditingPostText(postContent);
+    setIsEditingPost(true);
+  };
+
+  const saveEditedPost = async () => {
+    const trimmed = editingPostText.trim();
+    if (!trimmed || !onEditPost || isSavingPost) return;
+    setIsSavingPost(true);
+    setPostActionError("");
+    try {
+      await onEditPost(post.id, trimmed);
+      setPostContent(trimmed);
+      setIsEditingPost(false);
+    } catch {
+      setPostActionError("Post could not be updated.");
+    } finally {
+      setIsSavingPost(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!onDeletePost || isDeletingPost) return;
+    setMenuOpen(false);
+    setIsDeletingPost(true);
+    setPostActionError("");
+    try {
+      await onDeletePost(post.id);
+    } catch {
+      setPostActionError("Post could not be deleted.");
+      setIsDeletingPost(false);
+    }
+  };
+
   const handleShare = async () => {
+    setMenuOpen(false);
     await onShare?.(post.id);
     setShareCount((value) => value + 1);
   };
@@ -219,14 +294,60 @@ const PostCard: React.FC<PostCardProps> = ({
             </p>
           </div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.96 }}
-          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100"
-          aria-label="More actions"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </motion.button>
+        <div ref={menuRef} className="relative">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            aria-label="More actions"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </motion.button>
+
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 mt-1 w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-lg z-30"
+            >
+              {canEdit && onEditPost && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={startEditingPost}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-cyan-700" />
+                  Edit post
+                </button>
+              )}
+              {canEdit && onDeletePost && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleDeletePost}
+                  disabled={isDeletingPost}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {isDeletingPost ? "Deleting..." : "Delete post"}
+                </button>
+              )}
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleShare}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+              >
+                <Share2 className="h-3.5 w-3.5 text-slate-500" />
+                Share post
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {post.isTrending && (
@@ -236,9 +357,46 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
-      <p className="mb-4 text-[15px] leading-7 text-slate-700">
-        {post.content}
-      </p>
+      {isEditingPost ? (
+        <div className="mb-4 space-y-2">
+          <textarea
+            value={editingPostText}
+            onChange={(e) => setEditingPostText(e.target.value)}
+            rows={3}
+            className="w-full rounded-xl border border-cyan-300 bg-white p-3 text-[15px] leading-6 text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+            aria-label="Edit post content"
+          />
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditingPost(false);
+                setEditingPostText(postContent);
+                setPostActionError("");
+              }}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={saveEditedPost}
+              disabled={isSavingPost || !editingPostText.trim()}
+              className="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-800 disabled:opacity-50"
+            >
+              {isSavingPost ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="mb-4 whitespace-pre-line text-[15px] leading-7 text-slate-700">
+          {postContent}
+        </p>
+      )}
+
+      {postActionError && (
+        <p className="mb-3 text-xs font-medium text-red-600">{postActionError}</p>
+      )}
 
       {post.images && post.images.length > 0 && (
         <div

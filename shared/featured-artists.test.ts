@@ -17,6 +17,12 @@ test("Nooka is live as the featured face of TMU with verified metadata", () => {
   assert.ok(nooka.aliases.includes("Nooka Wansh"));
   assert.ok(nooka.bio.fr.length >= 2 && nooka.bio.en.length >= 2);
   assert.ok(nooka.discography.some((r) => r.title === "Gbiyahée"));
+  for (const release of nooka.discography) {
+    assert.ok(release.mediaLinks.length > 0, `${release.title} must route to available media`);
+    for (const link of release.mediaLinks) {
+      assert.match(link.url, /^https:\/\//, `${release.title} media link must be HTTPS`);
+    }
+  }
   assert.ok(nooka.officialLinks.some((l) => l.platform === "spotify" && l.url.includes("2qtdNMrGdvad9V1ERBOpct")));
   assert.ok(nooka.officialLinks.some((l) => l.platform === "youtube" && l.url.includes("@nookawansh")));
 });
