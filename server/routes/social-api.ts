@@ -165,7 +165,7 @@ async function syncFollowerCount(socialUserId: number): Promise<void> {
 // GET /api/social/posts - Get feed with pagination, optional postType filter
 router.get("/posts", async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 10, sort = "recent", postType } = req.query;
+    const { page = 1, limit = 10, sort = "recent", postType, q } = req.query;
     const pageNum = Math.max(1, parseInt(page as string) || 1);
     const limitNum = Math.max(1, Math.min(parseInt(limit as string) || 10, 50));
     const offset = (pageNum - 1) * limitNum;
@@ -179,6 +179,10 @@ router.get("/posts", async (req: Request, res: Response) => {
     }
     if (postType && typeof postType === "string") {
       conditions.push(eq(socialPosts.postType, postType));
+    }
+    if (typeof q === "string" && q.trim()) {
+      const term = `%${q.trim().slice(0, 80).replace(/[\\%_]/g, "\\$&")}%`;
+      conditions.push(sql`${socialPosts.content} ILIKE ${term}`);
     }
 
     let query = db

@@ -80,9 +80,15 @@ export default function BlogPage() {
   // Blog state
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [currentPath, setLocation] = useLocation();
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => window.clearTimeout(t);
+  }, [search]);
 
   // Real API data via useSocialFeed hook
   const {
@@ -93,7 +99,13 @@ export default function BlogPage() {
     createPost: apiCreatePost,
     likePost,
     unlikePost,
-  } = useSocialFeed(1, 10, sortBy);
+  } = useSocialFeed(
+    1,
+    10,
+    sortBy,
+    typeFilter === "all" ? undefined : typeFilter,
+    debouncedSearch || undefined,
+  );
 
   const [posts, setPosts] = useState<any[]>([]);
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
@@ -193,9 +205,7 @@ export default function BlogPage() {
 
   // Sync posts from API
   useEffect(() => {
-    if (feedPosts && feedPosts.length > 0) {
-      setPosts(feedPosts);
-    }
+    if (feedPosts) setPosts(feedPosts);
   }, [feedPosts]);
 
   // Load the members the signed-in user already follows
@@ -430,16 +440,8 @@ export default function BlogPage() {
     sortBy === "trending"
       ? [...posts].sort((a, b) => b.engagementScore - a.engagementScore)
       : posts;
-  const q = search.trim().toLowerCase();
-  const displayPosts = sortedPosts.filter((p) => {
-    if (typeFilter !== "all" && (p.postType || "discussion") !== typeFilter)
-      return false;
-    if (!q) return true;
-    const hay = `${p.content || ""} ${(p.tags || []).join(" ")} ${
-      p.author?.displayName || ""
-    }`.toLowerCase();
-    return hay.includes(q);
-  });
+  const q = debouncedSearch;
+  const displayPosts = sortedPosts;
   const TYPE_CHIPS = [
     ["all", "All"],
     ["discussion", "Discussions"],
@@ -565,7 +567,7 @@ export default function BlogPage() {
             {/* Posts */}
             {(q || typeFilter !== "all") && displayPosts.length === 0 && (
               <p className="py-10 text-center text-sm text-slate-600 dark:text-slate-400">
-                No loaded posts match. Try another search or filter.
+                No posts match. Try another search or filter.
               </p>
             )}
             {displayPosts.map((post, idx) => {
