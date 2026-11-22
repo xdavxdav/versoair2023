@@ -154,6 +154,19 @@ const SECTION_COPY = {
   },
 } as const;
 
+function renderBrandSafe(text: string) {
+  const parts = text.split(/(Verso Air|VERSO AIR INC\.|vxpp)/g);
+  return parts.map((part, idx) =>
+    part === "Verso Air" || part === "VERSO AIR INC." || part === "vxpp" ? (
+      <span key={idx} className="notranslate" translate="no">
+        {part}
+      </span>
+    ) : (
+      <React.Fragment key={idx}>{part}</React.Fragment>
+    ),
+  );
+}
+
 export default function VxppGuestIntro({
   section,
   onSignIn,
@@ -208,15 +221,15 @@ export default function VxppGuestIntro({
         )}
 
         <div className="inline-flex items-center gap-2 rounded-full bg-amber-600/12 border border-amber-600/25 px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-300 mb-4">
-          {copy.badge}
+          {renderBrandSafe(copy.badge)}
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
-          {copy.title}
+          {renderBrandSafe(copy.title)}
         </h1>
 
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed mb-7">
-          {copy.subtitle}
+          {renderBrandSafe(copy.subtitle)}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">

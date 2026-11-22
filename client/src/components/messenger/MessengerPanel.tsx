@@ -416,6 +416,8 @@ export default function MessengerPanel({
     (evt: { conversationId: IdLike; message?: unknown }) => {
       const incoming = evt.message as InboxMessage | undefined;
       if (!incoming) return;
+      // Never treat the sender's own echoed message as a newly received message
+      if (userId && String(incoming.senderId) === String(userId)) return;
 
       const isActive = sameId(activeConvoRef.current?.id, evt.conversationId);
       const isKnown = conversationsRef.current.some((c) =>

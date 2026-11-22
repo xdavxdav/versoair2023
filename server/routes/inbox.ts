@@ -231,11 +231,20 @@ router.get("/conversations", async (req: Request, res: Response) => {
       }
     }
 
-    const rows = await db
+    const rawRows = await db
       .select()
       .from(schema.inboxConversations)
       .where(eq(schema.inboxConversations.userId, Number(userId)))
       .orderBy(desc(schema.inboxConversations.updatedAt));
+
+    // Never surface legacy self-conversations (user messaging themselves)
+    const rows = rawRows.filter(
+      (conversation) =>
+        !(
+          participantIsUser(conversation.type) &&
+          String(conversation.participantId) === String(userId)
+        ),
+    );
 
     const participantIds = rows
       .filter((conversation) => participantIsUser(conversation.type))
@@ -478,6 +487,16 @@ router.post(
       return res.status(400).json({
         success: false,
         error: "participantId and participantName are required",
+      });
+    }
+
+    if (
+      participantIsUser(type) &&
+      String(participantId).trim() === String(userId).trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot start a conversation with yourself.",
       });
     }
 
@@ -949,7 +968,7 @@ router.post(
         return res.status(reply.status).json(reply.body);
       }
 
-      if (mirror && recipientUserId !== null) {
+      if (mirror && recipientUserId !== null && recipientUserId !== Number(userId)) {
         try {
           await notifyMessage({
             senderId: Number(userId),

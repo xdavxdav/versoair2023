@@ -51,11 +51,11 @@ const LABELS = {
     careers: "Careers",
     contractors: "Contractors",
     servicesHeading: "Services",
-    ecosystemHeading: "Verso Air Ecosystem",
+    ecosystemHeading: "Ecosystem",
     directory: "Business Directory",
     music: "Musical Universe",
     events: "Events",
-    home: "Verso Air Home",
+    homeSuffix: "Home",
     dashboard: "Member Dashboard",
     admin: "GeoAdmin",
     settings: "Account Settings",
@@ -75,11 +75,11 @@ const LABELS = {
     careers: "Carrières",
     contractors: "Contractants",
     servicesHeading: "Services",
-    ecosystemHeading: "Écosystème Verso Air",
+    ecosystemHeading: "Écosystème",
     directory: "Annuaire d'entreprises",
     music: "Univers Musical",
     events: "Événements",
-    home: "Accueil Verso Air",
+    homeSuffix: "Accueil",
     dashboard: "Tableau de bord",
     admin: "GeoAdmin",
     settings: "Paramètres",
@@ -99,11 +99,11 @@ const LABELS = {
     careers: "Carreras",
     contractors: "Contratistas",
     servicesHeading: "Servicios",
-    ecosystemHeading: "Ecosistema Verso Air",
+    ecosystemHeading: "Ecosistema",
     directory: "Directorio comercial",
     music: "Universo Musical",
     events: "Eventos",
-    home: "Inicio Verso Air",
+    homeSuffix: "Inicio",
     dashboard: "Panel personal",
     admin: "GeoAdmin",
     settings: "Configuración",
@@ -159,7 +159,19 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
     fetchUnread();
   }, [fetchUnread]);
 
-  useInboxSocket(user ? fetchUnread : undefined);
+  // Live unread counter bump — ignore messages sent by the current user
+  const handleLiveInboxEvent = useCallback(
+    (evt?: { message?: unknown }) => {
+      const incoming = evt?.message as { senderId?: string | number } | undefined;
+      if (incoming?.senderId && String(incoming.senderId) === String(user?.id)) {
+        return;
+      }
+      fetchUnread();
+    },
+    [fetchUnread, user?.id],
+  );
+
+  useInboxSocket(user ? handleLiveInboxEvent : undefined);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -243,11 +255,37 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
   ];
 
   const ecosystemItems = [
-    { href: "/businesses-directory", label: copy.directory, icon: Building2 },
-    { href: "/stream", label: copy.music, icon: Music },
-    { href: "/events", label: copy.events, icon: Calendar },
-    { href: "/", label: copy.home, icon: Home },
+    { href: "/businesses-directory", label: copy.directory, icon: Building2, isHome: false },
+    { href: "/stream", label: copy.music, icon: Music, isHome: false },
+    { href: "/events", label: copy.events, icon: Calendar, isHome: false },
+    { href: "/", label: copy.homeSuffix, icon: Home, isHome: true },
   ];
+
+  const renderHomeBrandLabel = () =>
+    currentLang === "fr" || currentLang === "es" ? (
+      <>
+        <span>{copy.homeSuffix} </span>
+        <span className="notranslate" translate="no">Verso Air</span>
+      </>
+    ) : (
+      <>
+        <span className="notranslate" translate="no">Verso Air</span>
+        <span> {copy.homeSuffix}</span>
+      </>
+    );
+
+  const renderEcosystemHeading = () =>
+    currentLang === "fr" || currentLang === "es" ? (
+      <>
+        <span>{copy.ecosystemHeading} </span>
+        <span className="notranslate" translate="no">Verso Air</span>
+      </>
+    ) : (
+      <>
+        <span className="notranslate" translate="no">Verso Air</span>
+        <span> {copy.ecosystemHeading}</span>
+      </>
+    );
 
   const navLinkClasses = (active: boolean) =>
     `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors min-h-[44px] ${
@@ -260,7 +298,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
     <div
       data-testid="vxpp-shell"
       className={`min-h-screen w-full bg-[#f6f3ee] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row ${
-        fullBleed ? "h-screen overflow-hidden" : ""
+        fullBleed ? "h-[100dvh] overflow-hidden" : ""
       }`}
     >
       {/* ── Desktop Left Navigation Rail ── */}
@@ -349,19 +387,16 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
 
           {/* Ecosystem */}
           <div className="space-y-1">
-            <p className="px-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 notranslate" translate="no">
-              {copy.ecosystemHeading}
+            <p className="px-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {renderEcosystemHeading()}
             </p>
             {ecosystemItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link key={item.href} href={item.href} className={navLinkClasses(false)}>
                   <Icon className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                  <span
-                    className={`truncate ${item.href === "/" ? "notranslate" : ""}`}
-                    translate={item.href === "/" ? "no" : undefined}
-                  >
-                    {item.label}
+                  <span className="truncate">
+                    {item.isHome ? renderHomeBrandLabel() : item.label}
                   </span>
                 </Link>
               );
@@ -386,7 +421,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
           {user ? (
             <div className="flex items-center gap-2.5 rounded-xl bg-stone-100/90 dark:bg-slate-800/70 p-2.5">
               <Link href="/profile" className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-amber-600 to-amber-800 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                <div className="h-9 w-9 rounded-full overflow-hidden bg-gradient-to-br from-amber-600 to-amber-800 text-white text-xs font-bold flex items-center justify-center shrink-0 notranslate" translate="no">
                   {userAvatar && !avatarBroken ? (
                     <img
                       src={userAvatar}
@@ -398,7 +433,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
                     initials
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 notranslate" translate="no">
                   <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                     {displayName}
                   </p>
@@ -482,7 +517,8 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
             <Link
               href="/profile"
               aria-label={copy.profile}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full overflow-hidden border border-stone-300 dark:border-slate-700 bg-amber-700 text-white text-xs font-bold shrink-0"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full overflow-hidden border border-stone-300 dark:border-slate-700 bg-amber-700 text-white text-xs font-bold shrink-0 notranslate"
+              translate="no"
             >
               {userAvatar && !avatarBroken ? (
                 <img
@@ -572,14 +608,16 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
 
               <div className="space-y-1">
                 <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  {copy.ecosystemHeading}
+                  {renderEcosystemHeading()}
                 </p>
                 {ecosystemItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <Link key={item.href} href={item.href} className={navLinkClasses(false)}>
                       <Icon className="h-4 w-4 shrink-0 text-slate-500" />
-                      <span>{item.label}</span>
+                      <span className="truncate">
+                        {item.isHome ? renderHomeBrandLabel() : item.label}
+                      </span>
                     </Link>
                   );
                 })}
@@ -603,8 +641,8 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
 
       {/* ── Main Content Area ── */}
       <div
-        className={`flex-1 min-w-0 flex flex-col ${
-          fullBleed ? "h-[calc(100vh-3.5rem-4rem)] lg:h-screen overflow-hidden" : "pb-20 lg:pb-6"
+        className={`flex-1 min-w-0 min-h-0 flex flex-col ${
+          fullBleed ? "h-[calc(100dvh-3.5rem-4rem)] lg:h-[100dvh] overflow-hidden" : "pb-20 lg:pb-6"
         }`}
       >
         {children}

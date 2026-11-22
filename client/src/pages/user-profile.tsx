@@ -255,8 +255,11 @@ export default function UserProfilePage() {
         </div>
 
         <div className="px-5 sm:px-7 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
-            <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white dark:border-slate-900 bg-gradient-to-br from-amber-600 to-amber-800 shadow-md overflow-hidden flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+            <div
+              className="relative -mt-12 sm:-mt-16 h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white dark:border-slate-900 bg-gradient-to-br from-amber-600 to-amber-800 shadow-md overflow-hidden flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shrink-0 notranslate"
+              translate="no"
+            >
               {profile.avatar && !avatarFailed ? (
                 <img
                   src={profile.avatar}
@@ -269,7 +272,7 @@ export default function UserProfilePage() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pt-1 sm:pt-3">
               {isMe ? (
                 <Link
                   href="/profile"
@@ -313,10 +316,10 @@ export default function UserProfilePage() {
 
           <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white notranslate" translate="no">
                 {profile.name}
               </h1>
-              <span className="text-sm text-slate-500">@{profile.username}</span>
+              <span className="text-sm text-slate-500 notranslate" translate="no">@{profile.username}</span>
               {profile.isArtist && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-600/10 border border-purple-500/25 px-2.5 py-0.5 text-xs font-semibold text-purple-800 dark:text-purple-300">
                   <Music className="h-3 w-3" />

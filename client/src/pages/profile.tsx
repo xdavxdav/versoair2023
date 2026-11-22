@@ -552,9 +552,12 @@ export default function ProfilePage() {
         </div>
 
         <div className="px-5 sm:px-7 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
-            <div className="relative inline-flex items-end gap-3">
-              <div className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white dark:border-slate-900 bg-gradient-to-br from-amber-600 to-amber-800 shadow-md overflow-hidden flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+            <div className="relative inline-flex items-end gap-3 -mt-12 sm:-mt-16">
+              <div
+                className="relative h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white dark:border-slate-900 bg-gradient-to-br from-amber-600 to-amber-800 shadow-md overflow-hidden flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shrink-0 notranslate"
+                translate="no"
+              >
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -595,28 +598,28 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pt-1 sm:pt-3">
               <button
                 type="button"
                 onClick={openProfileEditor}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 min-h-[42px] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 min-h-[40px] whitespace-nowrap transition-colors"
               >
-                <Edit3 className="h-4 w-4" />
+                <Edit3 className="h-4 w-4 shrink-0" />
                 {tr("Edit Profile", "Modifier le profil", "Editar perfil")}
               </button>
               <Link
                 href={`/user/${user.id}`}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-stone-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold px-3.5 py-2.5 min-h-[42px] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-stone-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold px-3.5 py-2 min-h-[40px] whitespace-nowrap transition-colors"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4 shrink-0" />
                 {tr("Public View", "Vue publique", "Vista pública")}
               </Link>
               <button
                 type="button"
                 onClick={() => setActiveTab("settings")}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold px-3.5 py-2.5 min-h-[42px] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold px-3.5 py-2 min-h-[40px] whitespace-nowrap transition-colors"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4 shrink-0" />
                 {tr("Settings", "Paramètres", "Ajustes")}
               </button>
             </div>
@@ -625,10 +628,10 @@ export default function ProfilePage() {
           <div className="space-y-3">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white notranslate" translate="no">
                   {displayName}
                 </h1>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-slate-500 dark:text-slate-400 notranslate" translate="no">
                   @{displayUsername}
                 </span>
               </div>
