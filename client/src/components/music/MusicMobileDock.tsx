@@ -202,7 +202,7 @@ export function MusicMobileDock({ onFabClick }: MusicMobileDockProps) {
       </header>
 
       {/* Bottom dock */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <nav className="tmu-dark-panel fixed bottom-0 left-0 right-0 z-50 md:hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-[#0a0512]/95 backdrop-blur-xl border-t border-white/[0.06]" />
 

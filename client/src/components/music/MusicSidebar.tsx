@@ -368,7 +368,7 @@ export function MusicSidebar() {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col h-screen fixed top-0 left-0 z-[90] w-16 shadow-[0_0_30px_rgba(168,85,247,0.18)]">
+      <aside className="tmu-dark-panel hidden md:flex flex-col h-screen fixed top-0 left-0 z-[90] w-16 shadow-[0_0_30px_rgba(168,85,247,0.18)]">
       <div className="absolute inset-0 bg-[#0a0512]/90 backdrop-blur-xl border-r border-white/[0.08]" />
       <div className="absolute top-14 bottom-0 right-0 w-px bg-gradient-to-b from-purple-500/50 via-fuchsia-500/20 to-transparent" />
       <div className="absolute top-14 left-0 right-0 h-px bg-gradient-to-r from-purple-500/30 via-purple-500/50 to-purple-500/60" />

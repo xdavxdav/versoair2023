@@ -29,7 +29,7 @@ export function FeaturedArtistCard({
     <section
       aria-label={isFr ? `Artiste à la une : ${artist.stageName}` : `Featured artist: ${artist.stageName}`}
       data-testid="tmu-featured-artist-card"
-      className={`relative overflow-hidden rounded-3xl border shadow-2xl ${
+      className={`tmu-dark-panel relative overflow-hidden rounded-3xl border shadow-2xl ${
         adaptive
           ? "border-pink-300/80 bg-[linear-gradient(135deg,#fff5f7_0%,#fdf2f8_48%,#eef2ff_100%)] text-slate-900 shadow-rose-900/10 dark:border-indigo-400/35 dark:bg-[linear-gradient(135deg,#0c0a26_0%,#181448_54%,#0a081f_100%)] dark:text-white dark:shadow-indigo-950/70"
           : "border-fuchsia-400/35 bg-[linear-gradient(135deg,#170936_0%,#250d4f_52%,#110726_100%)] text-white shadow-purple-950/60"
