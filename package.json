@@ -53,7 +53,7 @@
     "test:business-sector": "node --import tsx --test server/routes/business-sector.test.ts",
     "test:messaging": "DATABASE_URL=postgres://test:test@127.0.0.1:1/test JWT_SECRET=local-test-only-secret-0123456789abcdef node --import tsx --test server/utils/inbox-send-idempotency.test.ts server/utils/inbox-send-route.test.ts client/src/lib/inbox-api.test.ts server/services/ensure-tables.test.ts server/utils/inbox-participants.test.ts",
     "seed:test-pack": "node --import tsx scripts/seed-test-pack.ts",
-    "test:translation": "node --import tsx --test shared/public-translations.test.ts shared/apply-translations.test.ts shared/onboarding-translations.test.ts shared/geo-admin-translations.test.ts shared/footer-translations.test.ts client/src/lib/report-issue-nudge.test.ts client/src/utils/country-names.test.ts server/routes/translations.test.ts server/middleware/auth-public.test.ts scripts/tests/language-switcher.test.mjs",
+    "test:translation": "node --import tsx --test shared/public-translations.test.ts shared/directory-translations.test.ts shared/apply-translations.test.ts shared/onboarding-translations.test.ts shared/geo-admin-translations.test.ts shared/footer-translations.test.ts client/src/lib/report-issue-nudge.test.ts client/src/utils/country-names.test.ts server/routes/translations.test.ts server/middleware/auth-public.test.ts scripts/tests/language-switcher.test.mjs",
     "prerender:snap": "node --import tsx server/scripts/run-react-snap.ts",
     "build:prerender": "npm run seo:routes && npm run build && npm run prerender:snap && npm run seo:validate-prerender",
     "seed": "node scripts/seed-production.cjs"

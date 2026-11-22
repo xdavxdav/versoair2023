@@ -8,6 +8,7 @@ import { CHROME_COPY, CHROME_ES } from "./chrome-translations";
 import { GEO_ADMIN_COPY, GEO_ADMIN_ES } from "./geo-admin-translations";
 import { ONBOARDING_COPY, ONBOARDING_ES } from "./onboarding-translations";
 import { RECOVERY_COPY, RECOVERY_ES } from "./recovery-translations";
+import { DIRECTORY_COPY, DIRECTORY_ES } from "./directory-translations";
 import { BUNDLED_LANGUAGES, fillTemplate, isBundledLanguage, getPublicCopyId, nativeDictionary, PUBLIC_COPY } from "./public-translations";
 import { SPANISH_COPY } from "./spanish-translations";
 
@@ -152,6 +153,7 @@ const AUTHORED_MODULES: Array<{
   { name: "onboarding", rows: ONBOARDING_COPY, es: ONBOARDING_ES },
   { name: "geo-admin", rows: GEO_ADMIN_COPY, es: GEO_ADMIN_ES },
   { name: "recovery", rows: RECOVERY_COPY, es: RECOVERY_ES },
+  { name: "directory", rows: DIRECTORY_COPY, es: DIRECTORY_ES },
   { name: "checkout", rows: CHECKOUT_COPY, es: CHECKOUT_ES },
 ];
 

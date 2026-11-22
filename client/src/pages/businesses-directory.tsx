@@ -55,6 +55,8 @@ import { parseClaimed } from "@/lib/business-status";
 import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
 import { useCountry } from "@/contexts/CountryContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
+import { useTranslate } from "@/hooks/use-translate";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 const API_BASE_URL = "";
@@ -68,13 +70,13 @@ const DEFAULT_DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(
 const DEFAULT_DIRECTORY_MARKET_LABEL =
   import.meta.env.VITE_DIRECTORY_MARKET_LABEL?.trim() || "Toronto, Canada";
 
-function marketLabelFor(countryCode: string): string {
+function marketLabelFor(countryCode: string, language = "en"): string {
   if (countryCode === DEFAULT_DIRECTORY_COUNTRY_CODE) {
     return DEFAULT_DIRECTORY_MARKET_LABEL;
   }
   try {
     return (
-      new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ??
+      new Intl.DisplayNames([language], { type: "region" }).of(countryCode) ??
       countryCode
     );
   } catch {
@@ -533,6 +535,7 @@ const CategoryCard = ({
   ) => void;
 }) => {
   const Icon = category.icon;
+  const tr = useTranslate();
 
   return (
     <motion.div
@@ -562,11 +565,11 @@ const CategoryCard = ({
 
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-sky-700 transition-colors">
-            {category.title}
+            {tr(category.title)}
           </h3>
 
           <p className="text-sm text-slate-700 mb-4 line-clamp-2">
-            {category.description}
+            {tr(category.description)}
           </p>
 
           <div className="space-y-1.5">
@@ -580,7 +583,7 @@ const CategoryCard = ({
                 }}
               >
                 <ArrowRight className="w-3 h-3 mr-1.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="hover:underline">{link.label}</span>
+                <span className="hover:underline">{tr(link.label)}</span>
               </div>
             ))}
           </div>
@@ -605,9 +608,17 @@ export default function BusinessesDirectory() {
   const DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(normalizedSelectedCountry)
     ? normalizedSelectedCountry
     : DEFAULT_DIRECTORY_COUNTRY_CODE;
-  const DIRECTORY_MARKET_LABEL = marketLabelFor(DIRECTORY_COUNTRY_CODE);
+  const { currentLang } = useLanguage();
+  const tr = useTranslate();
+  const DIRECTORY_MARKET_LABEL = marketLabelFor(
+    DIRECTORY_COUNTRY_CODE,
+    currentLang,
+  );
   const continentAdj = getContinentAdjective(DIRECTORY_COUNTRY_CODE);
   const continentName = getContinentForCountry(DIRECTORY_COUNTRY_CODE);
+  const [headingTop, headingBottom] = tr(
+    `${continentAdj} Business|Directory`,
+  ).split("|");
   const [selectedCategory, setSelectedCategory] = useState<
     (typeof categories)[0] | null
   >(null);
@@ -882,7 +893,7 @@ export default function BusinessesDirectory() {
                   Verso Air
                 </span>
                 <span className="hidden sm:inline text-sky-700 ml-2 text-sm font-medium">
-                  Business Directory
+                  {tr("Business Directory")}
                 </span>
               </div>
             </div>
@@ -890,7 +901,7 @@ export default function BusinessesDirectory() {
             {databaseConnected !== null && (
               <div
                 role="status"
-                aria-label={databaseConnected ? "Connected" : "Offline"}
+                aria-label={databaseConnected ? tr("Connected") : tr("Offline")}
                 className={`flex shrink-0 items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
                   databaseConnected
                     ? "bg-green-50 text-green-700"
@@ -900,7 +911,7 @@ export default function BusinessesDirectory() {
                 <div
                   className={`w-2 h-2 rounded-full ${databaseConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
                 />
-                {databaseConnected ? "Connected" : "Offline"}
+                {databaseConnected ? tr("Connected") : tr("Offline")}
               </div>
             )}
           </div>
@@ -927,26 +938,30 @@ export default function BusinessesDirectory() {
             <div className="inline-flex max-w-full items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-5 sm:mb-6">
               <Globe className="w-4 h-4 shrink-0 text-sky-700" />
               <span className="text-xs sm:text-sm text-slate-700 text-left">
-                Planned first market: {DIRECTORY_MARKET_LABEL} ({continentName})
+                {tr("Planned first market: {market} ({continent})", {
+                  market: DIRECTORY_MARKET_LABEL,
+                  continent: tr(continentName),
+                })}
               </span>
             </div>
 
             <h1 className="text-3xl min-[400px]:text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-4 break-words">
-              {continentAdj} Business
+              {headingTop}
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-800 to-blue-800 mt-1 sm:mt-2">
-                Directory
+                {headingBottom}
               </span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-700 max-w-2xl mx-auto mb-4">
-              Listings appear only after local businesses meet our verification
-              checks and the planned market is ready.
+              {tr(
+                "Listings appear only after local businesses meet our verification checks and the planned market is ready.",
+              )}
             </p>
             <p className="text-xs sm:text-sm text-slate-700 max-w-2xl mx-auto mb-8 sm:mb-10">
-              The first planned market is {DIRECTORY_MARKET_LABEL}. Other
-              markets will open only when local availability and listings are
-              verified; expansion is region by region, not continent-wide or
-              worldwide.
+              {tr(
+                "The first planned market is {market}. Other markets will open only when local availability and listings are verified; expansion is region by region, not continent-wide or worldwide.",
+                { market: DIRECTORY_MARKET_LABEL },
+              )}
             </p>
           </motion.div>
 
@@ -965,8 +980,8 @@ export default function BusinessesDirectory() {
                     type="text"
                     placeholder={
                       searchMode === "ai"
-                        ? "Try: an emergency plumber near downtown Toronto"
-                        : "Business name, service..."
+                        ? tr("Try: an emergency plumber near downtown Toronto")
+                        : tr("Business name, service...")
                     }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -978,7 +993,7 @@ export default function BusinessesDirectory() {
                   <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700" />
                   <Input
                     type="text"
-                    placeholder="Country, city..."
+                    placeholder={tr("Country, city...")}
                     value={locationQuery}
                     onChange={(e) => setLocationQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -995,7 +1010,7 @@ export default function BusinessesDirectory() {
                   ) : (
                     <Search className="w-5 h-5" />
                   )}
-                  <span className="ml-2">Search</span>
+                  <span className="ml-2">{tr("Search")}</span>
                 </Button>
               </div>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 pt-3 pb-1">
@@ -1013,7 +1028,7 @@ export default function BusinessesDirectory() {
                     }
                   >
                     <Search className="w-4 h-4 mr-1.5" />
-                    Keyword search
+                    {tr("Keyword search")}
                   </Button>
                   <Button
                     type="button"
@@ -1028,12 +1043,13 @@ export default function BusinessesDirectory() {
                     }
                   >
                     <Sparkles className="w-4 h-4 mr-1.5" />
-                    AI-assisted search
+                    {tr("AI-assisted search")}
                   </Button>
                 </div>
                 <p className="text-xs text-slate-700 text-left md:text-right md:max-w-sm">
-                  AI search interprets your request; results are verified
-                  businesses in the planned market only.
+                  {tr(
+                    "AI search interprets your request; results are verified businesses in the planned market only.",
+                  )}
                 </p>
               </div>
             </div>
@@ -1055,10 +1071,10 @@ export default function BusinessesDirectory() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    Browse by Category
+                    {tr("Browse by Category")}
                   </h2>
                   <p className="text-slate-700 mt-1">
-                    Click on a category to explore businesses in that sector
+                    {tr("Click on a category to explore businesses in that sector")}
                   </p>
                 </div>
                 <Button
@@ -1067,9 +1083,9 @@ export default function BusinessesDirectory() {
                       "/contact?subject=Business%20directory%20listing%20eligibility%20review",
                     )
                   }
-                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 sm:whitespace-nowrap notranslate"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 sm:whitespace-nowrap"
                 >
-                  Request Listing Review
+                  {tr("Request Listing Review")}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -1116,12 +1132,12 @@ export default function BusinessesDirectory() {
                         <div className="min-w-0">
                           <h2 className="text-xl sm:text-3xl font-bold text-gray-900 break-words">
                             {selectedSubcategory
-                              ? selectedSubcategory.label
-                              : selectedCategory.title}
+                              ? tr(selectedSubcategory.label)
+                              : tr(selectedCategory.title)}
                           </h2>
                           {selectedSubcategory && (
                             <p className="text-sm text-slate-700">
-                              {selectedCategory.title}
+                              {tr(selectedCategory.title)}
                             </p>
                           )}
                         </div>
@@ -1129,14 +1145,16 @@ export default function BusinessesDirectory() {
                     )}
                   </div>
                   <p className="text-slate-700 mt-1">
-                    Showing {searchResults.length} of{" "}
-                    {totalResults.toLocaleString()} businesses
+                    {tr("Showing {shown} of {total} businesses", {
+                      shown: searchResults.length,
+                      total: totalResults.toLocaleString(),
+                    })}
                   </p>
                   {searchMode === "ai" && aiIntent && (
                     <div className="mt-3 flex flex-wrap gap-2 text-xs">
                       {aiIntent.sectorLabel && (
                         <Badge variant="secondary">
-                          {aiIntent.sectorLabel}
+                          {tr(aiIntent.sectorLabel)}
                         </Badge>
                       )}
                       {aiIntent.location && (
@@ -1146,7 +1164,7 @@ export default function BusinessesDirectory() {
                         </Badge>
                       )}
                       <Badge className="bg-amber-100 text-amber-900">
-                        Verified listings only
+                        {tr("Verified listings only")}
                       </Badge>
                     </div>
                   )}
@@ -1157,7 +1175,7 @@ export default function BusinessesDirectory() {
                   className="w-full sm:w-auto border-gray-300"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Clear filters
+                  {tr("Clear filters")}
                 </Button>
               </div>
             </motion.div>
@@ -1178,14 +1196,14 @@ export default function BusinessesDirectory() {
                 className="mx-auto max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-950"
               >
                 <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-800" />
-                <p>{searchError}</p>
+                <p>{tr(searchError)}</p>
                 {searchMode === "ai" && (
                   <Button
                     variant="outline"
                     onClick={() => setSearchMode("standard")}
                     className="mt-4"
                   >
-                    Switch to keyword search
+                    {tr("Switch to keyword search")}
                   </Button>
                 )}
               </div>
@@ -1293,17 +1311,20 @@ export default function BusinessesDirectory() {
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="w-4 h-4 mr-1" />
-                      Previous
+                      {tr("Previous")}
                     </Button>
                     <span className="text-sm text-gray-600">
-                      Page {currentPage} of {Math.ceil(totalResults / 12)}
+                      {tr("Page {page} of {pages}", {
+                        page: currentPage,
+                        pages: Math.ceil(totalResults / 12),
+                      })}
                     </span>
                     <Button
                       variant="outline"
                       onClick={() => handleSearch(currentPage + 1)}
                       disabled={currentPage >= Math.ceil(totalResults / 12)}
                     >
-                      Next
+                      {tr("Next")}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
@@ -1313,18 +1334,20 @@ export default function BusinessesDirectory() {
               <div className="text-center py-12">
                 <AlertCircle className="w-16 h-16 mx-auto text-slate-700 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  No Businesses Found
+                  {tr("No Businesses Found")}
                 </h3>
                 <p className="text-slate-700 mb-6">
                   {searchMode === "ai"
-                    ? "No verified businesses match that request in the planned market yet. Try another service or location, or browse categories."
-                    : "Try a different search or browse other categories."}
+                    ? tr(
+                        "No verified businesses match that request in the planned market yet. Try another service or location, or browse categories.",
+                      )
+                    : tr("Try a different search or browse other categories.")}
                 </p>
                 <Button
                   onClick={clearSearch}
                   className="bg-gradient-to-r from-sky-700 to-blue-800 hover:from-sky-800 hover:to-blue-900"
                 >
-                  Clear filters and browse categories
+                  {tr("Clear filters and browse categories")}
                 </Button>
               </div>
             )}
