@@ -797,6 +797,36 @@ export const AMERICAS_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "haitian-hip-hop",
+    name: "Haitian hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["HT"],
+    aliases: [],
+    wikidata: "Q5639747",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Haitian_hip-hop",
+        evidence: "Rap Kreyòl started in Haiti in the early 1980s by Master Dji, who witnessed how American hip hop gave birth to French hip hop while living in France.",
+      },
+    ],
+  },
+  {
+    slug: "haitian-rock",
+    name: "Haitian rock",
+    kind: "style",
+    parent: "rock",
+    countries: ["HT"],
+    aliases: [],
+    wikidata: "Q17004167",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Haitian_rock",
+        evidence: "Haitian rock, or rock kreyòl, started as rock n roll in Haiti in the early 1960s.",
+      },
+    ],
+  },
+  {
     slug: "hapa-haole-music",
     name: "Hapa haole music",
     kind: "style",
@@ -913,6 +943,21 @@ export const AMERICAS_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Jovem_Guarda",
         evidence: "Jovem Guarda was primarily a Brazilian musical television show first aired by Rede Record in 1965, although the term soon expanded to designate the entire movement and style surrounding it.",
+      },
+    ],
+  },
+  {
+    slug: "kontradans",
+    name: "Kontradans",
+    kind: "style",
+    parent: null,
+    countries: ["HT"],
+    aliases: [],
+    wikidata: "Q17077948",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Kontradans",
+        evidence: "Kontradans, or the French-Haitian Contredanse, is creolized dance music formed in the 18th century in the French colony of Saint-Domingue (Haiti) that evolved from the English contra dance, or (country dance), which eventually spread throughout the…",
       },
     ],
   },
@@ -1498,6 +1543,21 @@ export const AMERICAS_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Rap_metal",
         evidence: "Rap metal is a fusion genre that combines hip-hop with heavy metal.",
+      },
+    ],
+  },
+  {
+    slug: "rara-tech",
+    name: "Rara tech",
+    kind: "style",
+    parent: "electronic",
+    countries: ["HT"],
+    aliases: [],
+    wikidata: "Q21260785",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Rara_tech",
+        evidence: "Rara tech is an electronic music subgenre that fuses the Afro-Haitian genre rara with house music.",
       },
     ],
   },

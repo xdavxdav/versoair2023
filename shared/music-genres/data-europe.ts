@@ -212,6 +212,36 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "belgian-hardcore-techno",
+    name: "Belgian hardcore techno",
+    kind: "style",
+    parent: "techno",
+    countries: ["BE"],
+    aliases: [],
+    wikidata: "Q112663444",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Belgian_hardcore_techno",
+        evidence: "Belgian hardcore techno (also referred to as Belgian techno or rave techno) is an early style of hardcore techno that emerged from new beat as EBM and techno influences became more prevalent in this genre.",
+      },
+    ],
+  },
+  {
+    slug: "belgian-hip-hop",
+    name: "Belgian hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["BE"],
+    aliases: [],
+    wikidata: "Q815536",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Belgian_hip-hop",
+        evidence: "Belgian hip-hop music has a few rappers stemming from Africa and Italy.",
+      },
+    ],
+  },
+  {
     slug: "big-beat",
     name: "Big beat",
     kind: "style",
@@ -377,6 +407,51 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "cancion-melodica",
+    name: "Canción melódica",
+    kind: "style",
+    parent: "pop",
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q5747258",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Canci%C3%B3n_mel%C3%B3dica",
+        evidence: "Canción melódica, also known as canción ligera (\"light song\") is a genre of Spanish-language popular music typically defined by sentimental ballads with light, orchestral arrangements.",
+      },
+    ],
+  },
+  {
+    slug: "cante-alentejano",
+    name: "Cante Alentejano",
+    kind: "style",
+    parent: "folk",
+    countries: ["PT"],
+    aliases: [],
+    wikidata: "Q19754215",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Cante_Alentejano",
+        evidence: "Cante Alentejano is a Portuguese music genre based on vocal music without instrumentation from the Alentejo region.",
+      },
+    ],
+  },
+  {
+    slug: "catalan-rumba",
+    name: "Catalan rumba",
+    kind: "style",
+    parent: null,
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q2707994",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Catalan_rumba",
+        evidence: "The Catalan rumba is a genre of music that developed in Barcelona's Romani community beginning in the 1950s and 1960s.",
+      },
+    ],
+  },
+  {
     slug: "celtic-punk",
     name: "Celtic punk",
     kind: "style",
@@ -463,6 +538,21 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Chouval_bwa",
         evidence: "Chouval bwa is a kind of folk music originated on the slave plantations of Martinique.",
+      },
+    ],
+  },
+  {
+    slug: "coimbra-fado",
+    name: "Coimbra fado",
+    kind: "style",
+    parent: "fado",
+    countries: ["PT"],
+    aliases: [],
+    wikidata: "Q5141514",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Coimbra_fado",
+        evidence: "Coimbra fado (Portuguese: Fado de Coimbra) is a genre of fado originating in the city of Coimbra, Portugal.",
       },
     ],
   },
@@ -591,7 +681,7 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     name: "Electronic body music",
     kind: "style",
     parent: "electronic",
-    countries: ["GB","DE"],
+    countries: ["GB","DE","BE"],
     aliases: [],
     wikidata: "Q372103",
     sources: [
@@ -628,6 +718,51 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Ethereal_wave",
         evidence: "Ethereal wave, also called ethereal darkwave, ethereal goth or simply ethereal, is a subgenre of dark wave music that is variously described as \"gothic\", \"romantic\", and \"otherworldly\".",
+      },
+    ],
+  },
+  {
+    slug: "fado",
+    name: "Fado",
+    kind: "style",
+    parent: null,
+    countries: ["PT"],
+    aliases: [],
+    wikidata: "Q185676",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Fado",
+        evidence: "Fado is a music genre which can be traced to the 1820s in Lisbon, Portugal, but probably has much earlier origins.",
+      },
+    ],
+  },
+  {
+    slug: "flamenco",
+    name: "Flamenco",
+    kind: "style",
+    parent: null,
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q9764",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Flamenco",
+        evidence: "Flamenco is an art form based on the various folkloric music traditions of southern Spain, developed within the gitano subculture of the Andalusian region, and also having historical presence in Extremadura and Murcia.",
+      },
+    ],
+  },
+  {
+    slug: "flamenco-rock",
+    name: "Flamenco rock",
+    kind: "style",
+    parent: "rock",
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q6110311",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Flamenco_rock",
+        evidence: "Flamenco rock or Andalusian rock is a rock music fusion genre that emerged from (but is not limited to) the Spanish region of Andalusia throughout the late 1960s and early 1970s.",
       },
     ],
   },
@@ -902,6 +1037,21 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "hip-hop-tuga",
+    name: "Hip-hop tuga",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["PT"],
+    aliases: [],
+    wikidata: "Q3135807",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Hip-hop_tuga",
+        evidence: "Portuguese hip-hop (Portuguese: Hip-hop português), more commonly called hip-hop tuga (\"tuga\" here being slang for \"Portuguese\"), is the Portuguese variety of hip-hop.",
+      },
+    ],
+  },
+  {
     slug: "indie-pop",
     name: "Indie pop",
     kind: "style",
@@ -943,6 +1093,81 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Intelligent_dance_music",
         evidence: "Intelligent dance music (IDM) is a loose label used to describe experimental forms of electronic music associated with early-1990s ambient techno, \"electronic listening music\" and related forms of electronica.",
+      },
+    ],
+  },
+  {
+    slug: "italian-beat",
+    name: "Italian beat",
+    kind: "style",
+    parent: "rock",
+    countries: ["IT"],
+    aliases: [],
+    wikidata: "Q25110142",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Italian_beat",
+        evidence: "Italian beat (Italian: beat italiano), also called bitt, was the 1960s genre of Italian popular music called beat music (musica beat).",
+      },
+    ],
+  },
+  {
+    slug: "italian-folk-music",
+    name: "Italian folk music",
+    kind: "style",
+    parent: "folk",
+    countries: ["IT"],
+    aliases: [],
+    wikidata: "Q1048249",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Italian_folk_music",
+        evidence: "Italian folk music reflects a long and diverse history.",
+      },
+    ],
+  },
+  {
+    slug: "italian-jazz",
+    name: "Italian jazz",
+    kind: "style",
+    parent: "jazz",
+    countries: ["IT"],
+    aliases: [],
+    wikidata: "Q6093324",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Italian_jazz",
+        evidence: "Italian jazz refers to jazz music that is played by Italian musicians, or to jazz music that is in some way connected to Italy.",
+      },
+    ],
+  },
+  {
+    slug: "italo-disco",
+    name: "Italo disco",
+    kind: "style",
+    parent: null,
+    countries: ["IT"],
+    aliases: [],
+    wikidata: "Q744417",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Italo_disco",
+        evidence: "Italo disco or Italodisco (variously capitalized, and sometimes hyphenated as Italo-disco) is a music genre which originated in Italy in the early 1980s.",
+      },
+    ],
+  },
+  {
+    slug: "italo-house",
+    name: "Italo house",
+    kind: "style",
+    parent: "house",
+    countries: ["IT"],
+    aliases: [],
+    wikidata: "Q2702280",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Italo_house",
+        evidence: "Italo house (often simply referred to as \"Italian\" or \"Italian house\" in the UK) is a form of house music originating in Italy.",
       },
     ],
   },
@@ -1262,6 +1487,36 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "rock-en-espanol",
+    name: "Rock en español",
+    kind: "style",
+    parent: "rock",
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q2994332",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Rock_en_espa%C3%B1ol",
+        evidence: "Rock en español (Spanish for 'Spanish-language rock') is a term used to refer to any kind of rock music featuring Spanish vocals.",
+      },
+    ],
+  },
+  {
+    slug: "rondena",
+    name: "Rondeña",
+    kind: "style",
+    parent: "flamenco",
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q3941098",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Ronde%C3%B1a",
+        evidence: "The rondeña is a palo or musical form of flamenco associated with Ronda and the Province of Málaga in Andalusia, southern Spain.",
+      },
+    ],
+  },
+  {
     slug: "schaffel",
     name: "Schaffel",
     kind: "style",
@@ -1427,6 +1682,21 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "swiss-hip-hop",
+    name: "Swiss hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["CH"],
+    aliases: [],
+    wikidata: "Q1337973",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Swiss_hip-hop",
+        evidence: "The Swiss hip hop culture began in the early 1980s.",
+      },
+    ],
+  },
+  {
     slug: "synth-pop",
     name: "Synth-pop",
     kind: "style",
@@ -1438,6 +1708,21 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Synth-pop",
         evidence: "Synth-pop (short for synthesizer pop; also called techno-pop) is a music genre that first became prominent in the late 1970s and features the synthesizer as the dominant musical instrument.",
+      },
+    ],
+  },
+  {
+    slug: "taranto",
+    name: "Taranto",
+    kind: "style",
+    parent: "flamenco",
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q3981078",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Taranto_(flamenco_style)",
+        evidence: "The taranto is a flamenco style that originates from the province of Almería in Andalusia, Spain.",
       },
     ],
   },
@@ -1562,17 +1847,47 @@ export const EUROPE_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "villancico",
+    name: "Villancico",
+    kind: "style",
+    parent: null,
+    countries: ["ES"],
+    aliases: [],
+    wikidata: "Q1232283",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Villancico",
+        evidence: "The villancico or vilancete was a common poetic and musical form of the Iberian Peninsula and Latin America popular from the late 15th to 18th centuries.",
+      },
+    ],
+  },
+  {
     slug: "ye-ye",
     name: "Yé-yé",
     kind: "style",
     parent: "pop",
-    countries: ["FR"],
+    countries: ["FR","ES"],
     aliases: [],
     wikidata: "Q1636684",
     sources: [
       {
         url: "https://en.wikipedia.org/wiki/Y%C3%A9-y%C3%A9",
         evidence: "Yé-yé or yeyé was a style of pop music that emerged in Western and Southern Europe in the early 1960s.",
+      },
+    ],
+  },
+  {
+    slug: "yodeling",
+    name: "Yodeling",
+    kind: "style",
+    parent: "folk",
+    countries: ["CH"],
+    aliases: [],
+    wikidata: "Q41923",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Yodeling",
+        evidence: "Yodeling (also jodeling or yodelling) is a form of singing which involves repeated and rapid changes of pitch between the low-pitch chest register (or \"chest voice\") and the high-pitch head register or falsetto.",
       },
     ],
   },

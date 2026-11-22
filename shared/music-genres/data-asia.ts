@@ -17,6 +17,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "beiguan-music",
+    name: "Beiguan music",
+    kind: "style",
+    parent: null,
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q3846957",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Beiguan_music",
+        evidence: "Beiguan (Chinese: 北管; pinyin: Běiguǎn; Pe̍h-ōe-jī: Pak-kóan) is a type of traditional music, melody and theatrical performance between the 17th and mid-20th centuries.",
+      },
+    ],
+  },
+  {
     slug: "bhajan",
     name: "Bhajan",
     kind: "style",
@@ -77,6 +92,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "c-pop",
+    name: "C-pop",
+    kind: "style",
+    parent: "pop",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q1192110",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/C-pop",
+        evidence: "C-pop is an abbreviation for Chinese popular music (simplified Chinese: 中文流行音乐; traditional Chinese: 中文流行音樂; pinyin: zhōngwén liúxíng yīnyuè; Jyutping: zung1man4 lau4hang4 jam1ngok6), a loosely defined musical genre by artists originating from…",
+      },
+    ],
+  },
+  {
     slug: "carnatic-music",
     name: "Carnatic music",
     kind: "style",
@@ -88,6 +118,51 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Carnatic_music",
         evidence: "Carnatic music (known as Karnāṭaka saṃgīta or Karnāṭaka saṅgītam in the Dravidian languages) is a system of music commonly associated with South India, including the modern Indian states of Andhra Pradesh, Karnataka, Kerala, Tamil Nadu and Telangana.",
+      },
+    ],
+  },
+  {
+    slug: "chinese-heavy-metal",
+    name: "Chinese heavy metal",
+    kind: "style",
+    parent: "metal",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q5100797",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Chinese_heavy_metal",
+        evidence: "Chinese heavy metal (中国重金属, pinyin: Zhōngguó Zhòngjīnshǔ; also 中国重金属音乐, Zhōngguó zhòngjīnshǔ yīnyuè, literally \"Chinese heavy metal music\") is commonly used to describe a wide variety of forms of heavy metal music, in connection with the rock bands…",
+      },
+    ],
+  },
+  {
+    slug: "chinese-hip-hop",
+    name: "Chinese hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q5100799",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Chinese_hip-hop",
+        evidence: "Chinese hip-hop (Chinese: 中国嘻哈; pinyin: Zhōngguó xīhā), also known as C-Rap, is a subgenre of Chinese music.",
+      },
+    ],
+  },
+  {
+    slug: "chinese-rock",
+    name: "Chinese rock",
+    kind: "style",
+    parent: "rock",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q1064810",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Chinese_rock",
+        evidence: "Chinese rock (Chinese: 中国摇滚; pinyin: Zhōngguó yáogǔn; also simplified Chinese: 中国摇滚音乐; traditional Chinese: 中國搖滾音樂; pinyin: Zhōngguó yáogǔn yīnyuè, lit. \"Chinese rock and roll music\") is a wide variety of rock and roll music made by rock bands and…",
       },
     ],
   },
@@ -167,6 +242,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "gangtai",
+    name: "Gangtai",
+    kind: "style",
+    parent: "pop",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q5521262",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Gangtai",
+        evidence: "Gangtai (Chinese: 港臺; pinyin: Gǎng Tái) are the C-pop artists and musical style from Hong Kong or Taiwan.",
+      },
+    ],
+  },
+  {
     slug: "ghazal",
     name: "Ghazal",
     kind: "style",
@@ -208,6 +298,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Group_sounds",
         evidence: "Group sounds (Japanese: グループ・サウンズ, Hepburn: Gurūpu Saunzu), often abbreviated as GS, is a genre of Japanese rock music which became popular in the mid to late 1960s and initiated the fusion of Japanese kayōkyoku music and Western rock music.",
+      },
+    ],
+  },
+  {
+    slug: "guangdong-music",
+    name: "Guangdong music",
+    kind: "style",
+    parent: null,
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q6942109",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Guangdong_music_(genre)",
+        evidence: "Guangdong music, also known as Cantonese music (廣東音樂 Jyutping: gwong2dung1 jam1ngok6, Yale: gwóng-dūng yām-ngohk, Pinyin: Guǎngdōng yīnyuè) is a style of traditional Chinese instrumental music from Guangzhou and surrounding areas in Pearl River…",
       },
     ],
   },
@@ -287,6 +392,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "jiangnan-sizhu",
+    name: "Jiangnan sizhu",
+    kind: "style",
+    parent: null,
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q6191683",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Jiangnan_sizhu",
+        evidence: "Jiangnan sizhu is a style of traditional Chinese instrumental music from the Jiangnan region of China.",
+      },
+    ],
+  },
+  {
     slug: "kawaii-metal",
     name: "Kawaii metal",
     kind: "style",
@@ -362,6 +482,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "nanguan-music",
+    name: "Nanguan music",
+    kind: "style",
+    parent: null,
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q700805",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Nanguan_music",
+        evidence: "Nanguan (Chinese: 南管; pinyin: Nánguǎn; Tâi-lô: Lâm-kuán; lit. 'southern pipes'; also nanyin, nanyue, xianguan, or nanqu) is a style of Chinese chamber music from the southern Chinese province of Fujian.",
+      },
+    ],
+  },
+  {
     slug: "nazrul-geeti",
     name: "Nazrul Geeti",
     kind: "style",
@@ -373,6 +508,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Nazrul_Geeti",
         evidence: "Nazrul Geeti (Bengali: নজরুল গীতি; lit. 'music of Nazrul') also known as Nazrul Sangeet (Bengali: নজরুল সঙ্গীত), refers to the songs written and composed by Kazi Nazrul Islam, who is the national poet of Bangladesh.",
+      },
+    ],
+  },
+  {
+    slug: "northwest-wind",
+    name: "Northwest Wind",
+    kind: "style",
+    parent: null,
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q7060273",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Northwest_Wind",
+        evidence: "Northwest Wind (Chinese: 西北风; pinyin: xīběi fēng) is a style of music which emerged on the popular music scene in mainland China from the northwestern or xibei portion of China specifically from the Shanxi, Shaanxi and Gansu provinces.",
       },
     ],
   },
@@ -467,6 +617,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "shidaiqu",
+    name: "Shidaiqu",
+    kind: "style",
+    parent: "pop",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q7496127",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Shidaiqu",
+        evidence: "Shidaiqu (Chinese: 時代曲; pinyin: shídàiqǔ; Wade–Giles: shih² tai⁴ chʻü³; Jyutping: si4 doi6 kuk1) is a type of Chinese popular music that is a fusion of Chinese folk, American jazz and Hollywood film music that originated in Shanghai in the 1920s.",
+      },
+    ],
+  },
+  {
     slug: "shyama-sangeet",
     name: "Shyama Sangeet",
     kind: "style",
@@ -542,6 +707,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "teochew-string-music",
+    name: "Teochew string music",
+    kind: "style",
+    parent: null,
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q7701003",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Teochew_string_music",
+        evidence: "Teochew string music or Chaozhou xianshi (simplified Chinese: 潮州弦诗; traditional Chinese: 潮州弦詩; lit. 'Chaozhou string-poem' also called \"string-poem music\") is classed as a type of sizhu music (chamber music for strings and woodwind, literally…",
+      },
+    ],
+  },
+  {
     slug: "thumri",
     name: "Thumri",
     kind: "style",
@@ -568,6 +748,21 @@ export const ASIA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Visual_kei",
         evidence: "Visual kei (Japanese: ヴィジュアル系 or ビジュアル系, Hepburn: Vijuaru kei or Bijuaru kei; lit. \"Visual Style\"), abbreviated v-kei (V系, bui kei), is a subculture and category of Japanese musicians that have a strong focus on extravagant stage costumes that…",
+      },
+    ],
+  },
+  {
+    slug: "zhongguo-feng",
+    name: "Zhongguo feng",
+    kind: "style",
+    parent: "pop",
+    countries: ["CN"],
+    aliases: [],
+    wikidata: "Q10874829",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Zhongguo_feng_(music)",
+        evidence: "Zhongguo feng (simplified Chinese: 中国风; traditional Chinese: 中國風; pinyin: zhōngguó fēng; lit. 'China style'), also known as guofeng music (simplified Chinese: 国风音乐; traditional Chinese: 國風音樂; pinyin: guófēng yīnyuè; lit. 'China-style music') is a…",
       },
     ],
   },

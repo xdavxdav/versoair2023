@@ -62,6 +62,51 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "ahidus",
+    name: "Ahidus",
+    kind: "style",
+    parent: null,
+    countries: ["MA"],
+    aliases: [],
+    wikidata: "Q2635155",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Ahidus",
+        evidence: "Ahidus (Central Atlas Tamazight: ⴰⵃⵉⴷⵓⵙ, romanized: aḥidous), also sometimes called ahidous, haidous, tahidoust or hidoussi, is a Berber style of collective performance in central Morocco.",
+      },
+    ],
+  },
+  {
+    slug: "aita",
+    name: "Aita",
+    kind: "style",
+    parent: "folk",
+    countries: ["MA"],
+    aliases: [],
+    wikidata: "Q22949256",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Aita_(Morocco)",
+        evidence: "Aita or vocal shikhat music is a traditional folk musical style that originates from the countryside of Morocco.",
+      },
+    ],
+  },
+  {
+    slug: "algerian-hip-hop",
+    name: "Algerian hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["DZ"],
+    aliases: [],
+    wikidata: "Q3135790",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Algerian_hip-hop",
+        evidence: "Algerian hip hop music (Arabic: الراب الجزائري, romanized: Alrāb al-Jazāʼirī) as a genre includes the Hip Hop music of both native Algerians and Algerians abroad.",
+      },
+    ],
+  },
+  {
     slug: "alte",
     name: "Alté",
     kind: "style",
@@ -92,6 +137,21 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "andalusi-classical-music",
+    name: "Andalusi classical music",
+    kind: "style",
+    parent: "classical",
+    countries: ["DZ","MA"],
+    aliases: [],
+    wikidata: "Q623904",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Andalusi_classical_music",
+        evidence: "Andalusi classical music (Arabic: طرب أندلسي, romanized: ṭarab ʾandalusī; Spanish: música andalusí), also called Andalusi music or Arab-Andalusian music, is a genre of music originally developed in al-Andalus by the Muslim Arab and Moorish…",
+      },
+    ],
+  },
+  {
     slug: "apala",
     name: "Apala",
     kind: "style",
@@ -107,6 +167,51 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "bantowbol",
+    name: "Bantowbol",
+    kind: "style",
+    parent: null,
+    countries: ["CM"],
+    aliases: [],
+    wikidata: "Q4857249",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Bantowbol",
+        evidence: "Bantowbol or bantubol is a style of music from Cameroon.",
+      },
+    ],
+  },
+  {
+    slug: "bend-skin",
+    name: "Bend-skin",
+    kind: "style",
+    parent: null,
+    countries: ["CM"],
+    aliases: [],
+    wikidata: "Q590662",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Bend-skin",
+        evidence: "Bend-skin (bend skin) is a kind of urban Cameroonian popular music.",
+      },
+    ],
+  },
+  {
+    slug: "bikutsi",
+    name: "Bikutsi",
+    kind: "style",
+    parent: null,
+    countries: ["CM"],
+    aliases: [],
+    wikidata: "Q860196",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Bikutsi",
+        evidence: "Bikutsi is a musical genre from Cameroon.",
+      },
+    ],
+  },
+  {
     slug: "boeremusiek",
     name: "Boeremusiek",
     kind: "style",
@@ -118,6 +223,21 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Boeremusiek",
         evidence: "Boeremusiek (Afrikaans: ‘Boer music’) is a type of South African instrumental folk music.",
+      },
+    ],
+  },
+  {
+    slug: "chaabi",
+    name: "Chaabi",
+    kind: "style",
+    parent: null,
+    countries: ["MA"],
+    aliases: [],
+    wikidata: "Q2961759",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Chaabi_(Morocco)",
+        evidence: "Chaabi (Arabic: شعبي, romanized: shaʻbī, lit. 'popular') refers to several types of popular music of Morocco, combining rural and urban folk music.",
       },
     ],
   },
@@ -176,6 +296,21 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Music_of_Ivory_Coast",
         evidence: "Gbégbé, a Bété rhythm, has been a part of popular music since Ivory Coast's independence…",
+      },
+    ],
+  },
+  {
+    slug: "gnawa-music",
+    name: "Gnawa music",
+    kind: "style",
+    parent: null,
+    countries: ["MA"],
+    aliases: [],
+    wikidata: "Q2000173",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Gnawa_music",
+        evidence: "Gnawa music (Ar. ڭْناوة or كْناوة) is a body of Moroccan religious songs and rhythms.",
       },
     ],
   },
@@ -314,6 +449,36 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "makossa",
+    name: "Makossa",
+    kind: "style",
+    parent: null,
+    countries: ["CM"],
+    aliases: [],
+    wikidata: "Q1815364",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Makossa",
+        evidence: "Makossa is a music genre originating in Douala, Littoral Region, Cameroon in the late 20th century.",
+      },
+    ],
+  },
+  {
+    slug: "mangambeu",
+    name: "Mangambeu",
+    kind: "style",
+    parent: null,
+    countries: ["CM"],
+    aliases: [],
+    wikidata: "Q6748746",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Mangambeu",
+        evidence: "Mangambeu is a popular musical style of the Bangangte people of Cameroon.",
+      },
+    ],
+  },
+  {
     slug: "marabi",
     name: "Marabi",
     kind: "style",
@@ -359,6 +524,36 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
     ],
   },
   {
+    slug: "moroccan-hip-hop",
+    name: "Moroccan hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["MA"],
+    aliases: [],
+    wikidata: "Q3419347",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Moroccan_hip-hop",
+        evidence: "Moroccan hip-hop (also Moroccan rap) is a Moroccan musical style related to rap and hip hop culture.",
+      },
+    ],
+  },
+  {
+    slug: "moroccan-pop",
+    name: "Moroccan pop",
+    kind: "style",
+    parent: "pop",
+    countries: ["MA"],
+    aliases: [],
+    wikidata: "Q16977816",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Moroccan_pop",
+        evidence: "Moroccan pop or abbreviated as Morocco-pop music is a genre of the new Moroccan music generation along the hip hop, rap music in Morocco.",
+      },
+    ],
+  },
+  {
     slug: "nouchi-rap",
     name: "Nouchi Rap",
     kind: "style",
@@ -383,6 +578,21 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Music_of_Ivory_Coast",
         evidence: "Luckson Padaud's laba laba style, which is similar to the Bété ziglibithy, has had some success, as has Gnaore Djimi's polihet.",
+      },
+    ],
+  },
+  {
+    slug: "rai",
+    name: "Raï",
+    kind: "style",
+    parent: null,
+    countries: ["DZ"],
+    aliases: [],
+    wikidata: "Q839029",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Ra%C3%AF",
+        evidence: "Raï (, ; Arabic: راي, rāy, [ra:j]), sometimes written rai, is a form of Algerian popular music whose origins date back to the 1920s.",
       },
     ],
   },
@@ -427,6 +637,21 @@ export const AFRICA_GENRES: readonly GenreSeed[] = [
       {
         url: "https://en.wikipedia.org/wiki/Sakara_music",
         evidence: "Sakara music is a form of popular Nigerian music based in the traditions of Yoruba music.",
+      },
+    ],
+  },
+  {
+    slug: "senegalese-hip-hop",
+    name: "Senegalese hip-hop",
+    kind: "style",
+    parent: "hip-hop",
+    countries: ["SN"],
+    aliases: [],
+    wikidata: "Q7450478",
+    sources: [
+      {
+        url: "https://en.wikipedia.org/wiki/Senegalese_hip-hop",
+        evidence: "Senegalese hip hop is a form of hip hop that originated in Senegal in the early 1980s.",
       },
     ],
   },
