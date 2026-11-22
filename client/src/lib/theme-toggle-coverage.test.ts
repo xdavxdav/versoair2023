@@ -7,7 +7,7 @@ const read = (p: string) => readFileSync(new URL(p, import.meta.url), "utf8");
 test("every shell exposes a theme toggle", () => {
   assert.match(read("../components/vxpp/VxppShell.tsx"), /<ThemeToggle/);
   const app = read("../App.tsx");
-  assert.match(app, /!showFixedHeaderBlock && !isVxppPage && !isImmersivePage/);
+  assert.match(app, /!showFixedHeaderBlock &&\s+!isVxppPage &&\s+!isImmersivePage &&\s+!currentPath\.startsWith\("\/artist-portal"\)/);
 });
 
 test("saved theme is applied before first paint and local choice beats account default", () => {

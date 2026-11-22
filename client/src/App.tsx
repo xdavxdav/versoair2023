@@ -135,10 +135,10 @@ const ArtistPortalWelcomePage = (props: any) => {
   if (user && !isLoading && !canAccessArtist) {
     const links = accessiblePortals.filter((id) => PORTALS[id]);
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-4 text-white">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+      <div className="flex min-h-[60vh] items-center justify-center px-4 pt-16 text-slate-900 dark:text-white">
+        <div className="w-full max-w-md rounded-2xl border border-violet-200 bg-white p-6 text-center shadow-md dark:border-white/10 dark:bg-white/5 dark:shadow-none">
           <h1 className="text-lg font-semibold">You're signed in</h1>
-          <p className="mt-1 text-sm text-white/60">
+          <p className="mt-1 text-sm text-slate-600 dark:text-white/60">
             {user.name || user.email} · open a portal
           </p>
           <div className="mt-4 grid gap-2">
@@ -146,7 +146,7 @@ const ArtistPortalWelcomePage = (props: any) => {
               <Link
                 key={id}
                 href={PORTALS[id].path}
-                className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+                className="rounded-lg bg-violet-100 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               >
                 {PORTALS[id].label}
               </Link>
@@ -1273,7 +1273,10 @@ function AppContent() {
     <div className="min-h-screen flex flex-col">
       {/* Inside the sticky header block the unavailable-market notice stays pinned on scroll. */}
       {!pinMarketBanner && <GeoAdminMarketStatusBanner />}
-      {!showFixedHeaderBlock && !isVxppPage && !isImmersivePage && (
+      {!showFixedHeaderBlock &&
+        !isVxppPage &&
+        !isImmersivePage &&
+        !currentPath.startsWith("/artist-portal") && (
         <div className="fixed bottom-20 right-3 z-40 lg:bottom-4 lg:right-4">
           <ThemeToggle
             className="h-10 w-10 border border-slate-300 bg-white/95 text-slate-700 shadow-md dark:border-slate-600 dark:bg-slate-800/95 dark:text-slate-100"
