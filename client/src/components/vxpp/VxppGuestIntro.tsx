@@ -298,7 +298,7 @@ export default function VxppGuestIntro({
               {ssoBusy === "linkedin" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <span className="font-bold text-[#0a66c2]">in</span>
+                <span className="font-bold text-[#0a66c2] dark:text-sky-300">in</span>
               )}
               LinkedIn
             </button>

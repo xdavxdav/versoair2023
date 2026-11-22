@@ -1021,7 +1021,7 @@ export default function Careers() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-1 sm:gap-2 !text-gray-700 hover:!text-gray-900 hover:!bg-gray-100 transition-all duration-200 px-2 sm:px-3"
+                    className="gap-1 sm:gap-2 !text-gray-700 hover:!text-gray-900 hover:!bg-gray-100 dark:!text-slate-200 dark:hover:!text-white dark:hover:!bg-slate-800 transition-all duration-200 px-2 sm:px-3"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     <span className="hidden sm:inline">Back to Services</span>

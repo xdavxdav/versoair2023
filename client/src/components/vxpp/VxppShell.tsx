@@ -487,7 +487,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
               </Link>
             </div>
           )}
-          <p className="text-[10px] text-center text-slate-500 dark:text-slate-500 notranslate" translate="no">
+          <p className="text-[10px] text-center text-slate-500 dark:text-slate-400 notranslate" translate="no">
             VERSO AIR INC.
           </p>
         </div>

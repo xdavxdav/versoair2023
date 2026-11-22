@@ -59,7 +59,7 @@ function SsoProviderButtons() {
           disabled={!!loading}
           className="flex items-center justify-center gap-2.5 px-5 py-3 bg-white border border-white/20 rounded-xl text-slate-800 transition-all text-sm font-medium shadow-lg flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="font-bold text-lg text-[#0a66c2]">in</span>
+          <span className="font-bold text-lg text-[#0a66c2] dark:text-sky-300">in</span>
           LinkedIn
         </motion.button>
         <motion.button
