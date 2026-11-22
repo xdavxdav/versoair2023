@@ -54,6 +54,15 @@ export const cities = pgTable("cities", {
   countryId: integer("country_id").references(() => countries.id),
 });
 
+export const neighbourhoods = pgTable("neighbourhoods", {
+  id: serial("id").primaryKey(),
+  cityId: integer("city_id")
+    .notNull()
+    .references(() => cities.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -415,6 +424,13 @@ export const artists = pgTable("artists", {
   labelStatus: varchar("label_status").default("unsigned"),
   spotifyUrl: text("spotify_url"),
   countryCode: varchar("country_code", { length: 2 }),
+  cityId: integer("city_id").references(() => cities.id, {
+    onDelete: "set null",
+  }),
+  neighbourhoodId: integer("neighbourhood_id").references(
+    () => neighbourhoods.id,
+    { onDelete: "set null" },
+  ),
 });
 
 export const contractors = pgTable("contractors", {
