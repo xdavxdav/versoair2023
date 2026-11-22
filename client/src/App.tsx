@@ -329,7 +329,9 @@ const VersoAIChat = lazy(() => import("@/components/VersoAIChat"));
 import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
-import GeoAdminMarketStatusBanner from "@/components/GeoAdminMarketStatusBanner";
+import GeoAdminMarketStatusBanner, {
+  useMarketBannerPinned,
+} from "@/components/GeoAdminMarketStatusBanner";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import {
@@ -1240,20 +1242,27 @@ function AppContent() {
     return () => window.removeEventListener("versoai-fullscreen", handler);
   }, []);
 
+  const showFixedHeaderBlock =
+    !isMusicPage &&
+    !currentPath.startsWith("/community") &&
+    !currentPath.startsWith("/profile") &&
+    !currentPath.startsWith("/user/") &&
+    !currentPath.startsWith("/dashboard") &&
+    !currentPath.startsWith("/admin") &&
+    !isImmersivePage;
+
+  const marketBannerPinned = useMarketBannerPinned();
+  const pinMarketBanner = showFixedHeaderBlock && marketBannerPinned;
+
   return (
     <div className="min-h-screen flex flex-col">
-      <GeoAdminMarketStatusBanner />
+      {/* Inside the sticky header block the unavailable-market notice stays pinned on scroll. */}
+      {!pinMarketBanner && <GeoAdminMarketStatusBanner />}
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
-      {!isMusicPage &&
-        !currentPath.startsWith("/community") &&
-        !currentPath.startsWith("/profile") &&
-        !currentPath.startsWith("/user/") &&
-        !currentPath.startsWith("/dashboard") &&
-        !currentPath.startsWith("/admin") &&
-        !isImmersivePage && (
+      {showFixedHeaderBlock && (
           <div
           aria-hidden={isFooterVisible}
           className={`sticky top-0 left-0 right-0 z-[60] flex flex-col ${
@@ -1261,6 +1270,7 @@ function AppContent() {
           }`}
           style={{ overflow: "visible" }}
         >
+            {pinMarketBanner && <GeoAdminMarketStatusBanner />}
             {/* Top Utility Bar */}
             <div
               data-testid="top-utility-bar"

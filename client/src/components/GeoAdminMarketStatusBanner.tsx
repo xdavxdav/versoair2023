@@ -8,6 +8,12 @@ import { COUNTRY_CODES, getCountryMeta } from "@/utils/countryMeta";
 import { localizedCountryName } from "@/utils/country-names";
 import { fillTemplate } from "@shared/public-translations";
 
+// Only the "not available in your country" notice stays pinned on scroll.
+export function useMarketBannerPinned() {
+  const { selectedCountry } = useCountry();
+  return selectedCountry ? getMarketAvailability(selectedCountry) === false : false;
+}
+
 export default function GeoAdminMarketStatusBanner() {
   const { selectedCountry, setSelectedCountry, detecting } = useCountry();
   const { currentLang, translateText } = useLanguage();
