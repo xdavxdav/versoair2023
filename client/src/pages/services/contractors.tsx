@@ -514,6 +514,8 @@ export default function Contractors() {
   const {
     data: contracts = [],
     isLoading,
+    isError: contractsError,
+    error: contractsErrorObj,
     refetch: reFetch,
   } = useQuery<Contract[]>({
     queryKey: ["contracts"],
@@ -521,7 +523,7 @@ export default function Contractors() {
       const r = await fetch(
         API_BASE + "/api/jobs/search?type=contract&limit=100",
       );
-      if (!r.ok) throw new Error("fetch fail");
+      if (!r.ok) throw new Error(`Couldn't load contracts (HTTP ${r.status}).`);
       const d = await r.json();
       return Array.isArray(d) ? d : d.data || [];
     },
@@ -1513,6 +1515,27 @@ export default function Contractors() {
                         </Card>
                       ))}
                     </div>
+                  ) : contractsError ? (
+                    <Card
+                      role="alert"
+                      className="border-2 border-dashed border-red-300/60 bg-white text-gray-900"
+                    >
+                      <CardContent className="p-12 text-center">
+                        <h4 className="text-2xl font-semibold text-red-600 mb-3">
+                          Couldn't load contracts
+                        </h4>
+                        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                          {(contractsErrorObj as Error)?.message ||
+                            "Check your connection and try again."}
+                        </p>
+                        <Button
+                          onClick={() => reFetch()}
+                          className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 shadow-md"
+                        >
+                          <RefreshCw className="h-4 w-4" /> Retry
+                        </Button>
+                      </CardContent>
+                    </Card>
                   ) : filtered.length === 0 ? (
                     <Card className="border-2 border-dashed border-gray-300/50 bg-white text-gray-900">
                       <CardContent className="p-12 text-center">
