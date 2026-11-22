@@ -109,48 +109,54 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop + Scrollable Overlay (z-[60] clears mobile bottom nav & header) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
           />
 
-          {/* Modal */}
+          {/* Modal Container — scrollable viewport on smartphones & small screens */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", duration: 0.3 }}
-            className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ type: "spring", duration: 0.25 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[61] flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
           >
-            <div className="w-full max-w-2xl bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl shadow-2xl border border-white/10 font-handstyle">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl max-h-[88dvh] flex flex-col overflow-hidden bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl shadow-2xl border border-white/10 font-handstyle"
+            >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-white/10">
-                <h2 className="text-xl font-semibold text-white font-handstyle">
+              <div className="shrink-0 flex items-center justify-between px-4 py-3.5 sm:p-5 border-b border-white/10">
+                <h2 className="text-lg sm:text-xl font-semibold text-white font-handstyle">
                   Create Post
                 </h2>
                 <button
+                  type="button"
                   onClick={onClose}
                   disabled={isLoading}
+                  aria-label="Close"
                   className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <X className="w-5 h-5 text-slate-400" />
+                  <X className="w-5 h-5 text-slate-300" />
                 </button>
               </div>
 
-              {/* Content */}
-              <div className="p-6 space-y-4">
+              {/* Scrollable Content Body */}
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] p-4 sm:p-6 space-y-4">
                 {/* Text Input */}
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="What's on your mind? Share your thoughts, ideas, or stories..."
                   disabled={isLoading}
-                  rows={6}
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 resize-none disabled:opacity-50 font-handstyle"
+                  rows={5}
+                  className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-4 py-3 text-[16px] text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 resize-none disabled:opacity-50 font-handstyle"
                 />
 
                 {/* Tags Input */}
@@ -167,7 +173,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                       }}
                       placeholder="Add tags (e.g., #design, #technology)"
                       disabled={isLoading}
-                      className="flex-1 bg-slate-800/50 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 disabled:opacity-50 font-handstyle"
+                      className="flex-1 min-w-0 bg-slate-800/50 border border-white/10 rounded-lg px-4 py-2 text-[16px] text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 disabled:opacity-50 font-handstyle"
                     />
                     <button
                       onClick={handleAddTag}
@@ -277,8 +283,8 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-between p-6 border-t border-white/10 bg-slate-900/50">
+              {/* Footer — pinned inside modal flex column so Post & Cancel stay reachable */}
+              <div className="shrink-0 flex items-center justify-between px-4 py-3.5 sm:p-5 border-t border-white/10 bg-slate-900/80">
                 <div className="flex gap-2">
                   <button
                     type="button"
