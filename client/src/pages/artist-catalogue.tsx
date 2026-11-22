@@ -311,7 +311,8 @@ export default function ArtistCataloguePage() {
                 {artist.country && (
                   <span className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-purple-300" />
-                    {getFlag(artist.country_code)} {artist.country}
+                    {getFlag(artist.country_code)}{" "}
+                    {[artist.neighbourhood, artist.city, artist.country].filter(Boolean).join(", ")}
                   </span>
                 )}
               </div>
@@ -659,7 +660,8 @@ export default function ArtistCataloguePage() {
               <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30">
                 <p className="text-gray-400 text-xs mb-1">Pays</p>
                 <p className="text-white text-sm">
-                  {getFlag(artist.country_code)} {artist.country}
+                  {getFlag(artist.country_code)}{" "}
+                    {[artist.neighbourhood, artist.city, artist.country].filter(Boolean).join(", ")}
                 </p>
               </div>
             )}

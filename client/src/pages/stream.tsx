@@ -1315,6 +1315,11 @@ export default function StreamPage() {
                         {getFlag(artist.country_code)}{" "}
                         {formatStreams(artist.monthly_listeners || 0)}/mo
                       </p>
+                      {(artist.neighbourhood || artist.city) && (
+                        <p className="text-slate-400 text-[11px] truncate">
+                          {[artist.neighbourhood, artist.city, artist.country].filter(Boolean).join(", ")}
+                        </p>
+                      )}
                     </motion.div>
                   </Link>
                 ))}

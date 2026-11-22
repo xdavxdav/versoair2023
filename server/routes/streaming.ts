@@ -1003,6 +1003,8 @@ router.get("/artists", async (req: Request, res: Response) => {
         COALESCE(ap.genre #>> '{}', art.genre) as genre,
         ap.profile_image_url as image_url,
         ap.bio,
+        COALESCE(art_nb.name, ap_nb.name) as neighbourhood,
+        COALESCE(art_ct.name, ap_ct.name) as city,
         art.country_code,
         ap.country as country,
         COALESCE(ap.verified_for_payout, false) as verified,
@@ -1011,6 +1013,10 @@ router.get("/artists", async (req: Request, res: Response) => {
         (SELECT COUNT(*) FROM music_tracks mt WHERE mt.artist_id = art.id AND mt.status = 'published') as track_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      LEFT JOIN cities art_ct ON art_ct.id = art.city_id
+      LEFT JOIN neighbourhoods art_nb ON art_nb.id = art.neighbourhood_id
+      LEFT JOIN cities ap_ct ON ap_ct.id = ap.city_id
+      LEFT JOIN neighbourhoods ap_nb ON ap_nb.id = ap.neighbourhood_id
       ${where}
       ${orderBy}
       LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
@@ -1047,6 +1053,8 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         COALESCE(ap.genre #>> '{}', art.genre) as genre,
         ap.profile_image_url as image_url,
         ap.bio,
+        COALESCE(art_nb.name, ap_nb.name) as neighbourhood,
+        COALESCE(art_ct.name, ap_ct.name) as city,
         art.country_code,
         ap.country as country,
         COALESCE(ap.verified_for_payout, false) as verified,
@@ -1057,6 +1065,10 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      LEFT JOIN cities art_ct ON art_ct.id = art.city_id
+      LEFT JOIN neighbourhoods art_nb ON art_nb.id = art.neighbourhood_id
+      LEFT JOIN cities ap_ct ON ap_ct.id = ap.city_id
+      LEFT JOIN neighbourhoods ap_nb ON ap_nb.id = ap.neighbourhood_id
       WHERE art.id = $1
         AND NOT EXISTS (
           SELECT 1 FROM users u
@@ -1111,11 +1123,17 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         COALESCE(ap.stage_name, art.stage_name) as name,
         COALESCE(ap.genre #>> '{}', art.genre) as genre,
         ap.profile_image_url as image_url,
+        COALESCE(art_nb.name, ap_nb.name) as neighbourhood,
+        COALESCE(art_ct.name, ap_ct.name) as city,
         art.country_code,
         ap.country,
         COALESCE(ap.verified_for_payout, false) as verified
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      LEFT JOIN cities art_ct ON art_ct.id = art.city_id
+      LEFT JOIN neighbourhoods art_nb ON art_nb.id = art.neighbourhood_id
+      LEFT JOIN cities ap_ct ON ap_ct.id = ap.city_id
+      LEFT JOIN neighbourhoods ap_nb ON ap_nb.id = ap.neighbourhood_id
       WHERE art.id != $1
         AND NOT EXISTS (
           SELECT 1 FROM users u
@@ -2191,10 +2209,13 @@ router.get(
 
     // Top artists by streams
     const topArtists = await pool.query(`
-      SELECT id, name, genre, image_url, country, country_code, total_streams, 
-        monthly_listeners, followers, verified
-      FROM music_artists
-      ORDER BY total_streams DESC
+      SELECT ma.id, ma.name, ma.genre, ma.image_url, ma.country, ma.country_code, ma.total_streams,
+        ma.monthly_listeners, ma.followers, ma.verified,
+        ct.name AS city, nb.name AS neighbourhood
+      FROM music_artists ma
+      LEFT JOIN cities ct ON ct.id = ma.city_id
+      LEFT JOIN neighbourhoods nb ON nb.id = ma.neighbourhood_id
+      ORDER BY ma.total_streams DESC
       LIMIT 10
     `);
 
