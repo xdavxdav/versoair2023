@@ -35,6 +35,7 @@ test("anonymous public reads work through the global auth gate without exposing 
   app.post("/api/page-readiness", (_req, res) => res.sendStatus(204));
   app.get("/api/arcade/config", (_req, res) => res.json({ enabledGames: {} }));
   app.use("/api/arcade/admin", (_req, res) => res.json({ reached: true }));
+  app.use("/api/arcade-contest", (_req, res) => res.json({ reached: true }));
   // Stands in for the listening-sessions router: only the gate's decision is under test here.
   app.use("/api/listening-sessions", (_req, res) => res.json({ reached: true }));
   // Stands in for the business-logo router: only the gate's decision is under test here.
@@ -89,6 +90,29 @@ test("anonymous public reads work through the global auth gate without exposing 
       (await fetch(`${origin}/api/arcade/admin/config`, { method: "PUT" })).status,
       401,
     );
+    // Country contests: visitors may see which contests are open; everything else needs a session.
+    assert.equal((await fetch(`${origin}/api/arcade-contest/contests`)).status, 200);
+    for (const path of [
+      "/api/arcade-contest/CA/leaderboard",
+      "/api/arcade-contest/me",
+      "/api/arcade-contest/me/payouts",
+      "/api/arcade-contest/admin/contests",
+      "/api/arcade-contest/admin/payouts",
+    ]) {
+      assert.equal((await fetch(`${origin}${path}`)).status, 401, `GET ${path} is not public`);
+    }
+    for (const path of [
+      "/api/arcade-contest/contests",
+      "/api/arcade-contest/vote",
+      "/api/arcade-contest/admin/contests/CA/close",
+      "/api/arcade-contest/admin/payouts/release-escrow",
+    ]) {
+      assert.equal(
+        (await fetch(`${origin}${path}`, { method: "POST" })).status,
+        401,
+        `POST ${path} needs a session`,
+      );
+    }
     assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`, { method: "POST" })).status, 404);
     assert.equal((await fetch(`${origin}/api/v1/admin/users`)).status, 401);

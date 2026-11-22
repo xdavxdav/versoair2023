@@ -19,6 +19,11 @@ import {
   reverseArsenalOrderInTx,
 } from "./event-arsenal";
 import { ensurePaidOfferTables, revokePaidOfferPurchase } from "./paid-offers";
+import {
+  fulfillArcadePurchaseInTx,
+  reverseArcadePurchaseInTx,
+} from "./arcade-contest";
+import { isZeroDecimalCurrency } from "../utils/stripe-amount";
 import type { Queryable, TxClient, TxPool } from "./marketing-checkout";
 
 export type CheckoutReviewReason =
@@ -48,9 +53,12 @@ export type CheckoutCompletion =
         | "subscription"
         | "marketing_order"
         | "paid_offer"
-        | "event_arsenal_order";
+        | "event_arsenal_order"
+        | "arcade_play";
       /** The buyer already held this offer, so one payment should be refunded. */
       repeatPurchase?: true;
+      /** An arcade payment that could not be credited to its pool; staff reconcile it. */
+      arcadeMismatch?: string;
     }
   | CheckoutReview
   | { status: "duplicate" }
@@ -280,6 +288,59 @@ export async function applyCheckoutSessionCompleted(
     });
   }
 
+  if (type === "arcade_play" && session.metadata?.arcadePurchaseId) {
+    const purchaseId = positiveInt(session.metadata.arcadePurchaseId);
+    if (purchaseId === null) {
+      console.error("⚠️ Invalid arcadePurchaseId in checkout session:", session.id);
+      return { status: "ignored", reason: "invalid_arcade_purchase_id" };
+    }
+    const paidMinor =
+      typeof session.amount_total === "number" ? session.amount_total : null;
+    const paidCurrency = session.currency
+      ? String(session.currency).toUpperCase()
+      : null;
+    // Contests also run in zero-decimal currencies, where the Stripe amount is
+    // already in whole units.
+    const arcadeAmount =
+      paidMinor === null
+        ? "0.00"
+        : paidCurrency && isZeroDecimalCurrency(paidCurrency)
+          ? String(paidMinor)
+          : (paidMinor / 100).toFixed(2);
+
+    return inTransaction<CheckoutCompletion>(db, async (client) => {
+      const claimed = await claimSession(
+        client,
+        userIdNumber,
+        arcadeAmount,
+        "arcade_play",
+        session.id,
+      );
+      if (!claimed) return { status: "duplicate" };
+
+      const outcome = await fulfillArcadePurchaseInTx(client, {
+        purchaseId,
+        userId: userIdNumber,
+        sessionId: session.id,
+        paidMinor,
+        paidCurrency,
+        billingCountry: session.customer_details?.address?.country ?? null,
+      });
+      if (!outcome.fulfilled) {
+        console.error(
+          `⚠️ Arcade purchase ${purchaseId} requires review (${outcome.mismatch})`,
+        );
+        return {
+          status: "processed",
+          kind: "arcade_play",
+          arcadeMismatch: outcome.mismatch,
+        };
+      }
+      console.log(`✅ Arcade play time bought by user ${userIdNumber} (purchase ${purchaseId})`);
+      return { status: "processed", kind: "arcade_play" };
+    });
+  }
+
   if (type === "marketing_order" && orderId) {
     const orderIdNumber = positiveInt(orderId);
     if (orderIdNumber === null) {
@@ -498,6 +559,16 @@ export async function applyPaymentReversal(
       }
     }
 
+    if (original.rows[0].type === "arcade_play") {
+      await reverseArcadePurchaseInTx(
+        client,
+        sessionId,
+        reversal.kind,
+        reversal.kind === "refund" ? reversal.full : false,
+        note,
+      );
+    }
+
     console.log(
       `↩️ ${note} for session ${sessionId}; order rows updated: ${updated.rows.length}`,
     );
@@ -623,6 +694,22 @@ export async function applyCheckoutSessionExpired(
   session: Stripe.Checkout.Session,
 ): Promise<CheckoutExpiry> {
   const { userId, orderId, type } = session.metadata || {};
+  if (type === "arcade_play" && session.metadata?.arcadePurchaseId) {
+    const uid = positiveInt(userId);
+    const pid = positiveInt(session.metadata.arcadePurchaseId);
+    if (uid === null || pid === null) {
+      return { status: "ignored", reason: "invalid_metadata" };
+    }
+    const cancelled = await db.query(
+      `UPDATE arcade_contest_purchases SET status = 'cancelled'
+        WHERE id = $1 AND user_id = $2 AND status = 'pending'
+        RETURNING id`,
+      [pid, uid],
+    );
+    return cancelled.rows.length > 0
+      ? { status: "cancelled", orderId: pid }
+      : { status: "ignored", reason: "order_not_pending" };
+  }
   if (type === "event_arsenal_order" && session.metadata?.arsenalOrderId) {
     const uid = positiveInt(userId);
     const aid = positiveInt(session.metadata.arsenalOrderId);

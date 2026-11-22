@@ -90,6 +90,12 @@ import {
   syncBillingProfileToStripe,
 } from "../../services/billing-profile";
 import { prepareArsenalOrder } from "../../services/event-arsenal";
+import { ensureArcadeContestSchema } from "../../services/arcade-contest-schema";
+import {
+  attachCheckoutSession,
+  cancelPendingPurchase,
+  prepareArcadePurchase,
+} from "../../services/arcade-contest";
 
 const router = Router();
 
@@ -775,6 +781,135 @@ router.post(
   },
 );
 
+// ─── ARCADE CONTEST PLAY TIME ───────────────────────────────────────────────────
+
+/**
+ * POST /api/v1/payments/create-arcade-checkout
+ * Body: { hours, billingDetails? }. Buys play time for the player's own
+ * country contest, in that country's currency. The price always comes from the
+ * database, and the route stays closed until the country's contest AND online
+ * payments are both switched on.
+ */
+router.post(
+  "/create-arcade-checkout",
+  offerCheckoutLimiter,
+  async (req: Request, res: Response) => {
+    if (!onlinePaymentsEnabled()) {
+      rejectUnavailablePayment(res);
+      return;
+    }
+    const stripeClient = requireStripeClient(res);
+    if (!stripeClient) return;
+
+    const userId = actorUserId(req);
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
+    let purchaseId: number | null = null;
+    try {
+      const billingCheck = await parseOptionalBillingDetails(req, res);
+      if (!billingCheck.ok) return;
+
+      await ensureArcadeContestSchema(pool);
+      // The billing country picks the contest, so it is saved before the lookup.
+      if (billingCheck.details) {
+        await saveBillingProfile(pool, userId, billingCheck.details);
+      }
+      const prepared = await prepareArcadePurchase(
+        pool,
+        userId,
+        Number(bodyOf(req).hours),
+      );
+      if (!prepared.ok) {
+        return res.status(prepared.status).json({
+          success: false,
+          code: prepared.code,
+          error: prepared.error,
+        });
+      }
+      const { purchase } = prepared;
+      purchaseId = purchase.id;
+
+      const userResult = await pool.query(
+        `SELECT id, email, username FROM users WHERE id = $1`,
+        [userId],
+      );
+      if (!userResult.rows.length) {
+        await cancelPendingPurchase(pool, purchase.id, userId);
+        return res.status(404).json({ success: false, error: "User not found" });
+      }
+      const user = userResult.rows[0];
+      const customerId = await getOrCreateStripeCustomer(
+        userId,
+        user.email,
+        user.username,
+        stripeClient,
+      );
+      if (billingCheck.details) {
+        await syncBillingProfileToStripe(
+          stripeClient,
+          customerId,
+          billingCheck.details,
+        );
+      }
+
+      const origin = getPublicBaseUrl();
+      const session = await stripeClient.checkout.sessions.create(
+        {
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer: customerId,
+          ...buildTrustedCheckoutSecurityOptions({
+            purpose: `Arcade play time (${purchase.hours} h, ${purchase.countryCode} contest)`,
+            mode: "payment",
+            hasCustomer: Boolean(customerId),
+          }),
+          line_items: [
+            {
+              price_data: {
+                currency: purchase.currency.toLowerCase(),
+                product_data: {
+                  name: `Verso Air Arcade — ${purchase.hours} hour${purchase.hours === 1 ? "" : "s"} of play time`,
+                },
+                unit_amount: purchase.amountMinor,
+              },
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            userId: String(userId),
+            type: "arcade_play",
+            arcadePurchaseId: String(purchase.id),
+            countryCode: purchase.countryCode,
+          },
+          success_url: `${origin}/arcade?contest=success`,
+          cancel_url: `${origin}/arcade?contest=cancelled`,
+        },
+        { idempotencyKey: `arcade-purchase-${purchase.id}` },
+      );
+      await attachCheckoutSession(pool, purchase.id, session.id);
+
+      return res.json({
+        success: true,
+        data: { sessionId: session.id, url: session.url },
+      });
+    } catch (error: any) {
+      console.error(
+        "❌ Arcade checkout error:",
+        redactStripeSecrets(error?.message),
+      );
+      if (purchaseId !== null) {
+        await cancelPendingPurchase(pool, purchaseId, userId).catch(() => false);
+      }
+      return res
+        .status(500)
+        .json({ success: false, error: "Could not start checkout" });
+    }
+  },
+);
+
 // ─── STRIPE WEBHOOK ─────────────────────────────────────────────────────────────
 
 /**
@@ -855,6 +990,23 @@ router.post("/webhook", async (req: Request, res: Response) => {
           },
         });
         break;
+      }
+      if (outcome.status === "processed" && outcome.arcadeMismatch) {
+        // The money was collected but not credited to any pool: staff decide
+        // whether to refund it or fix the purchase by hand.
+        await raisePaymentAlert({
+          kind: "arcade_play_needs_review",
+          summary: `A paid arcade checkout was not credited to a contest pool (${outcome.arcadeMismatch})`,
+          details: {
+            reason: outcome.arcadeMismatch,
+            checkoutSessionId: session.id,
+            userId,
+            arcadePurchaseId: session.metadata?.arcadePurchaseId,
+            paidMinor: session.amount_total,
+            paidCurrency: session.currency,
+            billingCountry: session.customer_details?.address?.country,
+          },
+        });
       }
       if (outcome.status === "processed" && outcome.repeatPurchase) {
         // Both payments are recorded; the second one is a refund candidate.

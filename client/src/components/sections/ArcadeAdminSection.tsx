@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { ArcadeContestAdmin } from "@/components/admin/arcade-contest-admin";
 
 interface ArcadeAdminOverview {
   config: ArcadeGamesAdminConfig;
@@ -490,6 +491,9 @@ export function ArcadeAdminSection() {
           })}
         </CardContent>
       </Card>
+
+      {/* Per-country contests: settings, season close and payouts */}
+      <ArcadeContestAdmin />
 
       {/* Custom Lyrics & Trivia Question Bank */}
       <Card>

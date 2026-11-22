@@ -61,6 +61,7 @@ import { SnakeGame } from "@/components/arcade/games/SnakeGame";
 import { TetrisGame } from "@/components/arcade/games/TetrisGame";
 import { BrickBallGame } from "@/components/arcade/games/BrickBallGame";
 import { XensiaGame } from "@/components/arcade/games/XensiaGame";
+import { ContestPanel } from "@/components/arcade/contest-panel";
 import {
   CASUAL_ARCADE_GAMES,
   CASUAL_ARCADE_GAME_IDS,
@@ -836,6 +837,7 @@ export default function ArcadePage() {
 
       {/* ── Main Tabs ── */}
       <div className="max-w-7xl mx-auto px-4 pb-12">
+        <ContestPanel onSignIn={() => setShowQuickSignIn(true)} />
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

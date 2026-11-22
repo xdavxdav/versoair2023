@@ -247,6 +247,8 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/revenue-pulse/leaderboard",
       "/api/arcade/leaderboard",
       "/api/arcade/config",
+      // Open country contests only (none until staff switch one on); everything else needs sign-in
+      "/api/arcade-contest/contests",
       "/api/page-readiness",
       "/api/notifications",
       "/api/notifications/unread-count",
