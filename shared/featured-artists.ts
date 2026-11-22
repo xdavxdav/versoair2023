@@ -4,7 +4,7 @@ export interface LocalizedText {
 }
 
 export interface FeaturedArtistMediaLink {
-  platform: "youtube" | "spotify" | "youtube_music" | "reference";
+  platform: "youtube" | "spotify" | "youtube_music" | "soundcloud" | "reference";
   label: string;
   url: string;
 }
@@ -18,7 +18,15 @@ export interface FeaturedArtistRelease {
 }
 
 export interface FeaturedArtistLink {
-  platform: "youtube" | "spotify" | "instagram" | "facebook" | "x" | "press" | "reference";
+  platform:
+    | "youtube"
+    | "spotify"
+    | "soundcloud"
+    | "instagram"
+    | "facebook"
+    | "x"
+    | "press"
+    | "reference";
   label: string;
   url: string;
 }
@@ -26,6 +34,7 @@ export interface FeaturedArtistLink {
 export interface FeaturedArtistProfile {
   slug: string;
   stageName: string;
+  monogram?: string;
   aliases: readonly string[];
   group: string;
   groupMembers: readonly string[];
@@ -48,6 +57,7 @@ export interface FeaturedArtistProfile {
 export const NOOKA_PROFILE: FeaturedArtistProfile = {
   slug: "nooka",
   stageName: "Nooka",
+  monogram: "NK",
   aliases: ["Nooka Wansh", "le Dashibah", "Nookzilla"],
   group: "Wansh Way",
   groupMembers: ["Nooka", "Parker-Ice"],
@@ -245,7 +255,65 @@ export const NOOKA_PROFILE: FeaturedArtistProfile = {
   ],
 };
 
-export const FEATURED_ARTISTS: readonly FeaturedArtistProfile[] = [NOOKA_PROFILE];
+export const KOUZCO_PROFILE: FeaturedArtistProfile = {
+  slug: "kouzco",
+  stageName: "Kouzco",
+  monogram: "KZ",
+  aliases: [],
+  group: "",
+  groupMembers: [],
+  city: "",
+  countryCode: "",
+  countryName: "",
+  primaryGenre: "Hip-Hop",
+  genres: ["Hip-Hop", "Rap"],
+  featuredFaceOfTmu: false,
+  tagline: {
+    fr: "Artiste indépendant hip-hop/rap présent sur SoundCloud.",
+    en: "Independent hip-hop & rap artist publishing on SoundCloud.",
+  },
+  bio: {
+    fr: [
+      "Kouzco est un artiste indépendant actif dans l'univers hip-hop/rap, présent sur SoundCloud.",
+      "Sa sortie publique « The MD (feat. Manticore) » (2023) est disponible en écoute directe via sa page SoundCloud officielle.",
+    ],
+    en: [
+      "Kouzco is an independent hip-hop and rap artist publishing on SoundCloud.",
+      "His public release \"The MD (feat. Manticore)\" (2023) is available to stream directly on his official SoundCloud page.",
+    ],
+  },
+  discography: [
+    {
+      year: "2023",
+      title: "The MD (feat. Manticore)",
+      kind: "single",
+      note: {
+        fr: "Sortie SoundCloud (février 2023 · 2:41)",
+        en: "SoundCloud release (February 2023 · 2:41)",
+      },
+      mediaLinks: [
+        {
+          platform: "soundcloud",
+          label: "SoundCloud",
+          url: "https://soundcloud.com/kouzco/the-md-feat-manticore",
+        },
+      ],
+    },
+  ],
+  officialLinks: [
+    {
+      platform: "soundcloud",
+      label: "SoundCloud — Kouzco",
+      url: "https://soundcloud.com/kouzco",
+    },
+  ],
+  pressLinks: [],
+};
+
+export const FEATURED_ARTISTS: readonly FeaturedArtistProfile[] = [
+  NOOKA_PROFILE,
+  KOUZCO_PROFILE,
+];
 
 const normalizeKey = (value: string) =>
   value

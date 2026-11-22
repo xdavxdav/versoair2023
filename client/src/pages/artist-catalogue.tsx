@@ -295,7 +295,10 @@ export default function ArtistCataloguePage() {
                 )}
               </div>
 
-              <h1 className="tmu-hero-title text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+              <h1
+                translate="no"
+                className="notranslate tmu-hero-title text-3xl md:text-4xl font-extrabold tracking-tight mb-2"
+              >
                 {artist.name}
               </h1>
 

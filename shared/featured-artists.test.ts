@@ -29,10 +29,30 @@ test("Nooka is live as the featured face of TMU with verified metadata", () => {
 
 test("featured artist lookup matches slug, stage name, and aliases", () => {
   assert.equal(getFeaturedArtistBySlug("nooka")?.stageName, "Nooka");
+  assert.equal(getFeaturedArtistBySlug("kouzco")?.stageName, "Kouzco");
   assert.equal(getFeaturedArtistBySlug("unknown"), undefined);
   assert.equal(getFeaturedArtistByName("Nooka")?.slug, "nooka");
   assert.equal(getFeaturedArtistByName("Nooka Wansh")?.slug, "nooka");
   assert.equal(getFeaturedArtistByName("le Dashibah")?.slug, "nooka");
+  assert.equal(getFeaturedArtistByName("Kouzco")?.slug, "kouzco");
+});
+
+test("Kouzco profile carries verified SoundCloud links without invented fields", () => {
+  const kouzco = getFeaturedArtistBySlug("kouzco");
+  assert.ok(kouzco);
+  assert.equal(kouzco.featuredFaceOfTmu, false);
+  assert.ok(
+    kouzco.officialLinks.some(
+      (l) => l.platform === "soundcloud" && l.url === "https://soundcloud.com/kouzco",
+    ),
+  );
+  assert.ok(
+    kouzco.discography.some(
+      (r) =>
+        r.title === "The MD (feat. Manticore)" &&
+        r.mediaLinks.some((m) => m.url === "https://soundcloud.com/kouzco/the-md-feat-manticore"),
+    ),
+  );
 });
 
 test("featured artist primary genre aligns with canonical taxonomy filtering", () => {

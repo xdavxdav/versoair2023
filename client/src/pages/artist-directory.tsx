@@ -39,6 +39,8 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 // Artist directory is global — no country context needed
 // import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
+import { getFlag } from "@/utils/get-flag";
+import { getFeaturedArtistByName } from "@shared/featured-artists";
 import { FeaturedArtistCard } from "@/components/music/FeaturedArtistCard";
 
 const API_BASE_URL = "";
@@ -52,6 +54,7 @@ interface Artist {
   spotify_url: string | null;
   business_id: number | null;
   user_id: number | null;
+  country_code?: string | null;
 }
 
 interface ArtistDetails extends Artist {}
@@ -626,10 +629,11 @@ export default function ArtistDirectory() {
                               <div className="absolute top-1/2 right-1/4 w-8 h-8 border border-white/5 rounded-full" />
                             </div>
 
-                            {/* Centered initials — bigger, better shadow */}
+                            {/* Centered initials — bigger, better shadow (notranslate prevents Google Translate corruption) */}
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div
-                                className={`w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/10 group-hover:ring-purple-400/30 group-hover:scale-105 transition-all duration-500`}
+                                translate="no"
+                                className={`notranslate w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/10 group-hover:ring-purple-400/30 group-hover:scale-105 transition-all duration-500`}
                               >
                                 {(artist.name || "?")
                                   .split(/\s+/)
@@ -639,6 +643,16 @@ export default function ArtistDirectory() {
                                   .toUpperCase()}
                               </div>
                             </div>
+
+                            {/* Country badge — top-left when known */}
+                            {artist.country_code && (
+                              <div className="absolute top-3.5 left-3.5">
+                                <Badge className="bg-slate-950/75 text-slate-100 border border-white/15 backdrop-blur-sm px-2.5 py-1 text-xs font-medium">
+                                  {getFlag(artist.country_code)}{" "}
+                                  {getCountryMeta(artist.country_code)?.name || artist.country_code}
+                                </Badge>
+                              </div>
+                            )}
 
                             {/* Genre badge — polished glass effect */}
                             <div className="absolute top-3.5 right-3.5">
@@ -653,15 +667,18 @@ export default function ArtistDirectory() {
 
                           {/* Card body — improved spacing & typography */}
                           <div className="p-6">
-                            <h4 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight">
+                            <h4
+                              translate="no"
+                              className="notranslate text-lg font-bold text-white group-hover:text-purple-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight"
+                            >
                               {artist.name || "Artiste inconnu"}
                             </h4>
 
                             {/* Subtle divider */}
                             <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent mb-4" />
 
-                            {/* Label status + Spotify — better layout */}
-                            <div className="flex items-center justify-between">
+                            {/* Label status + Bio/Stream — better layout */}
+                            <div className="flex items-center justify-between gap-2">
                               <Badge
                                 variant="outline"
                                 className={`text-xs font-medium px-3 py-1 rounded-lg ${
@@ -679,14 +696,28 @@ export default function ArtistDirectory() {
                                     : "🆓 Non signé"}
                               </Badge>
 
-                              <Link
-                                href={`/artist-catalogue/${artist.id}`}
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="flex items-center gap-1.5 text-amber-600 hover:text-amber-700 transition-colors text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg"
-                              >
-                                <Music className="h-3.5 w-3.5" />
-                                Stream
-                              </Link>
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const featured = getFeaturedArtistByName(artist.name);
+                                  return featured ? (
+                                    <Link
+                                      href={`/artistes/${featured.slug}`}
+                                      onClick={(e: any) => e.stopPropagation()}
+                                      className="flex items-center gap-1 text-fuchsia-300 hover:text-fuchsia-200 transition-colors text-xs font-medium bg-fuchsia-500/15 hover:bg-fuchsia-500/25 px-3 py-1.5 rounded-lg"
+                                    >
+                                      Bio
+                                    </Link>
+                                  ) : null;
+                                })()}
+                                <Link
+                                  href={`/artist-catalogue/${artist.id}`}
+                                  onClick={(e: any) => e.stopPropagation()}
+                                  className="flex items-center gap-1.5 text-amber-600 hover:text-amber-700 transition-colors text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg"
+                                >
+                                  <Music className="h-3.5 w-3.5" />
+                                  Stream
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         </div>
