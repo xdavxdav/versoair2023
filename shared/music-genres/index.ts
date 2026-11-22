@@ -99,4 +99,22 @@ export function listGenres(country?: string): GenreOption[] {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+export interface GenreCountrySummary {
+  code: string;
+  count: number;
+}
+
+/** Countries that currently have verified genre content in the taxonomy (no empty markets). */
+export function listGenreCountries(): GenreCountrySummary[] {
+  const counts = new Map<string, number>();
+  for (const g of MUSIC_GENRES) {
+    for (const cc of g.countries) {
+      counts.set(cc, (counts.get(cc) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([code, count]) => ({ code, count }))
+    .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code));
+}
+
 export const getGenreBySlug = (slug: string) => bySlug.get(slug);

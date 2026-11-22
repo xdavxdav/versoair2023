@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { canonicalGenreName, genreFilterValues, listGenres, MUSIC_GENRES } from "./index";
+import { canonicalGenreName, genreFilterValues, listGenreCountries, listGenres, MUSIC_GENRES } from "./index";
 
 test("slugs and names are unique and parents exist", () => {
   const slugs = new Set(MUSIC_GENRES.map((g) => g.slug));
@@ -45,4 +45,15 @@ test("filter matches aliases and sub-styles exactly, never substrings", () => {
   assert.deepEqual(genreFilterValues("  "), []);
   assert.deepEqual(genreFilterValues("Mystery"), ["mystery"]);
   assert.ok(!genreFilterValues("Rock").includes("punk"), "Rock does not include punk family");
+});
+
+test("listGenreCountries returns only countries with verified available content", () => {
+  const countries = listGenreCountries();
+  assert.ok(countries.length > 0);
+  for (const entry of countries) {
+    assert.ok(entry.count > 0, `${entry.code} must have content`);
+  }
+  assert.ok(countries.some((c) => c.code === "CI"));
+  assert.ok(countries.some((c) => c.code === "CA"));
+  assert.ok(!countries.some((c) => c.code === "AF"), "unpopulated markets are excluded");
 });

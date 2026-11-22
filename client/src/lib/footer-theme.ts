@@ -105,6 +105,7 @@ const EXACT_ROUTE_THEMES = new Map<string, FooterTheme>([
 const PREFIX_ROUTE_THEMES: ReadonlyArray<readonly [string, FooterTheme]> = [
   ["/profiles/", PALETTES.violet],
   ["/artist-catalogue/", PALETTES.purple],
+  ["/artistes/", PALETTES.purple],
   ["/sessions/", PALETTES.purple],
 ];
 

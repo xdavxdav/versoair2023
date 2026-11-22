@@ -123,6 +123,7 @@ const EventDetailPage = lazy(() => import("@/pages/event-detail"));
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
 const ArtistPortalDashboard = lazy(() => import("@/pages/artist-portal"));
 const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
+const ArtistBioPage = lazy(() => import("@/pages/artist-bio"));
 
 // Stable wrapper components — MUST be defined at module level (not inline)
 // so React keeps the same component identity across re-renders.
@@ -420,6 +421,7 @@ function getDocumentTitle(pathname: string) {
   if (path.startsWith("/profiles/")) return "Community Profile";
   if (path.startsWith("/user/")) return "Member Profile";
   if (path.startsWith("/sessions/")) return "Listening Session";
+  if (path.startsWith("/artistes/")) return "Artist Biography";
 
   const sectionTitle = getPageTitle(path);
   const segments = path.split("/").filter(Boolean);
@@ -670,6 +672,7 @@ function Router() {
       <Route path="/artisans-portal">
         {() => <ProtectedRoute component={ArtisansPortal} />}
       </Route>
+      <Route path="/artistes/:slug" component={ArtistBioPage} />
       <Route path="/artistes" component={ArtistDirectory} />
       {/* On unified domain: /artist-portal renders welcome page directly (no cross-domain redirect) */}
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />

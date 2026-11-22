@@ -9,6 +9,7 @@ import { useAudio } from "@/lib/audio-context";
 import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { TmuHubNav } from "@/components/music/TmuHubNav";
 import { TmuShell } from "@/components/music/TmuShell";
+import { getFeaturedArtistByName } from "@shared/featured-artists";
 import {
   Sheet,
   SheetContent,
@@ -103,6 +104,8 @@ export default function ArtistCataloguePage() {
   const [showDiscussions, setShowDiscussions] = useState(false);
 
   const artist = data?.artist;
+  const featuredProfile = getFeaturedArtistByName(artist?.name);
+  const resolvedBio = artist?.bio || featuredProfile?.bio.fr.join("\n\n") || "";
   const topTracks = data?.topTracks || [];
   const albums = data?.albums || [];
   const relatedArtists = data?.relatedArtists || [];
@@ -395,6 +398,18 @@ export default function ArtistCataloguePage() {
                   Discussions
                 </button>
 
+                {featuredProfile && (
+                  <Link href={`/artistes/${featuredProfile.slug}`}>
+                    <button
+                      type="button"
+                      className="px-4 py-2.5 rounded-xl flex items-center gap-1.5 border bg-amber-500/15 text-amber-200 border-amber-400/35 hover:bg-amber-500/25 transition-all"
+                    >
+                      <Award className="w-4 h-4" />
+                      Biographie
+                    </button>
+                  </Link>
+                )}
+
                 {/* Social links */}
                 {artist.wiki_url && (
                   <a
@@ -622,14 +637,14 @@ export default function ArtistCataloguePage() {
       {activeTab === "about" && (
         <div className="max-w-[95vw] mx-auto px-4">
           {/* Bio */}
-          {artist.bio && (
+          {resolvedBio && (
             <div className="mb-8">
               <h3 className="text-sm font-semibold text-gray-200 mb-3">
                 Biographie
               </h3>
               <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700/30">
                 <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-line">
-                  {artist.bio}
+                  {resolvedBio}
                 </p>
               </div>
             </div>

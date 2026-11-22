@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TmuHubNav } from "@/components/music/TmuHubNav";
 import { TmuShell } from "@/components/music/TmuShell";
+import { FeaturedArtistCard } from "@/components/music/FeaturedArtistCard";
 import {
   useStreamingTracks,
   useFeaturedTracks,
@@ -1133,6 +1134,11 @@ export default function StreamPage() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* ========================================= */}
+              {/* FEATURED FACE OF TMU (NOOKA) */}
+              {/* ========================================= */}
+              <FeaturedArtistCard className="mb-8" />
 
               {/* ========================================= */}
               {/* TRENDING / FEATURED CAROUSEL */}

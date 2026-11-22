@@ -72,6 +72,7 @@ const StreamRoyaleReview = lazy(() => import("@/pages/streamroyale-review"));
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
 const ArtistPortalDashboard = lazy(() => import("@/pages/artist-portal"));
 const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
+const ArtistBioPage = lazy(() => import("@/pages/artist-bio"));
 const ArtistPortalWelcomePage = (props: any) => (
   <Suspense fallback={<PageLoader />}>
     <ArtistPortalWelcome {...props} />
@@ -162,6 +163,7 @@ function Router() {
       <Route path="/arcade" component={ArcadePage} />
       <Route path="/listener-portal" component={ListenerPortal} />
       <Route path="/streamer-portal" component={StreamerPortal} />
+      <Route path="/artistes/:slug" component={ArtistBioPage} />
       <Route path="/artistes" component={ArtistDirectory} />
       <Route path="/artist-portal/dashboard">
         <MusicProtectedRoute>

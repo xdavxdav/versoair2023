@@ -39,6 +39,7 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 // Artist directory is global — no country context needed
 // import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
+import { FeaturedArtistCard } from "@/components/music/FeaturedArtistCard";
 
 const API_BASE_URL = "";
 
@@ -156,14 +157,14 @@ export default function ArtistDirectory() {
       try {
         const [genresRes, countriesRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/artists/genres`),
-          fetch(`${API_BASE_URL}/api/countries`),
+          fetch(`${API_BASE_URL}/api/artists/countries`),
         ]);
         const genresJson = await genresRes.json();
         if (genresJson.success) setGenres(genresJson.data || []);
         const countriesJson = await countriesRes.json();
-        // /api/countries returns array of {id, name, code} objects
+        // /api/artists/countries returns only countries that currently have artist content
         if (Array.isArray(countriesJson)) {
-          setCountries(countriesJson.map((c: any) => c.code));
+          setCountries(countriesJson.map((c: any) => (typeof c === "string" ? c : c.code)));
         } else if (countriesJson.success) {
           setCountries(countriesJson.data || []);
         }
@@ -297,8 +298,13 @@ export default function ArtistDirectory() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-900 bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-white">
 
+      {/* Featured Artist Spotlight */}
+      <div className="max-w-[95vw] w-full mx-auto px-4 pt-6 pb-10 relative z-20">
+        <FeaturedArtistCard compact />
+      </div>
+
       {/* Search Section */}
-      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
+      <div className="max-w-[95vw] w-full mx-auto px-4 -mt-4 relative z-20">
         <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
