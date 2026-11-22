@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Pencil,
   Trash2,
+  Bookmark,
 } from "lucide-react";
 
 interface Post {
@@ -59,6 +60,8 @@ interface PostCardProps {
   onFetchComments?: (postId: number) => Promise<PostComment[]>;
   onShare?: (postId: number) => Promise<void> | void;
   liked?: boolean;
+  saved?: boolean;
+  onToggleSave?: (postId: number) => void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -73,6 +76,8 @@ const PostCard: React.FC<PostCardProps> = ({
   onShare,
   onFetchComments,
   liked = false,
+  saved = false,
+  onToggleSave,
 }) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -543,6 +548,21 @@ const PostCard: React.FC<PostCardProps> = ({
           <Share2 className="h-4 w-4" />
           Share
         </motion.button>
+
+        {onToggleSave && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onToggleSave(post.id)}
+            aria-pressed={saved}
+            aria-label={saved ? "Remove from saved" : "Save post"}
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <Bookmark
+              className={`h-4 w-4 ${saved ? "fill-amber-600 text-amber-600" : ""}`}
+            />
+          </motion.button>
+        )}
       </div>
 
       {isCommenting && (

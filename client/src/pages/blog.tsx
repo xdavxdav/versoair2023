@@ -82,6 +82,27 @@ export default function BlogPage() {
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
   const [currentPath, setLocation] = useLocation();
 
+  const SAVED_KEY = "blog_saved_posts";
+  const [savedPosts, setSavedPosts] = useState<Record<number, any>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(SAVED_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const toggleSavePost = (post: any) => {
+    setSavedPosts((cur) => {
+      const next = { ...cur };
+      if (next[post.id]) delete next[post.id];
+      else next[post.id] = post;
+      try {
+        localStorage.setItem(SAVED_KEY, JSON.stringify(next));
+      } catch {
+        // storage full or unavailable
+      }
+      return next;
+    });
+  };
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -103,7 +124,7 @@ export default function BlogPage() {
     1,
     10,
     sortBy,
-    typeFilter === "all" ? undefined : typeFilter,
+    typeFilter === "all" || typeFilter === "saved" ? undefined : typeFilter,
     debouncedSearch || undefined,
   );
 
@@ -441,7 +462,10 @@ export default function BlogPage() {
       ? [...posts].sort((a, b) => b.engagementScore - a.engagementScore)
       : posts;
   const q = debouncedSearch;
-  const displayPosts = sortedPosts;
+  const displayPosts =
+    typeFilter === "saved"
+      ? Object.values(savedPosts).reverse()
+      : sortedPosts;
   const TYPE_CHIPS = [
     ["all", "All"],
     ["discussion", "Discussions"],
@@ -450,6 +474,7 @@ export default function BlogPage() {
     ["announcement", "Announcements"],
     ["trend", "Trends"],
     ["faq", "FAQ"],
+    ["saved", "Saved"],
   ];
 
   return (
@@ -567,7 +592,9 @@ export default function BlogPage() {
             {/* Posts */}
             {(q || typeFilter !== "all") && displayPosts.length === 0 && (
               <p className="py-10 text-center text-sm text-slate-600 dark:text-slate-400">
-                No posts match. Try another search or filter.
+                {typeFilter === "saved"
+                  ? "Nothing saved yet. Tap the bookmark on a post to keep it here."
+                  : "No posts match. Try another search or filter."}
               </p>
             )}
             {displayPosts.map((post, idx) => {
@@ -633,6 +660,8 @@ export default function BlogPage() {
                     onDeleteComment={handleDeleteComment}
                     onFetchComments={handleFetchComments}
                     onShare={handleSharePost}
+                    saved={Boolean(savedPosts[post.id])}
+                    onToggleSave={() => toggleSavePost(post)}
                   />
                 </motion.div>
               );
