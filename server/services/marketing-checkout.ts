@@ -7,6 +7,11 @@
  */
 import type { Request, RequestHandler } from "express";
 import type Stripe from "stripe";
+import {
+  billingDetailsSchema,
+  buildTrustedCheckoutSecurityOptions,
+} from "@shared/billing-details";
+import { saveBillingProfile } from "./billing-profile";
 import { redactStripeSecrets } from "../utils/stripe-client";
 
 export const MARKETING_CURRENCY = "cad";
@@ -248,6 +253,11 @@ export function buildCheckoutSessionParams(input: {
   return {
     payment_method_types: ["card"],
     mode: "payment",
+    ...buildTrustedCheckoutSecurityOptions({
+      purpose: `Marketing Order #${input.orderId}`,
+      mode: "payment",
+      hasCustomer: false,
+    }),
     // Print products ship, and orders have no address columns of their own;
     // the webhook copies the collected address into the order notes.
     ...(shipsPhysicalGoods
@@ -308,6 +318,27 @@ export function createMarketingCheckoutHandler(
       }
 
       const userId = req.user!.userId;
+      if (req.body && typeof req.body === "object" && "billingDetails" in req.body && req.body.billingDetails !== undefined) {
+        const parsedBilling = billingDetailsSchema.safeParse(req.body.billingDetails);
+        if (!parsedBilling.success) {
+          res.status(400).json({
+            success: false,
+            code: "INVALID_BILLING_DETAILS",
+            error:
+              parsedBilling.error.issues[0]?.message ||
+              "Please complete all required billing details.",
+          });
+          return;
+        }
+        try {
+          await saveBillingProfile(deps.pool, Number(userId), parsedBilling.data);
+        } catch (billingErr) {
+          console.warn(
+            "[MARKETING] Could not persist billing profile before checkout:",
+            describeError(billingErr),
+          );
+        }
+      }
       const pricing = await priceCart(deps.pool, userId);
       if (!pricing.ok) {
         res.status(pricing.status).json({

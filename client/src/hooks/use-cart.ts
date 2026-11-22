@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { authenticatedFetch } from "@/lib/auth";
+import type { BillingDetailsInput } from "@shared/billing-details";
 
 /**
  * Cart item shape (shared between localStorage and server)
@@ -356,30 +358,32 @@ export function useCart() {
 
   // ─── Checkout ───
   const checkoutMutation = useMutation({
-    mutationFn: async () => {
-      const token = getAuthToken();
-      const res = await fetch("/api/marketing/cart/checkout", {
+    mutationFn: async (billingDetails?: BillingDetailsInput) => {
+      const res = await authenticatedFetch("/api/marketing/cart/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(billingDetails ? { billingDetails } : {}),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Checkout failed");
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || "Checkout failed");
       }
       return res.json();
     },
   });
 
-  const checkout = useCallback(async () => {
-    const result = await checkoutMutation.mutateAsync();
-    if (result.data?.url) {
-      window.location.href = result.data.url;
-    }
-    return result;
-  }, [checkoutMutation]);
+  const checkout = useCallback(
+    async (billingDetails?: BillingDetailsInput) => {
+      const result = await checkoutMutation.mutateAsync(billingDetails);
+      if (result.data?.url) {
+        window.location.href = result.data.url;
+      }
+      return result;
+    },
+    [checkoutMutation],
+  );
 
   return {
     items,

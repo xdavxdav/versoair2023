@@ -79,6 +79,16 @@ import {
   validateOfferUpdate,
 } from "../../services/paid-offers";
 import { createArsenalCheckoutSchema } from "@shared/event-arsenal";
+import {
+  billingDetailsSchema,
+  buildTrustedCheckoutSecurityOptions,
+  type BillingDetailsInput,
+} from "@shared/billing-details";
+import {
+  loadBillingProfile,
+  saveBillingProfile,
+  syncBillingProfileToStripe,
+} from "../../services/billing-profile";
 import { prepareArsenalOrder } from "../../services/event-arsenal";
 
 const router = Router();
@@ -158,6 +168,89 @@ router.get("/availability", (_req: Request, res: Response) => {
   });
 });
 
+// ─── CUSTOMER BILLING PROFILE (Name, Phone, Billing Address) ───────────────────
+
+async function parseOptionalBillingDetails(
+  req: Request,
+  res: Response,
+): Promise<{ ok: true; details: BillingDetailsInput | null } | { ok: false }> {
+  const raw = bodyOf(req).billingDetails;
+  if (raw === undefined) return { ok: true, details: null };
+  const parsed = billingDetailsSchema.safeParse(raw);
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      code: "INVALID_BILLING_DETAILS",
+      error:
+        parsed.error.issues[0]?.message ||
+        "Please complete all required billing details.",
+    });
+    return { ok: false };
+  }
+  return { ok: true, details: parsed.data };
+}
+
+async function persistAndSyncBilling(
+  userId: number,
+  stripeClient: Stripe | null,
+  customerId: string | null | undefined,
+  details: BillingDetailsInput | null,
+): Promise<void> {
+  if (!details) return;
+  await saveBillingProfile(pool, userId, details);
+  await syncBillingProfileToStripe(stripeClient, customerId, details);
+}
+
+/** GET /api/v1/payments/billing-profile — owner's saved billing identity. */
+router.get("/billing-profile", requireAuth(), async (req: Request, res: Response) => {
+  const userId = actorUserId(req);
+  if (!userId) {
+    return res.status(401).json({ success: false, error: "Authentication required" });
+  }
+  try {
+    const data = await loadBillingProfile(pool, userId);
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("❌ Load billing profile failed:", error);
+    return res.status(500).json({ success: false, error: "Failed to load billing profile" });
+  }
+});
+
+/** PUT /api/v1/payments/billing-profile — save verified billing identity & sync to Stripe. */
+router.put("/billing-profile", requireAuth(), async (req: Request, res: Response) => {
+  const userId = actorUserId(req);
+  if (!userId) {
+    return res.status(401).json({ success: false, error: "Authentication required" });
+  }
+  const parsed = billingDetailsSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      code: "INVALID_BILLING_DETAILS",
+      error: parsed.error.issues[0]?.message || "Invalid billing details.",
+    });
+  }
+  try {
+    const saved = await saveBillingProfile(pool, userId, parsed.data);
+    const stripeClient = getStripeClient({ apiVersion: STRIPE_API_VERSION });
+    if (stripeClient) {
+      const custRes = await pool.query(
+        `SELECT stripe_customer_id FROM users WHERE id = $1`,
+        [userId],
+      );
+      const existingCustomerId = custRes.rows[0]?.stripe_customer_id;
+      if (existingCustomerId) {
+        await syncBillingProfileToStripe(stripeClient, existingCustomerId, parsed.data);
+      }
+    }
+    return res.json({ success: true, data: saved });
+  } catch (error) {
+    console.error("❌ Save billing profile failed:", error);
+    return res.status(500).json({ success: false, error: "Failed to save billing profile" });
+  }
+});
+
 // ─── CREATE CHECKOUT SESSION ────────────────────────────────────────────────────
 
 /**
@@ -203,6 +296,9 @@ router.post("/create-checkout", subscriptionCheckoutLimiter, async (req: Request
       });
     }
 
+    const billingCheck = await parseOptionalBillingDetails(req, res);
+    if (!billingCheck.ok) return;
+
     // Fetch user for Stripe customer lookup/creation
     const userResult = await pool.query(
       `SELECT id, email, username, subscription_tier FROM users WHERE id = $1`,
@@ -232,6 +328,12 @@ router.post("/create-checkout", subscriptionCheckoutLimiter, async (req: Request
       user.username,
       stripeClient,
     );
+    await persistAndSyncBilling(
+      Number(userId),
+      stripeClient,
+      customerId,
+      billingCheck.details,
+    );
 
     const checkoutInput = {
       userId,
@@ -239,10 +341,16 @@ router.post("/create-checkout", subscriptionCheckoutLimiter, async (req: Request
       customerId,
       baseUrl: getPublicBaseUrl(),
     };
+    const rawAttemptId = bodyOf(req).clientAttemptId;
+    const attemptId =
+      typeof rawAttemptId === "string" && rawAttemptId.trim()
+        ? rawAttemptId.trim().slice(0, 64)
+        : null;
     const session = await stripeClient.checkout.sessions.create(
       recurring
         ? buildRecurringPlanCheckoutParams(checkoutInput)
         : buildPlanCheckoutParams(checkoutInput),
+      attemptId ? { idempotencyKey: `plan-${userId}-${attemptId}` } : undefined,
     );
 
     res.json({
@@ -452,6 +560,9 @@ router.post(
         });
       }
 
+      const billingCheck = await parseOptionalBillingDetails(req, res);
+      if (!billingCheck.ok) return;
+
       const userResult = await pool.query(
         `SELECT id, email, username FROM users WHERE id = $1`,
         [userId],
@@ -466,30 +577,49 @@ router.post(
         user.username,
         stripeClient,
       );
+      await persistAndSyncBilling(
+        Number(userId),
+        stripeClient,
+        customerId,
+        billingCheck.details,
+      );
 
       const origin = getPublicBaseUrl();
       const sep = returnPath.includes("?") ? "&" : "?";
-      const session = await stripeClient.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        customer: customerId,
-        line_items: [
-          {
-            price_data: {
-              currency: "cad",
-              product_data: {
-                name: `Verso Air — ${offer.name}`,
-                description: offer.description || undefined,
+      const rawAttemptId = bodyOf(req).clientAttemptId;
+      const attemptId =
+        typeof rawAttemptId === "string" && rawAttemptId.trim()
+          ? rawAttemptId.trim().slice(0, 64)
+          : null;
+      const session = await stripeClient.checkout.sessions.create(
+        {
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer: customerId,
+          ...buildTrustedCheckoutSecurityOptions({
+            purpose: offer.name,
+            mode: "payment",
+            hasCustomer: Boolean(customerId),
+          }),
+          line_items: [
+            {
+              price_data: {
+                currency: "cad",
+                product_data: {
+                  name: `Verso Air — ${offer.name}`,
+                  description: offer.description || undefined,
+                },
+                unit_amount: offer.amountCents,
               },
-              unit_amount: offer.amountCents,
+              quantity: 1,
             },
-            quantity: 1,
-          },
-        ],
-        metadata,
-        success_url: `${origin}${returnPath}${sep}status=success`,
-        cancel_url: `${origin}${returnPath}${sep}status=cancelled`,
-      });
+          ],
+          metadata,
+          success_url: `${origin}${returnPath}${sep}status=success`,
+          cancel_url: `${origin}${returnPath}${sep}status=cancelled`,
+        },
+        attemptId ? { idempotencyKey: `offer-${userId}-${attemptId}` } : undefined,
+      );
 
       res.json({
         success: true,
@@ -559,6 +689,9 @@ router.post(
       const stripeClient = requireStripeClient(res);
       if (!stripeClient) return;
 
+      const billingCheck = await parseOptionalBillingDetails(req, res);
+      if (!billingCheck.ok) return;
+
       const userResult = await pool.query(
         `SELECT id, email, username FROM users WHERE id = $1`,
         [userId],
@@ -573,31 +706,45 @@ router.post(
         user.username,
         stripeClient,
       );
+      await persistAndSyncBilling(
+        Number(userId),
+        stripeClient,
+        customerId,
+        billingCheck.details,
+      );
 
       const origin = getPublicBaseUrl();
       const encodedSlug = encodeURIComponent(prepared.eventSlug);
-      const session = await stripeClient.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        customer: customerId,
-        line_items: prepared.stripeLineItems,
-        ...(prepared.needsShipping
-          ? {
-              shipping_address_collection: {
-                allowed_countries: ["CA", "US", "GB", "FR", "DE", "AU"],
-              },
-            }
-          : {}),
-        metadata: {
-          userId: String(userId),
-          type: "event_arsenal_order",
-          eventId: String(prepared.eventId),
-          arsenalOrderId: String(prepared.orderId),
-          passCode: prepared.passCode,
+      const session = await stripeClient.checkout.sessions.create(
+        {
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer: customerId,
+          ...buildTrustedCheckoutSecurityOptions({
+            purpose: `Event Order #${prepared.orderId}`,
+            mode: "payment",
+            hasCustomer: Boolean(customerId),
+          }),
+          line_items: prepared.stripeLineItems,
+          ...(prepared.needsShipping
+            ? {
+                shipping_address_collection: {
+                  allowed_countries: ["CA", "US", "GB", "FR", "DE", "AU"],
+                },
+              }
+            : {}),
+          metadata: {
+            userId: String(userId),
+            type: "event_arsenal_order",
+            eventId: String(prepared.eventId),
+            arsenalOrderId: String(prepared.orderId),
+            passCode: prepared.passCode,
+          },
+          success_url: `${origin}/events/${encodedSlug}?arsenalOrder=${prepared.orderId}&status=success`,
+          cancel_url: `${origin}/events/${encodedSlug}?arsenalOrder=${prepared.orderId}&status=cancelled`,
         },
-        success_url: `${origin}/events/${encodedSlug}?arsenalOrder=${prepared.orderId}&status=success`,
-        cancel_url: `${origin}/events/${encodedSlug}?arsenalOrder=${prepared.orderId}&status=cancelled`,
-      });
+        { idempotencyKey: `arsenal-order-${prepared.orderId}` },
+      );
 
       await pool.query(
         `UPDATE event_arsenal_orders

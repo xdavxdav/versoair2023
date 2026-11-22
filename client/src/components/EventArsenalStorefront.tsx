@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import CheckoutReviewModal from "@/components/CheckoutReviewModal";
 import { authenticatedFetch } from "@/lib/auth";
 import { resolveEventTheme } from "@/components/EventPosterVisual";
+import type { BillingDetailsInput } from "@shared/billing-details";
 import {
   formatCadCents,
   type EventArsenalItem,
@@ -94,6 +96,7 @@ export default function EventArsenalStorefront({
   const [activeTab, setActiveTab] = useState<"ALL" | EventArsenalKind>("ALL");
   const [selectedVariants, setSelectedVariants] = useState<Record<number, string>>({});
   const [basket, setBasket] = useState<Record<string, BasketLine>>({});
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [copiedPass, setCopiedPass] = useState<string | null>(null);
@@ -176,7 +179,7 @@ export default function EventArsenalStorefront({
     });
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (billingDetails?: BillingDetailsInput) => {
     if (!basketLines.length || submitting) return;
     setSubmitting(true);
     setCheckoutError(null);
@@ -193,6 +196,7 @@ export default function EventArsenalStorefront({
               quantity: line.quantity,
               variant: line.variant,
             })),
+            ...(billingDetails ? { billingDetails } : {}),
           }),
         },
       );
@@ -599,7 +603,14 @@ export default function EventArsenalStorefront({
                     <Button
                       type="button"
                       disabled={submitting || awaitingPayment}
-                      onClick={() => void handleCheckout()}
+                      onClick={() => {
+                        if (totalCents === 0) {
+                          void handleCheckout();
+                        } else {
+                          setCheckoutError(null);
+                          setReviewOpen(true);
+                        }
+                      }}
                       className="bg-amber-500 font-black text-slate-950 hover:bg-amber-400"
                     >
                       {submitting ? (
@@ -628,7 +639,7 @@ export default function EventArsenalStorefront({
                 </div>
               </div>
 
-              {checkoutError && (
+              {checkoutError && !reviewOpen && (
                 <p
                   role="alert"
                   className="mt-3 rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-medium text-rose-200"
@@ -640,6 +651,23 @@ export default function EventArsenalStorefront({
           )}
         </div>
       )}
+      <CheckoutReviewModal
+        open={reviewOpen}
+        onClose={() => !submitting && setReviewOpen(false)}
+        title={eventTitle}
+        purpose={`VERSO AIR INC. Event Tickets & Merch — ${eventTitle}`}
+        deliverable="Your Digital Door Pass and itemized order voucher unlock immediately after Stripe confirmation, with an official PDF receipt emailed to you."
+        totalCents={totalCents}
+        billingFrequencyLabel="CAD · one-time"
+        items={basketLines.map((line) => ({
+          label: line.item.name,
+          detail: line.variant ? `${line.variant} · ×${line.quantity}` : `×${line.quantity}`,
+          amountCents: line.item.priceCents * line.quantity,
+        }))}
+        busy={submitting}
+        serverError={checkoutError}
+        onConfirm={handleCheckout}
+      />
     </section>
   );
 }

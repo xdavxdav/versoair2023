@@ -4,6 +4,7 @@
  * tested without Stripe.
  */
 import type Stripe from "stripe";
+import { buildTrustedCheckoutSecurityOptions } from "@shared/billing-details";
 import {
   PLAN_CURRENCY,
   PLAN_PRICES,
@@ -102,6 +103,11 @@ export function buildPlanCheckoutParams(
     payment_intent_data: {
       setup_future_usage: "off_session",
     },
+    ...buildTrustedCheckoutSecurityOptions({
+      purpose: `${selection.name} Plan (${selection.cycle})`,
+      mode: "payment",
+      hasCustomer: Boolean(input.customerId),
+    }),
     line_items: [
       {
         price_data: {
@@ -131,6 +137,11 @@ export function buildRecurringPlanCheckoutParams(
     payment_method_types: ["card"],
     mode: "subscription",
     customer: input.customerId,
+    ...buildTrustedCheckoutSecurityOptions({
+      purpose: `${selection.name} Subscription (${selection.cycle})`,
+      mode: "subscription",
+      hasCustomer: Boolean(input.customerId),
+    }),
     line_items: [
       {
         price_data: {

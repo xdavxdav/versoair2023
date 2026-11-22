@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import {
   ShoppingCart,
@@ -10,8 +11,10 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import CheckoutReviewModal from "@/components/CheckoutReviewModal";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import type { BillingDetailsInput } from "@shared/billing-details";
 
 const cad = new Intl.NumberFormat("en-CA", {
   style: "currency",
@@ -31,17 +34,22 @@ export default function CartPage() {
     isCheckingOut,
   } = useCart();
   const { toast } = useToast();
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (billingDetails: BillingDetailsInput) => {
+    setCheckoutError(null);
     try {
-      await checkout();
+      await checkout(billingDetails);
     } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Checkout could not be started. Please try again.";
+      setCheckoutError(msg);
       toast({
         title: "Checkout unavailable",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Checkout could not be started. Please try again.",
+        description: msg,
         variant: "destructive",
       });
     }
@@ -219,7 +227,10 @@ export default function CartPage() {
                   <Button
                     className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold"
                     size="lg"
-                    onClick={() => void handleCheckout()}
+                    onClick={() => {
+                      setCheckoutError(null);
+                      setReviewOpen(true);
+                    }}
                     disabled={isCheckingOut}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
@@ -239,6 +250,23 @@ export default function CartPage() {
           </div>
         )}
       </div>
+      <CheckoutReviewModal
+        open={reviewOpen}
+        onClose={() => !isCheckingOut && setReviewOpen(false)}
+        title="Marketing & Print Order"
+        purpose={`VERSO AIR INC. Marketing Cart (${itemCount} ${itemCount === 1 ? "item" : "items"})`}
+        deliverable="Order fulfillment begins after Stripe confirms payment. Official itemized PDF invoice emailed immediately; track progress under Order Tracking."
+        totalCents={totalCents}
+        billingFrequencyLabel="CAD · one-time"
+        items={items.map((item) => ({
+          label: item.item_name || `${item.item_type} #${item.item_id}`,
+          detail: `×${item.quantity}`,
+          amountCents: item.price_cents * item.quantity,
+        }))}
+        busy={isCheckingOut}
+        serverError={checkoutError}
+        onConfirm={handleCheckout}
+      />
     </div>
   );
 }
