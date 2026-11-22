@@ -193,7 +193,8 @@ export default function ArtistBioPage() {
                 {artist.genres.map((genre) => (
                   <span
                     key={genre}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-[#180d34]/80 px-3 py-1 text-xs font-semibold text-purple-100"
+                    translate="no"
+                    className="notranslate inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-[#180d34]/80 px-3 py-1 text-xs font-semibold text-purple-100"
                   >
                     <Music className="h-3.5 w-3.5 text-fuchsia-300" />
                     {genre}
