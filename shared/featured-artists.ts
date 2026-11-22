@@ -310,9 +310,48 @@ export const KOUZCO_PROFILE: FeaturedArtistProfile = {
   pressLinks: [],
 };
 
+export const DEUZEUS_PROFILE: FeaturedArtistProfile = {
+  slug: "deuzeus",
+  stageName: "DeuZeus",
+  monogram: "DZ",
+  aliases: [],
+  group: "",
+  groupMembers: [],
+  city: "Surrey, BC",
+  countryCode: "CA",
+  countryName: "Canada",
+  primaryGenre: "Hip-Hop",
+  genres: ["Hip-Hop", "Rap"],
+  featuredFaceOfTmu: false,
+  tagline: {
+    fr: "Artiste indépendant basé à Surrey (Colombie-Britannique, Canada), présent sur SoundCloud.",
+    en: "Independent artist based in Surrey, BC, Canada, publishing on SoundCloud.",
+  },
+  bio: {
+    fr: [
+      "DeuZeus est un artiste indépendant basé à Surrey, en Colombie-Britannique (Canada), actif sur SoundCloud.",
+      "Retrouvez ses sorties et écoutes directement sur sa page SoundCloud officielle.",
+    ],
+    en: [
+      "DeuZeus is an independent artist based in Surrey, British Columbia, Canada, publishing on SoundCloud.",
+      "Stream his releases directly on his official SoundCloud page.",
+    ],
+  },
+  discography: [],
+  officialLinks: [
+    {
+      platform: "soundcloud",
+      label: "SoundCloud — DeuZeus",
+      url: "https://soundcloud.com/DeuZeus",
+    },
+  ],
+  pressLinks: [],
+};
+
 export const FEATURED_ARTISTS: readonly FeaturedArtistProfile[] = [
   NOOKA_PROFILE,
   KOUZCO_PROFILE,
+  DEUZEUS_PROFILE,
 ];
 
 const normalizeKey = (value: string) =>

@@ -233,6 +233,7 @@ export default function ArtistBioPage() {
             </section>
 
             {/* Discography timeline (verified public metadata only) */}
+            {artist.discography.length > 0 && (
             <section className="tmu-glass-elevated rounded-2xl p-6 sm:p-7">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -322,6 +323,7 @@ export default function ArtistBioPage() {
                   : "While direct media hosting on Verso Air is being prepared, each release routes directly to the official platform where it is currently available (YouTube, Spotify, SoundCloud, YouTube Music)."}
               </div>
             </section>
+            )}
           </div>
 
           {/* Right col: Key facts + Official links + Press */}

@@ -98,19 +98,31 @@ export async function ensureAllTables(
     await ensureVxppCommunitiesSchema(client);
 
     // Ensure curated public artist directory entries exist (idempotent)
-    try {
-      await client.query(`
-        INSERT INTO artists (stage_name, genre, label_status, spotify_url, country_code)
-        SELECT 'Kouzco', 'Hip-Hop', 'independent', 'https://soundcloud.com/kouzco', NULL
-        WHERE NOT EXISTS (
-          SELECT 1 FROM artists WHERE LOWER(stage_name) = 'kouzco'
-        )
-      `);
-    } catch (err) {
-      console.warn(
-        "  ⚠️ [MIGRATE] Skipping Kouzco artist seed:",
-        err instanceof Error ? err.message : err,
-      );
+    const curatedArtists: Array<{
+      stageName: string;
+      genre: string;
+      url: string;
+      countryCode: string | null;
+    }> = [
+      { stageName: "Kouzco", genre: "Hip-Hop", url: "https://soundcloud.com/kouzco", countryCode: null },
+      { stageName: "DeuZeus", genre: "Hip-Hop", url: "https://soundcloud.com/DeuZeus", countryCode: "CA" },
+    ];
+    for (const artist of curatedArtists) {
+      try {
+        await client.query(
+          `INSERT INTO artists (stage_name, genre, label_status, spotify_url, country_code)
+           SELECT $1::text, $2::text, 'independent', $3::text, $4::text
+           WHERE NOT EXISTS (
+             SELECT 1 FROM artists WHERE LOWER(stage_name) = LOWER($1::text)
+           )`,
+          [artist.stageName, artist.genre, artist.url, artist.countryCode],
+        );
+      } catch (err) {
+        console.warn(
+          `  ⚠️ [MIGRATE] Skipping ${artist.stageName} artist seed:`,
+          err instanceof Error ? err.message : err,
+        );
+      }
     }
 
     const systemRoles = [

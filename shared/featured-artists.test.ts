@@ -30,11 +30,27 @@ test("Nooka is live as the featured face of TMU with verified metadata", () => {
 test("featured artist lookup matches slug, stage name, and aliases", () => {
   assert.equal(getFeaturedArtistBySlug("nooka")?.stageName, "Nooka");
   assert.equal(getFeaturedArtistBySlug("kouzco")?.stageName, "Kouzco");
+  assert.equal(getFeaturedArtistBySlug("deuzeus")?.stageName, "DeuZeus");
   assert.equal(getFeaturedArtistBySlug("unknown"), undefined);
   assert.equal(getFeaturedArtistByName("Nooka")?.slug, "nooka");
   assert.equal(getFeaturedArtistByName("Nooka Wansh")?.slug, "nooka");
   assert.equal(getFeaturedArtistByName("le Dashibah")?.slug, "nooka");
   assert.equal(getFeaturedArtistByName("Kouzco")?.slug, "kouzco");
+  assert.equal(getFeaturedArtistByName("DeuZeus")?.slug, "deuzeus");
+});
+
+test("DeuZeus profile carries Canada (Surrey, BC) metadata and SoundCloud link", () => {
+  const deuzeus = getFeaturedArtistBySlug("deuzeus");
+  assert.ok(deuzeus);
+  assert.equal(deuzeus.featuredFaceOfTmu, false);
+  assert.equal(deuzeus.countryCode, "CA");
+  assert.equal(deuzeus.countryName, "Canada");
+  assert.equal(deuzeus.city, "Surrey, BC");
+  assert.ok(
+    deuzeus.officialLinks.some(
+      (l) => l.platform === "soundcloud" && l.url === "https://soundcloud.com/DeuZeus",
+    ),
+  );
 });
 
 test("Kouzco profile carries verified SoundCloud links without invented fields", () => {
