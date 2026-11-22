@@ -35,6 +35,21 @@ async function checkCountryCodeColumn(): Promise<boolean> {
   return hasCountryCodeColumn;
 }
 
+let hasNeighbourhoodColumns: boolean | null = null;
+async function checkNeighbourhoodColumns(): Promise<boolean> {
+  if (hasNeighbourhoodColumns !== null) return hasNeighbourhoodColumns;
+  try {
+    const result = await pool.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'artists' AND column_name = 'neighbourhood_id'`,
+    );
+    hasNeighbourhoodColumns = result.rows.length > 0;
+  } catch {
+    hasNeighbourhoodColumns = false;
+  }
+  return hasNeighbourhoodColumns;
+}
+
 // GET /api/artists/search
 router.get("/search", async (req, res) => {
   try {
@@ -97,10 +112,16 @@ router.get("/search", async (req, res) => {
     );
     const total = parseInt(countResult.rows[0]?.total || "0");
 
-    const ccSelect = hasCC ? ", a.country_code" : "";
+    const hasGeo = await checkNeighbourhoodColumns();
+    const ccSelect =
+      (hasCC ? ", a.country_code" : "") +
+      (hasGeo ? ", ct.name AS city, nb.name AS neighbourhood" : "");
+    const geoJoin = hasGeo
+      ? "LEFT JOIN cities ct ON ct.id = a.city_id LEFT JOIN neighbourhoods nb ON nb.id = a.neighbourhood_id"
+      : "";
     const dataResult = await pool.query(
       `SELECT a.id, a.stage_name AS name, a.genre, a.label_status, a.spotify_url, a.business_id, a.user_id${ccSelect}
-       FROM artists a ${whereClause} ${orderClause}
+       FROM artists a ${geoJoin} ${whereClause} ${orderClause}
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...params, limitNum, offset],
     );

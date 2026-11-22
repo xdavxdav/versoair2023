@@ -56,6 +56,8 @@ interface Artist {
   business_id: number | null;
   user_id: number | null;
   country_code?: string | null;
+  city?: string | null;
+  neighbourhood?: string | null;
 }
 
 interface ArtistDetails extends Artist {}
@@ -667,7 +669,13 @@ export default function ArtistDirectory() {
                               <div className="absolute top-3.5 left-3.5">
                                 <Badge className="bg-white/90 text-indigo-950 border border-pink-200/80 dark:bg-indigo-950/85 dark:text-indigo-100 dark:border-indigo-400/30 backdrop-blur-sm px-2.5 py-1 text-xs font-medium">
                                   {getFlag(artist.country_code)}{" "}
-                                  {getCountryMeta(artist.country_code)?.name || artist.country_code}
+                                  {[
+                                    artist.neighbourhood,
+                                    artist.city,
+                                    getCountryMeta(artist.country_code)?.name || artist.country_code,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")}
                                 </Badge>
                               </div>
                             )}
