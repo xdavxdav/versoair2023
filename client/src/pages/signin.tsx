@@ -32,7 +32,10 @@ import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getSignupResumePath } from "@/lib/signup-resume";
-import { getSafeReturnPath } from "@/lib/auth-route-redirect";
+import {
+  getSafeReturnPath,
+  getSafeSignInBackTarget,
+} from "@/lib/auth-route-redirect";
 import {
   getDashboardDestination,
   getGeoAdminDestination,
@@ -392,9 +395,13 @@ export default function SignIn() {
     getQueryParam("redirect"),
     window.location.origin,
   );
+  const safeBackTarget = getSafeSignInBackTarget(
+    getQueryParam("redirect"),
+    window.location.origin,
+  );
   const handleBack = () => {
-    if (registrationReturnPath) {
-      navigate(registrationReturnPath);
+    if (safeBackTarget) {
+      navigate(safeBackTarget);
       return;
     }
     if (window.history.length > 1) {
@@ -404,15 +411,15 @@ export default function SignIn() {
     navigate("/");
   };
 
-  const registrationBackLabel = registrationReturnPath
-    ? registrationReturnPath === "/geo-admin" ||
-      registrationReturnPath.startsWith("/geo-admin/")
+  const registrationBackLabel = safeBackTarget
+    ? safeBackTarget === "/geo-admin" ||
+      safeBackTarget.startsWith("/geo-admin/")
       ? "Back to GeoAdmin"
       : "Back to previous page"
     : "Back to Sign In";
   const handleRegistrationBack = () => {
-    if (registrationReturnPath) {
-      navigate(registrationReturnPath);
+    if (safeBackTarget) {
+      navigate(safeBackTarget);
       return;
     }
     setStep("login");
