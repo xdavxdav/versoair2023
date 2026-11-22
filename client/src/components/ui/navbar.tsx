@@ -826,21 +826,6 @@ export default function Navbar({
               </button>
             )}
 
-            {/* vxpp — One-tap entry into VersoAirApp */}
-            <Link
-              href="/vxpp"
-              data-testid="navbar-vxpp-btn"
-              aria-label="Open vxpp (VersoAirApp)"
-              title="Open vxpp — VersoAirApp"
-              className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-3 py-1.5 text-xs font-extrabold tracking-tight shadow-sm transition-all whitespace-nowrap notranslate"
-              translate="no"
-            >
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-white/20 text-[10px] font-black">
-                vx
-              </span>
-              vxpp
-            </Link>
-
             {/* Notifications — bell icon with unread badge */}
             <NotificationCenter />
 

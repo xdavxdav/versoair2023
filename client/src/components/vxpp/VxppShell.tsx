@@ -349,7 +349,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
 
           {/* Ecosystem */}
           <div className="space-y-1">
-            <p className="px-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <p className="px-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 notranslate" translate="no">
               {copy.ecosystemHeading}
             </p>
             {ecosystemItems.map((item) => {
@@ -357,7 +357,12 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
               return (
                 <Link key={item.href} href={item.href} className={navLinkClasses(false)}>
                   <Icon className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                  <span className="truncate">{item.label}</span>
+                  <span
+                    className={`truncate ${item.href === "/" ? "notranslate" : ""}`}
+                    translate={item.href === "/" ? "no" : undefined}
+                  >
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
