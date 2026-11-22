@@ -25,7 +25,12 @@ export default function Communities() {
   const [myIds, setMyIds] = useState<Set<number>>(new Set());
 
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<string>("All");
+  const [category, setCategory] = useState<string>(() => {
+    const c = new URLSearchParams(window.location.search).get("category");
+    return c && (COMMUNITY_CATEGORIES as readonly string[]).includes(c)
+      ? c
+      : "All";
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);

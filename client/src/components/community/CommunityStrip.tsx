@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import CommunityAvatar from "./CommunityAvatar";
-import { listVxppCommunities, type VxppCommunity } from "@/lib/communities";
+import {
+  COMMUNITY_CATEGORIES,
+  listVxppCommunities,
+  type VxppCommunity,
+} from "@/lib/communities";
 
 export default function CommunityStrip() {
   const [items, setItems] = useState<VxppCommunity[]>([]);
@@ -40,6 +44,18 @@ export default function CommunityStrip() {
           Browse all
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
+      </div>
+
+      <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+        {COMMUNITY_CATEGORIES.map((cat) => (
+          <Link
+            key={cat}
+            href={`/communities?category=${encodeURIComponent(cat)}`}
+            className="shrink-0 rounded-full border border-[#E6DFD6] dark:border-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:border-[#B56535]/60 hover:text-[#B56535] dark:hover:text-amber-300 transition-colors"
+          >
+            {cat}
+          </Link>
+        ))}
       </div>
 
       <div className="flex gap-2.5 overflow-x-auto pb-1">
