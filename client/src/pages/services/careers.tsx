@@ -97,6 +97,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
@@ -529,25 +530,39 @@ export default function Careers() {
   // TRACE: Mutation for applying to jobs
   const applyMutation = useMutation({
     mutationFn: async (jobId: string) => {
+      if (!platformUser) {
+        setAuthMode("login");
+        setShowAuthPopup(true);
+        throw new Error("Please sign in to apply for this job.");
+      }
       try {
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `${API_BASE_URL}/api/jobs/${jobId}/apply`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              userId: "current-user-id",
               applied_date: new Date().toISOString(),
             }),
           },
         );
 
+        if (response.status === 401) {
+          setAuthMode("login");
+          setShowAuthPopup(true);
+          throw new Error("Please sign in to apply for this job.");
+        }
         if (!response.ok) {
           throw new Error("Failed to submit application");
         }
 
         return await response.json();
       } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.startsWith("Please sign in")
+        )
+          throw error;
         throw new Error("Application submission failed");
       }
     },
@@ -1033,7 +1048,10 @@ export default function Careers() {
                     className="gap-1 sm:gap-2 border-amber-300 !bg-amber-50 !text-amber-900 hover:border-amber-400 hover:!bg-amber-100 hover:!text-amber-950 px-2 sm:px-3"
                   >
                     <HardHat className="h-4 w-4" />
-                    <span className="hidden sm:inline notranslate" translate="no">
+                    <span
+                      className="hidden sm:inline notranslate"
+                      translate="no"
+                    >
                       {translateText("Switch to Contractor View")}
                     </span>
                   </Button>
@@ -1699,7 +1717,10 @@ export default function Careers() {
                   {isLoading ? (
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
-                        <Card key={i} className="bg-white text-slate-900 border-gray-200/80">
+                        <Card
+                          key={i}
+                          className="bg-white text-slate-900 border-gray-200/80"
+                        >
                           <CardContent className="p-6">
                             <Skeleton className="h-6 w-3/4 mb-2" />
                             <Skeleton className="h-4 w-1/2 mb-4" />
@@ -2058,7 +2079,9 @@ export default function Careers() {
                         setVerificationEmailSent(
                           typeof d.emailSent === "boolean" ? d.emailSent : null,
                         );
-                        setResendMessage(d.message || "Verification status updated.");
+                        setResendMessage(
+                          d.message || "Verification status updated.",
+                        );
                       } catch {
                         setResendMessage("Failed to resend. Try again.");
                       } finally {

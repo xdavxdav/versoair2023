@@ -78,6 +78,7 @@ import type { CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import EmailSubscribeCTA from "@/components/EmailSubscribeCTA";
 import {
@@ -86,6 +87,7 @@ import {
 } from "@/components/job-application-modal";
 
 const API_BASE = "";
+const SIGN_IN_MSG = "Please sign in to continue.";
 
 const DB_CFG = {
   user: "versoair",
@@ -538,15 +540,19 @@ export default function Contractors() {
   /* mutations */
   const proposeMut = useMutation({
     mutationFn: async (id: string) => {
-      const r = await fetch(API_BASE + "/api/jobs/" + id + "/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: "current-user",
-          applied_date: new Date().toISOString(),
-        }),
-      });
-      if (!r.ok) throw new Error("fail");
+      if (!platformUser) throw new Error(SIGN_IN_MSG);
+      const r = await authenticatedFetch(
+        API_BASE + "/api/jobs/" + id + "/apply",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            applied_date: new Date().toISOString(),
+          }),
+        },
+      );
+      if (r.status === 401) throw new Error(SIGN_IN_MSG);
+      if (!r.ok) throw new Error("Failed to submit proposal");
       return r.json();
     },
     onSuccess: () => {
@@ -573,13 +579,25 @@ export default function Contractors() {
       cid: string;
       act: "save" | "unsave";
     }) => {
-      const r = await fetch(API_BASE + "/api/jobs/" + cid + "/" + act, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "current-user" }),
-      });
-      if (!r.ok) throw new Error("fail");
+      if (!platformUser) throw new Error(SIGN_IN_MSG);
+      const r = await authenticatedFetch(
+        API_BASE + "/api/jobs/" + cid + "/" + act,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      );
+      if (r.status === 401) throw new Error(SIGN_IN_MSG);
+      if (!r.ok) throw new Error("Failed to update saved contract");
       return r.json();
+    },
+    onError: (e: Error) => {
+      toast({
+        title: e.message === SIGN_IN_MSG ? "Sign in required" : "Failed",
+        description: e.message,
+        variant: "destructive",
+      });
     },
     onSuccess: (_, v) => {
       setSaved((p) =>
@@ -1285,7 +1303,8 @@ export default function Contractors() {
                           <p className="text-xs text-amber-600 flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             <span className="notranslate" translate="no">
-                              Account role: {accountRoleLabel} · Current view: Contractor
+                              Account role: {accountRoleLabel} · Current view:
+                              Contractor
                             </span>
                           </p>
                         </div>
