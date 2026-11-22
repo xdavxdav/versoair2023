@@ -27,6 +27,7 @@ export const socialUsers = pgTable(
     userId: integer("user_id").notNull(), // References existing users table
     username: text("username").notNull().unique(),
     displayName: text("display_name").notNull(),
+    headline: text("headline"),
     bio: text("bio"),
     avatarUrl: text("avatar_url"),
     coverImageUrl: text("cover_image_url"),
@@ -34,6 +35,7 @@ export const socialUsers = pgTable(
     website: text("website"),
     profession: text("profession"), // e.g., "Business Owner", "Entrepreneur"
     company: text("company"),
+    interests: text("interests").array(),
     followerCount: integer("follower_count").default(0),
     followingCount: integer("following_count").default(0),
     postCount: integer("post_count").default(0),

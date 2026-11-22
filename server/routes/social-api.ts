@@ -1358,10 +1358,17 @@ router.get("/users/:userId", async (req: Request, res: Response) => {
           account.displayName || socialProfile.displayName || account.username,
         avatarUrl: socialProfile.avatarUrl ?? null,
         avatar: socialProfile.avatarUrl ?? null,
+        coverImageUrl: socialProfile.coverImageUrl ?? null,
+        headline: socialProfile.headline ?? null,
         bio: socialProfile.bio ?? null,
         location: socialProfile.location ?? null,
         website: socialProfile.website ?? null,
         profession: socialProfile.profession ?? null,
+        company: socialProfile.company ?? null,
+        interests: Array.isArray(socialProfile.interests)
+          ? socialProfile.interests
+          : [],
+        privacyLevel: socialProfile.privacyLevel || "public",
         role: account.role || "user",
         tier: account.subscriptionTier || "free",
         joinedAt: account.createdAt ?? null,

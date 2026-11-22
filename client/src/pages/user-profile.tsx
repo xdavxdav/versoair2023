@@ -1,37 +1,48 @@
+/**
+ * vxpp Public Member Profile (/user/:id)
+ *
+ * Displays another member's public identity (cover photo, avatar, headline,
+ * bio, location, website, interests, public posts, published tracks) without
+ * exposing private fields (email, applications, contracts, private messages).
+ * Works cleanly for both guests and signed-in members.
+ */
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { Link, useLocation, useRoute } from "wouter";
-import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
   ArrowLeft,
+  Briefcase,
   Calendar,
-  FileText,
-  Heart,
-  Link as LinkIcon,
+  Edit3,
+  Globe,
   Loader2,
   MapPin,
   MessageCircle,
   Music,
+  Newspaper,
   Play,
   User,
-  Users,
 } from "lucide-react";
 import FollowButton from "@/components/FollowButton";
-import { TmuShell } from "@/components/music/TmuShell";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/auth";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 
-type ActiveTab = "overview" | "tracks" | "posts";
+type ActiveTab = "posts" | "tracks" | "about";
 
 interface PublicUserProfile {
   id: number;
   username: string;
   name: string;
   avatar: string | null;
+  coverImageUrl: string | null;
+  headline: string | null;
   bio: string | null;
   location: string | null;
   website: string | null;
+  profession: string | null;
+  company: string | null;
+  interests: string[];
   role: string;
   tier: string;
   isArtist: boolean;
@@ -57,32 +68,41 @@ export default function UserProfilePage() {
   const userId = params?.id;
   const { user: me } = useAuthContext();
   const { toast } = useToast();
+
   const [profile, setProfile] = useState<PublicUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("posts");
   const [tracks, setTracks] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [tabLoading, setTabLoading] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(false);
 
   useEffect(() => {
     if (!match || !userId) return;
-    if (!me) {
-      setLoading(false);
-      setProfile(null);
-      return;
-    }
-
     let cancelled = false;
     setLoading(true);
+    setError(null);
+    setAvatarFailed(false);
+    setCoverFailed(false);
 
     authenticatedFetch(`/api/social/users/${userId}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((json) => {
-        if (cancelled || !json?.data) return;
-        setProfile(json.data);
+      .then(async (response) => {
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.data) {
+          throw new Error(json?.error || "Profile not found.");
+        }
+        return json.data;
       })
-      .catch(() => {
-        if (!cancelled) setProfile(null);
+      .then((data) => {
+        if (!cancelled) setProfile(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setProfile(null);
+          setError(err instanceof Error ? err.message : "Could not load profile.");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -93,42 +113,31 @@ export default function UserProfilePage() {
     };
   }, [match, userId, me?.id]);
 
-  // Fetch tab data when activeTab changes
   useEffect(() => {
     if (!userId || !profile) return;
-
     let cancelled = false;
     setTabLoading(true);
 
-    if (activeTab === "tracks" || activeTab === "overview") {
-      // Load tracks for both tracks tab and overview (for "latest track" preview)
-      if (tracks.length === 0) {
-        authenticatedFetch(`/api/social/users/${userId}/tracks?limit=20`)
-          .then((r) => (r.ok ? r.json() : null))
-          .then((json) => {
-            if (!cancelled && json?.data) setTracks(json.data);
-          })
-          .catch(() => {})
-          .finally(() => {
-            if (!cancelled) setTabLoading(false);
-          });
-      } else {
-        setTabLoading(false);
-      }
-    } else if (activeTab === "posts") {
-      if (posts.length === 0) {
-        authenticatedFetch(`/api/social/users/${userId}/posts?limit=20`)
-          .then((r) => (r.ok ? r.json() : null))
-          .then((json) => {
-            if (!cancelled && json?.data) setPosts(json.data);
-          })
-          .catch(() => {})
-          .finally(() => {
-            if (!cancelled) setTabLoading(false);
-          });
-      } else {
-        setTabLoading(false);
-      }
+    if (activeTab === "posts") {
+      authenticatedFetch(`/api/social/users/${userId}/posts?limit=20`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (!cancelled && Array.isArray(json?.data)) setPosts(json.data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setTabLoading(false);
+        });
+    } else if (activeTab === "tracks") {
+      authenticatedFetch(`/api/social/users/${userId}/tracks?limit=20`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (!cancelled && Array.isArray(json?.data)) setTracks(json.data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setTabLoading(false);
+        });
     } else {
       setTabLoading(false);
     }
@@ -136,9 +145,9 @@ export default function UserProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, userId, profile, tracks.length, posts.length]);
+  }, [activeTab, userId, profile]);
 
-  const isMe = me?.id === userId;
+  const isMe = Boolean(me?.id && profile?.id && String(me.id) === String(profile.id));
 
   const initials = useMemo(() => {
     if (!profile?.name) return "VA";
@@ -150,23 +159,15 @@ export default function UserProfilePage() {
       .toUpperCase();
   }, [profile]);
 
-  const handleBack = () => {
-    navigateBackSafely(navigate, "/");
-  };
-
   const handleMessage = async () => {
     if (!profile) return;
     if (!me) {
-      toast({
-        title: "Sign in required",
-        description: "Please log in to send messages.",
-        variant: "destructive",
-      });
+      navigate(`/auth/signin?redirect=${encodeURIComponent(`/user/${profile.id}`)}`);
       return;
     }
 
     try {
-      const type = profile.isArtist ? "music_artist" : "marketplace";
+      const type = profile.isArtist ? "music_artist" : "direct";
       const response = await authenticatedFetch("/api/inbox/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,14 +182,12 @@ export default function UserProfilePage() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || "Could not open conversation");
       }
-      window.dispatchEvent(new Event("messenger:open"));
-    } catch (error) {
+      navigate("/messages");
+    } catch (err) {
       toast({
         title: "Message unavailable",
         description:
-          error instanceof Error
-            ? error.message
-            : "Could not open conversation.",
+          err instanceof Error ? err.message : "Could not open conversation.",
         variant: "destructive",
       });
     }
@@ -196,38 +195,14 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f3efe9]">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="mb-6">
-            <div className="w-24 h-8 bg-white/5 rounded-lg animate-pulse" />
+      <div className="max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="rounded-3xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden animate-pulse">
+          <div className="h-44 bg-stone-200 dark:bg-slate-800" />
+          <div className="p-6 space-y-4">
+            <div className="h-24 w-24 -mt-16 rounded-full bg-stone-300 dark:bg-slate-700 border-4 border-white dark:border-slate-900" />
+            <div className="h-6 w-48 rounded bg-stone-200 dark:bg-slate-800" />
+            <div className="h-4 w-72 rounded bg-stone-200 dark:bg-slate-800" />
           </div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6 mb-6"
-          >
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-32 h-32 rounded-full bg-white/5 animate-pulse shrink-0" />
-              <div className="flex-1 space-y-4">
-                <div className="h-8 bg-white/5 rounded-lg w-48 animate-pulse" />
-                <div className="h-4 bg-white/5 rounded w-32 animate-pulse" />
-                <div className="h-12 bg-white/5 rounded w-full animate-pulse" />
-                <div className="flex gap-3">
-                  <div className="h-10 bg-white/5 rounded-lg w-32 animate-pulse" />
-                  <div className="h-10 bg-white/5 rounded-lg w-32 animate-pulse" />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="h-24 bg-white/5 rounded-xl animate-pulse"
-              />
-            ))}
-          </div>
-          <div className="h-64 bg-white/5 rounded-2xl animate-pulse" />
         </div>
       </div>
     );
@@ -235,406 +210,307 @@ export default function UserProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#f3efe9] flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <User className="w-16 h-16 text-slate-600 mx-auto" />
-          <h2 className="text-slate-900 text-xl font-bold">User not found</h2>
-          <p className="text-slate-700">
-            This profile doesn&apos;t exist or was removed.
-          </p>
-          <Link href="/">
-            <button className="px-6 py-2 bg-amber-500 text-slate-900 rounded-lg font-medium hover:bg-amber-600 transition-colors">
-              Go Home
-            </button>
-          </Link>
+      <div className="max-w-2xl mx-auto w-full px-4 py-12 text-center space-y-4">
+        <div className="h-14 w-14 rounded-full bg-stone-200 dark:bg-slate-800 mx-auto flex items-center justify-center">
+          <User className="h-7 w-7 text-slate-500" />
         </div>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+          {error || "Member not found"}
+        </h1>
+        <button
+          type="button"
+          onClick={() => navigateBackSafely(navigate, "/blog")}
+          className="inline-flex items-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white px-4 py-2.5 text-sm font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Feed
+        </button>
       </div>
     );
   }
 
-  const statItems = [
-    { label: "Followers", value: profile.stats.followerCount, icon: Users },
-    { label: "Following", value: profile.stats.followingCount, icon: User },
-    { label: "Tracks", value: profile.stats.trackCount, icon: Music },
-    { label: "Posts", value: profile.stats.postCount, icon: FileText },
-    { label: "Streams", value: profile.stats.streamCount, icon: Play },
-    { label: "Likes", value: profile.stats.likeCount, icon: Heart },
-  ];
-
   return (
-    <TmuShell chrome="site">
-      <div className="relative h-36 md:h-48 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-700/35 via-fuchsia-600/20 to-[#06020f]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#06020f]" />
-      </div>
+    <div className="max-w-4xl mx-auto w-full px-3 sm:px-6 py-4 sm:py-6 space-y-5">
+      <button
+        type="button"
+        onClick={() => navigateBackSafely(navigate, "/blog")}
+        className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-stone-100 dark:hover:bg-slate-800 min-h-[38px]"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-20 relative z-10 pb-16">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="flex items-center gap-2 p-2.5 rounded-xl bg-[#180d34]/80 hover:bg-purple-500/20 backdrop-blur-md border border-purple-500/25 transition-all text-white mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <section className="rounded-3xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+        <div className="relative h-40 sm:h-52 bg-gradient-to-br from-stone-900 via-amber-950 to-slate-900 overflow-hidden">
+          {profile.coverImageUrl && !coverFailed ? (
+            <img
+              src={profile.coverImageUrl}
+              alt={`${profile.name} cover`}
+              onError={() => setCoverFailed(true)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(217,119,6,0.3),transparent_55%)]" />
+          )}
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="tmu-glass-elevated rounded-2xl p-6 md:p-8 mb-6"
-        >
-          <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-[#06020f] bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center text-white text-3xl font-bold shrink-0 ring-2 ring-purple-400/50 overflow-hidden">
-              {profile.avatar ? (
+        <div className="px-5 sm:px-7 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
+            <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white dark:border-slate-900 bg-gradient-to-br from-amber-600 to-amber-800 shadow-md overflow-hidden flex items-center justify-center text-white text-2xl sm:text-3xl font-extrabold shrink-0">
+              {profile.avatar && !avatarFailed ? (
                 <img
                   src={profile.avatar}
                   alt={profile.name}
-                  className="w-full h-full object-cover"
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                  }}
+                  onError={() => setAvatarFailed(true)}
+                  className="h-full w-full object-cover"
                 />
               ) : (
                 initials
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
-              <h1 className="tmu-hero-title text-2xl md:text-3xl font-extrabold mb-1">
-                {profile.name}
-              </h1>
-              <p className="text-purple-200 text-sm mb-3">@{profile.username}</p>
-
-              {profile.bio && (
-                <p className="text-slate-200 text-sm mb-4 max-w-xl">
-                  {profile.bio}
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {profile.isArtist && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 border border-purple-400/35 text-purple-200">
-                    <Music className="w-3 h-3" /> Artist
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[#180d34] border border-purple-500/25 text-slate-200">
-                  {profile.role}
-                </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[#180d34] border border-purple-500/25 text-slate-200">
-                  <Calendar className="w-3 h-3 text-purple-300" />
-                  Joined{" "}
-                  {profile.joinedAt
-                    ? new Date(profile.joinedAt).toLocaleDateString()
-                    : "Unknown"}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-4 text-sm text-slate-300 mb-5">
-                {profile.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-fuchsia-300" /> {profile.location}
-                  </span>
-                )}
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-fuchsia-300 hover:text-fuchsia-200 transition-colors"
-                  >
-                    <LinkIcon className="w-3.5 h-3.5" /> Website
-                  </a>
-                )}
-              </div>
-
-              {!isMe && (
-                <div className="flex gap-3 flex-wrap">
-                  <FollowButton
-                    userId={profile.id}
-                    initialIsFollowing={profile.isFollowing}
-                    initialFollowerCount={profile.stats.followerCount}
-                    onFollowChange={(isFollowing, count) => {
-                      setProfile((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              isFollowing,
-                              stats: { ...prev.stats, followerCount: count },
-                            }
-                          : prev,
-                      );
-                    }}
-                  />
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleMessage}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-500/20 text-white border border-purple-400/35 hover:bg-purple-500/30 transition-all text-sm font-medium"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Message
-                  </motion.button>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6 tabular-nums"
-        >
-          {statItems.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="tmu-glass tmu-interactive-card rounded-xl p-4 text-center"
-              >
-                <Icon className="w-4 h-4 text-fuchsia-300 mx-auto mb-2" />
-                <p className="text-lg font-bold text-white">
-                  {formatCompact(stat.value)}
-                </p>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider">
-                  {stat.label}
-                </p>
-              </div>
-            );
-          })}
-        </motion.div>
-
-        <div className="tmu-glass flex gap-1 rounded-xl p-1 mb-6">
-          {[
-            { id: "overview" as const, label: "Overview", icon: User },
-            { id: "tracks" as const, label: "Tracks", icon: Music },
-            { id: "posts" as const, label: "Posts", icon: FileText },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
-                    : "text-slate-300 hover:text-white hover:bg-purple-500/15"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="tmu-glass-elevated rounded-2xl p-6 min-h-[200px]"
-        >
-          {tabLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-fuchsia-300 animate-spin" />
-            </div>
-          ) : activeTab === "overview" ? (
-            <div className="space-y-4">
-              <h3 className="text-white font-semibold">About</h3>
-              <p className="text-slate-300 text-sm">
-                {profile.bio || "No bio yet."}
-              </p>
-              {tracks.length > 0 && profile.isArtist && (
+            <div className="flex flex-wrap items-center gap-2">
+              {isMe ? (
+                <Link
+                  href="/profile"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold px-4 py-2.5 min-h-[42px]"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  Edit My Profile
+                </Link>
+              ) : (
                 <>
-                  <h3 className="text-white font-semibold pt-4">
-                    Latest Track
-                  </h3>
-                  <motion.div
-                    whileHover={{ scale: 1.01 }}
-                    className="tmu-glass flex items-center gap-3 p-3 rounded-xl hover:border-purple-400/40 transition-colors cursor-pointer"
-                    onClick={() =>
-                      navigate(`/streaming/${tracks[0].id}`)
-                    }
+                  {me && (
+                    <FollowButton
+                      userId={profile.id}
+                      initialIsFollowing={profile.isFollowing}
+                      initialFollowerCount={profile.stats.followerCount}
+                      onFollowChange={(isFollowing, count) => {
+                        setProfile((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                isFollowing,
+                                stats: { ...prev.stats, followerCount: count },
+                              }
+                            : prev,
+                        );
+                      }}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleMessage()}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold px-4 py-2.5 min-h-[42px]"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600/30 to-fuchsia-600/30 flex items-center justify-center overflow-hidden shrink-0">
-                      {tracks[0].coverArt ? (
-                        <img
-                          src={tracks[0].coverArt}
-                          alt=""
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      ) : (
-                        <Music className="w-5 h-5 text-fuchsia-300" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
-                        {tracks[0].title}
-                      </p>
-                      <p className="text-slate-400 text-xs">
-                        {tracks[0].genre || "Music"}
-                      </p>
-                    </div>
-                    <Play className="w-4 h-4 text-fuchsia-300" />
-                  </motion.div>
+                    <MessageCircle className="h-4 w-4" />
+                    {me ? "Message" : "Sign in to Message"}
+                  </button>
                 </>
               )}
             </div>
-          ) : activeTab === "tracks" ? (
-            tracks.length === 0 ? (
-              <div className="text-center py-12">
-                <Music className="w-12 h-12 text-purple-400/35 mx-auto mb-3" />
-                <p className="text-slate-300 text-sm">
-                  No tracks published yet.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {tracks.map((track, idx) => (
-                  <motion.div
-                    key={track.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.04 }}
-                    className="tmu-glass flex items-center gap-4 p-3 rounded-xl hover:border-purple-400/40 transition-all group cursor-pointer"
-                    onClick={() =>
-                      navigate(`/streaming/${track.id}`)
-                    }
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+                {profile.name}
+              </h1>
+              <span className="text-sm text-slate-500">@{profile.username}</span>
+              {profile.isArtist && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-purple-600/10 border border-purple-500/25 px-2.5 py-0.5 text-xs font-semibold text-purple-800 dark:text-purple-300">
+                  <Music className="h-3 w-3" />
+                  Artist
+                </span>
+              )}
+            </div>
+
+            {profile.headline && (
+              <p className="text-sm sm:text-base font-medium text-slate-700 dark:text-slate-200">
+                {profile.headline}
+              </p>
+            )}
+
+            {profile.bio && (
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl whitespace-pre-line">
+                {profile.bio}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-slate-500">
+              {(profile.profession || profile.company) && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Briefcase className="h-4 w-4 text-amber-700" />
+                  {[profile.profession, profile.company].filter(Boolean).join(" · ")}
+                </span>
+              )}
+              {profile.location && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-amber-700" />
+                  {profile.location}
+                </span>
+              )}
+              {profile.website && (
+                <a
+                  href={profile.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-amber-800 dark:text-amber-300 hover:underline"
+                >
+                  <Globe className="h-4 w-4" />
+                  {profile.website.replace(/^https?:\/\//, "")}
+                </a>
+              )}
+              {profile.joinedAt && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  Joined {new Date(profile.joinedAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+
+            {Array.isArray(profile.interests) && profile.interests.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {profile.interests.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
                   >
-                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-purple-600/25 to-fuchsia-600/25 flex items-center justify-center shrink-0 overflow-hidden">
-                      {track.coverArt ? (
-                        <img
-                          src={track.coverArt}
-                          alt={track.title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      ) : (
-                        <Music className="w-6 h-6 text-fuchsia-300" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-medium text-sm truncate group-hover:text-fuchsia-300 transition-colors">
-                        {track.title}
-                      </h4>
-                      <p className="text-slate-400 text-xs tabular-nums">
-                        {track.genre || "Music"} · {track.playCount || 0} plays
-                      </p>
-                    </div>
-                    <div className="text-slate-400 text-xs shrink-0 tabular-nums">
-                      {track.duration
-                        ? `${Math.floor(track.duration / 60)}:${String(
-                            track.duration % 60,
-                          ).padStart(2, "0")}`
-                        : "--:--"}
-                    </div>
-                    <Play className="w-4 h-4 text-fuchsia-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </motion.div>
+                    #{tag}
+                  </span>
                 ))}
               </div>
-            )
-          ) : activeTab === "posts" ? (
-            posts.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-purple-400/35 mx-auto mb-3" />
-                <p className="text-slate-300 text-sm">No posts yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {posts.map((post, idx) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.04 }}
-                    className="tmu-glass p-4 rounded-xl"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shrink-0">
-                        {profile?.avatar ? (
-                          <img
-                            src={profile.avatar}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none";
-                            }}
-                          />
-                        ) : (
-                          initials
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
-                          {profile?.name}
-                        </p>
-                        <p className="text-slate-400 text-[11px]">
-                          {new Date(post.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">
-                      {post.content}
-                    </p>
-                    {post.mediaUrl && (
-                      <div className="mt-3 rounded-lg overflow-hidden border border-purple-500/20">
-                        <img
-                          src={post.mediaUrl}
-                          alt="Post media"
-                          className="w-full max-h-64 object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      </div>
-                    )}
-                    {post.track && (
-                      <div className="mt-3 p-3 rounded-lg bg-[#180d34] border border-purple-500/25 flex items-center gap-3">
-                        <Music className="w-5 h-5 text-fuchsia-300 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium truncate">
-                            {post.track.title}
-                          </p>
-                          <p className="text-slate-400 text-xs">
-                            Attached Track
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-purple-500/15 tabular-nums">
-                      <span className="text-slate-400 text-xs flex items-center gap-1.5">
-                        <Heart className="w-3.5 h-3.5" /> {post.likeCount || 0}
-                      </span>
-                      <span className="text-slate-400 text-xs flex items-center gap-1.5">
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        {post.commentCount || 0}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )
-          ) : null}
-        </motion.div>
+            )}
+
+            <div className="flex items-center gap-6 pt-3 border-t border-stone-100 dark:border-slate-800 tabular-nums text-sm">
+              <span>
+                <strong className="text-slate-900 dark:text-white">
+                  {formatCompact(profile.stats.followerCount)}
+                </strong>{" "}
+                <span className="text-xs text-slate-500">Followers</span>
+              </span>
+              <span>
+                <strong className="text-slate-900 dark:text-white">
+                  {formatCompact(profile.stats.followingCount)}
+                </strong>{" "}
+                <span className="text-xs text-slate-500">Following</span>
+              </span>
+              <span>
+                <strong className="text-slate-900 dark:text-white">
+                  {formatCompact(profile.stats.postCount)}
+                </strong>{" "}
+                <span className="text-xs text-slate-500">Posts</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex gap-1 rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5">
+        {(
+          [
+            { id: "posts", label: "Posts", icon: Newspaper },
+            ...(profile.isArtist || profile.stats.trackCount > 0
+              ? [{ id: "tracks" as const, label: "Tracks", icon: Music }]
+              : []),
+            { id: "about", label: "About", icon: User },
+          ] as const
+        ).map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold min-h-[40px] ${
+                active
+                  ? "bg-amber-700 text-white"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
-    </TmuShell>
+
+      {tabLoading ? (
+        <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center">
+          <Loader2 className="h-5 w-5 animate-spin mx-auto text-amber-700" />
+        </div>
+      ) : activeTab === "posts" ? (
+        posts.length === 0 ? (
+          <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-500">
+            No public posts yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {posts.map((post) => (
+              <article
+                key={post.id}
+                className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-2.5"
+              >
+                <p className="text-xs text-slate-500">
+                  {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ""}
+                </p>
+                <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line">
+                  {post.content}
+                </p>
+                {Array.isArray(post.imageUrls) && post.imageUrls.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {post.imageUrls.map((src: string, idx: number) => (
+                      <img
+                        key={idx}
+                        src={src}
+                        alt="Post attachment"
+                        className="rounded-xl max-h-72 w-full object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )
+      ) : activeTab === "tracks" ? (
+        tracks.length === 0 ? (
+          <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-sm text-slate-500">
+            No published tracks yet.
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-3">
+            {tracks.map((track) => (
+              <Link
+                key={track.id}
+                href={`/track/${track.id}`}
+                className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex items-center gap-3 hover:border-amber-500/50 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-xl bg-amber-700/15 flex items-center justify-center shrink-0 overflow-hidden">
+                  {track.coverArt ? (
+                    <img src={track.coverArt} alt={track.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <Play className="h-5 w-5 text-amber-800" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                    {track.title}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {track.genre || "Music"} · {formatCompact(Number(track.playCount || 0))} plays
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )
+      ) : (
+        <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <p>{profile.bio || "No bio added yet."}</p>
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,10 +3,13 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Image as ImageIcon, Smile, Tag } from "lucide-react";
+import { X, Image as ImageIcon, Smile, Tag, Loader2 } from "lucide-react";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { authenticatedFetch } from "@/lib/auth";
+
+const QUICK_EMOJIS = ["🔥", "✨", "👏", "❤️", "🎵", "💼", "🚀", "🙌"];
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -32,6 +35,43 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [allowMediaDownload, setAllowMediaDownload] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showEmojiBar, setShowEmojiBar] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadPostImage = async (file: File) => {
+    setUploadError(null);
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("Image is too large (max 5 MB).");
+      return;
+    }
+    if (imageUrls.length >= 4) {
+      setUploadError("You can attach up to 4 images per post.");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await authenticatedFetch("/api/profile/post-media", {
+        method: "POST",
+        body: form,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success || !json?.url) {
+        throw new Error(json?.message || "Failed to upload image.");
+      }
+      setImageUrls((prev) => [...prev, json.url]);
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : "Could not upload image.",
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -48,12 +88,16 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     if (content.trim()) {
       onSubmit({
         content: content.trim(),
+        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
         tags: tags.length > 0 ? tags : undefined,
         allowMediaDownload,
       });
       setContent("");
       setTags([]);
       setTagInput("");
+      setImageUrls([]);
+      setUploadError(null);
+      setShowEmojiBar(false);
       setAllowMediaDownload(false);
       onClose();
     }
@@ -161,6 +205,59 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                   )}
                 </div>
 
+                {/* Attached Photos Preview */}
+                {uploadError && (
+                  <p role="alert" className="text-xs text-rose-400">
+                    {uploadError}
+                  </p>
+                )}
+                {imageUrls.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {imageUrls.map((url, idx) => (
+                      <div key={url} className="relative rounded-xl overflow-hidden border border-white/10">
+                        <img src={url} alt={`Attachment ${idx + 1}`} className="h-28 w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImageUrls((prev) => prev.filter((item) => item !== url))
+                          }
+                          aria-label="Remove attachment"
+                          className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-red-600"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showEmojiBar && (
+                  <div className="flex flex-wrap gap-1.5 rounded-xl bg-slate-800/80 border border-white/10 p-2">
+                    {QUICK_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setContent((prev) => `${prev}${emoji}`)}
+                        className="h-8 w-8 rounded-lg hover:bg-white/10 text-base flex items-center justify-center"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void handleUploadPostImage(file);
+                  }}
+                />
+
                 {/* Character Count */}
                 <label className="flex items-center gap-2 text-sm text-slate-300">
                   <input
@@ -184,23 +281,34 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
               <div className="flex items-center justify-between p-6 border-t border-white/10 bg-slate-900/50">
                 <div className="flex gap-2">
                   <button
-                    disabled={isLoading}
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={isLoading || uploadingImage || imageUrls.length >= 4}
                     className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
                     title="Add image"
+                    aria-label="Add image"
                   >
-                    <ImageIcon className="w-5 h-5 text-slate-400" />
+                    {uploadingImage ? (
+                      <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-slate-300" />
+                    )}
                   </button>
                   <button
+                    type="button"
+                    onClick={() => setShowEmojiBar((prev) => !prev)}
                     disabled={isLoading}
                     className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
                     title="Add emoji"
+                    aria-label="Add emoji"
                   >
-                    <Smile className="w-5 h-5 text-slate-400" />
+                    <Smile className="w-5 h-5 text-slate-300" />
                   </button>
                 </div>
 
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={onClose}
                     disabled={isLoading}
                     className="px-4 py-2 text-slate-300 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 font-handstyle"
@@ -208,8 +316,9 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleSubmit}
-                    disabled={!isValid || isLoading}
+                    disabled={!isValid || isLoading || uploadingImage}
                     className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-handstyle"
                   >
                     {isLoading ? "Posting..." : "Post"}

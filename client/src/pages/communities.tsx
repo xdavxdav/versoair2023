@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import CommunitiesTabBar from "@/components/vxpp/CommunitiesTabBar";
 import {
   Card,
   CardContent,
@@ -199,7 +200,8 @@ export default function Communities() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="flex flex-col min-h-screen bg-[#f6f3ee]">
+      <CommunitiesTabBar active="groups" />
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-12 md:py-16">
         <div className="max-w-[95vw] mx-auto px-4">

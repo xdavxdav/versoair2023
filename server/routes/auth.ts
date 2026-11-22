@@ -1286,6 +1286,23 @@ router.get(
         console.warn("[AUTH] Could not compute capabilities:", e);
       }
 
+      // Fetch personal avatar/cover/bio from social_users (fail-soft if absent)
+      let socialIdentity: {
+        avatar_url?: string | null;
+        cover_image_url?: string | null;
+        headline?: string | null;
+        bio?: string | null;
+      } | null = null;
+      try {
+        const socialRes = await db.execute(
+          sql`SELECT avatar_url, cover_image_url, headline, bio
+              FROM social_users WHERE user_id = ${Number(userId)} LIMIT 1`,
+        );
+        socialIdentity = (socialRes.rows?.[0] as any) || null;
+      } catch {
+        // Pre-migration or absent social_users row — safe to omit
+      }
+
       // Determine if this is a first-time login (account created within last 5 minutes of first session check)
       const createdAt = dbUser?.created_at ? new Date(dbUser.created_at) : null;
       const isNewAccount = createdAt
@@ -1330,6 +1347,11 @@ router.get(
           isContractor: capabilities?.isContractor || false,
           hasOAuthAccount: capabilities?.hasOAuthAccount || false,
           canAccessBlog: capabilities?.canAccessBlog || false,
+          avatar: socialIdentity?.avatar_url || null,
+          avatarUrl: socialIdentity?.avatar_url || null,
+          coverImageUrl: socialIdentity?.cover_image_url || null,
+          headline: socialIdentity?.headline || null,
+          bio: socialIdentity?.bio || null,
         },
       });
     } catch {

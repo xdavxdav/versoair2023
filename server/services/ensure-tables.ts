@@ -14,6 +14,7 @@
 import { pool } from "../db";
 import type { PoolClient } from "pg";
 import { TICKET_SCHEMA_UPGRADES } from "./ticket-schema";
+import { VXPP_SCHEMA_UPGRADES } from "./vxpp-schema";
 
 export async function ensureAllTables(
   connect: () => Promise<PoolClient> = () => pool.connect(),
@@ -81,6 +82,10 @@ export async function ensureAllTables(
     }
 
     for (const statement of TICKET_SCHEMA_UPGRADES) {
+      await client.query(statement);
+    }
+
+    for (const statement of VXPP_SCHEMA_UPGRADES) {
       await client.query(statement);
     }
 

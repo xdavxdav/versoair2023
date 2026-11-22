@@ -25,10 +25,12 @@ import {
 } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import { isContentNavPath } from "@/components/ContentNav";
+import { isVxppRoute } from "@/lib/vxpp-routes";
 import { MUSIC_ROUTE_PREFIXES } from "@/lib/music-routes";
 import { useRouteScrollRestoration } from "@/hooks/use-route-scroll-restoration";
 import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
+const VxppShell = lazy(() => import("@/components/vxpp/VxppShell"));
 import QuickSignIn from "@/components/QuickSignIn";
 import { MessagesPage } from "@/components/TwitterMessenger";
 import { BETA_SCOPE_FREEZE, isBetaRoute } from "@/lib/beta-route-access";
@@ -570,9 +572,13 @@ function Router() {
       <Route path="/for-artists" component={ArtistsBetaPage} />
       <Route path="/for-businesses" component={BusinessesBetaPage} />
       <Route path="/for-listeners" component={ListenersBetaPage} />
+      <Route path="/vxpp">{() => <Redirect to="/blog" />}</Route>
       <Route path="/blog" component={Blog} />
       <Route path="/faq" component={FaqPage} />
       <Route path="/profile">
+        {() => <ProtectedRoute component={Profile} />}
+      </Route>
+      <Route path="/profile/settings">
         {() => <ProtectedRoute component={Profile} />}
       </Route>
       <Route path="/user/:id" component={UserProfile} />
@@ -1170,6 +1176,7 @@ function AppContent() {
 
   // BlogNavbar owns the stable navigation for blog/marketplace pages.
   // Keep ContentNav for the other content routes so the two nav systems never stack.
+  const isVxppPage = isVxppRoute(currentPath);
   const isBlogOrMarketplace =
     currentPath === "/blog" || currentPath === "/marketplace";
   const isAuthPage = currentPath.startsWith("/auth");
@@ -1179,6 +1186,7 @@ function AppContent() {
   const isMessagesPage = currentPath === "/messages";
   const showAccountBlogNavbar =
     isAuthed &&
+    !isVxppPage &&
     !isAuthPage &&
     !isMessagesPage &&
     !isMusicPage &&
@@ -1187,6 +1195,7 @@ function AppContent() {
   const showContentNav =
     isContentNavPage &&
     isAuthed &&
+    !isVxppPage &&
     !isMessagesPage &&
     !isBlogOrMarketplace &&
     !showAccountBlogNavbar;
@@ -1243,6 +1252,7 @@ function AppContent() {
   }, []);
 
   const showFixedHeaderBlock =
+    !isVxppPage &&
     !isMusicPage &&
     !currentPath.startsWith("/community") &&
     !currentPath.startsWith("/profile") &&
@@ -1440,6 +1450,7 @@ function AppContent() {
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
       {!isAuthed &&
+        !isVxppPage &&
         !isAuthPage &&
         !showContentNav &&
         !isBlogOrMarketplace &&
@@ -1490,7 +1501,13 @@ function AppContent() {
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
-            <Router />
+            {isVxppPage ? (
+              <VxppShell fullBleed={isMessagesPage}>
+                <Router />
+              </VxppShell>
+            ) : (
+              <Router />
+            )}
           </Suspense>
         </ErrorBoundary>
       </main>
@@ -1504,13 +1521,13 @@ function AppContent() {
           </div>
         </Suspense>
       )}
-      {/* Footer — hide on music pages; show only motto on immersive pages */}
-      {!isMusicPage && !isImmersivePage && !isMessagesPage && (
+      {/* Footer — hide on music, vxpp, and immersive pages */}
+      {!isMusicPage && !isVxppPage && !isImmersivePage && !isMessagesPage && (
         <div>
           {isVHeartzPage ? <VHeartzFooter /> : <Footer />}
         </div>
       )}
-      {isImmersivePage && !isMessagesPage && (
+      {isImmersivePage && !isVxppPage && !isMessagesPage && (
         <div className="bg-gray-950 py-6 text-center">
           <p
             className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none notranslate"
@@ -1530,6 +1547,7 @@ function AppContent() {
         <ReportIssueNudge
           path={currentPath}
           raised={
+            isVxppPage ||
             showContentNav ||
             showAccountBlogNavbar ||
             isBlogOrMarketplace ||
@@ -1538,8 +1556,9 @@ function AppContent() {
         />
       </ErrorBoundary>
 
-      {/* Mobile Menu Bubble — hide whenever a dedicated account/content nav is active. */}
+      {/* Mobile Menu Bubble — hide whenever a dedicated account/content/vxpp nav is active. */}
       {!isImmersivePage &&
+        !isVxppPage &&
         !isMusicPage &&
         !isBlogOrMarketplace &&
         !showAccountBlogNavbar &&

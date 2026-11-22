@@ -89,13 +89,6 @@ import {
 const API_BASE = "";
 const SIGN_IN_MSG = "Please sign in to continue.";
 
-const DB_CFG = {
-  user: "versoair",
-  host: "localhost",
-  port: 5432,
-  database: "versoair_business_intelligence",
-};
-
 interface Contract {
   id: string;
   title: string;
@@ -498,10 +491,10 @@ export default function Contractors() {
           message: "offline",
           database: {
             connected: false,
-            name: DB_CFG.database,
-            host: DB_CFG.host,
-            port: String(DB_CFG.port),
-            user: DB_CFG.user,
+            name: "",
+            host: "",
+            port: "",
+            user: "",
           },
         };
       }

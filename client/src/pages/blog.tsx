@@ -10,7 +10,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
 import CreatePostModal from "@/components/CreatePostModal";
 import AuthModal from "@/components/AuthModal";
-import ViewOnlyGate from "@/components/ViewOnlyGate";
+import VxppGuestIntro from "@/components/vxpp/VxppGuestIntro";
 import BackLink from "@/components/BackLink";
 import { navigateBackSafely } from "@/lib/safe-navigation";
 import AdBanner from "@/components/AdBanner";
@@ -367,11 +367,13 @@ export default function BlogPage() {
   };
 
   // CONDITIONAL LOGIC AFTER ALL HOOKS
-  // If not authenticated, show view-only gate
+  // If not authenticated, show Feed-specific guest introduction
   if (!isAuthenticated) {
     return (
       <>
-        <ViewOnlyGate
+        <VxppGuestIntro
+          section="feed"
+          redirectPath="/blog"
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
           onBack={() => navigateBackSafely(setLocation, "/")}
@@ -397,27 +399,44 @@ export default function BlogPage() {
       : posts;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(86,155,255,0.12),_transparent_34%),linear-gradient(135deg,#f8f5f1_0%,#f2ede6_38%,#efe7dd_100%)] text-slate-800 antialiased">
+    <div className="flex min-h-screen flex-col bg-[#f6f3ee] text-slate-800 antialiased">
       <ScrollToTop />
-      {isContentNavPath(currentPath) && (
-        <div className="px-4 pt-4">
-          <BackLink className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-500/15">
-            <span aria-hidden="true">←</span>
-            Back
-          </BackLink>
-        </div>
-      )}
 
       {/* Main Content */}
-      <div className="mx-auto w-full max-w-[95vw] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Feed Column */}
-          <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm backdrop-blur-sm">
-              <p className="text-sm leading-6 text-slate-600">
-                Keep threads private, then publish your own updates when they
-                deserve a wider audience.
-              </p>
+          <div className="space-y-5 lg:col-span-2">
+            {/* Quick Composer Bar */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm flex items-center gap-3">
+              <Link
+                href="/profile"
+                className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-amber-600 to-amber-800 text-white text-xs font-bold flex items-center justify-center shrink-0"
+              >
+                {globalUser?.avatarUrl || globalUser?.avatar ? (
+                  <img
+                    src={(globalUser.avatarUrl || globalUser.avatar)!}
+                    alt={userName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  userName.slice(0, 2).toUpperCase()
+                )}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsCreatePostOpen(true)}
+                className="flex-1 text-left rounded-xl border border-stone-200 bg-[#faf8f4] hover:bg-stone-100 px-4 py-2.5 text-sm text-slate-500 transition-colors min-h-[44px]"
+              >
+                What&apos;s on your mind, {userName}? Share an update or photo…
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCreatePostOpen(true)}
+                className="rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 min-h-[44px] shrink-0 transition-colors"
+              >
+                Post
+              </button>
             </div>
 
             {/* Sort Controls */}

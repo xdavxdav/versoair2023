@@ -33,6 +33,10 @@ export interface AuthUser {
   subscription_tier?: string;
   subscriptionStatus?: string;
   avatar?: string;
+  avatarUrl?: string;
+  coverImageUrl?: string;
+  headline?: string;
+  bio?: string;
 }
 
 interface AuthContextType {
@@ -80,6 +84,13 @@ function normalizeUser(u: Record<string, unknown>): AuthUser {
       u.subscriptionTier || u.subscription_tier || "free",
     ),
     subscriptionStatus: u.subscriptionStatus as string | undefined,
+    avatar: (u.avatarUrl || u.avatar || undefined) as string | undefined,
+    avatarUrl: (u.avatarUrl || u.avatar || undefined) as string | undefined,
+    coverImageUrl: (u.coverImageUrl || u.cover_image_url || undefined) as
+      | string
+      | undefined,
+    headline: (u.headline || undefined) as string | undefined,
+    bio: (u.bio || undefined) as string | undefined,
   };
 }
 

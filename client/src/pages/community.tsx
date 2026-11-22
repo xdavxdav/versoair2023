@@ -19,6 +19,7 @@ import OfferCheckoutButton, { useActiveOffer } from "@/components/OfferCheckoutB
 import { useAuth } from "@/hooks/use-auth";
 import { useCheckoutReturn } from "@/hooks/use-checkout-return";
 import { useTranslate } from "@/hooks/use-translate";
+import CommunitiesTabBar from "@/components/vxpp/CommunitiesTabBar";
 
 type Pool = "all" | "mudp" | "cdp" | "crossdp";
 
@@ -272,8 +273,9 @@ export default function CommunityDetail() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <CommunitiesTabBar active="discussions" />
       {/* Header */}
-      <div className="relative pt-20 pb-10 px-4 bg-gradient-to-b from-slate-800/50 to-transparent">
+      <div className="relative pt-6 pb-10 px-4 bg-gradient-to-b from-slate-800/50 to-transparent">
         <div className="max-w-[95vw] mx-auto">
           <div className="flex items-start justify-between mb-6">
             <div>
