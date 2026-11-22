@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Filter } from "lucide-react";
+import { MessageCircle, Filter, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -80,6 +80,8 @@ export default function BlogPage() {
   // Blog state
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "trending">("recent");
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [currentPath, setLocation] = useLocation();
 
   // Real API data via useSocialFeed hook
@@ -424,10 +426,29 @@ export default function BlogPage() {
     );
   }
 
-  const displayPosts =
+  const sortedPosts =
     sortBy === "trending"
       ? [...posts].sort((a, b) => b.engagementScore - a.engagementScore)
       : posts;
+  const q = search.trim().toLowerCase();
+  const displayPosts = sortedPosts.filter((p) => {
+    if (typeFilter !== "all" && (p.postType || "discussion") !== typeFilter)
+      return false;
+    if (!q) return true;
+    const hay = `${p.content || ""} ${(p.tags || []).join(" ")} ${
+      p.author?.displayName || ""
+    }`.toLowerCase();
+    return hay.includes(q);
+  });
+  const TYPE_CHIPS = [
+    ["all", "All"],
+    ["discussion", "Discussions"],
+    ["job", "Jobs"],
+    ["marketplace", "Marketplace"],
+    ["announcement", "Announcements"],
+    ["trend", "Trends"],
+    ["faq", "FAQ"],
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f6f3ee] dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased">
@@ -472,6 +493,37 @@ export default function BlogPage() {
 
             <CommunityStrip />
 
+            {/* Search + type filters */}
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search posts, tags or people"
+                  aria-label="Search posts"
+                  className="w-full rounded-xl border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-9 pr-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 min-h-[44px]"
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {TYPE_CHIPS.map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setTypeFilter(val)}
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      typeFilter === val
+                        ? "border-amber-700 bg-amber-700 text-white"
+                        : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Sort Controls */}
             <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
               <Filter className="h-4 w-4 text-slate-700 dark:text-slate-300" />
@@ -511,6 +563,11 @@ export default function BlogPage() {
             </div>
 
             {/* Posts */}
+            {(q || typeFilter !== "all") && displayPosts.length === 0 && (
+              <p className="py-10 text-center text-sm text-slate-600 dark:text-slate-400">
+                No loaded posts match. Try another search or filter.
+              </p>
+            )}
             {displayPosts.map((post, idx) => {
               const author = post.author || {};
               const isStaff =
