@@ -1273,6 +1273,14 @@ function AppContent() {
     <div className="min-h-screen flex flex-col">
       {/* Inside the sticky header block the unavailable-market notice stays pinned on scroll. */}
       {!pinMarketBanner && <GeoAdminMarketStatusBanner />}
+      {!showFixedHeaderBlock && !isVxppPage && !isImmersivePage && (
+        <div className="fixed bottom-20 right-3 z-40 lg:bottom-4 lg:right-4">
+          <ThemeToggle
+            className="h-10 w-10 border border-slate-300 bg-white/95 text-slate-700 shadow-md dark:border-slate-600 dark:bg-slate-800/95 dark:text-slate-100"
+            iconClassName="h-5 w-5"
+          />
+        </div>
+      )}
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages

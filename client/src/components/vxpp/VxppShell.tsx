@@ -10,6 +10,7 @@
  */
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   Briefcase,
   Building2,
@@ -349,6 +350,10 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
           </Link>
         </div>
 
+        <div className="px-4 pt-3 flex justify-end">
+          <ThemeToggle className="text-slate-600 dark:text-slate-300 hover:bg-stone-200/70 dark:hover:bg-slate-800 hover:text-amber-700" />
+        </div>
+
         {/* Navigation Links */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
           <div className="space-y-1">
@@ -520,6 +525,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <ThemeToggle className="h-9 w-9 text-slate-600 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800 hover:text-amber-700" />
           {activeSection !== "careers" &&
             activeSection !== "contractors" &&
             (roleServices.mobileQuickService === "contractors" ? (
