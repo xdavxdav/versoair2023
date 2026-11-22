@@ -247,6 +247,11 @@
 .tmu-light [class*="bg-[#211246]"],
 .tmu-light [class*="bg-[#090418]"],
 .tmu-light [class*="bg-[#06020f]"],
+.tmu-light [class*="bg-[#0a0518]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#0a0512]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#0f0520]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#120929]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#0f0818]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
 .tmu-light .bg-gray-900,
 .tmu-light .bg-slate-900,
 .tmu-light .bg-slate-950,
@@ -260,3 +265,26 @@
 .tmu-light textarea:not(.tmu-dark-panel *),
 .tmu-light select:not(.tmu-dark-panel *) { color: #1e1b4b; }
 .tmu-light ::placeholder:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.5); }
+
+/* Pastel accent text written for dark surfaces; darkened for lavender. */
+.tmu-light .text-cyan-200:not(.tmu-dark-panel *),
+.tmu-light .text-cyan-300:not(.tmu-dark-panel *),
+.tmu-light .text-cyan-400:not(.tmu-dark-panel *),
+.tmu-light .text-sky-300:not(.tmu-dark-panel *) { color: #0e7490; }
+.tmu-light .text-amber-200:not(.tmu-dark-panel *),
+.tmu-light .text-amber-300:not(.tmu-dark-panel *),
+.tmu-light .text-yellow-300:not(.tmu-dark-panel *) { color: #92400e; }
+.tmu-light .text-emerald-300:not(.tmu-dark-panel *),
+.tmu-light .text-emerald-400:not(.tmu-dark-panel *),
+.tmu-light .text-green-300:not(.tmu-dark-panel *),
+.tmu-light .text-green-400:not(.tmu-dark-panel *) { color: #047857; }
+.tmu-light .text-rose-200:not(.tmu-dark-panel *),
+.tmu-light .text-rose-300:not(.tmu-dark-panel *),
+.tmu-light .text-rose-400:not(.tmu-dark-panel *),
+.tmu-light .text-red-300:not(.tmu-dark-panel *),
+.tmu-light .text-red-400:not(.tmu-dark-panel *) { color: #be123c; }
+
+/* White labels inside gradient/solid fills must stay white. */
+.tmu-light [class*="bg-gradient"] .text-white:not(.tmu-dark-panel *),
+.tmu-light .text-white:has(> [class*="bg-gradient"]):not(.tmu-dark-panel *),
+.tmu-light .text-white:has(> [class*="bg-gradient"]) .text-white { color: #fff !important; }
