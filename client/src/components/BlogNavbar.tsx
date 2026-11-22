@@ -44,9 +44,9 @@ const navLinks = [
 /* ── mobile quick-nav pills ── */
 const MOBILE_PILLS = [
   {
-    href: "/blog",
-    label: "Blog",
-    hover: "hover:text-cyan-300 hover:bg-cyan-500/10",
+    href: "/vxpp",
+    label: "vxpp",
+    hover: "hover:text-amber-300 hover:bg-amber-500/15",
   },
   {
     href: "/stream",

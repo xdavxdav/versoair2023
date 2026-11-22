@@ -1346,6 +1346,16 @@ function AppContent() {
 
                 {/* Right: Compact utility actions */}
                 <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
+                  <Link
+                    href="/vxpp"
+                    data-testid="topbar-vxpp-btn"
+                    aria-label="Open vxpp (VersoAirApp)"
+                    title="Open vxpp — VersoAirApp"
+                    className="inline-flex items-center justify-center gap-1 h-5 min-[260px]:h-6 md:h-5 rounded-full bg-amber-950/55 hover:bg-amber-950/80 border border-amber-200/45 px-2 text-[9px] sm:text-[10px] font-extrabold tracking-tight text-amber-50 transition-colors shrink-0 whitespace-nowrap notranslate"
+                    translate="no"
+                  >
+                    vxpp
+                  </Link>
                   <button
                     onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
                     aria-label="Open Verso Air Music Portal"
