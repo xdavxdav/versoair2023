@@ -281,7 +281,7 @@ const PostCard: React.FC<PostCardProps> = ({
           />
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-slate-800">
+              <p translate="no" className="notranslate text-sm font-semibold text-slate-800">
                 {post.author.name}
               </p>
               {post.author.verified && (

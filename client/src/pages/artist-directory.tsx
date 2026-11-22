@@ -840,7 +840,10 @@ export default function ArtistDirectory() {
                       className={`h-48 bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} relative overflow-hidden`}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold">
+                        <div
+                          translate="no"
+                          className="notranslate w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold"
+                        >
                           {(selectedArtist.name || "?")
                             .split(/\s+/)
                             .map((w: string) => w[0])
@@ -871,7 +874,10 @@ export default function ArtistDirectory() {
                         {GENRE_ICONS[selectedArtist.genre || ""] || "🎵"}{" "}
                         {selectedArtist.genre || "Divers"}
                       </Badge>
-                      <h2 className="text-3xl font-bold text-white drop-shadow-lg">
+                      <h2
+                        translate="no"
+                        className="notranslate text-3xl font-bold text-white drop-shadow-lg"
+                      >
                         {selectedArtist.name || "Artiste inconnu"}
                       </h2>
                     </div>
@@ -906,14 +912,34 @@ export default function ArtistDirectory() {
                       </Card>
                     </div>
 
-                    {/* Stream on Verso Air */}
-                    <Link
-                      href={`/artist-catalogue/${selectedArtist.id}`}
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-600 to-orange-500 rounded-lg text-white font-semibold hover:from-amber-700 hover:to-orange-600 transition-all"
-                    >
-                      <Music className="h-5 w-5" />
-                      Écouter sur Verso Air
-                    </Link>
+                    {/* Actions: Biography (if curated) + Stream on Verso Air */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {(() => {
+                        const featured = getFeaturedArtistByName(selectedArtist.name);
+                        return featured ? (
+                          <Link
+                            href={`/artistes/${featured.slug}`}
+                            onClick={() => setShowArtistDetails(false)}
+                            className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-lg text-white font-semibold hover:from-purple-700 hover:to-fuchsia-700 transition-all"
+                          >
+                            <Mic2 className="h-5 w-5" />
+                            Biographie
+                          </Link>
+                        ) : null;
+                      })()}
+                      <Link
+                        href={`/artist-catalogue/${selectedArtist.id}`}
+                        className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-amber-600 to-orange-500 rounded-lg text-white font-semibold hover:from-amber-700 hover:to-orange-600 transition-all"
+                      >
+                        <Music className="h-5 w-5" />
+                        <span>
+                          Écouter sur{" "}
+                          <span translate="no" className="notranslate">
+                            Verso Air
+                          </span>
+                        </span>
+                      </Link>
+                    </div>
                   </div>
                 </>
               ) : null}

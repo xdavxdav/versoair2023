@@ -1083,10 +1083,10 @@ export default function StreamPage() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-slate-50 text-sm truncate">
+                                <p translate="no" className="notranslate text-slate-50 text-sm truncate">
                                   {t.title}
                                 </p>
-                                <p className="text-slate-400 text-xs truncate">
+                                <p translate="no" className="notranslate text-slate-400 text-xs truncate">
                                   {t.artist_name}
                                 </p>
                               </div>
@@ -1109,11 +1109,14 @@ export default function StreamPage() {
                                   <Disc3 className="w-4 h-4 text-purple-300" />
                                 </div>
                                 <div>
-                                  <p className="text-slate-50 text-sm">
+                                  <p translate="no" className="notranslate text-slate-50 text-sm">
                                     {a.title}
                                   </p>
                                   <p className="text-slate-400 text-xs">
-                                    {a.artist_name} • {a.album_type}
+                                    <span translate="no" className="notranslate">
+                                      {a.artist_name}
+                                    </span>{" "}
+                                    • {a.album_type}
                                   </p>
                                 </div>
                               </div>
@@ -1210,10 +1213,10 @@ export default function StreamPage() {
                             </div>
                           </div>
                         </div>
-                        <p className="text-slate-50 text-sm font-semibold truncate px-0.5">
+                        <p translate="no" className="notranslate text-slate-50 text-sm font-semibold truncate px-0.5">
                           {track.title}
                         </p>
-                        <p className="text-slate-300 text-xs truncate px-0.5">
+                        <p translate="no" className="notranslate text-slate-300 text-xs truncate px-0.5">
                           {track.artist_name}
                         </p>
                         <div className="px-0.5">
@@ -1256,7 +1259,10 @@ export default function StreamPage() {
                   <Sparkles className="w-4 h-4 text-fuchsia-300" />
                 </div>
                 <h2 className="text-xl font-bold tracking-tight text-slate-50">
-                  Artistes Verso Air
+                  Artistes{" "}
+                  <span translate="no" className="notranslate">
+                    Verso Air
+                  </span>
                 </h2>
                 <div className="flex-1" />
                 <Link href="/artistes">
@@ -1287,7 +1293,7 @@ export default function StreamPage() {
                             <div
                               className={`w-full h-full bg-gradient-to-br ${getGenreGradient(artist.genre)} flex items-center justify-center`}
                             >
-                              <span className="text-2xl font-bold text-white uppercase">
+                              <span translate="no" className="notranslate text-2xl font-bold text-white uppercase">
                                 {artist.name?.[0]}
                               </span>
                             </div>
@@ -1299,7 +1305,7 @@ export default function StreamPage() {
                           </div>
                         )}
                       </div>
-                      <p className="text-slate-50 text-xs font-semibold truncate">
+                      <p translate="no" className="notranslate text-slate-50 text-xs font-semibold truncate">
                         {artist.name}
                       </p>
                       <p className="text-slate-300 text-[11px] mt-0.5 truncate">
@@ -1359,10 +1365,10 @@ export default function StreamPage() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-slate-50 text-sm font-semibold truncate">
+                    <p translate="no" className="notranslate text-slate-50 text-sm font-semibold truncate">
                       {track.title}
                     </p>
-                    <p className="text-slate-300 text-xs truncate mt-0.5">
+                    <p translate="no" className="notranslate text-slate-300 text-xs truncate mt-0.5">
                       {track.artist_name}
                     </p>
                     <TrackReactionStrip track={track} compact />
