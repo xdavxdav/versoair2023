@@ -42,6 +42,7 @@ import { getCountryMeta } from "@/utils/countryMeta";
 import { getFlag } from "@/utils/get-flag";
 import { getFeaturedArtistByName } from "@shared/featured-artists";
 import { FeaturedArtistCard } from "@/components/music/FeaturedArtistCard";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 const API_BASE_URL = "";
 
@@ -115,6 +116,11 @@ function formatDuration(seconds: number | null): string {
 }
 
 export default function ArtistDirectory() {
+  const { currentLang } = useLanguage();
+  const isFr = currentLang.toLowerCase().startsWith("fr");
+  const isEs = currentLang.toLowerCase().startsWith("es");
+  const bioLabel = isFr ? "Biographie" : isEs ? "Biografía" : "Biography";
+  const listenLabel = isFr ? "Écouter" : isEs ? "Escuchar" : "Listen";
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
   );
@@ -703,19 +709,21 @@ export default function ArtistDirectory() {
                                     <Link
                                       href={`/artistes/${featured.slug}`}
                                       onClick={(e: any) => e.stopPropagation()}
-                                      className="flex items-center gap-1 text-fuchsia-300 hover:text-fuchsia-200 transition-colors text-xs font-medium bg-fuchsia-500/15 hover:bg-fuchsia-500/25 px-3 py-1.5 rounded-lg"
+                                      translate="no"
+                                      className="notranslate flex items-center gap-1 text-fuchsia-300 hover:text-fuchsia-200 transition-colors text-xs font-medium bg-fuchsia-500/15 hover:bg-fuchsia-500/25 px-3 py-1.5 rounded-lg"
                                     >
-                                      Bio
+                                      {bioLabel}
                                     </Link>
                                   ) : null;
                                 })()}
                                 <Link
                                   href={`/artist-catalogue/${artist.id}`}
                                   onClick={(e: any) => e.stopPropagation()}
-                                  className="flex items-center gap-1.5 text-amber-600 hover:text-amber-700 transition-colors text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg"
+                                  translate="no"
+                                  className="notranslate flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors text-xs font-medium bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 rounded-lg"
                                 >
                                   <Music className="h-3.5 w-3.5" />
-                                  Stream
+                                  {listenLabel}
                                 </Link>
                               </div>
                             </div>
