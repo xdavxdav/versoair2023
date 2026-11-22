@@ -126,7 +126,7 @@ export default function ArtistBioPage() {
         </div>
 
         {/* Hero Profile Banner */}
-        <section className="relative overflow-hidden rounded-3xl border border-fuchsia-400/30 bg-[linear-gradient(135deg,#160934_0%,#240d4e_55%,#0e0522_100%)] p-6 sm:p-8 shadow-2xl shadow-purple-950/60 mb-8">
+        <section className="tmu-dark-panel relative overflow-hidden rounded-3xl border border-fuchsia-400/30 bg-[linear-gradient(135deg,#160934_0%,#240d4e_55%,#0e0522_100%)] p-6 sm:p-8 shadow-2xl shadow-purple-950/60 mb-8">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl"

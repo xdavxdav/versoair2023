@@ -194,32 +194,112 @@
     0 12px 32px -16px rgba(79, 70, 229, 0.3);
 }
 
-.tmu-light .tmu-hero-title {
+.tmu-light .tmu-hero-title:not(.tmu-dark-panel *) {
   background-image: linear-gradient(90deg, #1e1b4b 0%, #4338ca 55%, #7e22ce 100%);
 }
 
 /* Foreground remaps for classes written for the dark surface. Solid or gradient
-   action fills keep their white labels via the :not() guards. */
-.tmu-light .text-white:not([class*="from-"]):not([class*="bg-purple-"]):not([class*="bg-indigo-"]):not([class*="bg-fuchsia-"]):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not(.tmu-dark-panel *),
+   action fills keep their white labels via the :not() guards and the solid-fill
+   restore rule below. */
+.tmu-light .text-white:not([class*="from-"]):not([class*="bg-purple-"]):not([class*="bg-indigo-"]):not([class*="bg-fuchsia-"]):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-amber-"]):not([class*="bg-cyan-"]):not([class*="bg-blue-"]):not(.tmu-dark-panel):not(.tmu-dark-panel *),
 .tmu-light .text-slate-50:not(.tmu-dark-panel *),
 .tmu-light .text-slate-100:not(.tmu-dark-panel *),
 .tmu-light .text-slate-200:not(.tmu-dark-panel *),
 .tmu-light .text-gray-100:not(.tmu-dark-panel *),
-.tmu-light .text-gray-200:not(.tmu-dark-panel *) { color: #1e1b4b; }
+.tmu-light .text-gray-200:not(.tmu-dark-panel *),
+.tmu-light .text-zinc-100:not(.tmu-dark-panel *),
+.tmu-light .text-zinc-200:not(.tmu-dark-panel *),
+.tmu-light .text-neutral-100:not(.tmu-dark-panel *),
+.tmu-light .text-neutral-200:not(.tmu-dark-panel *),
+.tmu-light .text-stone-100:not(.tmu-dark-panel *),
+.tmu-light .text-stone-200:not(.tmu-dark-panel *) { color: #1e1b4b; }
 .tmu-light .text-slate-300:not(.tmu-dark-panel *),
-.tmu-light .text-gray-300:not(.tmu-dark-panel *) { color: #312e81; }
+.tmu-light .text-gray-300:not(.tmu-dark-panel *),
+.tmu-light .text-zinc-300:not(.tmu-dark-panel *),
+.tmu-light .text-neutral-300:not(.tmu-dark-panel *),
+.tmu-light .text-stone-300:not(.tmu-dark-panel *) { color: #312e81; }
 .tmu-light .text-slate-400:not(.tmu-dark-panel *),
 .tmu-light .text-gray-400:not(.tmu-dark-panel *),
-.tmu-light .text-gray-500:not(.tmu-dark-panel *) { color: #4f5388; }
+.tmu-light .text-gray-500:not(.tmu-dark-panel *),
+.tmu-light .text-zinc-400:not(.tmu-dark-panel *),
+.tmu-light .text-neutral-400:not(.tmu-dark-panel *),
+.tmu-light .text-stone-400:not(.tmu-dark-panel *) { color: #43467a; }
+
+/* Accent foregrounds — step pastel dark-mode shades down to WCAG AA+ deep inks */
 .tmu-light .text-purple-100:not(.tmu-dark-panel *),
 .tmu-light .text-purple-200:not(.tmu-dark-panel *),
 .tmu-light .text-purple-300:not(.tmu-dark-panel *),
-.tmu-light .text-fuchsia-200:not(.tmu-dark-panel *),
-.tmu-light .text-fuchsia-300:not(.tmu-dark-panel *) { color: #4338ca; }
+.tmu-light [class*="text-purple-200/"]:not(.tmu-dark-panel *),
+.tmu-light [class*="text-purple-300/"]:not(.tmu-dark-panel *),
+.tmu-light .text-indigo-100:not(.tmu-dark-panel *),
+.tmu-light .text-indigo-200:not(.tmu-dark-panel *),
+.tmu-light .text-indigo-300:not(.tmu-dark-panel *),
+.tmu-light .text-indigo-400:not(.tmu-dark-panel *),
+.tmu-light .text-violet-100:not(.tmu-dark-panel *),
+.tmu-light .text-violet-200:not(.tmu-dark-panel *),
+.tmu-light .text-violet-300:not(.tmu-dark-panel *),
+.tmu-light .text-violet-400:not(.tmu-dark-panel *) { color: #3730a3; }
 .tmu-light .text-purple-400:not(.tmu-dark-panel *),
-.tmu-light .text-fuchsia-400:not(.tmu-dark-panel *) { color: #6d28d9; }
+.tmu-light .text-fuchsia-100:not(.tmu-dark-panel *),
+.tmu-light .text-fuchsia-200:not(.tmu-dark-panel *),
+.tmu-light .text-fuchsia-300:not(.tmu-dark-panel *),
+.tmu-light .text-fuchsia-400:not(.tmu-dark-panel *),
+.tmu-light [class*="text-fuchsia-200/"]:not(.tmu-dark-panel *),
+.tmu-light [class*="text-fuchsia-300/"]:not(.tmu-dark-panel *) { color: #6b21a8; }
 
-.tmu-light .text-white\/90 { color: rgba(30, 27, 75, 0.92); }
+.tmu-light .text-amber-100:not(.tmu-dark-panel *),
+.tmu-light .text-amber-200:not(.tmu-dark-panel *),
+.tmu-light .text-amber-300:not(.tmu-dark-panel *),
+.tmu-light .text-amber-400:not(.tmu-dark-panel *) { color: #92400e; }
+.tmu-light .text-yellow-100:not(.tmu-dark-panel *),
+.tmu-light .text-yellow-200:not(.tmu-dark-panel *),
+.tmu-light .text-yellow-300:not(.tmu-dark-panel *),
+.tmu-light .text-yellow-400:not(.tmu-dark-panel *) { color: #854d0e; }
+.tmu-light .text-orange-100:not(.tmu-dark-panel *),
+.tmu-light .text-orange-200:not(.tmu-dark-panel *),
+.tmu-light .text-orange-300:not(.tmu-dark-panel *),
+.tmu-light .text-orange-400:not(.tmu-dark-panel *) { color: #9a3412; }
+
+.tmu-light .text-cyan-100:not(.tmu-dark-panel *),
+.tmu-light .text-cyan-200:not(.tmu-dark-panel *),
+.tmu-light .text-cyan-300:not(.tmu-dark-panel *),
+.tmu-light .text-cyan-400:not(.tmu-dark-panel *) { color: #155e75; }
+.tmu-light .text-sky-100:not(.tmu-dark-panel *),
+.tmu-light .text-sky-200:not(.tmu-dark-panel *),
+.tmu-light .text-sky-300:not(.tmu-dark-panel *),
+.tmu-light .text-sky-400:not(.tmu-dark-panel *) { color: #075985; }
+.tmu-light .text-blue-100:not(.tmu-dark-panel *),
+.tmu-light .text-blue-200:not(.tmu-dark-panel *),
+.tmu-light .text-blue-300:not(.tmu-dark-panel *),
+.tmu-light .text-blue-400:not(.tmu-dark-panel *) { color: #1d4ed8; }
+.tmu-light .text-teal-100:not(.tmu-dark-panel *),
+.tmu-light .text-teal-200:not(.tmu-dark-panel *),
+.tmu-light .text-teal-300:not(.tmu-dark-panel *),
+.tmu-light .text-teal-400:not(.tmu-dark-panel *) { color: #115e59; }
+
+.tmu-light .text-emerald-100:not(.tmu-dark-panel *),
+.tmu-light .text-emerald-200:not(.tmu-dark-panel *),
+.tmu-light .text-emerald-300:not(.tmu-dark-panel *),
+.tmu-light .text-emerald-400:not(.tmu-dark-panel *) { color: #065f46; }
+.tmu-light .text-green-100:not(.tmu-dark-panel *),
+.tmu-light .text-green-200:not(.tmu-dark-panel *),
+.tmu-light .text-green-300:not(.tmu-dark-panel *),
+.tmu-light .text-green-400:not(.tmu-dark-panel *) { color: #166534; }
+
+.tmu-light .text-rose-100:not(.tmu-dark-panel *),
+.tmu-light .text-rose-200:not(.tmu-dark-panel *),
+.tmu-light .text-rose-300:not(.tmu-dark-panel *),
+.tmu-light .text-rose-400:not(.tmu-dark-panel *) { color: #9f1239; }
+.tmu-light .text-red-100:not(.tmu-dark-panel *),
+.tmu-light .text-red-200:not(.tmu-dark-panel *),
+.tmu-light .text-red-300:not(.tmu-dark-panel *),
+.tmu-light .text-red-400:not(.tmu-dark-panel *) { color: #991b1b; }
+.tmu-light .text-pink-100:not(.tmu-dark-panel *),
+.tmu-light .text-pink-200:not(.tmu-dark-panel *),
+.tmu-light .text-pink-300:not(.tmu-dark-panel *),
+.tmu-light .text-pink-400:not(.tmu-dark-panel *) { color: #9d174d; }
+
+.tmu-light .text-white\/90:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.92); }
 .tmu-light .text-white\/80:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.86); }
 .tmu-light .text-white\/70:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.78); }
 .tmu-light .text-white\/60:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.7); }
@@ -229,62 +309,102 @@
 .tmu-light .text-white\/25:not(.tmu-dark-panel *),
 .tmu-light .text-white\/20:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.5); }
 
+/* Keep white text & icons crisp white when nested INSIDE solid accent/gradient
+   fills (avatars, primary CTA buttons, play badges, verified stars). */
+.tmu-light :is(
+  .from-purple-500, .from-purple-600, .from-purple-700,
+  .from-fuchsia-500, .from-fuchsia-600, .from-fuchsia-700,
+  .from-indigo-500, .from-indigo-600, .from-indigo-700,
+  .from-violet-500, .from-violet-600, .from-violet-700,
+  .from-rose-500, .from-rose-600, .from-rose-700,
+  .from-red-500, .from-red-600, .from-red-700,
+  .from-pink-500, .from-pink-600, .from-pink-700,
+  .from-amber-500, .from-amber-600, .from-amber-700, .from-amber-800,
+  .from-orange-500, .from-orange-600, .from-orange-700,
+  .from-emerald-500, .from-emerald-600, .from-emerald-700,
+  .from-green-500, .from-green-600, .from-green-700,
+  .from-cyan-500, .from-cyan-600, .from-cyan-700,
+  .from-blue-500, .from-blue-600, .from-blue-700,
+  .bg-purple-600, .bg-purple-700,
+  .bg-fuchsia-600, .bg-fuchsia-700,
+  .bg-indigo-600, .bg-indigo-700,
+  .bg-rose-600, .bg-red-600, .bg-emerald-600, .bg-amber-600, .bg-cyan-600, .bg-blue-600
+) :is(.text-white, .text-white\/90) { color: #ffffff; }
+.tmu-light :is(
+  .from-purple-500, .from-purple-600, .from-purple-700,
+  .from-fuchsia-500, .from-fuchsia-600,
+  .from-indigo-500, .from-indigo-600,
+  .from-amber-600, .from-amber-700, .from-amber-800,
+  .from-rose-600, .from-red-600, .from-emerald-600, .from-blue-600
+) :is(.text-white\/80, .text-white\/70, .text-white\/60, .text-white\/50) { color: rgba(255, 255, 255, 0.88); }
+
+/* Strengthen accent pill borders & tinted fills on lavender so buttons like
+   Biography, Discussions, Spotify, and YouTube read with clear boundaries. */
+.tmu-light .border-amber-400\/25:not(.tmu-dark-panel *),
+.tmu-light .border-amber-400\/35:not(.tmu-dark-panel *),
+.tmu-light .border-amber-400\/40:not(.tmu-dark-panel *),
+.tmu-light .border-amber-500\/30:not(.tmu-dark-panel *) { border-color: rgba(180, 83, 9, 0.42); }
+.tmu-light .border-cyan-400\/25:not(.tmu-dark-panel *),
+.tmu-light .border-cyan-500\/30:not(.tmu-dark-panel *) { border-color: rgba(14, 116, 144, 0.4); }
+.tmu-light .border-emerald-400\/35:not(.tmu-dark-panel *),
+.tmu-light .border-emerald-500\/30:not(.tmu-dark-panel *) { border-color: rgba(6, 95, 70, 0.38); }
+.tmu-light .border-rose-400\/35:not(.tmu-dark-panel *),
+.tmu-light .border-rose-500\/30:not(.tmu-dark-panel *) { border-color: rgba(159, 18, 57, 0.38); }
+.tmu-light .border-blue-500\/30:not(.tmu-dark-panel *),
+.tmu-light .border-blue-500\/35:not(.tmu-dark-panel *) { border-color: rgba(29, 78, 216, 0.36); }
+.tmu-light .border-gray-700:not(.tmu-dark-panel *),
+.tmu-light .border-gray-700\/30:not(.tmu-dark-panel *) { border-color: rgba(79, 70, 229, 0.24); }
+
 /* White-alpha overlays and borders become indigo-alpha. */
-.tmu-light .bg-white\/5 { background-color: rgba(79, 70, 229, 0.06); }
+.tmu-light .bg-white\/5:not(.tmu-dark-panel *) { background-color: rgba(79, 70, 229, 0.06); }
 .tmu-light .bg-white\/10:not(.tmu-dark-panel *) { background-color: rgba(79, 70, 229, 0.1); }
 .tmu-light .bg-white\/20:not(.tmu-dark-panel *) { background-color: rgba(79, 70, 229, 0.16); }
 .tmu-light .border-white\/5:not(.tmu-dark-panel *),
-.tmu-light .border-white\/10:not(.tmu-dark-panel *) { border-color: rgba(79, 70, 229, 0.14); }
+.tmu-light .border-white\/10:not(.tmu-dark-panel *) { border-color: rgba(79, 70, 229, 0.16); }
+.tmu-light .border-white\/15:not(.tmu-dark-panel *),
 .tmu-light .border-white\/20:not(.tmu-dark-panel *),
-.tmu-light .border-white\/30:not(.tmu-dark-panel *) { border-color: rgba(79, 70, 229, 0.26); }
+.tmu-light .border-white\/30:not(.tmu-dark-panel *) { border-color: rgba(79, 70, 229, 0.28); }
 .tmu-light .hover\:bg-white\/5:hover:not(.tmu-dark-panel *),
 .tmu-light .hover\:bg-white\/10:hover:not(.tmu-dark-panel *) { background-color: rgba(79, 70, 229, 0.12); }
 .tmu-light .hover\:text-white:hover:not(.tmu-dark-panel *) { color: #1e1b4b; }
+.tmu-light .hover\:text-green-400:hover:not(.tmu-dark-panel *) { color: #166534; }
+.tmu-light .hover\:text-pink-400:hover:not(.tmu-dark-panel *) { color: #9d174d; }
+.tmu-light .hover\:text-blue-400:hover:not(.tmu-dark-panel *) { color: #1d4ed8; }
+.tmu-light .hover\:text-amber-400:hover:not(.tmu-dark-panel *) { color: #92400e; }
+.tmu-light .hover\:text-fuchsia-200:hover:not(.tmu-dark-panel *),
+.tmu-light .hover\:text-fuchsia-300:hover:not(.tmu-dark-panel *) { color: #6b21a8; }
+.tmu-light .hover\:text-rose-200:hover:not(.tmu-dark-panel *) { color: #9f1239; }
 
-/* Hard-coded dark panels become lavender panels. */
-.tmu-light [class*="bg-[#180d34]"],
-.tmu-light [class*="bg-[#0f0822]"],
-.tmu-light [class*="bg-[#211246]"],
-.tmu-light [class*="bg-[#090418]"],
-.tmu-light [class*="bg-[#06020f]"],
+/* Hard-coded dark panels become lavender panels (never inside .tmu-dark-panel). */
+.tmu-light [class*="bg-[#180d34]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#0f0822]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#211246]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#090418]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#06020f]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
 .tmu-light [class*="bg-[#0a0518]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
 .tmu-light [class*="bg-[#0a0512]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
-.tmu-light [class*="bg-[#0f0520]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
 .tmu-light [class*="bg-[#120929]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
 .tmu-light [class*="bg-[#0f0818]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
-.tmu-light .bg-gray-900,
-.tmu-light .bg-slate-900,
-.tmu-light .bg-slate-950,
-.tmu-light [class*="bg-slate-900/"],
-.tmu-light [class*="bg-slate-950/"],
-.tmu-light [class*="bg-black/"] { background-color: rgba(232, 232, 248, 0.88); }
+.tmu-light [class*="bg-[#0f0520]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#070312]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#0c061d]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#0c0520]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-[#140a2d]"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-gray-800"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-slate-800"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light .bg-gray-700:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light .bg-gray-900:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light .bg-slate-900:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light .bg-slate-950:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-slate-900/"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-slate-950/"]:not(.tmu-dark-panel):not(.tmu-dark-panel *),
+.tmu-light [class*="bg-black/"]:not(.tmu-dark-panel):not(.tmu-dark-panel *) { background-color: rgba(232, 232, 248, 0.9); }
 .tmu-light .bg-black\/60:not(.tmu-dark-panel *),
 .tmu-light .bg-black\/70:not(.tmu-dark-panel *),
 .tmu-light .bg-black\/80:not(.tmu-dark-panel *) { background-color: rgba(30, 27, 75, 0.45); }
 .tmu-light input:not(.tmu-dark-panel *),
 .tmu-light textarea:not(.tmu-dark-panel *),
 .tmu-light select:not(.tmu-dark-panel *) { color: #1e1b4b; }
-.tmu-light ::placeholder:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.5); }
-
-/* Pastel accent text written for dark surfaces; darkened for lavender. */
-.tmu-light .text-cyan-200:not(.tmu-dark-panel *),
-.tmu-light .text-cyan-300:not(.tmu-dark-panel *),
-.tmu-light .text-cyan-400:not(.tmu-dark-panel *),
-.tmu-light .text-sky-300:not(.tmu-dark-panel *) { color: #0e7490; }
-.tmu-light .text-amber-200:not(.tmu-dark-panel *),
-.tmu-light .text-amber-300:not(.tmu-dark-panel *),
-.tmu-light .text-yellow-300:not(.tmu-dark-panel *) { color: #92400e; }
-.tmu-light .text-emerald-300:not(.tmu-dark-panel *),
-.tmu-light .text-emerald-400:not(.tmu-dark-panel *),
-.tmu-light .text-green-300:not(.tmu-dark-panel *),
-.tmu-light .text-green-400:not(.tmu-dark-panel *) { color: #047857; }
-.tmu-light .text-rose-200:not(.tmu-dark-panel *),
-.tmu-light .text-rose-300:not(.tmu-dark-panel *),
-.tmu-light .text-rose-400:not(.tmu-dark-panel *),
-.tmu-light .text-red-300:not(.tmu-dark-panel *),
-.tmu-light .text-red-400:not(.tmu-dark-panel *) { color: #be123c; }
-
-/* White labels inside gradient/solid fills must stay white. */
-.tmu-light [class*="bg-gradient"] .text-white:not(.tmu-dark-panel *),
+.tmu-light ::placeholder:not(.tmu-dark-panel *) { color: rgba(30, 27, 75, 0.54); }
 .tmu-light .text-white:has(> [class*="bg-gradient"]):not(.tmu-dark-panel *),
-.tmu-light .text-white:has(> [class*="bg-gradient"]) .text-white { color: #fff !important; }
+.tmu-light .text-white:has(> [class*="bg-gradient"]) .text-white { color: #ffffff; }
