@@ -5,9 +5,12 @@ import { authenticatedFetch } from "@/lib/auth";
 
 export const COMMUNITY_CATEGORIES = [
   "Trades",
-  "Careers",
-  "Local",
   "Business",
+  "Food",
+  "Health",
+  "Music",
+  "Neighbourhood",
+  "Careers",
   "Creative",
   "General",
 ] as const;

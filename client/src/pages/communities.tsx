@@ -111,7 +111,13 @@ export default function Communities() {
     setCreateOpen(true);
   }
 
-  const allCategories = ["All", ...COMMUNITY_CATEGORIES];
+  const allCategories = useMemo(() => {
+    const seen = new Set<string>(["All", ...COMMUNITY_CATEGORIES]);
+    for (const item of items) {
+      if (item.category) seen.add(item.category);
+    }
+    return Array.from(seen);
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-[#F7F4F0] dark:bg-slate-950 text-[#1A202C] dark:text-slate-100">
