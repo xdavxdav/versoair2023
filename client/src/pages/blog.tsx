@@ -9,6 +9,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import PostCard from "@/components/PostCard";
 import CreatePostModal from "@/components/CreatePostModal";
+import CommunityStrip from "@/components/community/CommunityStrip";
 import AuthModal from "@/components/AuthModal";
 import VxppGuestIntro from "@/components/vxpp/VxppGuestIntro";
 import BackLink from "@/components/BackLink";
@@ -468,6 +469,8 @@ export default function BlogPage() {
                 Post
               </button>
             </div>
+
+            <CommunityStrip />
 
             {/* Sort Controls */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-4">

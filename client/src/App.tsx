@@ -116,6 +116,7 @@ const ArtisansDirectory = lazy(() => import("@/pages/artisans"));
 const ArtisansPortal = lazy(() => import("@/pages/artisans-portal"));
 const CulturalPrograms = lazy(() => import("@/pages/programs"));
 const Communities = lazy(() => import("@/pages/communities"));
+const CommunitySlugPage = lazy(() => import("@/pages/community-slug"));
 const CommunityDetail = lazy(() => import("@/pages/community"));
 const ArtisanWorkshops = lazy(() => import("@/pages/artisan-workshops"));
 const EventsPage = lazy(() => import("@/pages/events"));
@@ -682,6 +683,7 @@ function Router() {
       />
 
       <Route path="/programs" component={CulturalPrograms} />
+      <Route path="/communities/:slug" component={CommunitySlugPage} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
       <Route path="/artisan-workshops" component={ArtisanWorkshops} />

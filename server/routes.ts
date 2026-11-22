@@ -64,6 +64,7 @@ import geoSeoRouter, {
 import businessLogoRouter from "./routes/business-logo";
 import businessCoverRouter from "./routes/business-cover";
 import profileMediaRouter from "./routes/profile-media";
+import vxppCommunitiesRouter from "./routes/vxpp-communities";
 import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
 import communityRouter from "./routes/community";
@@ -338,6 +339,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
   app.use("/api/community", communityRouter); // Community Hub — Fan Wall (ungated, slow-mode for spam)
   app.use("/api/communities", artisanCommunitiesRouter);
+  app.use("/api/vxpp-communities", vxppCommunitiesRouter);
   app.use("/api/events", eventsRouter);
   app.use("/api/geo-actions", geoActionsRouter); // Geo-Action Queue — tiered geo-admin access control
   app.use("/api/geo-admin/addons", geoAdminAddonsRouter);

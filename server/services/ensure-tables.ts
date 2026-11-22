@@ -16,6 +16,7 @@ import type { PoolClient } from "pg";
 import { TICKET_SCHEMA_UPGRADES } from "./ticket-schema";
 import { VXPP_SCHEMA_UPGRADES } from "./vxpp-schema";
 import { BILLING_PROFILE_SCHEMA_UPGRADES } from "./billing-profile";
+import { ensureVxppCommunitiesSchema } from "./vxpp-communities-schema";
 
 export async function ensureAllTables(
   connect: () => Promise<PoolClient> = () => pool.connect(),
@@ -93,6 +94,8 @@ export async function ensureAllTables(
     for (const statement of BILLING_PROFILE_SCHEMA_UPGRADES) {
       await client.query(statement);
     }
+
+    await ensureVxppCommunitiesSchema(client);
 
     // Ensure curated public artist directory entries exist (idempotent)
     try {

@@ -216,7 +216,6 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
     icon: React.ComponentType<{ className?: string }>;
     badge?: number;
   }> = [
-    { key: "feed", href: "/blog", label: copy.feed, shortLabel: copy.feed, icon: Newspaper },
     {
       key: "communities",
       href: "/communities",
@@ -224,6 +223,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
       shortLabel: copy.communities,
       icon: Users,
     },
+    { key: "feed", href: "/blog", label: copy.feed, shortLabel: copy.feed, icon: Newspaper },
     {
       key: "messages",
       href: "/messages",

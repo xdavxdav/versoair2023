@@ -206,6 +206,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/streaming/search", // Streaming search
   "/api/streaming/subscription/plans", // Subscription plan listing (public)
   "/api/communities/", // Public artisan community discovery
+  "/api/vxpp-communities", // Public vxpp communities browse, detail, posts & comments (GET only)
   "/api/events", // Public published event discovery
   "/api/astrology", // Read-only astrology data used by the public VersoAI page
   "/api/seo/", // Public SEO resources: sitemap + robots + JSON-LD endpoints
