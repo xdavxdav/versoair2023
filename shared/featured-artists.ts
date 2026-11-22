@@ -35,6 +35,7 @@ export interface FeaturedArtistProfile {
   slug: string;
   stageName: string;
   monogram?: string;
+  avatarUrl?: string;
   aliases: readonly string[];
   group: string;
   groupMembers: readonly string[];
@@ -314,6 +315,7 @@ export const DEUZEUS_PROFILE: FeaturedArtistProfile = {
   slug: "deuzeus",
   stageName: "DeuZeus",
   monogram: "DZ",
+  avatarUrl: "/artists/deuzeus.jpg",
   aliases: [],
   group: "",
   groupMembers: [],
@@ -342,7 +344,7 @@ export const DEUZEUS_PROFILE: FeaturedArtistProfile = {
     {
       platform: "soundcloud",
       label: "SoundCloud — DeuZeus",
-      url: "https://soundcloud.com/DeuZeus",
+      url: "https://soundcloud.com/denyce-sanchez",
     },
   ],
   pressLinks: [],

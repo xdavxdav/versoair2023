@@ -105,7 +105,7 @@ export async function ensureAllTables(
       countryCode: string | null;
     }> = [
       { stageName: "Kouzco", genre: "Hip-Hop", url: "https://soundcloud.com/kouzco", countryCode: null },
-      { stageName: "DeuZeus", genre: "Hip-Hop", url: "https://soundcloud.com/DeuZeus", countryCode: "CA" },
+      { stageName: "DeuZeus", genre: "Hip-Hop", url: "https://soundcloud.com/denyce-sanchez", countryCode: "CA" },
     ];
     for (const artist of curatedArtists) {
       try {
@@ -116,6 +116,13 @@ export async function ensureAllTables(
              SELECT 1 FROM artists WHERE LOWER(stage_name) = LOWER($1::text)
            )`,
           [artist.stageName, artist.genre, artist.url, artist.countryCode],
+        );
+        await client.query(
+          `UPDATE artists
+           SET spotify_url = $2::text
+           WHERE LOWER(stage_name) = LOWER($1::text)
+             AND spotify_url = 'https://soundcloud.com/DeuZeus'`,
+          [artist.stageName, artist.url],
         );
       } catch (err) {
         console.warn(

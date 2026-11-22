@@ -46,9 +46,10 @@ test("DeuZeus profile carries Canada (Surrey, BC) metadata and SoundCloud link",
   assert.equal(deuzeus.countryCode, "CA");
   assert.equal(deuzeus.countryName, "Canada");
   assert.equal(deuzeus.city, "Surrey, BC");
+  assert.equal(deuzeus.avatarUrl, "/artists/deuzeus.jpg");
   assert.ok(
     deuzeus.officialLinks.some(
-      (l) => l.platform === "soundcloud" && l.url === "https://soundcloud.com/DeuZeus",
+      (l) => l.platform === "soundcloud" && l.url === "https://soundcloud.com/denyce-sanchez",
     ),
   );
 });

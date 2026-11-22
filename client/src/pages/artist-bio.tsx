@@ -132,23 +132,31 @@ export default function ArtistBioPage() {
             className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl"
           />
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-            {/* Monogram emblem */}
+            {/* Artist photo or monogram emblem */}
             <div className="flex-shrink-0">
               <div className="flex h-36 w-36 sm:h-40 sm:w-40 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-amber-500 p-[2px] shadow-2xl shadow-fuchsia-950/60">
-                <div className="flex h-full w-full flex-col items-center justify-center rounded-[14px] bg-[#0b041c]">
-                  <span
-                    translate="no"
-                    className="notranslate bg-gradient-to-br from-white via-fuchsia-200 to-amber-200 bg-clip-text text-5xl font-black tracking-tight text-transparent"
-                  >
-                    {artist.monogram || artist.stageName.slice(0, 2).toUpperCase()}
-                  </span>
-                  {(artist.city || artist.countryCode) && (
-                    <span className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300 notranslate" translate="no">
-                      {artist.countryCode ? `${getFlag(artist.countryCode)} ` : ""}
-                      {artist.city || artist.countryName}
+                {artist.avatarUrl ? (
+                  <img
+                    src={artist.avatarUrl}
+                    alt={artist.stageName}
+                    className="h-full w-full rounded-[14px] object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center rounded-[14px] bg-[#0b041c]">
+                    <span
+                      translate="no"
+                      className="notranslate bg-gradient-to-br from-white via-fuchsia-200 to-amber-200 bg-clip-text text-5xl font-black tracking-tight text-transparent"
+                    >
+                      {artist.monogram || artist.stageName.slice(0, 2).toUpperCase()}
                     </span>
-                  )}
-                </div>
+                    {(artist.city || artist.countryCode) && (
+                      <span className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300 notranslate" translate="no">
+                        {artist.countryCode ? `${getFlag(artist.countryCode)} ` : ""}
+                        {artist.city || artist.countryName}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

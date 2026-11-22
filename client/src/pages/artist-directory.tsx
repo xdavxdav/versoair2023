@@ -635,19 +635,31 @@ export default function ArtistDirectory() {
                               <div className="absolute top-1/2 right-1/4 w-8 h-8 border border-indigo-900/10 dark:border-white/5 rounded-full" />
                             </div>
 
-                            {/* Centered initials — bigger, better shadow (notranslate prevents Google Translate corruption) */}
+                            {/* Centered artist photo or initials (notranslate prevents Google Translate corruption) */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <div
-                                translate="no"
-                                className={`notranslate w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/80 dark:ring-white/10 group-hover:ring-pink-300/80 dark:group-hover:ring-indigo-400/40 group-hover:scale-105 transition-all duration-500`}
-                              >
-                                {(artist.name || "?")
-                                  .split(/\s+/)
-                                  .map((w: string) => w[0])
-                                  .join("")
-                                  .slice(0, 2)
-                                  .toUpperCase()}
-                              </div>
+                              {(() => {
+                                const featuredAvatar = getFeaturedArtistByName(artist.name)?.avatarUrl;
+                                return featuredAvatar ? (
+                                  <img
+                                    src={featuredAvatar}
+                                    alt={artist.name}
+                                    loading="lazy"
+                                    className="w-28 h-28 rounded-full object-cover shadow-2xl ring-4 ring-white/80 dark:ring-white/10 group-hover:ring-pink-300/80 dark:group-hover:ring-indigo-400/40 group-hover:scale-105 transition-all duration-500"
+                                  />
+                                ) : (
+                                  <div
+                                    translate="no"
+                                    className={`notranslate w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/80 dark:ring-white/10 group-hover:ring-pink-300/80 dark:group-hover:ring-indigo-400/40 group-hover:scale-105 transition-all duration-500`}
+                                  >
+                                    {(artist.name || "?")
+                                      .split(/\s+/)
+                                      .map((w: string) => w[0])
+                                      .join("")
+                                      .slice(0, 2)
+                                      .toUpperCase()}
+                                  </div>
+                                );
+                              })()}
                             </div>
 
                             {/* Country badge — top-left when known */}
