@@ -86,3 +86,90 @@ export function getVxppFallbackBack(path: string): string {
   if (p === "/contracts") return "/services/contractors";
   return "/blog";
 }
+
+export interface VxppRoleUser {
+  role?: string | null;
+  accountType?: string | null;
+  isAdmin?: boolean;
+  isContractor?: boolean;
+  portals?: string[] | null;
+}
+
+export interface VxppRoleServices {
+  showCareers: boolean;
+  showContractors: boolean;
+  isEmployer: boolean;
+  isContractor: boolean;
+  mobileQuickService: "careers" | "contractors";
+}
+
+/**
+ * Determine which specialized Services links a user sees in vxpp so a
+ * contractor sees Contractors (not Careers) and a job seeker / general member
+ * sees Careers (not Contractors). Staff and guests can discover both.
+ */
+export function resolveVxppRoleServices(
+  user: VxppRoleUser | null | undefined,
+): VxppRoleServices {
+  if (!user) {
+    return {
+      showCareers: true,
+      showContractors: true,
+      isEmployer: false,
+      isContractor: false,
+      mobileQuickService: "careers",
+    };
+  }
+
+  const role = String(user.role || "").toLowerCase();
+  const portals = Array.isArray(user.portals) ? user.portals : [];
+  const isStaff =
+    Boolean(user.isAdmin) ||
+    ["admin", "superuser", "moderator"].includes(role);
+  const isContractor =
+    Boolean(user.isContractor) ||
+    role === "contractor" ||
+    portals.includes("contractor");
+  const isEmployer =
+    user.accountType === "business_owner" ||
+    role === "business_owner" ||
+    portals.includes("careers");
+
+  if (isStaff) {
+    return {
+      showCareers: true,
+      showContractors: true,
+      isEmployer: true,
+      isContractor,
+      mobileQuickService: "careers",
+    };
+  }
+
+  if (isContractor && !isEmployer) {
+    return {
+      showCareers: false,
+      showContractors: true,
+      isEmployer: false,
+      isContractor: true,
+      mobileQuickService: "contractors",
+    };
+  }
+
+  if (isContractor && isEmployer) {
+    return {
+      showCareers: true,
+      showContractors: true,
+      isEmployer: true,
+      isContractor: true,
+      mobileQuickService: "careers",
+    };
+  }
+
+  return {
+    showCareers: true,
+    showContractors: false,
+    isEmployer,
+    isContractor: false,
+    mobileQuickService: "careers",
+  };
+}

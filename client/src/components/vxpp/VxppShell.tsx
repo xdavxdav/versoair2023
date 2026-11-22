@@ -32,7 +32,11 @@ import {
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useInboxSocket } from "@/hooks/use-inbox-socket";
 import { useLanguage } from "@/components/LanguageSwitcher";
-import { getVxppSection, type VxppSection } from "@/lib/vxpp-routes";
+import {
+  getVxppSection,
+  resolveVxppRoleServices,
+  type VxppSection,
+} from "@/lib/vxpp-routes";
 
 interface VxppShellProps {
   children: React.ReactNode;
@@ -244,14 +248,20 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
     },
   ];
 
+  const roleServices = resolveVxppRoleServices(user);
+
   const serviceItems: Array<{
     key: VxppSection;
     href: string;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
   }> = [
-    { key: "careers", href: "/services/careers", label: copy.careers, icon: Briefcase },
-    { key: "contractors", href: "/services/contractors", label: copy.contractors, icon: HardHat },
+    ...(roleServices.showCareers
+      ? [{ key: "careers" as const, href: "/services/careers", label: copy.careers, icon: Briefcase }]
+      : []),
+    ...(roleServices.showContractors
+      ? [{ key: "contractors" as const, href: "/services/contractors", label: copy.contractors, icon: HardHat }]
+      : []),
   ];
 
   const ecosystemItems = [
@@ -502,17 +512,25 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <Link
-            href="/services/careers"
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold min-h-[36px] ${
-              activeSection === "careers"
-                ? "bg-amber-600/15 text-amber-900 dark:text-amber-200"
-                : "text-slate-600 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800"
-            }`}
-          >
-            <Briefcase className="h-3.5 w-3.5" />
-            <span className="hidden min-[380px]:inline">{copy.careers}</span>
-          </Link>
+          {activeSection !== "careers" &&
+            activeSection !== "contractors" &&
+            (roleServices.mobileQuickService === "contractors" ? (
+              <Link
+                href="/services/contractors"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold min-h-[36px] text-slate-600 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800"
+              >
+                <HardHat className="h-3.5 w-3.5" />
+                <span className="hidden min-[380px]:inline">{copy.contractors}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/services/careers"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold min-h-[36px] text-slate-600 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800"
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                <span className="hidden min-[380px]:inline">{copy.careers}</span>
+              </Link>
+            ))}
           {user ? (
             <Link
               href="/profile"

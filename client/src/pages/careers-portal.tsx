@@ -11,6 +11,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { resolveVxppRoleServices } from "@/lib/vxpp-routes";
 import { BUSINESS_REQUEST_PATH } from "@/lib/signup-resume";
 import { authenticatedFetch } from "@/lib/auth";
 import { loadJson, resolveLang } from "@/lib/submit-json";
@@ -223,10 +225,14 @@ function ResumeDownload({
 
 export default function CareersPortal() {
   const { currentLang } = useLanguage();
+  const { user } = useAuthContext();
   const lang = resolveLang(currentLang);
   const copy = COPY[lang];
 
-  const [tab, setTab] = useState<"postings" | "applications">("postings");
+  const { isEmployer } = resolveVxppRoleServices(user);
+  const [tab, setTab] = useState<"postings" | "applications">(
+    isEmployer ? "postings" : "applications",
+  );
   const [openId, setOpenId] = useState<string | null>(null);
   const [applicants, setApplicants] = useState<Record<string, ApplicantsState>>(
     {},
@@ -237,6 +243,15 @@ export default function CareersPortal() {
     readApplications,
     lang,
   );
+
+  const showPostingsTab =
+    isEmployer || (Array.isArray(postings.items) && postings.items.length > 0);
+
+  useEffect(() => {
+    if (!showPostingsTab && tab === "postings") {
+      setTab("applications");
+    }
+  }, [showPostingsTab, tab]);
 
   const loadApplicants = async (id: string) => {
     setApplicants((prev) => ({ ...prev, [id]: { status: "loading" } }));
@@ -288,9 +303,9 @@ export default function CareersPortal() {
         <div className="mb-4 flex gap-2">
           {(
             [
-              ["postings", copy.tabPostings],
-              ["applications", copy.tabApplications],
-            ] as const
+              ...(showPostingsTab ? ([["postings", copy.tabPostings]] as const) : []),
+              ["applications", copy.tabApplications] as const,
+            ]
           ).map(([key, label]) => (
             <button
               key={key}
