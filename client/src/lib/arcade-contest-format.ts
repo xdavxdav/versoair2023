@@ -49,11 +49,3 @@ export function previousSeasonKey(seasonKey: string): string {
   const previous = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 2, 1));
   return `${previous.getUTCFullYear()}-${String(previous.getUTCMonth() + 1).padStart(2, "0")}`;
 }
-
-export type ContestPanelMode = "hidden" | "earnings" | "full";
-
-/** With no country contest open the panel disappears, except for money an artist is still owed. */
-export function contestPanelMode(openContests: number, hasEarnings: boolean): ContestPanelMode {
-  if (openContests > 0) return "full";
-  return hasEarnings ? "earnings" : "hidden";
-}

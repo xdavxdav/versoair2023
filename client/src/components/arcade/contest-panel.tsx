@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { contestPanelMode, formatMinor } from "@/lib/arcade-contest-format";
+import { formatMinor } from "@/lib/arcade-contest-format";
 import { loadJson, submitJson } from "@/lib/submit-json";
 import { localizedCountryName } from "@/utils/country-names";
 import { BILLING_COUNTRIES, billingDetailsSchema } from "@shared/billing-details";
@@ -133,37 +133,7 @@ function LoadError({ message, onRetry }: { message: string; onRetry: () => void 
   );
 }
 
-/** Paused (no country contest open) the panel leaves no trace on the page, except an artist's unpaid earnings. */
 export function ContestPanel({ onSignIn }: { onSignIn: () => void }) {
-  const { user } = useAuthContext();
-  const open = useQuery({
-    queryKey: [KEY, "contests"],
-    queryFn: () => getData<ContestList>("/api/arcade-contest/contests"),
-  });
-  const earnings = useQuery({
-    queryKey: [KEY, "payouts"],
-    queryFn: () => getData<Earning[]>("/api/arcade-contest/me/payouts"),
-    enabled: !!user,
-  });
-  // A session that expired keeps its cached earnings, so they only count while signed in.
-  const mode = contestPanelMode(
-    open.data?.contests.filter((contest) => contest.enabled).length ?? 0,
-    !!user && (earnings.data?.length ?? 0) > 0,
-  );
-  if (mode === "hidden") return null;
-  if (mode === "earnings") {
-    return (
-      <section className="mb-6">
-        <Card className="p-4 sm:p-6">
-          <Earnings standalone />
-        </Card>
-      </section>
-    );
-  }
-  return <ContestPanelBody onSignIn={onSignIn} />;
-}
-
-function ContestPanelBody({ onSignIn }: { onSignIn: () => void }) {
   const { user, loading: authLoading } = useAuthContext();
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState(readReturnNotice);
@@ -684,14 +654,14 @@ function Leaderboard({
   );
 }
 
-function Earnings({ standalone = false }: { standalone?: boolean }) {
+function Earnings() {
   const earnings = useQuery({
     queryKey: [KEY, "payouts"],
     queryFn: () => getData<Earning[]>("/api/arcade-contest/me/payouts"),
   });
   if (!earnings.data?.length) return null;
   return (
-    <div className={standalone ? "space-y-2" : "space-y-2 border-t border-border pt-4"}>
+    <div className="space-y-2 border-t border-border pt-4">
       <h3 className="font-semibold">Your contest earnings</h3>
       <ul className="space-y-2">
         {earnings.data.map((row) => (

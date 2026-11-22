@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  contestPanelMode,
   formatMinor,
   majorToMinor,
   minorToMajorText,
@@ -10,13 +9,6 @@ import {
 } from "./arcade-contest-format";
 
 const plain = (text: string) => text.replace(/\s/g, " ");
-
-test("the contest panel disappears while no country contest is open", () => {
-  assert.equal(contestPanelMode(0, false), "hidden");
-  assert.equal(contestPanelMode(0, true), "earnings");
-  assert.equal(contestPanelMode(1, false), "full");
-  assert.equal(contestPanelMode(2, true), "full");
-});
 
 test("minor units are shifted by the currency's own decimals", () => {
   assert.match(plain(formatMinor(1250, "CAD", "en-CA")), /12\.50$/);
