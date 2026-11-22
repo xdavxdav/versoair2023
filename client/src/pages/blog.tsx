@@ -430,7 +430,7 @@ export default function BlogPage() {
       : posts;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f6f3ee] text-slate-800 antialiased">
+    <div className="flex min-h-screen flex-col bg-[#f6f3ee] dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased">
       <ScrollToTop />
 
       {/* Main Content */}
@@ -439,7 +439,7 @@ export default function BlogPage() {
           {/* Feed Column */}
           <div className="space-y-5 lg:col-span-2">
             {/* Quick Composer Bar */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm flex items-center gap-3">
+            <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex items-center gap-3">
               <Link
                 href="/profile"
                 className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-amber-600 to-amber-800 text-white text-xs font-bold flex items-center justify-center shrink-0"
@@ -457,7 +457,7 @@ export default function BlogPage() {
               <button
                 type="button"
                 onClick={() => setIsCreatePostOpen(true)}
-                className="flex-1 text-left rounded-xl border border-stone-200 bg-[#faf8f4] hover:bg-stone-100 px-4 py-2.5 text-sm text-slate-500 transition-colors min-h-[44px]"
+                className="flex-1 text-left rounded-xl border border-stone-200 dark:border-slate-700 bg-[#faf8f4] dark:bg-slate-800/80 hover:bg-stone-100 dark:hover:bg-slate-800 px-4 py-2.5 text-sm text-slate-500 dark:text-slate-300 transition-colors min-h-[44px]"
               >
                 What&apos;s on your mind, {userName}? Share an update or photo…
               </button>
@@ -473,14 +473,14 @@ export default function BlogPage() {
             <CommunityStrip />
 
             {/* Sort Controls */}
-            <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
-              <Filter className="h-4 w-4 text-slate-700" />
+            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
+              <Filter className="h-4 w-4 text-slate-700 dark:text-slate-300" />
               <button
                 onClick={() => setSortBy("recent")}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   sortBy === "recent"
                     ? "bg-cyan-700 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-100"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
                 Recent
@@ -490,7 +490,7 @@ export default function BlogPage() {
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   sortBy === "trending"
                     ? "bg-cyan-700 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-100"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
                 Trending
@@ -503,7 +503,7 @@ export default function BlogPage() {
                   }
                   window.location.assign("/messages");
                 }}
-                className="ml-auto flex items-center gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100"
+                className="ml-auto flex items-center gap-2 rounded-lg border border-cyan-200 dark:border-cyan-800/60 bg-cyan-50 dark:bg-cyan-950/50 px-3 py-2 text-sm font-medium text-cyan-700 dark:text-cyan-300 transition-colors hover:bg-cyan-100 dark:hover:bg-cyan-900/50"
               >
                 <MessageCircle className="h-4 w-4" />
                 Messages
@@ -599,9 +599,9 @@ export default function BlogPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm transition-colors"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 p-4 shadow-sm backdrop-blur-sm transition-colors"
             >
-              <h3 className="mb-3 text-lg font-semibold text-slate-800">
+              <h3 className="mb-3 text-lg font-semibold text-slate-800 dark:text-slate-100">
                 Trends
               </h3>
               <div className="space-y-2">
@@ -614,13 +614,13 @@ export default function BlogPage() {
                   <motion.button
                     key={trend.tag}
                     whileHover={{ x: 4 }}
-                    className="w-full rounded-lg p-2 text-left transition-colors hover:bg-slate-100"
+                    className="w-full rounded-lg p-2 text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-cyan-700">
+                      <span className="font-medium text-cyan-700 dark:text-cyan-400">
                         {trend.tag}
                       </span>
-                      <span className="text-xs text-slate-700">
+                      <span className="text-xs text-slate-700 dark:text-slate-400">
                         {trend.posts}
                       </span>
                     </div>
@@ -634,11 +634,11 @@ export default function BlogPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl p-4 border border-slate-200 hover:border-cyan-500/30 transition-colors"
+              className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/30 transition-colors"
             >
-              <h3 className="text-lg font-semibold text-slate-900 mb-3 font-handstyle flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 font-handstyle flex items-center gap-2">
                 <svg
-                  className="w-5 h-5 text-cyan-700"
+                  className="w-5 h-5 text-cyan-700 dark:text-cyan-400"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -652,11 +652,11 @@ export default function BlogPage() {
                 </svg>
                 FAQ & Help
               </h3>
-              <p className="text-slate-700 text-sm mb-3 font-handstyle">
+              <p className="text-slate-700 dark:text-slate-300 text-sm mb-3 font-handstyle">
                 Got questions? Browse topics or ask the community.
               </p>
               <Link href="/faq">
-                <button className="w-full py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-700 rounded-lg text-sm font-medium transition-all font-handstyle flex items-center justify-center gap-2">
+                <button className="w-full py-2.5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/20 dark:border-cyan-500/30 hover:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 rounded-lg text-sm font-medium transition-all font-handstyle flex items-center justify-center gap-2">
                   Browse FAQ
                   <svg
                     className="w-4 h-4"
