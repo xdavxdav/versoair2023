@@ -32,6 +32,7 @@ import { useSkipAuthPageWhenSignedIn } from "@/hooks/useSkipAuthPageWhenSignedIn
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getSignupResumePath } from "@/lib/signup-resume";
+import { getSafeReturnPath } from "@/lib/auth-route-redirect";
 import {
   getDashboardDestination,
   getGeoAdminDestination,
@@ -62,26 +63,6 @@ import {
 const getQueryParam = (param: string) => {
   const url = new URL(window.location.href);
   return url.searchParams.get(param);
-};
-
-const getSafeReturnPath = (target: string | null) => {
-  if (
-    !target?.startsWith("/") ||
-    target.startsWith("//") ||
-    target.includes("\\")
-  ) {
-    return null;
-  }
-
-  try {
-    const url = new URL(target, window.location.origin);
-    if (url.origin !== window.location.origin || url.pathname === "/auth/signin") {
-      return null;
-    }
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
 };
 
 type SignInProvider = "google" | "microsoft" | "linkedin";
@@ -361,7 +342,7 @@ export default function SignIn() {
   ) => {
     const target = getRoleAwareLoginPath(
       userData,
-      getSafeReturnPath(getQueryParam("redirect")),
+      getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
     );
     if (target) {
       navigate(target);
@@ -407,9 +388,15 @@ export default function SignIn() {
     setPortalSelectionOpen(true);
   };
 
-  // Never navigate to the ?redirect= target: it is usually the protected page
-  // that sent us here, which would bounce straight back to this page.
+  const registrationReturnPath = getSafeReturnPath(
+    getQueryParam("redirect"),
+    window.location.origin,
+  );
   const handleBack = () => {
+    if (registrationReturnPath) {
+      navigate(registrationReturnPath);
+      return;
+    }
     if (window.history.length > 1) {
       window.history.back();
       return;
@@ -417,7 +404,6 @@ export default function SignIn() {
     navigate("/");
   };
 
-  const registrationReturnPath = getSafeReturnPath(getQueryParam("redirect"));
   const registrationBackLabel = registrationReturnPath
     ? registrationReturnPath === "/geo-admin" ||
       registrationReturnPath.startsWith("/geo-admin/")
@@ -609,7 +595,7 @@ export default function SignIn() {
       });
       const redirectTarget = getRoleAwareLoginPath(
         data.user,
-        getSafeReturnPath(getQueryParam("redirect")),
+        getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
       );
       if (redirectTarget) {
         navigate(redirectTarget);
@@ -746,7 +732,7 @@ export default function SignIn() {
 
         const redirectTarget = getRoleAwareLoginPath(
           data.user,
-          getSafeReturnPath(getQueryParam("redirect")),
+          getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
         );
         if (redirectTarget) {
           navigate(redirectTarget);
@@ -847,7 +833,7 @@ export default function SignIn() {
         });
         const redirectTarget = getRoleAwareLoginPath(
           data.user,
-          getSafeReturnPath(getQueryParam("redirect")),
+          getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
         );
         if (redirectTarget) {
           navigate(redirectTarget);
@@ -1358,7 +1344,7 @@ export default function SignIn() {
           // Same priority as every other sign-in path: go back where the user was headed.
           const returnPath = getRoleAwareLoginPath(
             pendingLoginData.user,
-            getSafeReturnPath(getQueryParam("redirect")),
+            getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
           );
           if (returnPath) {
             navigate(returnPath);
@@ -2382,7 +2368,7 @@ export default function SignIn() {
 
                       const redirectTarget = getRoleAwareLoginPath(
                         nextData.user,
-                        getSafeReturnPath(getQueryParam("redirect")),
+                        getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
                       );
                       if (redirectTarget) {
                         navigate(redirectTarget);

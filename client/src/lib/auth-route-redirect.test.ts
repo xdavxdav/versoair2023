@@ -1,6 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getLegacySignInRedirect } from "./auth-route-redirect";
+import {
+  getLegacySignInRedirect,
+  getSafeReturnPath,
+} from "./auth-route-redirect";
+
+test("safe return paths preserve local path, query, and hash", () => {
+  assert.equal(
+    getSafeReturnPath("/pricing?plan=essential#plans", "https://versoair.test"),
+    "/pricing?plan=essential#plans",
+  );
+});
+
+test("safe return paths reject external, malformed, and sign-in destinations", () => {
+  for (const target of [
+    null,
+    "https://evil.example",
+    "//evil.example",
+    "/\\evil.example",
+    "/auth/signin?redirect=%2Fpricing",
+  ]) {
+    assert.equal(getSafeReturnPath(target, "https://versoair.test"), null);
+  }
+});
 
 test("legacy sign-in redirects preserve the requested destination and hash", () => {
   assert.equal(
