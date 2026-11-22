@@ -1,3 +1,4 @@
+import { GenreDatalist, GenreSelectItems } from "@/hooks/use-music-genres";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 /* webhint-disable hint-no-inline-styles */
 import { Link, useLocation } from "wouter";
@@ -1838,36 +1839,7 @@ export default function ArtistPortal() {
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-white/20 notranslate">
               <SelectItem value="all">Tous les genres</SelectItem>
-              <SelectItem value="Afrobeats">Afrobeats</SelectItem>
-              <SelectItem value="Amapiano">Amapiano</SelectItem>
-              <SelectItem value="RnB">R&B</SelectItem>
-              <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
-              <SelectItem value="Rap">Rap</SelectItem>
-              <SelectItem value="Trap">Trap</SelectItem>
-              <SelectItem value="Drill">Drill</SelectItem>
-              <SelectItem value="Pop">Pop</SelectItem>
-              <SelectItem value="Rock">Rock</SelectItem>
-              <SelectItem value="Jazz">Jazz</SelectItem>
-              <SelectItem value="Soul">Soul</SelectItem>
-              <SelectItem value="Reggae">Reggae</SelectItem>
-              <SelectItem value="Dancehall">Dancehall</SelectItem>
-              <SelectItem value="Electronic">Électronique</SelectItem>
-              <SelectItem value="Classical">Classique</SelectItem>
-              <SelectItem value="Gospel">Gospel</SelectItem>
-              <SelectItem value="Latin">Latin</SelectItem>
-              <SelectItem value="Zouk">Zouk</SelectItem>
-              <SelectItem value="Coupe-Decale">Coupé-Décalé</SelectItem>
-              <SelectItem value="Zouglou">Zouglou</SelectItem>
-              <SelectItem value="Funk">Funk</SelectItem>
-              <SelectItem value="Blues">Blues</SelectItem>
-              <SelectItem value="Country">Country</SelectItem>
-              <SelectItem value="Metal">Metal</SelectItem>
-              <SelectItem value="Folk">Folk</SelectItem>
-              <SelectItem value="Acoustic">Acoustique</SelectItem>
-              <SelectItem value="Lo-fi">Lo-fi</SelectItem>
-              <SelectItem value="Ambient">Ambient</SelectItem>
-              <SelectItem value="World">World Music</SelectItem>
-              <SelectItem value="Other">Autre</SelectItem>
+              <GenreSelectItems current={selectedGenre === "all" ? undefined : selectedGenre} />
             </SelectContent>
           </Select>
           <div className="flex items-center space-x-2">
@@ -3971,13 +3943,15 @@ export default function ArtistPortal() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-purple-200 text-sm">Genre</Label>
+                <GenreDatalist />
                 <Input
+                  list="music-genre-options"
                   value={editForm.genre}
                   onChange={(e) =>
                     setEditForm((prev) => ({ ...prev, genre: e.target.value }))
                   }
                   className="bg-white/5 border-white/10 text-white"
-                  placeholder="Hip-Hop, Pop, R&B..."
+                  placeholder="Hip-Hop, Pop, Zouglou..."
                 />
               </div>
             </div>
@@ -4936,35 +4910,7 @@ export default function ArtistPortal() {
                     <SelectValue placeholder="Sélectionner le genre" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/20 max-h-[300px] notranslate">
-                    <SelectItem value="Afrobeats">Afrobeats</SelectItem>
-                    <SelectItem value="Amapiano">Amapiano</SelectItem>
-                    <SelectItem value="RnB">R&B</SelectItem>
-                    <SelectItem value="Hip-Hop">Hip Hop</SelectItem>
-                    <SelectItem value="Rap">Rap</SelectItem>
-                    <SelectItem value="Trap">Trap</SelectItem>
-                    <SelectItem value="Drill">Drill</SelectItem>
-                    <SelectItem value="Pop">Pop</SelectItem>
-                    <SelectItem value="Rock">Rock</SelectItem>
-                    <SelectItem value="Jazz">Jazz</SelectItem>
-                    <SelectItem value="Soul">Soul</SelectItem>
-                    <SelectItem value="Reggae">Reggae</SelectItem>
-                    <SelectItem value="Dancehall">Dancehall</SelectItem>
-                    <SelectItem value="Electronic">Électronique</SelectItem>
-                    <SelectItem value="Classical">Classique</SelectItem>
-                    <SelectItem value="Gospel">Gospel</SelectItem>
-                    <SelectItem value="Latin">Latin</SelectItem>
-                    <SelectItem value="Zouk">Zouk</SelectItem>
-                    <SelectItem value="Coupe-Decale">Coupé-Décalé</SelectItem>
-                    <SelectItem value="Zouglou">Zouglou</SelectItem>
-                    <SelectItem value="Funk">Funk</SelectItem>
-                    <SelectItem value="Blues">Blues</SelectItem>
-                    <SelectItem value="Country">Country</SelectItem>
-                    <SelectItem value="Metal">Metal</SelectItem>
-                    <SelectItem value="Folk">Folk</SelectItem>
-                    <SelectItem value="Acoustic">Acoustique</SelectItem>
-                    <SelectItem value="Lo-fi">Lo-fi</SelectItem>
-                    <SelectItem value="Ambient">Ambient</SelectItem>
-                    <SelectItem value="World">World Music</SelectItem>
+                    <GenreSelectItems current={uploadForm.genre} />
                     <SelectItem value="Other">Autre</SelectItem>
                   </SelectContent>
                 </Select>
@@ -5409,42 +5355,7 @@ export default function ArtistPortal() {
                     <SelectValue placeholder="Genre" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-900 border-white/20 notranslate">
-                    {[
-                      "Afrobeats",
-                      "Amapiano",
-                      "RnB",
-                      "Hip-Hop",
-                      "Rap",
-                      "Trap",
-                      "Drill",
-                      "Pop",
-                      "Jazz",
-                      "Reggae",
-                      "Latin",
-                      "Electronic",
-                      "Dancehall",
-                      "Gospel",
-                      "Rock",
-                      "Classical",
-                      "Kompa",
-                      "Coupé-décalé",
-                      "Ndombolo",
-                      "Zouk",
-                      "Gqom",
-                      "Kizomba",
-                      "Bongo Flava",
-                      "Highlife",
-                      "Mbalax",
-                      "Gnawa",
-                      "Raï",
-                      "Afro-Fusion",
-                      "Afro-Pop",
-                      "Afro-Soul",
-                    ].map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g}
-                      </SelectItem>
-                    ))}
+                    <GenreSelectItems current={albumForm.genre} />
                   </SelectContent>
                 </Select>
               </div>

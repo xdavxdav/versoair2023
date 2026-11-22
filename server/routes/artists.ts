@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { pool } from "../db";
 
+import { canonicalGenreName } from "../../shared/music-genres";
+import { textGenreCondition } from "../utils/genre-filter";
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
 const router = Router();
@@ -62,9 +64,10 @@ router.get("/search", async (req, res) => {
       params.push(`%${query.trim()}%`);
       paramIdx++;
     }
-    if (genre.trim()) {
-      conditions.push(`a.genre = $${paramIdx}`);
-      params.push(genre.trim());
+    const genreCond = textGenreCondition("a.genre", genre, paramIdx);
+    if (genreCond) {
+      conditions.push(genreCond.sql);
+      params.push(...genreCond.params);
       paramIdx++;
     }
     if (hasCC && countryCode.trim() && countryCode !== "all") {
@@ -128,7 +131,10 @@ router.get("/genres", async (_req, res) => {
        WHERE a.genre IS NOT NULL AND a.genre != '' AND ${publicArtistAccountFilter}
        ORDER BY a.genre ASC`,
     );
-    res.json({ success: true, data: result.rows.map((r: any) => r.genre) });
+    res.json({
+      success: true,
+      data: [...new Set<string>(result.rows.map((r: any) => canonicalGenreName(r.genre)))].sort((a, b) => a.localeCompare(b)),
+    });
   } catch (error: any) {
     console.error("❌ Get genres error:", error);
     res.status(500).json({ success: false, error: "Failed to fetch genres" });

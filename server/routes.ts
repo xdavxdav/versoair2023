@@ -19,6 +19,7 @@ import pageReadinessRouter from "./routes/page-readiness";
 import { requireAdminElevation } from "./middleware/admin-elevation";
 import jobsRouter from "./routes/jobs";
 import musicRouter from "./routes/music";
+import musicGenresRouter from "./routes/music-genres";
 import streamroyaleRouter from "./routes/streamroyale";
 import streamingRouter from "./routes/streaming";
 import artistContractsRouter from "./routes/artist-contracts";
@@ -232,6 +233,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/implementation-tracking", implementationTrackingRouter);
   app.use("/api/page-readiness", pageReadinessRouter);
   app.use("/api/jobs", jobsRouter);
+  app.use("/api/music-genres", musicGenresRouter);
   app.use("/api/music", musicRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/push", pushRouter);

@@ -2,6 +2,8 @@
  * Verso Air Streaming Platform — API Routes
  * Full-featured streaming backend: tracks, playlists, social, analytics, subscriptions
  */
+import { canonicalGenreName } from "../../shared/music-genres";
+import { artistGenreCondition, textGenreCondition } from "../utils/genre-filter";
 import { Router, Request, RequestHandler, Response } from "express";
 import { pool } from "../db";
 import { fanChatSlowMode } from "../middleware/rate-limiter";
@@ -62,9 +64,10 @@ router.get("/tracks", async (req: Request, res: Response) => {
     const params: any[] = [];
     let paramIdx = 1;
 
-    if (genre) {
-      where += ` AND mt.genre ILIKE $${paramIdx}`;
-      params.push(`%${genre}%`);
+    const genreCond = textGenreCondition("mt.genre", genre, paramIdx);
+    if (genreCond) {
+      where += ` AND ${genreCond.sql}`;
+      params.push(...genreCond.params);
       paramIdx++;
     }
     if (mood) {
@@ -141,7 +144,7 @@ router.get("/tracks", async (req: Request, res: Response) => {
       total: parseInt(countResult.rows[0].total),
       page: parseInt(page as string),
       limit: parseInt(limit as string),
-      genres: genres.rows.map((r: any) => r.genre),
+      genres: [...new Set<string>(genres.rows.map((r: any) => canonicalGenreName(r.genre)))].sort((a, b) => a.localeCompare(b)),
       moods: moods.rows.map((r: any) => r.mood),
     });
   } catch (err: any) {
@@ -973,9 +976,10 @@ router.get("/artists", async (req: Request, res: Response) => {
       params.push(`%${search}%`);
       paramIdx++;
     }
-    if (genre) {
-      where += ` AND COALESCE(ap.genre #>> '{}', art.genre) ILIKE $${paramIdx}`;
-      params.push(`%${genre}%`);
+    const genreCond = artistGenreCondition(genre, paramIdx);
+    if (genreCond) {
+      where += ` AND ${genreCond.sql}`;
+      params.push(...genreCond.params);
       paramIdx++;
     }
     if (country) {
