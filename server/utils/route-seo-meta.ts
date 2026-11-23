@@ -2,6 +2,8 @@
 // route-specific tags without a headless-browser prerender step. Keep in sync with
 // the <SeoHead> usages on each page. Tags carry data-rh so react-helmet-async
 // replaces them (rather than duplicating them) once the client mounts.
+import { generateOrganizationJsonLd } from "../services/json-ld-generator";
+
 const SITE_ORIGIN = "https://www.versoair.com";
 const DEFAULT_IMAGE = "/Logo-page.png";
 
@@ -100,6 +102,21 @@ export const ROUTE_SEO_META: Readonly<Record<string, RouteMeta>> = {
   },
 };
 
+// No data-rh on this script: react-helmet-async removes every data-rh tag once the
+// client mounts, and the homepage <SeoHead> carries no JSON-LD to put back.
+function homepageJsonLdScript(): string {
+  const json = JSON.stringify([
+    generateOrganizationJsonLd(),
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Verso Air",
+      url: SITE_ORIGIN,
+    },
+  ]).replace(/</g, "\\u003c");
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -136,6 +153,7 @@ export function injectRouteSeoMeta(html: string, requestPath: string): string {
     `<meta name="twitter:title" content="${title}" data-rh="true">`,
     `<meta name="twitter:description" content="${description}" data-rh="true">`,
     `<meta name="twitter:image" content="${image}" data-rh="true">`,
+    ...(routePath === "/" ? [homepageJsonLdScript()] : []),
   ].join("\n    ");
 
   return html

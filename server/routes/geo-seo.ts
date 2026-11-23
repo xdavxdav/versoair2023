@@ -16,6 +16,7 @@
 import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { buildRobotsTxt, createSitemapHandlers } from "../services/sitemap";
+import { createLlmsTxtHandler } from "../services/llms-txt";
 import { getSiteOrigin } from "../utils/site-origin";
 import {
   publicBusinessVisibilitySql,
@@ -173,5 +174,7 @@ export function robotsTxtHandler(_req: Request, res: Response) {
 }
 
 router.get("/robots.txt", robotsTxtHandler);
+
+export const llmsTxtHandler = createLlmsTxtHandler((sql, params) => pool.query(sql, params));
 
 export default router;

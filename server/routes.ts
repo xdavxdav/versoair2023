@@ -57,6 +57,7 @@ import siteSearchRouter from "./routes/site-search";
 import migrateRouter from "./routes/migrate";
 import escrowRouter from "./routes/escrow";
 import geoSeoRouter, {
+  llmsTxtHandler,
   robotsTxtHandler,
   sitemapBusinessesHandler,
   sitemapPagesHandler,
@@ -337,6 +338,7 @@ export async function registerRoutes(app: Express) {
   app.get("/sitemap-pages.xml", sitemapPagesHandler);
   app.get("/sitemap-businesses-:page.xml", sitemapBusinessesHandler);
   app.get("/robots.txt", robotsTxtHandler);
+  app.get("/llms.txt", llmsTxtHandler);
   app.use("/api/inventory", inventoryRouter); // Inventory — sector-adaptive product & stock management
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
   app.use("/api/community", communityRouter); // Community Hub — Fan Wall (ungated, slow-mode for spam)
