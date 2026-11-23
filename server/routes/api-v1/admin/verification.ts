@@ -2,16 +2,19 @@ import { Router } from "express";
 import { pool } from "../../../db";
 import { requireAuth, requireOwner } from "../../../middleware/auth";
 import { asyncHandler } from "../../../middleware/asyncHandler";
+import {
+  approveBusiness,
+  cleanNote,
+  rejectBusinessVerification,
+} from "../../../services/business-verification";
 
 const router = Router();
 // Account, role, security and identity-verification management is owner-only.
 router.use(requireOwner);
 
-type VerificationStatus = "unverified" | "verified" | "rejected";
-
 /**
  * GET /api/v1/admin/verification/queue
- * Get all businesses pending verification (unverified or rejected)
+ * Businesses that are not verified-and-public yet, with their true flags
  */
 router.get(
   "/queue",
@@ -39,12 +42,14 @@ router.get(
           b.verified_by,
           (SELECT username FROM users WHERE id = b.verified_by) as verified_by_username,
           b.is_active,
+          b.is_verified,
+          b.approval_status,
           b.rating,
           b.phone,
           b.email,
           b.address
         FROM businesses b
-        WHERE b.verification_status IN ('unverified', 'rejected')
+        WHERE b.verification_status IN ('unverified', 'rejected') OR b.is_verified IS NOT TRUE
         ORDER BY 
           CASE WHEN b.verification_status = 'unverified' THEN 1 ELSE 2 END,
           b.created_at ASC
@@ -55,7 +60,7 @@ router.get(
       pool.query(`
         SELECT COUNT(*) as count
         FROM businesses
-        WHERE verification_status IN ('unverified', 'rejected')
+        WHERE verification_status IN ('unverified', 'rejected') OR is_verified IS NOT TRUE
       `),
     ]);
 
@@ -74,104 +79,71 @@ router.get(
 );
 
 /**
- * PATCH /api/v1/admin/businesses/:id/verify
- * Approve or reject a business for verification
+ * PATCH /api/v1/admin/verification/businesses/:id/verify
+ * The one canonical publish path. Works on any row.
  *
  * Request body:
  * {
  *   action: 'approve' | 'reject',
- *   reason?: string (required for rejection, optional for approval)
+ *   reason: string (approve: the record that was checked; reject: why)
  * }
+ *
+ * approve -> verification_status 'verified', is_verified, is_active
+ * reject  -> verification_status 'rejected', is_verified = false
  */
 router.patch(
   "/businesses/:id/verify",
   requireAuth(["admin", "moderator"]),
   asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { action, reason } = req.body;
-    const adminId = (req.user as any)?.id;
+    const { action } = req.body ?? {};
+    const note = cleanNote(req.body?.reason);
 
-    // Validate input
     if (!["approve", "reject"].includes(action)) {
       return res
         .status(400)
         .json({ error: "Invalid action. Use 'approve' or 'reject'" });
     }
-
-    if (action === "reject" && !reason) {
+    if (!note) {
       return res.status(400).json({
-        error: "Rejection reason is required when rejecting a business",
+        error:
+          action === "approve"
+            ? "An evidence note (what record was checked) is required to approve a business"
+            : "Rejection reason is required when rejecting a business",
       });
     }
 
-    // Get current business
-    const businessResult = await pool.query(
-      "SELECT * FROM businesses WHERE id = $1",
-      [id],
-    );
-    const business = businessResult.rows[0];
-
-    if (!business) {
+    const decide =
+      action === "approve" ? approveBusiness : rejectBusinessVerification;
+    const result = await decide({
+      id: req.params.id,
+      actorId: Number((req.user as any)?.id),
+      note,
+      ipAddress: String(req.headers["x-forwarded-for"] || req.ip || ""),
+    });
+    if (!result) {
       return res.status(404).json({ error: "Business not found" });
     }
 
-    // Update verification status
-    const newStatus: VerificationStatus =
-      action === "approve" ? "verified" : "rejected";
-    const updateResult = await pool.query(
-      `
-        UPDATE businesses 
-        SET 
-          verification_status = $1,
-          verification_date = NOW(),
-          verified_by = $2,
-          verification_reason = $3
-        WHERE id = $4
-        RETURNING *
-      `,
-      [newStatus, adminId, reason || null, id],
-    );
-
-    const updatedBusiness = updateResult.rows[0];
-
-    // Log to audit trail
-    await pool.query(
-      `
-        INSERT INTO audit_logs (admin_id, action, target_type, target_id, details, created_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-      `,
-      [
-        adminId,
-        action === "approve" ? "VERIFY_APPROVE" : "VERIFY_REJECT",
-        "business",
-        id,
-        JSON.stringify({
-          businessName: business.name,
-          previousStatus: business.verification_status,
-          newStatus,
-          reason,
-        }),
-      ],
-    );
-
+    const updated = result.business;
     res.json({
       success: true,
       message: `Business ${action === "approve" ? "approved" : "rejected"} successfully`,
       business: {
-        id: updatedBusiness.id,
-        name: updatedBusiness.name,
-        verificationStatus: updatedBusiness.verification_status,
-        verificationReason: updatedBusiness.verification_reason,
-        verificationDate: updatedBusiness.verification_date,
-        verifiedBy: updatedBusiness.verified_by,
-        isActive: updatedBusiness.is_active,
+        id: updated.id,
+        name: updated.name,
+        verificationStatus: updated.verification_status,
+        verificationReason: updated.verification_reason,
+        verificationDate: updated.verification_date,
+        verifiedBy: updated.verified_by,
+        isActive: updated.is_active,
+        isVerified: updated.is_verified,
       },
     });
   }),
 );
 
 /**
- * PATCH /api/v1/admin/businesses/:id/activate
+ * PATCH /api/v1/admin/verification/businesses/:id/activate
  * Activate a verified business (with validation)
  *
  * Request body:
@@ -179,14 +151,18 @@ router.patch(
  *   is_active: boolean
  * }
  *
- * Constraint: Can only activate if verification_status = 'verified'
+ * Constraint: activating requires verification_status = 'verified' AND is_verified.
+ * This is the visibility switch only; it never publishes an unverified row.
  */
 router.patch(
   "/businesses/:id/activate",
   requireAuth(["admin"]),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { is_active } = req.body;
+    const { is_active } = req.body ?? {};
+    if (typeof is_active !== "boolean") {
+      return res.status(400).json({ error: "is_active must be true or false" });
+    }
 
     // Get current business
     const businessResult = await pool.query(
@@ -200,10 +176,14 @@ router.patch(
     }
 
     // Validate: Can only activate if verified
-    if (is_active === true && business.verification_status !== "verified") {
+    if (
+      is_active === true &&
+      (business.verification_status !== "verified" ||
+        business.is_verified !== true)
+    ) {
       return res.status(403).json({
         error: "Cannot activate unverified business",
-        details: `Business must be verified first (current status: ${business.verification_status})`,
+        details: `Business must be verified first (current status: ${business.verification_status}, verified flag: ${business.is_verified === true})`,
       });
     }
 
@@ -219,14 +199,14 @@ router.patch(
     const adminId = (req.user as any)?.id;
     await pool.query(
       `
-        INSERT INTO audit_logs (admin_id, action, target_type, target_id, details, created_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
+        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, changes)
+        VALUES ($1, $2, $3, $4, $5)
       `,
       [
         adminId,
         is_active ? "BUSINESS_ACTIVATE" : "BUSINESS_DEACTIVATE",
         "business",
-        id,
+        String(id),
         JSON.stringify({
           businessName: business.name,
           verificationStatus: business.verification_status,
@@ -243,6 +223,7 @@ router.patch(
         id: updatedBusiness.id,
         name: updatedBusiness.name,
         isActive: updatedBusiness.is_active,
+        isVerified: updatedBusiness.is_verified,
         verificationStatus: updatedBusiness.verification_status,
       },
     });
@@ -292,14 +273,14 @@ router.get(
       `
         SELECT 
           al.id,
-          al.admin_id,
+          al.user_id as admin_id,
           u.username as admin_username,
           al.action,
-          al.details,
+          al.changes as details,
           al.created_at
         FROM audit_logs al
-        LEFT JOIN users u ON al.admin_id = u.id
-        WHERE al.target_type = 'business' AND al.target_id = $1
+        LEFT JOIN users u ON al.user_id = u.id
+        WHERE al.entity_type = 'business' AND al.entity_id = $1
           AND al.action IN ('VERIFY_APPROVE', 'VERIFY_REJECT', 'BUSINESS_ACTIVATE', 'BUSINESS_DEACTIVATE')
         ORDER BY al.created_at DESC
       `,

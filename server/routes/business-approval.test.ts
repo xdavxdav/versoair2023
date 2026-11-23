@@ -26,13 +26,33 @@ beforeEach(() => {
 interface Scenario {
   /** Whether business 5 is still waiting for a decision. */
   pending?: boolean;
+  /** No such business. */
+  missing?: boolean;
   submittedBy?: number | null;
 }
 
 function scriptedDb(scenario: Scenario = {}) {
   return scriptPool((sql) => {
+    if (sql.startsWith("SELECT id, name, verification_status")) {
+      return {
+        rows: scenario.missing
+          ? []
+          : [{ id: BUSINESS, name: "Chez Ada", approval_status: scenario.pending === false ? "approved" : "pending" }],
+      };
+    }
+    if (/^UPDATE businesses SET verification_status = 'verified'/.test(sql)) {
+      return {
+        rows: [
+          {
+            id: BUSINESS,
+            name: "Chez Ada",
+            submitted_by: scenario.submittedBy ?? null,
+          },
+        ],
+      };
+    }
     if (
-      /^UPDATE businesses SET approval_status = '(approved|rejected)'/.test(sql)
+      /^UPDATE businesses SET approval_status = 'rejected'/.test(sql)
     ) {
       return {
         rows:
@@ -79,10 +99,40 @@ test("approving a business also verifies it, so it reaches the public directory"
   const update = decisionSql(database);
   assert.ok(update, "the approval was written");
   assert.match(update.sql, /approval_status = 'approved'/);
+  assert.match(update.sql, /verification_status = 'verified'/);
   assert.match(update.sql, /is_active = true/);
   assert.match(update.sql, /is_verified = true/);
-  assert.match(update.sql, /WHERE id = \$3 AND approval_status = 'pending'/);
-  assert.deepEqual(update.params, [1, "Looks good", "5"]);
+  assert.doesNotMatch(update.sql, /approval_status = 'pending'/);
+  assert.deepEqual(update.params, [1, "Looks good", 5]);
+  assert.equal(database.matching("INSERT INTO audit_logs").length, 1);
+});
+
+test("a row that is already 'approved' (admin-created) can still be approved and published", async () => {
+  const database = scriptedDb({ pending: false });
+  await serve(async (origin) => {
+    const res = await call(origin, "PUT", `/api/businesses/${BUSINESS}/approve`, {
+      headers: signIn(admin),
+      body: { notes: "Registry checked" },
+    });
+    assert.equal(res.status, 200);
+  });
+  const update = decisionSql(database);
+  assert.ok(update);
+  assert.match(update.sql, /is_verified = true/);
+});
+
+test("approving without an evidence note is refused before anything is written", async () => {
+  const database = scriptedDb();
+  await serve(async (origin) => {
+    for (const body of [{}, { notes: "  " }]) {
+      const res = await call(origin, "PUT", `/api/businesses/${BUSINESS}/approve`, {
+        headers: signIn(admin),
+        body,
+      });
+      assert.equal(res.status, 400);
+    }
+  });
+  assert.equal(decisionSql(database), undefined);
 });
 
 test("approval sets every flag the public directory requires", () => {
@@ -97,7 +147,7 @@ test("approval sets every flag the public directory requires", () => {
   return serve(async (origin) => {
     await call(origin, "PUT", `/api/businesses/${BUSINESS}/approve`, {
       headers: signIn(admin),
-      body: {},
+      body: { notes: "Registry checked" },
     });
     const update = decisionSql(database);
     assert.ok(update);
@@ -154,7 +204,7 @@ test("only the team can decide: visitors, members and moderators are refused", a
         `/api/businesses/${BUSINESS}/approve`,
         {
           headers: signIn(account),
-          body: {},
+          body: { notes: "Registry checked" },
         },
       );
       assert.equal(res.status, 200, `${account.role} approve`);
@@ -167,20 +217,14 @@ test("only the team can decide: visitors, members and moderators are refused", a
   );
 });
 
-test("a business that is no longer pending cannot be approved again", async () => {
-  scriptedDb({ pending: false });
+test("approving a business that does not exist is a 404", async () => {
+  scriptedDb({ missing: true });
   await serve(async (origin) => {
-    const res = await call(
-      origin,
-      "PUT",
-      `/api/businesses/${BUSINESS}/approve`,
-      {
-        headers: signIn(admin),
-        body: {},
-      },
-    );
+    const res = await call(origin, "PUT", `/api/businesses/${BUSINESS}/approve`, {
+      headers: signIn(admin),
+      body: { notes: "Registry checked" },
+    });
     assert.equal(res.status, 404);
-    assert.equal(res.body.error, "Business not found or not in pending state");
   });
 });
 
@@ -209,7 +253,7 @@ test("approval does not depend on the notification email going out", async () =>
       `/api/businesses/${BUSINESS}/approve`,
       {
         headers: signIn(admin),
-        body: {},
+        body: { notes: "Registry checked" },
       },
     );
     assert.equal(res.status, 200);
