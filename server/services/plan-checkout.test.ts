@@ -200,5 +200,10 @@ test("only the recurring Checkout Session can renew; the prepaid one cannot", ()
     (recurring as { setup_future_usage?: unknown }).setup_future_usage,
     undefined,
   );
-  assert.deepEqual(recurring.payment_method_types, ["card"]);
+  // Every method enabled in the dashboard is offered, and the payer's full
+  // name and address are collected.
+  assert.equal(recurring.payment_method_types, undefined);
+  assert.equal(prepaid.payment_method_types, undefined);
+  assert.equal(recurring.billing_address_collection, "required");
+  assert.equal(prepaid.billing_address_collection, "required");
 });

@@ -96,8 +96,10 @@ export function buildPlanCheckoutParams(
   input: PlanCheckoutInput,
 ): Stripe.Checkout.SessionCreateParams {
   const { selection } = input;
+  // No payment_method_types: Checkout offers every method enabled in the
+  // Stripe dashboard for the buyer's country and currency.
   return {
-    payment_method_types: ["card"],
+    billing_address_collection: "required",
     mode: "payment",
     customer: input.customerId,
     customer_email: input.customerEmail,
@@ -130,7 +132,7 @@ export function buildRecurringPlanCheckoutParams(
   const { selection } = input;
   const metadata = planMetadata(input);
   return {
-    payment_method_types: ["card"],
+    billing_address_collection: "required",
     mode: "subscription",
     customer: input.customerId,
     customer_email: input.customerEmail,

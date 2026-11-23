@@ -247,7 +247,7 @@ export function buildCheckoutSessionParams(input: {
     (line) => line.itemType === "print_product",
   );
   return {
-    payment_method_types: ["card"],
+    billing_address_collection: "required",
     mode: "payment",
     customer_email: input.customerEmail,
     // Print products ship, and orders have no address columns of their own;

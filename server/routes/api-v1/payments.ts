@@ -436,7 +436,7 @@ router.post(
 
       const origin = getPublicBaseUrl();
       const session = await stripeClient.checkout.sessions.create({
-        payment_method_types: ["card"],
+        billing_address_collection: "required",
         mode: "payment",
         customer: customerId,
         line_items: [
@@ -507,6 +507,8 @@ router.post("/webhook", async (req: Request, res: Response) => {
 
   // Handle the event
   switch (event.type) {
+    // Delayed methods (bank debits, transfers) complete unpaid and settle later.
+    case "checkout.session.async_payment_succeeded":
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const { userId } = session.metadata || {};
