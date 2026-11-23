@@ -25,6 +25,10 @@ import {
   parseBulkBusinessUpdates,
 } from "../utils/business-bulk-update";
 
+import {
+  approveBusiness,
+  cleanNote,
+} from "../services/business-verification";
 import { numericRouteParam } from "../middleware/numeric-route-param";
 import {
   canEditFiche,
@@ -1612,30 +1616,32 @@ router.put(
         });
       }
 
-      // The team's review is the verification: the public directory lists only
-      // active AND verified businesses (publicBusinessVisibilitySql), and the
-      // approval email tells the owner the business is now live there.
-      const result = await pool.query(
-        `UPDATE businesses
-         SET approval_status = 'approved',
-             is_active = true,
-             is_verified = true,
-             approved_by = $1,
-             approval_notes = $2,
-             updated_at = NOW()
-         WHERE id = $3 AND approval_status = 'pending'
-         RETURNING *`,
-        [actorId, notes || null, id],
-      );
+      // The team's review is the verification: the same service as the v1
+      // verify action sets every flag the public directory requires. Any row
+      // can be approved, whatever its approval_status.
+      const note = cleanNote(notes);
+      if (!note) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "An evidence note (what record was checked) is required to approve a business",
+        });
+      }
+      const result = await approveBusiness({
+        id,
+        actorId,
+        note,
+        ipAddress: String(req.headers["x-forwarded-for"] || req.ip || "unknown"),
+      });
 
-      if (result.rows.length === 0) {
+      if (!result) {
         return res.status(404).json({
           success: false,
-          error: "Business not found or not in pending state",
+          error: "Business not found",
         });
       }
 
-      const biz = result.rows[0];
+      const biz = result.business;
 
       // Notify the submitter via email
       if (biz.submitted_by) {
@@ -1650,28 +1656,12 @@ router.put(
               submitter.email,
               submitter.username,
               biz.name,
-              notes,
+              note,
             );
           }
         } catch {
           /* best-effort */
         }
-      }
-
-      // Audit log
-      try {
-        await db.insert(auditLogs).values({
-          userId: actorId,
-          action: "BUSINESS_APPROVED",
-          entityType: "business",
-          entityId: String(id),
-          changes: { notes, businessName: biz.name },
-          ipAddress: String(
-            req.headers["x-forwarded-for"] || req.ip || "unknown",
-          ),
-        });
-      } catch {
-        /* best-effort */
       }
 
       res.json({

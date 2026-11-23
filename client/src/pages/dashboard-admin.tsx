@@ -756,6 +756,10 @@ const PendingApprovals = () => {
   }, [fetchPending]);
 
   const handleApprove = async (id: number, name: string) => {
+    const notes = prompt(
+      `Evidence checked before approving "${name}" (required):`,
+    )?.trim();
+    if (!notes) return;
     setActionId(id);
     try {
       const res = await authenticatedFetch(
@@ -763,7 +767,7 @@ const PendingApprovals = () => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ approvedBy: 1 }),
+          body: JSON.stringify({ notes }),
         },
       );
       const result = await res.json();

@@ -196,6 +196,9 @@ const DatabaseManagementCenter = lazy(
   () => import("@/components/DatabaseManagementCenter"),
 );
 const VerificationPage = lazy(() => import("@/pages/admin/verification"));
+const BusinessVerificationQueuePage = lazy(
+  () => import("@/pages/admin/business-verification"),
+);
 const AdminTicketManagement = lazy(
   () => import("@/pages/admin/ticket-management"),
 );
@@ -761,6 +764,11 @@ function Router() {
       <Route path="/admin/verification">
         {() => (
           <ProtectedRoute component={VerificationPage} ownerOnly />
+        )}
+      </Route>
+      <Route path="/admin/business-verification">
+        {() => (
+          <ProtectedRoute component={BusinessVerificationQueuePage} ownerOnly />
         )}
       </Route>
       <Route path="/admin/tickets">
