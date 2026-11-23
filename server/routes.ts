@@ -63,6 +63,7 @@ import geoSeoRouter, {
   sitemapPagesHandler,
   sitemapXmlHandler,
 } from "./routes/geo-seo";
+import { INDEXNOW_KEY_PATH, indexNowKeyHandler } from "./utils/indexnow";
 import businessLogoRouter from "./routes/business-logo";
 import businessCoverRouter from "./routes/business-cover";
 import profileMediaRouter from "./routes/profile-media";
@@ -339,6 +340,7 @@ export async function registerRoutes(app: Express) {
   app.get("/sitemap-businesses-:page.xml", sitemapBusinessesHandler);
   app.get("/robots.txt", robotsTxtHandler);
   app.get("/llms.txt", llmsTxtHandler);
+  app.get(INDEXNOW_KEY_PATH, indexNowKeyHandler);
   app.use("/api/inventory", inventoryRouter); // Inventory — sector-adaptive product & stock management
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
   app.use("/api/community", communityRouter); // Community Hub — Fan Wall (ungated, slow-mode for spam)
