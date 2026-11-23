@@ -102,6 +102,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { submitJson } from "@/lib/submit-json";
 import { authenticatedFetch } from "@/lib/auth";
+import { invalidateAuthSessionCache } from "@/lib/session-fetch";
 
 const PRESET_AVATARS = [
   {
@@ -1507,7 +1508,7 @@ const ACCOUNT_THEMES: Record<
 
 export default function UserDashboard() {
   const queryClient = useQueryClient();
-  const { user: authUser, logout } = useAuthContext();
+  const { user: authUser, logout, restoreAuth } = useAuthContext();
   const [location, setLocation] = useLocation();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
@@ -1523,39 +1524,90 @@ export default function UserDashboard() {
     "account" | "preferences"
   >("account");
 
-  // Avatar Management
+  // Avatar Management — backed by real PostgreSQL storage (/api/profile/avatar)
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [customAvatarUrl, setCustomAvatarUrl] = useState<string>(
-    () => localStorage.getItem("user_custom_avatar") || authUser?.avatar || "",
+    () => authUser?.avatarUrl || authUser?.avatar || "",
   );
 
-  const handleSelectAvatar = (url: string) => {
-    setCustomAvatarUrl(url);
-    localStorage.setItem("user_custom_avatar", url);
-    toast({
-      title: "Photo de profil mise à jour",
-      description: "Votre avatar a été appliqué avec succès.",
-    });
-    setShowAvatarModal(false);
+  useEffect(() => {
+    const serverAvatar = authUser?.avatarUrl || authUser?.avatar || "";
+    if (serverAvatar) {
+      setCustomAvatarUrl(serverAvatar);
+    }
+  }, [authUser?.avatarUrl, authUser?.avatar]);
+
+  const handleSelectAvatar = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Could not load selected avatar.");
+      const blob = await response.blob();
+      const file = new File([blob], "avatar.png", {
+        type: blob.type && blob.type.startsWith("image/") ? blob.type : "image/png",
+      });
+      const form = new FormData();
+      form.append("avatar", file);
+      const uploadRes = await authenticatedFetch("/api/profile/avatar", {
+        method: "POST",
+        body: form,
+      });
+      const uploadJson = await uploadRes.json().catch(() => null);
+      if (!uploadRes.ok || !uploadJson?.success) {
+        throw new Error(uploadJson?.message || "Could not save avatar.");
+      }
+      localStorage.removeItem("user_custom_avatar");
+      setCustomAvatarUrl(uploadJson.avatarUrl);
+      invalidateAuthSessionCache();
+      await restoreAuth();
+      toast({
+        title: "Photo de profil mise à jour",
+        description: "Votre avatar a été enregistré sur votre compte.",
+      });
+      setShowAvatarModal(false);
+    } catch (err) {
+      toast({
+        title: "Échec de la mise à jour",
+        description:
+          err instanceof Error ? err.message : "Impossible d'enregistrer cet avatar.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUploadAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadAvatarFile = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUri = event.target?.result as string;
-      if (dataUri) {
-        setCustomAvatarUrl(dataUri);
-        localStorage.setItem("user_custom_avatar", dataUri);
-        toast({
-          title: "Nouvelle photo appliquée",
-          description: "Votre photo de profil a été enregistrée.",
-        });
-        setShowAvatarModal(false);
+    try {
+      const form = new FormData();
+      form.append("avatar", file);
+      const res = await authenticatedFetch("/api/profile/avatar", {
+        method: "POST",
+        body: form,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || "Upload failed.");
       }
-    };
-    reader.readAsDataURL(file);
+      localStorage.removeItem("user_custom_avatar");
+      setCustomAvatarUrl(json.avatarUrl);
+      invalidateAuthSessionCache();
+      await restoreAuth();
+      toast({
+        title: "Nouvelle photo enregistrée",
+        description: "Votre photo de profil est synchronisée sur tous vos appareils.",
+      });
+      setShowAvatarModal(false);
+    } catch (err) {
+      toast({
+        title: "Échec de l'envoi",
+        description:
+          err instanceof Error ? err.message : "Impossible d'enregistrer cette image.",
+        variant: "destructive",
+      });
+    }
   };
 
   const downloadProfilePicture = () => {

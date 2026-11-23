@@ -7,6 +7,8 @@ import { LEGAL_COPY } from "./legal-translations";
 import { OFFER_COPY } from "./offer-translations";
 import { ONBOARDING_COPY } from "./onboarding-translations";
 import { RECOVERY_COPY } from "./recovery-translations";
+import { DIRECTORY_COPY } from "./directory-translations";
+import { VERSOAI_COPY } from "./versoai-translations";
 import { SPANISH_COPY } from "./spanish-translations";
 
 // Only authored public copy belongs here. Never add account or user-generated content.
@@ -19,6 +21,8 @@ export const PUBLIC_COPY = [
   ...ONBOARDING_COPY,
   ...GEO_ADMIN_COPY,
   ...RECOVERY_COPY,
+  ...DIRECTORY_COPY,
+  ...VERSOAI_COPY,
   ["AI detects:", "L'IA détecte :"],
   ["confidence", "confiance"],
   ["AI found {count} business in {sector}.", "L'IA a trouvé {count} entreprise dans le secteur {sector}."],

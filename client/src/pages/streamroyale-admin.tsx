@@ -22,6 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { TmuShell } from "@/components/music/TmuShell";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -63,16 +64,19 @@ export default function StreamRoyaleAdmin() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#06020f] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
-      </div>
+      <TmuShell chrome="site">
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
+        </div>
+      </TmuShell>
     );
   }
 
   const stats = overview;
 
   return (
-    <div className="min-h-screen bg-[#06020f] text-white p-4 md:p-8">
+    <TmuShell chrome="site">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
@@ -453,5 +457,6 @@ export default function StreamRoyaleAdmin() {
         </Card>
       )}
     </div>
+    </TmuShell>
   );
 }

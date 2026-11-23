@@ -12,12 +12,13 @@ import React, {
   useMemo,
 } from "react";
 import { useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   MessageCircle,
   X,
   Send,
   Search,
+  ChevronDown,
   ChevronLeft,
   Loader2,
   Music,
@@ -145,10 +146,17 @@ export function HeaderMessagesButton({
     fetchUnread();
   }, [user, isLoading, fetchUnread]);
 
-  // Real-time unread counter bump
-  const handleLiveMessage = useCallback(() => {
-    fetchUnread();
-  }, [fetchUnread]);
+  // Real-time unread counter bump (ignore messages sent by self)
+  const handleLiveMessage = useCallback(
+    (evt?: { message?: unknown }) => {
+      const incoming = evt?.message as { senderId?: string | number } | undefined;
+      if (incoming?.senderId && String(incoming.senderId) === String(user?.id)) {
+        return;
+      }
+      fetchUnread();
+    },
+    [fetchUnread, user?.id],
+  );
   useInboxSocket(user ? handleLiveMessage : undefined);
 
   const handleClick = () => {
@@ -207,15 +215,15 @@ export function MessagesPage() {
   if (!user) return null;
 
   return (
-    <div className="h-full min-h-0 bg-slate-950 text-white">
-      <div className="mx-auto flex h-full min-h-0 max-w-[1200px] border-x border-white/[0.06]">
-        <div className="flex h-full min-h-0 flex-1">
+    <div className="flex h-full min-h-0 w-full flex-col bg-[#f6f3ee] dark:bg-slate-950 text-white">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-1 sm:border-x sm:border-white/[0.08] bg-slate-950 shadow-sm">
+        <div className="flex h-full min-h-0 w-full flex-1">
           <TwitterMessenger
             open={true}
             onClose={() =>
               window.history.length > 1
                 ? window.history.back()
-                : setLocation("/dashboard")
+                : setLocation("/blog")
             }
             inline
           />
@@ -314,6 +322,8 @@ export function TwitterMessenger({
   const [startingConvoId, setStartingConvoId] = useState<number | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
   const sendingRef = useRef(false);
   // The key of the send that has not been confirmed yet, so "Try again" after a
   // lost response cannot store the message twice.
@@ -481,11 +491,12 @@ export function TwitterMessenger({
     }
   }, []);
 
-  // Real-time incoming messages
+  // Real-time incoming messages (never echo the sender's own sent messages)
   const handleLiveMessage = useCallback(
     (evt: { conversationId: IdLike; message?: unknown }) => {
       const incoming = evt.message as Message | undefined;
       if (!incoming) return;
+      if (userId && String(incoming.senderId) === String(userId)) return;
 
       const isActive = sameId(selectedConvRef.current?.id, evt.conversationId);
       const isKnown = conversationsRef.current.some((c) =>
@@ -747,101 +758,60 @@ export function TwitterMessenger({
 
   /* ── Panel Body ── */
   // Private, live-updating screen: keep Google Translate out. It re-parents the text React manages (which crashes the app) and would send messages to Google.
+  // Single unified centered inbox: shows either the unified conversation list OR the active chat thread (never splits the screen into duplicated options).
   const panelBody = (
     <div
       translate="no"
-      className={`notranslate flex ${inline ? "h-full" : "h-[85vh] sm:h-[600px]"} overflow-hidden bg-black relative`}
+      className={`notranslate flex w-full flex-1 min-h-0 min-w-0 ${inline ? "h-full" : "h-[85vh] sm:h-[600px]"} overflow-hidden bg-slate-950 relative`}
     >
-      {/* LEFT SIDEBAR — Conversation List */}
-      <div
-        className={`flex w-full flex-col border-r border-white/[0.06] sm:w-[320px] lg:w-[360px] ${selectedConv ? "hidden sm:flex" : "flex"}`}
-      >
+      {/* CONVERSATION LIST (shown when no thread is open) */}
+      {!selectedConv && (
+      <div className="flex w-full flex-1 min-h-0 flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 px-5 pb-4 pt-4 backdrop-blur-md">
-          <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="shrink-0 border-b border-white/[0.08] bg-slate-950/95 px-4 sm:px-6 pb-4 pt-4 backdrop-blur-md">
+          <div className="mb-3 flex items-center justify-between gap-3">
             {inline ? (
               <button
                 type="button"
                 onClick={onClose}
-                className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white min-h-[36px]"
                 title="Return to the previous page"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Return</span>
+                <span>Back</span>
               </button>
             ) : (
               <span />
             )}
-            <button
-              onClick={onClose}
-              className="rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            {!inline && (
+              <button
+                onClick={onClose}
+                className="rounded-full p-2 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
           </div>
 
-          <div className="mb-4 flex items-end justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-bold leading-tight text-white">
                 Messages
               </h2>
-              <p className="mt-0.5 text-xs text-white/40">
-                Your conversations in one place
+              <p className="mt-0.5 text-xs text-white/50">
+                All your conversations in one unified inbox
               </p>
             </div>
             <button
+              type="button"
               onClick={openNewConversation}
-              className="flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-cyan-400"
+              className="flex shrink-0 items-center gap-1.5 rounded-full bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-xs font-bold text-slate-950 transition-colors min-h-[40px]"
               title="Start conversation with contacts"
             >
               <SquarePen className="h-3.5 w-3.5" />
               <span>New Message</span>
             </button>
-          </div>
-
-          {/* Portal Filter Tabs */}
-          <div className="flex gap-1 rounded-full bg-white/[0.04] p-1">
-            {(["music", "community", "all"] as const).map((key) => {
-              const active = portalFilter === key;
-              const portal = key === "all" ? null : PORTALS[key];
-
-              return (
-                <button
-                  key={key}
-                  onClick={() => setPortalFilter(key)}
-                  className={`relative flex-1 rounded-full py-1.5 text-xs font-medium transition-all ${
-                    active ? "text-white" : "text-white/40 hover:text-white/70"
-                  }`}
-                >
-                  {key === "all" ? (
-                    <span className="flex items-center justify-center gap-1">
-                      <MessageCircle className="h-3 w-3" />
-                      All
-                    </span>
-                  ) : portal ? (
-                    <span className="flex items-center justify-center gap-1">
-                      <portal.icon
-                        className="h-3 w-3"
-                        style={{ color: portal.color }}
-                      />
-                      {portal.label}
-                    </span>
-                  ) : null}
-                  {active && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 -z-10 rounded-full bg-white/10"
-                      transition={{
-                        type: "spring",
-                        damping: 25,
-                        stiffness: 300,
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
           </div>
         </div>
 
@@ -916,7 +886,6 @@ export function TwitterMessenger({
           {filtered.map((conv) => {
             const portal = PORTALS[resolvePortalKey(conv.portal, conv.type)];
             const isUnread = (conv.unreadCount || 0) > 0;
-            const isSelected = sameId(selectedConv?.id, conv.id);
 
             return (
               <button
@@ -925,9 +894,7 @@ export function TwitterMessenger({
                   setSelectedConv(conv);
                   setComposerError(null);
                 }}
-                className={`group flex w-full items-start gap-3 border-b border-white/[0.04] px-4 py-3 text-left transition-colors ${
-                  isSelected ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"
-                }`}
+                className="group flex w-full items-start gap-3 border-b border-white/[0.06] px-4 sm:px-6 py-3.5 text-left transition-colors hover:bg-white/[0.04]"
               >
                 {/* Avatar with portal ring */}
                 <div className={`relative flex-shrink-0`}>
@@ -977,20 +944,22 @@ export function TwitterMessenger({
           })}
         </div>
       </div>
+      )}
 
-      {/* RIGHT — Message Thread */}
-      <div
-        className={`flex flex-1 flex-col ${selectedConv ? "flex" : "hidden sm:flex"}`}
-      >
-        {selectedConv ? (
-          <>
+      {/* ACTIVE CHAT THREAD (centered full-width, always-visible sticky composer) */}
+      {selectedConv && (
+      <div className="flex flex-1 min-h-0 w-full flex-col overflow-hidden">
+        <>
             {/* Thread Header */}
-            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/[0.06] bg-black/80 px-4 py-3 backdrop-blur-md">
+            <div className="shrink-0 z-10 flex items-center gap-3 border-b border-white/[0.08] bg-slate-950/95 px-4 py-3 backdrop-blur-md">
               <button
+                type="button"
                 onClick={() => setSelectedConv(null)}
-                className="rounded-full p-2 text-white/50 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
+                aria-label="Back to conversations"
+                className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-white min-h-[36px]"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
+                <span>Messages</span>
               </button>
               <div
                 className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] ${theme?.ring || ""} ring-2`}
@@ -1035,10 +1004,17 @@ export function TwitterMessenger({
             </div>
 
             {/* Messages */}
-            <div
-              ref={scrollRef}
-              className="flex-1 space-y-1 overflow-y-auto px-4 py-4"
-            >
+            <div className="relative flex-1 min-h-0 flex flex-col">
+              <div
+                ref={scrollRef}
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  setShowScrollBottom(
+                    el.scrollHeight - el.scrollTop - el.clientHeight > 140,
+                  );
+                }}
+                className="flex-1 overflow-y-auto px-4 py-4"
+              >
               {loadingMsgs && messages.length === 0 && (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin text-white/20" />
@@ -1060,6 +1036,9 @@ export function TwitterMessenger({
 
               {messages.map((msg, idx) => {
                 const isMe = String(msg.senderId) === String(user?.id);
+                const sameAsPrev =
+                  idx > 0 &&
+                  String(messages[idx - 1]?.senderId) === String(msg.senderId);
                 const showDate =
                   idx === 0 ||
                   dateDivider(messages[idx - 1]?.createdAt, msg.createdAt);
@@ -1075,8 +1054,13 @@ export function TwitterMessenger({
                         </span>
                       </div>
                     )}
-                    <div
-                      className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                    <motion.div
+                      initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={reducedMotion ? { duration: 0 } : { duration: 0.16 }}
+                      className={`flex ${isMe ? "justify-end" : "justify-start"} ${
+                        sameAsPrev && !showDate ? "mt-1" : "mt-2.5"
+                      }`}
                     >
                       <div
                         className={`group relative max-w-[80%] sm:max-w-[70%] ${isMe ? "items-end" : "items-start"} flex flex-col`}
@@ -1093,8 +1077,8 @@ export function TwitterMessenger({
                         <div
                           className={`relative rounded-2xl px-4 py-2.5 text-[14px] leading-5 ${
                             isMe
-                              ? `${msgPortal.bg} text-white`
-                              : "bg-white/[0.06] text-white/90"
+                              ? `${msgPortal.bg} text-white rounded-br-sm`
+                              : "bg-white/[0.06] border border-white/[0.08] text-white/90 rounded-bl-sm"
                           } ${msg.pending ? "opacity-50" : ""}`}
                           style={
                             isMe ? { backgroundColor: msgPortal.color } : {}
@@ -1124,14 +1108,27 @@ export function TwitterMessenger({
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   </React.Fragment>
                 );
               })}
+              </div>
+              {showScrollBottom && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = scrollRef.current;
+                    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+                  }}
+                  className="absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full border border-purple-400/40 bg-[#180d34]/95 px-3 py-1.5 text-xs font-semibold text-purple-100 shadow-lg backdrop-blur-md hover:bg-purple-600/80 transition-colors"
+                >
+                  <ChevronDown className="h-3.5 h-3.5" /> Latest
+                </button>
+              )}
             </div>
 
-            {/* Composer */}
-            <div className="border-t border-white/[0.06] bg-black px-4 py-3">
+            {/* Composer — always pinned and visible at bottom of thread */}
+            <div className="shrink-0 border-t border-white/[0.08] bg-slate-950 px-3 sm:px-4 py-3">
               {composerError && (
                 <InboxNotice
                   failure={composerError}
@@ -1141,16 +1138,11 @@ export function TwitterMessenger({
                 />
               )}
               <div className="flex items-end gap-2">
-                <button className="rounded-full p-2 text-white/30 transition-colors hover:bg-white/5 hover:text-white/60">
-                  <Smile className="h-5 w-5" />
-                </button>
                 <div
-                  className={`flex flex-1 items-end rounded-full border px-4 py-2 transition-colors ${
+                  className={`flex flex-1 items-end rounded-2xl border px-4 py-2 transition-colors ${
                     msgText.trim()
-                      ? theme
-                        ? "border-white/20 bg-white/[0.06]"
-                        : "border-cyan-500/30 bg-cyan-500/[0.05]"
-                      : "border-white/10 bg-white/[0.03]"
+                      ? "border-amber-400/50 bg-white/[0.08]"
+                      : "border-white/15 bg-white/[0.04]"
                   }`}
                 >
                   <textarea
@@ -1162,27 +1154,22 @@ export function TwitterMessenger({
                         sendMessage();
                       }
                     }}
-                    placeholder="Start a new message…"
+                    placeholder="Write a message…"
                     rows={1}
-                    className="max-h-32 flex-1 resize-none bg-transparent py-1 text-[16px] text-white placeholder:text-white/35 focus:outline-none [touch-action:manipulation]"
-                    style={{ minHeight: "24px" }}
+                    className="max-h-32 flex-1 resize-none bg-transparent py-1 text-[16px] text-white placeholder:text-white/45 focus:outline-none [touch-action:manipulation]"
+                    style={{ minHeight: "26px" }}
                   />
                 </div>
                 <button
+                  type="button"
+                  aria-label="Send message"
                   onClick={sendMessage}
                   disabled={!msgText.trim() || sending}
-                  className={`rounded-full p-2.5 text-white transition-all ${
+                  className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all ${
                     msgText.trim() && !sending
-                      ? theme
-                        ? ""
-                        : "bg-cyan-500 text-black hover:opacity-80"
-                      : "text-white/20"
+                      ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                      : "bg-white/10 text-white/30"
                   }`}
-                  style={
-                    msgText.trim() && !sending && theme
-                      ? { backgroundColor: theme.color }
-                      : {}
-                  }
                 >
                   {sending ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -1192,32 +1179,9 @@ export function TwitterMessenger({
                 </button>
               </div>
             </div>
-          </>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03]">
-              <MessageCircle
-                className="h-8 w-8 text-white/15"
-                strokeWidth={1}
-              />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-white">Select a message</p>
-              <p className="mt-1 max-w-xs text-sm text-white/35">
-                Choose from your existing conversations, or start a new one with
-                contacts you follow.
-              </p>
-              <button
-                onClick={openNewConversation}
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all hover:scale-105"
-              >
-                <Plus className="h-4 w-4" />
-                New Conversation
-              </button>
-            </div>
-          </div>
-        )}
+        </>
       </div>
+      )}
 
       {/* NEW CONVERSATION / CONTACT PICKER MODAL */}
       <AnimatePresence>

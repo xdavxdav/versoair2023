@@ -33,6 +33,14 @@ export const DEFAULT_PAID_OFFERS: PaidOffer[] = [
     amountCents: 1000,
     active: true,
   },
+  {
+    key: "event_host_fee",
+    name: "Event hosting fee",
+    description:
+      "Host and publish an event with its ticket and merch arsenal on Verso Air.",
+    amountCents: 2500,
+    active: true,
+  },
 ];
 
 export function isPaidOfferKey(value: unknown): value is string {
@@ -163,6 +171,19 @@ export async function revokePaidOfferPurchase(
           AND NOT EXISTS (
             SELECT 1 FROM paid_offer_purchases
              WHERE user_id = $2 AND offer_key = 'activity_ticket' AND event_id = $1
+          )`,
+      [purchase.event_id, purchase.user_id],
+    );
+  }
+  if (purchase.offer_key === "event_host_fee" && purchase.event_id != null) {
+    await db.query(
+      `UPDATE events
+          SET status = CASE WHEN status IN ('PENDING', 'PUBLISHED') THEN 'DRAFT' ELSE status END,
+              updated_at = NOW()
+        WHERE id = $1 AND organizer_id = $2
+          AND NOT EXISTS (
+            SELECT 1 FROM paid_offer_purchases
+             WHERE user_id = $2 AND offer_key = 'event_host_fee' AND event_id = $1
           )`,
       [purchase.event_id, purchase.user_id],
     );

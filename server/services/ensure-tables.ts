@@ -3,7 +3,7 @@
  * VERSO AIR — Startup Table Migration
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Runs on every server boot. Ensures ALL 55 schema tables exist via
+ * Runs on every server boot. Ensures ALL 56 schema tables exist via
  * `CREATE TABLE IF NOT EXISTS`. This is critical for Render + Neon deployments
  * where drizzle-kit push cannot be run interactively.
  *
@@ -14,6 +14,9 @@
 import { pool } from "../db";
 import type { PoolClient } from "pg";
 import { TICKET_SCHEMA_UPGRADES } from "./ticket-schema";
+import { VXPP_SCHEMA_UPGRADES } from "./vxpp-schema";
+import { BILLING_PROFILE_SCHEMA_UPGRADES } from "./billing-profile";
+import { ensureVxppCommunitiesSchema } from "./vxpp-communities-schema";
 
 export async function ensureAllTables(
   connect: () => Promise<PoolClient> = () => pool.connect(),
@@ -82,6 +85,51 @@ export async function ensureAllTables(
 
     for (const statement of TICKET_SCHEMA_UPGRADES) {
       await client.query(statement);
+    }
+
+    for (const statement of VXPP_SCHEMA_UPGRADES) {
+      await client.query(statement);
+    }
+
+    for (const statement of BILLING_PROFILE_SCHEMA_UPGRADES) {
+      await client.query(statement);
+    }
+
+    await ensureVxppCommunitiesSchema(client);
+
+    // Ensure curated public artist directory entries exist (idempotent)
+    const curatedArtists: Array<{
+      stageName: string;
+      genre: string;
+      url: string;
+      countryCode: string | null;
+    }> = [
+      { stageName: "Kouzco", genre: "Hip-Hop", url: "https://soundcloud.com/kouzco", countryCode: null },
+      { stageName: "DeuZeus", genre: "Hip-Hop", url: "https://soundcloud.com/denyce-sanchez", countryCode: "CA" },
+    ];
+    for (const artist of curatedArtists) {
+      try {
+        await client.query(
+          `INSERT INTO artists (stage_name, genre, label_status, spotify_url, country_code)
+           SELECT $1::text, $2::text, 'independent', $3::text, $4::text
+           WHERE NOT EXISTS (
+             SELECT 1 FROM artists WHERE LOWER(stage_name) = LOWER($1::text)
+           )`,
+          [artist.stageName, artist.genre, artist.url, artist.countryCode],
+        );
+        await client.query(
+          `UPDATE artists
+           SET spotify_url = $2::text
+           WHERE LOWER(stage_name) = LOWER($1::text)
+             AND spotify_url = 'https://soundcloud.com/DeuZeus'`,
+          [artist.stageName, artist.url],
+        );
+      } catch (err) {
+        console.warn(
+          `  ⚠️ [MIGRATE] Skipping ${artist.stageName} artist seed:`,
+          err instanceof Error ? err.message : err,
+        );
+      }
     }
 
     const systemRoles = [
@@ -662,6 +710,38 @@ const TABLE_STATEMENTS: TableDef[] = [
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )`,
+  },
+  {
+    table: "business_owners",
+    sql: `CREATE TABLE IF NOT EXISTS business_owners (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
+      invited_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      invited_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      accepted_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      CONSTRAINT business_owners_status_check
+        CHECK (status IN ('invited', 'active')),
+      CONSTRAINT business_owners_business_user_unique
+        UNIQUE (business_id, user_id)
+    )`,
+  },
+  {
+    table: "business_owners",
+    sql: `CREATE INDEX IF NOT EXISTS business_owners_user_status_idx
+      ON business_owners (user_id, status)`,
+  },
+  {
+    table: "business_owners",
+    sql: `INSERT INTO business_owners
+      (business_id, user_id, status, accepted_at)
+      SELECT id, owner_id, 'active', NOW()
+      FROM businesses
+      WHERE owner_id IS NOT NULL
+      ON CONFLICT (business_id, user_id) DO NOTHING`,
   },
   {
     table: "business_claims",

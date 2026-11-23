@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "wouter";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 interface MusicPortalProps {
   isOpen: boolean;
@@ -24,6 +25,10 @@ interface MusicArtist {
 
 export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
   useScrollLock(isOpen);
+  const { currentLang } = useLanguage();
+  const isFr = currentLang.toLowerCase().startsWith("fr");
+  const isEs = currentLang.toLowerCase().startsWith("es");
+  const playsLabel = isFr ? "écoutes" : isEs ? "reproducciones" : "plays";
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
 
@@ -150,7 +155,12 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Verso Air Musical Label</h3>
+          <h3 className="text-lg font-semibold">
+            <span translate="no" className="notranslate">
+              Verso Air
+            </span>{" "}
+            Musical Label
+          </h3>
           <Button
             variant="ghost"
             size="icon"
@@ -163,30 +173,49 @@ export default function MusicPortal({ isOpen, onClose }: MusicPortalProps) {
 
         <div className="space-y-6">
           <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <h4 className="font-medium mb-3">Top Artists</h4>
-            <div className="space-y-2">
-              {artists?.slice(0, 2).map((artist, index: number) => (
-                <div key={artist.id} className="flex items-center space-x-3">
-                  <img
-                    src={
-                      artist.imageUrl ||
-                      `https://images.unsplash.com/photo-${
-                        index === 0
-                          ? "1493225457124-a3eb161ffa5f"
-                          : "1534528741775-53994a69daeb"
-                      }?w=40&h=40&fit=crop&crop=face`
-                    }
-                    alt={artist.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div>
-                    <p className="font-medium">{artist.name}</p>
-                    <p className="text-sm text-purple-200">
-                      {artist.totalStreams?.toLocaleString() || "0"} streams
-                    </p>
-                  </div>
-                </div>
-              )) || (
+            <h4 className="font-medium mb-3">
+              {isFr ? "Artistes vedettes" : isEs ? "Artistas destacados" : "Top Artists"}
+            </h4>
+            <div className="space-y-2.5">
+              {artists?.slice(0, 3).map((artist) => {
+                const initials = (artist.name || "?")
+                  .split(/\s+/)
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase();
+                return (
+                  <Link
+                    key={artist.id}
+                    href={`/artist-catalogue/${artist.id}`}
+                    onClick={onClose}
+                    className="flex items-center space-x-3 rounded-lg p-1.5 hover:bg-white/10 transition-colors"
+                  >
+                    {artist.imageUrl ? (
+                      <img
+                        src={artist.imageUrl}
+                        alt={artist.name}
+                        className="w-10 h-10 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div
+                        translate="no"
+                        className="notranslate w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center text-white text-xs font-extrabold shrink-0"
+                      >
+                        {initials}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p translate="no" className="notranslate font-medium truncate">
+                        {artist.name}
+                      </p>
+                      <p translate="no" className="notranslate text-xs text-purple-200">
+                        {(artist.totalStreams || 0).toLocaleString()} {playsLabel}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              }) || (
                 <>
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">

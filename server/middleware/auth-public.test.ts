@@ -4,6 +4,7 @@ import { once } from "node:events";
 import test from "node:test";
 import express from "express";
 import music from "../routes/music";
+import musicGenres from "../routes/music-genres";
 import translations from "../routes/translations";
 
 test("anonymous public reads work through the global auth gate without exposing protected routes", async () => {
@@ -21,6 +22,7 @@ test("anonymous public reads work through the global auth gate without exposing 
     res.json({ reached: true }),
   );
   app.use("/api/translations", translations);
+  app.use("/api/music-genres", musicGenres);
   app.use("/api/music", music);
   app.use("/api/notifications", notifications);
   app.get("/auth/oauth/providers", (_req, res) => res.json({ providers: [] }));
@@ -31,6 +33,9 @@ test("anonymous public reads work through the global auth gate without exposing 
     res.json({ eligiblePaths: ["/get-involved"] }),
   );
   app.post("/api/page-readiness", (_req, res) => res.sendStatus(204));
+  app.get("/api/arcade/config", (_req, res) => res.json({ enabledGames: {} }));
+  app.use("/api/arcade/admin", (_req, res) => res.json({ reached: true }));
+  app.use("/api/arcade-contest", (_req, res) => res.json({ reached: true }));
   // Stands in for the listening-sessions router: only the gate's decision is under test here.
   app.use("/api/listening-sessions", (_req, res) => res.json({ reached: true }));
   // Stands in for the business-logo router: only the gate's decision is under test here.
@@ -50,6 +55,9 @@ test("anonymous public reads work through the global auth gate without exposing 
     assert.equal((await response.json()).language, "en");
     assert.equal((await fetch(`${origin}/api/translations/not-a-language`)).status, 400);
     assert.equal((await fetch(`${origin}/api/translations/en?text=private`)).status, 400);
+    assert.equal((await fetch(`${origin}/api/music-genres`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/music-genres/countries`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/music-genres`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/api/music/analytics`)).status, 401);
     const publicNotifications = await fetch(`${origin}/api/notifications`);
     assert.equal(publicNotifications.status, 200);
@@ -76,6 +84,35 @@ test("anonymous public reads work through the global auth gate without exposing 
       (await fetch(`${origin}/api/page-readiness`, { method: "POST" })).status,
       401,
     );
+    assert.equal((await fetch(`${origin}/api/arcade/config`)).status, 200);
+    assert.equal((await fetch(`${origin}/api/arcade/admin/overview`)).status, 401);
+    assert.equal(
+      (await fetch(`${origin}/api/arcade/admin/config`, { method: "PUT" })).status,
+      401,
+    );
+    // Country contests: visitors may see which contests are open; everything else needs a session.
+    assert.equal((await fetch(`${origin}/api/arcade-contest/contests`)).status, 200);
+    for (const path of [
+      "/api/arcade-contest/CA/leaderboard",
+      "/api/arcade-contest/me",
+      "/api/arcade-contest/me/payouts",
+      "/api/arcade-contest/admin/contests",
+      "/api/arcade-contest/admin/payouts",
+    ]) {
+      assert.equal((await fetch(`${origin}${path}`)).status, 401, `GET ${path} is not public`);
+    }
+    for (const path of [
+      "/api/arcade-contest/contests",
+      "/api/arcade-contest/vote",
+      "/api/arcade-contest/admin/contests/CA/close",
+      "/api/arcade-contest/admin/payouts/release-escrow",
+    ]) {
+      assert.equal(
+        (await fetch(`${origin}${path}`, { method: "POST" })).status,
+        401,
+        `POST ${path} needs a session`,
+      );
+    }
     assert.equal((await fetch(`${origin}/api/translations/en`, { method: "POST" })).status, 401);
     assert.equal((await fetch(`${origin}/auth/oauth/providers`, { method: "POST" })).status, 404);
     assert.equal((await fetch(`${origin}/api/v1/admin/users`)).status, 401);
@@ -158,5 +195,37 @@ test("anonymous public reads work through the global auth gate without exposing 
     await pool.end();
     if (previousUrl === undefined) delete process.env.DATABASE_URL;
     else process.env.DATABASE_URL = previousUrl;
+  }
+});
+
+test("GET /auth/session returns 200 unauthenticated for anonymous visitors and 401 for invalid tokens", async () => {
+  const { globalAuthGate } = await import("./auth");
+  const { default: authRouter } = await import("../routes/auth");
+  const app = express();
+  app.use(globalAuthGate);
+  app.use("/auth", authRouter);
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+  const origin = `http://127.0.0.1:${address.port}`;
+  try {
+    const anon = await fetch(`${origin}/auth/session`);
+    assert.equal(anon.status, 200);
+    assert.equal(anon.headers.get("cache-control"), "no-store");
+    assert.deepEqual(await anon.json(), {
+      success: true,
+      authenticated: false,
+      user: null,
+    });
+
+    const badToken = await fetch(`${origin}/auth/session`, {
+      headers: { Authorization: "Bearer not-a-valid-jwt" },
+    });
+    assert.equal(badToken.status, 401);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
   }
 });

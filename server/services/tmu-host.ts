@@ -1,5 +1,8 @@
 /**
- * Artist attributes for session display and published tracks available to signed-in hosts.
+ * Who may host a TMU live listening session, and which tracks a host may put in a set.
+ *
+ * Any signed-in user may host a listening party using any published track in the TMU catalogue.
+ * Track durations are always resolved server-side from stored rows, never trusted from the client.
  */
 import type { SetTrack } from "../../shared/listening-session";
 
@@ -10,6 +13,7 @@ export interface HostDb {
 export interface HostEligibility {
   registered: boolean;
   verified: boolean;
+  canHost: boolean;
 }
 
 export async function getHostEligibility(db: HostDb, userId: number): Promise<HostEligibility> {
@@ -30,7 +34,7 @@ export async function getHostEligibility(db: HostDb, userId: number): Promise<Ho
   );
   const row = result.rows[0] ?? {};
   const verified = row.verified === true;
-  return { registered: row.registered === true || verified, verified };
+  return { registered: row.registered === true || verified, verified, canHost: true };
 }
 
 export interface HostTrackOption {
@@ -45,20 +49,22 @@ const PUBLISHED_TRACKS = `FROM music_tracks mt
   LEFT JOIN artists art ON art.id = mt.artist_id
  WHERE mt.status = 'published' AND COALESCE(mt.duration, 0) > 0`;
 
-/** Published tracks with a known length, optionally filtered by title. */
-export async function searchPublishedTracks(
+/** Any published TMU track with a known length, optionally filtered by title or artist name. */
+export async function searchHostTracks(
   db: HostDb,
+  _userId: number,
   q: string,
   limit: number,
 ): Promise<HostTrackOption[]> {
-  const term = q.trim().replace(/[\\%_]/g, (char) => `\\${char}`);
+  const trimmed = q.trim();
+  const term = trimmed.replace(/[\\%_]/g, (char) => `\\${char}`);
   const result = await db.query(
     `SELECT mt.id, mt.title, COALESCE(ma.name, art.stage_name) AS artist_name, mt.duration
        ${PUBLISHED_TRACKS}
-        AND ($1::text = '' OR mt.title ILIKE $2)
+        AND ($1::text = '' OR mt.title ILIKE $2 ESCAPE '\\' OR COALESCE(ma.name, art.stage_name, '') ILIKE $2 ESCAPE '\\')
       ORDER BY mt.id DESC
       LIMIT $3`,
-    [q.trim(), `%${term}%`, Math.min(Math.max(limit, 1), 50)],
+    [trimmed, `%${term}%`, Math.min(Math.max(limit, 1), 50)],
   );
   return result.rows.map((row) => ({
     id: Number(row.id),
@@ -74,14 +80,18 @@ export type HostTracksResult =
 
 /**
  * Turns the chosen track ids into set entries. Lengths come from the stored track, never from the
- * request, and every track must be published.
+ * request, and every track must be published with a valid duration.
  */
-export async function resolvePublishedTracks(
+export async function resolveHostTracks(
   db: HostDb,
+  _userId: number,
   trackIds: readonly number[],
 ): Promise<HostTracksResult> {
   const result = await db.query(
-    `SELECT mt.id, mt.duration ${PUBLISHED_TRACKS} AND mt.id = ANY($1::int[])`,
+    `SELECT mt.id, mt.duration
+       FROM music_tracks mt
+      WHERE mt.status = 'published' AND COALESCE(mt.duration, 0) > 0
+        AND mt.id = ANY($1::int[])`,
     [trackIds],
   );
   const durations = new Map(result.rows.map((row) => [Number(row.id), Number(row.duration)]));
@@ -90,7 +100,7 @@ export async function resolvePublishedTracks(
     return {
       ok: false,
       code: "track_unavailable",
-      message: "You can only add published tracks to a live session.",
+      message: "Every track in a listening session must be a published track with a valid duration.",
       trackIds: missing,
     };
   }

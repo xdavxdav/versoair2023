@@ -75,7 +75,6 @@ test("a full refund marks the order refunded once and a replay changes nothing",
   const ledger = db.transactions.filter((t) => t.type === "refund");
   assert.equal(ledger.length, 1);
   assert.equal(ledger[0]?.amount, "-50.00");
-  assert.equal(ledger[0]?.currency, "CAD");
   assert.equal(ledger[0]?.reference, "stripe_event:evt_refund_1");
 });
 
@@ -329,12 +328,7 @@ test("print orders collect a CA/US shipping address and keep it on the order; pa
     unitCents: 500,
     lineCents: 500,
   });
-  const base = {
-    orderId: 1,
-    userId: 7,
-    customerEmail: "customer@example.com",
-    baseUrl: "https://example.test",
-  };
+  const base = { orderId: 1, userId: 7, baseUrl: "https://example.test" };
   assert.deepEqual(
     buildCheckoutSessionParams({ ...base, lines: [line("print_product")] })
       .shipping_address_collection,

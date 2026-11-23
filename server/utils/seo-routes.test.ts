@@ -26,7 +26,6 @@ test("public pages remain discoverable in the sitemap", () => {
     "/contact",
     "/privacy",
     "/terms",
-    "/aup",
     "/cookies",
     "/marketing/journal",
     "/marketing/print",

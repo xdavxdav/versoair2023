@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { TmuShell } from "@/components/music/TmuShell";
 import { useStreamRoyaleReview } from "@/hooks/use-streamroyale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,8 +76,9 @@ export default function StreamRoyaleReview() {
   }
 
   return (
-    <main className="min-h-screen bg-[#06020f] p-4 text-white md:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <TmuShell chrome="site">
+      <main className="p-4 md:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link href={adminHref}>
@@ -452,5 +454,6 @@ export default function StreamRoyaleReview() {
         ) : null}
       </div>
     </main>
+    </TmuShell>
   );
 }

@@ -25,7 +25,6 @@ export class FakeDb {
   orders: Row[] = [];
   orderItems: Row[] = [];
   transactions: Row[] = [];
-  userEmails = new Map<number, string>([[7, "user7@example.com"]]);
   userTiers = new Map<number, string>();
   userExpiries = new Map<number, string>();
   statements: string[] = [];
@@ -104,11 +103,6 @@ export class FakeDb {
       throw new Error(`injected failure: ${sql.slice(0, 60)}`);
     }
     let m: RegExpMatchArray | null;
-
-    if (sql === "SELECT email FROM users WHERE id = $1") {
-      const email = this.userEmails.get(Number(p[0]));
-      return result(email ? [{ email }] : []);
-    }
 
     if (
       sql ===
@@ -208,16 +202,15 @@ export class FakeDb {
 
     if (
       sql ===
-      "INSERT INTO transactions (business_id, user_id, amount, currency, type, status, reference) VALUES (NULL, $1, $2, $3, $4, 'completed', $5) ON CONFLICT DO NOTHING RETURNING id"
+      "INSERT INTO transactions (business_id, user_id, amount, type, status, reference) VALUES (NULL, $1, $2, $3, 'completed', $4) ON CONFLICT DO NOTHING RETURNING id"
     ) {
-      if (this.transactions.some((t) => t.reference === p[4])) return result();
+      if (this.transactions.some((t) => t.reference === p[3])) return result();
       const row = {
         id: ++this.transactionSeq,
         user_id: p[0],
         amount: p[1],
-        currency: p[2],
-        type: p[3],
-        reference: p[4],
+        type: p[2],
+        reference: p[3],
       };
       this.transactions.push(row);
       undo?.push(() => {
@@ -290,11 +283,11 @@ export class FakeDb {
       return result();
     }
 
-    if (sql === "SELECT user_id, currency, type FROM transactions WHERE reference = $1") {
+    if (sql === "SELECT user_id, type FROM transactions WHERE reference = $1") {
       return result(
         this.transactions
           .filter((t) => t.reference === p[0])
-          .map((t) => ({ user_id: t.user_id, currency: t.currency, type: t.type })),
+          .map((t) => ({ user_id: t.user_id, type: t.type })),
       );
     }
 

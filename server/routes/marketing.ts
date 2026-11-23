@@ -37,6 +37,17 @@ import {
   parseItemId,
   parseQuantity,
 } from "../services/marketing-checkout";
+import {
+  listAdminCatalog,
+  MAX_CATALOG_PRICE_CENTS,
+  MIN_CATALOG_PRICE_CENTS,
+  VALID_PACK_TIERS,
+  VALID_PRINT_CATEGORIES,
+  validateCreatePackInput,
+  validateCreatePrintProductInput,
+  type PackTier,
+  type PrintCategory,
+} from "../services/marketing-catalog";
 
 import { numericRouteParam } from "../middleware/numeric-route-param";
 
@@ -653,15 +664,18 @@ router.get("/packs", async (_req: Request, res: Response) => {
   try {
     const packs = await pool.query(
       `SELECT mp.*, 
-              json_agg(json_build_object(
-                'id', pi.id, 'name', COALESCE(to_jsonb(pi)->>'name', to_jsonb(pi)->>'item_type'),
-                'description', pi.description, 'included', COALESCE((to_jsonb(pi)->>'included')::boolean, true)
-              ) ORDER BY pi.id) AS items
+              COALESCE(
+                json_agg(json_build_object(
+                  'id', pi.id, 'name', COALESCE(to_jsonb(pi)->>'name', to_jsonb(pi)->>'item_type'),
+                  'description', pi.description, 'included', COALESCE((to_jsonb(pi)->>'included')::boolean, true)
+                ) ORDER BY pi.id) FILTER (WHERE pi.id IS NOT NULL),
+                '[]'::json
+              ) AS items
        FROM marketing_packs mp
        LEFT JOIN pack_items pi ON pi.pack_id = mp.id
        WHERE COALESCE((to_jsonb(mp)->>'is_active')::boolean, (to_jsonb(mp)->>'active')::boolean, false) = true
        GROUP BY mp.id
-       ORDER BY mp.price_cents ASC`,
+       ORDER BY COALESCE(mp.sort_order, 0) ASC, mp.price_cents ASC`,
     );
 
     res.json({ success: true, data: packs.rows });
@@ -678,10 +692,13 @@ router.get("/packs/:id", async (req: Request, res: Response) => {
   try {
     const pack = await pool.query(
       `SELECT mp.*,
-              json_agg(json_build_object(
-                'id', pi.id, 'name', COALESCE(to_jsonb(pi)->>'name', to_jsonb(pi)->>'item_type'),
-                'description', pi.description, 'included', COALESCE((to_jsonb(pi)->>'included')::boolean, true)
-              ) ORDER BY pi.id) AS items
+              COALESCE(
+                json_agg(json_build_object(
+                  'id', pi.id, 'name', COALESCE(to_jsonb(pi)->>'name', to_jsonb(pi)->>'item_type'),
+                  'description', pi.description, 'included', COALESCE((to_jsonb(pi)->>'included')::boolean, true)
+                ) ORDER BY pi.id) FILTER (WHERE pi.id IS NOT NULL),
+                '[]'::json
+              ) AS items
        FROM marketing_packs mp
        LEFT JOIN pack_items pi ON pi.pack_id = mp.id
        WHERE mp.id = $1
@@ -1287,6 +1304,467 @@ router.get(
     const status = getPaymentsModeStatus();
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, ...status, data: status });
+  },
+);
+
+/**
+ * GET /api/marketing/admin/catalog
+ * Owner only: list all marketing packs (+ items) and print products, including inactive ones.
+ */
+router.get(
+  "/admin/catalog",
+  requireOwner,
+  async (_req: Request, res: Response) => {
+    try {
+      res.setHeader("Cache-Control", "no-store");
+      const catalog = await listAdminCatalog(pool);
+      res.json({ success: true, data: catalog });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
+
+/**
+ * POST /api/marketing/admin/packs
+ * Owner only: create a marketing pack (and optional pack_items) in CAD cents.
+ */
+router.post(
+  "/admin/packs",
+  requireOwner,
+  async (req: Request, res: Response) => {
+    const parsed = validateCreatePackInput(
+      req.body && typeof req.body === "object" ? req.body : {},
+    );
+    if (!parsed.ok) {
+      return res.status(400).json({ success: false, error: parsed.error });
+    }
+    const {
+      name,
+      slug,
+      tier,
+      description,
+      priceCents,
+      features,
+      active,
+      sortOrder,
+    } = parsed.data;
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existing = await client.query(
+        `SELECT id FROM marketing_packs WHERE slug = $1 LIMIT 1`,
+        [slug],
+      );
+      if (existing.rows.length > 0) {
+        await client.query("ROLLBACK");
+        return res
+          .status(409)
+          .json({ success: false, error: `Pack slug "${slug}" already exists` });
+      }
+
+      const inserted = await client.query(
+        `INSERT INTO marketing_packs
+           (name, slug, tier, description, price_cents, features, active, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+         RETURNING *`,
+        [
+          name,
+          slug,
+          tier,
+          description,
+          priceCents,
+          JSON.stringify(features),
+          active,
+          sortOrder,
+        ],
+      );
+      const pack = inserted.rows[0];
+
+      for (const itemName of features) {
+        await client.query(
+          `INSERT INTO pack_items (pack_id, item_type, description, quantity)
+           VALUES ($1, $2, $3, 1)`,
+          [pack.id, itemName, null],
+        );
+      }
+
+      await client.query("COMMIT");
+      res.status(201).json({ success: true, data: pack });
+    } catch (error: any) {
+      await client.query("ROLLBACK").catch(() => {});
+      res.status(500).json({ success: false, error: error.message });
+    } finally {
+      client.release();
+    }
+  },
+);
+
+/**
+ * PATCH /api/marketing/admin/packs/:id
+ * Owner only: update a marketing pack's CAD price, active flag, name, tier, description, or items.
+ */
+router.patch(
+  "/admin/packs/:id",
+  requireOwner,
+  async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id, 10);
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+
+    if (body.name !== undefined) {
+      const name = typeof body.name === "string" ? body.name.trim() : "";
+      if (!name || name.length > 120) {
+        return res
+          .status(400)
+          .json({ success: false, error: "name must be 1–120 characters" });
+      }
+      updates.push(`name = $${idx++}`);
+      values.push(name);
+    }
+
+    if (body.tier !== undefined) {
+      const tier =
+        typeof body.tier === "string" ? body.tier.trim().toLowerCase() : "";
+      if (!VALID_PACK_TIERS.includes(tier as PackTier)) {
+        return res.status(400).json({
+          success: false,
+          error: `tier must be one of: ${VALID_PACK_TIERS.join(", ")}`,
+        });
+      }
+      updates.push(`tier = $${idx++}`);
+      values.push(tier);
+    }
+
+    const rawPrice = body.priceCents ?? body.price_cents;
+    if (rawPrice !== undefined) {
+      const priceCents = Number(rawPrice);
+      if (
+        !Number.isSafeInteger(priceCents) ||
+        priceCents < MIN_CATALOG_PRICE_CENTS ||
+        priceCents > MAX_CATALOG_PRICE_CENTS
+      ) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "priceCents must be an integer between 100 and 500000 (CA$1.00–CA$5,000.00)",
+        });
+      }
+      updates.push(`price_cents = $${idx++}`);
+      values.push(priceCents);
+    }
+
+    if (body.description !== undefined) {
+      if (body.description !== null && typeof body.description !== "string") {
+        return res
+          .status(400)
+          .json({ success: false, error: "description must be a string or null" });
+      }
+      updates.push(`description = $${idx++}`);
+      values.push(
+        body.description === null
+          ? null
+          : body.description.trim().slice(0, 1000) || null,
+      );
+    }
+
+    if (body.active !== undefined) {
+      if (typeof body.active !== "boolean") {
+        return res
+          .status(400)
+          .json({ success: false, error: "active must be a boolean" });
+      }
+      updates.push(`active = $${idx++}`);
+      values.push(body.active);
+    }
+
+    const rawSort = body.sortOrder ?? body.sort_order;
+    if (rawSort !== undefined) {
+      const sortOrder = Number(rawSort);
+      if (
+        !Number.isSafeInteger(sortOrder) ||
+        sortOrder < -1000 ||
+        sortOrder > 10_000
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "sortOrder must be an integer between -1000 and 10000",
+        });
+      }
+      updates.push(`sort_order = $${idx++}`);
+      values.push(sortOrder);
+    }
+
+    let nextFeatures: string[] | undefined;
+    if (body.features !== undefined) {
+      if (!Array.isArray(body.features) || body.features.length > 30) {
+        return res.status(400).json({
+          success: false,
+          error: "features must be an array of up to 30 short strings",
+        });
+      }
+      nextFeatures = [];
+      for (const item of body.features) {
+        if (typeof item !== "string") {
+          return res
+            .status(400)
+            .json({ success: false, error: "each feature must be a string" });
+        }
+        const trimmed = item.trim();
+        if (!trimmed) continue;
+        if (trimmed.length > 200) {
+          return res.status(400).json({
+            success: false,
+            error: "each feature must be at most 200 characters",
+          });
+        }
+        nextFeatures.push(trimmed);
+      }
+      updates.push(`features = $${idx++}::jsonb`);
+      values.push(JSON.stringify(nextFeatures));
+    }
+
+    if (updates.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "No valid fields provided to update" });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      values.push(id);
+      const updated = await client.query(
+        `UPDATE marketing_packs SET ${updates.join(", ")} WHERE id = $${idx} RETURNING *`,
+        values,
+      );
+      if (updated.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res
+          .status(404)
+          .json({ success: false, error: "Marketing pack not found" });
+      }
+
+      if (nextFeatures !== undefined) {
+        await client.query(`DELETE FROM pack_items WHERE pack_id = $1`, [id]);
+        for (const itemName of nextFeatures) {
+          await client.query(
+            `INSERT INTO pack_items (pack_id, item_type, description, quantity)
+             VALUES ($1, $2, $3, 1)`,
+            [id, itemName, null],
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      res.json({ success: true, data: updated.rows[0] });
+    } catch (error: any) {
+      await client.query("ROLLBACK").catch(() => {});
+      res.status(500).json({ success: false, error: error.message });
+    } finally {
+      client.release();
+    }
+  },
+);
+
+/**
+ * POST /api/marketing/admin/print-products
+ * Owner only: create a print product in CAD cents.
+ */
+router.post(
+  "/admin/print-products",
+  requireOwner,
+  async (req: Request, res: Response) => {
+    const parsed = validateCreatePrintProductInput(
+      req.body && typeof req.body === "object" ? req.body : {},
+    );
+    if (!parsed.ok) {
+      return res.status(400).json({ success: false, error: parsed.error });
+    }
+    const {
+      name,
+      slug,
+      category,
+      description,
+      specs,
+      priceCents,
+      turnaroundDays,
+      active,
+    } = parsed.data;
+
+    try {
+      const existing = await pool.query(
+        `SELECT id FROM print_products WHERE slug = $1 LIMIT 1`,
+        [slug],
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: `Print product slug "${slug}" already exists`,
+        });
+      }
+
+      const inserted = await pool.query(
+        `INSERT INTO print_products
+           (name, slug, category, description, specs, price_cents, turnaround_days, active)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)
+         RETURNING *`,
+        [
+          name,
+          slug,
+          category,
+          description,
+          JSON.stringify(specs),
+          priceCents,
+          turnaroundDays,
+          active,
+        ],
+      );
+      res.status(201).json({ success: true, data: inserted.rows[0] });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+);
+
+/**
+ * PATCH /api/marketing/admin/print-products/:id
+ * Owner only: update a print product's CAD price, active flag, category, turnaround, or specs.
+ */
+router.patch(
+  "/admin/print-products/:id",
+  requireOwner,
+  async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id, 10);
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const updates: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+
+    if (body.name !== undefined) {
+      const name = typeof body.name === "string" ? body.name.trim() : "";
+      if (!name || name.length > 120) {
+        return res
+          .status(400)
+          .json({ success: false, error: "name must be 1–120 characters" });
+      }
+      updates.push(`name = $${idx++}`);
+      values.push(name);
+    }
+
+    if (body.category !== undefined) {
+      const category =
+        typeof body.category === "string"
+          ? body.category.trim().toLowerCase()
+          : "";
+      if (!VALID_PRINT_CATEGORIES.includes(category as PrintCategory)) {
+        return res.status(400).json({
+          success: false,
+          error: `category must be one of: ${VALID_PRINT_CATEGORIES.join(", ")}`,
+        });
+      }
+      updates.push(`category = $${idx++}`);
+      values.push(category);
+    }
+
+    const rawPrice = body.priceCents ?? body.price_cents;
+    if (rawPrice !== undefined) {
+      const priceCents = Number(rawPrice);
+      if (
+        !Number.isSafeInteger(priceCents) ||
+        priceCents < MIN_CATALOG_PRICE_CENTS ||
+        priceCents > MAX_CATALOG_PRICE_CENTS
+      ) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "priceCents must be an integer between 100 and 500000 (CA$1.00–CA$5,000.00)",
+        });
+      }
+      updates.push(`price_cents = $${idx++}`);
+      values.push(priceCents);
+    }
+
+    if (body.description !== undefined) {
+      if (body.description !== null && typeof body.description !== "string") {
+        return res
+          .status(400)
+          .json({ success: false, error: "description must be a string or null" });
+      }
+      updates.push(`description = $${idx++}`);
+      values.push(
+        body.description === null
+          ? null
+          : body.description.trim().slice(0, 1000) || null,
+      );
+    }
+
+    if (body.active !== undefined) {
+      if (typeof body.active !== "boolean") {
+        return res
+          .status(400)
+          .json({ success: false, error: "active must be a boolean" });
+      }
+      updates.push(`active = $${idx++}`);
+      values.push(body.active);
+    }
+
+    const rawTurnaround = body.turnaroundDays ?? body.turnaround_days;
+    if (rawTurnaround !== undefined) {
+      const turnaroundDays = Number(rawTurnaround);
+      if (
+        !Number.isSafeInteger(turnaroundDays) ||
+        turnaroundDays < 1 ||
+        turnaroundDays > 90
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "turnaroundDays must be an integer between 1 and 90",
+        });
+      }
+      updates.push(`turnaround_days = $${idx++}`);
+      values.push(turnaroundDays);
+    }
+
+    if (body.specs !== undefined) {
+      if (
+        body.specs === null ||
+        typeof body.specs !== "object" ||
+        Array.isArray(body.specs)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "specs must be a flat JSON object",
+        });
+      }
+      updates.push(`specs = $${idx++}::jsonb`);
+      values.push(JSON.stringify(body.specs));
+    }
+
+    if (updates.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "No valid fields provided to update" });
+    }
+
+    try {
+      values.push(id);
+      const updated = await pool.query(
+        `UPDATE print_products SET ${updates.join(", ")} WHERE id = $${idx} RETURNING *`,
+        values,
+      );
+      if (updated.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Print product not found" });
+      }
+      res.json({ success: true, data: updated.rows[0] });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
   },
 );
 

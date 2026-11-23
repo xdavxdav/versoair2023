@@ -17,8 +17,6 @@ vite.config.ts.*
 *.md
 !README.md
 !LICENSE.md
-!AGENTS.md
-!.github/copilot-instructions.md
 !GEOADMIN_BUSINESS_MANAGEMENT.md
 !GEOADMIN_IMPLEMENTATION_COMPLETE.md
 !VERSOAIR_MASTER_REMEDIATION_PLAN.md
@@ -56,7 +54,6 @@ nodemon.json
 
 # Ignore most scripts but keep migrations
 scripts/*
-!scripts/agent-task-lock.cjs
 !scripts/migrations/
 !scripts/run-migrations.sh
 !scripts/seed-production.cjs
@@ -66,8 +63,6 @@ scripts/*
 !scripts/generate-superadmin-totp-secret.cjs
 !scripts/seed-country-regions.cjs
 !scripts/seed-country-regions.test.ts
-!scripts/test-pack-seed-target.ts
-!scripts/test-pack-seed-target.test.ts
 !scripts/tests/
 scripts/tests/*
 !scripts/tests/language-switcher.test.mjs
@@ -90,7 +85,6 @@ node_modules
 client/public/prerender-routes.json
 client/public/prerender-routes.txt
 .neon
-.agent-task-locks/
 
 # Private credentials file — never commit
 .private/

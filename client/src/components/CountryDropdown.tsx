@@ -354,27 +354,29 @@ export function CountryDropdown() {
       )}
 
       <div
-        className="relative flex items-center gap-1.5 notranslate"
+        className="relative flex items-center gap-1 sm:gap-1.5 min-w-0 max-w-full notranslate"
         style={{ zIndex: open ? 999999 : "auto" }}
       >
         {/* ── Trigger pill: 🇨🇮 Côte d'Ivoire · FR ── */}
         <button
           onClick={() => setOpen((o) => !o)}
-          className="mobile-compact-btn group flex items-center gap-1 text-white hover:text-white/80 transition-colors focus:outline-none"
+          className="mobile-compact-btn group inline-flex items-center gap-1 min-w-0 max-w-full rounded-full bg-white/15 hover:bg-white/25 border border-white/15 px-1.5 sm:px-2 py-0.5 text-white transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-200"
           title={tr("Country & Language")}
           aria-label={tr("Change country or language")}
           data-testid="country-trigger"
           aria-haspopup="true"
           aria-expanded={open}
         >
-          <span className="text-xs leading-none">{current?.flag ?? "🌍"}</span>
-          <span className="text-[11px] font-semibold max-w-[5.5rem] truncate">
+          <span className="text-xs leading-none shrink-0">{current?.flag ?? "🌍"}</span>
+          <span className="hidden min-[340px]:inline text-[11px] font-semibold max-w-[4.75rem] sm:max-w-[6.5rem] truncate">
             {current?.name ?? tr("Select")}
           </span>
           {/* Language badge */}
-          <span className="text-[9px] font-bold opacity-70">{langShort}</span>
+          <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-px rounded bg-black/20 text-amber-100 leading-tight shrink-0">
+            {langShort}
+          </span>
           <ChevronDown
-            className={`h-2.5 w-2.5 opacity-70 group-hover:opacity-100 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`hidden min-[240px]:block h-2.5 w-2.5 shrink-0 opacity-75 group-hover:opacity-100 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -383,20 +385,21 @@ export function CountryDropdown() {
             href="https://translate.google.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] text-white underline underline-offset-2"
+            data-testid="google-translate-attribution"
+            className="hidden lg:inline-flex items-center text-[10px] text-amber-100/90 hover:text-white underline underline-offset-2 whitespace-nowrap shrink-0"
             aria-label={tr("Automatic translation by Google Translate")}
           >
             {tr("Auto · Google Translate")}
           </a>
         )}
 
-        {/* Reload detection */}
+        {/* Reload detection (visible in bar on tablet/desktop; inside dropdown on phones) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             reloadDetection();
           }}
-          className="mobile-compact-btn text-white/70 hover:text-white transition-colors focus:outline-none"
+          className="hidden sm:inline-flex mobile-compact-btn h-5 w-5 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors focus:outline-none shrink-0"
           title={tr("Reload location detection")}
           aria-label={tr("Reload location detection")}
           data-testid="country-reload"
@@ -406,14 +409,14 @@ export function CountryDropdown() {
 
         {/* ── Dropdown ── */}
         {open && createPortal(
-          <div translate="no" className="notranslate fixed top-8 inset-x-0 mx-auto bg-white text-slate-900 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div translate="no" className="notranslate fixed top-9 sm:top-8 inset-x-0 mx-auto bg-white text-slate-900 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] border border-gray-200/80 z-[999999] w-[90vw] sm:w-72 max-w-xs overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
             {/* Header with tabs */}
-            <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-1">
+            <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 {/* Country tab */}
                 <button
                   onClick={() => setTab("country")}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
+                  className={`mobile-compact-btn flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
                     tab === "country"
                       ? "bg-white/25 text-white"
                       : "text-white/60 hover:text-white hover:bg-white/10"
@@ -425,7 +428,7 @@ export function CountryDropdown() {
                 {/* Language tab */}
                 <button
                   onClick={() => setTab("language")}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
+                  className={`mobile-compact-btn flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
                     tab === "language"
                       ? "bg-white/25 text-white"
                       : "text-white/60 hover:text-white hover:bg-white/10"
@@ -435,14 +438,43 @@ export function CountryDropdown() {
                   {tr("Language")}
                 </button>
               </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-white/60 hover:text-white transition-colors"
-                aria-label={tr("Close")}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    reloadDetection();
+                  }}
+                  className="sm:hidden mobile-compact-btn inline-flex items-center justify-center rounded-full p-1 text-white/75 hover:text-white hover:bg-white/15 transition-colors"
+                  title={tr("Reload location detection")}
+                  aria-label={tr("Reload location detection")}
+                  data-testid="country-reload-mobile"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="mobile-compact-btn inline-flex items-center justify-center rounded-full p-1 text-white/70 hover:text-white hover:bg-white/15 transition-colors"
+                  aria-label={tr("Close")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
+
+            {machineTranslated && (
+              <div className="lg:hidden px-3 py-1.5 bg-amber-50/90 border-b border-amber-100 flex items-center justify-between text-[10px] text-amber-900">
+                <span>{tr("Auto · Google Translate")}</span>
+                <a
+                  href="https://translate.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline underline-offset-2 hover:text-amber-700"
+                  aria-label={tr("Automatic translation by Google Translate")}
+                >
+                  Google Translate
+                </a>
+              </div>
+            )}
 
             {/* Search */}
             <div className="px-3 py-2 border-b border-gray-100">

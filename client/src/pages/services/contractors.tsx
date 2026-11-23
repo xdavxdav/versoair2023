@@ -78,6 +78,7 @@ import type { CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import EmailSubscribeCTA from "@/components/EmailSubscribeCTA";
 import {
@@ -86,13 +87,7 @@ import {
 } from "@/components/job-application-modal";
 
 const API_BASE = "";
-
-const DB_CFG = {
-  user: "versoair",
-  host: "localhost",
-  port: 5432,
-  database: "versoair_business_intelligence",
-};
+const SIGN_IN_MSG = "Please sign in to continue.";
 
 interface Contract {
   id: string;
@@ -496,10 +491,10 @@ export default function Contractors() {
           message: "offline",
           database: {
             connected: false,
-            name: DB_CFG.database,
-            host: DB_CFG.host,
-            port: String(DB_CFG.port),
-            user: DB_CFG.user,
+            name: "",
+            host: "",
+            port: "",
+            user: "",
           },
         };
       }
@@ -519,6 +514,8 @@ export default function Contractors() {
   const {
     data: contracts = [],
     isLoading,
+    isError: contractsError,
+    error: contractsErrorObj,
     refetch: reFetch,
   } = useQuery<Contract[]>({
     queryKey: ["contracts"],
@@ -526,7 +523,7 @@ export default function Contractors() {
       const r = await fetch(
         API_BASE + "/api/jobs/search?type=contract&limit=100",
       );
-      if (!r.ok) throw new Error("fetch fail");
+      if (!r.ok) throw new Error(`Couldn't load contracts (HTTP ${r.status}).`);
       const d = await r.json();
       return Array.isArray(d) ? d : d.data || [];
     },
@@ -538,15 +535,19 @@ export default function Contractors() {
   /* mutations */
   const proposeMut = useMutation({
     mutationFn: async (id: string) => {
-      const r = await fetch(API_BASE + "/api/jobs/" + id + "/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: "current-user",
-          applied_date: new Date().toISOString(),
-        }),
-      });
-      if (!r.ok) throw new Error("fail");
+      if (!platformUser) throw new Error(SIGN_IN_MSG);
+      const r = await authenticatedFetch(
+        API_BASE + "/api/jobs/" + id + "/apply",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            applied_date: new Date().toISOString(),
+          }),
+        },
+      );
+      if (r.status === 401) throw new Error(SIGN_IN_MSG);
+      if (!r.ok) throw new Error("Failed to submit proposal");
       return r.json();
     },
     onSuccess: () => {
@@ -573,13 +574,25 @@ export default function Contractors() {
       cid: string;
       act: "save" | "unsave";
     }) => {
-      const r = await fetch(API_BASE + "/api/jobs/" + cid + "/" + act, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "current-user" }),
-      });
-      if (!r.ok) throw new Error("fail");
+      if (!platformUser) throw new Error(SIGN_IN_MSG);
+      const r = await authenticatedFetch(
+        API_BASE + "/api/jobs/" + cid + "/" + act,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      );
+      if (r.status === 401) throw new Error(SIGN_IN_MSG);
+      if (!r.ok) throw new Error("Failed to update saved contract");
       return r.json();
+    },
+    onError: (e: Error) => {
+      toast({
+        title: e.message === SIGN_IN_MSG ? "Sign in required" : "Failed",
+        description: e.message,
+        variant: "destructive",
+      });
     },
     onSuccess: (_, v) => {
       setSaved((p) =>
@@ -997,20 +1010,20 @@ export default function Contractors() {
 
               {/* search */}
               <div className="max-w-3xl mx-auto scroll-fade-in opacity-0 translate-y-4 transition-all duration-700 delay-300">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-50" />
+                <div className="relative flex flex-col gap-2 sm:block">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur-xl opacity-50 pointer-events-none" />
                   <div className="relative bg-white/95 backdrop-blur-sm border border-gray-300/50 rounded-2xl shadow-xl overflow-hidden">
-                    <Search className="absolute left-5 top-5 h-5 w-5 text-gray-600" />
+                    <Search className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
                     <Input
                       placeholder="Search contracts, companies, or skills..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-24 py-7 text-lg border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
+                      className="pl-12 sm:pr-32 py-7 text-lg border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
                     />
-                    <Button className="absolute right-2.5 top-2.5 py-5 px-6 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-md">
-                      <Search className="h-5 w-5 mr-2" /> Search
-                    </Button>
                   </div>
+                  <Button className="hero-search-cta relative z-10 w-full sm:w-auto sm:absolute sm:right-2.5 sm:top-1/2 sm:-translate-y-1/2 py-5 px-6 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-md">
+                    <Search className="h-5 w-5 mr-2" /> Search
+                  </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-6 justify-center">
                   {[
@@ -1285,7 +1298,8 @@ export default function Contractors() {
                           <p className="text-xs text-amber-600 flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             <span className="notranslate" translate="no">
-                              Account role: {accountRoleLabel} · Current view: Contractor
+                              Account role: {accountRoleLabel} · Current view:
+                              Contractor
                             </span>
                           </p>
                         </div>
@@ -1501,6 +1515,27 @@ export default function Contractors() {
                         </Card>
                       ))}
                     </div>
+                  ) : contractsError ? (
+                    <Card
+                      role="alert"
+                      className="border-2 border-dashed border-red-300/60 bg-white text-gray-900"
+                    >
+                      <CardContent className="p-12 text-center">
+                        <h4 className="text-2xl font-semibold text-red-600 mb-3">
+                          Couldn't load contracts
+                        </h4>
+                        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                          {(contractsErrorObj as Error)?.message ||
+                            "Check your connection and try again."}
+                        </p>
+                        <Button
+                          onClick={() => reFetch()}
+                          className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 shadow-md"
+                        >
+                          <RefreshCw className="h-4 w-4" /> Retry
+                        </Button>
+                      </CardContent>
+                    </Card>
                   ) : filtered.length === 0 ? (
                     <Card className="border-2 border-dashed border-gray-300/50 bg-white text-gray-900">
                       <CardContent className="p-12 text-center">

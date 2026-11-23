@@ -65,7 +65,6 @@ test("paid marketing webhook is atomic, clears the cart, and is replay-safe", as
   assert.deepEqual(first, { status: "processed", kind: "marketing_order" });
   assert.deepEqual(replay, { status: "duplicate" });
   assert.equal(db.transactions.length, 1);
-  assert.equal(db.transactions[0]?.currency, "CAD");
   assert.equal(db.orders[0]?.status, "paid");
   assert.equal(db.orders[0]?.stripe_session_id, "cs_test_order_42");
   assert.equal(db.cart.length, 0);

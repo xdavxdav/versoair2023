@@ -54,6 +54,15 @@ export const cities = pgTable("cities", {
   countryId: integer("country_id").references(() => countries.id),
 });
 
+export const neighbourhoods = pgTable("neighbourhoods", {
+  id: serial("id").primaryKey(),
+  cityId: integer("city_id")
+    .notNull()
+    .references(() => cities.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -368,6 +377,41 @@ export const businessClaims = pgTable(
   }),
 );
 
+export const businessOwners = pgTable(
+  "business_owners",
+  {
+    id: serial("id").primaryKey(),
+    businessId: integer("business_id")
+      .references(() => businesses.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("active"),
+    invitedBy: integer("invited_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    invitedAt: timestamp("invited_at").notNull().defaultNow(),
+    acceptedAt: timestamp("accepted_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    businessUser: uniqueIndex("business_owners_business_user_unique").on(
+      table.businessId,
+      table.userId,
+    ),
+    userStatus: index("business_owners_user_status_idx").on(
+      table.userId,
+      table.status,
+    ),
+    statusCheck: check(
+      "business_owners_status_check",
+      sql`${table.status} IN ('invited', 'active')`,
+    ),
+  }),
+);
+
 // --- 3. MUSIC & JOBS EXTENSIONS ---
 export const artists = pgTable("artists", {
   id: serial("id").primaryKey(),
@@ -380,6 +424,13 @@ export const artists = pgTable("artists", {
   labelStatus: varchar("label_status").default("unsigned"),
   spotifyUrl: text("spotify_url"),
   countryCode: varchar("country_code", { length: 2 }),
+  cityId: integer("city_id").references(() => cities.id, {
+    onDelete: "set null",
+  }),
+  neighbourhoodId: integer("neighbourhood_id").references(
+    () => neighbourhoods.id,
+    { onDelete: "set null" },
+  ),
 });
 
 export const contractors = pgTable("contractors", {
@@ -956,6 +1007,12 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 // --- 8. RELATION MAPS (Drizzle Query API) ---
 export const userRelations = relations(users, ({ many }) => ({
   businessesOwned: many(businesses),
+  businessOwnerships: many(businessOwners, {
+    relationName: "businessOwnerUser",
+  }),
+  invitedBusinessOwnerships: many(businessOwners, {
+    relationName: "businessOwnerInviter",
+  }),
   requestedGeoAdminAddons: many(geoAdminAddons, {
     relationName: "geoAdminAddonUser",
   }),
@@ -985,6 +1042,7 @@ export const geoAdminAddonRelations = relations(
 
 export const businessRelations = relations(businesses, ({ one, many }) => ({
   owner: one(users, { fields: [businesses.ownerId], references: [users.id] }),
+  owners: many(businessOwners),
   category: one(businessCategories, {
     fields: [businesses.categoryId],
     references: [businessCategories.id],
@@ -992,6 +1050,23 @@ export const businessRelations = relations(businesses, ({ one, many }) => ({
   jobs: many(jobs),
   artists: many(artists),
   reviews: many(businessReviews),
+}));
+
+export const businessOwnerRelations = relations(businessOwners, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessOwners.businessId],
+    references: [businesses.id],
+  }),
+  user: one(users, {
+    fields: [businessOwners.userId],
+    references: [users.id],
+    relationName: "businessOwnerUser",
+  }),
+  inviter: one(users, {
+    fields: [businessOwners.invitedBy],
+    references: [users.id],
+    relationName: "businessOwnerInviter",
+  }),
 }));
 
 export const connectionsRelations = relations(connections, ({ one }) => ({
@@ -1496,6 +1571,10 @@ export const events = pgTable(
     venue: varchar("venue", { length: 220 }),
     city: varchar("city", { length: 120 }),
     imageUrl: text("image_url"),
+    themeAccent: varchar("theme_accent", { length: 24 })
+      .default("amber")
+      .notNull(),
+    capacity: integer("capacity"),
     status: varchar("status", { length: 30 }).default("DRAFT").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -1547,6 +1626,106 @@ export const eventAttendees = pgTable(
     eventIdx: index("event_attendees_event_idx").on(t.eventId),
     userIdx: index("event_attendees_user_idx").on(t.userId),
     uniqueAttendance: unique("event_attendees_unique").on(t.eventId, t.userId),
+  }),
+);
+
+export const eventArsenalItems = pgTable(
+  "event_arsenal_items",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .references(() => events.id, { onDelete: "cascade" })
+      .notNull(),
+    kind: varchar("kind", { length: 20 }).default("TICKET").notNull(),
+    name: varchar("name", { length: 160 }).notNull(),
+    description: text("description").default("").notNull(),
+    priceCents: integer("price_cents").default(0).notNull(),
+    stockLimit: integer("stock_limit"),
+    soldCount: integer("sold_count").default(0).notNull(),
+    maxPerOrder: smallint("max_per_order").default(6).notNull(),
+    imageUrl: text("image_url"),
+    badge: varchar("badge", { length: 60 }),
+    variants: jsonb("variants").notNull().default(sql`'[]'::jsonb`),
+    fulfillmentNote: varchar("fulfillment_note", { length: 220 }),
+    sortOrder: smallint("sort_order").default(0).notNull(),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    eventSortIdx: index("event_arsenal_items_event_sort_idx").on(
+      t.eventId,
+      t.sortOrder,
+      t.id,
+    ),
+  }),
+);
+
+export const eventArsenalOrders = pgTable(
+  "event_arsenal_orders",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .references(() => events.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    passCode: varchar("pass_code", { length: 32 }).unique().notNull(),
+    status: varchar("status", { length: 20 }).default("pending").notNull(),
+    totalCents: integer("total_cents").default(0).notNull(),
+    currency: varchar("currency", { length: 8 }).default("CAD").notNull(),
+    hasTicket: boolean("has_ticket").default(false).notNull(),
+    ticketQty: integer("ticket_qty").default(0).notNull(),
+    merchQty: integer("merch_qty").default(0).notNull(),
+    stripeSessionId: text("stripe_session_id").unique(),
+    checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
+    merchFulfilledAt: timestamp("merch_fulfilled_at", { withTimezone: true }),
+    notes: text("notes"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    eventStatusIdx: index("event_arsenal_orders_event_status_idx").on(
+      t.eventId,
+      t.status,
+      t.createdAt,
+    ),
+    userEventIdx: index("event_arsenal_orders_user_event_idx").on(
+      t.userId,
+      t.eventId,
+    ),
+  }),
+);
+
+export const eventArsenalOrderItems = pgTable(
+  "event_arsenal_order_items",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .references(() => eventArsenalOrders.id, { onDelete: "cascade" })
+      .notNull(),
+    itemId: integer("item_id").references(() => eventArsenalItems.id, {
+      onDelete: "set null",
+    }),
+    kind: varchar("kind", { length: 20 }).notNull(),
+    itemName: varchar("item_name", { length: 160 }).notNull(),
+    variant: varchar("variant", { length: 60 }),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    lineTotalCents: integer("line_total_cents").notNull(),
+  },
+  (t) => ({
+    orderIdx: index("event_arsenal_order_items_order_idx").on(t.orderId),
   }),
 );
 

@@ -1,5 +1,3 @@
-import { normalizeCountryCode } from "../utils/business-visibility";
-
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
  * VERSO AIR — SHARED INTENT PARSER (God-Tier Brain)
@@ -202,9 +200,6 @@ const MAJOR_CITIES: Record<string, string> = {
   "san francisco": "US",
   // Africa
   abidjan: "CI",
-  yamoussoukro: "CI",
-  bouaké: "CI",
-  "san pedro": "CI",
   dakar: "SN",
   lagos: "NG",
   accra: "GH",
@@ -407,12 +402,6 @@ function ruleParse(query: string, selectedLanguage?: string): IntentContext {
       break;
     }
   }
-  if (
-    !countryCode &&
-    /\b(?:c[oô]te\s+d[’' ]?ivoire|ivory coast)\b/i.test(lower)
-  ) {
-    countryCode = "CI";
-  }
 
   // ── Extract keywords ──
   const stopWords = new Set([
@@ -543,7 +532,7 @@ export async function parseUserIntent(
           : ruleResult.sectorLabel,
         urgency: aiResult.urgency ?? ruleResult.urgency,
         location: aiResult.location ?? ruleResult.location,
-        countryCode: ruleResult.countryCode ?? aiResult.countryCode ?? null,
+        countryCode: aiResult.countryCode ?? ruleResult.countryCode,
         action: aiResult.action ?? ruleResult.action,
         keywords: aiResult.keywords?.length
           ? aiResult.keywords
@@ -558,19 +547,6 @@ export async function parseUserIntent(
   }
 
   return ruleResult;
-}
-
-/** Prefer a country identified from the search text over the visitor's default scope. */
-export function resolveIntentCountryCode(
-  detectedCountryCode: unknown,
-  selectedCountryCode: unknown,
-  fallbackCountryCode: unknown,
-): string | null {
-  return (
-    normalizeCountryCode(detectedCountryCode) ??
-    normalizeCountryCode(selectedCountryCode) ??
-    normalizeCountryCode(fallbackCountryCode)
-  );
 }
 
 /**

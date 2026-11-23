@@ -152,6 +152,8 @@ test("who may edit a fiche", () => {
   assert.equal(canEditFiche({ id: "7", role: "business_owner" }, business), true);
   assert.equal(canEditFiche({ id: 8, role: "user" }, business), false);
   assert.equal(canEditFiche({ id: 8, role: "business_owner" }, business), false);
+  assert.equal(canEditFiche({ id: 8, role: "business_owner" }, { owner_id: 7, is_owner: true }), true);
+  assert.equal(canEditFiche({ id: 8, role: "business_owner" }, { owner_id: 7, is_owner: false }), false);
   for (const role of ["admin", "moderator", "superuser"]) {
     assert.equal(canEditFiche({ id: 8, role }, business), true, role);
   }

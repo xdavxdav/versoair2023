@@ -23,6 +23,14 @@ interface Artist {
   labelStatus?: string;
   spotifyUrl?: string;
   countryCode?: string;
+  cityId?: number | null;
+  neighbourhoodId?: number | null;
+}
+
+interface PlaceCity {
+  id: number;
+  name: string;
+  neighbourhoods: { id: number; name: string }[];
 }
 
 interface CreateArtistInput {
@@ -31,6 +39,8 @@ interface CreateArtistInput {
   labelStatus: string;
   spotifyUrl: string;
   countryCode?: string;
+  cityName?: string;
+  neighbourhoodName?: string;
 }
 
 export function ArtistsSection() {
@@ -51,7 +61,10 @@ export function ArtistsSection() {
     labelStatus: "unsigned",
     spotifyUrl: "",
     countryCode: "",
+    cityName: "",
+    neighbourhoodName: "",
   });
+  const [placeEdited, setPlaceEdited] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -68,6 +81,45 @@ export function ArtistsSection() {
     },
     staleTime: 60000,
   });
+
+  // Existing cities/neighbourhoods for the chosen country (suggestions only;
+  // typing a new name creates it on save)
+  const { data: places = [] } = useQuery({
+    queryKey: ["artist-places", formData.countryCode],
+    enabled: isModalOpen && (formData.countryCode || "").length === 2,
+    queryFn: async () => {
+      const res = await authenticatedFetch(
+        `/api/v1/admin/artists/places?countryCode=${formData.countryCode}`,
+        { headers: { "Content-Type": "application/json" } },
+      );
+      if (!res.ok) return [];
+      const json = await res.json();
+      return (json.data || []) as PlaceCity[];
+    },
+    staleTime: 30000,
+  });
+  const matchedCity = places.find(
+    (c) =>
+      c.name.toLowerCase() === (formData.cityName || "").trim().toLowerCase(),
+  );
+
+  // Pre-fill city/neighbourhood names when editing
+  useEffect(() => {
+    if (!editingArtist || !places.length) return;
+    setFormData((prev) => {
+      if (prev.cityName || !editingArtist.cityId) return prev;
+      const city = places.find((c) => c.id === editingArtist.cityId);
+      if (!city) return prev;
+      const hood = city.neighbourhoods.find(
+        (n) => n.id === editingArtist.neighbourhoodId,
+      );
+      return {
+        ...prev,
+        cityName: city.name,
+        neighbourhoodName: hood?.name || "",
+      };
+    });
+  }, [editingArtist, places]);
 
   // Load countries list
   useEffect(() => {
@@ -183,8 +235,11 @@ export function ArtistsSection() {
       labelStatus: "unsigned",
       spotifyUrl: "",
       countryCode: "",
+      cityName: "",
+      neighbourhoodName: "",
     });
     setEditingArtist(null);
+    setPlaceEdited(false);
     setIsModalOpen(false);
     setError("");
   };
@@ -197,6 +252,8 @@ export function ArtistsSection() {
       labelStatus: artist.labelStatus || "unsigned",
       spotifyUrl: artist.spotifyUrl || "",
       countryCode: artist.countryCode || "",
+      cityName: "",
+      neighbourhoodName: "",
     });
     setIsModalOpen(true);
   };
@@ -208,7 +265,19 @@ export function ArtistsSection() {
       setError("Stage name is required");
       return;
     }
-    mutation.mutate({ ...formData, id: editingArtist?.id });
+    if (formData.cityName?.trim() && !formData.countryCode) {
+      setError("Choose a country before setting a city");
+      return;
+    }
+    // Don't wipe a stored city if its names haven't loaded into the form yet
+    const keepStoredPlace =
+      !!editingArtist?.cityId && !placeEdited && !formData.cityName;
+    const { cityName, neighbourhoodName, ...rest } = formData;
+    mutation.mutate({
+      ...rest,
+      ...(keepStoredPlace ? {} : { cityName, neighbourhoodName }),
+      id: editingArtist?.id,
+    });
   };
 
   const columns: DataTableColumn<Artist>[] = [
@@ -521,6 +590,63 @@ export function ArtistsSection() {
                   ))}
                 </select>
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    list="artist-city-options"
+                    value={formData.cityName || ""}
+                    onChange={(e) => {
+                      setPlaceEdited(true);
+                      setFormData({
+                        ...formData,
+                        cityName: e.target.value,
+                        neighbourhoodName: "",
+                      });
+                    }}
+                    disabled={!formData.countryCode}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
+                    placeholder="Pick or type a new city"
+                  />
+                  <datalist id="artist-city-options">
+                    {places.map((c) => (
+                      <option key={c.id} value={c.name} />
+                    ))}
+                  </datalist>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                    Neighbourhood
+                  </label>
+                  <input
+                    type="text"
+                    list="artist-neighbourhood-options"
+                    value={formData.neighbourhoodName || ""}
+                    onChange={(e) => {
+                      setPlaceEdited(true);
+                      setFormData({
+                        ...formData,
+                        neighbourhoodName: e.target.value,
+                      });
+                    }}
+                    disabled={!formData.cityName?.trim()}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
+                    placeholder="Pick or type a new one"
+                  />
+                  <datalist id="artist-neighbourhood-options">
+                    {(matchedCity?.neighbourhoods || []).map((n) => (
+                      <option key={n.id} value={n.name} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 -mt-2">
+                New cities and neighbourhoods are added automatically when you save.
+              </p>
 
               {/* Actions */}
               <div className="flex gap-3 pt-4">

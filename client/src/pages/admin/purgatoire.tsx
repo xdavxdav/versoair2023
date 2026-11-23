@@ -5,8 +5,11 @@
  * Superadmin + Admin → Approve / Reject
  * Moderator → Flag only
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { TmuPortalHeader } from "@/components/music/TmuPrimitives";
+import { TmuShell } from "@/components/music/TmuShell";
 import {
   Shield,
   CheckCircle2,
@@ -138,69 +141,75 @@ export default function PurgatoirePage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f3efe9] p-6 text-slate-900">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <TmuShell chrome="site">
+      <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
         {/* ═══ HEADER ═══ */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/20">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Purgatoire</h1>
-              <p className="text-sm text-slate-600">Track Moderation Queue</p>
-            </div>
-          </div>
-          <button
-            onClick={() =>
-              queryClient.invalidateQueries({ queryKey: ["purgatoire"] })
-            }
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
-        </div>
+        <TmuPortalHeader
+          title="Purgatoire"
+          subtitle="File de modération des titres — J / K pour naviguer"
+          icon={<Shield className="h-5 w-5" />}
+          backHref="/admin"
+          backLabel="Console Admin"
+          actions={
+            <>
+              <Link href="/admin/profile-requests">
+                <span className="inline-flex items-center gap-1.5 rounded-xl border border-purple-500/30 bg-[#180d34]/80 px-3 py-2 text-xs font-semibold text-purple-200 hover:bg-purple-500/20 cursor-pointer">
+                  Demandes de lien
+                </span>
+              </Link>
+              <Link href="/admin/contracts">
+                <span className="inline-flex items-center gap-1.5 rounded-xl border border-purple-500/30 bg-[#180d34]/80 px-3 py-2 text-xs font-semibold text-purple-200 hover:bg-purple-500/20 cursor-pointer">
+                  Contrats
+                </span>
+              </Link>
+              <button
+                onClick={() =>
+                  queryClient.invalidateQueries({ queryKey: ["purgatoire"] })
+                }
+                className="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-[#180d34]/80 px-3.5 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-purple-500/20"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh
+              </button>
+            </>
+          }
+        />
 
         {/* ═══ STATS BANNER ═══ */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 tabular-nums">
           {[
             {
               label: "Pending Review",
               value: stats.pending || 0,
-              color: "text-amber-600",
-              bg: "bg-amber-50",
+              color: "text-amber-300",
               icon: Clock,
             },
             {
               label: "Approved Today",
               value: stats.approved_today || 0,
-              color: "text-amber-600",
-              bg: "bg-amber-50",
+              color: "text-emerald-300",
               icon: CheckCircle2,
             },
             {
               label: "Rejected Today",
               value: stats.rejected_today || 0,
-              color: "text-red-600",
-              bg: "bg-red-50",
+              color: "text-rose-300",
               icon: XCircle,
             },
             {
               label: "Artists Waiting",
               value: stats.artists_waiting || 0,
-              color: "text-blue-600",
-              bg: "bg-blue-50",
+              color: "text-cyan-300",
               icon: User,
             },
           ].map((s) => (
             <div
               key={s.label}
-              className={`${s.bg} rounded-xl border border-slate-200 p-4 shadow-sm`}
+              className="tmu-glass tmu-interactive-card rounded-2xl p-4"
             >
               <div className="mb-1 flex items-center gap-2">
                 <s.icon className={`h-4 w-4 ${s.color}`} />
-                <span className="text-xs uppercase tracking-wider text-slate-600">
+                <span className="text-xs uppercase tracking-wider text-slate-400">
                   {s.label}
                 </span>
               </div>
@@ -210,8 +219,8 @@ export default function PurgatoirePage() {
         </div>
 
         {/* ═══ FILTER TABS ═══ */}
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-500" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="w-4 h-4 text-purple-300" />
           {[
             { value: "pending_review", label: "Pending", count: stats.pending },
             {
@@ -231,15 +240,15 @@ export default function PurgatoirePage() {
                 setStatusFilter(tab.value);
                 setPage(1);
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 statusFilter === tab.value
-                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                  : "bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent"
+                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/25"
+                  : "tmu-glass text-slate-300 hover:text-white"
               }`}
             >
               {tab.label}
               {tab.count !== undefined && (
-                <span className="ml-1.5 text-xs opacity-60">({tab.count})</span>
+                <span className="ml-1.5 text-xs opacity-75 tabular-nums">({tab.count})</span>
               )}
             </button>
           ))}
@@ -248,16 +257,16 @@ export default function PurgatoirePage() {
         {/* ═══ TRACK QUEUE ═══ */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fuchsia-400" />
           </div>
         ) : tracks.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
-            <Music className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="text-lg">
+          <div className="tmu-glass rounded-2xl text-center py-16 text-slate-300">
+            <Music className="w-12 h-12 mx-auto mb-3 text-purple-400/40" />
+            <p className="text-lg font-medium">
               No tracks in {statusFilter.replace("_", " ")}
             </p>
             {statusFilter === "pending_review" && (
-              <p className="text-sm mt-1 text-gray-600">
+              <p className="text-sm mt-1 text-slate-400">
                 All clear — no tracks waiting for review!
               </p>
             )}
@@ -267,7 +276,7 @@ export default function PurgatoirePage() {
             {tracks.map((track: any) => (
               <div
                 key={track.id}
-                className="bg-white/[0.03] border border-white/5 rounded-xl overflow-hidden hover:border-white/10 transition-colors"
+                className="tmu-glass tmu-interactive-card rounded-2xl overflow-hidden"
               >
                 {/* ── Track Row ── */}
                 <div
@@ -621,24 +630,24 @@ export default function PurgatoirePage() {
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm disabled:opacity-30"
+              className="px-4 py-2 tmu-glass hover:bg-purple-500/20 rounded-xl text-sm disabled:opacity-30"
             >
               ← Previous
             </button>
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-slate-300 tabular-nums">
               Page {pagination.page} / {pagination.pages} ({pagination.total}{" "}
               tracks)
             </span>
             <button
               onClick={() => setPage(Math.min(pagination.pages, page + 1))}
               disabled={page >= pagination.pages}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm disabled:opacity-30"
+              className="px-4 py-2 tmu-glass hover:bg-purple-500/20 rounded-xl text-sm disabled:opacity-30"
             >
               Next →
             </button>
           </div>
         )}
       </div>
-    </div>
+    </TmuShell>
   );
 }

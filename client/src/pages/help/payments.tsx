@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import BackLink from "@/components/BackLink";
 import { Link } from "wouter";
 import { ArrowLeft, CreditCard, Info } from "lucide-react";
 
@@ -9,12 +10,12 @@ export default function PaymentsHelp() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm">
+              <BackLink>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
+                Back
+              </BackLink>
+            </Button>
             <div className="h-6 border-l border-gray-300"></div>
             <h1 className="text-2xl font-bold text-gray-800">Payment Help</h1>
           </div>

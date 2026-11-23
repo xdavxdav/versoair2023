@@ -49,14 +49,14 @@ import {
   Calendar,
   AlertCircle,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
 import { parseClaimed } from "@/lib/business-status";
 import { AnimatePresence } from "framer-motion";
 import { AuthHelper } from "@/components/AuthHelper";
-import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { useCountry } from "@/contexts/CountryContext";
+import { useLanguage } from "@/components/LanguageSwitcher";
+import { useTranslate } from "@/hooks/use-translate";
 import { SeoHead } from "@/components/seo/SeoHead";
 
 const API_BASE_URL = "";
@@ -70,13 +70,13 @@ const DEFAULT_DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(
 const DEFAULT_DIRECTORY_MARKET_LABEL =
   import.meta.env.VITE_DIRECTORY_MARKET_LABEL?.trim() || "Toronto, Canada";
 
-function marketLabelFor(countryCode: string): string {
+function marketLabelFor(countryCode: string, language = "en"): string {
   if (countryCode === DEFAULT_DIRECTORY_COUNTRY_CODE) {
     return DEFAULT_DIRECTORY_MARKET_LABEL;
   }
   try {
     return (
-      new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ??
+      new Intl.DisplayNames([language], { type: "region" }).of(countryCode) ??
       countryCode
     );
   } catch {
@@ -535,6 +535,7 @@ const CategoryCard = ({
   ) => void;
 }) => {
   const Icon = category.icon;
+  const tr = useTranslate();
 
   return (
     <motion.div
@@ -564,11 +565,11 @@ const CategoryCard = ({
 
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-sky-700 transition-colors">
-            {category.title}
+            {tr(category.title)}
           </h3>
 
           <p className="text-sm text-slate-700 mb-4 line-clamp-2">
-            {category.description}
+            {tr(category.description)}
           </p>
 
           <div className="space-y-1.5">
@@ -582,7 +583,7 @@ const CategoryCard = ({
                 }}
               >
                 <ArrowRight className="w-3 h-3 mr-1.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="hover:underline">{link.label}</span>
+                <span className="hover:underline">{tr(link.label)}</span>
               </div>
             ))}
           </div>
@@ -607,9 +608,17 @@ export default function BusinessesDirectory() {
   const DIRECTORY_COUNTRY_CODE = /^[A-Z]{2}$/.test(normalizedSelectedCountry)
     ? normalizedSelectedCountry
     : DEFAULT_DIRECTORY_COUNTRY_CODE;
-  const DIRECTORY_MARKET_LABEL = marketLabelFor(DIRECTORY_COUNTRY_CODE);
+  const { currentLang } = useLanguage();
+  const tr = useTranslate();
+  const DIRECTORY_MARKET_LABEL = marketLabelFor(
+    DIRECTORY_COUNTRY_CODE,
+    currentLang,
+  );
   const continentAdj = getContinentAdjective(DIRECTORY_COUNTRY_CODE);
   const continentName = getContinentForCountry(DIRECTORY_COUNTRY_CODE);
+  const [headingTop, headingBottom] = tr(
+    `${continentAdj} Business|Directory`,
+  ).split("|");
   const [selectedCategory, setSelectedCategory] = useState<
     (typeof categories)[0] | null
   >(null);
@@ -631,11 +640,6 @@ export default function BusinessesDirectory() {
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
   );
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
-    null,
-  );
-  const [showBusinessDetails, setShowBusinessDetails] = useState(false);
-  useScrollLock(showBusinessDetails);
 
   // Test database connection and ensure auth
   useEffect(() => {
@@ -878,25 +882,27 @@ export default function BusinessesDirectory() {
       />
       {/* Header */}
       <header className="bg-[#f3efe9] text-slate-900">
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3 h-16">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">
                 <Globe className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <span className="text-xl font-bold tracking-tight">
+              <div className="min-w-0 truncate">
+                <span className="text-lg sm:text-xl font-bold tracking-tight notranslate" translate="no">
                   Verso Air
                 </span>
                 <span className="hidden sm:inline text-sky-700 ml-2 text-sm font-medium">
-                  Business Directory
+                  {tr("Business Directory")}
                 </span>
               </div>
             </div>
 
             {databaseConnected !== null && (
               <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                role="status"
+                aria-label={databaseConnected ? tr("Connected") : tr("Offline")}
+                className={`flex shrink-0 items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium ${
                   databaseConnected
                     ? "bg-green-50 text-green-700"
                     : "bg-red-50 text-red-700"
@@ -905,7 +911,7 @@ export default function BusinessesDirectory() {
                 <div
                   className={`w-2 h-2 rounded-full ${databaseConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
                 />
-                {databaseConnected ? "✅ Connected" : "❌ Offline"}
+                {databaseConnected ? tr("Connected") : tr("Offline")}
               </div>
             )}
           </div>
@@ -913,7 +919,7 @@ export default function BusinessesDirectory() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative bg-[#f3efe9] pt-16 pb-16 sm:pb-32 overflow-hidden">
+      <section className="relative bg-[#f3efe9] pt-10 sm:pt-16 pb-24 sm:pb-32 overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-20 left-10 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl" />
@@ -923,35 +929,39 @@ export default function BusinessesDirectory() {
           <div className="absolute bottom-20 left-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-pulse delay-700" />
         </div>
 
-        <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <Globe className="w-4 h-4 text-sky-700" />
-              <span className="text-sm text-slate-700">
-                Planned first market: {DIRECTORY_MARKET_LABEL} ({continentName})
+            <div className="inline-flex max-w-full items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-5 sm:mb-6">
+              <Globe className="w-4 h-4 shrink-0 text-sky-700" />
+              <span className="text-xs sm:text-sm text-slate-700 text-left">
+                {tr("Planned first market: {market} ({continent})", {
+                  market: DIRECTORY_MARKET_LABEL,
+                  continent: tr(continentName),
+                })}
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-4">
-              {continentAdj} Business
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-800 to-blue-800 mt-2">
-                Directory
+            <h1 className="text-3xl min-[400px]:text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 mb-4 break-words">
+              {headingTop}
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-sky-800 to-blue-800 mt-1 sm:mt-2">
+                {headingBottom}
               </span>
             </h1>
 
-            <p className="text-lg text-slate-700 max-w-2xl mx-auto mb-10">
-              Listings appear only after local businesses meet our verification
-              checks and the planned market is ready.
+            <p className="text-base sm:text-lg text-slate-700 max-w-2xl mx-auto mb-4">
+              {tr(
+                "Listings appear only after local businesses meet our verification checks and the planned market is ready.",
+              )}
             </p>
-            <p className="text-sm text-slate-700 max-w-2xl mx-auto -mt-6 mb-10">
-              The first planned market is {DIRECTORY_MARKET_LABEL}. Other
-              markets will open only when local availability and listings are
-              verified; expansion is region by region, not continent-wide or
-              worldwide.
+            <p className="text-xs sm:text-sm text-slate-700 max-w-2xl mx-auto mb-8 sm:mb-10">
+              {tr(
+                "The first planned market is {market}. Other markets will open only when local availability and listings are verified; expansion is region by region, not continent-wide or worldwide.",
+                { market: DIRECTORY_MARKET_LABEL },
+              )}
             </p>
           </motion.div>
 
@@ -963,15 +973,15 @@ export default function BusinessesDirectory() {
             className="max-w-4xl mx-auto"
           >
             <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 p-2">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 relative">
+              <div className="flex flex-col md:flex-row gap-2">
+                <div className="flex-1 relative min-w-0">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700" />
                   <Input
                     type="text"
                     placeholder={
                       searchMode === "ai"
-                        ? "Try: an emergency plumber near downtown Toronto"
-                        : "Business name, service..."
+                        ? tr("Try: an emergency plumber near downtown Toronto")
+                        : tr("Business name, service...")
                     }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -979,11 +989,11 @@ export default function BusinessesDirectory() {
                     className="pl-12 h-14 border-0 bg-gray-50 rounded-xl text-gray-900 placeholder:text-slate-700"
                   />
                 </div>
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-w-0">
                   <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700" />
                   <Input
                     type="text"
-                    placeholder="Country, city..."
+                    placeholder={tr("Country, city...")}
                     value={locationQuery}
                     onChange={(e) => setLocationQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -993,18 +1003,18 @@ export default function BusinessesDirectory() {
                 <Button
                   onClick={() => handleSearch()}
                   disabled={isSearching}
-                  className="h-14 px-5 bg-sky-700 hover:bg-sky-800 text-white"
+                  className="h-14 px-5 bg-sky-700 hover:bg-sky-800 text-white w-full md:w-auto"
                 >
                   {isSearching ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <Search className="w-5 h-5" />
                   )}
-                  <span className="ml-2">Search</span>
+                  <span className="ml-2">{tr("Search")}</span>
                 </Button>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 pt-3">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 pt-3 pb-1">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
                     size="sm"
@@ -1018,7 +1028,7 @@ export default function BusinessesDirectory() {
                     }
                   >
                     <Search className="w-4 h-4 mr-1.5" />
-                    Keyword search
+                    {tr("Keyword search")}
                   </Button>
                   <Button
                     type="button"
@@ -1033,12 +1043,13 @@ export default function BusinessesDirectory() {
                     }
                   >
                     <Sparkles className="w-4 h-4 mr-1.5" />
-                    AI-assisted search
+                    {tr("AI-assisted search")}
                   </Button>
                 </div>
-                <p className="text-xs text-slate-700 text-left sm:text-right">
-                  AI search interprets your request; results are verified
-                  businesses in the planned market only.
+                <p className="text-xs text-slate-700 text-left md:text-right md:max-w-sm">
+                  {tr(
+                    "AI search interprets your request; results are verified businesses in the planned market only.",
+                  )}
                 </p>
               </div>
             </div>
@@ -1048,22 +1059,22 @@ export default function BusinessesDirectory() {
 
       {/* Categories Section or Search Results */}
       {!hasSearched ? (
-        <section className="relative -mt-16 pb-20">
-          <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative -mt-12 sm:-mt-16 pb-16 sm:pb-20">
+          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
             {/* Section Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-12"
+              className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 mb-8 sm:mb-12"
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    Browse by Category
+                    {tr("Browse by Category")}
                   </h2>
                   <p className="text-slate-700 mt-1">
-                    Click on a category to explore businesses in that sector
+                    {tr("Click on a category to explore businesses in that sector")}
                   </p>
                 </div>
                 <Button
@@ -1072,9 +1083,9 @@ export default function BusinessesDirectory() {
                       "/contact?subject=Business%20directory%20listing%20eligibility%20review",
                     )
                   }
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 whitespace-nowrap notranslate"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold px-6 py-6 rounded-xl shadow-lg shadow-amber-500/25 sm:whitespace-nowrap"
                 >
-                  Request Listing Review
+                  {tr("Request Listing Review")}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -1102,31 +1113,31 @@ export default function BusinessesDirectory() {
         </section>
       ) : (
         // Search Results Section
-        <section className="relative -mt-16 pb-20">
-          <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative -mt-12 sm:-mt-16 pb-16 sm:pb-20">
+          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
             {/* Results Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-12"
+              className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 mb-8 sm:mb-12"
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     {selectedCategory && (
                       <>
                         {React.createElement(selectedCategory.icon, {
-                          className: "w-6 h-6 text-sky-600",
+                          className: "w-6 h-6 shrink-0 text-sky-600",
                         })}
-                        <div>
-                          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                        <div className="min-w-0">
+                          <h2 className="text-xl sm:text-3xl font-bold text-gray-900 break-words">
                             {selectedSubcategory
-                              ? selectedSubcategory.label
-                              : selectedCategory.title}
+                              ? tr(selectedSubcategory.label)
+                              : tr(selectedCategory.title)}
                           </h2>
                           {selectedSubcategory && (
                             <p className="text-sm text-slate-700">
-                              {selectedCategory.title}
+                              {tr(selectedCategory.title)}
                             </p>
                           )}
                         </div>
@@ -1134,14 +1145,16 @@ export default function BusinessesDirectory() {
                     )}
                   </div>
                   <p className="text-slate-700 mt-1">
-                    Showing {searchResults.length} of{" "}
-                    {totalResults.toLocaleString()} businesses
+                    {tr("Showing {shown} of {total} businesses", {
+                      shown: searchResults.length,
+                      total: totalResults.toLocaleString(),
+                    })}
                   </p>
                   {searchMode === "ai" && aiIntent && (
                     <div className="mt-3 flex flex-wrap gap-2 text-xs">
                       {aiIntent.sectorLabel && (
                         <Badge variant="secondary">
-                          {aiIntent.sectorLabel}
+                          {tr(aiIntent.sectorLabel)}
                         </Badge>
                       )}
                       {aiIntent.location && (
@@ -1151,7 +1164,7 @@ export default function BusinessesDirectory() {
                         </Badge>
                       )}
                       <Badge className="bg-amber-100 text-amber-900">
-                        Verified listings only
+                        {tr("Verified listings only")}
                       </Badge>
                     </div>
                   )}
@@ -1159,17 +1172,17 @@ export default function BusinessesDirectory() {
                 <Button
                   onClick={clearSearch}
                   variant="outline"
-                  className="border-gray-300"
+                  className="w-full sm:w-auto border-gray-300"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Clear filters
+                  {tr("Clear filters")}
                 </Button>
               </div>
             </motion.div>
 
             {/* Loading State */}
             {isSearching ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
@@ -1183,20 +1196,20 @@ export default function BusinessesDirectory() {
                 className="mx-auto max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-950"
               >
                 <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-800" />
-                <p>{searchError}</p>
+                <p>{tr(searchError)}</p>
                 {searchMode === "ai" && (
                   <Button
                     variant="outline"
                     onClick={() => setSearchMode("standard")}
                     className="mt-4"
                   >
-                    Switch to keyword search
+                    {tr("Switch to keyword search")}
                   </Button>
                 )}
               </div>
             ) : searchResults.length > 0 ? (
               <>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
                   <AnimatePresence>
                     {searchResults.map((business, index) => (
                       <motion.div
@@ -1210,15 +1223,15 @@ export default function BusinessesDirectory() {
                         <div
                           className={`h-2 bg-gradient-to-r from-sky-700 to-blue-800`}
                         />
-                        <div className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-bold text-gray-900 group-hover:text-sky-700 transition-colors mb-2 line-clamp-1">
+                        <div className="p-4 sm:p-6">
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-bold text-gray-900 group-hover:text-sky-700 transition-colors mb-2 line-clamp-2 break-words">
                                 <span className="notranslate">{business.title}</span>
                               </h3>
-                              <div className="flex items-center gap-2 text-gray-600 mb-2">
-                                <MapPin className="w-4 h-4" />
-                                <span className="text-sm">
+                              <div className="flex items-start gap-2 text-gray-600 mb-2">
+                                <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+                                <span className="text-sm min-w-0 break-words">
                                   {business.location}
                                 </span>
                               </div>
@@ -1229,7 +1242,7 @@ export default function BusinessesDirectory() {
                               />
                             </div>
                             {business.rating && (
-                              <div className="flex items-center gap-1 bg-amber-50 px-3 py-2 rounded-lg">
+                              <div className="flex shrink-0 items-center gap-1 bg-amber-50 px-3 py-2 rounded-lg">
                                 <Star className="w-4 h-4 fill-amber-400 text-amber-800" />
                                 <span className="font-bold text-amber-900">
                                   {business.rating}
@@ -1250,8 +1263,8 @@ export default function BusinessesDirectory() {
                               </div>
                             )}
                             {business.email && (
-                              <div className="flex items-center gap-2 text-gray-600">
-                                <span className="text-xs">✉</span>
+                              <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                                <span className="text-xs shrink-0">✉</span>
                                 <span className="text-xs truncate">
                                   {business.email}
                                 </span>
@@ -1291,24 +1304,27 @@ export default function BusinessesDirectory() {
 
                 {/* Pagination */}
                 {searchMode === "standard" && totalResults > 12 && (
-                  <div className="flex justify-center items-center gap-2">
+                  <div className="flex flex-wrap justify-center items-center gap-2">
                     <Button
                       variant="outline"
                       onClick={() => handleSearch(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="w-4 h-4 mr-1" />
-                      Previous
+                      {tr("Previous")}
                     </Button>
                     <span className="text-sm text-gray-600">
-                      Page {currentPage} of {Math.ceil(totalResults / 12)}
+                      {tr("Page {page} of {pages}", {
+                        page: currentPage,
+                        pages: Math.ceil(totalResults / 12),
+                      })}
                     </span>
                     <Button
                       variant="outline"
                       onClick={() => handleSearch(currentPage + 1)}
                       disabled={currentPage >= Math.ceil(totalResults / 12)}
                     >
-                      Next
+                      {tr("Next")}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
@@ -1318,220 +1334,26 @@ export default function BusinessesDirectory() {
               <div className="text-center py-12">
                 <AlertCircle className="w-16 h-16 mx-auto text-slate-700 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  No Businesses Found
+                  {tr("No Businesses Found")}
                 </h3>
                 <p className="text-slate-700 mb-6">
                   {searchMode === "ai"
-                    ? "No verified businesses match that request in the planned market yet. Try another service or location, or browse categories."
-                    : "Try a different search or browse other categories."}
+                    ? tr(
+                        "No verified businesses match that request in the planned market yet. Try another service or location, or browse categories.",
+                      )
+                    : tr("Try a different search or browse other categories.")}
                 </p>
                 <Button
                   onClick={clearSearch}
                   className="bg-gradient-to-r from-sky-700 to-blue-800 hover:from-sky-800 hover:to-blue-900"
                 >
-                  Clear filters and browse categories
+                  {tr("Clear filters and browse categories")}
                 </Button>
               </div>
             )}
           </div>
         </section>
       )}
-
-      {/* Business Details Modal */}
-      <AnimatePresence>
-        {showBusinessDetails && selectedBusiness && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowBusinessDetails(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sticky top-0 bg-gradient-to-r from-sky-50 to-blue-50 border-b border-gray-200 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedBusiness.title}
-                </h2>
-                <button
-                  onClick={() => setShowBusinessDetails(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <MapPin className="w-5 h-5 text-sky-700" />
-                      <span className="text-gray-700 font-medium">
-                        {selectedBusiness.location}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {selectedBusiness.category}
-                      </Badge>
-                      {selectedBusiness.status && (
-                        <Badge className="bg-green-100 text-green-800">
-                          {selectedBusiness.status}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  {selectedBusiness.rating && (
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-1 bg-amber-50 px-4 py-2 rounded-lg">
-                        <Star className="w-5 h-5 fill-amber-400 text-amber-800" />
-                        <span className="text-2xl font-bold text-amber-900">
-                          {selectedBusiness.rating}
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-600 mt-2">
-                        {selectedBusiness.reviews} reviews
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {selectedBusiness.description && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Description
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      {selectedBusiness.description}
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedBusiness.phone && (
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="text-sm text-gray-600 mb-1">Phone</div>
-                        <div className="text-lg font-semibold text-gray-900 break-all">
-                          {selectedBusiness.phone}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {selectedBusiness.email && (
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="text-sm text-gray-600 mb-1">Email</div>
-                        <div className="text-lg font-semibold text-gray-900 break-all">
-                          {selectedBusiness.email}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {selectedBusiness.revenue && (
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="text-sm text-gray-600 mb-1">
-                          Revenue
-                        </div>
-                        <div className="text-lg font-semibold text-gray-900">
-                          €{selectedBusiness.revenue.toLocaleString()}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {selectedBusiness.employees && (
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="text-sm text-gray-600 mb-1">
-                          Employees
-                        </div>
-                        <div className="text-lg font-semibold text-gray-900">
-                          {selectedBusiness.employees}+
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-
-                {selectedBusiness.address && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Address
-                    </h3>
-                    <p className="text-gray-700">{selectedBusiness.address}</p>
-                  </div>
-                )}
-
-                {selectedBusiness.tags && selectedBusiness.tags.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Services & Tags
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedBusiness.tags.map((tag, i) => (
-                        <Badge key={i} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-4 pt-6 border-t border-gray-200">
-                  <Button className="flex-1 bg-gradient-to-r from-sky-700 to-blue-800 hover:from-sky-800 hover:to-blue-900 text-white">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Contact Business
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setShowBusinessDetails(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Footer */}
-      <footer className="bg-[#f3efe9] text-slate-900 py-12 border-t border-slate-200">
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">Verso Air</span>
-            </div>
-
-            <p className="text-slate-700 text-sm text-center">
-              © {new Date().getFullYear()} VERSO AIR INC. Business Directory.
-              Market availability depends on verified local listings.
-            </p>
-
-            <div className="flex gap-4 text-sm text-slate-700">
-              <a href="/privacy" className="hover:text-slate-900 transition-colors">
-                Privacy
-              </a>
-              <a href="/terms" className="hover:text-slate-900 transition-colors">
-                Terms
-              </a>
-              <a href="/contact" className="hover:text-slate-900 transition-colors">
-                Contact
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
 
       {/* Auth Helper */}
       <AuthHelper />

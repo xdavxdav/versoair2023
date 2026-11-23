@@ -25,10 +25,12 @@ import {
 } from "react";
 import { trackPageView, initializeGTMSession } from "./lib/gtag-tracking";
 import { isContentNavPath } from "@/components/ContentNav";
+import { isVxppRoute } from "@/lib/vxpp-routes";
 import { MUSIC_ROUTE_PREFIXES } from "@/lib/music-routes";
 import { useRouteScrollRestoration } from "@/hooks/use-route-scroll-restoration";
 import { useFooterVisibility } from "@/hooks/use-footer-visibility";
 const ContentNav = lazy(() => import("@/components/ContentNav"));
+const VxppShell = lazy(() => import("@/components/vxpp/VxppShell"));
 import QuickSignIn from "@/components/QuickSignIn";
 import { MessagesPage } from "@/components/TwitterMessenger";
 import { BETA_SCOPE_FREEZE, isBetaRoute } from "@/lib/beta-route-access";
@@ -114,6 +116,7 @@ const ArtisansDirectory = lazy(() => import("@/pages/artisans"));
 const ArtisansPortal = lazy(() => import("@/pages/artisans-portal"));
 const CulturalPrograms = lazy(() => import("@/pages/programs"));
 const Communities = lazy(() => import("@/pages/communities"));
+const CommunitySlugPage = lazy(() => import("@/pages/community-slug"));
 const CommunityDetail = lazy(() => import("@/pages/community"));
 const ArtisanWorkshops = lazy(() => import("@/pages/artisan-workshops"));
 const EventsPage = lazy(() => import("@/pages/events"));
@@ -121,6 +124,7 @@ const EventDetailPage = lazy(() => import("@/pages/event-detail"));
 const ArtistPortalWelcome = lazy(() => import("@/pages/artist-portal-welcome"));
 const ArtistPortalDashboard = lazy(() => import("@/pages/artist-portal"));
 const ArtistDirectory = lazy(() => import("@/pages/artist-directory"));
+const ArtistBioPage = lazy(() => import("@/pages/artist-bio"));
 
 // Stable wrapper components — MUST be defined at module level (not inline)
 // so React keeps the same component identity across re-renders.
@@ -131,10 +135,10 @@ const ArtistPortalWelcomePage = (props: any) => {
   if (user && !isLoading && !canAccessArtist) {
     const links = accessiblePortals.filter((id) => PORTALS[id]);
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-4 text-white">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+      <div className="flex min-h-[60vh] items-center justify-center px-4 pt-16 text-slate-900 dark:text-white">
+        <div className="w-full max-w-md rounded-2xl border border-violet-200 bg-white p-6 text-center shadow-md dark:border-white/10 dark:bg-white/5 dark:shadow-none">
           <h1 className="text-lg font-semibold">You're signed in</h1>
-          <p className="mt-1 text-sm text-white/60">
+          <p className="mt-1 text-sm text-slate-600 dark:text-white/60">
             {user.name || user.email} · open a portal
           </p>
           <div className="mt-4 grid gap-2">
@@ -142,7 +146,7 @@ const ArtistPortalWelcomePage = (props: any) => {
               <Link
                 key={id}
                 href={PORTALS[id].path}
-                className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+                className="rounded-lg bg-violet-100 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               >
                 {PORTALS[id].label}
               </Link>
@@ -170,6 +174,7 @@ const SignInSimple = lazy(() => import("@/pages/signin-simple"));
 const OAuthComplete = lazy(() => import("@/pages/oauth-complete"));
 const ApplyPage = lazy(() => import("@/pages/apply"));
 const BusinessRequestPage = lazy(() => import("@/pages/business-request"));
+const ProfileRequestPage = lazy(() => import("@/pages/profile-request"));
 
 // ─────────────────────────────────────────────────────
 // 🌍 Geo Admin Portal (lazy-loaded)
@@ -200,6 +205,9 @@ const StreamRoyaleReview = lazy(() => import("@/pages/streamroyale-review"));
 const PurgatoireAdmin = lazy(() => import("@/pages/admin/purgatoire"));
 const ArtistContractsAdmin = lazy(
   () => import("@/pages/admin/artist-contracts"),
+);
+const ProfileRequestsAdmin = lazy(
+  () => import("@/pages/admin/profile-requests"),
 );
 const InventoryDashboard = lazy(() => import("@/pages/inventory-dashboard"));
 
@@ -325,7 +333,9 @@ const VersoAIChat = lazy(() => import("@/components/VersoAIChat"));
 import MessengerLauncher from "@/components/messenger/MessengerLauncher";
 import NotificationCenter from "@/components/NotificationCenter";
 import { CountryDropdown } from "@/components/CountryDropdown";
-import GeoAdminMarketStatusBanner from "@/components/GeoAdminMarketStatusBanner";
+import GeoAdminMarketStatusBanner, {
+  useMarketBannerPinned,
+} from "@/components/GeoAdminMarketStatusBanner";
 import { LanguageProvider, useLanguage } from "@/components/LanguageSwitcher";
 import { LoadingProvider, useLoading } from "@/hooks/use-loading";
 import {
@@ -412,6 +422,7 @@ function getDocumentTitle(pathname: string) {
   if (path.startsWith("/profiles/")) return "Community Profile";
   if (path.startsWith("/user/")) return "Member Profile";
   if (path.startsWith("/sessions/")) return "Listening Session";
+  if (path.startsWith("/artistes/")) return "Artist Biography";
 
   const sectionTitle = getPageTitle(path);
   const segments = path.split("/").filter(Boolean);
@@ -564,9 +575,13 @@ function Router() {
       <Route path="/for-artists" component={ArtistsBetaPage} />
       <Route path="/for-businesses" component={BusinessesBetaPage} />
       <Route path="/for-listeners" component={ListenersBetaPage} />
+      <Route path="/vxpp">{() => <Redirect to="/blog" />}</Route>
       <Route path="/blog" component={Blog} />
       <Route path="/faq" component={FaqPage} />
       <Route path="/profile">
+        {() => <ProtectedRoute component={Profile} />}
+      </Route>
+      <Route path="/profile/settings">
         {() => <ProtectedRoute component={Profile} />}
       </Route>
       <Route path="/user/:id" component={UserProfile} />
@@ -658,6 +673,7 @@ function Router() {
       <Route path="/artisans-portal">
         {() => <ProtectedRoute component={ArtisansPortal} />}
       </Route>
+      <Route path="/artistes/:slug" component={ArtistBioPage} />
       <Route path="/artistes" component={ArtistDirectory} />
       {/* On unified domain: /artist-portal renders welcome page directly (no cross-domain redirect) */}
       <Route path="/artist-portal" component={ArtistPortalWelcomePage} />
@@ -667,6 +683,7 @@ function Router() {
       />
 
       <Route path="/programs" component={CulturalPrograms} />
+      <Route path="/communities/:slug" component={CommunitySlugPage} />
       <Route path="/communities" component={Communities} />
       <Route path="/community" component={CommunityDetail} />
       <Route path="/artisan-workshops" component={ArtisanWorkshops} />
@@ -703,6 +720,7 @@ function Router() {
           🎯 UNIFIED APPLY PAGE — Portal selection & registration
           ═══════════════════════════════════════════════ */}
       <Route path="/apply" component={ApplyPage} />
+      <Route path="/apply/profile" component={ProfileRequestPage} />
       <Route path="/apply/business">
         {() => <ProtectedRoute component={BusinessRequestPage} />}
       </Route>
@@ -781,6 +799,9 @@ function Router() {
         {() => (
           <ProtectedRoute component={ArtistContractsAdmin} ownerOnly />
         )}
+      </Route>
+      <Route path="/admin/profile-requests">
+        {() => <ProtectedRoute component={ProfileRequestsAdmin} ownerOnly />}
       </Route>
       {/* 🔐 Superuser-only credentials vault — secret path, no nav links */}
       <Route path="/sys/0x7f3a9c">
@@ -1160,6 +1181,7 @@ function AppContent() {
 
   // BlogNavbar owns the stable navigation for blog/marketplace pages.
   // Keep ContentNav for the other content routes so the two nav systems never stack.
+  const isVxppPage = isVxppRoute(currentPath);
   const isBlogOrMarketplace =
     currentPath === "/blog" || currentPath === "/marketplace";
   const isAuthPage = currentPath.startsWith("/auth");
@@ -1169,6 +1191,7 @@ function AppContent() {
   const isMessagesPage = currentPath === "/messages";
   const showAccountBlogNavbar =
     isAuthed &&
+    !isVxppPage &&
     !isAuthPage &&
     !isMessagesPage &&
     !isMusicPage &&
@@ -1177,6 +1200,7 @@ function AppContent() {
   const showContentNav =
     isContentNavPage &&
     isAuthed &&
+    !isVxppPage &&
     !isMessagesPage &&
     !isBlogOrMarketplace &&
     !showAccountBlogNavbar;
@@ -1232,20 +1256,39 @@ function AppContent() {
     return () => window.removeEventListener("versoai-fullscreen", handler);
   }, []);
 
+  const showFixedHeaderBlock =
+    !isVxppPage &&
+    !isMusicPage &&
+    !currentPath.startsWith("/community") &&
+    !currentPath.startsWith("/profile") &&
+    !currentPath.startsWith("/user/") &&
+    !currentPath.startsWith("/dashboard") &&
+    !currentPath.startsWith("/admin") &&
+    !isImmersivePage;
+
+  const marketBannerPinned = useMarketBannerPinned();
+  const pinMarketBanner = showFixedHeaderBlock && marketBannerPinned;
+
   return (
     <div className="min-h-screen flex flex-col">
-      <GeoAdminMarketStatusBanner />
+      {/* Inside the sticky header block the unavailable-market notice stays pinned on scroll. */}
+      {!pinMarketBanner && <GeoAdminMarketStatusBanner />}
+      {!showFixedHeaderBlock &&
+        !isVxppPage &&
+        !isImmersivePage &&
+        !currentPath.startsWith("/artist-portal") && (
+        <div className="fixed bottom-20 right-3 z-40 lg:bottom-4 lg:right-4">
+          <ThemeToggle
+            className="h-10 w-10 border border-slate-300 bg-white/95 text-slate-700 shadow-md dark:border-slate-600 dark:bg-slate-800/95 dark:text-slate-100"
+            iconClassName="h-5 w-5"
+          />
+        </div>
+      )}
       {/* Removed the extra top promo banner to avoid covering the logo/header on localhost. */}
       {/* ── Fixed Header Block: amber top bar (conditional) + scrolling ticker (conditional) ──
           Hidden on: Music pages, Blog, Community, Profile, Dashboard, Immersive pages
           Shown on: Business/Commerce pages (Commerce, Hotellerie, Batiment, Automobile, Finance, etc.) */}
-      {!isMusicPage &&
-        !currentPath.startsWith("/community") &&
-        !currentPath.startsWith("/profile") &&
-        !currentPath.startsWith("/user/") &&
-        !currentPath.startsWith("/dashboard") &&
-        !currentPath.startsWith("/admin") &&
-        !isImmersivePage && (
+      {showFixedHeaderBlock && (
           <div
           aria-hidden={isFooterVisible}
           className={`sticky top-0 left-0 right-0 z-[60] flex flex-col ${
@@ -1253,78 +1296,108 @@ function AppContent() {
           }`}
           style={{ overflow: "visible" }}
         >
-            {/* Top Banner */}
-            <div className="bg-gradient-to-r from-amber-700 to-amber-800 text-white h-7 px-2 flex items-center">
+            {pinMarketBanner && <GeoAdminMarketStatusBanner />}
+            {/* Top Utility Bar */}
+            <div
+              data-testid="top-utility-bar"
+              className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-700 text-white h-8 sm:h-7 px-1.5 sm:px-3 flex items-center border-b border-amber-950/25 shadow-[inset_0_-1px_0_rgba(255,255,255,0.08)]"
+            >
               <div
-                className="max-w-7xl mx-auto flex items-center text-[10px] gap-2 w-full"
+                className="topbar-nowrap max-w-7xl mx-auto w-full min-w-0 flex flex-nowrap items-center justify-between gap-1 sm:gap-2 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-3 text-[10px]"
                 style={{ overflow: "visible" }}
               >
-                {/* Left: Platform label — Dynamic based on current page */}
-                <span
-                  className="font-medium flex-1 min-w-0 text-center notranslate"
-                  translate="no"
-                >
-                  <span className="hidden md:inline notranslate" translate="no">
-                    {pageTitle === "Verso Air"
-                      ? isFr
-                        ? "Verso Air"
-                        : "Verso Air"
-                      : isFr
-                        ? pageTitle === "Verso Air Business" ||
-                          pageTitle === "Community Hub"
-                          ? pageTitle
-                          : `Plateforme ${pageTitle}`
-                        : pageTitle}
-                    {pageTitle === "Verso Air" && (
-                      <>
-                        <sup className="ml-0.5 align-super text-[7px]">™</sup>
-                        <span className="mx-1">
-                          {translateText("Business Intelligence Platform")}
-                        </span>
-                      </>
-                    )}
-                  </span>
+                {/* Left: Platform label — Blinking BIP pill on mobile, full title on larger screens */}
+                <div className="flex items-center min-w-0 shrink-0 sm:shrink">
                   <span
-                    className="hidden sm:inline md:hidden notranslate"
+                    data-testid="topbar-bip-badge"
+                    className="sm:hidden inline-flex items-center gap-1 rounded-full bg-amber-950/35 border border-amber-300/35 px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase text-amber-50 shrink-0 notranslate"
                     translate="no"
                   >
-                    {pageTitle === "Verso Air"
-                      ? translateText("Business Intelligence Platform")
-                      : isFr
-                        ? pageTitle.substring(0, 3)
+                    <span className="relative flex h-1.5 w-1.5 shrink-0" aria-hidden="true">
+                      <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-200" />
+                    </span>
+                    <span className="animate-bip-blink motion-reduce:animate-none">BIP</span>
+                  </span>
+                  <span
+                    className="hidden sm:inline-block font-medium truncate min-w-0 text-left notranslate"
+                    translate="no"
+                  >
+                    <span className="hidden md:inline notranslate" translate="no">
+                      {pageTitle === "Verso Air"
+                        ? "Verso Air"
+                        : isFr
+                          ? pageTitle === "Verso Air Business" ||
+                            pageTitle === "Community Hub"
+                            ? pageTitle
+                            : `Plateforme ${pageTitle}`
+                          : pageTitle}
+                      {pageTitle === "Verso Air" && (
+                        <>
+                          <sup className="ml-0.5 relative -top-0.5 text-[7px] leading-none">™</sup>
+                          <span className="mx-1">
+                            {translateText("Business Intelligence Platform")}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                    <span
+                      className="sm:inline md:hidden notranslate"
+                      translate="no"
+                    >
+                      {pageTitle === "Verso Air"
+                        ? translateText("Business Intelligence Platform")
                         : pageTitle.substring(0, 3)}
+                    </span>
                   </span>
-                  <span className="sm:hidden notranslate" translate="no">
-                    BIP
-                  </span>
-                </span>
+                </div>
 
-                {/* Center: Country filter dropdown */}
-                <div className="flex-shrink-0" style={{ overflow: "visible" }}>
+                {/* Center: Country & Language pill */}
+                <div
+                  className="min-w-0 flex items-center justify-center"
+                  style={{ overflow: "visible" }}
+                >
                   <CountryDropdown />
                 </div>
 
-                {/* Right: Action buttons */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 justify-end">
+                {/* Right: Compact utility actions */}
+                <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
+                  <Link
+                    href="/vxpp"
+                    data-testid="topbar-vxpp-btn"
+                    aria-label="Open vxpp (VersoAirApp)"
+                    title="Open vxpp — VersoAirApp"
+                    className="inline-flex items-center justify-center gap-1 h-5 min-[260px]:h-6 md:h-5 rounded-full bg-amber-950/55 hover:bg-amber-950/80 border border-amber-200/45 px-2 text-[9px] sm:text-[10px] font-extrabold tracking-tight text-amber-50 transition-colors shrink-0 whitespace-nowrap notranslate"
+                    translate="no"
+                  >
+                    vxpp
+                  </Link>
                   <button
                     onClick={() => setIsMusicPortalOpen(!isMusicPortalOpen)}
                     aria-label="Open Verso Air Music Portal"
                     title="Verso Air Music Portal"
-                    className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
+                    className="mobile-compact-btn inline-flex items-center justify-center gap-1 h-5 w-5 min-[260px]:h-6 min-[260px]:w-6 md:h-5 md:w-auto rounded-full bg-white/10 hover:bg-white/20 px-0 md:px-2 text-white hover:text-amber-100 transition-colors shrink-0"
                   >
-                    <span>🎵</span>
-                    <span className="hidden sm:inline notranslate">Verso Air</span>
+                    <span className="leading-none">🎵</span>
+                    <span className="hidden md:inline notranslate whitespace-nowrap">
+                      Verso Air
+                    </span>
                   </button>
                   <button
                     onClick={() => setIsLocationPanelOpen(!isLocationPanelOpen)}
                     aria-label="Open GPS Services"
                     title="GPS Services"
-                    className="mobile-compact-btn hover:text-amber-200 transition-colors flex items-center gap-1"
+                    className="mobile-compact-btn inline-flex items-center justify-center gap-1 h-5 w-5 min-[260px]:h-6 min-[260px]:w-6 md:h-5 md:w-auto rounded-full bg-white/10 hover:bg-white/20 px-0 md:px-2 text-white hover:text-amber-100 transition-colors shrink-0"
                   >
-                    <span>📍</span>
-                    <span className="hidden sm:inline">GPS Services</span>
+                    <span className="leading-none">📍</span>
+                    <span className="hidden md:inline whitespace-nowrap">
+                      GPS Services
+                    </span>
                   </button>
-                  <ThemeToggle />
+                  <ThemeToggle
+                    className="mobile-compact-btn h-5 w-5 min-[260px]:h-6 min-[260px]:w-6 md:h-5 md:w-5 p-0.5 min-[260px]:p-1 bg-white/10 hover:bg-white/20 shrink-0"
+                    iconClassName="h-3 w-3 min-[260px]:h-3.5 min-[260px]:w-3.5 md:h-3 md:w-3"
+                  />
                 </div>
               </div>
             </div>
@@ -1403,6 +1476,7 @@ function AppContent() {
       {/* Main Navbar — desktop/tablet only (md+); MobileMenuBubble handles nav on phones
            (still hidden on auth/content-nav/music/immersive pages as before) */}
       {!isAuthed &&
+        !isVxppPage &&
         !isAuthPage &&
         !showContentNav &&
         !isBlogOrMarketplace &&
@@ -1453,7 +1527,13 @@ function AppContent() {
       >
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
-            <Router />
+            {isVxppPage ? (
+              <VxppShell fullBleed={isMessagesPage}>
+                <Router />
+              </VxppShell>
+            ) : (
+              <Router />
+            )}
           </Suspense>
         </ErrorBoundary>
       </main>
@@ -1467,13 +1547,13 @@ function AppContent() {
           </div>
         </Suspense>
       )}
-      {/* Footer — hide on music pages; show only motto on immersive pages */}
-      {!isMusicPage && !isImmersivePage && !isMessagesPage && (
+      {/* Footer — hide on music, vxpp, and immersive pages */}
+      {!isMusicPage && !isVxppPage && !isImmersivePage && !isMessagesPage && (
         <div>
           {isVHeartzPage ? <VHeartzFooter /> : <Footer />}
         </div>
       )}
-      {isImmersivePage && !isMessagesPage && (
+      {isImmersivePage && !isVxppPage && !isMessagesPage && (
         <div className="bg-gray-950 py-6 text-center">
           <p
             className="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-white to-amber-400 font-light select-none notranslate"
@@ -1493,6 +1573,7 @@ function AppContent() {
         <ReportIssueNudge
           path={currentPath}
           raised={
+            isVxppPage ||
             showContentNav ||
             showAccountBlogNavbar ||
             isBlogOrMarketplace ||
@@ -1501,8 +1582,9 @@ function AppContent() {
         />
       </ErrorBoundary>
 
-      {/* Mobile Menu Bubble — hide whenever a dedicated account/content nav is active. */}
+      {/* Mobile Menu Bubble — hide whenever a dedicated account/content/vxpp nav is active. */}
       {!isImmersivePage &&
+        !isVxppPage &&
         !isMusicPage &&
         !isBlogOrMarketplace &&
         !showAccountBlogNavbar &&

@@ -1167,23 +1167,6 @@
   }
 }
 
-/* ── GLOBAL: Hero search bars — stack button below on phone ── */
-@media (max-width: 480px) {
-  /* Search input with absolutely-positioned button → stack vertically */
-  .relative:has(> input + .absolute) {
-    display: flex;
-    flex-direction: column;
-  }
-  .relative:has(> input + .absolute) > .absolute {
-    position: static !important;
-    width: 100%;
-    margin-top: 0.5rem;
-  }
-  .relative:has(> input + .absolute) > input {
-    padding-right: 1rem !important;
-  }
-}
-
 /* ── GLOBAL: Card grids — single column on phones ── */
 @media (max-width: 480px) {
   .grid-cols-2:not([role="tablist"]) {
@@ -1193,8 +1176,8 @@
 
 /* ── GLOBAL: Header bars — wrap on mobile ── */
 @media (max-width: 768px) {
-  /* Sticky page headers with flex justify-between → allow wrapping */
-  .sticky .flex.items-center.justify-between {
+  /* Sticky page headers with flex justify-between → allow wrapping, except compact single-row utility bars */
+  .sticky .flex.items-center.justify-between:not(.topbar-nowrap) {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
@@ -1254,6 +1237,16 @@
   .clickable {
     min-height: 44px;
     min-width: 44px;
+  }
+
+  /* Inline icon buttons anchored inside input wrappers (password toggles, clear X):
+     stay compact and centered inside the input padding instead of inflating to 44x44 top-left */
+  .relative:has(> input) > button.absolute:not(.hero-search-cta) {
+    min-height: 28px;
+    min-width: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Disable hover scale effects — they cause jank on touch */
@@ -2059,6 +2052,27 @@ html {
 
   [class~="max-h-[80vh]"] {
     max-height: 80dvh;
+  }
+}
+
+/* Top utility bar mobile BIP live indicator blink */
+.animate-bip-blink {
+  animation: bip-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes bip-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bip-blink {
+    animation: none;
   }
 }
 

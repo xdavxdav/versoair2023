@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import type { CheckoutReturnPhase } from "@/hooks/use-checkout-return";
 import { useTranslate } from "@/hooks/use-translate";
 
-export type PurchaseKind = "community" | "activity" | "plan";
+export type PurchaseKind =
+  | "community"
+  | "activity"
+  | "plan"
+  | "event_host"
+  | "event_arsenal";
 
 interface CheckoutReturnNoticeProps {
   phase: CheckoutReturnPhase;
@@ -103,6 +108,14 @@ function confirmedMessage(
   }
   if (purchase === "activity") {
     return tr("Payment received. You are on the list for this activity.");
+  }
+  if (purchase === "event_host") {
+    return tr("Payment received. Your event has been submitted for review!");
+  }
+  if (purchase === "event_arsenal") {
+    return tr(
+      "Payment received. Your event pass and arsenal order are ready!",
+    );
   }
   return planName
     ? tr("Payment received. Your {plan} plan is now active.", { plan: planName })

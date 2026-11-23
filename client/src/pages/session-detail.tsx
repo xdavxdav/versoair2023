@@ -31,6 +31,8 @@ import {
   type SessionTrackView,
 } from "@shared/listening-session";
 import { useLanguage } from "@/components/LanguageSwitcher";
+import { TmuEqualizerBars, TmuHubNav } from "@/components/music/TmuHubNav";
+import { TmuShell } from "@/components/music/TmuShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,11 +88,11 @@ import { cn } from "@/lib/utils";
 import { StatusPill } from "@/pages/sessions";
 
 const FOCUS_RING =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06020f]";
 const PRIMARY_BUTTON =
-  "bg-amber-500 font-semibold text-gray-950 hover:bg-amber-400 focus-visible:ring-amber-400 focus-visible:ring-offset-gray-950";
+  "bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600 font-semibold text-white hover:from-purple-500 hover:to-fuchsia-500 shadow-[0_0_20px_rgba(147,51,234,0.35)] focus-visible:ring-fuchsia-400 focus-visible:ring-offset-[#06020f]";
 const SECONDARY_BUTTON =
-  "border-gray-600 bg-transparent text-gray-100 hover:bg-gray-800 hover:text-white focus-visible:ring-amber-400 focus-visible:ring-offset-gray-950";
+  "border-purple-500/30 bg-[#180d34]/75 text-slate-100 hover:bg-purple-500/20 hover:text-white focus-visible:ring-fuchsia-400 focus-visible:ring-offset-[#06020f]";
 
 interface TextProps {
   lang: SessionLang;
@@ -101,27 +103,28 @@ interface TextProps {
 
 function PageShell({ copy, children }: { copy: SessionCopy; children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black pb-28 text-white">
+    <TmuShell chrome="site">
       <div className="mx-auto w-full max-w-5xl px-4 pt-6">
+        <TmuHubNav currentSurface="sessions" className="mb-5" />
         <Link
           href={SESSIONS_PATH}
-          className={cn("inline-flex items-center gap-1 rounded-md text-sm text-gray-300 hover:text-white", FOCUS_RING)}
+          className={cn("inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-slate-300 hover:bg-purple-500/10 hover:text-white", FOCUS_RING)}
         >
           <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           <span>{copy.back}</span>
         </Link>
         {children}
       </div>
-    </div>
+    </TmuShell>
   );
 }
 
 function NotFoundView({ copy }: { copy: SessionCopy }) {
   return (
     <PageShell copy={copy}>
-      <div className="mt-8 rounded-xl border border-gray-800 bg-gray-900/60 p-6">
-        <h1 className="text-xl font-semibold text-white">{copy.notFoundTitle}</h1>
-        <p className="mt-2 text-sm text-gray-300">{copy.notFoundBody}</p>
+      <div className="tmu-glass mt-8 rounded-2xl p-6">
+        <h1 className="text-xl font-semibold text-slate-50">{copy.notFoundTitle}</h1>
+        <p className="mt-2 text-sm text-slate-300">{copy.notFoundBody}</p>
       </div>
     </PageShell>
   );
@@ -131,9 +134,9 @@ function LoadError({ copy, onRetry }: { copy: SessionCopy; onRetry: () => void }
   return (
     <div
       role="alert"
-      className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3"
+      className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-500/35 bg-rose-500/10 px-4 py-3"
     >
-      <p className="text-sm text-red-100">{copy.sessionLoadError}</p>
+      <p className="text-sm text-rose-100">{copy.sessionLoadError}</p>
       <Button type="button" size="sm" variant="outline" className={SECONDARY_BUTTON} onClick={onRetry}>
         {copy.retry}
       </Button>
@@ -146,10 +149,10 @@ function DetailSkeleton({ label }: { label: string }) {
     <div role="status" className="mt-6 space-y-4">
       <span className="sr-only">{label}</span>
       <div aria-hidden="true" className="space-y-4">
-        <Skeleton className="h-6 w-24 rounded-full bg-gray-800 motion-reduce:animate-none" />
-        <Skeleton className="h-9 w-3/4 bg-gray-800 motion-reduce:animate-none" />
-        <Skeleton className="h-4 w-1/2 bg-gray-800 motion-reduce:animate-none" />
-        <Skeleton className="h-44 w-full rounded-2xl bg-gray-800 motion-reduce:animate-none" />
+        <Skeleton className="h-6 w-24 rounded-full bg-purple-950/80 motion-reduce:animate-none" />
+        <Skeleton className="h-9 w-3/4 bg-purple-950/80 motion-reduce:animate-none" />
+        <Skeleton className="h-4 w-1/2 bg-purple-950/80 motion-reduce:animate-none" />
+        <Skeleton className="h-44 w-full rounded-2xl bg-purple-950/80 motion-reduce:animate-none" />
       </div>
     </div>
   );
@@ -160,7 +163,7 @@ function OfflineBanner({ show, copy }: { show: boolean; copy: SessionCopy }) {
   return (
     <div role="status">
       {show && (
-        <p className="mt-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+        <p className="mt-4 flex items-center gap-2 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
           <WifiOff aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span>{copy.reconnecting}</span>
         </p>
@@ -219,21 +222,21 @@ function SessionHeader({
         <StatusPill status={status} copy={copy} />
         <CopyLinkButton sessionId={detail.id} copy={copy} />
       </div>
-      <h1 className="mt-3 break-words bg-gradient-to-r from-amber-200 to-orange-300 bg-clip-text text-2xl font-bold leading-tight text-transparent sm:text-3xl">
+      <h1 className="tmu-hero-title mt-3 break-words text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
         {detail.title}
       </h1>
-      <ul className="mt-3 space-y-1 text-sm text-gray-300">
+      <ul className="mt-3 space-y-1 text-sm text-slate-300">
         {detail.hostName && (
           <li className="flex items-center gap-1.5">
-            <User aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <User aria-hidden="true" className="h-4 w-4 shrink-0 text-purple-300" />
             <span className="min-w-0 break-words">{copy.hostedBy(detail.hostName)}</span>
           </li>
         )}
-        <li className="flex items-center gap-1.5">
-          <CalendarClock aria-hidden="true" className="h-4 w-4 shrink-0" />
+        <li className="flex items-center gap-1.5 tabular-nums">
+          <CalendarClock aria-hidden="true" className="h-4 w-4 shrink-0 text-purple-300" />
           <span>{formatSessionWhen(detail.startsAt, lang, { nowMs })}</span>
         </li>
-        {status === "scheduled" && <li className="ml-[1.375rem] text-xs text-gray-400">{copy.localTimeNote}</li>}
+        {status === "scheduled" && <li className="ml-[1.375rem] text-xs text-slate-400">{copy.localTimeNote}</li>}
       </ul>
     </header>
   );
@@ -252,8 +255,8 @@ function LeaveButton({ onClick, copy }: { onClick: () => void; copy: SessionCopy
 
 function Countdown({ seconds, lang, copy }: TextProps & { seconds: number }) {
   return (
-    <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
-      <p role="timer" className="text-3xl font-bold tabular-nums text-amber-200 sm:text-4xl">
+    <section className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/15 via-[#120929]/90 to-fuchsia-500/10 p-5">
+      <p role="timer" className="text-3xl font-bold tabular-nums text-purple-100 sm:text-4xl">
         {copy.startsIn(formatCountdown(seconds, lang))}
       </p>
     </section>
@@ -262,8 +265,8 @@ function Countdown({ seconds, lang, copy }: TextProps & { seconds: number }) {
 
 function WaitingCard({ live, copy }: { live: LiveSession; copy: SessionCopy }) {
   return (
-    <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-4">
-      <p className="text-sm text-gray-200">{copy.joinedWaiting}</p>
+    <section className="tmu-glass rounded-2xl p-4">
+      <p className="text-sm text-slate-200">{copy.joinedWaiting}</p>
       <div className="mt-3">
         <LeaveButton onClick={live.leave} copy={copy} />
       </div>
@@ -275,8 +278,8 @@ function ReplayCard({ tracks, copy }: { tracks: readonly SessionTrackView[]; cop
   const { playTracks } = useAudio();
   const playable = replayTracks(tracks);
   return (
-    <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-4 sm:p-6">
-      <p className="text-sm text-gray-200">{copy.endedNote}</p>
+    <section className="tmu-glass-elevated rounded-2xl p-4 sm:p-6">
+      <p className="text-sm text-slate-200">{copy.endedNote}</p>
       {playable.length > 0 && (
         <>
           <Button
@@ -287,7 +290,7 @@ function ReplayCard({ tracks, copy }: { tracks: readonly SessionTrackView[]; cop
             <Play aria-hidden="true" />
             <span>{copy.replayButton}</span>
           </Button>
-          <p className="mt-2 text-xs text-gray-400">{copy.replayNote}</p>
+          <p className="mt-2 text-xs text-slate-400">{copy.replayNote}</p>
         </>
       )}
     </section>
@@ -321,11 +324,14 @@ function ProgressBar({ view, track, copy }: { view: NowPlayingView; track: Sessi
         aria-valuemax={total}
         aria-valuenow={elapsed}
         aria-valuetext={`${formatDuration(elapsed)} / ${formatDuration(total)}`}
-        className="h-1.5 w-full overflow-hidden rounded-full bg-gray-800"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-purple-950/80"
       >
-        <div className="h-full rounded-full bg-amber-400" style={{ width: `${view.progress * 100}%` }} />
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-cyan-400"
+          style={{ width: `${view.progress * 100}%` }}
+        />
       </div>
-      <div className="mt-1 flex justify-between text-xs tabular-nums text-gray-400">
+      <div className="mt-1.5 flex justify-between text-xs tabular-nums text-slate-400">
         <span>{formatDuration(elapsed)}</span>
         <span>{formatDuration(total)}</span>
       </div>
@@ -333,22 +339,25 @@ function ProgressBar({ view, track, copy }: { view: NowPlayingView; track: Sessi
   );
 }
 
-function NowPlaying({ view, copy }: { view: NowPlayingView; copy: SessionCopy }) {
+function NowPlaying({ view, copy, active }: { view: NowPlayingView; copy: SessionCopy; active?: boolean }) {
   const note = nowPlayingNote(view);
   const { track, next } = view;
   const heard = track !== null && track.available ? track : null;
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{copy.nowPlaying}</p>
-      <div aria-live="polite" aria-atomic="true" className="mt-1 min-h-[3.5rem]">
+      <div className="flex items-center gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-purple-300">{copy.nowPlaying}</p>
+        <TmuEqualizerBars active={Boolean(active)} />
+      </div>
+      <div aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-[3.5rem]">
         {heard && (
           <>
-            <p className="break-words text-xl font-semibold leading-snug text-white sm:text-2xl">{heard.title}</p>
-            {heard.artistName && <p className="break-words text-sm text-gray-300">{heard.artistName}</p>}
+            <p className="break-words text-xl font-bold leading-snug text-white sm:text-2xl">{heard.title}</p>
+            {heard.artistName && <p className="break-words text-sm text-slate-300">{heard.artistName}</p>}
           </>
         )}
         {note && (
-          <p className={cn("text-sm", heard ? "mt-1 text-amber-200" : "text-gray-200")}>
+          <p className={cn("text-sm", heard ? "mt-1 text-fuchsia-200" : "text-slate-200")}>
             {noteText(note, view, copy)}
           </p>
         )}
@@ -356,8 +365,8 @@ function NowPlaying({ view, copy }: { view: NowPlayingView; copy: SessionCopy })
       {track && <ProgressBar view={view} track={track} copy={copy} />}
       {next && view.kind !== "break" && (
         <div className="mt-3 flex flex-wrap items-baseline gap-x-2 text-sm">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{copy.upNext}</span>
-          <span className="min-w-0 break-words text-gray-200">{next.available ? next.title : copy.trackUnavailable}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{copy.upNext}</span>
+          <span className="min-w-0 break-words text-slate-200">{next.available ? next.title : copy.trackUnavailable}</span>
         </div>
       )}
     </div>
@@ -426,11 +435,11 @@ function LiveCard({
   copy: SessionCopy;
 }) {
   return (
-    <section className="rounded-2xl border border-red-500/40 bg-gradient-to-br from-red-500/10 via-gray-900/60 to-amber-500/5 p-4 sm:p-6">
-      <NowPlaying view={playing} copy={copy} />
+    <section className="tmu-glass-elevated rounded-2xl border-rose-500/40 bg-gradient-to-br from-rose-500/12 via-[#120929]/90 to-fuchsia-500/10 p-4 sm:p-6">
+      <NowPlaying view={playing} copy={copy} active={mode === "listening"} />
       <div role="status">
         {live.leftForPlayer && mode === "join" && (
-          <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+          <p className="mt-4 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
             {copy.leftForPlayer}
           </p>
         )}
@@ -446,11 +455,11 @@ function LiveCard({
 
 function About({ description, copy }: { description: string; copy: SessionCopy }) {
   return (
-    <section aria-labelledby="session-about">
-      <h2 id="session-about" className="text-lg font-semibold text-white">
+    <section aria-labelledby="session-about" className="tmu-glass rounded-2xl p-4 sm:p-5">
+      <h2 id="session-about" className="text-lg font-semibold text-slate-50">
         {copy.aboutTitle}
       </h2>
-      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-300">{description}</p>
+      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-300">{description}</p>
     </section>
   );
 }
@@ -471,29 +480,29 @@ function TrackRow({
     <li
       aria-current={row.current ? "true" : undefined}
       className={cn(
-        "flex items-start gap-3 px-3 py-3 sm:px-4",
-        row.current && "bg-amber-500/10 ring-1 ring-inset ring-amber-400/60",
+        "flex items-start gap-3 px-3 py-3 sm:px-4 transition-colors",
+        row.current && "bg-purple-500/15 ring-1 ring-inset ring-fuchsia-400/50",
         row.past && "opacity-75",
       )}
     >
-      <span aria-hidden="true" className="w-6 shrink-0 pt-0.5 text-right text-sm tabular-nums text-gray-400">
+      <span aria-hidden="true" className="w-6 shrink-0 pt-0.5 text-right text-sm tabular-nums text-slate-400">
         {number}
       </span>
       <div className="min-w-0 flex-1">
-        <p className={cn("break-words text-sm font-medium", row.unavailable ? "italic text-gray-400" : "text-white")}>
+        <p className={cn("break-words text-sm font-medium", row.unavailable ? "italic text-slate-400" : "text-slate-50")}>
           {track.available ? track.title : copy.trackUnavailable}
         </p>
-        {track.artistName && <p className="break-words text-xs text-gray-400">{track.artistName}</p>}
+        {track.artistName && <p className="break-words text-xs text-slate-400">{track.artistName}</p>}
         {(row.current || row.next || grade) && (
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {row.current && (
-              <Badge variant="outline" className="gap-1 border-red-500/40 bg-red-500/15 text-red-200">
+              <Badge variant="outline" className="gap-1 border-rose-500/45 bg-rose-500/15 text-rose-200">
                 <Play aria-hidden="true" className="h-3 w-3" />
                 <span>{copy.trackPlaying}</span>
               </Badge>
             )}
             {row.next && (
-              <Badge variant="outline" className="border-gray-600 bg-gray-800/60 text-gray-200">
+              <Badge variant="outline" className="border-purple-500/30 bg-[#180d34]/80 text-slate-200">
                 {copy.upNext}
               </Badge>
             )}
@@ -506,7 +515,7 @@ function TrackRow({
           </div>
         )}
       </div>
-      <span className="shrink-0 pt-0.5 text-xs tabular-nums text-gray-400">{formatDuration(track.durationSec)}</span>
+      <span className="shrink-0 pt-0.5 text-xs tabular-nums text-slate-400">{formatDuration(track.durationSec)}</span>
     </li>
   );
 }
@@ -526,14 +535,14 @@ function Tracklist({
   return (
     <section aria-labelledby="session-tracklist">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 id="session-tracklist" className="text-lg font-semibold text-white">
+        <h2 id="session-tracklist" className="text-lg font-semibold text-slate-50">
           {copy.tracklistTitle}
         </h2>
-        <p className="text-sm text-gray-400">{copy.tracklistMeta(tracks.length, formatTotalLength(totalSec))}</p>
+        <p className="text-sm tabular-nums text-slate-400">{copy.tracklistMeta(tracks.length, formatTotalLength(totalSec))}</p>
       </div>
       <ol
         role="list"
-        className="mt-3 divide-y divide-gray-800 overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60"
+        className="tmu-glass mt-3 divide-y divide-purple-500/15 overflow-hidden rounded-2xl"
       >
         {tracks.map((track, index) => (
           <TrackRow key={track.position} track={track} row={rows[index]} number={index + 1} copy={copy} />
@@ -566,8 +575,8 @@ const ChatMessageRow = memo(function ChatMessageRow({
   return (
     <li
       className={cn(
-        "rounded-lg border px-3 py-2",
-        message.isHost ? "border-amber-400/50 bg-amber-400/10" : "border-transparent bg-gray-800/40",
+        "rounded-xl border px-3 py-2",
+        message.isHost ? "border-amber-400/45 bg-amber-400/10" : "border-purple-500/15 bg-[#180d34]/70",
       )}
     >
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -578,12 +587,12 @@ const ChatMessageRow = memo(function ChatMessageRow({
           </Badge>
         )}
         {time && (
-          <time dateTime={message.createdAt} className="text-xs text-gray-400">
+          <time dateTime={message.createdAt} className="text-xs tabular-nums text-slate-400">
             {time}
           </time>
         )}
       </div>
-      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-100">{message.body}</p>
+      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-100">{message.body}</p>
     </li>
   );
 });
@@ -665,19 +674,19 @@ const ChatPanel = memo(function ChatPanel({ sessionId, view, auth, lang, copy }:
   const firstLoadFailed = panel.loads && !chat.loaded && chat.refreshFailed;
 
   return (
-    <section aria-labelledby="session-chat" className="rounded-2xl border border-gray-800 bg-gray-900/60 p-4">
-      <h2 id="session-chat" className="flex items-center gap-2 text-lg font-semibold text-white">
-        <MessageCircle aria-hidden="true" className="h-5 w-5 text-amber-300" />
+    <section aria-labelledby="session-chat" className="tmu-glass-elevated mb-2 rounded-2xl p-4">
+      <h2 id="session-chat" className="flex items-center gap-2 text-lg font-semibold text-slate-50">
+        <MessageCircle aria-hidden="true" className="h-5 w-5 text-fuchsia-300" />
         <span>{copy.chatTitle}</span>
       </h2>
 
       {panel.note && (
-        <p className="mt-2 text-sm text-gray-300">
+        <p className="mt-2 text-sm text-slate-300">
           {panel.note === "beforeStart" ? copy.chatBeforeStart : copy.chatEnded}
         </p>
       )}
 
-      <div role="status" className="text-sm text-gray-300">
+      <div role="status" className="text-sm text-slate-300">
         {panel.loads && !chat.loaded && !chat.refreshFailed && <p className="mt-3">{copy.chatLoading}</p>}
         {chat.refreshFailed && <p className="mt-3 text-amber-200">{copy.chatRefreshFailed}</p>}
       </div>
@@ -715,12 +724,12 @@ const ChatPanel = memo(function ChatPanel({ sessionId, view, auth, lang, copy }:
             role="group"
             aria-label={copy.chatTitle}
             className={cn(
-              "mt-3 max-h-80 min-h-[8rem] overflow-y-auto rounded-lg border border-gray-800 bg-gray-950/60 sm:max-h-96 lg:max-h-[28rem]",
+              "mt-3 max-h-[42dvh] min-h-[8rem] overflow-y-auto rounded-xl border border-purple-500/20 bg-[#070312]/80 sm:max-h-96 lg:max-h-[28rem]",
               FOCUS_RING,
             )}
           >
             {messages.length === 0 ? (
-              <p className="p-3 text-sm text-gray-400">{copy.chatEmpty}</p>
+              <p className="p-3 text-sm text-slate-400">{copy.chatEmpty}</p>
             ) : (
               <ul className="space-y-2 p-2">
                 {messages.map((message) => (
@@ -745,7 +754,7 @@ const ChatPanel = memo(function ChatPanel({ sessionId, view, auth, lang, copy }:
               placeholder={copy.chatPlaceholder}
               autoComplete="off"
               enterKeyHint="send"
-              className="border-gray-700 bg-gray-900 text-white placeholder:text-gray-500 focus-visible:ring-amber-400 focus-visible:ring-offset-gray-950"
+              className="border-purple-500/30 bg-[#0c061d] text-white placeholder:text-slate-400 focus-visible:ring-fuchsia-400 focus-visible:ring-offset-[#06020f]"
             />
             <Button type="submit" disabled={sending || !checked.ok} className={cn(PRIMARY_BUTTON, "shrink-0")}>
               <Send aria-hidden="true" />
@@ -755,7 +764,7 @@ const ChatPanel = memo(function ChatPanel({ sessionId, view, auth, lang, copy }:
           <div id="session-chat-notice" role="status" className="text-sm text-amber-200">
             {notice && <p className="mt-2">{noticeText(notice, copy)}</p>}
           </div>
-          <p className="mt-2 text-xs text-gray-400">{copy.chatPublicNote}</p>
+          <p className="mt-2 text-xs text-slate-400">{copy.chatPublicNote}</p>
         </form>
       )}
       {composer === "signIn" && (
@@ -763,7 +772,7 @@ const ChatPanel = memo(function ChatPanel({ sessionId, view, auth, lang, copy }:
           <Link href={signInPath(sessionPath(sessionId))}>{copy.chatSignIn}</Link>
         </Button>
       )}
-      {composer === "checking" && <Skeleton className="mt-3 h-10 bg-gray-800 motion-reduce:animate-none" />}
+      {composer === "checking" && <Skeleton className="mt-3 h-10 bg-purple-950/80 motion-reduce:animate-none" />}
     </section>
   );
 });

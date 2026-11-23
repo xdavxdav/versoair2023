@@ -36,10 +36,17 @@ export default function MessengerLauncher({
     };
   }, [user, open]);
 
-  // Live badge bump the instant a message arrives, no polling needed.
-  const handleLiveMessage = useCallback(() => {
-    if (!open) setUnread((n) => n + 1);
-  }, [open]);
+  // Live badge bump only for messages from another user (never echo own sent messages).
+  const handleLiveMessage = useCallback(
+    (evt?: { message?: unknown }) => {
+      const incoming = evt?.message as { senderId?: string | number } | undefined;
+      if (incoming?.senderId && String(incoming.senderId) === String(user?.id)) {
+        return;
+      }
+      if (!open) setUnread((n) => n + 1);
+    },
+    [open, user?.id],
+  );
   useInboxSocket(user ? handleLiveMessage : undefined);
 
   useEffect(() => {

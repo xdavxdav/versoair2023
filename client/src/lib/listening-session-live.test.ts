@@ -546,7 +546,6 @@ test("parseSessionResponse accepts the API shape and fills the gaps", () => {
     withSession({
       description: "",
       hostName: null,
-      featured: true,
       trackCount: 99,
       totalDurationSec: undefined,
       tracks: [
@@ -560,7 +559,6 @@ test("parseSessionResponse accepts the API shape and fills the gaps", () => {
   assert.equal(parsed.serverTime, serverTime);
   assert.equal(parsed.detail.description, null);
   assert.equal(parsed.detail.hostName, null);
-  assert.equal(parsed.detail.featured, true);
   assert.equal(parsed.detail.trackCount, 2);
   assert.equal(parsed.detail.totalDurationSec, 470);
   assert.deepEqual(parsed.detail.tracks[0], {
@@ -577,7 +575,6 @@ test("parseSessionResponse accepts the API shape and fills the gaps", () => {
   assert.equal(parsed.detail.tracks[1].available, false);
 
   const full = parseSessionResponse(withSession({}), 12);
-  assert.equal(full?.detail.featured, false);
   assert.equal(full?.detail.tracks[0].grade, "S");
   assert.equal(full?.detail.tracks[1].grade, null);
   assert.equal(full?.detail.tracks[2].grade, "B");

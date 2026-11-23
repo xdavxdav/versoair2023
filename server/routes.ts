@@ -4,6 +4,7 @@ import { sql, eq } from "drizzle-orm";
 import databaseManagementRouter from "./routes/database-management";
 import businessesRouter from "./routes/businesses";
 import businessClaimsRouter from "./routes/business-claims";
+import businessOwnersRouter from "./routes/business-owners";
 import propertiesRouter from "./routes/properties";
 import propertyBookingsRouter from "./routes/property-bookings";
 import apiV1Router from "./routes/api-v1";
@@ -18,6 +19,7 @@ import pageReadinessRouter from "./routes/page-readiness";
 import { requireAdminElevation } from "./middleware/admin-elevation";
 import jobsRouter from "./routes/jobs";
 import musicRouter from "./routes/music";
+import musicGenresRouter from "./routes/music-genres";
 import streamroyaleRouter from "./routes/streamroyale";
 import streamingRouter from "./routes/streaming";
 import artistContractsRouter from "./routes/artist-contracts";
@@ -43,6 +45,9 @@ import collabChainsRouter from "./routes/collab-chains";
 import revenuePulseRouter from "./routes/revenue-pulse";
 import walletRouter from "./routes/wallet";
 import gamesRouter from "./routes/games";
+import arcadeScoresRouter from "./routes/arcade-scores";
+import arcadeContestRouter from "./routes/arcade-contest";
+import profileRequestsRouter from "./routes/profile-requests";
 import paypalRouter from "./routes/paypal";
 import listenerRouter from "./routes/listener";
 import beatmakerRouter from "./routes/beatmaker";
@@ -59,6 +64,8 @@ import geoSeoRouter, {
 } from "./routes/geo-seo";
 import businessLogoRouter from "./routes/business-logo";
 import businessCoverRouter from "./routes/business-cover";
+import profileMediaRouter from "./routes/profile-media";
+import vxppCommunitiesRouter from "./routes/vxpp-communities";
 import inventoryRouter from "./routes/inventory";
 import inboxRouter from "./routes/inbox";
 import communityRouter from "./routes/community";
@@ -216,6 +223,7 @@ export async function registerRoutes(app: Express) {
 
   // Register businesses routes
   app.use("/api/businesses", businessClaimsRouter);
+  app.use("/api/businesses", businessOwnersRouter);
   app.use("/", businessesRouter);
 
   // Register properties routes
@@ -227,6 +235,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/implementation-tracking", implementationTrackingRouter);
   app.use("/api/page-readiness", pageReadinessRouter);
   app.use("/api/jobs", jobsRouter);
+  app.use("/api/music-genres", musicGenresRouter);
   app.use("/api/music", musicRouter);
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/push", pushRouter);
@@ -295,6 +304,8 @@ export async function registerRoutes(app: Express) {
   // Business logo upload (paid tiers only)
   app.use("/api/business-logo", businessLogoRouter);
   app.use("/api/business-cover", businessCoverRouter);
+  // vxpp personal profile, avatar/cover media, and social post photos
+  app.use("/api/profile", profileMediaRouter);
 
   // Register user browsing history routes
   app.use("/api/user/history", userHistoryRouter);
@@ -311,6 +322,9 @@ export async function registerRoutes(app: Express) {
   app.use("/api/revenue-pulse", revenuePulseRouter); // Revenue Pulse transparency dashboard
   app.use("/api/wallet", walletRouter); // Credits wallet (balance, deposit, game rewards)
   app.use("/api/games", gamesRouter); // PvP skill games (trivia, prediction, card battle)
+  app.use("/api/arcade", arcadeScoresRouter); // Casual arcade scores (no money/credits)
+  app.use("/api/arcade-contest", arcadeContestRouter); // Per-country paid contests (default OFF per country)
+  app.use("/api/profile-requests", profileRequestsRouter); // Drop-a-link artist account requests + import staging
   app.use("/api/paypal", paypalRouter); // PayPal checkout (create order, capture, config)
   app.use("/api/listener", listenerRouter); // Listener Portal — stats, bonuses, XP tracking
   app.use("/api/beatmaker", beatmakerRouter); // Beatmaker Studio — production requests & briefs
@@ -327,6 +341,7 @@ export async function registerRoutes(app: Express) {
   app.use("/api/inbox", inboxRouter); // Inbox — Support tickets + Business Networking (VersoAI)
   app.use("/api/community", communityRouter); // Community Hub — Fan Wall (ungated, slow-mode for spam)
   app.use("/api/communities", artisanCommunitiesRouter);
+  app.use("/api/vxpp-communities", vxppCommunitiesRouter);
   app.use("/api/events", eventsRouter);
   app.use("/api/geo-actions", geoActionsRouter); // Geo-Action Queue — tiered geo-admin access control
   app.use("/api/geo-admin/addons", geoAdminAddonsRouter);

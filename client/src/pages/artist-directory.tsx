@@ -39,6 +39,10 @@ import { useScrollLock } from "@/hooks/use-scroll-lock";
 // Artist directory is global — no country context needed
 // import { useCountry } from "@/contexts/CountryContext";
 import { getCountryMeta } from "@/utils/countryMeta";
+import { getFlag } from "@/utils/get-flag";
+import { getFeaturedArtistByName } from "@shared/featured-artists";
+import { FeaturedArtistCard } from "@/components/music/FeaturedArtistCard";
+import { useLanguage } from "@/components/LanguageSwitcher";
 
 const API_BASE_URL = "";
 
@@ -51,6 +55,9 @@ interface Artist {
   spotify_url: string | null;
   business_id: number | null;
   user_id: number | null;
+  country_code?: string | null;
+  city?: string | null;
+  neighbourhood?: string | null;
 }
 
 interface ArtistDetails extends Artist {}
@@ -111,6 +118,11 @@ function formatDuration(seconds: number | null): string {
 }
 
 export default function ArtistDirectory() {
+  const { currentLang } = useLanguage();
+  const isFr = currentLang.toLowerCase().startsWith("fr");
+  const isEs = currentLang.toLowerCase().startsWith("es");
+  const bioLabel = isFr ? "Biographie" : isEs ? "Biografía" : "Biography";
+  const listenLabel = isFr ? "Écouter" : isEs ? "Escuchar" : "Listen";
   const [databaseConnected, setDatabaseConnected] = useState<boolean | null>(
     null,
   );
@@ -156,14 +168,14 @@ export default function ArtistDirectory() {
       try {
         const [genresRes, countriesRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/artists/genres`),
-          fetch(`${API_BASE_URL}/api/countries`),
+          fetch(`${API_BASE_URL}/api/artists/countries`),
         ]);
         const genresJson = await genresRes.json();
         if (genresJson.success) setGenres(genresJson.data || []);
         const countriesJson = await countriesRes.json();
-        // /api/countries returns array of {id, name, code} objects
+        // /api/artists/countries returns only countries that currently have artist content
         if (Array.isArray(countriesJson)) {
-          setCountries(countriesJson.map((c: any) => c.code));
+          setCountries(countriesJson.map((c: any) => (typeof c === "string" ? c : c.code)));
         } else if (countriesJson.success) {
           setCountries(countriesJson.data || []);
         }
@@ -295,26 +307,31 @@ export default function ArtistDirectory() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 bg-gradient-to-b from-slate-900 via-purple-900/40 to-slate-900 text-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-rose-50 via-pink-50/75 to-indigo-50 text-slate-900 dark:from-[#08071a] dark:via-[#110f33] dark:to-[#070615] dark:text-indigo-50">
+
+      {/* Featured Artist Spotlight */}
+      <div className="max-w-[95vw] w-full mx-auto px-4 pt-6 pb-10 relative z-20">
+        <FeaturedArtistCard compact surface="adaptive" />
+      </div>
 
       {/* Search Section */}
-      <div className="max-w-[95vw] mx-auto px-4 -mt-8 relative z-20">
-        <Card className="bg-gradient-to-br from-slate-800/90 to-purple-900/90 backdrop-blur-md border-purple-700 shadow-2xl">
+      <div className="max-w-[95vw] w-full mx-auto px-4 -mt-4 relative z-20">
+        <Card className="bg-white/90 dark:bg-[#110f33]/90 backdrop-blur-md border-pink-200/90 dark:border-indigo-500/35 shadow-xl shadow-indigo-950/10 dark:shadow-indigo-950/50">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-rose-500 dark:text-indigo-300" />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Recherchez des Artistes..."
-                  className="pl-12 bg-slate-800/50 border-purple-600 text-white placeholder-purple-300/60 focus:border-purple-400"
+                  className="pl-12 bg-rose-50/50 dark:bg-[#0b0924]/80 border-pink-300 dark:border-indigo-500/40 text-slate-900 dark:text-white placeholder:text-indigo-400 dark:placeholder:text-indigo-300/60 focus:border-indigo-500 dark:focus:border-indigo-400"
                 />
               </div>
 
               {isSearching && (
-                <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                <Loader2 className="h-5 w-5 animate-spin text-rose-500 dark:text-indigo-300" />
               )}
             </div>
 
@@ -323,9 +340,9 @@ export default function ArtistDirectory() {
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="border-purple-600 hover:bg-purple-800"
+                  className="bg-rose-50/80 text-indigo-950 border-pink-300 hover:bg-pink-100/90 hover:text-indigo-950 dark:bg-indigo-950/80 dark:text-indigo-100 dark:border-indigo-500/40 dark:hover:bg-indigo-900/80 dark:hover:text-white"
                 >
-                  <Filter size={16} className="mr-2" />
+                  <Filter size={16} className="mr-2 text-rose-600 dark:text-indigo-300" />
                   {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
                 </Button>
 
@@ -334,7 +351,7 @@ export default function ArtistDirectory() {
                     variant="ghost"
                     size="sm"
                     onClick={clearAllFilters}
-                    className="text-purple-300 hover:text-white hover:bg-white/10"
+                    className="text-rose-700 hover:text-rose-900 hover:bg-rose-100/70 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-800/50"
                   >
                     <X size={14} className="mr-1" />
                     Réinitialiser
@@ -342,7 +359,7 @@ export default function ArtistDirectory() {
                 )}
               </div>
 
-              <div className="text-sm text-purple-300">
+              <div className="text-sm font-medium text-indigo-800 dark:text-indigo-200">
                 {totalResults.toLocaleString()} artiste
                 {totalResults !== 1 ? "s" : ""} trouvé
                 {totalResults !== 1 ? "s" : ""}
@@ -350,27 +367,27 @@ export default function ArtistDirectory() {
             </div>
 
             {/* Genre & Country Filters */}
-            <div className="mt-4 pt-4 border-t border-purple-700 flex flex-col md:flex-row gap-4">
+            <div className="mt-4 pt-4 border-t border-pink-200/80 dark:border-indigo-500/30 flex flex-col md:flex-row gap-4">
               {/* Genre Dropdown */}
               <div className="flex-1">
-                <Label className="text-sm font-medium mb-2 block text-purple-300">
+                <Label className="text-sm font-medium mb-2 block text-indigo-900 dark:text-indigo-200">
                   Genre{genres.length > 0 ? ` (${genres.length} disponibles)` : ""}
                 </Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-purple-600 bg-slate-800 text-white hover:bg-slate-700 hover:text-white w-full md:w-[300px] justify-between"
+                      className="border-pink-300 bg-rose-50/60 text-indigo-950 hover:bg-pink-100/80 hover:text-indigo-950 dark:border-indigo-500/40 dark:bg-[#0b0924]/85 dark:text-white dark:hover:bg-indigo-900/70 dark:hover:text-white w-full md:w-[300px] justify-between"
                     >
                       <span className="text-sm">
                         {selectedGenre
                           ? `${GENRE_ICONS[selectedGenre] || "🎵"} ${selectedGenre}`
                           : "Tous les genres"}
                       </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                      <ChevronDown className="h-4 w-4 opacity-60" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
+                  <DropdownMenuContent className="bg-white dark:bg-[#110f33] border-pink-200 dark:border-indigo-500/40 w-[300px] max-h-[400px] overflow-y-auto">
                     <DropdownMenuItem
                       onClick={() => {
                         setSelectedGenre("");
@@ -378,13 +395,13 @@ export default function ArtistDirectory() {
                       }}
                     >
                       {!selectedGenre && (
-                        <Check className="h-4 w-4 mr-2 text-purple-400" />
+                        <Check className="h-4 w-4 mr-2 text-rose-600 dark:text-indigo-300" />
                       )}
                       <span
                         className={
                           !selectedGenre
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
+                            ? "font-semibold text-rose-700 dark:text-indigo-200"
+                            : "text-indigo-950 dark:text-indigo-100"
                         }
                       >
                         Tous les genres
@@ -399,13 +416,13 @@ export default function ArtistDirectory() {
                         }}
                       >
                         {selectedGenre === genre && (
-                          <Check className="h-4 w-4 mr-2 text-purple-400" />
+                          <Check className="h-4 w-4 mr-2 text-rose-600 dark:text-indigo-300" />
                         )}
                         <span
                           className={
                             selectedGenre === genre
-                              ? "font-semibold text-purple-300"
-                              : "text-purple-200"
+                              ? "font-semibold text-rose-700 dark:text-indigo-200"
+                              : "text-indigo-950 dark:text-indigo-100"
                           }
                         >
                           {GENRE_ICONS[genre] || "🎵"} {genre}
@@ -418,24 +435,24 @@ export default function ArtistDirectory() {
 
               {/* Country Dropdown */}
               <div className="flex-1">
-                <Label className="text-sm font-medium mb-2 block text-purple-300">
+                <Label className="text-sm font-medium mb-2 block text-indigo-900 dark:text-indigo-200">
                   Pays ({countries.length} disponibles)
                 </Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-purple-600 bg-slate-800 text-white hover:bg-slate-700 hover:text-white w-full md:w-[300px] justify-between"
+                      className="border-pink-300 bg-rose-50/60 text-indigo-950 hover:bg-pink-100/80 hover:text-indigo-950 dark:border-indigo-500/40 dark:bg-[#0b0924]/85 dark:text-white dark:hover:bg-indigo-900/70 dark:hover:text-white w-full md:w-[300px] justify-between"
                     >
                       <span className="text-sm">
                         {selectedArtistCountry
                           ? `${getCountryMeta(selectedArtistCountry).flag} ${getCountryMeta(selectedArtistCountry).name}`
                           : "Tous les pays"}
                       </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                      <ChevronDown className="h-4 w-4 opacity-60" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[300px] max-h-[400px] overflow-y-auto">
+                  <DropdownMenuContent className="bg-white dark:bg-[#110f33] border-pink-200 dark:border-indigo-500/40 w-[300px] max-h-[400px] overflow-y-auto">
                     <DropdownMenuItem
                       onClick={() => {
                         setSelectedArtistCountry("");
@@ -443,13 +460,13 @@ export default function ArtistDirectory() {
                       }}
                     >
                       {!selectedArtistCountry && (
-                        <Check className="h-4 w-4 mr-2 text-purple-400" />
+                        <Check className="h-4 w-4 mr-2 text-rose-600 dark:text-indigo-300" />
                       )}
                       <span
                         className={
                           !selectedArtistCountry
-                            ? "font-semibold text-purple-300"
-                            : "text-purple-200"
+                            ? "font-semibold text-rose-700 dark:text-indigo-200"
+                            : "text-indigo-950 dark:text-indigo-100"
                         }
                       >
                         🌍 Tous les pays
@@ -466,13 +483,13 @@ export default function ArtistDirectory() {
                           }}
                         >
                           {selectedArtistCountry === code && (
-                            <Check className="h-4 w-4 mr-2 text-purple-400" />
+                            <Check className="h-4 w-4 mr-2 text-rose-600 dark:text-indigo-300" />
                           )}
                           <span
                             className={
                               selectedArtistCountry === code
-                                ? "font-semibold text-purple-300"
-                                : "text-purple-200"
+                                ? "font-semibold text-rose-700 dark:text-indigo-200"
+                                : "text-indigo-950 dark:text-indigo-100"
                             }
                           >
                             {meta.flag} {meta.name}
@@ -494,25 +511,25 @@ export default function ArtistDirectory() {
                   exit={{ opacity: 0, height: 0 }}
                   className="mt-6 overflow-hidden"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-800/50 rounded-lg border border-purple-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-indigo-50/70 dark:bg-[#0b0924]/70 rounded-lg border border-pink-200/80 dark:border-indigo-500/35">
                     <div>
-                      <Label className="text-sm font-medium mb-2 block text-purple-300">
+                      <Label className="text-sm font-medium mb-2 block text-indigo-900 dark:text-indigo-200">
                         Trier par
                       </Label>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="outline"
-                            className="border-purple-600 bg-slate-800 text-white hover:bg-slate-700 hover:text-white w-full justify-between"
+                            className="border-pink-300 bg-white text-indigo-950 hover:bg-pink-50 hover:text-indigo-950 dark:border-indigo-500/40 dark:bg-[#110f33] dark:text-white dark:hover:bg-indigo-900/70 dark:hover:text-white w-full justify-between"
                           >
                             <span className="text-sm">
                               {SORT_OPTIONS.find((s) => s.value === sortBy)
                                 ?.label || "Popularité"}
                             </span>
-                            <ChevronDown className="h-4 w-4 opacity-50" />
+                            <ChevronDown className="h-4 w-4 opacity-60" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-slate-800 border-purple-600 w-[280px]">
+                        <DropdownMenuContent className="bg-white dark:bg-[#110f33] border-pink-200 dark:border-indigo-500/40 w-[280px]">
                           {SORT_OPTIONS.map((option) => (
                             <DropdownMenuItem
                               key={option.value}
@@ -523,13 +540,13 @@ export default function ArtistDirectory() {
                               }}
                             >
                               {sortBy === option.value && (
-                                <Check className="h-4 w-4 mr-2" />
+                                <Check className="h-4 w-4 mr-2 text-rose-600 dark:text-indigo-300" />
                               )}
                               <span
                                 className={
                                   sortBy === option.value
-                                    ? "font-semibold text-purple-300"
-                                    : "text-purple-200"
+                                    ? "font-semibold text-rose-700 dark:text-indigo-200"
+                                    : "text-indigo-950 dark:text-indigo-100"
                                 }
                               >
                                 {option.label}
@@ -544,13 +561,13 @@ export default function ArtistDirectory() {
                       <Button
                         variant="outline"
                         onClick={clearAllFilters}
-                        className="border-purple-600 hover:bg-purple-800"
+                        className="bg-white text-indigo-950 border-pink-300 hover:bg-pink-50 hover:text-indigo-950 dark:bg-indigo-950/80 dark:text-indigo-100 dark:border-indigo-500/40 dark:hover:bg-indigo-900/80"
                       >
                         Réinitialiser les filtres
                       </Button>
                       <Button
                         onClick={() => handleSearch(1)}
-                        className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+                        className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-700 hover:via-pink-700 hover:to-indigo-700 dark:from-indigo-600 dark:via-violet-600 dark:to-indigo-500 text-white"
                       >
                         Appliquer
                       </Button>
@@ -564,13 +581,13 @@ export default function ArtistDirectory() {
       </div>
 
       {/* Main Content - Artist Cards */}
-      <div className="max-w-[95vw] mx-auto px-4 py-12">
+      <div className="max-w-[95vw] w-full mx-auto px-4 py-12">
         {hasSearched ? (
           <>
             <div className="mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Disc3 className="h-6 w-6 text-purple-400" />
-                <span className="bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
+                <Disc3 className="h-6 w-6 text-rose-600 dark:text-indigo-300" />
+                <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-700 dark:from-indigo-300 dark:via-violet-300 dark:to-indigo-200 bg-clip-text text-transparent">
                   {selectedGenre
                     ? `${GENRE_ICONS[selectedGenre] || "🎵"} ${selectedGenre}`
                     : "Tous les Artistes"}{" "}
@@ -597,47 +614,77 @@ export default function ArtistDirectory() {
                         onClick={() => fetchArtistDetails(artist.id)}
                       >
                         {/* Outer glow on hover */}
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 rounded-2xl opacity-0 group-hover:opacity-60 blur-sm transition-opacity duration-500 pointer-events-none" />
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-600 dark:from-indigo-600 dark:via-violet-500 dark:to-indigo-400 rounded-2xl opacity-0 group-hover:opacity-60 blur-sm transition-opacity duration-500 pointer-events-none" />
 
-                        <div className="relative bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-md rounded-2xl border border-slate-300/60 group-hover:border-purple-500/50 transition-all duration-500 group-hover:-translate-y-1 overflow-hidden">
+                        <div className="relative bg-white/95 dark:bg-gradient-to-br dark:from-[#121036]/95 dark:to-[#0a0821]/95 backdrop-blur-md rounded-2xl border border-pink-200/80 dark:border-indigo-500/30 group-hover:border-indigo-400/70 dark:group-hover:border-indigo-400/60 shadow-lg shadow-indigo-950/5 dark:shadow-indigo-950/40 transition-all duration-500 group-hover:-translate-y-1 overflow-hidden">
                           {/* Genre color bar — thinner, more refined */}
                           <div
-                            className={`h-1 bg-gradient-to-r ${getGenreGradient(artist.genre || "")} opacity-70 group-hover:opacity-100 transition-opacity duration-500`}
+                            className={`h-1 bg-gradient-to-r ${getGenreGradient(artist.genre || "")} opacity-80 group-hover:opacity-100 transition-opacity duration-500`}
                           />
 
                           {/* Artist avatar header — more spacious */}
                           <div className="relative h-52 overflow-hidden">
                             {/* Background pattern */}
                             <div
-                              className={`absolute inset-0 bg-gradient-to-br ${getGenreGradient(artist.genre || "")} opacity-20 group-hover:opacity-30 transition-opacity duration-500`}
+                              className={`absolute inset-0 bg-gradient-to-br ${getGenreGradient(artist.genre || "")} opacity-15 dark:opacity-25 group-hover:opacity-25 dark:group-hover:opacity-35 transition-opacity duration-500`}
                             />
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(0,0,0,0.4),transparent)]" />
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(79,70,229,0.12),transparent)] dark:bg-[radial-gradient(circle_at_50%_120%,rgba(0,0,0,0.45),transparent)]" />
 
                             {/* Decorative floating elements */}
                             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                              <div className="absolute top-4 left-4 w-16 h-16 border border-white/5 rounded-full" />
-                              <div className="absolute bottom-6 right-6 w-24 h-24 border border-white/5 rounded-full" />
-                              <div className="absolute top-1/2 right-1/4 w-8 h-8 border border-white/5 rounded-full" />
+                              <div className="absolute top-4 left-4 w-16 h-16 border border-indigo-900/10 dark:border-white/5 rounded-full" />
+                              <div className="absolute bottom-6 right-6 w-24 h-24 border border-rose-900/10 dark:border-white/5 rounded-full" />
+                              <div className="absolute top-1/2 right-1/4 w-8 h-8 border border-indigo-900/10 dark:border-white/5 rounded-full" />
                             </div>
 
-                            {/* Centered initials — bigger, better shadow */}
+                            {/* Centered artist photo or initials (notranslate prevents Google Translate corruption) */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <div
-                                className={`w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/10 group-hover:ring-purple-400/30 group-hover:scale-105 transition-all duration-500`}
-                              >
-                                {(artist.name || "?")
-                                  .split(/\s+/)
-                                  .map((w: string) => w[0])
-                                  .join("")
-                                  .slice(0, 2)
-                                  .toUpperCase()}
-                              </div>
+                              {(() => {
+                                const featuredAvatar = getFeaturedArtistByName(artist.name)?.avatarUrl;
+                                return featuredAvatar ? (
+                                  <img
+                                    src={featuredAvatar}
+                                    alt={artist.name}
+                                    loading="lazy"
+                                    className="w-28 h-28 rounded-full object-cover shadow-2xl ring-4 ring-white/80 dark:ring-white/10 group-hover:ring-pink-300/80 dark:group-hover:ring-indigo-400/40 group-hover:scale-105 transition-all duration-500"
+                                  />
+                                ) : (
+                                  <div
+                                    translate="no"
+                                    className={`notranslate w-28 h-28 rounded-full bg-gradient-to-br ${getGenreGradient(artist.genre || "")} flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-4 ring-white/80 dark:ring-white/10 group-hover:ring-pink-300/80 dark:group-hover:ring-indigo-400/40 group-hover:scale-105 transition-all duration-500`}
+                                  >
+                                    {(artist.name || "?")
+                                      .split(/\s+/)
+                                      .map((w: string) => w[0])
+                                      .join("")
+                                      .slice(0, 2)
+                                      .toUpperCase()}
+                                  </div>
+                                );
+                              })()}
                             </div>
+
+                            {/* Country badge — top-left when known */}
+                            {artist.country_code && (
+                              <div className="absolute top-3.5 left-3.5">
+                                <Badge className="bg-white/90 text-indigo-950 border border-pink-200/80 dark:bg-indigo-950/85 dark:text-indigo-100 dark:border-indigo-400/30 backdrop-blur-sm px-2.5 py-1 text-xs font-medium">
+                                  {getFlag(artist.country_code)}{" "}
+                                  {[
+                                    artist.neighbourhood,
+                                    artist.city,
+                                    getCountryMeta(artist.country_code)?.name || artist.country_code,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                                </Badge>
+                              </div>
+                            )}
 
                             {/* Genre badge — polished glass effect */}
                             <div className="absolute top-3.5 right-3.5">
                               <Badge
-                                className={`bg-gradient-to-r ${getGenreGradient(artist.genre || "")} text-white border-0 shadow-lg backdrop-blur-sm px-3 py-1 text-xs font-semibold`}
+                                translate="no"
+                                className={`notranslate bg-gradient-to-r ${getGenreGradient(artist.genre || "")} text-white border-0 shadow-lg backdrop-blur-sm px-3 py-1 text-xs font-semibold`}
                               >
                                 {GENRE_ICONS[artist.genre || ""] || "🎵"}{" "}
                                 {artist.genre || "Divers"}
@@ -647,23 +694,26 @@ export default function ArtistDirectory() {
 
                           {/* Card body — improved spacing & typography */}
                           <div className="p-6">
-                            <h4 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight">
+                            <h4
+                              translate="no"
+                              className="notranslate text-lg font-bold text-indigo-950 dark:text-white group-hover:text-rose-700 dark:group-hover:text-indigo-200 transition-colors duration-300 mb-3 line-clamp-1 tracking-tight"
+                            >
                               {artist.name || "Artiste inconnu"}
                             </h4>
 
                             {/* Subtle divider */}
-                            <div className="h-px w-full bg-gradient-to-r from-transparent via-purple-500/20 to-transparent mb-4" />
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-pink-300/70 dark:via-indigo-400/30 to-transparent mb-4" />
 
-                            {/* Label status + Spotify — better layout */}
-                            <div className="flex items-center justify-between">
+                            {/* Label status + Bio/Stream — better layout */}
+                            <div className="flex items-center justify-between gap-2">
                               <Badge
                                 variant="outline"
                                 className={`text-xs font-medium px-3 py-1 rounded-lg ${
                                   artist.label_status === "signed"
-                                    ? "border-green-500/40 text-green-400 bg-green-500/5"
+                                    ? "border-emerald-300 text-emerald-800 bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-300 dark:bg-emerald-500/10"
                                     : artist.label_status === "independent"
-                                      ? "border-amber-500/40 text-amber-600 bg-amber-500/5"
-                                      : "border-purple-500/40 text-purple-300 bg-purple-500/5"
+                                      ? "border-rose-300 text-rose-800 bg-rose-50 dark:border-indigo-400/40 dark:text-indigo-200 dark:bg-indigo-500/15"
+                                      : "border-indigo-300 text-indigo-800 bg-indigo-50 dark:border-indigo-500/40 dark:text-indigo-300 dark:bg-indigo-500/10"
                                 }`}
                               >
                                 {artist.label_status === "signed"
@@ -673,14 +723,30 @@ export default function ArtistDirectory() {
                                     : "🆓 Non signé"}
                               </Badge>
 
-                              <Link
-                                href={`/artist-catalogue/${artist.id}`}
-                                onClick={(e: any) => e.stopPropagation()}
-                                className="flex items-center gap-1.5 text-amber-600 hover:text-amber-700 transition-colors text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg"
-                              >
-                                <Music className="h-3.5 w-3.5" />
-                                Stream
-                              </Link>
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const featured = getFeaturedArtistByName(artist.name);
+                                  return featured ? (
+                                    <Link
+                                      href={`/artistes/${featured.slug}`}
+                                      onClick={(e: any) => e.stopPropagation()}
+                                      translate="no"
+                                      className="notranslate flex items-center gap-1 text-indigo-800 hover:text-indigo-950 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 dark:text-indigo-200 dark:hover:text-white dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 dark:border-indigo-400/30 transition-colors text-xs font-semibold px-3 py-1.5 rounded-lg"
+                                    >
+                                      {bioLabel}
+                                    </Link>
+                                  ) : null;
+                                })()}
+                                <Link
+                                  href={`/artist-catalogue/${artist.id}`}
+                                  onClick={(e: any) => e.stopPropagation()}
+                                  translate="no"
+                                  className="notranslate flex items-center gap-1.5 text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 dark:text-indigo-200 dark:hover:text-white dark:bg-indigo-500/15 dark:hover:bg-indigo-500/25 dark:border-indigo-400/30 transition-colors text-xs font-semibold px-3 py-1.5 rounded-lg"
+                                >
+                                  <Music className="h-3.5 w-3.5" />
+                                  {listenLabel}
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -696,7 +762,7 @@ export default function ArtistDirectory() {
                       variant="outline"
                       disabled={currentPage === 1}
                       onClick={() => handleSearch(currentPage - 1)}
-                      className="border-purple-600 hover:bg-purple-800"
+                      className="bg-white text-indigo-950 border-pink-300 hover:bg-pink-50 dark:bg-indigo-950/80 dark:text-indigo-100 dark:border-indigo-500/40 dark:hover:bg-indigo-900/80"
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
                       Précédent
@@ -713,7 +779,7 @@ export default function ArtistDirectory() {
                         .map((page, idx, arr) => (
                           <span key={page} className="flex items-center gap-2">
                             {idx > 0 && arr[idx - 1] !== page - 1 && (
-                              <span className="text-gray-400">...</span>
+                              <span className="text-slate-500 dark:text-indigo-300">...</span>
                             )}
                             <Button
                               size="sm"
@@ -723,8 +789,8 @@ export default function ArtistDirectory() {
                               onClick={() => handleSearch(page)}
                               className={
                                 page === currentPage
-                                  ? "bg-purple-600 hover:bg-purple-700"
-                                  : "border-purple-600 hover:bg-purple-800"
+                                  ? "bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 dark:from-indigo-600 dark:to-violet-600 text-white"
+                                  : "bg-white text-indigo-950 border-pink-300 hover:bg-pink-50 dark:bg-indigo-950/80 dark:text-indigo-100 dark:border-indigo-500/40 dark:hover:bg-indigo-900/80"
                               }
                             >
                               {page}
@@ -737,7 +803,7 @@ export default function ArtistDirectory() {
                       variant="outline"
                       disabled={currentPage === totalPages}
                       onClick={() => handleSearch(currentPage + 1)}
-                      className="border-purple-600 hover:bg-purple-800"
+                      className="bg-white text-indigo-950 border-pink-300 hover:bg-pink-50 dark:bg-indigo-950/80 dark:text-indigo-100 dark:border-indigo-500/40 dark:hover:bg-indigo-900/80"
                     >
                       Suivant
                       <ChevronRight className="h-4 w-4 ml-1" />
@@ -747,11 +813,11 @@ export default function ArtistDirectory() {
               </>
             ) : (
               <div className="text-center py-12">
-                <Music className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-200 mb-2">
+                <Music className="h-16 w-16 mx-auto text-rose-400 dark:text-indigo-400 mb-4" />
+                <h3 className="text-xl font-semibold text-indigo-950 dark:text-indigo-100 mb-2">
                   Aucun artiste trouvé
                 </h3>
-                <p className="text-gray-400">
+                <p className="text-slate-600 dark:text-indigo-300">
                   Essayez une autre recherche ou un autre genre
                 </p>
               </div>
@@ -759,11 +825,11 @@ export default function ArtistDirectory() {
           </>
         ) : (
           <div className="text-center py-12">
-            <Radio className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-200 mb-2">
+            <Radio className="h-16 w-16 mx-auto text-rose-400 dark:text-indigo-400 mb-4" />
+            <h3 className="text-xl font-semibold text-indigo-950 dark:text-indigo-100 mb-2">
               Explorez le répertoire musical
             </h3>
-            <p className="text-gray-400">
+            <p className="text-slate-600 dark:text-indigo-300">
               Sélectionnez un genre ou lancez votre recherche
             </p>
           </div>
@@ -777,7 +843,7 @@ export default function ArtistDirectory() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-indigo-950/65 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => {
               setShowArtistDetails(false);
               setSelectedArtist(null);
@@ -787,13 +853,13 @@ export default function ArtistDirectory() {
               initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-purple-500/30 shadow-2xl shadow-purple-900/30"
+              className="bg-white dark:bg-gradient-to-br dark:from-[#121036] dark:to-[#09081d] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-pink-200 dark:border-indigo-500/35 shadow-2xl shadow-indigo-950/25 dark:shadow-indigo-950/60"
               onClick={(e) => e.stopPropagation()}
             >
               {loadingDetails ? (
                 <div className="flex items-center justify-center py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
-                  <span className="ml-3 text-gray-200">Chargement...</span>
+                  <Loader2 className="h-8 w-8 animate-spin text-rose-500 dark:text-indigo-300" />
+                  <span className="ml-3 text-indigo-950 dark:text-indigo-100">Chargement...</span>
                 </div>
               ) : selectedArtist ? (
                 <>
@@ -803,7 +869,10 @@ export default function ArtistDirectory() {
                       className={`h-48 bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} relative overflow-hidden`}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold">
+                        <div
+                          translate="no"
+                          className="notranslate w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-4xl font-bold"
+                        >
                           {(selectedArtist.name || "?")
                             .split(/\s+/)
                             .map((w: string) => w[0])
@@ -812,7 +881,7 @@ export default function ArtistDirectory() {
                             .toUpperCase()}
                         </div>
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-800 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/75 via-transparent to-transparent dark:from-[#121036]" />
                     </div>
 
                     <div className="absolute top-4 right-4">
@@ -821,7 +890,7 @@ export default function ArtistDirectory() {
                           setShowArtistDetails(false);
                           setSelectedArtist(null);
                         }}
-                        className="p-2 bg-slate-900/30 hover:bg-slate-900/50 backdrop-blur-sm rounded-full transition-colors"
+                        className="p-2 bg-slate-900/35 hover:bg-slate-900/55 backdrop-blur-sm rounded-full transition-colors"
                       >
                         <X className="h-5 w-5 text-white" />
                       </button>
@@ -829,12 +898,16 @@ export default function ArtistDirectory() {
 
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <Badge
-                        className={`bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} text-white border-0 mb-2`}
+                        translate="no"
+                        className={`notranslate bg-gradient-to-r ${getGenreGradient(selectedArtist.genre || "")} text-white border-0 mb-2`}
                       >
                         {GENRE_ICONS[selectedArtist.genre || ""] || "🎵"}{" "}
                         {selectedArtist.genre || "Divers"}
                       </Badge>
-                      <h2 className="text-3xl font-bold text-white drop-shadow-lg">
+                      <h2
+                        translate="no"
+                        className="notranslate text-3xl font-bold text-white drop-shadow-lg"
+                      >
                         {selectedArtist.name || "Artiste inconnu"}
                       </h2>
                     </div>
@@ -843,40 +916,60 @@ export default function ArtistDirectory() {
                   <div className="p-6 space-y-6">
                     {/* Info Cards */}
                     <div className="grid grid-cols-2 gap-3">
-                      <Card className="bg-purple-900/30 border-purple-500/20">
+                      <Card className="bg-pink-50/80 border-pink-200 dark:bg-indigo-950/60 dark:border-indigo-500/30">
                         <CardContent className="p-4 text-center">
-                          <Mic2 className="h-5 w-5 text-purple-400 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-white">
+                          <Mic2 className="h-5 w-5 text-rose-600 dark:text-indigo-300 mx-auto mb-1" />
+                          <div className="text-lg font-bold text-indigo-950 dark:text-white">
                             {selectedArtist.genre || "—"}
                           </div>
-                          <div className="text-xs text-purple-300">Genre</div>
+                          <div className="text-xs text-rose-700 dark:text-indigo-300">Genre</div>
                         </CardContent>
                       </Card>
-                      <Card className="bg-fuchsia-900/30 border-fuchsia-500/20">
+                      <Card className="bg-indigo-50/80 border-indigo-200 dark:bg-indigo-950/60 dark:border-indigo-500/30">
                         <CardContent className="p-4 text-center">
-                          <CheckCircle className="h-5 w-5 text-fuchsia-400 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-white">
+                          <CheckCircle className="h-5 w-5 text-indigo-600 dark:text-indigo-300 mx-auto mb-1" />
+                          <div className="text-lg font-bold text-indigo-950 dark:text-white">
                             {selectedArtist.label_status === "signed"
                               ? "Signé"
                               : selectedArtist.label_status === "independent"
                                 ? "Indépendant"
                                 : "Non signé"}
                           </div>
-                          <div className="text-xs text-fuchsia-300">
+                          <div className="text-xs text-indigo-700 dark:text-indigo-300">
                             Statut label
                           </div>
                         </CardContent>
                       </Card>
                     </div>
 
-                    {/* Stream on Verso Air */}
-                    <Link
-                      href={`/artist-catalogue/${selectedArtist.id}`}
-                      className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-600 to-orange-500 rounded-lg text-white font-semibold hover:from-amber-700 hover:to-orange-600 transition-all"
-                    >
-                      <Music className="h-5 w-5" />
-                      Écouter sur Verso Air
-                    </Link>
+                    {/* Actions: Biography (if curated) + Stream on Verso Air */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {(() => {
+                        const featured = getFeaturedArtistByName(selectedArtist.name);
+                        return featured ? (
+                          <Link
+                            href={`/artistes/${featured.slug}`}
+                            onClick={() => setShowArtistDetails(false)}
+                            className="flex items-center justify-center gap-2 flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500/25 dark:hover:bg-indigo-500/35 dark:border dark:border-indigo-400/40 rounded-lg text-white font-semibold transition-all"
+                          >
+                            <Mic2 className="h-5 w-5" />
+                            Biographie
+                          </Link>
+                        ) : null;
+                      })()}
+                      <Link
+                        href={`/artist-catalogue/${selectedArtist.id}`}
+                        className="flex items-center justify-center gap-2 flex-1 py-3 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-700 hover:via-pink-700 hover:to-indigo-700 dark:from-indigo-600 dark:via-violet-600 dark:to-indigo-500 rounded-lg text-white font-semibold transition-all"
+                      >
+                        <Music className="h-5 w-5" />
+                        <span>
+                          Écouter sur{" "}
+                          <span translate="no" className="notranslate">
+                            Verso Air
+                          </span>
+                        </span>
+                      </Link>
+                    </div>
                   </div>
                 </>
               ) : null}

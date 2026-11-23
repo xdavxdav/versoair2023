@@ -50,8 +50,8 @@ test("category listing selects an explicit public column list, never b.*", async
   assert.ok(query, "category query should run");
   const selectList = query.sql
     .split(" FROM businesses b")[0]
-    .replace(PUBLIC_CLAIMABLE_SQL, "")
-    .replace(PUBLIC_IS_CLAIMED_SQL, "");
+    .replace(PUBLIC_IS_CLAIMED_SQL, "")
+    .replace(PUBLIC_CLAIMABLE_SQL, "");
   assert.ok(!selectList.includes("b.*"));
   for (const key of PRIVATE_KEYS) {
     assert.ok(!selectList.includes(`b.${key}`), `${key} must not be selected`);

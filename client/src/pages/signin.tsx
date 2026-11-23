@@ -33,6 +33,10 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { getAuthToken } from "@/lib/auth";
 import { getSignupResumePath } from "@/lib/signup-resume";
 import {
+  getSafeReturnPath,
+  getSafeSignInBackTarget,
+} from "@/lib/auth-route-redirect";
+import {
   getDashboardDestination,
   getGeoAdminDestination,
 } from "@/lib/dashboard-routes";
@@ -62,26 +66,6 @@ import {
 const getQueryParam = (param: string) => {
   const url = new URL(window.location.href);
   return url.searchParams.get(param);
-};
-
-const getSafeReturnPath = (target: string | null) => {
-  if (
-    !target?.startsWith("/") ||
-    target.startsWith("//") ||
-    target.includes("\\")
-  ) {
-    return null;
-  }
-
-  try {
-    const url = new URL(target, window.location.origin);
-    if (url.origin !== window.location.origin || url.pathname === "/auth/signin") {
-      return null;
-    }
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
 };
 
 type SignInProvider = "google" | "microsoft" | "linkedin";
@@ -309,6 +293,7 @@ export default function SignIn() {
   const [accountType, setAccountType] = useState<"general" | "business_owner">(
     "general",
   );
+  const [accountCategory, setAccountCategory] = useState("general");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
@@ -361,7 +346,7 @@ export default function SignIn() {
   ) => {
     const target = getRoleAwareLoginPath(
       userData,
-      getSafeReturnPath(getQueryParam("redirect")),
+      getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
     );
     if (target) {
       navigate(target);
@@ -407,9 +392,19 @@ export default function SignIn() {
     setPortalSelectionOpen(true);
   };
 
-  // Never navigate to the ?redirect= target: it is usually the protected page
-  // that sent us here, which would bounce straight back to this page.
+  const registrationReturnPath = getSafeReturnPath(
+    getQueryParam("redirect"),
+    window.location.origin,
+  );
+  const safeBackTarget = getSafeSignInBackTarget(
+    getQueryParam("redirect"),
+    window.location.origin,
+  );
   const handleBack = () => {
+    if (safeBackTarget) {
+      navigate(safeBackTarget);
+      return;
+    }
     if (window.history.length > 1) {
       window.history.back();
       return;
@@ -417,16 +412,15 @@ export default function SignIn() {
     navigate("/");
   };
 
-  const registrationReturnPath = getSafeReturnPath(getQueryParam("redirect"));
-  const registrationBackLabel = registrationReturnPath
-    ? registrationReturnPath === "/geo-admin" ||
-      registrationReturnPath.startsWith("/geo-admin/")
+  const registrationBackLabel = safeBackTarget
+    ? safeBackTarget === "/geo-admin" ||
+      safeBackTarget.startsWith("/geo-admin/")
       ? "Back to GeoAdmin"
       : "Back to previous page"
     : "Back to Sign In";
   const handleRegistrationBack = () => {
-    if (registrationReturnPath) {
-      navigate(registrationReturnPath);
+    if (safeBackTarget) {
+      navigate(safeBackTarget);
       return;
     }
     setStep("login");
@@ -609,7 +603,7 @@ export default function SignIn() {
       });
       const redirectTarget = getRoleAwareLoginPath(
         data.user,
-        getSafeReturnPath(getQueryParam("redirect")),
+        getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
       );
       if (redirectTarget) {
         navigate(redirectTarget);
@@ -746,7 +740,7 @@ export default function SignIn() {
 
         const redirectTarget = getRoleAwareLoginPath(
           data.user,
-          getSafeReturnPath(getQueryParam("redirect")),
+          getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
         );
         if (redirectTarget) {
           navigate(redirectTarget);
@@ -847,7 +841,7 @@ export default function SignIn() {
         });
         const redirectTarget = getRoleAwareLoginPath(
           data.user,
-          getSafeReturnPath(getQueryParam("redirect")),
+          getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
         );
         if (redirectTarget) {
           navigate(redirectTarget);
@@ -1046,7 +1040,7 @@ export default function SignIn() {
             style={{ animation: "fade-up 0.5s ease-out 0.5s both" }}
           >
             Welcome to{" "}
-            <span className="text-[#d4a037] font-semibold">Verso Air</span>,{" "}
+            <span className="text-[#d4a037] font-semibold notranslate">Verso Air</span>,{" "}
             {verifiedName}!
           </p>
           <p
@@ -1098,7 +1092,7 @@ export default function SignIn() {
 
         {/* Footer */}
         <div className="absolute bottom-6 text-center text-xs text-[#40407a]">
-          🦅 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+          🦅 <strong className="text-[#bf831c] notranslate">Verso Air</strong> — Your
           business, amplified
         </div>
       </div>
@@ -1286,7 +1280,7 @@ export default function SignIn() {
 
               {/* Footer strip */}
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
-                🌍 <strong className="text-[#bf831c]">Verso Air</strong> —
+                🌍 <strong className="text-[#bf831c] notranslate">Verso Air</strong> —
                 Business Intelligence Platform
               </div>
             </div>
@@ -1358,7 +1352,7 @@ export default function SignIn() {
           // Same priority as every other sign-in path: go back where the user was headed.
           const returnPath = getRoleAwareLoginPath(
             pendingLoginData.user,
-            getSafeReturnPath(getQueryParam("redirect")),
+            getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
           );
           if (returnPath) {
             navigate(returnPath);
@@ -1523,7 +1517,7 @@ export default function SignIn() {
 
               {/* Footer */}
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
-                🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+                🌍 <strong className="text-[#bf831c] notranslate">Verso Air</strong> — Your
                 identity, your way
               </div>
             </div>
@@ -1677,7 +1671,7 @@ export default function SignIn() {
               </div>
 
               <div className="bg-[#0a0a14] px-8 py-4 text-center text-xs text-[#40407a] border-t border-white/5">
-                🌍 <strong className="text-[#bf831c]">Verso Air</strong> — Your
+                🌍 <strong className="text-[#bf831c] notranslate">Verso Air</strong> — Your
                 identity, your way
               </div>
             </div>
@@ -1967,18 +1961,27 @@ export default function SignIn() {
                     Account type
                   </label>
                   <select
-                    value={accountType}
-                    onChange={(e) =>
+                    value={accountCategory}
+                    onChange={(e) => {
+                      setAccountCategory(e.target.value);
                       setAccountType(
                         e.target.value === "business_owner"
                           ? "business_owner"
                           : "general",
-                      )
-                    }
+                      );
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
                   >
                     <option value="general">Personal (General)</option>
                     <option value="business_owner">Business Owner</option>
+                    <option value="geoadmin">GeoAdmin Subscriber</option>
+                    <option value="musical">Musical (Artist / Label)</option>
+                    <option value="streamer">Streamer / Listener</option>
+                    <option value="careers">Careers / Job Seeker</option>
+                    <option value="independent">Independent (Particulier)</option>
+                    <option value="contractor">Contractor / Freelancer</option>
+                    <option value="artisan">Artisan / Craft Professional</option>
+                    <option value="community">Community Member</option>
                   </select>
                   {accountType === "business_owner" && (
                     <p className="mt-2 text-xs text-gray-600">
@@ -2087,7 +2090,7 @@ export default function SignIn() {
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
                     <input
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
@@ -2100,7 +2103,9 @@ export default function SignIn() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                      className="mobile-compact-btn absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -2380,7 +2385,7 @@ export default function SignIn() {
 
                       const redirectTarget = getRoleAwareLoginPath(
                         nextData.user,
-                        getSafeReturnPath(getQueryParam("redirect")),
+                        getSafeReturnPath(getQueryParam("redirect"), window.location.origin),
                       );
                       if (redirectTarget) {
                         navigate(redirectTarget);
@@ -2641,7 +2646,7 @@ export default function SignIn() {
                       Password
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
                       <input
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
@@ -2654,7 +2659,9 @@ export default function SignIn() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-pressed={showPassword}
+                        className="mobile-compact-btn absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-400 hover:text-gray-600"
                       >
                         {showPassword ? (
                           <EyeOff className="h-5 w-5" />

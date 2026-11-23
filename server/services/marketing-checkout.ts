@@ -7,6 +7,11 @@
  */
 import type { Request, RequestHandler } from "express";
 import type Stripe from "stripe";
+import {
+  billingDetailsSchema,
+  buildTrustedCheckoutSecurityOptions,
+} from "@shared/billing-details";
+import { saveBillingProfile } from "./billing-profile";
 import { redactStripeSecrets } from "../utils/stripe-client";
 
 export const MARKETING_CURRENCY = "cad";
@@ -240,7 +245,6 @@ export function buildCheckoutSessionParams(input: {
   lines: PricedCartLine[];
   orderId: number;
   userId: string | number;
-  customerEmail: string;
   baseUrl: string;
 }): Stripe.Checkout.SessionCreateParams {
   const shipsPhysicalGoods = input.lines.some(
@@ -249,7 +253,11 @@ export function buildCheckoutSessionParams(input: {
   return {
     payment_method_types: ["card"],
     mode: "payment",
-    customer_email: input.customerEmail,
+    ...buildTrustedCheckoutSecurityOptions({
+      purpose: `Marketing Order #${input.orderId}`,
+      mode: "payment",
+      hasCustomer: false,
+    }),
     // Print products ship, and orders have no address columns of their own;
     // the webhook copies the collected address into the order notes.
     ...(shipsPhysicalGoods
@@ -310,20 +318,27 @@ export function createMarketingCheckoutHandler(
       }
 
       const userId = req.user!.userId;
-      const user = await deps.pool.query(
-        "SELECT email FROM users WHERE id = $1",
-        [userId],
-      );
-      const customerEmail = user.rows[0]?.email;
-      if (typeof customerEmail !== "string" || !customerEmail.trim()) {
-        res.status(400).json({
-          success: false,
-          error: "An email address is required for Checkout.",
-          code: "CHECKOUT_EMAIL_REQUIRED",
-        });
-        return;
+      if (req.body && typeof req.body === "object" && "billingDetails" in req.body && req.body.billingDetails !== undefined) {
+        const parsedBilling = billingDetailsSchema.safeParse(req.body.billingDetails);
+        if (!parsedBilling.success) {
+          res.status(400).json({
+            success: false,
+            code: "INVALID_BILLING_DETAILS",
+            error:
+              parsedBilling.error.issues[0]?.message ||
+              "Please complete all required billing details.",
+          });
+          return;
+        }
+        try {
+          await saveBillingProfile(deps.pool, Number(userId), parsedBilling.data);
+        } catch (billingErr) {
+          console.warn(
+            "[MARKETING] Could not persist billing profile before checkout:",
+            describeError(billingErr),
+          );
+        }
       }
-
       const pricing = await priceCart(deps.pool, userId);
       if (!pricing.ok) {
         res.status(pricing.status).json({
@@ -349,7 +364,6 @@ export function createMarketingCheckoutHandler(
             lines: pricing.lines,
             orderId: order.id,
             userId,
-            customerEmail: customerEmail.trim(),
             baseUrl: deps.getBaseUrl(),
           }),
           { idempotencyKey: `marketing-order-${order.id}` },

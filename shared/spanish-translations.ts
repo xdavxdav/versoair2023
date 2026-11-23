@@ -6,6 +6,8 @@ import { GEO_ADMIN_ES } from "./geo-admin-translations";
 import { ONBOARDING_ES } from "./onboarding-translations";
 import type { PUBLIC_COPY } from "./public-translations";
 import { RECOVERY_ES } from "./recovery-translations";
+import { DIRECTORY_ES } from "./directory-translations";
+import { VERSOAI_ES } from "./versoai-translations";
 
 // Bundled editorial translation; legal copy still requires professional review.
 export const SPANISH_COPY = {
@@ -15,6 +17,8 @@ export const SPANISH_COPY = {
   ...ONBOARDING_ES,
   ...GEO_ADMIN_ES,
   ...RECOVERY_ES,
+  ...DIRECTORY_ES,
+  ...VERSOAI_ES,
   "AI detects:": "La IA detecta:",
   "confidence": "confianza",
   "AI found {count} business in {sector}.": "La IA encontró {count} empresa en el sector {sector}.",

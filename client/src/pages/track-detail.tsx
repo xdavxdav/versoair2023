@@ -243,12 +243,12 @@ export default function TrackDetailPage() {
                 Explicite
               </span>
             )}
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <h1 translate="no" className="notranslate text-3xl md:text-4xl font-bold mb-2">
               {track.title}
             </h1>
 
             <Link href={`/artist-catalogue/${track.artist_id}`}>
-              <p className="text-amber-400 text-lg hover:text-amber-300 cursor-pointer transition-colors inline-flex items-center gap-1.5 mb-3">
+              <p translate="no" className="notranslate text-amber-400 text-lg hover:text-amber-300 cursor-pointer transition-colors inline-flex items-center gap-1.5 mb-3">
                 {track.artist_name}
                 {track.artist_verified && <Star className="w-4 h-4" />}
               </p>

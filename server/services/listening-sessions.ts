@@ -85,7 +85,6 @@ export interface SessionRow {
   description: string | null;
   hostUserId: number | null;
   hostName: string | null;
-  featured: boolean;
   startsAt: Date;
   endsAt: Date;
   playlistId: number | null;
@@ -96,19 +95,9 @@ export interface SessionRow {
 
 export const SESSION_SELECT = `SELECT ls.id, ls.title, ls.description, ls.host_user_id, ls.starts_at,
        ls.ends_at, ls.playlist_id, ls.status, ls.set_tracks, ls.gap_seconds,
-       u.display_name AS host_display_name, u.username AS host_username,
-       COALESCE(host_contract.grade IN ('S', 'A', 'B'), false) AS host_featured
+       u.display_name AS host_display_name, u.username AS host_username
   FROM listening_sessions ls
-  LEFT JOIN users u ON u.id = ls.host_user_id
-  LEFT JOIN LATERAL (
-    SELECT ac.grade
-      FROM artist_contracts ac
-     WHERE ac.user_id = ls.host_user_id
-       AND ac.status = 'approved'
-       AND ac.grade IN ('S', 'A', 'B', 'C')
-     ORDER BY ac.reviewed_at DESC NULLS LAST, ac.id DESC
-     LIMIT 1
-  ) host_contract ON true`;
+  LEFT JOIN users u ON u.id = ls.host_user_id`;
 
 /** The stored set, defensively: a malformed entry is dropped rather than trusted. */
 export function parseStoredSet(value: unknown): SetTrack[] {
@@ -147,7 +136,6 @@ export function mapSessionRow(raw: any): SessionRow {
     description: raw.description ?? null,
     hostUserId: nullableInt(raw.host_user_id),
     hostName: publicDisplayName([raw.host_display_name, raw.host_username], null),
-    featured: raw.host_featured === true,
     startsAt: new Date(raw.starts_at),
     endsAt: new Date(raw.ends_at),
     playlistId: nullableInt(raw.playlist_id),
@@ -170,7 +158,6 @@ export function summarizeSession(row: SessionRow, now: Date): AdminSessionSummar
     title: row.title,
     description: row.description,
     hostName: row.hostName,
-    featured: row.featured,
     startsAt: row.startsAt.toISOString(),
     endsAt: row.endsAt.toISOString(),
     status: deriveStatus({
@@ -197,7 +184,7 @@ export function toPublicDetail(detail: AdminSessionDetail): SessionDetail {
   return rest;
 }
 
-/** Featured hosts lead live/upcoming sessions; replays stay newest first. */
+/** Live first, then what is coming up (soonest first), then recent ones (newest first). */
 export function presentPublicList(rows: readonly SessionRow[], now: Date): SessionSummary[] {
   const live: SessionSummary[] = [];
   const scheduled: SessionSummary[] = [];
@@ -209,9 +196,7 @@ export function presentPublicList(rows: readonly SessionRow[], now: Date): Sessi
     else if (summary.status === "ended") ended.push(summary);
   }
   const byStart = (a: SessionSummary, b: SessionSummary) =>
-    Number(b.featured) - Number(a.featured) ||
-    a.startsAt.localeCompare(b.startsAt) ||
-    a.id - b.id;
+    a.startsAt.localeCompare(b.startsAt) || a.id - b.id;
   const byEndNewest = (a: SessionSummary, b: SessionSummary) =>
     b.endsAt.localeCompare(a.endsAt) || b.id - a.id;
   live.sort(byStart);

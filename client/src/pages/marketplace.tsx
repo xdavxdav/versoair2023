@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import ScrollToTop from "@/components/ScrollToTop";
 import AuthModal from "@/components/AuthModal";
-import ViewOnlyGate from "@/components/ViewOnlyGate";
+import VxppGuestIntro from "@/components/vxpp/VxppGuestIntro";
 import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { authenticatedFetch, checkAuth } from "@/lib/auth";
+import { navigateBackSafely } from "@/lib/safe-navigation";
 import {
   nextSendAttempt,
   settleSendAttempt,
@@ -163,7 +165,12 @@ const conditionStyle = (c: string) => {
 // ═══════════════════════════════════════════════════
 export default function MarketplacePage() {
   // ═══ UNIFIED AUTH — AuthContext (main/artist/geo-admin) OR community session ═══
-  const { user: globalUser, login: setGlobalLogin, logout: globalLogout } = useAuthContext();
+  const {
+    user: globalUser,
+    login: setGlobalLogin,
+    logout: globalLogout,
+  } = useAuthContext();
+  const [, navigate] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("blog_community_auth") === "true";
   });
@@ -466,21 +473,12 @@ export default function MarketplacePage() {
   } = useQuery<any[]>({
     queryKey: ["my-marketplace-listings"],
     queryFn: async () => {
-      try {
-        const token =
-          localStorage.getItem("auth_token") ||
-          localStorage.getItem("authToken");
-        if (!token) return [];
-        const res = await fetch("/api/marketing/journal/my-listings", {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
-        });
-        if (!res.ok) return [];
-        const data = await res.json();
-        return data.data || data.listings || [];
-      } catch {
-        return [];
-      }
+      const res = await authenticatedFetch(
+        "/api/marketing/journal/my-listings",
+      );
+      if (!res.ok) throw new Error("Couldn't load your listings.");
+      const data = await res.json();
+      return data.data || data.listings || [];
     },
     enabled: isAuthenticated,
     staleTime: 30_000,
@@ -526,16 +524,24 @@ export default function MarketplacePage() {
   const sendAttemptRef = useRef<SendAttempt | null>(null);
 
   // ═══ LIVE LISTINGS (public browse feed) ═══
-  const { data: liveListings = [] } = useQuery<any[]>({
+  const {
+    data: liveListings = [],
+    isLoading: listingsLoading,
+    isError: listingsError,
+    error: listingsErrorObj,
+    refetch: refetchListings,
+  } = useQuery<any[]>({
     queryKey: ["public-marketplace-listings", activeCategory],
+    retry: 1,
     queryFn: async () => {
-      try {
+      {
         const url =
           activeCategory === "all"
             ? "/api/marketing/journal/listings?status=active&limit=60"
             : `/api/marketing/journal/listings?status=active&limit=60&category=${encodeURIComponent(activeCategory)}`;
         const res = await fetch(url, { credentials: "include" });
-        if (!res.ok) return [];
+        if (!res.ok)
+          throw new Error(`Couldn't load listings (HTTP ${res.status}).`);
         const json = await res.json();
         const rows = json.data || json.listings || [];
         // Normalize DB row → UI card shape
@@ -583,8 +589,6 @@ export default function MarketplacePage() {
             },
           };
         });
-      } catch {
-        return [];
       }
     },
     staleTime: 30_000,
@@ -644,8 +648,19 @@ export default function MarketplacePage() {
       const convId = convJson.conversation?.id;
       if (!convId) throw new Error("Missing conversation id");
 
-      // 2. Send the message
-      const content = messageText.trim();
+      // 2. Send the message with clear listing context so the thread in Messages
+      // unmistakably identifies the marketplace item being discussed.
+      const priceTag =
+        typeof messageTarget.price === "number" && messageTarget.price > 0
+          ? ` ($${messageTarget.price})`
+          : "";
+      const listingHeader = messageTarget.title
+        ? `[Marketplace · ${messageTarget.title}${priceTag}]\n`
+        : "";
+      const rawContent = messageText.trim();
+      const content = rawContent.startsWith("[Marketplace")
+        ? rawContent
+        : `${listingHeader}${rawContent}`;
       const attempt = nextSendAttempt(sendAttemptRef.current, {
         conversationId: convId,
         content,
@@ -696,9 +711,11 @@ export default function MarketplacePage() {
   // Filter & sort
   const filtered = listings
     .filter((item) => {
+      const q = searchQuery.trim().toLowerCase();
       const matchSearch =
-        item.title.toLowerCase().startsWith(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().startsWith(searchQuery.toLowerCase());
+        !q ||
+        item.title.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q);
       const matchCat =
         activeCategory === "all" || item.category === activeCategory;
       const matchPrice =
@@ -735,15 +752,16 @@ export default function MarketplacePage() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // ═══ AUTH GATE: Block unauthenticated users ═══
+  // ═══ AUTH GATE: Marketplace-specific introduction for signed-out visitors ═══
   if (!isAuthenticated) {
     return (
       <>
-        <ViewOnlyGate
+        <VxppGuestIntro
+          section="marketplace"
+          redirectPath="/marketplace"
           onSignIn={() => setIsAuthModalOpen(true)}
           onSignUp={() => setIsAuthModalOpen(true)}
-          showProfessionalSSO={false}
-          onBack={() => window.location.assign("/")}
+          onBack={() => navigateBackSafely(navigate, "/")}
         />
         <AuthModal
           isOpen={isAuthModalOpen}
@@ -1324,6 +1342,34 @@ export default function MarketplacePage() {
                     })}
                   </div>
                 )}
+              </div>
+            ) : listingsLoading ? (
+              <div
+                role="status"
+                className={`flex flex-col items-center justify-center py-20 text-center ${t.textMuted}`}
+              >
+                <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                <p className="text-sm">Loading listings...</p>
+              </div>
+            ) : listingsError && listings.length === 0 ? (
+              <div
+                role="alert"
+                className="flex flex-col items-center justify-center py-20 text-center"
+              >
+                <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
+                <p className={`text-lg font-semibold ${t.text} mb-1`}>
+                  Couldn't load the marketplace
+                </p>
+                <p className={`text-sm ${t.textMuted} mb-4`}>
+                  {(listingsErrorObj as Error)?.message ||
+                    "Check your connection and try again."}
+                </p>
+                <button
+                  onClick={() => refetchListings()}
+                  className="px-6 py-2.5 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
+                >
+                  Retry
+                </button>
               </div>
             ) : filtered.length > 0 ? (
               <motion.div

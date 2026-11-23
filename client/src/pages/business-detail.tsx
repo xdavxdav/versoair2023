@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/tooltip";
 import { BusinessStatusBadges } from "@/components/BusinessStatusBadges";
 import { BusinessClaimAction } from "@/components/BusinessClaimAction";
+import { BusinessOwnersPanel } from "@/components/BusinessOwnersPanel";
 import { UNCLAIMED_NOTICE, parseClaimed } from "@/lib/business-status";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
@@ -69,6 +70,10 @@ import {
   ficheSectorStyle,
   getFicheSectorPalette,
 } from "@/lib/fiche-sector-theme";
+import {
+  getFooterThemeForSectorSlug,
+  setDynamicFooterTheme,
+} from "@/lib/footer-theme";
 import { SeoHead } from "@/components/seo/SeoHead";
 import { useTheme } from "@/contexts/ThemeContext";
 import "./business-detail-theme.css";
@@ -454,6 +459,16 @@ export default function BusinessDetailPage() {
   const metaTitle = business?.name
     ? `${business.name} | VersoAir`
     : "Business Profile | VersoAir";
+
+  useEffect(() => {
+    if (!businessId) return;
+    const path = `/business/${businessId}`;
+    const sectorTheme = getFooterThemeForSectorSlug(business?.sector_slug);
+    setDynamicFooterTheme(path, sectorTheme);
+    return () => {
+      setDynamicFooterTheme(path, null);
+    };
+  }, [businessId, business?.sector_slug]);
   const metaDescription = (() => {
     const baseDescription =
       business?.description?.trim() ||
@@ -1081,6 +1096,11 @@ export default function BusinessDetailPage() {
             <FicheTechnique
               business={biz}
               onEdit={canEditFiche ? () => setFicheEditorOpen(true) : undefined}
+            />
+            <BusinessOwnersPanel
+              businessId={biz.id}
+              currentUserId={auth?.user?.id}
+              isOwner={isOwner}
             />
             {canEditFiche && (
               <FicheEditor

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
+import { useTranslate } from "@/hooks/use-translate";
 import {
   Zap,
   Globe,
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/select";
 
 export default function Home() {
+  const tr = useTranslate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [timePeriod, setTimePeriod] = useState("week");
   const [isSolarSystemPaused, setIsSolarSystemPaused] = useState(false);
@@ -813,7 +815,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 bg-blue-500/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
                 <Zap className="h-4 w-4 text-blue-400" />
                 <span className="text-sm font-medium text-blue-400">
-                  Powered by VersoAI Neural Networks
+                  {tr("Powered by VersoAI Neural Networks")}
                 </span>
               </div>
 
@@ -823,9 +825,9 @@ export default function Home() {
                 animate="visible"
                 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight"
               >
-                <span className="block text-slate-900 mb-4">Decode Your</span>
+                <span className="block text-slate-900 mb-4">{tr("Decode Your")}</span>
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                  Business Universe
+                  {tr("Business Universe")}
                 </span>
               </motion.h1>
 
@@ -836,16 +838,15 @@ export default function Home() {
                 transition={{ delay: 0.15 }}
                 className="text-xl text-blue-200/80 max-w-2xl leading-relaxed"
               >
-                VersoAI is being prepared alongside the Toronto, Canada launch.
-                Analytics, predictive insights, and other capabilities are
-                subject to regional availability and are not currently offered
-                for online purchase.
+                {tr(
+                  "VersoAI is being prepared alongside the Toronto, Canada launch. Analytics, predictive insights, and other capabilities are subject to regional availability and are not currently offered for online purchase.",
+                )}
               </motion.p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <a href="/services">
                   <Button className="bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-6 text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                    Explore the directory offer
+                    {tr("Explore the directory offer")}
                     <Rocket className="ml-2 h-5 w-5" />
                   </Button>
                 </a>
@@ -855,7 +856,7 @@ export default function Home() {
                     className="border-blue-500/50 text-blue-200 px-8 py-6 text-lg hover:bg-blue-500/10"
                   >
                     <ExternalLink className="mr-2 h-5 w-5" />
-                    Watch Demo
+                    {tr("Watch Demo")}
                   </Button>
                 </a>
               </div>
@@ -863,7 +864,7 @@ export default function Home() {
               {/* Time Period Filter */}
               <div className="flex items-center gap-2 pt-8 pb-4 flex-wrap">
                 <Calendar className="h-4 w-4 text-blue-400" />
-                <span className="text-xs text-blue-200/80">Metrics:</span>
+                <span className="text-xs text-blue-200/80">{tr("Metrics:")}</span>
                 {[
                   { value: "day", label: "Today" },
                   { value: "week", label: "Week" },
@@ -885,7 +886,7 @@ export default function Home() {
                         : "bg-slate-900/30 text-blue-300 hover:bg-slate-800/50 border border-blue-500/20"
                     }`}
                   >
-                    {period.label}
+                    {tr(period.label)}
                   </button>
                 ))}
               </div>
@@ -1523,7 +1524,9 @@ export default function Home() {
                           : "none",
                       }}
                     >
-                      {isSolarSystemPaused ? "▶ Resume" : "⏸ Pause"}
+                      {isSolarSystemPaused
+                        ? `▶ ${tr("Resume")}`
+                        : `⏸ ${tr("Pause")}`}
                     </button>
                     <button
                       onClick={() => setShowDebugHits((v) => !v)}
@@ -1558,11 +1561,12 @@ export default function Home() {
         <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-6">
-              Enterprise-Grade Features
+              {tr("Enterprise-Grade Features")}
             </h2>
             <p className="text-xl text-blue-200/80 max-w-3xl mx-auto">
-              Everything you need to transform raw data into actionable business
-              intelligence
+              {tr(
+                "Everything you need to transform raw data into actionable business intelligence",
+              )}
             </p>
           </div>
 
@@ -1578,15 +1582,15 @@ export default function Home() {
                   <div className="text-slate-900">{feature.icon}</div>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-4">
-                  {feature.title}
+                  {tr(feature.title)}
                 </h3>
-                <p className="text-blue-200/70">{feature.description}</p>
+                <p className="text-blue-200/70">{tr(feature.description)}</p>
                 <div className="mt-6 pt-6 border-t border-blue-500/20">
                   <Button
                     variant="ghost"
                     className="text-blue-400 hover:text-slate-900 p-0 h-auto"
                   >
-                    Learn more <ChevronRight className="ml-2 h-4 w-4" />
+                    {tr("Learn more")} <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -1601,11 +1605,12 @@ export default function Home() {
         <div className="relative max-w-[95vw] mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-6">
-              Sectors considered for future coverage
+              {tr("Sectors considered for future coverage")}
             </h2>
             <p className="text-xl text-blue-200/80 max-w-3xl mx-auto">
-              Sector coverage will depend on verified local listings and
-              launch readiness in each market.
+              {tr(
+                "Sector coverage will depend on verified local listings and launch readiness in each market.",
+              )}
             </p>
           </div>
 
@@ -1616,7 +1621,7 @@ export default function Home() {
                 className={`${industry.color} rounded-xl p-6 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-2xl cursor-pointer`}
               >
                 <div className="text-3xl mb-3">{industry.icon}</div>
-                <h3 className="font-bold text-slate-900">{industry.name}</h3>
+                <h3 className="font-bold text-slate-900">{tr(industry.name)}</h3>
               </div>
             ))}
           </div>
@@ -1629,16 +1634,17 @@ export default function Home() {
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <div className="bg-slate-900/50 backdrop-blur-xl border border-blue-500/30 rounded-3xl p-12">
             <h2 className="text-4xl font-bold text-slate-900 mb-6">
-              Interested in VersoAI?
+              {tr("Interested in VersoAI?")}
             </h2>
             <p className="text-xl text-blue-200/80 mb-10 max-w-2xl mx-auto">
-              VersoAI availability and terms are not currently finalized. Our
-              current inquiry pathway is for business-directory listing review.
+              {tr(
+                "VersoAI availability and terms are not currently finalized. Our current inquiry pathway is for business-directory listing review.",
+              )}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="/services">
                 <Button className="bg-gradient-to-r from-blue-500 to-purple-500 px-10 py-6 text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all">
-                  Explore directory listings
+                  {tr("Explore directory listings")}
                   <Rocket className="ml-2 h-5 w-5" />
                 </Button>
               </a>
@@ -1648,7 +1654,7 @@ export default function Home() {
                   className="border-blue-500 text-blue-200 px-10 py-6 text-lg hover:bg-blue-500/10"
                 >
                   <Headphones className="mr-2 h-5 w-5" />
-                  Ask about availability
+                  {tr("Ask about availability")}
                 </Button>
               </a>
             </div>
@@ -1698,17 +1704,18 @@ export default function Home() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">VERSO AIR</h3>
-                  <p className="text-sm text-blue-400">Powered by VersoAI</p>
+                  <p className="text-sm text-blue-400">{tr("Powered by VersoAI")}</p>
                 </div>
               </div>
               <p className="text-blue-200/70 text-sm">
-                Advanced analytics and strategic intelligence powered by VersoAI
-                for modern enterprises.
+                {tr(
+                  "Advanced analytics and strategic intelligence powered by VersoAI for modern enterprises.",
+                )}
               </p>
             </div>
 
             <div>
-              <h4 className="text-slate-900 font-semibold mb-4">Platform</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">{tr("Platform")}</h4>
               <ul className="space-y-3">
                 <li>
                   <a
@@ -1746,7 +1753,7 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-slate-900 font-semibold mb-4">Company</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">{tr("Company")}</h4>
               <ul className="space-y-3">
                 <li>
                   <a
@@ -1784,7 +1791,7 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-slate-900 font-semibold mb-4">Resources</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">{tr("Resources")}</h4>
               <ul className="space-y-3">
                 <li>
                   <a
@@ -1824,8 +1831,8 @@ export default function Home() {
 
           <div className="pt-8 border-t border-blue-500/20 text-center">
             <p className="text-blue-200/50 text-sm">
-              © {new Date().getFullYear()} Verso Air. All rights reserved.
-              Powered by VersoAI.
+              © {new Date().getFullYear()}{" "}
+              {tr("Verso Air. All rights reserved. Powered by VersoAI.")}
             </p>
           </div>
         </div>

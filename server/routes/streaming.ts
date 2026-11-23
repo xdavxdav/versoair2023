@@ -2,6 +2,8 @@
  * Verso Air Streaming Platform — API Routes
  * Full-featured streaming backend: tracks, playlists, social, analytics, subscriptions
  */
+import { canonicalGenreName } from "../../shared/music-genres";
+import { artistGenreCondition, textGenreCondition } from "../utils/genre-filter";
 import { Router, Request, RequestHandler, Response } from "express";
 import { pool } from "../db";
 import { fanChatSlowMode } from "../middleware/rate-limiter";
@@ -62,9 +64,10 @@ router.get("/tracks", async (req: Request, res: Response) => {
     const params: any[] = [];
     let paramIdx = 1;
 
-    if (genre) {
-      where += ` AND mt.genre ILIKE $${paramIdx}`;
-      params.push(`%${genre}%`);
+    const genreCond = textGenreCondition("mt.genre", genre, paramIdx);
+    if (genreCond) {
+      where += ` AND ${genreCond.sql}`;
+      params.push(...genreCond.params);
       paramIdx++;
     }
     if (mood) {
@@ -141,7 +144,7 @@ router.get("/tracks", async (req: Request, res: Response) => {
       total: parseInt(countResult.rows[0].total),
       page: parseInt(page as string),
       limit: parseInt(limit as string),
-      genres: genres.rows.map((r: any) => r.genre),
+      genres: [...new Set<string>(genres.rows.map((r: any) => canonicalGenreName(r.genre)))].sort((a, b) => a.localeCompare(b)),
       moods: moods.rows.map((r: any) => r.mood),
     });
   } catch (err: any) {
@@ -587,7 +590,7 @@ async function getStreamBudget(userId: number | null): Promise<{
 
 // POST /api/streaming/record-play — Record a stream play (must be ≥30 seconds)
 // Enforces weekly stream caps per listener subscription tier.
-const recordPlayHandler = async (req: Request, res: Response) => {
+router.post("/record-play", async (req: Request, res: Response) => {
   try {
     const { trackId, duration, sessionId } = req.body;
     if (!trackId || !duration) {
@@ -735,9 +738,7 @@ const recordPlayHandler = async (req: Request, res: Response) => {
     console.error("[Streaming] record-play error:", err.message);
     res.status(500).json({ error: "Failed to record play" });
   }
-};
-
-router.post("/record-play", recordPlayHandler);
+});
 
 // ═══════════════════════════════════════════════════════════
 // PREVIEW MODE + PAYLIST SYSTEM
@@ -975,9 +976,10 @@ router.get("/artists", async (req: Request, res: Response) => {
       params.push(`%${search}%`);
       paramIdx++;
     }
-    if (genre) {
-      where += ` AND COALESCE(ap.genre #>> '{}', art.genre) ILIKE $${paramIdx}`;
-      params.push(`%${genre}%`);
+    const genreCond = artistGenreCondition(genre, paramIdx);
+    if (genreCond) {
+      where += ` AND ${genreCond.sql}`;
+      params.push(...genreCond.params);
       paramIdx++;
     }
     if (country) {
@@ -1001,6 +1003,8 @@ router.get("/artists", async (req: Request, res: Response) => {
         COALESCE(ap.genre #>> '{}', art.genre) as genre,
         ap.profile_image_url as image_url,
         ap.bio,
+        COALESCE(art_nb.name, ap_nb.name) as neighbourhood,
+        COALESCE(art_ct.name, ap_ct.name) as city,
         art.country_code,
         ap.country as country,
         COALESCE(ap.verified_for_payout, false) as verified,
@@ -1009,6 +1013,10 @@ router.get("/artists", async (req: Request, res: Response) => {
         (SELECT COUNT(*) FROM music_tracks mt WHERE mt.artist_id = art.id AND mt.status = 'published') as track_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      LEFT JOIN cities art_ct ON art_ct.id = art.city_id
+      LEFT JOIN neighbourhoods art_nb ON art_nb.id = art.neighbourhood_id
+      LEFT JOIN cities ap_ct ON ap_ct.id = ap.city_id
+      LEFT JOIN neighbourhoods ap_nb ON ap_nb.id = ap.neighbourhood_id
       ${where}
       ${orderBy}
       LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
@@ -1045,6 +1053,8 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         COALESCE(ap.genre #>> '{}', art.genre) as genre,
         ap.profile_image_url as image_url,
         ap.bio,
+        COALESCE(art_nb.name, ap_nb.name) as neighbourhood,
+        COALESCE(art_ct.name, ap_ct.name) as city,
         art.country_code,
         ap.country as country,
         COALESCE(ap.verified_for_payout, false) as verified,
@@ -1055,6 +1065,10 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         (SELECT COUNT(*) FROM artist_follows af WHERE af.artist_id = art.id) as follower_count
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      LEFT JOIN cities art_ct ON art_ct.id = art.city_id
+      LEFT JOIN neighbourhoods art_nb ON art_nb.id = art.neighbourhood_id
+      LEFT JOIN cities ap_ct ON ap_ct.id = ap.city_id
+      LEFT JOIN neighbourhoods ap_nb ON ap_nb.id = ap.neighbourhood_id
       WHERE art.id = $1
         AND NOT EXISTS (
           SELECT 1 FROM users u
@@ -1109,11 +1123,17 @@ router.get("/artists/:id", async (req: Request, res: Response) => {
         COALESCE(ap.stage_name, art.stage_name) as name,
         COALESCE(ap.genre #>> '{}', art.genre) as genre,
         ap.profile_image_url as image_url,
+        COALESCE(art_nb.name, ap_nb.name) as neighbourhood,
+        COALESCE(art_ct.name, ap_ct.name) as city,
         art.country_code,
         ap.country,
         COALESCE(ap.verified_for_payout, false) as verified
       FROM artists art
       LEFT JOIN artist_profiles ap ON ap.legacy_artist_id = art.id
+      LEFT JOIN cities art_ct ON art_ct.id = art.city_id
+      LEFT JOIN neighbourhoods art_nb ON art_nb.id = art.neighbourhood_id
+      LEFT JOIN cities ap_ct ON ap_ct.id = ap.city_id
+      LEFT JOIN neighbourhoods ap_nb ON ap_nb.id = ap.neighbourhood_id
       WHERE art.id != $1
         AND NOT EXISTS (
           SELECT 1 FROM users u
@@ -2189,10 +2209,13 @@ router.get(
 
     // Top artists by streams
     const topArtists = await pool.query(`
-      SELECT id, name, genre, image_url, country, country_code, total_streams, 
-        monthly_listeners, followers, verified
-      FROM music_artists
-      ORDER BY total_streams DESC
+      SELECT ma.id, ma.name, ma.genre, ma.image_url, ma.country, ma.country_code, ma.total_streams,
+        ma.monthly_listeners, ma.followers, ma.verified,
+        ct.name AS city, nb.name AS neighbourhood
+      FROM music_artists ma
+      LEFT JOIN cities ct ON ct.id = ma.city_id
+      LEFT JOIN neighbourhoods nb ON nb.id = ma.neighbourhood_id
+      ORDER BY ma.total_streams DESC
       LIMIT 10
     `);
 
@@ -2639,8 +2662,61 @@ router.get("/search", async (req: Request, res: Response) => {
 // SIMPLIFIED ENDPOINTS (aliases for cleaner API)
 // ═══════════════════════════════════════════════════════════
 
-// POST /api/streaming/play — Legacy alias for the validated record-play handler.
-router.post("/play", recordPlayHandler);
+// POST /api/streaming/play — Alias for /record-play
+router.post("/play", async (req: Request, res: Response) => {
+  try {
+    const { trackId, duration, sessionId } = req.body;
+    if (!trackId || !duration) {
+      return res.status(400).json({ error: "trackId and duration required" });
+    }
+    if (duration < 30) {
+      return res.json({
+        recorded: false,
+        reason: "Must listen at least 30 seconds",
+      });
+    }
+
+    // Get artist for this track
+    const trackRow = await pool.query(
+      `SELECT artist_id FROM music_tracks WHERE id = $1`,
+      [trackId],
+    );
+    const artistId = trackRow.rows[0]?.artist_id;
+
+    // Insert stream play
+    await pool.query(
+      `INSERT INTO stream_plays (track_id, artist_id, user_id, duration, session_id, played_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [
+        trackId,
+        artistId || null,
+        (req as any).user?.id || null,
+        duration,
+        sessionId || null,
+      ],
+    );
+
+    // Increment play count
+    await pool.query(
+      `UPDATE music_tracks SET streams = COALESCE(streams, 0) + 1 WHERE id = $1`,
+      [trackId],
+    );
+
+    // $0.007 flat revenue per stream
+    const RATE = 0.007;
+    if (artistId) {
+      await pool.query(
+        `UPDATE music_artists SET total_streams = COALESCE(total_streams, 0) + 1, revenue = COALESCE(revenue, 0) + $1 WHERE id = $2`,
+        [RATE, artistId],
+      );
+    }
+
+    res.json({ recorded: true, revenue: RATE });
+  } catch (err: any) {
+    console.error("[STREAMING] Play error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /api/streaming/stats/:artistId — Artist streaming stats
 router.get(

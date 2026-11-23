@@ -50,6 +50,7 @@ import {
 import { SectionBlock, InfoRow, ApiEndpoint, DbTable } from "./vault-shared";
 import VersoAirCardPanel from "./VersoAirCardPanel";
 import OfferPricesPanel from "./OfferPricesPanel";
+import MarketingCatalogPanel from "./MarketingCatalogPanel";
 
 const formatPlanPrice = (cents: number) =>
   new Intl.NumberFormat("en-CA", {
@@ -343,6 +344,7 @@ export default function FinanceControlPanel() {
   return (
     <>
       <OfferPricesPanel />
+      <MarketingCatalogPanel />
       {/* Revenue KPI Dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div className="bg-gray-900/60 border border-gray-800/50 rounded-lg p-4">

@@ -1,6 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getLegacySignInRedirect } from "./auth-route-redirect";
+import {
+  getLegacySignInRedirect,
+  getSafeReturnPath,
+  getSafeSignInBackTarget,
+} from "./auth-route-redirect";
+
+test("safe return paths preserve local path, query, and hash", () => {
+  assert.equal(
+    getSafeReturnPath("/pricing?plan=essential#plans", "https://versoair.test"),
+    "/pricing?plan=essential#plans",
+  );
+});
+
+test("safe return paths reject external, malformed, and sign-in destinations", () => {
+  for (const target of [
+    null,
+    "https://evil.example",
+    "//evil.example",
+    "/\\evil.example",
+    "/auth/signin?redirect=%2Fpricing",
+  ]) {
+    assert.equal(getSafeReturnPath(target, "https://versoair.test"), null);
+  }
+});
 
 test("legacy sign-in redirects preserve the requested destination and hash", () => {
   assert.equal(
@@ -45,5 +68,32 @@ test("only the first returnTo becomes the destination", () => {
   assert.equal(
     getLegacySignInRedirect("?returnTo=%2Fa&returnTo=%2Fb", ""),
     "/auth/signin?redirect=%2Fa&returnTo=%2Fb",
+  );
+});
+
+test("sign-in Back target avoids bouncing into auth-required routes", () => {
+  assert.equal(
+    getSafeSignInBackTarget("/messages", "https://versoair.test"),
+    "/blog",
+  );
+  assert.equal(
+    getSafeSignInBackTarget("/profile", "https://versoair.test"),
+    "/blog",
+  );
+  assert.equal(
+    getSafeSignInBackTarget("/dashboard", "https://versoair.test"),
+    "/",
+  );
+  assert.equal(
+    getSafeSignInBackTarget("/services/careers/dashboard", "https://versoair.test"),
+    "/services/careers",
+  );
+  assert.equal(
+    getSafeSignInBackTarget("/contracts", "https://versoair.test"),
+    "/services/contractors",
+  );
+  assert.equal(
+    getSafeSignInBackTarget("/pricing?plan=essential", "https://versoair.test"),
+    "/pricing?plan=essential",
   );
 });

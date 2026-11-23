@@ -15,11 +15,13 @@ installTranslateDomGuard();
 
 // A deployment can replace hashed lazy-load chunks while a tab is open. Retry
 // once with the current HTML shell instead of surfacing a JavaScript MIME error.
-window.addEventListener("vite:preloadError", (event) => {
-  event.preventDefault();
-  const reloadKey = "versoair_vite_preload_retry";
-  if (!sessionStorage.getItem(reloadKey)) {
-    sessionStorage.setItem(reloadKey, "1");
+// Never call preventDefault here: Vite then resolves the import as `undefined`,
+// which crashes lazy loaders with "Cannot read properties of undefined".
+window.addEventListener("vite:preloadError", () => {
+  const reloadKey = "chunk_reload_at";
+  const last = Number(sessionStorage.getItem(reloadKey) || 0);
+  if (Date.now() - last > 60_000) {
+    sessionStorage.setItem(reloadKey, String(Date.now()));
     window.location.reload();
   }
 });

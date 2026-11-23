@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Calendar,
   Clock,
@@ -25,6 +25,7 @@ const FILTERS: readonly Filter[] = ["all", "scheduled", "live", "ended", "cancel
 
 export function UserSessionDashboard() {
   const { toast } = useToast();
+  const reducedMotion = useReducedMotion();
   const [filter, setFilter] = useState<Filter>("all");
 
   const { data: sessionsData, isLoading, error } = useUserSessions();
@@ -53,18 +54,22 @@ export function UserSessionDashboard() {
     switch (status) {
       case "live":
         return (
-          <Badge className="bg-green-500/20 text-green-300 border-green-500/30 animate-pulse">
+          <Badge variant="outline" className="gap-1.5 border-rose-500/45 bg-rose-500/15 text-rose-200 font-semibold">
+            <span aria-hidden="true" className="relative flex h-2 w-2">
+              <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-400" />
+            </span>
             LIVE
           </Badge>
         );
       case "scheduled":
         return (
-          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">SCHEDULED</Badge>
+          <Badge variant="outline" className="bg-amber-500/15 text-amber-200 border-amber-400/35">SCHEDULED</Badge>
         );
       case "ended":
-        return <Badge className="bg-white/10 text-white/70 border-white/20">ENDED</Badge>;
+        return <Badge variant="outline" className="bg-[#180d34]/80 text-slate-300 border-purple-500/25">ENDED</Badge>;
       case "cancelled":
-        return <Badge className="bg-red-500/10 text-red-300 border-red-500/30">CANCELLED</Badge>;
+        return <Badge variant="outline" className="bg-[#0f0822]/70 text-slate-400 border-purple-500/15">CANCELLED</Badge>;
       default:
         return null;
     }
@@ -84,8 +89,8 @@ export function UserSessionDashboard() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto mb-3" />
-          <p className="text-white/60">Loading your sessions...</p>
+          <Loader2 className="w-8 h-8 text-fuchsia-400 animate-spin mx-auto mb-3" />
+          <p className="text-slate-300">Loading your sessions...</p>
         </div>
       </div>
     );
@@ -93,12 +98,12 @@ export function UserSessionDashboard() {
 
   if (error) {
     return (
-      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+      <div className="bg-rose-500/10 border border-rose-500/35 rounded-2xl p-4">
         <div className="flex gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-red-400 font-semibold">Failed to Load Sessions</p>
-            <p className="text-red-400/60 text-sm">
+            <p className="text-rose-200 font-semibold">Failed to Load Sessions</p>
+            <p className="text-rose-200/75 text-sm">
               {error instanceof Error ? error.message : "Unknown error"}
             </p>
           </div>
@@ -110,16 +115,16 @@ export function UserSessionDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Your Sessions</h2>
-          <p className="text-white/60 text-sm">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-50 mb-1">Your Sessions</h2>
+          <p className="text-slate-400 text-sm tabular-nums">
             {sessions.length} total session{sessions.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 rounded-full border border-amber-500/30">
-          <Music className="w-4 h-4 text-amber-500" />
-          <span className="text-amber-500 font-semibold text-sm">
+        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-purple-500/15 rounded-full border border-purple-400/30">
+          <Music className="w-4 h-4 text-fuchsia-300" />
+          <span className="text-purple-100 font-semibold text-sm tabular-nums">
             {sessionsData?.rateLimitStatus?.sessionsCreatedToday ?? 0}/
             {sessionsData?.rateLimitStatus?.maxPerDay ?? 0} today
           </span>
@@ -127,15 +132,15 @@ export function UserSessionDashboard() {
       </div>
 
       {/* Filter Buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               filter === f
-                ? "bg-amber-500 text-verso-navy"
-                : "bg-verso-navy/50 text-white/70 hover:bg-verso-navy/60"
+                ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-[0_0_14px_rgba(168,85,247,0.35)]"
+                : "tmu-glass text-slate-300 hover:text-white hover:bg-[#180d34]"
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -145,14 +150,14 @@ export function UserSessionDashboard() {
 
       {/* Sessions List */}
       {filteredSessions.length === 0 ? (
-        <div className="bg-verso-navy/50 rounded-lg p-12 text-center">
-          <Music className="w-12 h-12 text-white/20 mx-auto mb-3" />
-          <p className="text-white/60 mb-1">
+        <div className="tmu-glass rounded-2xl p-12 text-center">
+          <Music className="w-12 h-12 text-purple-300/30 mx-auto mb-3" />
+          <p className="text-slate-200 mb-1">
             {filter === "all"
               ? "No sessions yet. Create your first live session!"
               : `No ${filter} sessions at the moment.`}
           </p>
-          <p className="text-white/40 text-sm">
+          <p className="text-slate-400 text-sm">
             {sessionsData?.rateLimitStatus?.nextSessionAvailableAt &&
               `Next session available: ${formatTime(
                 sessionsData.rateLimitStatus.nextSessionAvailableAt
@@ -165,35 +170,35 @@ export function UserSessionDashboard() {
             {filteredSessions.map((session, index) => (
               <motion.div
                 key={session.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={reducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-verso-navy/50 rounded-lg p-4 border border-verso-navy/50 hover:border-amber-500/30 transition"
+                exit={reducedMotion ? undefined : { opacity: 0, y: -10 }}
+                transition={reducedMotion ? { duration: 0 } : { delay: index * 0.04 }}
+                className="tmu-glass tmu-interactive-card rounded-2xl p-4 sm:p-5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-white font-semibold truncate">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h3 className="text-slate-50 font-semibold truncate">
                         {session.title}
                       </h3>
                       {getStatusBadge(session.status)}
                     </div>
 
                     {session.description && (
-                      <p className="text-white/60 text-sm mb-3 line-clamp-2">
+                      <p className="text-slate-300 text-sm mb-3 line-clamp-2">
                         {session.description}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap gap-4 text-sm text-white/60">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
+                    <div className="flex flex-wrap gap-4 text-sm text-slate-400 tabular-nums">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-purple-300" />
                         {formatTime(session.startsAt)}
                       </div>
                       {session.trackCount > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Music className="w-4 h-4" />
+                        <div className="flex items-center gap-1.5">
+                          <Music className="w-4 h-4 text-purple-300" />
                           {session.trackCount} track
                           {session.trackCount !== 1 ? "s" : ""}
                         </div>
@@ -201,10 +206,10 @@ export function UserSessionDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 shrink-0">
                     {session.status === "live" && (
                       <Link href={`/sessions/${session.id}`}>
-                        <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                        <Button size="sm" className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white">
                           <Play className="w-4 h-4 mr-1" />
                           Open
                         </Button>
@@ -217,7 +222,7 @@ export function UserSessionDashboard() {
                         variant="outline"
                         onClick={() => cancelMutation.mutate(session.id)}
                         disabled={cancelMutation.isPending}
-                        className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+                        className="text-rose-300 border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20"
                       >
                         {cancelMutation.isPending ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -234,7 +239,7 @@ export function UserSessionDashboard() {
                       <Button
                         size="sm"
                         disabled
-                        className="bg-white/10 text-white/60 cursor-default"
+                        className="bg-purple-500/10 text-slate-400 border border-purple-500/15 cursor-default"
                       >
                         Completed
                       </Button>
@@ -249,9 +254,9 @@ export function UserSessionDashboard() {
 
       {/* Rate Limit Info */}
       {sessionsData?.rateLimitStatus && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-          <p className="text-amber-500 font-semibold text-sm mb-2">Rate Limit Status</p>
-          <div className="space-y-1 text-sm text-amber-500/80">
+        <div className="tmu-glass rounded-2xl p-4 border-purple-400/25">
+          <p className="text-purple-200 font-semibold text-sm mb-2">Rate Limit Status</p>
+          <div className="space-y-1 text-sm text-slate-300 tabular-nums">
             <p>
               Sessions created today: {sessionsData.rateLimitStatus.sessionsCreatedToday}/
               {sessionsData.rateLimitStatus.maxPerDay}

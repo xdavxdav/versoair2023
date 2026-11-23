@@ -1,11 +1,11 @@
 /**
  * User-facing listening session endpoints (TMU)
- * Signed-in users can create and manage their live sessions.
+ * Any signed-in user can create and manage listening parties using any published TMU tracks.
  *
  * Routes (all require a signed-in user):
  *   GET  /eligibility         Whether the caller may host, and the quota status
- *   GET  /tracks              Published tracks for the set picker
- *   POST /create              Create a session using published tracks
+ *   GET  /tracks              Published TMU tracks (for the listening-party set picker)
+ *   POST /create              Create a listening session (any signed-in user, any published tracks)
  *   GET  /my-sessions         The caller's sessions
  *   POST /:id/cancel          Cancel one of the caller's sessions before it ends
  */
@@ -40,8 +40,8 @@ import {
 } from "../services/listening-session-rate-limits";
 import {
   getHostEligibility,
-  resolvePublishedTracks,
-  searchPublishedTracks,
+  resolveHostTracks,
+  searchHostTracks,
 } from "../services/tmu-host";
 
 const MAX_INT4 = 2_147_483_647;
@@ -191,13 +191,13 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
         success: true,
         registeredArtist: eligibility.registered,
         verifiedArtist: eligibility.verified,
-        canHost: true,
+        canHost: eligibility.canHost,
         rateLimitStatus: quotaView(quota),
       });
     }),
   );
 
-  // GET /tracks - Any published track may be added to a session set
+  // GET /tracks - Any published TMU tracks
   router.get(
     "/tracks",
     asyncHandler(async (req, res) => {
@@ -208,11 +208,11 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
 
       const q = typeof req.query.q === "string" ? req.query.q.slice(0, 100) : "";
       const limit = Number.parseInt(String(req.query.limit ?? "20"), 10) || 20;
-      res.json({ success: true, tracks: await searchPublishedTracks(db, q, limit) });
+      res.json({ success: true, tracks: await searchHostTracks(db, userId, q, limit) });
     }),
   );
 
-  // POST /create - Create a new live session
+  // POST /create - Create a new live listening session
   router.post(
     "/create",
     asyncHandler(async (req, res) => {
@@ -232,14 +232,12 @@ export function createUserSessionsRouter(deps: UserSessionsRouterDeps) {
         return sendError(res, 400, "starts_too_far", "The start time is more than a year away.");
       }
 
-      // Lengths come from the stored tracks, and every selected track must be published.
-      const published = await resolvePublishedTracks(db, parsed.data.trackIds);
-      if (!published.ok) {
-        return sendError(res, 400, published.code, published.message, {
-          trackIds: published.trackIds,
-        });
+      // Lengths come from the stored tracks, and every track must be published.
+      const resolved = await resolveHostTracks(db, userId, parsed.data.trackIds);
+      if (!resolved.ok) {
+        return sendError(res, 400, resolved.code, resolved.message, { trackIds: resolved.trackIds });
       }
-      const set = validateSetTracks(published.tracks);
+      const set = validateSetTracks(resolved.tracks);
       if (!set.ok) return sendError(res, 400, set.code, set.message);
 
       // One creation at a time per user, so two parallel requests cannot both pass the quota check.

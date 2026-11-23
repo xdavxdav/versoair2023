@@ -31,6 +31,11 @@ import {
   XCircle,
   Loader2,
   Clock,
+  Grid2X2,
+  LayoutGrid,
+  Play,
+  Compass,
+  Blocks,
 } from "lucide-react";
 import {
   Card,
@@ -48,7 +53,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { useMusicAccess } from "@/hooks/useMusicAccess";
+import { TmuHubNav } from "@/components/music/TmuHubNav";
+import { TmuShell } from "@/components/music/TmuShell";
 import QuickSignIn from "@/components/QuickSignIn";
+import { useCasualArcadeData } from "@/hooks/use-arcade-run";
+import { SnakeGame } from "@/components/arcade/games/SnakeGame";
+import { TetrisGame } from "@/components/arcade/games/TetrisGame";
+import { BrickBallGame } from "@/components/arcade/games/BrickBallGame";
+import { XensiaGame } from "@/components/arcade/games/XensiaGame";
+import { ContestPanel } from "@/components/arcade/contest-panel";
+import {
+  CASUAL_ARCADE_GAMES,
+  CASUAL_ARCADE_GAME_IDS,
+  createDefaultArcadeGamesConfig,
+  type AllArcadeGameId,
+  type ArcadeGamesAdminConfig,
+  type CasualArcadeGameId,
+} from "@shared/arcade-games";
 import {
   fadeInUp,
   staggerContainer,
@@ -203,7 +224,30 @@ export default function ArcadePage() {
   const [answerResult, setAnswerResult] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const questionStartedAtRef = useRef<number>(Date.now());
   const [showAgeModal, setShowAgeModal] = useState(false);
+
+  // Public GeoAdmin arcade configuration (game toggles + maintenance notice)
+  const { data: arcadeConfig = createDefaultArcadeGamesConfig() } =
+    useQuery<ArcadeGamesAdminConfig>({
+      queryKey: ["/api/arcade/config"],
+      queryFn: async () => {
+        const res = await fetch("/api/arcade/config", {
+          credentials: "include",
+        });
+        if (!res.ok) return createDefaultArcadeGamesConfig();
+        return res.json();
+      },
+      staleTime: 15_000,
+    });
+
+  const isGameEnabled = useCallback(
+    (gameId: string) => {
+      const enabledMap = arcadeConfig.enabledGames as Record<string, boolean>;
+      return enabledMap[gameId as AllArcadeGameId] !== false;
+    },
+    [arcadeConfig],
+  );
   const [dob, setDob] = useState("");
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState("10");
@@ -427,17 +471,19 @@ export default function ArcadePage() {
   // ── Load current question when match is active ──
   useEffect(() => {
     if (activeMatch?.status === "active" && activeMatch.game_state?.questions) {
-      const q = activeMatch.game_state.questions.find(
-        (q: TriviaQuestion) => q.round === activeMatch.current_round,
-      );
+      const q =
+        activeMatch.game_state.questions.find(
+          (item: TriviaQuestion) => item.round === activeMatch.current_round,
+        ) ?? activeMatch.game_state.questions[activeMatch.current_round];
       if (q) {
         setCurrentQuestion(q);
-        setCountdown(q.time_limit);
+        setCountdown(q.time_limit || 20);
+        questionStartedAtRef.current = Date.now();
         setSelectedAnswer(null);
         setAnswerResult(null);
       }
     }
-  }, [activeMatch?.current_round, activeMatch?.status]);
+  }, [activeMatch?.id, activeMatch?.current_round, activeMatch?.status]);
 
   // ── Create challenge ──
   const createChallenge = useCallback(async () => {
@@ -450,6 +496,16 @@ export default function ArcadePage() {
         variant: "destructive",
       });
       navigate("/artist-portal");
+      return;
+    }
+    if (!isGameEnabled(selectedGame)) {
+      toast({
+        title: "Jeu en pause",
+        description:
+          arcadeConfig.maintenanceMessage ||
+          "Ce jeu est temporairement désactivé depuis GeoAdmin.",
+        variant: "destructive",
+      });
       return;
     }
     const gameTypeMapping: Record<string, string> = {
@@ -494,6 +550,8 @@ export default function ArcadePage() {
   }, [
     user,
     isAuthenticated,
+    isGameEnabled,
+    arcadeConfig.maintenanceMessage,
     selectedGame,
     currentGame.rounds,
     wagerAmount,
@@ -542,13 +600,18 @@ export default function ArcadePage() {
       setSelectedAnswer(answerIndex);
       if (countdownRef.current) clearInterval(countdownRef.current);
 
+      const responseTimeMs = Math.max(
+        0,
+        Math.min(30_000, Date.now() - questionStartedAtRef.current),
+      );
       const res = await authJson(`/api/games/${activeMatch.id}/answer`, {
         round: activeMatch.current_round,
         answerIndex,
-        responseTimeMs: 0,
+        responseTimeMs,
       });
       const data = await res.json();
       if (!res.ok) {
+        setSelectedAnswer(null);
         toast({
           title: "Erreur",
           description: data.error || "Échec",
@@ -557,9 +620,18 @@ export default function ArcadePage() {
         return;
       }
 
-      setAnswerResult(data);
+      const normalizedResult = {
+        ...data,
+        is_correct: Boolean(data.is_correct ?? data.isCorrect),
+        points_earned: Number(data.points_earned ?? data.points ?? 0),
+        correct_index:
+          data.correct_index ?? data.correctAnswer ?? undefined,
+        your_score: Number(data.your_score ?? data.newScore ?? 0),
+        opponent_score: Number(data.opponent_score ?? 0),
+      };
+      setAnswerResult(normalizedResult);
 
-      // Auto-advance to next round after 2.5s
+      // Auto-advance to next round after 2.2s
       setTimeout(() => {
         if (data.matchComplete || data.match_status === "completed") {
           setActiveMatch(null);
@@ -569,15 +641,28 @@ export default function ArcadePage() {
           toast({
             title: isWinner ? "🏆 Victoire!" : "Match terminé",
             description: isWinner
-              ? "Vous gagnez des points!"
+              ? `Score final : ${normalizedResult.your_score} pts!`
               : "Bien joué! Retentez votre chance.",
           });
           refetchWallet();
           refetchMy();
         } else if (data.match) {
           setActiveMatch(normalizeMatch(data.match));
+        } else if (typeof data.currentRound === "number") {
+          setActiveMatch((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  current_round: data.currentRound,
+                  player1_score:
+                    data.player1Score ?? prev.player1_score,
+                  player2_score:
+                    data.player2Score ?? prev.player2_score,
+                }
+              : null,
+          );
         }
-      }, 2500);
+      }, 2200);
     },
     [activeMatch, selectedAnswer, user, toast, refetchWallet, refetchMy],
   );
@@ -608,6 +693,23 @@ export default function ArcadePage() {
   const balance = parseFloat(wallet?.balance || "0");
   const frozenBalance = parseFloat(wallet?.frozen_balance || "0");
 
+  // Casual arcade games state (no money or credits attached)
+  const [activeCasualGame, setActiveCasualGame] =
+    useState<CasualArcadeGameId | null>(null);
+  const [leaderboardMode, setLeaderboardMode] = useState<"casual" | "pvp">(
+    "casual",
+  );
+  const [leaderboardGame, setLeaderboardGame] =
+    useState<CasualArcadeGameId>("snake");
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<
+    "all" | "7d" | "30d"
+  >("all");
+  const {
+    leaderboard: casualLeaderboard,
+    leaderboardLoading: casualLeaderboardLoading,
+    myBest: casualMyBest,
+  } = useCasualArcadeData(leaderboardGame, leaderboardPeriod);
+
   // Determine if user can actually play (not just view)
   const canPlay =
     isAuthenticated &&
@@ -618,10 +720,12 @@ export default function ArcadePage() {
   // ── Loading state while portal/music access resolves ──
   if (portalLoading || musicLoading) {
     return (
-      <div className="min-h-screen bg-[#06020f] flex flex-col items-center justify-center p-4 gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
-        <p className="text-gray-500 text-sm">Loading arcade...</p>
-      </div>
+      <TmuShell chrome="music">
+        <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
+          <p className="text-slate-400 text-sm">Loading arcade...</p>
+        </div>
+      </TmuShell>
     );
   }
 
@@ -629,134 +733,100 @@ export default function ArcadePage() {
   // Auth checks happen when user tries to PLAY
 
   return (
-    <div className="min-h-screen bg-[#06020f] text-white">
+    <TmuShell chrome="music">
       {/* ── Hero Header ── */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-fuchsia-900/20 to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4 pt-8 pb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/stream?from=arcade")}
-              className={
-                fromPage === "stream"
-                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
-                  : "text-gray-400 hover:text-white"
-              }
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" /> Stream
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/artist-portal?from=arcade")}
-              className={
-                fromPage === "artist-portal"
-                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
-                  : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-              }
-            >
-              Portail Artiste
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/arena?from=arcade")}
-              className={
-                fromPage === "arena"
-                  ? "text-amber-200 bg-amber-500/30 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(245,158,11,0.4)] ring-2 ring-amber-400/30"
-                  : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-              }
-            >
-              Arena
-            </Button>
-          </div>
+        <div className="relative max-w-7xl mx-auto px-4 pt-5 pb-6">
+          <TmuHubNav currentSurface="arcade" className="mb-5" />
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3">
-                <Gamepad2 className="w-8 h-8 text-purple-400" />
-                Arcade
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight flex items-center gap-3">
+                <Gamepad2 className="w-8 h-8 text-fuchsia-400 shrink-0" />
+                <span className="tmu-hero-title">Arcade</span>
               </h1>
-              <p className="text-gray-400 mt-1">
-                Duels musicaux PvP • Misez vos crédits • Grimpez le classement
+              <p className="text-slate-300 text-sm sm:text-base mt-1">
+                Duels musicaux PvP • Jeux classiques gratuits • Grimpez le classement
               </p>
-              {isAuthenticated && isArtist && (
-                <Badge className="mt-2 bg-amber-600/20 text-amber-300 border-amber-500/30 text-xs">
-                  <Star className="w-3 h-3 mr-1" />
-                  Inclus dans votre abonnement {artistTier}
-                </Badge>
-              )}
-              {isAuthenticated && !isArtist && canPlay && (
-                <Badge className="mt-2 bg-purple-600/20 text-purple-300 border-purple-500/30 text-xs">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Accès{" "}
-                  {streamerTier.charAt(0).toUpperCase() + streamerTier.slice(1)}
-                </Badge>
-              )}
-              {!canPlay && (
-                <Badge className="mt-2 bg-gray-600/20 text-gray-400 border-gray-500/30 text-xs">
-                  <Gamepad2 className="w-3 h-3 mr-1" />
-                  Connectez-vous pour jouer
-                </Badge>
-              )}
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                {isAuthenticated && isArtist && (
+                  <Badge className="bg-amber-500/15 text-amber-200 border-amber-400/35 text-xs">
+                    <Star className="w-3 h-3 mr-1" />
+                    Inclus dans votre abonnement {artistTier}
+                  </Badge>
+                )}
+                {isAuthenticated && !isArtist && canPlay && (
+                  <Badge className="bg-purple-500/20 text-purple-200 border-purple-400/35 text-xs">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Accès{" "}
+                    {streamerTier.charAt(0).toUpperCase() + streamerTier.slice(1)}
+                  </Badge>
+                )}
+                {!isAuthenticated && (
+                  <Badge className="bg-[#180d34]/80 text-slate-200 border-purple-500/25 text-xs">
+                    <Gamepad2 className="w-3 h-3 mr-1 text-purple-300" />
+                    Connectez-vous pour enregistrer vos scores
+                  </Badge>
+                )}
+              </div>
             </div>
 
-            {/* Wallet stats strip - always visible */}
-            <div className="flex items-center gap-4 bg-slate-900/50 border border-purple-500/30 rounded-xl px-5 py-3">
-              <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  PAY
-                </p>
-                <p className="text-xl font-bold text-amber-400">
-                  {isAuthenticated ? balance.toLocaleString() : "—"}
-                </p>
+            {/* Wallet stats strip - responsive so it never overflows 375px */}
+            <div className="tmu-glass-elevated w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 rounded-2xl p-3.5 sm:px-5 sm:py-3">
+              <div className="grid grid-cols-3 divide-x divide-purple-500/25 text-center sm:flex sm:items-center sm:gap-4 sm:divide-x-0 tabular-nums">
+                <div className="px-2 sm:px-0">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider">
+                    PAY
+                  </p>
+                  <p className="text-lg sm:text-xl font-bold text-amber-300">
+                    {isAuthenticated ? balance.toLocaleString() : "—"}
+                  </p>
+                </div>
+                <Separator
+                  orientation="vertical"
+                  className="hidden sm:block h-8 bg-purple-500/30"
+                />
+                <div className="px-2 sm:px-0">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider">
+                    STAKE
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold text-rose-300">
+                    {isAuthenticated ? frozenBalance.toLocaleString() : "—"}
+                  </p>
+                </div>
+                <Separator
+                  orientation="vertical"
+                  className="hidden sm:block h-8 bg-purple-500/30"
+                />
+                <div className="px-2 sm:px-0">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider">
+                    WIN%
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold text-emerald-300">
+                    {isAuthenticated ? `${winRate}%` : "—"}
+                  </p>
+                </div>
               </div>
               <Separator
                 orientation="vertical"
-                className="h-8 bg-purple-500/30"
-              />
-              <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  STAKE
-                </p>
-                <p className="text-lg font-semibold text-red-400">
-                  {isAuthenticated ? frozenBalance.toLocaleString() : "—"}
-                </p>
-              </div>
-              <Separator
-                orientation="vertical"
-                className="h-8 bg-purple-500/30"
-              />
-              <div className="text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">
-                  WIN%
-                </p>
-                <p className="text-lg font-semibold text-green-400">
-                  {isAuthenticated ? `${winRate}%` : "—"}
-                </p>
-              </div>
-              <Separator
-                orientation="vertical"
-                className="h-8 bg-purple-500/30"
+                className="hidden sm:block h-8 bg-purple-500/30"
               />
               {isAuthenticated ? (
                 <Button
                   size="sm"
                   disabled
-                  className="bg-gray-700 text-gray-300"
+                  className="w-full sm:w-auto bg-[#180d34] border border-purple-500/25 text-slate-300 text-xs"
                 >
-                  <CircleDollarSign className="w-4 h-4 mr-1" />
-                  Dépôts désactivés en bêta
+                  <CircleDollarSign className="w-4 h-4 mr-1.5 shrink-0" />
+                  <span className="truncate">Dépôts désactivés en bêta</span>
                 </Button>
               ) : (
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700"
+                  className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white"
                   onClick={() => setShowQuickSignIn(true)}
                 >
-                  <Music className="w-4 h-4 mr-1" />
+                  <Music className="w-4 h-4 mr-1.5 shrink-0" />
                   Se connecter
                 </Button>
               )}
@@ -767,6 +837,7 @@ export default function ArcadePage() {
 
       {/* ── Main Tabs ── */}
       <div className="max-w-7xl mx-auto px-4 pb-12">
+        <ContestPanel onSignIn={() => setShowQuickSignIn(true)} />
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -815,7 +886,7 @@ export default function ArcadePage() {
                   <Card className="bg-slate-900/50 border-purple-500/30">
                     <CardHeader className="text-center">
                       <Badge className="mx-auto mb-2 bg-fuchsia-600/30 text-fuchsia-300 border-fuchsia-500/40">
-                        Round {activeMatch.current_round} /{" "}
+                        Round {Math.min(activeMatch.current_round + 1, activeMatch.round_count)} /{" "}
                         {activeMatch.round_count}
                       </Badge>
                       <CardTitle className="text-xl text-white">
@@ -948,40 +1019,126 @@ export default function ArcadePage() {
                   animate="visible"
                   className="space-y-6"
                 >
+                  {/* ═══════════ MAINTENANCE BANNER (IF SET IN GEOADMIN) ═══════════ */}
+                  {arcadeConfig.maintenanceMessage && (
+                    <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-amber-300 shrink-0" />
+                      <span>{arcadeConfig.maintenanceMessage}</span>
+                    </div>
+                  )}
+
+                  {/* ═══════════ CASUAL ARCADE GAMES (NO CREDITS) ═══════════ */}
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                      <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Gamepad2 className="w-5 h-5 text-cyan-300" />
+                        Jeux classiques · Score libre
+                      </h3>
+                      <Badge className="bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 text-xs">
+                        Gratuit • Sans crédits • Classement Points
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                      {CASUAL_ARCADE_GAME_IDS.map((gameId) => {
+                        const meta = CASUAL_ARCADE_GAMES[gameId];
+                        const best = casualMyBest[gameId]?.score ?? 0;
+                        const enabled = isGameEnabled(gameId);
+                        const GameIcon =
+                          gameId === "snake"
+                            ? Zap
+                            : gameId === "tetris"
+                              ? Blocks
+                              : gameId === "brick_ball"
+                                ? LayoutGrid
+                                : Compass;
+                        return (
+                          <div
+                            key={gameId}
+                            className={`tmu-glass tmu-interactive-card rounded-2xl p-4 flex flex-col justify-between gap-3 ${
+                              enabled ? "" : "opacity-60"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center shrink-0">
+                                <GameIcon className="w-5 h-5 text-cyan-300" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-slate-50 text-base truncate">
+                                    {meta.name}
+                                  </h4>
+                                  {!enabled && (
+                                    <Badge className="bg-slate-700/80 text-slate-200 text-[10px]">
+                                      Pause
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-300 line-clamp-2 mt-0.5">
+                                  {meta.tagline}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-purple-500/15">
+                              <span className="text-xs text-slate-300 tabular-nums">
+                                Record:{" "}
+                                <strong className="text-cyan-300">
+                                  {best > 0 ? `${best.toLocaleString()} pts` : "—"}
+                                </strong>
+                              </span>
+                              <Button
+                                size="sm"
+                                disabled={!enabled}
+                                data-testid={`play-casual-${gameId}`}
+                                onClick={() => enabled && setActiveCasualGame(gameId)}
+                                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-semibold h-9 px-3.5 rounded-xl disabled:opacity-50"
+                              >
+                                <Play className="w-3.5 h-3.5 mr-1" />
+                                {enabled ? "Jouer" : "En pause"}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* ═══════════ AVAILABLE GAMES GRID ═══════════ */}
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <Gamepad2 className="w-5 h-5 text-purple-400" />
-                      Jeux Disponibles
+                      <Swords className="w-5 h-5 text-purple-400" />
+                      Duels Musicaux PvP
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {ARCADE_GAMES.filter((game) => game.available).map(
-                        (game) => (
+                        (game) => {
+                          const enabled = isGameEnabled(game.id);
+                          return (
                           <motion.div
                             key={game.id}
-                            whileHover={{ scale: game.available ? 1.02 : 1 }}
-                            whileTap={{ scale: game.available ? 0.98 : 1 }}
+                            whileHover={{ scale: enabled ? 1.02 : 1 }}
+                            whileTap={{ scale: enabled ? 0.98 : 1 }}
                           >
                             <Card
-                              className={`relative overflow-hidden cursor-pointer transition-all ${
-                                selectedGame === game.id && game.available
-                                  ? `bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
-                                  : game.available
-                                    ? "bg-slate-900/40 border-purple-500/20 hover:border-purple-500/50"
-                                    : "bg-slate-900/20 border-gray-700/30 opacity-60"
+                              className={`relative overflow-hidden transition-all ${
+                                !enabled
+                                  ? "bg-slate-900/20 border-gray-700/30 opacity-60 cursor-not-allowed"
+                                  : selectedGame === game.id
+                                    ? `cursor-pointer bg-gradient-to-br ${game.color} border-2 ${game.borderColor} shadow-lg shadow-purple-500/20`
+                                    : "cursor-pointer bg-slate-900/40 border-purple-500/20 hover:border-purple-500/50"
                               }`}
                               onClick={() =>
-                                game.available && setSelectedGame(game.id)
+                                enabled && setSelectedGame(game.id)
                               }
                             >
-                              {game.comingSoon && (
+                              {!enabled && (
                                 <div className="absolute top-2 right-2">
-                                  <Badge className="bg-gray-600/80 text-gray-300 text-[10px] border-gray-500/40">
-                                    Bientôt
+                                  <Badge className="bg-slate-700/80 text-slate-200 text-[10px] border-slate-500/40">
+                                    En pause
                                   </Badge>
                                 </div>
                               )}
-                              {selectedGame === game.id && game.available && (
+                              {selectedGame === game.id && enabled && (
                                 <div className="absolute top-2 right-2">
                                   <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                                     <CheckCircle2 className="w-4 h-4 text-white" />
@@ -1012,8 +1169,8 @@ export default function ArcadePage() {
                                       className={`text-xs mt-0.5 line-clamp-2 ${
                                         selectedGame === game.id &&
                                         game.available
-                                          ? "text-white/80"
-                                          : "text-gray-500"
+                                          ? "text-white/85"
+                                          : "text-slate-300"
                                       }`}
                                     >
                                       {game.description}
@@ -1021,29 +1178,30 @@ export default function ArcadePage() {
                                   </div>
                                 </div>
                                 <div
-                                  className={`flex items-center gap-2 mt-3 text-[10px] ${
+                                  className={`flex flex-wrap items-center gap-1.5 mt-3 text-[11px] tabular-nums ${
                                     selectedGame === game.id && game.available
-                                      ? "text-white/70"
-                                      : "text-gray-600"
+                                      ? "text-white/90"
+                                      : "text-slate-300"
                                   }`}
                                 >
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     {game.format}
                                   </span>
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     {game.rounds} rounds
                                   </span>
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     {game.timePerRound}s
                                   </span>
-                                  <span className="bg-slate-900/20 px-2 py-0.5 rounded">
+                                  <span className="bg-white/[0.08] border border-white/[0.1] px-2 py-0.5 rounded-md">
                                     Min {game.minWager} cr
                                   </span>
                                 </div>
                               </CardContent>
                             </Card>
                           </motion.div>
-                        ),
+                          );
+                        },
                       )}
                     </div>
                   </div>
@@ -1095,17 +1253,21 @@ export default function ArcadePage() {
 
                       <Button
                         onClick={createChallenge}
-                        disabled={!currentGame.available}
+                        disabled={
+                          !currentGame.available || !isGameEnabled(currentGame.id)
+                        }
                         className={`w-full py-3 text-lg ${
-                          currentGame.available
+                          currentGame.available && isGameEnabled(currentGame.id)
                             ? `bg-gradient-to-r ${currentGame.color} hover:opacity-90`
                             : "bg-gray-700 cursor-not-allowed"
                         } text-white`}
                       >
                         <Swords className="w-5 h-5 mr-2" />
-                        {currentGame.available
-                          ? "Jouer gratuitement"
-                          : "Bientôt disponible"}
+                        {!currentGame.available
+                          ? "Bientôt disponible"
+                          : !isGameEnabled(currentGame.id)
+                            ? "Temporairement en pause"
+                            : "Jouer gratuitement"}
                       </Button>
                     </CardContent>
                   </Card>
@@ -1308,11 +1470,143 @@ export default function ArcadePage() {
 
           {/* ═══════════ LEADERBOARD TAB ═══════════ */}
           <TabsContent value="leaderboard" className="space-y-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              Top Joueurs
-            </h3>
-            {leaderboard.length === 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                Classement
+              </h3>
+              <div className="inline-flex rounded-xl border border-purple-500/25 bg-[#0f0822] p-1">
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardMode("casual")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    leaderboardMode === "casual"
+                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Classiques (Points)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardMode("pvp")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    leaderboardMode === "pvp"
+                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Duels PvP (Crédits)
+                </button>
+              </div>
+            </div>
+
+            {leaderboardMode === "casual" ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+                    {CASUAL_ARCADE_GAME_IDS.map((gameId) => (
+                      <button
+                        key={gameId}
+                        type="button"
+                        onClick={() => setLeaderboardGame(gameId)}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                          leaderboardGame === gameId
+                            ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200"
+                            : "bg-[#180d34]/75 border-purple-500/20 text-slate-300 hover:text-white"
+                        }`}
+                      >
+                        {CASUAL_ARCADE_GAMES[gameId].name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {(
+                      [
+                        { id: "all", label: "Tout" },
+                        { id: "30d", label: "30j" },
+                        { id: "7d", label: "7j" },
+                      ] as const
+                    ).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setLeaderboardPeriod(p.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
+                          leaderboardPeriod === p.id
+                            ? "bg-purple-600/40 text-white border border-purple-400/40"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {isAuthenticated && (
+                  <div className="tmu-glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3 tabular-nums">
+                    <span className="text-sm text-slate-200">
+                      Votre meilleur score ({CASUAL_ARCADE_GAMES[leaderboardGame].name})
+                    </span>
+                    <span className="text-lg font-extrabold text-cyan-300">
+                      {(casualMyBest[leaderboardGame]?.score ?? 0).toLocaleString()} pts
+                    </span>
+                  </div>
+                )}
+
+                {casualLeaderboardLoading ? (
+                  <Card className="bg-slate-900/40 border-purple-500/20 py-10 text-center">
+                    <Loader2 className="w-8 h-8 mx-auto text-purple-400 animate-spin" />
+                  </Card>
+                ) : casualLeaderboard.length === 0 ? (
+                  <Card className="tmu-glass py-12 text-center">
+                    <Trophy className="w-12 h-12 mx-auto text-purple-400/40 mb-3" />
+                    <p className="text-slate-200 font-medium">
+                      Aucun score enregistré pour {CASUAL_ARCADE_GAMES[leaderboardGame].name}
+                    </p>
+                    <p className="text-slate-400 text-sm mt-1">
+                      Lancez une partie pour établir le premier record !
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-2.5">
+                    {casualLeaderboard.map((entry) => (
+                      <Card key={entry.userId} className="tmu-glass">
+                        <CardContent className="flex items-center justify-between py-3.5">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                                entry.rank === 1
+                                  ? "bg-gradient-to-br from-amber-500 to-yellow-600 text-white"
+                                  : entry.rank === 2
+                                    ? "bg-gradient-to-br from-slate-300 to-slate-400 text-slate-900"
+                                    : entry.rank === 3
+                                      ? "bg-gradient-to-br from-amber-700 to-amber-800 text-white"
+                                      : "bg-[#180d34] text-slate-300 border border-purple-500/20"
+                              }`}
+                            >
+                              {entry.rank}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white font-semibold truncate">
+                                {entry.displayName}
+                              </p>
+                              <p className="text-slate-400 text-xs tabular-nums">
+                                Niveau {entry.level}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-cyan-300 font-extrabold text-lg tabular-nums shrink-0">
+                            {entry.score.toLocaleString()} pts
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : leaderboard.length === 0 ? (
               <Card className="bg-slate-900/40 border-purple-500/20 py-12 text-center">
                 <Crown className="w-12 h-12 mx-auto text-gray-600 mb-3" />
                 <p className="text-gray-400">Le classement est vide</p>
@@ -1358,7 +1652,7 @@ export default function ArcadePage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-amber-400 font-bold text-lg">
+                        <p className="text-amber-400 font-bold text-lg tabular-nums">
                           {parseFloat(entry.total_winnings).toLocaleString()} cr
                         </p>
                       </div>
@@ -1624,6 +1918,48 @@ export default function ArcadePage() {
         onClose={() => setShowQuickSignIn(false)}
         onSuccess={() => window.location.reload()}
       />
-    </div>
+
+      {/* Casual Full-Viewport Arcade Games */}
+      {activeCasualGame === "snake" && (
+        <SnakeGame
+          bestScore={casualMyBest.snake?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+      {activeCasualGame === "tetris" && (
+        <TetrisGame
+          bestScore={casualMyBest.tetris?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+      {activeCasualGame === "brick_ball" && (
+        <BrickBallGame
+          bestScore={casualMyBest.brick_ball?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+      {activeCasualGame === "xensia" && (
+        <XensiaGame
+          bestScore={casualMyBest.xensia?.score ?? 0}
+          onQuit={() => setActiveCasualGame(null)}
+          onRequireSignIn={() => {
+            setActiveCasualGame(null);
+            setShowQuickSignIn(true);
+          }}
+        />
+      )}
+    </TmuShell>
   );
 }

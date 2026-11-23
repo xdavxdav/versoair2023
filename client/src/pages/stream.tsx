@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useAudio } from "@/lib/audio-context";
 import { navigateBackSafely } from "@/lib/safe-navigation";
@@ -13,8 +13,9 @@ import ThreadFeedWidget from "@/components/ThreadFeedWidget";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MusicSidebar } from "@/components/music/MusicSidebar";
-import { MusicMobileDock } from "@/components/music/MusicMobileDock";
+import { TmuHubNav } from "@/components/music/TmuHubNav";
+import { TmuShell } from "@/components/music/TmuShell";
+import { FeaturedArtistCard } from "@/components/music/FeaturedArtistCard";
 import {
   useStreamingTracks,
   useFeaturedTracks,
@@ -96,170 +97,31 @@ function getCover(t: any): string | null {
   return null;
 }
 
-// ====================================================================
-// IMMERSIVE BACKGROUND -- Nebula + Stars + Floating Orbs
-// ====================================================================
-function ImmersiveBackground() {
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      {/* Warm light base */}
-      <div className="absolute inset-0 bg-[#f3efe9]" />
-      {/* Soft ambient gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,60,20,0.15),transparent)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(80,40,120,0.08),transparent)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_20%_80%,rgba(20,80,120,0.06),transparent)]" />
-
-      {/* Nebula blobs -- SKIP on mobile for performance */}
-      {!isMobile && (
-        <>
-          <motion.div
-            className="absolute w-[600px] h-[600px] rounded-full opacity-[0.04]"
-            style={{
-              background: "radial-gradient(circle, #f59e0b, transparent 70%)",
-              top: "-10%",
-              left: "20%",
-              filter: "blur(80px)",
-            }}
-            animate={{ x: [0, 40, -20, 0], y: [0, 20, -10, 0] }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute w-[500px] h-[500px] rounded-full opacity-[0.03]"
-            style={{
-              background: "radial-gradient(circle, #8b5cf6, transparent 70%)",
-              bottom: "10%",
-              right: "10%",
-              filter: "blur(100px)",
-            }}
-            animate={{ x: [0, -30, 20, 0], y: [0, -20, 30, 0] }}
-            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute w-[400px] h-[400px] rounded-full opacity-[0.03]"
-            style={{
-              background: "radial-gradient(circle, #06b6d4, transparent 70%)",
-              top: "40%",
-              left: "-5%",
-              filter: "blur(90px)",
-            }}
-            animate={{ x: [0, 30, -10, 0], y: [0, -30, 20, 0] }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          />
-        </>
-      )}
-
-      {/* Star particles -- varied sizes and brightness (reduced on mobile for performance) */}
-      {Array.from({
-        length:
-          typeof window !== "undefined" && window.innerWidth < 768 ? 8 : 20,
-      }).map((_, i) => {
-        const size = i < 5 ? 2 : 1;
-        const dur = 5 + Math.random() * 4;
-        const color =
-          i % 3 === 0
-            ? "bg-amber-300"
-            : i % 2 === 0
-              ? "bg-purple-300"
-              : "bg-white";
-        return (
-          <motion.div
-            key={`star-${i}`}
-            className={`absolute rounded-full ${color} will-change-opacity`}
-            style={{
-              width: size,
-              height: size,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              backfaceVisibility: "hidden",
-            }}
-            animate={{ opacity: [0.1, 0.3, 0.1] }}
-            transition={{
-              duration: dur,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "linear",
-            }}
-          />
-        );
-      })}
-
-      {/* Floating orbs -- SKIP on mobile for performance, use simpler opacity only on desktop */}
-      {!isMobile && (
-        <>
-          <motion.div
-            className="absolute w-3 h-3 bg-amber-400/20 rounded-full"
-            style={{
-              filter: "blur(2px)",
-              top: "15%",
-              left: "70%",
-              willChange: "opacity",
-            }}
-            animate={{ opacity: [0.1, 0.25, 0.1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute w-2 h-2 bg-purple-400/20 rounded-full"
-            style={{
-              filter: "blur(1px)",
-              top: "55%",
-              left: "30%",
-              willChange: "opacity",
-            }}
-            animate={{ opacity: [0.1, 0.25, 0.1] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute w-2.5 h-2.5 bg-cyan-400/15 rounded-full"
-            style={{
-              filter: "blur(2px)",
-              top: "75%",
-              right: "20%",
-              willChange: "opacity",
-            }}
-            animate={{ opacity: [0.08, 0.2, 0.08] }}
-            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          />
-        </>
-      )}
-
-      {/* Horizontal light streaks -- skip on mobile */}
-      {!isMobile && (
-        <>
-          <div className="absolute top-[30%] left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/[0.04] to-transparent" />
-          <div className="absolute top-[65%] left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/[0.03] to-transparent" />
-        </>
-      )}
-    </div>
-  );
-}
-
 // Genre color mapping
 const GENRE_COLORS: Record<string, string> = {
-  Afrobeats: "from-green-500 to-amber-700",
-  Afropop: "from-pink-500 to-rose-700",
-  Rumba: "from-blue-500 to-indigo-700",
-  Soukous: "from-cyan-500 to-teal-700",
-  "Coupé-Décalé": "from-orange-500 to-red-700",
-  Reggae: "from-green-600 to-lime-800",
-  Electronic: "from-violet-500 to-purple-700",
-  "World Music": "from-amber-500 to-yellow-700",
-  "Pop/R&B": "from-fuchsia-500 to-pink-700",
-  "Afro Trap": "from-red-500 to-orange-700",
-  Zouglou: "from-teal-500 to-cyan-700",
-  Mbalax: "from-indigo-500 to-blue-700",
-  "Bongo Flava": "from-yellow-500 to-amber-700",
-  Gospel: "from-purple-500 to-indigo-700",
-  Mandingue: "from-amber-500 to-green-700",
-  Zoblazo: "from-rose-500 to-red-700",
-  "Afro-Pop": "from-sky-500 to-blue-700",
-  "Afro-Blues": "from-slate-500 to-gray-700",
-  "Afro-Manding": "from-amber-600 to-orange-800",
+  Afrobeats: "from-emerald-600 to-purple-800",
+  Afropop: "from-pink-600 to-purple-800",
+  Rumba: "from-blue-600 to-indigo-800",
+  Soukous: "from-cyan-600 to-violet-800",
+  "Coupé-Décalé": "from-orange-600 to-fuchsia-800",
+  Reggae: "from-emerald-700 to-indigo-900",
+  Electronic: "from-violet-600 to-fuchsia-800",
+  "World Music": "from-amber-600 to-purple-800",
+  "Pop/R&B": "from-fuchsia-600 to-purple-800",
+  "Afro Trap": "from-rose-600 to-purple-900",
+  Zouglou: "from-teal-600 to-purple-800",
+  Mbalax: "from-indigo-600 to-violet-800",
+  "Bongo Flava": "from-amber-600 to-fuchsia-800",
+  Gospel: "from-purple-600 to-indigo-800",
+  Mandingue: "from-amber-600 to-emerald-800",
+  Zoblazo: "from-rose-600 to-fuchsia-800",
+  "Afro-Pop": "from-sky-600 to-indigo-800",
+  "Afro-Blues": "from-indigo-700 to-slate-900",
+  "Afro-Manding": "from-amber-700 to-purple-900",
 };
 
 function getGenreGradient(genre: string): string {
-  return GENRE_COLORS[genre] || "from-gray-600 to-gray-700";
+  return GENRE_COLORS[genre] || "from-purple-700 to-fuchsia-900";
 }
 
 // ====================================================================
@@ -268,7 +130,7 @@ function getGenreGradient(genre: string): string {
 function SectionGlow() {
   return (
     <div className="max-w-[95vw] mx-auto px-4 my-2">
-      <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-purple-500/25 to-transparent" />
     </div>
   );
 }
@@ -332,20 +194,20 @@ function TrackReactionStrip({
             }}
             aria-label={`${active ? "Remove" : "Add"} ${reaction.label} reaction${count ? `, ${count} reactions` : ""}`}
             title={`${reaction.label}${count ? ` · ${count}` : ""}`}
-            className={`inline-flex h-7 min-w-7 items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-medium transition-all ${
+            className={`inline-flex h-7 min-w-7 items-center justify-center gap-1 rounded-full border px-2 text-[11px] font-medium transition-all ${
               active
-                ? "border-amber-500/40 bg-amber-500/10 text-amber-800"
-                : "border-slate-200 bg-white/[0.02] text-slate-700 hover:border-amber-500/30 hover:text-amber-800"
+                ? "border-fuchsia-400/50 bg-fuchsia-500/20 text-fuchsia-200"
+                : "border-purple-500/20 bg-[#180d34]/75 text-slate-300 hover:border-purple-400/40 hover:text-white"
             }`}
           >
             <ReactionIcon reactionKey={reaction.key} />
-            {count > 0 && <span>{count}</span>}
+            {count > 0 && <span className="tabular-nums">{count}</span>}
           </button>
         );
       })}
 
       {totalReactions > 0 && (
-        <span className="ml-0.5 text-[10px] text-slate-700">
+        <span className="ml-0.5 text-[11px] text-slate-400 tabular-nums">
           {totalReactions} réactions
         </span>
       )}
@@ -412,9 +274,9 @@ function NowPlayingComments({
 
   return (
     <section className="max-w-[95vw] mx-auto px-4 mb-10 relative z-10">
-      <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-5">
-        <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+      <div className="tmu-glass-elevated rounded-2xl p-4 sm:p-5">
+        <div className="flex items-center gap-3 border-b border-purple-500/15 pb-4">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#180d34] border border-purple-500/25">
             {track?.cover_art || track?.album_cover || track?.pochette ? (
               <img
                 src={track.cover_art || track.album_cover || track.pochette}
@@ -422,24 +284,24 @@ function NowPlayingComments({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-white text-amber-800">
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600/30 to-fuchsia-600/30 text-fuchsia-300">
                 <Music className="h-5 w-5" />
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-amber-800" />
-              <h2 className="text-base font-bold text-slate-900 sm:text-lg">
+              <MessageCircle className="h-4 w-4 text-fuchsia-300" />
+              <h2 className="text-base font-bold text-slate-50 sm:text-lg">
                 {track?.artist_name || "Discussion du titre"}
               </h2>
               {track && !isPlaying && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                <span className="rounded-full bg-purple-500/20 border border-purple-400/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-200">
                   Dernière écoute
                 </span>
               )}
             </div>
-            <p className="truncate text-sm font-semibold text-slate-800">
+            <p className="truncate text-sm font-semibold text-slate-300">
               {track?.title || "Lancez un titre pour ouvrir sa discussion"}
             </p>
           </div>
@@ -447,7 +309,7 @@ function NowPlayingComments({
             <Link
               href={`/track/${track.id}`}
               aria-label={`Open the discussion for ${track.title}`}
-              className="hidden rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-amber-400 hover:text-amber-700 sm:inline-flex"
+              className="hidden rounded-full border border-purple-400/30 bg-[#180d34]/75 px-3 py-1.5 text-xs font-semibold text-purple-200 transition-colors hover:border-fuchsia-400 hover:text-white sm:inline-flex"
             >
               Ouvrir le titre
             </Link>
@@ -455,12 +317,12 @@ function NowPlayingComments({
         </div>
 
         {!track ? (
-          <p className="py-8 text-center text-sm text-slate-700">
+          <p className="py-8 text-center text-sm text-slate-400">
             Les commentaires du titre en cours apparaîtront ici.
           </p>
         ) : (
           <>
-            <div className="flex gap-2 border-b border-slate-200 py-4">
+            <div className="flex gap-2 border-b border-purple-500/15 py-4">
               <input
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
@@ -476,13 +338,13 @@ function NowPlayingComments({
                     : "Connectez-vous pour commenter"
                 }
                 maxLength={1000}
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-700 focus:border-amber-400 focus:bg-white"
+                className="min-w-0 flex-1 rounded-xl border border-purple-500/25 bg-[#090418] px-3 py-2.5 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-400 focus:border-fuchsia-400"
               />
               <button
                 type="button"
                 onClick={handleComment}
                 disabled={!draft.trim() || commentMutation.isPending}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Publier</span>
@@ -490,26 +352,26 @@ function NowPlayingComments({
             </div>
 
             {isLoading ? (
-              <p className="py-6 text-center text-sm text-slate-700">
+              <p className="py-6 text-center text-sm text-slate-400">
                 Chargement des commentaires...
               </p>
             ) : visibleComments.length > 0 ? (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-purple-500/15">
                 {visibleComments.map((comment: any) => (
                   <div key={comment.id} className="flex gap-3 py-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/25 border border-purple-400/30 text-xs font-bold text-purple-100">
                       {(comment.username || "U")[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-slate-800">
+                        <span className="text-sm font-semibold text-slate-100">
                           {comment.username || "Utilisateur"}
                         </span>
-                        <span className="text-xs text-slate-700">
+                        <span className="text-xs text-slate-400 tabular-nums">
                           {timeAgo(comment.created_at)}
                         </span>
                       </div>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-slate-600">
+                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-slate-300">
                         {comment.content}
                       </p>
                     </div>
@@ -517,7 +379,7 @@ function NowPlayingComments({
                 ))}
               </div>
             ) : (
-              <p className="py-7 text-center text-sm text-slate-700">
+              <p className="py-7 text-center text-sm text-slate-400">
                 Soyez le premier à commenter ce titre.
               </p>
             )}
@@ -526,7 +388,7 @@ function NowPlayingComments({
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="mt-2 text-sm font-semibold text-amber-700 hover:text-amber-900"
+                className="mt-2 text-sm font-semibold text-fuchsia-300 hover:text-fuchsia-200"
               >
                 Voir les {comments.length - 5} autres commentaires
               </button>
@@ -644,20 +506,13 @@ export default function StreamPage() {
   const handleBack = () => {
     navigateBackSafely(navigate, "/music");
   };
+  const reducedMotion = useReducedMotion();
 
   return (
-      <>
-        {/* Music sidebar (desktop) */}
-        <MusicSidebar />
-        {/* Music mobile dock */}
-        <div className="md:hidden">
-          <MusicMobileDock />
-        </div>
-        <div className="min-h-screen bg-[#f3efe9] text-slate-900 relative pb-32 overflow-x-hidden md:ml-16">
-          <ImmersiveBackground />
-
+      <TmuShell chrome="music">
+        <div className="relative overflow-x-hidden pb-24">
           {/* ========================================= */}
-          {/* FLOATING MY STATS PANEL */}
+          {/* FLOATING MY STATS PANEL (desktop bottom-right; on mobile triggered from hero to prevent FAB collision) */}
           {/* ========================================= */}
           {user && (
             <div className="fixed bottom-24 right-4 z-50">
@@ -669,90 +524,99 @@ export default function StreamPage() {
                     exit={{ opacity: 0, y: 20, scale: 0.95 }}
                     className="mb-3"
                   >
-                    <Card className="text-slate-900 bg-white backdrop-blur-xl border-purple-500/30 shadow-2xl shadow-purple-500/10 w-72">
+                    <Card className="tmu-glass-modal text-slate-50 w-72">
                       <CardContent className="p-4">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
-                            <Headphones className="w-6 h-6 text-white" />
+                        <div className="flex items-center justify-between gap-2 mb-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center shrink-0">
+                              <Headphones className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-slate-50 font-semibold truncate">
+                                {user.username || user.email?.split("@")[0]}
+                              </p>
+                              <Badge className="bg-purple-500/25 border border-purple-400/30 text-purple-200 text-xs">
+                                <Crown className="w-3 h-3 mr-1 text-amber-300" />
+                                {levelName} · Lv.{currentLevel}
+                              </Badge>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-slate-900 font-semibold">
-                              {user.username || user.email?.split("@")[0]}
-                            </p>
-                            <Badge className="bg-purple-500/20 text-purple-700 text-xs">
-                              <Crown className="w-3 h-3 mr-1" />
-                              {levelName} · Lv.{currentLevel}
-                            </Badge>
-                          </div>
+                          <button
+                            onClick={() => setShowMyStats(false)}
+                            aria-label="Fermer"
+                            className="md:hidden p-1.5 rounded-lg text-slate-300 hover:bg-purple-500/20"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
 
                         <div className="mb-4">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-slate-700">XP Progress</span>
-                            <span className="text-purple-700">
+                          <div className="flex justify-between text-xs mb-1 tabular-nums">
+                            <span className="text-slate-300">XP Progress</span>
+                            <span className="text-purple-300">
                               {currentPoints} / {nextLevelPoints}
                             </span>
                           </div>
-                          <div className="h-2 bg-white rounded-full overflow-hidden">
+                          <div className="h-2 bg-[#090418] rounded-full overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{
                                 width: `${Math.min(100, (currentPoints / nextLevelPoints) * 100)}%`,
                               }}
-                              className="h-full bg-gradient-to-r from-purple-600 to-fuchsia-600"
+                              className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500"
                             />
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 mb-4">
-                          <div className="text-center p-2 bg-white rounded-lg">
-                            <div className="text-amber-800 font-bold flex items-center justify-center gap-1">
+                        <div className="grid grid-cols-3 gap-2 mb-4 tabular-nums">
+                          <div className="text-center p-2 bg-[#090418]/80 border border-purple-500/15 rounded-xl">
+                            <div className="text-amber-300 font-bold flex items-center justify-center gap-1">
                               <Flame className="w-3.5 h-3.5" />
                               {stats?.currentStreak || 0}
                             </div>
-                            <div className="text-[10px] text-slate-700">
+                            <div className="text-[10px] text-slate-400">
                               Streak
                             </div>
                           </div>
-                          <div className="text-center p-2 bg-white rounded-lg">
-                            <div className="text-green-700 font-bold">
+                          <div className="text-center p-2 bg-[#090418]/80 border border-purple-500/15 rounded-xl">
+                            <div className="text-emerald-300 font-bold">
                               #{stats?.rank || "—"}
                             </div>
-                            <div className="text-[10px] text-slate-700">
+                            <div className="text-[10px] text-slate-400">
                               Rank
                             </div>
                           </div>
-                          <div className="text-center p-2 bg-white rounded-lg">
-                            <div className="text-fuchsia-400 font-bold">
+                          <div className="text-center p-2 bg-[#090418]/80 border border-purple-500/15 rounded-xl">
+                            <div className="text-fuchsia-300 font-bold">
                               {stats?.correctPredictions || 0}
                             </div>
-                            <div className="text-[10px] text-slate-700">
+                            <div className="text-[10px] text-slate-400">
                               Wins
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 mb-2">
                           <button
                             onClick={() => navigate("/streamer-portal")}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-fuchsia-500/20 text-fuchsia-400 rounded-lg text-xs font-medium hover:bg-fuchsia-500/30 transition-all"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-fuchsia-500/20 border border-fuchsia-400/25 text-fuchsia-200 rounded-lg text-xs font-medium hover:bg-fuchsia-500/30 transition-all"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
                             Community
                           </button>
                           <button
                             onClick={() => navigate("/arena?from=stream")}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-amber-500/20 text-amber-800 rounded-lg text-xs font-medium hover:bg-amber-500/30 transition-all"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-amber-500/20 border border-amber-400/25 text-amber-200 rounded-lg text-xs font-medium hover:bg-amber-500/30 transition-all"
                           >
                             <Trophy className="w-3.5 h-3.5" />
                             Arena
                           </button>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 mb-2">
                           {canAccessArcade ? (
                             <button
                               onClick={() => navigate("/arcade?from=stream")}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-500/20 border border-purple-400/25 text-purple-200 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-all"
                             >
                               <Gamepad2 className="w-3.5 h-3.5" />
                               Arcade
@@ -760,11 +624,11 @@ export default function StreamPage() {
                           ) : (
                             <button
                               onClick={() => navigate("/arcade?from=stream")}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-white text-slate-700 rounded-lg text-xs font-medium hover:bg-white transition-all"
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#180d34] border border-purple-500/20 text-slate-300 rounded-lg text-xs font-medium hover:bg-purple-500/20 transition-all"
                               title="Supporter+ requis"
                             >
                               <Gamepad2 className="w-3.5 h-3.5" />
-                              <Crown className="w-3 h-3 text-purple-700" />
+                              <Crown className="w-3 h-3 text-purple-300" />
                             </button>
                           )}
                         </div>
@@ -772,8 +636,8 @@ export default function StreamPage() {
                           onClick={() => navigate("/artist-portal?from=stream")}
                           className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${
                             fromPage === "artist-portal"
-                              ? "bg-amber-400/40 text-amber-700 border-2 border-amber-400/60 shadow-[0_0_16px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
-                              : "bg-amber-500/20 text-amber-700 hover:bg-amber-500/30"
+                              ? "bg-purple-500/35 text-white border-2 border-fuchsia-400/60"
+                              : "bg-purple-500/20 border border-purple-400/25 text-purple-200 hover:bg-purple-500/30"
                           }`}
                         >
                           <Mic2 className="w-3.5 h-3.5" />
@@ -787,9 +651,10 @@ export default function StreamPage() {
 
               <motion.button
                 onClick={() => setShowMyStats(!showMyStats)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-purple-500/30 relative"
+                whileHover={reducedMotion ? undefined : { scale: 1.05 }}
+                whileTap={reducedMotion ? undefined : { scale: 0.95 }}
+                aria-label="Mes statistiques d'écoute"
+                className="hidden md:flex w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 items-center justify-center shadow-lg shadow-purple-500/35 border border-purple-400/30 relative"
               >
                 {showMyStats ? (
                   <ChevronDown className="w-6 h-6 text-white" />
@@ -797,7 +662,7 @@ export default function StreamPage() {
                   <>
                     <Headphones className="w-6 h-6 text-white" />
                     {currentPoints > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 text-black text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums">
                         {currentLevel}
                       </span>
                     )}
@@ -811,112 +676,70 @@ export default function StreamPage() {
           {/* HERO SECTION */}
           {/* ========================================= */}
           <section className="relative overflow-hidden">
-            {/* Hero cinematic gradients - darker tones */}
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-950/30 via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(180,83,9,0.12),transparent_50%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(109,40,217,0.08),transparent_50%)]" />
+            <div className="relative max-w-[95vw] mx-auto px-4 pt-5 pb-8 z-10">
+              <TmuHubNav currentSurface="stream" className="mb-5" />
 
-            <div className="relative max-w-[95vw] mx-auto px-4 pt-6 pb-10 z-10">
-              {/* Back Button - positioned below top bar, above header */}
-              <button
-                onClick={handleBack}
-                className="mb-4 p-2 rounded-lg bg-slate-900/40 hover:bg-slate-900/60 backdrop-blur-md border border-slate-200 hover:border-white/20 transition-all duration-200 text-slate-900 flex items-center gap-2"
-                title="Go back"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="text-sm text-slate-700">Retour</span>
-              </button>
+              {/* Back Button + mobile stats trigger */}
+              <div className="flex items-center justify-between gap-3 mb-5">
+                <button
+                  onClick={handleBack}
+                  className="px-3 py-2 rounded-xl bg-[#180d34]/80 hover:bg-purple-500/20 border border-purple-500/25 transition-all duration-200 text-slate-100 flex items-center gap-2 text-sm"
+                  title="Go back"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Retour</span>
+                </button>
+
+                {user && (
+                  <button
+                    onClick={() => setShowMyStats(!showMyStats)}
+                    className="md:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600/25 border border-purple-400/35 text-xs font-semibold text-purple-100"
+                  >
+                    <Headphones className="w-3.5 h-3.5 text-fuchsia-300" />
+                    <span>{levelName} · Niv.{currentLevel}</span>
+                  </button>
+                )}
+              </div>
 
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-violet-600 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/35">
                       <Radio className="w-6 h-6 text-white" />
                     </div>
-                    {/* Pulsing beacon ring */}
-                    <motion.div
-                      className="absolute -inset-1.5 rounded-2xl border border-amber-400/30"
-                      animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0, 0.6] }}
-                      transition={{ duration: 2.5, repeat: Infinity }}
-                    />
-                    <motion.div
-                      className="absolute -inset-3 rounded-2xl border border-amber-400/10"
-                      animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0, 0.3] }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        delay: 0.3,
-                      }}
-                    />
+                    {!reducedMotion && (
+                      <motion.div
+                        className="absolute -inset-1.5 rounded-2xl border border-fuchsia-400/30"
+                        animate={{ scale: [1, 1.12, 1], opacity: [0.55, 0, 0.55] }}
+                        transition={{ duration: 2.8, repeat: Infinity }}
+                      />
+                    )}
                   </div>
                   <div>
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-                      <span className="bg-gradient-to-r from-slate-900 via-orange-300 to-slate-900 bg-clip-text text-transparent">
-                        Verso Air
-                      </span>{" "}
-                      <span className="text-slate-900">Stream</span>
+                      <span className="tmu-hero-title">
+                        Verso Air Stream
+                      </span>
                     </h1>
-                    <p className="text-slate-700 text-xs sm:text-sm mt-0.5 flex items-center gap-1.5">
-                      <Waves className="w-3.5 h-3.5 text-amber-800" />
+                    <p className="text-slate-300 text-xs sm:text-sm mt-0.5 flex items-center gap-1.5">
+                      <Waves className="w-3.5 h-3.5 text-fuchsia-300" />
                       La musique africaine, sans limites
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link href="/streamer-portal?from=stream">
-                    <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 text-fuchsia-400 border border-fuchsia-500/30 rounded-xl hover:from-fuchsia-500/30 hover:to-purple-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(217,70,239,0.15)]">
-                      <MessageCircle className="w-4 h-4" />
-                      <span className="hidden md:inline">Community</span>
-                    </button>
-                  </Link>
-                  <Link href="/arena?from=stream">
-                    <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-800 border border-amber-500/30 rounded-xl hover:from-amber-500/30 hover:to-orange-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)]">
-                      <Trophy className="w-4 h-4" />
-                      <span className="hidden md:inline">Arena</span>
-                    </button>
-                  </Link>
-                  {canAccessArcade ? (
-                    <Link href="/arcade?from=stream">
-                      <button className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-700 border border-purple-500/30 rounded-xl hover:from-purple-500/30 hover:to-pink-500/30 backdrop-blur transition-all shadow-[0_0_12px_rgba(168,85,247,0.15)]">
-                        <Gamepad2 className="w-4 h-4" />
-                        <span className="hidden md:inline">Arcade</span>
-                      </button>
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => navigate("/arcade?from=stream")}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-white text-slate-700 border border-gray-700/50 rounded-xl cursor-pointer hover:bg-white transition-all relative"
-                      title="Abonnement Supporter+ requis"
-                    >
-                      <Gamepad2 className="w-4 h-4" />
-                      <span className="hidden md:inline">Arcade</span>
-                      <Crown className="w-3 h-3 text-purple-700 md:ml-1 absolute -top-1 -right-1 md:static" />
-                    </button>
-                  )}
+                <div className="hidden lg:flex items-center gap-2 flex-wrap">
                   <Link href="/library">
-                    <button className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm text-slate-700 hover:text-slate-900 bg-white/[0.03] backdrop-blur border border-slate-200 rounded-xl hover:border-amber-500/30 hover:bg-amber-500/5 transition-all">
-                      <Music2 className="w-3.5 h-3.5" />
+                    <button className="flex items-center gap-1.5 px-3.5 py-2 text-sm text-slate-200 hover:text-white bg-[#180d34]/75 backdrop-blur border border-purple-500/25 rounded-xl hover:border-purple-400/45 transition-all">
+                      <Music2 className="w-3.5 h-3.5 text-purple-300" />
                       Bibliothèque
                     </button>
                   </Link>
                   <Link href="/analytics">
-                    <button className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm bg-amber-500/10 text-amber-800 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 backdrop-blur transition-all">
-                      <BarChart3 className="w-3.5 h-3.5" />
+                    <button className="flex items-center gap-1.5 px-3.5 py-2 text-sm bg-purple-500/15 text-purple-200 border border-purple-400/25 rounded-xl hover:bg-purple-500/25 backdrop-blur transition-all">
+                      <BarChart3 className="w-3.5 h-3.5 text-fuchsia-300" />
                       Analytics
-                    </button>
-                  </Link>
-                  <Link href="/artist-portal?from=stream">
-                    <button
-                      className={`hidden md:flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl backdrop-blur transition-all ${
-                        fromPage === "artist-portal"
-                          ? "bg-gradient-to-r from-amber-400/40 to-teal-400/40 text-amber-700 border-2 border-amber-400/60 shadow-[0_0_20px_rgba(16,185,129,0.4)] ring-2 ring-amber-400/30"
-                          : "bg-gradient-to-r from-amber-500/20 to-teal-500/20 text-amber-700 border border-amber-500/30 hover:from-amber-500/30 hover:to-teal-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                      }`}
-                    >
-                      <Mic2 className="w-4 h-4" />
-                      Portail Artiste
                     </button>
                   </Link>
                 </div>
@@ -1001,7 +824,7 @@ export default function StreamPage() {
                             <p className={`text-sm font-bold ${tc.text}`}>
                               {isGodTier ? "God Tier ∞" : currentPlan.name}
                             </p>
-                            <p className="text-[10px] text-slate-700 uppercase tracking-widest">
+                            <p className="text-[10px] text-slate-400 uppercase tracking-widest">
                               Mon abonnement
                             </p>
                           </div>
@@ -1013,7 +836,7 @@ export default function StreamPage() {
                                 document.getElementById("subscription-plans");
                               el?.scrollIntoView({ behavior: "smooth" });
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-800 text-xs font-semibold border border-amber-500/30 hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500/25 to-fuchsia-500/25 text-purple-100 text-xs font-semibold border border-purple-400/35 hover:from-purple-500/35 hover:to-fuchsia-500/35 transition-all"
                           >
                             <Zap className="w-3 h-3" />
                             Upgrade
@@ -1022,35 +845,35 @@ export default function StreamPage() {
                       </div>
 
                       {/* Stats grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 tabular-nums">
                         {/* Weekly streams */}
-                        <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
+                        <div className="bg-[#090418]/75 rounded-xl px-3 py-2.5 border border-purple-500/20">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
                             Streams / sem.
                           </p>
-                          <p className="text-lg font-bold text-slate-900">
+                          <p className="text-lg font-bold text-slate-50">
                             {isGodTier ? "∞" : streamsLabel}
                           </p>
                         </div>
 
                         {/* Audio quality */}
-                        <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
+                        <div className="bg-[#090418]/75 rounded-xl px-3 py-2.5 border border-purple-500/20">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
                             Qualité audio
                           </p>
                           <p
-                            className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-amber-700" : "text-slate-900"}`}
+                            className={`text-sm font-bold ${currentPlan.audioQuality === "FLAC" ? "text-amber-300" : "text-slate-50"}`}
                           >
                             {isGodTier ? "FLAC" : currentPlan.audioQuality}
                           </p>
                         </div>
 
                         {/* Downloads */}
-                        <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
+                        <div className="bg-[#090418]/75 rounded-xl px-3 py-2.5 border border-purple-500/20">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
                             Downloads / mois
                           </p>
-                          <p className="text-sm font-bold text-slate-900">
+                          <p className="text-sm font-bold text-slate-50">
                             {isGodTier
                               ? "∞"
                               : currentPlan.downloadsPerMonth === 0
@@ -1062,24 +885,24 @@ export default function StreamPage() {
                         </div>
 
                         {/* Ads */}
-                        <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
+                        <div className="bg-[#090418]/75 rounded-xl px-3 py-2.5 border border-purple-500/20">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
                             Publicités
                           </p>
                           <p
-                            className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-amber-700" : "text-orange-700"}`}
+                            className={`text-sm font-bold ${!currentPlan.ads || isGodTier ? "text-emerald-300" : "text-amber-300"}`}
                           >
                             {!currentPlan.ads || isGodTier ? "Aucune ✓" : "Oui"}
                           </p>
                         </div>
 
                         {/* Arcade */}
-                        <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
+                        <div className="bg-[#090418]/75 rounded-xl px-3 py-2.5 border border-purple-500/20">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
                             Arcade PvP
                           </p>
                           <p
-                            className={`text-sm font-bold flex items-center gap-1 ${canAccessArcade ? "text-purple-700" : "text-gray-600"}`}
+                            className={`text-sm font-bold flex items-center gap-1 ${canAccessArcade ? "text-purple-300" : "text-slate-400"}`}
                           >
                             <Gamepad2 className="w-3.5 h-3.5" />
                             {canAccessArcade ? "Accès ✓" : "Verrouillé"}
@@ -1087,12 +910,12 @@ export default function StreamPage() {
                         </div>
 
                         {/* Vote weight */}
-                        <div className="bg-white/[0.04] rounded-xl px-3 py-2.5 border border-white/[0.06]">
-                          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-0.5">
+                        <div className="bg-[#090418]/75 rounded-xl px-3 py-2.5 border border-purple-500/20">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">
                             Vote Arena
                           </p>
                           <p
-                            className={`text-sm font-bold flex items-center gap-1 ${voteWeight !== "×1" ? "text-amber-800" : "text-slate-900"}`}
+                            className={`text-sm font-bold flex items-center gap-1 ${voteWeight !== "×1" ? "text-amber-300" : "text-slate-50"}`}
                           >
                             <Trophy className="w-3.5 h-3.5" />
                             {isGodTier ? "100%" : voteWeight}
@@ -1104,12 +927,12 @@ export default function StreamPage() {
                       {stats && (
                         <div className="mt-3 flex items-center gap-3">
                           <div className="flex items-center gap-1.5">
-                            <Sparkles className="w-3 h-3 text-purple-700" />
-                            <span className="text-[10px] font-semibold text-slate-700">
+                            <Sparkles className="w-3 h-3 text-fuchsia-300" />
+                            <span className="text-[11px] font-semibold text-slate-300">
                               {levelName} · Niv.{currentLevel}
                             </span>
                           </div>
-                          <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                          <div className="flex-1 h-1.5 bg-[#090418] rounded-full overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{
@@ -1119,7 +942,7 @@ export default function StreamPage() {
                               className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full"
                             />
                           </div>
-                          <span className="text-[10px] text-slate-700">
+                          <span className="text-[11px] text-slate-300 tabular-nums">
                             {currentPoints}/{nextLevelPoints} XP
                           </span>
                         </div>
@@ -1129,7 +952,7 @@ export default function StreamPage() {
                 })()}
 
               {/* Animated equalizer decoration */}
-              <div className="flex items-end justify-center gap-[3px] h-8 mb-6 opacity-30">
+              <div className="flex items-end justify-center gap-[3px] h-8 mb-6 opacity-50">
                 {Array.from({
                   length:
                     typeof window !== "undefined" && window.innerWidth < 768
@@ -1138,41 +961,49 @@ export default function StreamPage() {
                 }).map((_, i) => (
                   <motion.div
                     key={`eq-${i}`}
-                    className="w-[3px] rounded-full bg-gradient-to-t from-amber-600 to-amber-300"
-                    animate={{
-                      height: [
-                        4 + Math.random() * 8,
-                        10 + Math.random() * 22,
-                        4 + Math.random() * 8,
-                      ],
-                    }}
-                    transition={{
-                      duration: 1.2 + Math.random() * 0.8,
-                      repeat: Infinity,
-                      delay: i * 0.04,
-                      ease: "easeInOut",
-                    }}
+                    className="w-[3px] rounded-full bg-gradient-to-t from-purple-600 via-fuchsia-400 to-cyan-300"
+                    animate={
+                      reducedMotion
+                        ? { height: 10 + ((i * 7) % 16) }
+                        : {
+                            height: [
+                              4 + ((i * 3) % 8),
+                              12 + ((i * 5) % 20),
+                              4 + ((i * 3) % 8),
+                            ],
+                          }
+                    }
+                    transition={
+                      reducedMotion
+                        ? { duration: 0 }
+                        : {
+                            duration: 1.1 + (i % 5) * 0.15,
+                            repeat: Infinity,
+                            delay: i * 0.04,
+                            ease: "easeInOut",
+                          }
+                    }
                   />
                 ))}
               </div>
 
               {/* Search Bar -- Glass effect */}
-              <div className="relative max-w-2xl mx-auto mb-12">
+              <div className="relative max-w-2xl mx-auto mb-10">
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-purple-500/10 to-amber-500/20 rounded-2xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-500" />
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/25 via-fuchsia-500/20 to-cyan-400/20 rounded-2xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-500" />
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700 group-focus-within:text-amber-400 transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300 group-focus-within:text-fuchsia-300 transition-colors pointer-events-none" />
                     <input
                       type="text"
                       placeholder="Rechercher artistes, titres, albums..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-12 py-4 bg-white/[0.04] backdrop-blur-xl border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-700 focus:outline-none focus:border-amber-500/40 focus:bg-white/[0.06] transition-all text-sm"
+                      className="w-full pl-12 pr-12 py-4 bg-[#120929]/90 backdrop-blur-xl border border-purple-500/25 rounded-2xl text-slate-50 placeholder-slate-400 focus:outline-none focus:border-fuchsia-400/55 focus:bg-[#180d34] transition-all text-sm"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1187,17 +1018,17 @@ export default function StreamPage() {
                       initial={{ opacity: 0, y: -10, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-white backdrop-blur-2xl border border-slate-200 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden z-[100] max-h-[70vh] overflow-y-auto"
+                      className="tmu-glass-modal absolute top-full left-0 right-0 mt-2 rounded-2xl overflow-hidden z-[100] max-h-[70vh] overflow-y-auto"
                     >
                       {searchResults.artists?.length > 0 && (
                         <div className="p-4">
-                          <p className="text-[10px] text-amber-800 uppercase tracking-[0.2em] font-semibold mb-3">
+                          <p className="text-[11px] text-fuchsia-300 uppercase tracking-[0.2em] font-semibold mb-3">
                             Artistes
                           </p>
                           {searchResults.artists.map((a: any) => (
                             <Link key={a.id} href={`/artist-catalogue/${a.id}`}>
-                              <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center overflow-hidden ring-1 ring-white/10">
+                              <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-purple-500/15 cursor-pointer transition-colors">
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center overflow-hidden ring-1 ring-purple-400/25">
                                   {a.image_url ? (
                                     <img
                                       src={a.image_url}
@@ -1209,17 +1040,17 @@ export default function StreamPage() {
                                   )}
                                 </div>
                                 <div>
-                                  <p className="text-slate-900 text-sm font-medium">
+                                  <p className="text-slate-50 text-sm font-medium">
                                     {a.name}
                                   </p>
-                                  <p className="text-slate-700 text-xs">
+                                  <p className="text-slate-400 text-xs tabular-nums">
                                     {a.genre} •{" "}
                                     {formatStreams(a.monthly_listeners || 0)}{" "}
                                     auditeurs/mois
                                   </p>
                                 </div>
                                 {a.verified && (
-                                  <Star className="w-3.5 h-3.5 text-amber-800 ml-auto fill-amber-400" />
+                                  <Star className="w-3.5 h-3.5 text-fuchsia-400 ml-auto fill-fuchsia-400" />
                                 )}
                               </div>
                             </Link>
@@ -1227,8 +1058,8 @@ export default function StreamPage() {
                         </div>
                       )}
                       {searchResults.tracks?.length > 0 && (
-                        <div className="p-4 border-t border-slate-200">
-                          <p className="text-[10px] text-amber-800 uppercase tracking-[0.2em] font-semibold mb-3">
+                        <div className="p-4 border-t border-purple-500/20">
+                          <p className="text-[11px] text-fuchsia-300 uppercase tracking-[0.2em] font-semibold mb-3">
                             Titres
                           </p>
                           {searchResults.tracks.map((t: any) => (
@@ -1238,9 +1069,9 @@ export default function StreamPage() {
                                 audio.playTrack(t);
                                 setSearchQuery("");
                               }}
-                              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors"
+                              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-purple-500/15 cursor-pointer transition-colors"
                             >
-                              <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 ring-1 ring-white/5">
+                              <div className="w-9 h-9 rounded-lg bg-[#180d34] flex items-center justify-center overflow-hidden flex-shrink-0 ring-1 ring-purple-400/20">
                                 {getCover(t) ? (
                                   <img
                                     src={getCover(t)!}
@@ -1248,18 +1079,18 @@ export default function StreamPage() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <Music className="w-3 h-3 text-slate-700" />
+                                  <Music className="w-3.5 h-3.5 text-purple-300" />
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-slate-900 text-sm truncate">
+                                <p translate="no" className="notranslate text-slate-50 text-sm truncate">
                                   {t.title}
                                 </p>
-                                <p className="text-slate-700 text-xs truncate">
+                                <p translate="no" className="notranslate text-slate-400 text-xs truncate">
                                   {t.artist_name}
                                 </p>
                               </div>
-                              <span className="text-gray-600 text-xs ml-auto font-mono">
+                              <span className="text-slate-400 text-xs ml-auto font-mono tabular-nums">
                                 {formatDuration(t.duration)}
                               </span>
                             </div>
@@ -1267,22 +1098,25 @@ export default function StreamPage() {
                         </div>
                       )}
                       {searchResults.albums?.length > 0 && (
-                        <div className="p-4 border-t border-slate-200">
-                          <p className="text-[10px] text-amber-800 uppercase tracking-[0.2em] font-semibold mb-3">
+                        <div className="p-4 border-t border-purple-500/20">
+                          <p className="text-[11px] text-fuchsia-300 uppercase tracking-[0.2em] font-semibold mb-3">
                             Albums
                           </p>
                           {searchResults.albums.map((a: any) => (
                             <Link key={a.id} href={`/track/${a.id}`}>
-                              <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
-                                <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center ring-1 ring-white/5">
-                                  <Disc3 className="w-4 h-4 text-slate-700" />
+                              <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-purple-500/15 cursor-pointer transition-colors">
+                                <div className="w-9 h-9 rounded-lg bg-[#180d34] flex items-center justify-center ring-1 ring-purple-400/20">
+                                  <Disc3 className="w-4 h-4 text-purple-300" />
                                 </div>
                                 <div>
-                                  <p className="text-slate-900 text-sm">
+                                  <p translate="no" className="notranslate text-slate-50 text-sm">
                                     {a.title}
                                   </p>
-                                  <p className="text-slate-700 text-xs">
-                                    {a.artist_name} • {a.album_type}
+                                  <p className="text-slate-400 text-xs">
+                                    <span translate="no" className="notranslate">
+                                      {a.artist_name}
+                                    </span>{" "}
+                                    • {a.album_type}
                                   </p>
                                 </div>
                               </div>
@@ -1293,8 +1127,8 @@ export default function StreamPage() {
                       {searchResults.tracks?.length === 0 &&
                         searchResults.artists?.length === 0 && (
                           <div className="p-8 text-center">
-                            <Search className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-                            <p className="text-slate-700 text-sm">
+                            <Search className="w-8 h-8 text-purple-400/40 mx-auto mb-2" />
+                            <p className="text-slate-300 text-sm">
                               Aucun résultat pour «{searchQuery}»
                             </p>
                           </div>
@@ -1305,19 +1139,24 @@ export default function StreamPage() {
               </div>
 
               {/* ========================================= */}
+              {/* FEATURED FACE OF TMU (NOOKA) */}
+              {/* ========================================= */}
+              <FeaturedArtistCard className="mb-8" />
+
+              {/* ========================================= */}
               {/* TRENDING / FEATURED CAROUSEL */}
               {/* ========================================= */}
               {trending.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2.5 mb-5">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center">
-                      <Flame className="w-4 h-4 text-amber-800" />
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                      <Flame className="w-4 h-4 text-fuchsia-300" />
                     </div>
-                    <h2 className="text-xl font-bold tracking-tight">
+                    <h2 className="text-xl font-bold tracking-tight text-slate-50">
                       Tendances
                     </h2>
                     <div className="flex-1" />
-                    <button className="text-amber-800 text-sm hover:text-amber-800 flex items-center gap-1 transition-colors">
+                    <button className="text-fuchsia-300 text-sm hover:text-fuchsia-200 flex items-center gap-1 transition-colors">
                       Voir tout <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -1328,13 +1167,13 @@ export default function StreamPage() {
                     {trending.slice(0, 8).map((track: any, i: number) => (
                       <motion.div
                         key={track.id}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={reducedMotion ? false : { opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.06 }}
+                        transition={reducedMotion ? { duration: 0 } : { delay: i * 0.05 }}
                         className="flex-shrink-0 w-48 group cursor-pointer"
                         onClick={() => audio.playTrack(track)}
                       >
-                        <div className="relative w-48 h-48 rounded-2xl overflow-hidden mb-3 shadow-xl shadow-black/40 ring-1 ring-white/5 group-hover:ring-amber-500/30 transition-all duration-300">
+                        <div className="relative w-48 h-48 rounded-2xl overflow-hidden mb-3 shadow-xl shadow-black/50 ring-1 ring-purple-500/20 group-hover:ring-fuchsia-400/50 transition-all duration-300">
                           {getCover(track) ? (
                             <img
                               src={getCover(track)!}
@@ -1345,39 +1184,39 @@ export default function StreamPage() {
                             <div
                               className={`w-full h-full bg-gradient-to-br ${getGenreGradient(track.genre)} flex items-center justify-center`}
                             >
-                              <Music className="w-14 h-14 text-white/20" />
+                              <Music className="w-14 h-14 text-white/30" />
                             </div>
                           )}
                           {/* Dark gradient overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#06020f]/80 via-black/15 to-transparent" />
                           {/* Play overlay */}
-                          <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-[#06020f]/45 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                             <motion.div
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="w-14 h-14 bg-amber-500 rounded-full flex items-center justify-center shadow-xl shadow-amber-500/40"
+                              whileHover={reducedMotion ? undefined : { scale: 1.08 }}
+                              whileTap={reducedMotion ? undefined : { scale: 0.92 }}
+                              className="w-14 h-14 bg-gradient-to-br from-purple-600 to-fuchsia-600 rounded-full flex items-center justify-center shadow-xl shadow-purple-500/40"
                             >
-                              <Play className="w-6 h-6 text-black ml-0.5" />
+                              <Play className="w-6 h-6 text-white ml-0.5" />
                             </motion.div>
                           </div>
                           {/* Rank badge */}
                           <div className="absolute top-2.5 left-2.5">
-                            <div className="px-2.5 py-1 bg-slate-900/60 backdrop-blur-md rounded-lg text-amber-400 text-xs font-bold border border-amber-500/20">
+                            <div className="px-2.5 py-1 bg-[#06020f]/75 backdrop-blur-md rounded-lg text-fuchsia-300 text-xs font-bold border border-purple-400/30 tabular-nums">
                               #{i + 1}
                             </div>
                           </div>
                           {/* Bottom info overlay */}
                           <div className="absolute bottom-2.5 left-2.5 right-2.5">
-                            <div className="flex items-center gap-1.5 text-[10px] text-gray-300">
-                              <Headphones className="w-3 h-3" />
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-200 tabular-nums">
+                              <Headphones className="w-3 h-3 text-purple-300" />
                               {formatStreams(track.streams || 0)} streams
                             </div>
                           </div>
                         </div>
-                        <p className="text-slate-900 text-sm font-semibold truncate px-0.5">
+                        <p translate="no" className="notranslate text-slate-50 text-sm font-semibold truncate px-0.5">
                           {track.title}
                         </p>
-                        <p className="text-slate-700 text-xs truncate px-0.5">
+                        <p translate="no" className="notranslate text-slate-300 text-xs truncate px-0.5">
                           {track.artist_name}
                         </p>
                         <div className="px-0.5">
@@ -1386,12 +1225,12 @@ export default function StreamPage() {
                         <Link
                           href={`/track/${track.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-amber-500/30 hover:text-amber-800"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-purple-500/25 bg-[#180d34]/70 px-2.5 py-1 text-[11px] font-medium text-slate-200 transition-colors hover:border-fuchsia-400/45 hover:text-white"
                         >
-                          <MessageCircle className="w-3 h-3" />
+                          <MessageCircle className="w-3 h-3 text-purple-300" />
                           Discuss
                           {track.comment_count > 0 && (
-                            <span>{track.comment_count}</span>
+                            <span className="tabular-nums">{track.comment_count}</span>
                           )}
                         </Link>
                       </motion.div>
@@ -1416,15 +1255,18 @@ export default function StreamPage() {
           {artists.length > 0 && (
             <section className="max-w-[95vw] mx-auto px-4 mb-10 py-6 relative z-10">
               <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/10 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-purple-700" />
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-fuchsia-300" />
                 </div>
-                <h2 className="text-xl font-bold tracking-tight">
-                  Artistes Verso Air
+                <h2 className="text-xl font-bold tracking-tight text-slate-50">
+                  Artistes{" "}
+                  <span translate="no" className="notranslate">
+                    Verso Air
+                  </span>
                 </h2>
                 <div className="flex-1" />
                 <Link href="/artistes">
-                  <button className="text-amber-800 text-sm hover:text-amber-800 flex items-center gap-1 transition-colors">
+                  <button className="text-fuchsia-300 text-sm hover:text-fuchsia-200 flex items-center gap-1 transition-colors">
                     Catalogue <ChevronRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -1433,15 +1275,14 @@ export default function StreamPage() {
                 {artists.slice(0, 10).map((artist: any, i: number) => (
                   <Link key={artist.id} href={`/artist-catalogue/${artist.id}`}>
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
+                      initial={reducedMotion ? false : { opacity: 0, scale: 0.94 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.05 }}
+                      transition={reducedMotion ? { duration: 0 } : { delay: i * 0.04 }}
                       className="flex-shrink-0 w-32 text-center group cursor-pointer"
                     >
                       <div className="relative w-28 h-28 mx-auto mb-3">
-                        {/* Aurora glow behind artist circle */}
-                        <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-amber-500/20 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500" />
-                        <div className="relative w-28 h-28 rounded-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-50 ring-2 ring-white/5 group-hover:ring-amber-500/40 transition-all duration-300 shadow-lg shadow-black/30">
+                        <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-purple-500/30 via-fuchsia-500/20 to-cyan-500/15 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500" />
+                        <div className="relative w-28 h-28 rounded-full overflow-hidden bg-[#180d34] ring-2 ring-purple-500/25 group-hover:ring-fuchsia-400/60 transition-all duration-300 shadow-lg shadow-black/40">
                           {artist.image_url ? (
                             <img
                               src={artist.image_url}
@@ -1452,28 +1293,33 @@ export default function StreamPage() {
                             <div
                               className={`w-full h-full bg-gradient-to-br ${getGenreGradient(artist.genre)} flex items-center justify-center`}
                             >
-                              <span className="text-2xl font-bold text-slate-900">
+                              <span translate="no" className="notranslate text-2xl font-bold text-white uppercase">
                                 {artist.name?.[0]}
                               </span>
                             </div>
                           )}
                         </div>
                         {artist.verified && (
-                          <div className="absolute -bottom-0.5 right-1 w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center ring-3 ring-gray-950 shadow-lg shadow-amber-500/30">
-                            <Star className="w-3 h-3 text-black fill-black" />
+                          <div className="absolute -bottom-0.5 right-1 w-6 h-6 bg-gradient-to-br from-purple-500 to-fuchsia-500 rounded-full flex items-center justify-center ring-2 ring-[#06020f] shadow-lg shadow-purple-500/35">
+                            <Star className="w-3 h-3 text-white fill-white" />
                           </div>
                         )}
                       </div>
-                      <p className="text-slate-900 text-xs font-semibold truncate">
+                      <p translate="no" className="notranslate text-slate-50 text-xs font-semibold truncate">
                         {artist.name}
                       </p>
-                      <p className="text-slate-700 text-[10px] mt-0.5">
+                      <p className="text-slate-300 text-[11px] mt-0.5 truncate">
                         {artist.genre}
                       </p>
-                      <p className="text-gray-600 text-[10px]">
+                      <p className="text-slate-400 text-[11px] tabular-nums">
                         {getFlag(artist.country_code)}{" "}
                         {formatStreams(artist.monthly_listeners || 0)}/mo
                       </p>
+                      {(artist.neighbourhood || artist.city) && (
+                        <p className="text-slate-400 text-[11px] truncate">
+                          {[artist.neighbourhood, artist.city, artist.country].filter(Boolean).join(", ")}
+                        </p>
+                      )}
                     </motion.div>
                   </Link>
                 ))}
@@ -1489,22 +1335,22 @@ export default function StreamPage() {
           {newReleases.length > 0 && (
             <section className="max-w-[95vw] mx-auto px-4 mb-10 py-6 relative z-10">
               <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-cyan-700" />
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-400/25 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-cyan-300" />
                 </div>
-                <h2 className="text-xl font-bold tracking-tight">Nouveautés</h2>
+                <h2 className="text-xl font-bold tracking-tight text-slate-50">Nouveautés</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {newReleases.slice(0, 10).map((track: any, i: number) => (
                   <motion.div
                     key={track.id}
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={reducedMotion ? false : { opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
+                    transition={reducedMotion ? { duration: 0 } : { delay: i * 0.04 }}
                     onClick={() => audio.playTrack(track)}
-                    className="group cursor-pointer bg-white/[0.02] backdrop-blur-sm rounded-xl p-3 hover:bg-white/[0.06] border border-white/[0.03] hover:border-amber-500/20 transition-all duration-300"
+                    className="tmu-glass tmu-interactive-card group cursor-pointer rounded-2xl p-3"
                   >
-                    <div className="relative aspect-square rounded-xl overflow-hidden bg-white mb-3 ring-1 ring-white/5 shadow-lg shadow-black/30">
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-[#180d34] mb-3 ring-1 ring-purple-500/20 shadow-lg shadow-black/40">
                       {getCover(track) ? (
                         <img
                           src={getCover(track)!}
@@ -1515,31 +1361,31 @@ export default function StreamPage() {
                         <div
                           className={`w-full h-full bg-gradient-to-br ${getGenreGradient(track.genre)} flex items-center justify-center`}
                         >
-                          <Music className="w-8 h-8 text-white/20" />
+                          <Music className="w-8 h-8 text-white/35" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-2.5">
-                        <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/40 ml-auto">
-                          <Play className="w-4 h-4 text-black ml-0.5" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#06020f]/75 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-2.5">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-fuchsia-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/40 ml-auto">
+                          <Play className="w-4 h-4 text-white ml-0.5" />
                         </div>
                       </div>
                     </div>
-                    <p className="text-slate-900 text-sm font-semibold truncate">
+                    <p translate="no" className="notranslate text-slate-50 text-sm font-semibold truncate">
                       {track.title}
                     </p>
-                    <p className="text-slate-700 text-xs truncate mt-0.5">
+                    <p translate="no" className="notranslate text-slate-300 text-xs truncate mt-0.5">
                       {track.artist_name}
                     </p>
                     <TrackReactionStrip track={track} compact />
                     <Link
                       href={`/track/${track.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:border-amber-500/30 hover:text-amber-800"
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-purple-500/25 bg-[#180d34]/70 px-2.5 py-1 text-[11px] font-medium text-slate-200 transition-colors hover:border-fuchsia-400/45 hover:text-white"
                     >
-                      <MessageCircle className="w-3 h-3" />
+                      <MessageCircle className="w-3 h-3 text-purple-300" />
                       Discuss
                       {track.comment_count > 0 && (
-                        <span>{track.comment_count}</span>
+                        <span className="tabular-nums">{track.comment_count}</span>
                       )}
                     </Link>
                   </motion.div>
@@ -1560,7 +1406,7 @@ export default function StreamPage() {
               postType="musical_universe"
               title="MU × Community talks"
               composerPlaceholder="Talk music, drops, collabs…"
-              variant="light"
+              variant="dark"
             />
           </section>
 
@@ -1573,11 +1419,11 @@ export default function StreamPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm border backdrop-blur transition-all ${
                   showFilters
-                    ? "bg-amber-500/15 border-amber-500/30 text-amber-800"
-                    : "border-slate-200 text-slate-700 hover:border-white/20 bg-white/[0.02]"
+                    ? "bg-purple-500/25 border-fuchsia-400/50 text-white"
+                    : "border-purple-500/25 text-slate-200 hover:border-purple-400/45 bg-[#180d34]/70"
                 }`}
               >
-                <Filter className="w-3.5 h-3.5" />
+                <Filter className="w-3.5 h-3.5 text-purple-300" />
                 Filtres
               </button>
 
@@ -1587,10 +1433,10 @@ export default function StreamPage() {
                   setActiveGenre("");
                   setPage(1);
                 }}
-                className={`px-3.5 py-2 rounded-xl text-base font-bold transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
                   !activeGenre
-                    ? "bg-[#f4a028] text-slate-900 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/30"
-                    : "bg-[#f6f1ea] text-slate-700 hover:bg-[#eee5d8] border border-[#d9d0c6]"
+                    ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/25"
+                    : "bg-[#180d34]/75 text-slate-200 hover:bg-purple-500/20 border border-purple-500/20"
                 }`}
               >
                 Tous
@@ -1602,10 +1448,10 @@ export default function StreamPage() {
                     setActiveGenre(g === activeGenre ? "" : g);
                     setPage(1);
                   }}
-                  className={`px-3.5 py-2 rounded-xl text-base font-bold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
                     activeGenre === g
-                      ? "bg-[#f4a028] text-slate-900 shadow-lg shadow-amber-500/20 ring-1 ring-amber-500/30"
-                      : "bg-[#f6f1ea] text-slate-700 hover:bg-[#eee5d8] border border-[#d9d0c6]"
+                      ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/25"
+                      : "bg-[#180d34]/75 text-slate-200 hover:bg-purple-500/20 border border-purple-500/20"
                   }`}
                 >
                   {g}
@@ -1622,9 +1468,9 @@ export default function StreamPage() {
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden mb-4"
                 >
-                  <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl p-5 flex flex-wrap gap-5 border border-slate-200">
+                  <div className="tmu-glass rounded-2xl p-5 flex flex-wrap gap-5">
                     <div>
-                      <label className="text-[10px] text-amber-800 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[11px] text-fuchsia-300 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
                         Ambiance
                       </label>
                       <select
@@ -1633,7 +1479,7 @@ export default function StreamPage() {
                           setActiveMood(e.target.value);
                           setPage(1);
                         }}
-                        className="bg-white/[0.04] border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:border-amber-500/40 focus:outline-none backdrop-blur"
+                        className="bg-[#090418] border border-purple-500/25 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:border-fuchsia-400 focus:outline-none"
                       >
                         <option value="">Toutes</option>
                         {moods.map((m: string) => (
@@ -1644,7 +1490,7 @@ export default function StreamPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-amber-800 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
+                      <label className="text-[11px] text-fuchsia-300 uppercase tracking-[0.15em] font-semibold mb-1.5 block">
                         Trier par
                       </label>
                       <select
@@ -1653,7 +1499,7 @@ export default function StreamPage() {
                           setSortBy(e.target.value);
                           setPage(1);
                         }}
-                        className="bg-white/[0.04] border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:border-amber-500/40 focus:outline-none backdrop-blur"
+                        className="bg-[#090418] border border-purple-500/25 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:border-fuchsia-400 focus:outline-none"
                       >
                         <option value="discover">Découvrir</option>
                         <option value="popular">Populaire</option>
@@ -1669,7 +1515,7 @@ export default function StreamPage() {
                           setActiveMood("");
                           setPage(1);
                         }}
-                        className="self-end px-3.5 py-2 text-sm text-red-700 hover:text-red-700 flex items-center gap-1 transition-colors"
+                        className="self-end px-3.5 py-2 text-sm text-rose-300 hover:text-rose-200 flex items-center gap-1 transition-colors"
                       >
                         <X className="w-3.5 h-3.5" /> Réinitialiser
                       </button>
@@ -1684,14 +1530,14 @@ export default function StreamPage() {
           {/* ALL TRACKS GRID */}
           {/* ========================================= */}
           <section className="max-w-[95vw] mx-auto px-4 mb-14 relative z-10">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/10 flex items-center justify-center">
-                <Music className="w-4 h-4 text-amber-800" />
+            <div className="flex items-center gap-2.5 mb-5 flex-wrap">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                <Music className="w-4 h-4 text-fuchsia-300" />
               </div>
-              <h2 className="text-[2rem] sm:text-[2.25rem] font-black tracking-[-0.05em] text-slate-900">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-50">
                 {activeGenre ? activeGenre : "Tous les titres"}
               </h2>
-              <span className="text-slate-600 text-sm font-semibold font-mono">
+              <span className="text-slate-400 text-sm font-semibold font-mono tabular-nums">
                 ({totalTracks})
               </span>
               <div className="flex-1" />
@@ -1699,9 +1545,9 @@ export default function StreamPage() {
                 onClick={() => {
                   if (tracks.length > 0) audio.playTracks(tracks);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500/10 text-amber-800 border border-amber-500/20 rounded-xl text-sm hover:bg-amber-500/20 backdrop-blur transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 bg-purple-500/20 text-purple-100 border border-purple-400/30 rounded-xl text-sm hover:bg-purple-500/30 backdrop-blur transition-all"
               >
-                <Shuffle className="w-3.5 h-3.5" />
+                <Shuffle className="w-3.5 h-3.5 text-fuchsia-300" />
                 Aléatoire
               </button>
             </div>
@@ -1712,27 +1558,27 @@ export default function StreamPage() {
                 {Array.from({ length: 12 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.02]"
+                    className="tmu-glass flex items-center gap-3 p-3 rounded-xl"
                   >
-                    <div className="w-11 h-11 rounded-lg bg-white animate-pulse" />
+                    <div className="w-11 h-11 rounded-lg bg-purple-950/80 animate-pulse" />
                     <div className="flex-1">
-                      <div className="h-3 bg-white rounded-lg w-3/4 mb-2 animate-pulse" />
-                      <div className="h-2 bg-white rounded-lg w-1/2 animate-pulse" />
+                      <div className="h-3 bg-purple-950/80 rounded-lg w-3/4 mb-2 animate-pulse" />
+                      <div className="h-2 bg-purple-950/80 rounded-lg w-1/2 animate-pulse" />
                     </div>
-                    <div className="w-10 h-3 bg-white rounded animate-pulse" />
+                    <div className="w-10 h-3 bg-purple-950/80 rounded animate-pulse" />
                   </div>
                 ))}
               </div>
             ) : tracks.length === 0 ? (
               /* Empty state */
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 rounded-full bg-white/[0.02] border border-slate-200 flex items-center justify-center mb-4">
-                  <Music className="w-8 h-8 text-gray-700" />
+              <div className="tmu-glass rounded-2xl flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-purple-500/15 border border-purple-400/25 flex items-center justify-center mb-4">
+                  <Music className="w-7 h-7 text-purple-300" />
                 </div>
-                <p className="text-slate-700 text-lg font-medium mb-1">
+                <p className="text-slate-100 text-lg font-medium mb-1">
                   Aucun titre disponible
                 </p>
-                <p className="text-gray-600 text-sm max-w-sm">
+                <p className="text-slate-400 text-sm max-w-sm">
                   {activeGenre
                     ? `Pas de titres trouvés en ${activeGenre}. Essayez un autre genre.`
                     : "Les artistes sont en studio… Revenez bientôt pour découvrir de nouveaux sons !"}
@@ -1743,7 +1589,7 @@ export default function StreamPage() {
                       setActiveGenre("");
                       setPage(1);
                     }}
-                    className="mt-4 px-4 py-2 bg-amber-500/10 text-amber-800 border border-amber-500/20 rounded-xl text-sm hover:bg-amber-500/20 transition-all"
+                    className="mt-4 px-4 py-2 bg-purple-500/20 text-purple-100 border border-purple-400/30 rounded-xl text-sm hover:bg-purple-500/30 transition-all"
                   >
                     Voir tous les titres
                   </button>
@@ -1752,52 +1598,46 @@ export default function StreamPage() {
             ) : (
               <>
                 {/* Track rows */}
-                <div className="bg-white/[0.015] backdrop-blur-sm rounded-2xl border border-white/[0.03] overflow-hidden">
+                <div className="tmu-glass rounded-2xl overflow-hidden">
                   {tracks.map((track: any, i: number) => {
                     const isCurrentTrack = audio.currentTrack?.id === track.id;
                     return (
                       <motion.div
                         key={track.id}
-                        initial={{ opacity: 0 }}
+                        initial={reducedMotion ? false : { opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.015 }}
+                        transition={reducedMotion ? { duration: 0 } : { delay: i * 0.015 }}
                         onClick={() => audio.playTrack(track)}
                         className={`flex items-center gap-3 px-4 py-3 cursor-pointer group transition-all duration-200 ${
                           isCurrentTrack
-                            ? "bg-amber-500/[0.08] border-l-2 border-l-amber-500"
-                            : "border-l-2 border-l-transparent hover:bg-white/[0.03]"
-                        } ${i > 0 ? "border-t border-white/[0.02]" : ""}`}
+                            ? "bg-purple-500/15 border-l-2 border-l-fuchsia-400"
+                            : "border-l-2 border-l-transparent hover:bg-purple-500/[0.08]"
+                        } ${i > 0 ? "border-t border-purple-500/15" : ""}`}
                       >
                         {/* Number or Playing indicator */}
                         <div className="w-7 text-center flex-shrink-0">
                           {isCurrentTrack && audio.isPlaying ? (
                             <div className="flex items-end justify-center gap-[2px] h-4">
                               {[1, 2, 3].map((b) => (
-                                <motion.div
+                                <span
                                   key={b}
-                                  className="w-[3px] bg-amber-400 rounded-full"
-                                  animate={{ height: [3, 14, 3] }}
-                                  transition={{
-                                    duration: 0.7,
-                                    repeat: Infinity,
-                                    delay: b * 0.12,
-                                    ease: "easeInOut",
-                                  }}
+                                  className="tmu-eq-bar w-[3px] h-full bg-fuchsia-400 rounded-full"
+                                  style={{ animationDelay: `${b * 150}ms` }}
                                 />
                               ))}
                             </div>
                           ) : (
                             <>
-                              <span className="text-gray-600 text-xs font-mono group-hover:hidden">
+                              <span className="text-slate-400 text-xs font-mono tabular-nums group-hover:hidden">
                                 {(page - 1) * 24 + i + 1}
                               </span>
-                              <Play className="w-3.5 h-3.5 text-slate-900 hidden group-hover:block mx-auto" />
+                              <Play className="w-3.5 h-3.5 text-fuchsia-300 hidden group-hover:block mx-auto" />
                             </>
                           )}
                         </div>
 
                         {/* Cover */}
-                        <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-white ring-1 ring-white/5 shadow-md shadow-black/20">
+                        <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#180d34] ring-1 ring-purple-500/20 shadow-md shadow-black/30">
                           {getCover(track) ? (
                             <img
                               src={getCover(track)!}
@@ -1808,7 +1648,7 @@ export default function StreamPage() {
                             <div
                               className={`w-full h-full bg-gradient-to-br ${getGenreGradient(track.genre)} flex items-center justify-center`}
                             >
-                              <Music className="w-4 h-4 text-slate-900" />
+                              <Music className="w-4 h-4 text-white/75" />
                             </div>
                           )}
                         </div>
@@ -1816,14 +1656,14 @@ export default function StreamPage() {
                         {/* Info */}
                         <div className="min-w-0 flex-1">
                           <p
-                            className={`text-sm font-medium truncate ${isCurrentTrack ? "text-amber-800" : "text-slate-900"}`}
+                            className={`text-sm font-medium truncate ${isCurrentTrack ? "text-fuchsia-300" : "text-slate-50"}`}
                           >
                             {track.title}
                           </p>
-                          <p className="text-slate-700 text-xs truncate">
+                          <p className="text-slate-300 text-xs truncate">
                             {track.artist_name}
                             {track.album_title && (
-                              <span className="text-gray-600">
+                              <span className="text-slate-400">
                                 {" • "}
                                 {track.album_title}
                               </span>
@@ -1834,33 +1674,33 @@ export default function StreamPage() {
 
                         {/* Genre badge */}
                         {track.genre && (
-                          <span className="hidden lg:inline-block px-2.5 py-1 bg-white/[0.04] text-slate-700 text-[10px] rounded-lg border border-slate-200 font-medium">
+                          <span className="hidden lg:inline-block px-2.5 py-1 bg-[#180d34] text-slate-300 text-[11px] rounded-lg border border-purple-500/20 font-medium">
                             {track.genre}
                           </span>
                         )}
 
                         {/* Streams */}
-                        <span className="text-gray-600 text-xs flex-shrink-0 hidden sm:inline font-mono">
+                        <span className="text-slate-400 text-xs flex-shrink-0 hidden sm:inline font-mono tabular-nums">
                           {formatStreams(track.streams || 0)}
                         </span>
 
                         {/* Duration */}
-                        <span className="text-gray-600 text-xs flex-shrink-0 w-10 text-right font-mono">
+                        <span className="text-slate-400 text-xs flex-shrink-0 w-10 text-right font-mono tabular-nums">
                           {formatDuration(track.duration)}
                         </span>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <Link
                             href={`/track/${track.id}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-700 opacity-100 transition-colors hover:border-amber-500/30 hover:text-amber-800 sm:opacity-0 sm:group-hover:opacity-100"
+                            className="inline-flex items-center gap-1 rounded-full border border-purple-500/25 bg-[#180d34]/75 px-2 py-1 text-[11px] text-slate-200 transition-colors hover:border-fuchsia-400/50 hover:text-white"
                             title="Voir les commentaires"
                           >
-                            <MessageCircle className="w-3.5 h-3.5" />
+                            <MessageCircle className="w-3.5 h-3.5 text-purple-300" />
                             <span className="hidden md:inline">Discuss</span>
                             {track.comment_count > 0 && (
-                              <span>{track.comment_count}</span>
+                              <span className="tabular-nums">{track.comment_count}</span>
                             )}
                           </Link>
                           <button
@@ -1874,8 +1714,8 @@ export default function StreamPage() {
                             }}
                             className={`transition-colors p-1 ${
                               audio.queue.some((t) => t.id === track.id)
-                                ? "text-amber-700"
-                                : "text-slate-700 hover:text-amber-800"
+                                ? "text-fuchsia-300"
+                                : "text-slate-300 hover:text-fuchsia-300"
                             }`}
                             title={
                               audio.queue.some((t) => t.id === track.id)
@@ -1901,11 +1741,11 @@ export default function StreamPage() {
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-5 py-2.5 bg-white/[0.04] backdrop-blur text-slate-700 rounded-xl border border-slate-200 disabled:opacity-30 hover:bg-white/[0.08] transition-all text-sm"
+                      className="px-5 py-2.5 bg-[#180d34]/80 backdrop-blur text-slate-200 rounded-xl border border-purple-500/25 disabled:opacity-30 hover:bg-purple-500/20 transition-all text-sm"
                     >
                       Précédent
                     </button>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 tabular-nums">
                       {Array.from(
                         { length: Math.min(5, Math.ceil(totalTracks / 24)) },
                         (_, idx) => {
@@ -1926,8 +1766,8 @@ export default function StreamPage() {
                               onClick={() => setPage(pageNum)}
                               className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
                                 page === pageNum
-                                  ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
-                                  : "bg-white/[0.04] text-slate-700 hover:bg-white/[0.08] border border-slate-200"
+                                  ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/25"
+                                  : "bg-[#180d34]/80 text-slate-200 hover:bg-purple-500/20 border border-purple-500/20"
                               }`}
                             >
                               {pageNum}
@@ -1939,7 +1779,7 @@ export default function StreamPage() {
                     <button
                       onClick={() => setPage((p) => p + 1)}
                       disabled={page * 24 >= totalTracks}
-                      className="px-5 py-2.5 bg-white/[0.04] backdrop-blur text-slate-700 rounded-xl border border-slate-200 disabled:opacity-30 hover:bg-white/[0.08] transition-all text-sm"
+                      className="px-5 py-2.5 bg-[#180d34]/80 backdrop-blur text-slate-200 rounded-xl border border-purple-500/25 disabled:opacity-30 hover:bg-purple-500/20 transition-all text-sm"
                     >
                       Suivant
                     </button>
@@ -1957,29 +1797,15 @@ export default function StreamPage() {
               id="subscription-plans"
               className="max-w-[95vw] mx-auto px-4 mb-16 relative z-10"
             >
-              <div className="relative rounded-3xl overflow-hidden border border-white/[0.06]">
-                {/* Background layers */}
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-gray-900/80 to-purple-900/15" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(245,158,11,0.1),transparent_50%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(139,92,246,0.08),transparent_50%)]" />
-                {/* Subtle grid texture */}
-                <div
-                  className="absolute inset-0 opacity-[0.015]"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-                    backgroundSize: "40px 40px",
-                  }}
-                />
-
-                <div className="relative p-8 sm:p-10">
+              <div className="tmu-glass-elevated relative rounded-3xl overflow-hidden">
+                <div className="relative p-6 sm:p-10">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                      <Crown className="w-5 h-5 text-black" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                      <Crown className="w-5 h-5 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold">Abonnements Streamer</h2>
+                    <h2 className="text-2xl font-bold text-slate-50">Abonnements Streamer</h2>
                   </div>
-                  <p className="text-slate-700 text-sm mb-8 max-w-xl leading-relaxed">
+                  <p className="text-slate-300 text-sm mb-8 max-w-xl leading-relaxed">
                     Le streaming gratuit est disponible. Les abonnements
                     payants, leurs tarifs et leurs avantages ne sont pas
                     disponibles tant que les modalités et le parcours de
@@ -2004,32 +1830,32 @@ export default function StreamPage() {
                         }
                       > = {
                         guest: {
-                          bg: "bg-white/[0.02]",
-                          border: "border-white/5",
-                          text: "text-gray-400",
-                          btn: "bg-white/[0.05] text-gray-300 hover:bg-white/[0.08] border border-white/10",
-                          accent: "text-gray-400",
+                          bg: "bg-[#0f0822]/85",
+                          border: "border-purple-500/15",
+                          text: "text-slate-200",
+                          btn: "bg-[#180d34] text-slate-200 hover:bg-purple-500/20 border border-purple-500/25",
+                          accent: "text-slate-300",
                         },
                         supporter: {
-                          bg: "bg-blue-500/[0.06]",
-                          border: "border-blue-500/20",
-                          text: "text-blue-400",
-                          btn: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30",
-                          accent: "text-blue-400",
+                          bg: "bg-blue-950/35",
+                          border: "border-blue-500/30",
+                          text: "text-blue-300",
+                          btn: "bg-blue-500/20 text-blue-200 border border-blue-500/35 hover:bg-blue-500/30",
+                          accent: "text-blue-300",
                         },
                         champion: {
-                          bg: "bg-amber-500/[0.08]",
-                          border: "border-amber-500/25",
-                          text: "text-amber-400",
+                          bg: "bg-amber-950/30",
+                          border: "border-amber-500/30",
+                          text: "text-amber-300",
                           btn: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-lg shadow-amber-500/20",
-                          accent: "text-amber-400",
+                          accent: "text-amber-300",
                         },
                         patron: {
-                          bg: "bg-purple-500/[0.08]",
-                          border: "border-purple-500/25",
-                          text: "text-purple-400",
+                          bg: "bg-purple-950/40",
+                          border: "border-fuchsia-500/35",
+                          text: "text-fuchsia-300",
                           btn: "bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-500/20",
-                          accent: "text-purple-400",
+                          accent: "text-fuchsia-300",
                         },
                       };
                       const colors = tierColors[plan.id] || tierColors.guest;
@@ -2037,7 +1863,7 @@ export default function StreamPage() {
                       return (
                         <div
                           key={plan.id}
-                          className={`relative rounded-2xl p-5 border backdrop-blur transition-all hover:scale-[1.02] hover:-translate-y-1 duration-300 ${colors.bg} ${colors.border} ${isPopular ? "shadow-xl shadow-amber-500/10 ring-1 ring-amber-500/20" : ""} ${isPatron ? "shadow-xl shadow-purple-500/10 ring-1 ring-purple-500/20" : ""}`}
+                          className={`relative rounded-2xl p-5 border backdrop-blur transition-all duration-300 ${colors.bg} ${colors.border} ${isPopular ? "shadow-xl shadow-amber-500/10 ring-1 ring-amber-400/25" : ""} ${isPatron ? "shadow-xl shadow-purple-500/15 ring-1 ring-fuchsia-400/25" : ""}`}
                         >
                           {isPopular && (
                             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -2058,27 +1884,27 @@ export default function StreamPage() {
                               {plan.name}
                             </h3>
                           </div>
-                          <div className="mb-4">
-                            <span className="text-3xl font-extrabold text-slate-900">
+                          <div className="mb-4 tabular-nums">
+                            <span className="text-3xl font-extrabold text-slate-50">
                               ${plan.price}
                             </span>
                             {plan.price > 0 && (
-                              <span className="text-slate-700 text-sm ml-1">
+                              <span className="text-slate-400 text-sm ml-1">
                                 /mois
                               </span>
                             )}
                           </div>
                           {/* Weekly streams indicator */}
                           <div
-                            className={`mb-4 text-xs ${colors.accent} font-medium`}
+                            className={`mb-4 text-xs ${colors.accent} font-medium tabular-nums`}
                           >
                             {plan.weeklyStreams === -1
                               ? "∞ Streams illimités"
                               : `${plan.weeklyStreams} streams/semaine`}
                           </div>
-                          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-900/10 px-3 py-2.5">
+                          <div className="mb-4 rounded-xl border border-purple-500/20 bg-[#090418]/75 px-3 py-2.5">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                 Arena vote power
                               </span>
                               <Trophy
@@ -2090,7 +1916,7 @@ export default function StreamPage() {
                             >
                               {plan.contestVoteLabel || "10% of 1 vote point"}
                             </p>
-                            <p className="mt-1 text-[10px] leading-4 text-slate-700">
+                            <p className="mt-1 text-[10px] leading-4 text-slate-400">
                               One eligible listener vote is weighted by this
                               share. Streaming stays free; voting remains tied
                               to the contest rules.
@@ -2103,7 +1929,7 @@ export default function StreamPage() {
                             ).map((f: string, idx: number) => (
                               <li
                                 key={idx}
-                                className="text-slate-700 text-[11px] flex items-start gap-2"
+                                className="text-slate-300 text-xs flex items-start gap-2"
                               >
                                 <span
                                   className={`${colors.accent} mt-0.5 text-[10px]`}
@@ -2122,7 +1948,7 @@ export default function StreamPage() {
                                       [plan.id]: !prev[plan.id],
                                     }))
                                   }
-                                  className={`text-[10px] font-medium ${colors.accent} hover:underline flex items-center gap-1 transition-all`}
+                                  className={`text-xs font-medium ${colors.accent} hover:underline flex items-center gap-1 transition-all`}
                                 >
                                   {expandedTiers[plan.id] ? (
                                     <>▲ Masquer</>
@@ -2151,6 +1977,6 @@ export default function StreamPage() {
             </section>
           )}
         </div>
-      </>
+      </TmuShell>
     );
   }

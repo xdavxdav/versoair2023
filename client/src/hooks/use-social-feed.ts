@@ -39,11 +39,14 @@ interface FeedResponse {
   };
 }
 
+const EMPTY_POSTS: PostData[] = [];
+
 export const useSocialFeed = (
   initialPage: number = 1,
   limit: number = 10,
   sort: "recent" | "trending" = "recent",
   postType?: string,
+  search?: string,
 ) => {
   const [page, setPage] = useState(initialPage);
   const queryClient = useQueryClient();
@@ -55,7 +58,7 @@ export const useSocialFeed = (
     isError,
     error,
   } = useQuery({
-    queryKey: ["socialFeed", page, limit, sort, postType],
+    queryKey: ["socialFeed", page, limit, sort, postType, search],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page),
@@ -63,6 +66,7 @@ export const useSocialFeed = (
         sort,
       });
       if (postType) params.set("postType", postType);
+      if (search) params.set("q", search);
       const response = await fetch(`/api/social/posts?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch feed");
       return (await response.json()) as FeedResponse;
@@ -139,7 +143,7 @@ export const useSocialFeed = (
     setPage((prev) => prev + 1);
   }, []);
 
-  const posts = feedData?.data || [];
+  const posts = feedData?.data ?? EMPTY_POSTS;
 
   return {
     posts,

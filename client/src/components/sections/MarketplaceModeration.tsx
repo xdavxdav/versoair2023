@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authenticatedFetch } from "@/lib/auth";
+import MarketingCatalogPanel from "@/pages/vault/MarketingCatalogPanel";
 import {
   Card,
   CardContent,
@@ -216,6 +217,7 @@ export function MarketplaceModeration() {
 
   return (
     <div className="space-y-6">
+      <MarketingCatalogPanel />
       {/* Header with stats */}
       <Card className="border-0 shadow-lg">
         <CardHeader>

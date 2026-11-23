@@ -78,6 +78,34 @@
       "when": 1794512827613,
       "tag": "0010_business_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795195000000,
+      "tag": "0011_arcade_scores",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795197000000,
+      "tag": "0012_profile_link_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795198000000,
+      "tag": "0013_business_owners",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795199000000,
+      "tag": "0014_event_arsenal",
+      "breakpoints": true
     }
   ]
 }

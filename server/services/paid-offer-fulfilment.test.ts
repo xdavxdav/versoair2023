@@ -32,18 +32,18 @@ class OfferDb {
     if (sql.startsWith("INSERT INTO paid_offers")) return { rows: [] };
 
     if (sql.startsWith("INSERT INTO transactions")) {
-      const [userId, amount, currency, type, reference] = p;
+      const [userId, amount, type, reference] = p;
       if (this.transactions.some((t) => t.reference === reference)) {
         return { rows: [] };
       }
-      this.transactions.push({ user_id: userId, amount, currency, type, reference });
+      this.transactions.push({ user_id: userId, amount, type, reference });
       return { rows: [{ id: this.transactions.length }] };
     }
-    if (sql.startsWith("SELECT user_id, currency, type FROM transactions")) {
+    if (sql.startsWith("SELECT user_id, type FROM transactions")) {
       return {
         rows: this.transactions
           .filter((t) => t.reference === p[0])
-          .map(({ user_id, currency, type }) => ({ user_id, currency, type })),
+          .map(({ user_id, type }) => ({ user_id, type })),
       };
     }
     if (sql.startsWith("UPDATE orders")) return { rows: [] };

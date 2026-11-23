@@ -25,7 +25,7 @@ export function MusicLayout({ children }: MusicLayoutProps) {
         </div>
 
         {/* Page content — fills remaining width, offset from sidebar on desktop */}
-        <main className="flex-1 min-w-0 pt-14 pb-20 md:pb-0 md:ml-16">
+        <main className="flex-1 min-w-0 pt-14 pb-24 md:pt-0 md:pb-10 md:ml-16">
           {children}
         </main>
       </div>

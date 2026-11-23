@@ -157,6 +157,9 @@ const PUBLIC_PATHS: string[] = [
   "/api/request/business",
   "/api/request/artist",
   "/api/request/job",
+  // Drop-a-link artist account request & public preview (pending only, staff-approved)
+  "/api/profile-requests/preview",
+  "/api/profile-requests",
   // Public beta contact & newsletter endpoints
   "/api/contact",
   "/api/marketing/newsletters/subscribe",
@@ -186,6 +189,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/profiles/", // Public artisan and unified profile directory
   "/api/faq", // FAQ browsing — GET only (list/search/detail)
   "/api/artists/", // Artist directory (search, genres, countries)
+  "/api/music-genres", // Public read-only canonical music genre taxonomy
   "/api/music/", // Music artists, tracks, analytics (home page carousel)
   "/api/businesses", // Business listing & search (home page, directory)
   "/api/business/search", // Business search (legacy)
@@ -202,6 +206,7 @@ const PUBLIC_PATH_PREFIXES: string[] = [
   "/api/streaming/search", // Streaming search
   "/api/streaming/subscription/plans", // Subscription plan listing (public)
   "/api/communities/", // Public artisan community discovery
+  "/api/vxpp-communities", // Public vxpp communities browse, detail, posts & comments (GET only)
   "/api/events", // Public published event discovery
   "/api/astrology", // Read-only astrology data used by the public VersoAI page
   "/api/seo/", // Public SEO resources: sitemap + robots + JSON-LD endpoints
@@ -240,15 +245,23 @@ function isPublicPath(path: string, method: string): boolean {
       "/api/arena/summary",
       "/api/revenue-pulse/pool",
       "/api/revenue-pulse/leaderboard",
+      "/api/arcade/leaderboard",
+      "/api/arcade/config",
+      // Open country contests only (none until staff switch one on); everything else needs sign-in
+      "/api/arcade-contest/contests",
       "/api/page-readiness",
       "/api/notifications",
       "/api/notifications/unread-count",
     ].includes(path)) return true;
     if (/^\/api\/translations\/[^/]+\/?$/.test(path)) return true;
     if (new RegExp("^/api/social/posts/[^/]+/comments$").test(path) ||
+        new RegExp("^/api/social/users/[0-9]+(?:/(?:posts|tracks))?$").test(path) ||
+        new RegExp("^/api/profile/media/[0-9]+/(?:avatar|cover)$").test(path) ||
+        new RegExp("^/api/profile/post-media/[0-9]+$").test(path) ||
         new RegExp("^/api/arena/[0-9]+(?:/bracket)?$").test(path) ||
         // Stored business logos; the route itself hides non-public businesses.
         new RegExp("^/api/business-logo/file/[0-9]+$").test(path) ||
+        new RegExp("^/api/business-cover/file/[0-9]+$").test(path) ||
         new RegExp("^/api/listening-sessions(?:/[0-9]+(?:/(?:now-playing|chat))?)?/?$").test(path) ||
         new RegExp("^/api/marketing/packs/[^/]+$").test(path) ||
         new RegExp("^/api/marketing/journal/pdf/[^/]+$").test(path)) return true;

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
+import CheckoutReviewModal from "@/components/CheckoutReviewModal";
 import { authenticatedFetch } from "@/lib/auth";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useTranslate } from "@/hooks/use-translate";
+import type { BillingDetailsInput } from "@shared/billing-details";
+import { isBundledLanguage } from "@shared/public-translations";
 
 export interface PublicOffer {
   key: string;
@@ -79,15 +83,23 @@ export default function OfferCheckoutButton({
   onOwned,
 }: OfferCheckoutButtonProps) {
   const { user } = useAuthContext();
+  const { currentLang } = useLanguage();
   const tr = useTranslate();
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const native = isBundledLanguage(currentLang);
 
-  async function start() {
+  function openReview() {
     if (!user) {
       window.location.href = `/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
+    setError(null);
+    setReviewOpen(true);
+  }
+
+  async function start(billingDetails: BillingDetailsInput) {
     setBusy(true);
     setError(null);
     try {
@@ -96,12 +108,20 @@ export default function OfferCheckoutButton({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ offerKey: offer.key, eventId }),
+          body: JSON.stringify({
+            offerKey: offer.key,
+            eventId,
+            billingDetails,
+            clientAttemptId: `${offer.key}-${eventId ?? "none"}-${Date.now()}`,
+          }),
         },
       );
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.data?.url) {
-        if (res.status === 409 && ALREADY_OWNED.has(body?.code)) onOwned?.();
+        if (res.status === 409 && ALREADY_OWNED.has(body?.code)) {
+          onOwned?.();
+          setReviewOpen(false);
+        }
         setError(body?.error ?? "Checkout could not start. Please try again.");
         return;
       }
@@ -117,18 +137,39 @@ export default function OfferCheckoutButton({
     <div>
       <Button
         type="button"
-        onClick={start}
+        onClick={openReview}
         disabled={busy}
         className={className ?? "bg-amber-600 text-white hover:bg-amber-700"}
       >
         {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {tr(label)} — CA${(offer.amountCents / 100).toFixed(2)}
+        <span
+          key={`${offer.key}-${offer.amountCents}-${currentLang}`}
+          lang={native ? currentLang : undefined}
+          dir="auto"
+          translate={native ? "no" : undefined}
+          className={native ? "notranslate" : undefined}
+        >
+          {tr(label)} — CA${(offer.amountCents / 100).toFixed(2)}
+        </span>
       </Button>
-      {error ? (
+      {error && !reviewOpen ? (
         <p role="alert" className="mt-2 text-sm text-red-600">
           {tr(error)}
         </p>
       ) : null}
+      <CheckoutReviewModal
+        open={reviewOpen}
+        onClose={() => !busy && setReviewOpen(false)}
+        title={offer.name}
+        purpose={`VERSO AIR INC. — ${offer.name}`}
+        deliverable="One-time payment applied directly to your Verso Air account upon Stripe confirmation. Official itemized PDF receipt emailed automatically."
+        totalCents={offer.amountCents}
+        billingFrequencyLabel="CAD · one-time"
+        items={[{ label: offer.name, amountCents: offer.amountCents }]}
+        busy={busy}
+        serverError={error}
+        onConfirm={start}
+      />
     </div>
   );
 }

@@ -97,6 +97,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { authenticatedFetch } from "@/lib/auth";
 import { useLanguage } from "@/components/LanguageSwitcher";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import {
@@ -529,25 +530,39 @@ export default function Careers() {
   // TRACE: Mutation for applying to jobs
   const applyMutation = useMutation({
     mutationFn: async (jobId: string) => {
+      if (!platformUser) {
+        setAuthMode("login");
+        setShowAuthPopup(true);
+        throw new Error("Please sign in to apply for this job.");
+      }
       try {
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `${API_BASE_URL}/api/jobs/${jobId}/apply`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              userId: "current-user-id",
               applied_date: new Date().toISOString(),
             }),
           },
         );
 
+        if (response.status === 401) {
+          setAuthMode("login");
+          setShowAuthPopup(true);
+          throw new Error("Please sign in to apply for this job.");
+        }
         if (!response.ok) {
           throw new Error("Failed to submit application");
         }
 
         return await response.json();
       } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.startsWith("Please sign in")
+        )
+          throw error;
         throw new Error("Application submission failed");
       }
     },
@@ -650,10 +665,14 @@ export default function Careers() {
   // Refresh the published job list.
   const refreshJobs = () => {
     refetchJobs();
-    toast({
+    const { dismiss } = toast({
       title: "Jobs refreshed!",
       description: "The latest published job listings have been loaded.",
+      duration: 2000,
     });
+    window.setTimeout(() => {
+      dismiss();
+    }, 2000);
   };
 
   // TRACE: Filter jobs based on search criteria
@@ -1002,7 +1021,7 @@ export default function Careers() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-1 sm:gap-2 !text-gray-700 hover:!text-gray-900 hover:!bg-gray-100 transition-all duration-200 px-2 sm:px-3"
+                    className="gap-1 sm:gap-2 !text-gray-700 hover:!text-gray-900 hover:!bg-gray-100 dark:!text-slate-200 dark:hover:!text-white dark:hover:!bg-slate-800 transition-all duration-200 px-2 sm:px-3"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     <span className="hidden sm:inline">Back to Services</span>
@@ -1033,7 +1052,10 @@ export default function Careers() {
                     className="gap-1 sm:gap-2 border-amber-300 !bg-amber-50 !text-amber-900 hover:border-amber-400 hover:!bg-amber-100 hover:!text-amber-950 px-2 sm:px-3"
                   >
                     <HardHat className="h-4 w-4" />
-                    <span className="hidden sm:inline notranslate" translate="no">
+                    <span
+                      className="hidden sm:inline notranslate"
+                      translate="no"
+                    >
                       {translateText("Switch to Contractor View")}
                     </span>
                   </Button>
@@ -1493,20 +1515,20 @@ export default function Careers() {
             <div className="lg:w-3/4">
               {/* Search Bar — right above job results */}
               <div className="mb-5">
-                <div className="relative">
+                <div className="flex flex-col gap-2 sm:block sm:relative">
                   <div className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
+                    <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-600" />
                     <Input
                       placeholder="Search jobs, companies, or skills…"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-11 pr-28 py-6 text-base border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
+                      className="pl-11 sm:pr-28 py-6 text-base border-0 focus:ring-0 focus-visible:ring-0 bg-transparent"
                     />
-                    <Button className="absolute right-2 top-1/2 -translate-y-1/2 py-2.5 px-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-sm text-sm">
-                      <Search className="h-4 w-4 mr-1.5" />
-                      Search
-                    </Button>
                   </div>
+                  <Button className="hero-search-cta w-full sm:w-auto sm:absolute sm:right-2 sm:top-1/2 sm:-translate-y-1/2 py-2.5 px-5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-sm text-sm">
+                    <Search className="h-4 w-4 mr-1.5" />
+                    Search
+                  </Button>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2.5">
                   {[
@@ -1699,7 +1721,10 @@ export default function Careers() {
                   {isLoading ? (
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
-                        <Card key={i} className="bg-white text-slate-900 border-gray-200/80">
+                        <Card
+                          key={i}
+                          className="bg-white text-slate-900 border-gray-200/80"
+                        >
                           <CardContent className="p-6">
                             <Skeleton className="h-6 w-3/4 mb-2" />
                             <Skeleton className="h-4 w-1/2 mb-4" />
@@ -2058,7 +2083,9 @@ export default function Careers() {
                         setVerificationEmailSent(
                           typeof d.emailSent === "boolean" ? d.emailSent : null,
                         );
-                        setResendMessage(d.message || "Verification status updated.");
+                        setResendMessage(
+                          d.message || "Verification status updated.",
+                        );
                       } catch {
                         setResendMessage("Failed to resend. Try again.");
                       } finally {

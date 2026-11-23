@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ShieldCheck, ArrowLeft, Globe } from "lucide-react";
 import ScrollableNavbar from "@/components/ScrollableNavbar";
+import BackLink from "@/components/BackLink";
 import { useState, useEffect, useMemo } from "react";
 
 type RegionKey = "eu" | "us" | "br" | "ca" | "za" | "au" | "jp" | "in" | "kr" | "uk" | "global";
@@ -249,12 +250,10 @@ export default function GDPRCompliance() {
     <div className="min-h-screen bg-[#f3efe9] text-slate-900">
       <ScrollableNavbar isAuthenticated={false} />
       <div className="max-w-4xl mx-auto px-4 py-16">
-        <Link href="/">
-          <a className="inline-flex items-center gap-2 text-amber-800 hover:text-amber-700 text-sm mb-8 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </a>
-        </Link>
+        <BackLink className="inline-flex items-center gap-2 text-amber-800 hover:text-amber-700 text-sm mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </BackLink>
 
         <div className="flex items-center gap-4 mb-6">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">

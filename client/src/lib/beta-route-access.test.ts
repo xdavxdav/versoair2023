@@ -104,6 +104,7 @@ test("links in the main navigation never point outside the beta scope", () => {
     "client/src/components/BlogNavbar.tsx",
     "client/src/components/ContentNav.tsx",
     "client/src/components/SmartNavDock.tsx",
+    "client/src/components/vxpp/VxppShell.tsx",
   ];
   const link = /\b(?:href|path|to)\s*[:=]\s*\{?\s*["'](\/[^"'$`?#]*)["']/g;
 
@@ -121,6 +122,7 @@ test("links in the main navigation never point outside the beta scope", () => {
 test("isRouteReachable tells links apart from pages the beta scope hides", () => {
   assert.equal(isRouteReachable("/support"), true);
   assert.equal(isRouteReachable("/services/contractors"), true);
-  assert.equal(isRouteReachable("/user/"), false);
-  assert.equal(isRouteReachable("/user/42"), false);
+  assert.equal(isRouteReachable("/vxpp"), true);
+  assert.equal(isRouteReachable("/user/42"), true);
+  assert.equal(isRouteReachable("/unreleased-legacy-portal"), false);
 });

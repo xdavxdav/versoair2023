@@ -4,19 +4,17 @@ export interface PageReadinessConfig {
   blockedPaths: string[];
 }
 
-export const PAGE_READINESS_CONFIG_VERSION = 9;
+export const PAGE_READINESS_CONFIG_VERSION = 11;
 
-export const LOCAL_PREVIEW_ONLY_PATHS = [
-  "/arcade",
-  "/programs",
-  "/sponsorship",
-] as const;
+export const LOCAL_PREVIEW_ONLY_PATHS: readonly string[] = [] as const;
 
 // Launched from the preview gate: the business directory and featured category
-// pages (version 8), then the in-development community pages (version 9). Saved
-// configs from earlier versions still list them as blocked, so the migration
-// below strips them.
+// pages (version 8), the in-development community pages (version 9), the Arcade
+// page (version 10), and the exploratory Programs & Sponsorship concept pages
+// (version 11). Saved configs from earlier versions still list them as blocked,
+// so the migration below strips them.
 export const RELEASED_PAGE_PATHS = [
+  "/arcade",
   "/businesses-directory",
   "/commerce",
   "/hotellerie",
@@ -30,6 +28,8 @@ export const RELEASED_PAGE_PATHS = [
   "/vheatrz",
   "/artihuman-foundation",
   "/partners",
+  "/programs",
+  "/sponsorship",
 ] as const;
 
 export const PAGE_READINESS_CANDIDATES = [
@@ -167,10 +167,13 @@ export function isPageReadinessCandidate(path: string): boolean {
   return (PAGE_READINESS_CANDIDATES as readonly string[]).includes(path);
 }
 
-export function isLocalPreviewOnlyPath(pathname: string): boolean {
+export function isLocalPreviewOnlyPath(
+  pathname: string,
+  previewOnlyPaths: readonly string[] = LOCAL_PREVIEW_ONLY_PATHS,
+): boolean {
   const normalizedPath =
     pathname.split(/[?#]/, 1)[0].replace(/\/+$/, "").toLowerCase() || "/";
-  return LOCAL_PREVIEW_ONLY_PATHS.some(
+  return previewOnlyPaths.some(
     (previewPath) =>
       normalizedPath === previewPath ||
       normalizedPath.startsWith(`${previewPath}/`),
@@ -186,24 +189,28 @@ export function isLocalDevelopmentHost(hostname: string): boolean {
 export function getEffectiveBlockedPaths(
   blockedPaths: readonly string[],
   isLocalPreview: boolean,
+  previewOnlyPaths: readonly string[] = LOCAL_PREVIEW_ONLY_PATHS,
 ): string[] {
   return isLocalPreview
-    ? blockedPaths.filter((path) => !isLocalPreviewOnlyPath(path))
+    ? blockedPaths.filter(
+        (path) => !isLocalPreviewOnlyPath(path, previewOnlyPaths),
+      )
     : [...blockedPaths];
 }
 
 export function enforceProductionPreviewGates(
   config: PageReadinessConfig,
   isProduction: boolean,
+  previewOnlyPaths: readonly string[] = LOCAL_PREVIEW_ONLY_PATHS,
 ): PageReadinessConfig {
   if (!isProduction) return config;
   return {
     ...config,
     eligiblePaths: [
-      ...new Set([...config.eligiblePaths, ...LOCAL_PREVIEW_ONLY_PATHS]),
+      ...new Set([...config.eligiblePaths, ...previewOnlyPaths]),
     ],
     blockedPaths: [
-      ...new Set([...config.blockedPaths, ...LOCAL_PREVIEW_ONLY_PATHS]),
+      ...new Set([...config.blockedPaths, ...previewOnlyPaths]),
     ],
   };
 }

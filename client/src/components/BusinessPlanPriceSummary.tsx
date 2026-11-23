@@ -1,16 +1,19 @@
 import {
   BUSINESS_PLAN_PRICE_SCHEDULE,
   deriveEurPlanPrice,
+  type BillingCycle,
 } from "@shared/plan-pricing";
 import { type GeoAdminOfferKey } from "@/lib/geoadmin-pricing";
 import { useLocalizedContent } from "@/hooks/use-localized-content";
 
 interface BusinessPlanPriceSummaryProps {
   offer: GeoAdminOfferKey;
+  cycle?: BillingCycle;
 }
 
 export default function BusinessPlanPriceSummary({
   offer,
+  cycle,
 }: BusinessPlanPriceSummaryProps) {
   const localize = useLocalizedContent(false);
   const price = BUSINESS_PLAN_PRICE_SCHEDULE[offer];
@@ -31,9 +34,23 @@ export default function BusinessPlanPriceSummary({
   }
 
   const eur = deriveEurPlanPrice(price.fcfaAnnual);
-  const cadPrices = `CA$${(price.cadMonthlyCents / 100).toFixed(0)}/mo · CA$${(price.cadAnnualCents / 100).toFixed(0)}/yr`;
+  const cadMonthly = `CA$${(price.cadMonthlyCents / 100).toFixed(0)}/mo`;
+  const cadAnnual = `CA$${(price.cadAnnualCents / 100).toFixed(0)}/yr`;
+  const cadPrices =
+    cycle === "monthly"
+      ? cadMonthly
+      : cycle === "annual"
+        ? cadAnnual
+        : `${cadMonthly} · ${cadAnnual}`;
   const fcfaPrice = `${price.fcfaAnnual.toLocaleString("en-CA")} FCFA/yr`;
-  const eurPrices = `€${(eur.monthlyCents / 100).toFixed(2)}/mo · €${(eur.annualCents / 100).toFixed(2)}/yr`;
+  const eurMonthly = `€${(eur.monthlyCents / 100).toFixed(2)}/mo`;
+  const eurAnnual = `€${(eur.annualCents / 100).toFixed(2)}/yr`;
+  const eurPrices =
+    cycle === "monthly"
+      ? eurMonthly
+      : cycle === "annual"
+        ? eurAnnual
+        : `${eurMonthly} · ${eurAnnual}`;
   return localize(
     <div className="space-y-1 text-sm">
       <p>

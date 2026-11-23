@@ -231,11 +231,20 @@ router.get("/conversations", async (req: Request, res: Response) => {
       }
     }
 
-    const rows = await db
+    const rawRows = await db
       .select()
       .from(schema.inboxConversations)
       .where(eq(schema.inboxConversations.userId, Number(userId)))
       .orderBy(desc(schema.inboxConversations.updatedAt));
+
+    // Never surface legacy self-conversations (user messaging themselves)
+    const rows = rawRows.filter(
+      (conversation) =>
+        !(
+          participantIsUser(conversation.type) &&
+          String(conversation.participantId) === String(userId)
+        ),
+    );
 
     const participantIds = rows
       .filter((conversation) => participantIsUser(conversation.type))
@@ -317,8 +326,8 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
     const search = (req.query.q as string) ?? "";
     const limit = Math.min(Number(req.query.limit) || 20, 50);
 
-    // businesses has city_name / country_code / owner_id (no city, country or user_id). Excluding the
-    // caller's own business with owner_id IS DISTINCT FROM keeps rows for callers who own none.
+    // businesses has city_name / country_code / owner_id (no city, country or user_id).
+    // Exclude both the primary owner and any accepted co-owner.
     const rows = await db.execute(
       sql`
         SELECT
@@ -335,6 +344,12 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
         WHERE b.verification_status = 'verified'
           AND b.is_active = true
           AND b.owner_id IS DISTINCT FROM ${Number(req.user!.userId)}
+          AND NOT EXISTS (
+            SELECT 1 FROM business_owners bo
+             WHERE bo.business_id = b.id
+               AND bo.user_id = ${Number(req.user!.userId)}
+               AND bo.status = 'active'
+          )
           ${search ? sql`AND b.name ILIKE ${"%" + search + "%"}` : sql``}
         ORDER BY b.rating DESC NULLS LAST
         LIMIT ${limit}
@@ -472,6 +487,16 @@ router.post(
       return res.status(400).json({
         success: false,
         error: "participantId and participantName are required",
+      });
+    }
+
+    if (
+      participantIsUser(type) &&
+      String(participantId).trim() === String(userId).trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "You cannot start a conversation with yourself.",
       });
     }
 
@@ -943,7 +968,7 @@ router.post(
         return res.status(reply.status).json(reply.body);
       }
 
-      if (mirror && recipientUserId !== null) {
+      if (mirror && recipientUserId !== null && recipientUserId !== Number(userId)) {
         try {
           await notifyMessage({
             senderId: Number(userId),

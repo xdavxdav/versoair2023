@@ -7,7 +7,7 @@ const COPY_CALLS = new Set(["translateText", "tr"]);
 const NON_COPY_PROPERTIES = new Set([
   "id", "key", "icon", "gradient", "cardRing", "badgeClassName", "className",
   "redirectPath", "registerEndpoint", "loginEndpoint", "color", "href", "path",
-  "to", "emoji", "variant",
+  "to", "emoji", "variant", "bgColor", "categoryId",
 ]);
 
 export interface CopyScanOptions {

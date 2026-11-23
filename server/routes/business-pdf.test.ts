@@ -12,6 +12,7 @@ import businessesRouter from "./businesses";
 
 const BUSINESS = 5;
 const owner = { id: 21, role: "user" };
+const coOwner = { id: 22, role: "user" };
 const stranger = { id: 8, role: "user" };
 const moderator = { id: 3, role: "moderator" };
 const admin = { id: 1, role: "admin" };
@@ -36,18 +37,28 @@ const BASE_ROW = {
 
 interface Scenario {
   ownerId?: number;
+  coOwnerIds?: number[];
   missing?: boolean;
   row?: Partial<typeof BASE_ROW>;
   readFails?: boolean;
 }
 
 function scriptedDb(scenario: Scenario = {}) {
-  return scriptPool((sql) => {
-    if (sql === "SELECT owner_id FROM businesses WHERE id = $1") {
+  return scriptPool((sql, params) => {
+    if (
+      sql.includes("FROM business_owners bo") &&
+      sql.includes("FROM businesses b WHERE b.id = $1")
+    ) {
+      const callerId = Number(params?.[1]);
       return {
         rows: scenario.missing
           ? []
-          : [{ owner_id: scenario.ownerId ?? owner.id }],
+          : [
+              {
+                owner_id: scenario.ownerId ?? owner.id,
+                is_owner: Boolean(scenario.coOwnerIds?.includes(callerId)),
+              },
+            ],
       };
     }
     if (sql.startsWith("SELECT b.id, b.name, b.description, b.address")) {
@@ -202,13 +213,13 @@ test("business PDF: it shows the real status, with the sign-off box only while p
   }
 });
 
-test("business PDF: staff can download any business, a stranger cannot", async () => {
-  const scenario: Scenario = { ownerId: owner.id };
+test("business PDF: staff and active co-owners can download any business, a stranger cannot", async () => {
+  const scenario: Scenario = { ownerId: owner.id, coOwnerIds: [coOwner.id] };
   const db = scriptedDb(scenario);
-  for (const staff of [admin, moderator, superuser]) {
+  for (const allowedUser of [coOwner, admin, moderator, superuser]) {
     await serve(async (origin) => {
-      const res = await download(origin, pdfPath(), signIn(staff));
-      assert.equal(res.status, 200, staff.role);
+      const res = await download(origin, pdfPath(), signIn(allowedUser));
+      assert.equal(res.status, 200, `${allowedUser.role}:${allowedUser.id}`);
       assert.equal(res.body.subarray(0, 5).toString("latin1"), "%PDF-");
     });
   }

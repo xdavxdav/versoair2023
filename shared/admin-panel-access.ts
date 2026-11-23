@@ -32,6 +32,7 @@ export const OWNER_ONLY_ADMIN_PANEL_SECTIONS = [
   "tsr-whitelist",
   "artisan-profiles",
   "listening-sessions",
+  "arcade-games",
 ] as const;
 
 /** Audit entities an invited Admin manages and may therefore see in the activity log. */

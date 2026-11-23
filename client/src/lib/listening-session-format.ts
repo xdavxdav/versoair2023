@@ -99,7 +99,7 @@ export interface SessionGroups {
   replays: SessionSummary[];
 }
 
-/** Featured live/upcoming sessions lead; other sessions sort by time, replays newest first. */
+/** Live and upcoming sessions soonest first, replays newest first; cancelled ones are not listed. */
 export function groupSessions(
   sessions: readonly SessionSummary[],
   serverNowMs: number,
@@ -112,9 +112,7 @@ export function groupSessions(
     else if (status === "ended") groups.replays.push(session);
   }
   const byStart = (a: SessionSummary, b: SessionSummary) =>
-    Number(b.featured) - Number(a.featured) ||
-    Date.parse(a.startsAt) - Date.parse(b.startsAt) ||
-    a.id - b.id;
+    Date.parse(a.startsAt) - Date.parse(b.startsAt) || a.id - b.id;
   const byEndDesc = (a: SessionSummary, b: SessionSummary) =>
     Date.parse(b.endsAt) - Date.parse(a.endsAt) || b.id - a.id;
   groups.live.sort(byStart);

@@ -27,10 +27,13 @@ export const PUBLIC_BUSINESS_LIST_COLUMNS = [
   "updated_at",
 ] as const;
 
-// Whether an owner exists, never who: owner_id itself stays private.
-export const PUBLIC_IS_CLAIMED_SQL = "(b.owner_id IS NOT NULL) AS is_claimed";
+// Whether any accepted owner exists, never who: owner IDs stay private.
+export const BUSINESS_HAS_ACTIVE_OWNER_SQL =
+  "(b.owner_id IS NOT NULL OR EXISTS (SELECT 1 FROM business_owners bo WHERE bo.business_id = b.id AND bo.status = 'active'))";
+export const PUBLIC_IS_CLAIMED_SQL =
+  `(${BUSINESS_HAS_ACTIVE_OWNER_SQL}) AS is_claimed`;
 export const PUBLIC_CLAIMABLE_SQL =
-  "(b.owner_id IS NULL AND b.is_active = true) AS claimable";
+  `(NOT ${BUSINESS_HAS_ACTIVE_OWNER_SQL} AND b.is_active = true) AS claimable`;
 
 export const PUBLIC_BUSINESS_LIST_SELECT_SQL = [
   ...PUBLIC_BUSINESS_LIST_COLUMNS.map((column) => `b.${column}`),

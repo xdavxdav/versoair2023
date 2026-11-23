@@ -50,11 +50,12 @@ export default function OfferPricesPanel() {
   return (
     <div className="bg-gray-900/60 border border-gray-800/50 rounded-lg p-4 mb-4">
       <h3 className="text-sm font-bold text-white mb-1">
-        Community &amp; activity prices (CAD)
+        Community, activity &amp; event hosting prices (CAD)
       </h3>
       <p className="text-[11px] text-gray-500 mb-3">
         Changes apply to new checkouts immediately. Turning an offer off hides
-        its Pay button and, for activities, reopens free RSVP.
+        its Pay button — for activities it reopens free RSVP, and for Event
+        hosting fee it lets members submit events for review at no charge.
       </p>
       <div className="space-y-2">
         {offers.map((offer) => (

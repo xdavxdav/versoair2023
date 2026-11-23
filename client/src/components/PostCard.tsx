@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
@@ -7,6 +7,9 @@ import {
   MoreHorizontal,
   Zap,
   TrendingUp,
+  Pencil,
+  Trash2,
+  Bookmark,
 } from "lucide-react";
 
 interface Post {
@@ -43,6 +46,9 @@ interface PostComment {
 
 interface PostCardProps {
   post: Post;
+  canEdit?: boolean;
+  onEditPost?: (postId: number, content: string) => Promise<void> | void;
+  onDeletePost?: (postId: number) => Promise<void> | void;
   onLike?: (postId: number) => void;
   onComment?: (postId: number, content: string) => Promise<void> | void;
   onEditComment?: (
@@ -54,10 +60,15 @@ interface PostCardProps {
   onFetchComments?: (postId: number) => Promise<PostComment[]>;
   onShare?: (postId: number) => Promise<void> | void;
   liked?: boolean;
+  saved?: boolean;
+  onToggleSave?: (postId: number) => void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
   post,
+  canEdit = false,
+  onEditPost,
+  onDeletePost,
   onLike,
   onComment,
   onEditComment,
@@ -65,11 +76,21 @@ const PostCard: React.FC<PostCardProps> = ({
   onShare,
   onFetchComments,
   liked = false,
+  saved = false,
+  onToggleSave,
 }) => {
   const [isLiked, setIsLiked] = useState(liked);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [commentCount, setCommentCount] = useState(post.comments);
   const [shareCount, setShareCount] = useState(post.shares);
+  const [postContent, setPostContent] = useState(post.content);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [editingPostText, setEditingPostText] = useState(post.content);
+  const [isSavingPost, setIsSavingPost] = useState(false);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [postActionError, setPostActionError] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
   const [showParticles, setShowParticles] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [comment, setComment] = useState("");
@@ -184,7 +205,66 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  useEffect(() => {
+    setPostContent(post.content);
+  }, [post.content]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [menuOpen]);
+
+  const startEditingPost = () => {
+    setMenuOpen(false);
+    setPostActionError("");
+    setEditingPostText(postContent);
+    setIsEditingPost(true);
+  };
+
+  const saveEditedPost = async () => {
+    const trimmed = editingPostText.trim();
+    if (!trimmed || !onEditPost || isSavingPost) return;
+    setIsSavingPost(true);
+    setPostActionError("");
+    try {
+      await onEditPost(post.id, trimmed);
+      setPostContent(trimmed);
+      setIsEditingPost(false);
+    } catch {
+      setPostActionError("Post could not be updated.");
+    } finally {
+      setIsSavingPost(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!onDeletePost || isDeletingPost) return;
+    setMenuOpen(false);
+    setIsDeletingPost(true);
+    setPostActionError("");
+    try {
+      await onDeletePost(post.id);
+    } catch {
+      setPostActionError("Post could not be deleted.");
+      setIsDeletingPost(false);
+    }
+  };
+
   const handleShare = async () => {
+    setMenuOpen(false);
     await onShare?.(post.id);
     setShareCount((value) => value + 1);
   };
@@ -195,50 +275,133 @@ const PostCard: React.FC<PostCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="mb-4 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-4 shadow-sm shadow-slate-200/60 dark:shadow-none backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
           <img
             src={post.author.avatar}
             alt={post.author.name}
-            className="h-12 w-12 rounded-full object-cover ring-2 ring-cyan-100"
+            className="h-12 w-12 rounded-full object-cover ring-2 ring-cyan-100 dark:ring-cyan-900/60"
           />
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-slate-800">
+              <p translate="no" className="notranslate text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {post.author.name}
               </p>
               {post.author.verified && (
-                <span className="text-xs text-cyan-600">✓</span>
+                <span className="text-xs text-cyan-600 dark:text-cyan-400">✓</span>
               )}
             </div>
-            <p className="text-xs text-slate-500">{post.author.profession}</p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">{post.author.profession}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               {formatTime(post.timestamp)}
             </p>
           </div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.96 }}
-          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100"
-          aria-label="More actions"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </motion.button>
+        <div ref={menuRef} className="relative">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200"
+            aria-label="More actions"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </motion.button>
+
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 mt-1 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 shadow-lg z-30"
+            >
+              {canEdit && onEditPost && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={startEditingPost}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-cyan-700 dark:text-cyan-400" />
+                  Edit post
+                </button>
+              )}
+              {canEdit && onDeletePost && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleDeletePost}
+                  disabled={isDeletingPost}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {isDeletingPost ? "Deleting..." : "Delete post"}
+                </button>
+              )}
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleShare}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <Share2 className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                Share post
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {post.isTrending && (
-        <div className="mb-3 flex items-center gap-1 text-xs font-medium text-amber-600">
+        <div className="mb-3 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
           <Zap className="h-3 w-3" />
           Trending
         </div>
       )}
 
-      <p className="mb-4 text-[15px] leading-7 text-slate-700">
-        {post.content}
-      </p>
+      {isEditingPost ? (
+        <div className="mb-4 space-y-2">
+          <textarea
+            value={editingPostText}
+            onChange={(e) => setEditingPostText(e.target.value)}
+            rows={3}
+            className="w-full rounded-xl border border-cyan-300 dark:border-cyan-700 bg-white dark:bg-slate-800 p-3 text-[15px] leading-6 text-slate-800 dark:text-slate-100 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+            aria-label="Edit post content"
+          />
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditingPost(false);
+                setEditingPostText(postContent);
+                setPostActionError("");
+              }}
+              className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={saveEditedPost}
+              disabled={isSavingPost || !editingPostText.trim()}
+              className="rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-800 disabled:opacity-50"
+            >
+              {isSavingPost ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="mb-4 whitespace-pre-line text-[15px] leading-7 text-slate-700 dark:text-slate-200">
+          {postContent}
+        </p>
+      )}
+
+      {postActionError && (
+        <p className="mb-3 text-xs font-medium text-red-600">{postActionError}</p>
+      )}
 
       {post.images && post.images.length > 0 && (
         <div
@@ -271,7 +434,7 @@ const PostCard: React.FC<PostCardProps> = ({
       {post.allowMediaDownload && (post.images?.length || post.videoUrl) && (
         <a
           href={`/api/social/posts/${post.id}/media-download`}
-          className="mb-4 inline-flex rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          className="mb-4 inline-flex rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
           download
         >
           Download media
@@ -283,7 +446,7 @@ const PostCard: React.FC<PostCardProps> = ({
           {post.tags.map((tag) => (
             <span
               key={tag}
-              className="cursor-pointer rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 transition-colors hover:bg-cyan-100"
+              className="cursor-pointer rounded-full bg-cyan-50 dark:bg-cyan-950/60 px-2.5 py-1 text-xs font-medium text-cyan-700 dark:text-cyan-300 transition-colors hover:bg-cyan-100 dark:hover:bg-cyan-900/60"
             >
               #{tag}
             </span>
@@ -298,11 +461,11 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-4 text-xs text-slate-500">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-4 text-xs text-slate-500 dark:text-slate-400">
         <button
           type="button"
           onClick={handleLike}
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <Heart
             className={`h-3.5 w-3.5 ${isLiked ? "fill-pink-500 text-pink-500" : ""}`}
@@ -315,7 +478,7 @@ const PostCard: React.FC<PostCardProps> = ({
             setIsCommenting((current) => !current);
             setShowAllComments(false);
           }}
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <MessageCircle className="h-3.5 w-3.5" />
           {commentCount} comments
@@ -323,7 +486,7 @@ const PostCard: React.FC<PostCardProps> = ({
         <button
           type="button"
           onClick={() => void handleShare()}
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100"
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <Share2 className="h-3.5 w-3.5" />
           {shareCount} shares
@@ -358,8 +521,8 @@ const PostCard: React.FC<PostCardProps> = ({
           onClick={handleLike}
           className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
             isLiked
-              ? "border-pink-200 bg-pink-50 text-pink-600"
-              : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+              ? "border-pink-200 dark:border-pink-800/60 bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-300"
+              : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
           }`}
         >
           <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
@@ -370,7 +533,7 @@ const PostCard: React.FC<PostCardProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => setIsCommenting((current) => !current)}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <MessageCircle className="h-4 w-4" />
           Comment
@@ -380,29 +543,44 @@ const PostCard: React.FC<PostCardProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => void handleShare()}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <Share2 className="h-4 w-4" />
           Share
         </motion.button>
+
+        {onToggleSave && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onToggleSave(post.id)}
+            aria-pressed={saved}
+            aria-label={saved ? "Remove from saved" : "Save post"}
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <Bookmark
+              className={`h-4 w-4 ${saved ? "fill-amber-600 text-amber-600" : ""}`}
+            />
+          </motion.button>
+        )}
       </div>
 
       {isCommenting && (
-        <div className="mt-3 border-t border-slate-200 pt-3">
+        <div className="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3">
           <div className="mb-3 space-y-2">
             {isLoadingComments && (
-              <p className="text-sm text-slate-500">Loading comments...</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Loading comments...</p>
             )}
             {commentsError && (
-              <p className="text-sm text-rose-600">{commentsError}</p>
+              <p className="text-sm text-rose-600 dark:text-rose-400">{commentsError}</p>
             )}
             {!isLoadingComments && !commentsError && comments.length === 0 && (
-              <p className="text-sm text-slate-500">No comments yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No comments yet.</p>
             )}
             {comments.slice(0, showAllComments ? undefined : 3).map((item) => (
-              <div key={item.id} className="rounded-xl bg-slate-50 px-3 py-2">
+              <div key={item.id} className="rounded-xl bg-slate-50 dark:bg-slate-800/80 px-3 py-2">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-slate-700 notranslate">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 notranslate">
                     {item.author?.name || "Community member"}
                   </p>
                   {(onEditComment || onDeleteComment) && (
@@ -441,7 +619,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       onChange={(event) =>
                         setEditingCommentText(event.target.value)
                       }
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 notranslate focus:border-cyan-400 focus:outline-none"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-sm text-slate-700 dark:text-slate-100 notranslate focus:border-cyan-400 focus:outline-none"
                     />
                     <div className="flex gap-2">
                       <button
@@ -457,14 +635,14 @@ const PostCard: React.FC<PostCardProps> = ({
                           setEditingCommentId(null);
                           setEditingCommentText("");
                         }}
-                        className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                        className="rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       >
                         Cancel
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-700 notranslate whitespace-pre-wrap">
+                  <p className="text-sm text-slate-700 dark:text-slate-200 notranslate whitespace-pre-wrap">
                     {item.content}
                   </p>
                 )}
@@ -474,7 +652,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAllComments((current) => !current)}
-                className="text-sm font-medium text-cyan-700 hover:text-cyan-600"
+                className="text-sm font-medium text-cyan-700 dark:text-cyan-400 hover:text-cyan-600 dark:hover:text-cyan-300"
               >
                 {showAllComments
                   ? "Show fewer comments"
@@ -490,7 +668,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 if (event.key === "Enter") void submitComment();
               }}
               placeholder="Write a comment..."
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none notranslate"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none notranslate"
               translate="no"
             />
             <button

@@ -1,4 +1,4 @@
-name: SEO Metadata CI
+name: Prerender SEO CI
 
 on:
   push:
@@ -25,8 +25,5 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Build production bundles
-        run: npm run build
-
-      - name: Validate route SEO metadata
-        run: npm run test:route-seo
+      - name: Build + prerender + SEO validation
+        run: npm run build:prerender

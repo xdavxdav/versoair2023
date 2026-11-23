@@ -468,16 +468,18 @@ export default function SAV() {
       <div className="max-w-[95vw] mx-auto px-6 py-12">
         {/* Search Bar */}
         <div className="mb-8">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
-              placeholder="Search for solutions, guides, or contact support..."
-              className="pl-12 py-6 text-lg rounded-full border-gray-300 shadow-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <Button className="rounded-full bg-blue-600 hover:bg-blue-700">
+          <div className="flex flex-col gap-2 sm:block sm:relative">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Search for solutions, guides, or contact support..."
+                className="pl-12 sm:pr-28 py-6 text-lg rounded-full border-gray-300 shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="sm:absolute sm:right-2 sm:top-1/2 sm:-translate-y-1/2">
+              <Button className="hero-search-cta w-full sm:w-auto rounded-full bg-blue-600 hover:bg-blue-700">
                 Search
               </Button>
             </div>

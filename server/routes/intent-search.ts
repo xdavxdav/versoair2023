@@ -13,15 +13,13 @@
 
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import {
-  parseUserIntent,
-  resolveIntentCountryCode,
-} from "../services/intent-parser";
+import { parseUserIntent } from "../services/intent-parser";
 import { searchRelevantBusinesses } from "../services/knowledge-injector";
 import { optionalAuth, requireAuth } from "../middleware/auth";
 import { pool } from "../db";
 import {
   getDirectoryCountryCode,
+  normalizeCountryCode,
   publicBusinessVisibilitySql,
 } from "../utils/business-visibility";
 
@@ -61,13 +59,10 @@ router.post("/intent", optionalAuth, async (req: Request, res: Response) => {
 
     // Step 1: Parse intent from natural language
     const intent = await parseUserIntent(query, language);
-    // An explicitly detected query location takes precedence over the visitor's
-    // country scope; otherwise keep that scope or use the configured market.
-    intent.countryCode = resolveIntentCountryCode(
-      intent.countryCode,
-      parsed.data.countryCode,
-      getDirectoryCountryCode(),
-    );
+    // Discovery is scoped to the visitor's selected country (validated as a
+    // two-letter code); anything else falls back to the configured market.
+    intent.countryCode =
+      normalizeCountryCode(parsed.data.countryCode) ?? getDirectoryCountryCode();
 
     // Step 2: Search database with grounded knowledge
     const results = await searchRelevantBusinesses(intent, limit);
@@ -143,11 +138,13 @@ router.post(
       const { businessIds, message, contactPhone, contactEmail, location } =
         parsed.data;
 
-      // Look up business owner details
+      // Notify every accepted owner, falling back to the legacy primary owner.
       const businessResult = await pool.query(
         `SELECT b.id, b.name, b.phone, b.email, u.id as owner_id, u.email as owner_email
          FROM businesses b
-         LEFT JOIN users u ON b.user_id = u.id
+         LEFT JOIN business_owners bo
+           ON bo.business_id = b.id AND bo.status = 'active'
+         LEFT JOIN users u ON u.id = COALESCE(bo.user_id, b.owner_id)
          WHERE b.id = ANY($1) AND ${publicBusinessVisibilitySql("b")}`,
         [businessIds],
       );
@@ -202,9 +199,12 @@ router.post(
         }
       }
 
+      const notifiedBusinessIds = new Set<number>();
       for (const biz of businessResult.rows) {
+        if (notifiedBusinessIds.has(Number(biz.id))) continue;
+        notifiedBusinessIds.add(Number(biz.id));
         notified.push({
-          businessId: biz.id,
+          businessId: Number(biz.id),
           businessName: biz.name,
           method: biz.owner_id ? "in_app" : "email_pending",
         });

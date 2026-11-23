@@ -6,6 +6,10 @@ import { artists, auditLogs } from "../../../../shared/schema";
 import { eq, ilike, and, or, count, desc, sql, isNotNull } from "drizzle-orm";
 import { sendGeoAdminCrudNotificationEmail } from "../../../services/email-service";
 import {
+  resolveArtistPlace,
+  cleanPlaceName,
+} from "../../../services/artist-places";
+import {
   parseCountryCode,
   INVALID_COUNTRY_CODE_RESPONSE,
 } from "../../../utils/country-code";
@@ -34,6 +38,35 @@ router.get(
       .filter((g): g is string => !!g && g.trim().length > 0);
 
     res.json({ success: true, data: genres });
+  }),
+);
+
+/**
+ * GET /api/v1/admin/artists/places?countryCode=CI
+ * Existing cities and neighbourhoods for a country (form suggestions).
+ */
+router.get(
+  "/places",
+  requireAuth(["admin", "moderator"]),
+  asyncHandler(async (req, res) => {
+    const code =
+      typeof req.query.countryCode === "string"
+        ? req.query.countryCode.trim().toUpperCase()
+        : "";
+    if (code.length !== 2) return res.json({ success: true, data: [] });
+
+    const rows = await db.execute(
+      sql`SELECT c.id, c.name,
+                 COALESCE(json_agg(json_build_object('id', n.id, 'name', n.name)
+                   ORDER BY n.name) FILTER (WHERE n.id IS NOT NULL), '[]') AS neighbourhoods
+          FROM cities c
+          JOIN countries co ON co.id = c.country_id
+          LEFT JOIN neighbourhoods n ON n.city_id = c.id
+          WHERE UPPER(co.code) = ${code}
+          GROUP BY c.id, c.name
+          ORDER BY c.name`,
+    );
+    res.json({ success: true, data: rows.rows });
   }),
 );
 
@@ -125,6 +158,8 @@ router.post(
       businessId,
       userId,
       countryCode,
+      cityName,
+      neighbourhoodName,
     } = req.body;
 
     // Validate required fields
@@ -144,9 +179,28 @@ router.post(
       return res.status(400).json(INVALID_COUNTRY_CODE_RESPONSE);
     }
 
+    let place = { cityId: null as number | null, neighbourhoodId: null as number | null };
+    if (cleanPlaceName(cityName)) {
+      try {
+        place = await resolveArtistPlace(
+          parsedCountry.value ?? null,
+          cityName,
+          neighbourhoodName,
+        );
+      } catch (err: any) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          error: { code: "VALIDATION_ERROR", message: err.message },
+        });
+      }
+    }
+
     const [artist] = await db
       .insert(artists)
       .values({
+        cityId: place.cityId,
+        neighbourhoodId: place.neighbourhoodId,
         stageName: stageName.trim(),
         genre,
         labelStatus,
@@ -236,6 +290,8 @@ router.put(
       businessId,
       userId,
       countryCode,
+      cityName,
+      neighbourhoodName,
     } = req.body;
     const artistId = parseInt(id);
 
@@ -274,9 +330,31 @@ router.put(
       });
     }
 
+    let placeUpdate = {};
+    if (typeof cityName === "string") {
+      const effectiveCountry =
+        parsedCountry.value !== undefined
+          ? parsedCountry.value
+          : existing[0].countryCode;
+      try {
+        placeUpdate = await resolveArtistPlace(
+          effectiveCountry ?? null,
+          cityName,
+          neighbourhoodName,
+        );
+      } catch (err: any) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          error: { code: "VALIDATION_ERROR", message: err.message },
+        });
+      }
+    }
+
     const [updatedArtist] = await db
       .update(artists)
       .set({
+        ...placeUpdate,
         stageName,
         genre,
         labelStatus,

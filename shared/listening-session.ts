@@ -322,7 +322,6 @@ export interface SessionSummary {
   title: string;
   description: string | null;
   hostName: string | null;
-  featured: boolean;
   startsAt: string;
   endsAt: string;
   status: SessionStatus;

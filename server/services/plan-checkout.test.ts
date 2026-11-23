@@ -50,13 +50,11 @@ test("the Checkout Session charges CAD once, for the quoted amount, and records 
     userId: 7,
     selection: select("verified", "annual"),
     customerId: "cus_123",
-    customerEmail: "customer@example.com",
     baseUrl: "https://www.versoair.com",
   });
 
   assert.equal(params.mode, "payment");
   assert.equal(params.customer, "cus_123");
-  assert.equal(params.customer_email, "customer@example.com");
   assert.equal(params.line_items?.length, 1);
   const item = params.line_items![0];
   assert.equal(item.quantity, 1);
@@ -88,7 +86,6 @@ test("a paid plan session grants exactly the bought tier and period through the 
       userId: 7,
       selection,
       customerId: "cus_123",
-      customerEmail: "customer@example.com",
       baseUrl: "https://www.versoair.com",
     });
     const session = {
@@ -105,7 +102,6 @@ test("a paid plan session grants exactly the bought tier and period through the 
     assert.equal(db.userTiers.get(7), "verified", cycle);
     assert.equal(db.transactions.length, 1, cycle);
     assert.equal(db.transactions[0].type, "subscription_fee");
-    assert.equal(db.transactions[0].currency, "CAD");
     assert.equal(db.transactions[0].reference, session.id);
     assert.equal(
       db.transactions[0].amount,
@@ -138,14 +134,12 @@ test("the recurring Checkout Session is a CAD subscription at the same price, wi
       userId: 7,
       selection: select("verified", cycle),
       customerId: "cus_123",
-      customerEmail: "customer@example.com",
       baseUrl: "https://www.versoair.com",
     };
     const params = buildRecurringPlanCheckoutParams(input);
 
     assert.equal(params.mode, "subscription", cycle);
     assert.equal(params.customer, "cus_123");
-    assert.equal(params.customer_email, "customer@example.com");
     assert.equal(params.line_items?.length, 1);
     const item = params.line_items![0];
     assert.equal(item.quantity, 1);
@@ -182,15 +176,12 @@ test("only the recurring Checkout Session can renew; the prepaid one cannot", ()
     userId: 7,
     selection: select("essential", "annual"),
     customerId: "cus_123",
-    customerEmail: "customer@example.com",
     baseUrl: "https://www.versoair.com",
   };
   const prepaid = buildPlanCheckoutParams(input);
   const recurring = buildRecurringPlanCheckoutParams(input);
 
   assert.equal(prepaid.mode, "payment");
-  assert.equal(prepaid.customer_email, "customer@example.com");
-  assert.equal(recurring.customer_email, "customer@example.com");
   assert.equal(prepaid.line_items![0].price_data?.recurring, undefined);
   assert.equal(prepaid.subscription_data, undefined);
 

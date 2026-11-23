@@ -14,7 +14,16 @@
  */
 import type Stripe from "stripe";
 import { inTransaction } from "./db-transaction";
+import {
+  fulfillArsenalOrderInTx,
+  reverseArsenalOrderInTx,
+} from "./event-arsenal";
 import { ensurePaidOfferTables, revokePaidOfferPurchase } from "./paid-offers";
+import {
+  fulfillArcadePurchaseInTx,
+  reverseArcadePurchaseInTx,
+} from "./arcade-contest";
+import { isZeroDecimalCurrency } from "../utils/stripe-amount";
 import type { Queryable, TxClient, TxPool } from "./marketing-checkout";
 
 export type CheckoutReviewReason =
@@ -40,9 +49,16 @@ export interface CheckoutReview {
 export type CheckoutCompletion =
   | {
       status: "processed";
-      kind: "subscription" | "marketing_order" | "paid_offer";
+      kind:
+        | "subscription"
+        | "marketing_order"
+        | "paid_offer"
+        | "event_arsenal_order"
+        | "arcade_play";
       /** The buyer already held this offer, so one payment should be refunded. */
       repeatPurchase?: true;
+      /** An arcade payment that could not be credited to its pool; staff reconcile it. */
+      arcadeMismatch?: string;
     }
   | CheckoutReview
   | { status: "duplicate" }
@@ -90,14 +106,13 @@ export async function claimSession(
   amount: string,
   type: string,
   sessionId: string,
-  currency = "CAD",
 ): Promise<boolean> {
   const claim = await client.query(
-    `INSERT INTO transactions (business_id, user_id, amount, currency, type, status, reference)
-     VALUES (NULL, $1, $2, $3, $4, 'completed', $5)
+    `INSERT INTO transactions (business_id, user_id, amount, type, status, reference)
+     VALUES (NULL, $1, $2, $3, 'completed', $4)
      ON CONFLICT DO NOTHING
      RETURNING id`,
-    [userId, amount, currency.toUpperCase(), type, sessionId],
+    [userId, amount, type, sessionId],
   );
   return claim.rows.length > 0;
 }
@@ -136,10 +151,6 @@ export async function applyCheckoutSessionCompleted(
   }
 
   const amount = ((session.amount_total || 0) / 100).toFixed(2);
-  const currency =
-    typeof session.currency === "string" && session.currency.trim()
-      ? session.currency.toUpperCase()
-      : "CAD";
 
   if (targetTier) {
     return inTransaction<CheckoutCompletion>(db, async (client) => {
@@ -149,7 +160,6 @@ export async function applyCheckoutSessionCompleted(
         amount,
         type || "subscription_fee",
         session.id,
-        currency,
       );
       if (!claimed) return { status: "duplicate" };
 
@@ -180,8 +190,11 @@ export async function applyCheckoutSessionCompleted(
     const offerKey = session.metadata.offerKey;
     const eventIdRaw = session.metadata.eventId;
     const eventId = eventIdRaw ? positiveInt(eventIdRaw) : null;
-    if (offerKey === "activity_ticket" && eventId === null) {
-      console.error("⚠️ Activity ticket without a valid eventId:", session.id);
+    if (
+      (offerKey === "activity_ticket" || offerKey === "event_host_fee") &&
+      eventId === null
+    ) {
+      console.error(`⚠️ ${offerKey} without a valid eventId:`, session.id);
       return { status: "ignored", reason: "invalid_event_id" };
     }
 
@@ -220,10 +233,111 @@ export async function applyCheckoutSessionCompleted(
         );
       }
 
+      if (offerKey === "event_host_fee" && eventId !== null) {
+        await client.query(
+          `UPDATE events
+              SET status = CASE WHEN status = 'DRAFT' THEN 'PENDING' ELSE status END,
+                  updated_at = NOW()
+            WHERE id = $1 AND organizer_id = $2`,
+          [eventId, userIdNumber],
+        );
+      }
+
       console.log(`✅ Paid offer ${offerKey} bought by user ${userIdNumber}`);
       return prior.rows.length > 0
         ? { status: "processed", kind: "paid_offer", repeatPurchase: true }
         : { status: "processed", kind: "paid_offer" };
+    });
+  }
+
+  if (type === "event_arsenal_order" && session.metadata?.arsenalOrderId) {
+    const arsenalOrderId = positiveInt(session.metadata.arsenalOrderId);
+    if (arsenalOrderId === null) {
+      console.error("⚠️ Invalid arsenalOrderId in checkout session:", session.id);
+      return { status: "ignored", reason: "invalid_arsenal_order_id" };
+    }
+
+    return inTransaction<CheckoutCompletion>(db, async (client) => {
+      const claimed = await claimSession(
+        client,
+        userIdNumber,
+        amount,
+        "event_arsenal_order",
+        session.id,
+      );
+      if (!claimed) return { status: "duplicate" };
+
+      const shipping = describeShipping(session);
+      const outcome = await fulfillArsenalOrderInTx(client, {
+        userId: userIdNumber,
+        arsenalOrderId,
+        sessionId: session.id,
+        paidCents: typeof session.amount_total === "number" ? session.amount_total : 0,
+        shippingNote: shipping,
+      });
+      if (!outcome.fulfilled) {
+        console.error(
+          `⚠️ Event arsenal order ${arsenalOrderId} requires review (${outcome.mismatch})`,
+        );
+      } else {
+        console.log(
+          `✅ Event arsenal order ${arsenalOrderId} fulfilled for user ${userIdNumber}`,
+        );
+      }
+      return { status: "processed", kind: "event_arsenal_order" };
+    });
+  }
+
+  if (type === "arcade_play" && session.metadata?.arcadePurchaseId) {
+    const purchaseId = positiveInt(session.metadata.arcadePurchaseId);
+    if (purchaseId === null) {
+      console.error("⚠️ Invalid arcadePurchaseId in checkout session:", session.id);
+      return { status: "ignored", reason: "invalid_arcade_purchase_id" };
+    }
+    const paidMinor =
+      typeof session.amount_total === "number" ? session.amount_total : null;
+    const paidCurrency = session.currency
+      ? String(session.currency).toUpperCase()
+      : null;
+    // Contests also run in zero-decimal currencies, where the Stripe amount is
+    // already in whole units.
+    const arcadeAmount =
+      paidMinor === null
+        ? "0.00"
+        : paidCurrency && isZeroDecimalCurrency(paidCurrency)
+          ? String(paidMinor)
+          : (paidMinor / 100).toFixed(2);
+
+    return inTransaction<CheckoutCompletion>(db, async (client) => {
+      const claimed = await claimSession(
+        client,
+        userIdNumber,
+        arcadeAmount,
+        "arcade_play",
+        session.id,
+      );
+      if (!claimed) return { status: "duplicate" };
+
+      const outcome = await fulfillArcadePurchaseInTx(client, {
+        purchaseId,
+        userId: userIdNumber,
+        sessionId: session.id,
+        paidMinor,
+        paidCurrency,
+        billingCountry: session.customer_details?.address?.country ?? null,
+      });
+      if (!outcome.fulfilled) {
+        console.error(
+          `⚠️ Arcade purchase ${purchaseId} requires review (${outcome.mismatch})`,
+        );
+        return {
+          status: "processed",
+          kind: "arcade_play",
+          arcadeMismatch: outcome.mismatch,
+        };
+      }
+      console.log(`✅ Arcade play time bought by user ${userIdNumber} (purchase ${purchaseId})`);
+      return { status: "processed", kind: "arcade_play" };
     });
   }
 
@@ -241,7 +355,6 @@ export async function applyCheckoutSessionCompleted(
         amount,
         "marketing_order",
         session.id,
-        currency,
       );
       if (!claimed) return { status: "duplicate" };
 
@@ -377,7 +490,7 @@ export async function applyPaymentReversal(
 ): Promise<ReversalOutcome> {
   return inTransaction<ReversalOutcome>(db, async (client) => {
     const original = await client.query(
-      `SELECT user_id, currency, type FROM transactions WHERE reference = $1`,
+      `SELECT user_id, type FROM transactions WHERE reference = $1`,
       [sessionId],
     );
     if (original.rows.length === 0) return { status: "unmatched" };
@@ -388,7 +501,6 @@ export async function applyPaymentReversal(
       ledgerAmount(reversal),
       reversal.kind,
       `stripe_event:${eventId}`,
-      String(original.rows[0].currency || "CAD"),
     );
     if (!claimed) return { status: "duplicate" };
 
@@ -426,6 +538,35 @@ export async function applyPaymentReversal(
     if (withdrawsAccess && original.rows[0].type === "paid_offer") {
       const revoked = await revokePaidOfferPurchase(client, sessionId);
       console.log(`↩️ Paid offer for session ${sessionId} withdrawn: ${revoked}`);
+    }
+    if (original.rows[0].type === "event_arsenal_order") {
+      const arsenalStatus =
+        reversal.kind === "dispute_won"
+          ? "paid"
+          : reversal.kind === "dispute_opened"
+            ? "disputed"
+            : reversal.kind === "dispute_lost"
+              ? "chargeback"
+              : "refunded";
+      if (!(reversal.kind === "refund" && !reversal.full)) {
+        await reverseArsenalOrderInTx(
+          client,
+          sessionId,
+          arsenalStatus,
+          note,
+          withdrawsAccess,
+        );
+      }
+    }
+
+    if (original.rows[0].type === "arcade_play") {
+      await reverseArcadePurchaseInTx(
+        client,
+        sessionId,
+        reversal.kind,
+        reversal.kind === "refund" ? reversal.full : false,
+        note,
+      );
     }
 
     console.log(
@@ -553,6 +694,39 @@ export async function applyCheckoutSessionExpired(
   session: Stripe.Checkout.Session,
 ): Promise<CheckoutExpiry> {
   const { userId, orderId, type } = session.metadata || {};
+  if (type === "arcade_play" && session.metadata?.arcadePurchaseId) {
+    const uid = positiveInt(userId);
+    const pid = positiveInt(session.metadata.arcadePurchaseId);
+    if (uid === null || pid === null) {
+      return { status: "ignored", reason: "invalid_metadata" };
+    }
+    const cancelled = await db.query(
+      `UPDATE arcade_contest_purchases SET status = 'cancelled'
+        WHERE id = $1 AND user_id = $2 AND status = 'pending'
+        RETURNING id`,
+      [pid, uid],
+    );
+    return cancelled.rows.length > 0
+      ? { status: "cancelled", orderId: pid }
+      : { status: "ignored", reason: "order_not_pending" };
+  }
+  if (type === "event_arsenal_order" && session.metadata?.arsenalOrderId) {
+    const uid = positiveInt(userId);
+    const aid = positiveInt(session.metadata.arsenalOrderId);
+    if (uid === null || aid === null) {
+      return { status: "ignored", reason: "invalid_metadata" };
+    }
+    const cancelled = await db.query(
+      `UPDATE event_arsenal_orders
+          SET status = 'cancelled', notes = $3, updated_at = NOW()
+        WHERE id = $1 AND user_id = $2 AND status = 'pending'
+        RETURNING id`,
+      [aid, uid, `Checkout session ${session.id} expired`],
+    );
+    return cancelled.rows.length > 0
+      ? { status: "cancelled", orderId: aid }
+      : { status: "ignored", reason: "order_not_pending" };
+  }
   if (type !== "marketing_order" || !orderId) {
     return { status: "ignored", reason: "not_marketing_order" };
   }

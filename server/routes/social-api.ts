@@ -165,7 +165,7 @@ async function syncFollowerCount(socialUserId: number): Promise<void> {
 // GET /api/social/posts - Get feed with pagination, optional postType filter
 router.get("/posts", async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 10, sort = "recent", postType } = req.query;
+    const { page = 1, limit = 10, sort = "recent", postType, q } = req.query;
     const pageNum = Math.max(1, parseInt(page as string) || 1);
     const limitNum = Math.max(1, Math.min(parseInt(limit as string) || 10, 50));
     const offset = (pageNum - 1) * limitNum;
@@ -179,6 +179,10 @@ router.get("/posts", async (req: Request, res: Response) => {
     }
     if (postType && typeof postType === "string") {
       conditions.push(eq(socialPosts.postType, postType));
+    }
+    if (typeof q === "string" && q.trim()) {
+      const term = `%${q.trim().slice(0, 80).replace(/[\\%_]/g, "\\$&")}%`;
+      conditions.push(sql`${socialPosts.content} ILIKE ${term}`);
     }
 
     let query = db
@@ -623,6 +627,122 @@ router.get("/posts/:postId", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching post:", error);
     res.status(500).json({ success: false, error: "Failed to fetch post" });
+  }
+});
+
+// PATCH /api/social/posts/:postId - Edit a post (author or staff)
+router.patch("/posts/:postId", async (req: Request, res: Response) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+    const { content } = req.body ?? {};
+
+    if (!appUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
+    if (!Number.isInteger(postId) || postId <= 0) {
+      return res.status(400).json({ success: false, error: "Invalid post id" });
+    }
+
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
+    if (!trimmedContent) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Post content is required" });
+    }
+
+    const [existingPost] = await db
+      .select()
+      .from(socialPosts)
+      .where(and(eq(socialPosts.id, postId), isNull(socialPosts.deletedAt)))
+      .limit(1);
+
+    if (!existingPost) {
+      return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const role = String(req.user?.role || "").toLowerCase();
+    const isStaff = ["admin", "superadmin", "superuser", "moderator"].includes(role);
+    if (existingPost.authorId !== authorProfileId && !isStaff) {
+      return res
+        .status(403)
+        .json({ success: false, error: "You can only edit your own posts" });
+    }
+
+    const [updatedPost] = await db
+      .update(socialPosts)
+      .set({
+        content: trimmedContent,
+        isEdited: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(socialPosts.id, postId))
+      .returning();
+
+    return res.json({
+      success: true,
+      data: updatedPost,
+      message: "Post updated",
+    });
+  } catch (error) {
+    console.error("Error updating post:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to update post" });
+  }
+});
+
+// DELETE /api/social/posts/:postId - Soft-delete a post (author or staff)
+router.delete("/posts/:postId", async (req: Request, res: Response) => {
+  try {
+    const appUserId = req.user?.userId;
+    const postId = Number(req.params.postId);
+
+    if (!appUserId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Authentication required" });
+    }
+    if (!Number.isInteger(postId) || postId <= 0) {
+      return res.status(400).json({ success: false, error: "Invalid post id" });
+    }
+
+    const [existingPost] = await db
+      .select()
+      .from(socialPosts)
+      .where(and(eq(socialPosts.id, postId), isNull(socialPosts.deletedAt)))
+      .limit(1);
+
+    if (!existingPost) {
+      return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    const authorProfileId = await getSocialProfileId(Number(appUserId));
+    const role = String(req.user?.role || "").toLowerCase();
+    const isStaff = ["admin", "superadmin", "superuser", "moderator"].includes(role);
+    if (existingPost.authorId !== authorProfileId && !isStaff) {
+      return res
+        .status(403)
+        .json({ success: false, error: "You can only delete your own posts" });
+    }
+
+    await db
+      .update(socialPosts)
+      .set({
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(socialPosts.id, postId));
+
+    return res.json({ success: true, message: "Post deleted" });
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Failed to delete post" });
   }
 });
 
@@ -1358,10 +1478,17 @@ router.get("/users/:userId", async (req: Request, res: Response) => {
           account.displayName || socialProfile.displayName || account.username,
         avatarUrl: socialProfile.avatarUrl ?? null,
         avatar: socialProfile.avatarUrl ?? null,
+        coverImageUrl: socialProfile.coverImageUrl ?? null,
+        headline: socialProfile.headline ?? null,
         bio: socialProfile.bio ?? null,
         location: socialProfile.location ?? null,
         website: socialProfile.website ?? null,
         profession: socialProfile.profession ?? null,
+        company: socialProfile.company ?? null,
+        interests: Array.isArray(socialProfile.interests)
+          ? socialProfile.interests
+          : [],
+        privacyLevel: socialProfile.privacyLevel || "public",
         role: account.role || "user",
         tier: account.subscriptionTier || "free",
         joinedAt: account.createdAt ?? null,

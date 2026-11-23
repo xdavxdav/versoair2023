@@ -18,6 +18,23 @@
     />
     <meta name="apple-mobile-web-app-title" content="VersoAir" />
     <link rel="apple-touch-icon" href="/Logo-page.png" />
+    <!-- Apply the saved theme before first paint so a reload never flashes the other theme.
+         Keep in sync with ThemeContext (key "verso_theme", default "light"). -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("verso_theme");
+          var pref = saved === "dark" || saved === "system" ? saved : "light";
+          var dark =
+            pref === "dark" ||
+            (pref === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var root = document.documentElement;
+          root.classList.add(dark ? "dark" : "light");
+          root.style.colorScheme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
     <!-- Ensure Tailwind CSS is loaded via the app entry -->
     <link rel="stylesheet" href="/src/index.css" />
     <!-- Google Fonts: Caveat (handstyle font) -->

@@ -219,13 +219,12 @@ async function recordCharge(
     );
 
     await client.query(
-      `INSERT INTO transactions (user_id, amount, currency, type, status, reference)
-       VALUES ($1, $2, $3, 'ngo_charge', $4, $5)
+      `INSERT INTO transactions (user_id, amount, type, status, reference)
+       VALUES ($1, $2, 'ngo_charge', $3, $4)
        ON CONFLICT DO NOTHING`,
       [
         record.userId,
         record.amount,
-        record.currency,
         record.status === "succeeded" ? "completed" : "pending",
         record.paymentIntentId,
       ],
@@ -250,7 +249,7 @@ export async function chargeSavedCard(
     input.currency === undefined ||
     input.currency === null ||
     input.currency === ""
-      ? "CAD"
+      ? "USD"
       : input.currency;
   const parsed = parseChargeAmount(input.amount, currency);
   if (!parsed.ok) return fail(400, parsed.error, parsed.code);

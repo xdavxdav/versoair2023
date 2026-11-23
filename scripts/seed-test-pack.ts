@@ -1,8 +1,22 @@
 import "dotenv/config";
-import { assertTestPackSeedTarget } from "./test-pack-seed-target";
+
+function assertLocalSeedTarget() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed a test pack in production.");
+  }
+  if (process.env.ALLOW_TEST_PACK_SEED !== "true") {
+    throw new Error("Set ALLOW_TEST_PACK_SEED=true to seed the local test pack.");
+  }
+  const rawUrl = process.env.DATABASE_URL;
+  if (!rawUrl) throw new Error("DATABASE_URL is required.");
+  const host = new URL(rawUrl).hostname.toLowerCase();
+  if (host !== "localhost" && host !== "127.0.0.1" && host !== "::1") {
+    throw new Error("The test pack seeder only permits a loopback database.");
+  }
+}
 
 async function main() {
-  assertTestPackSeedTarget(process.env);
+  assertLocalSeedTarget();
   const { pool } = await import("../server/db");
   try {
     const result = await pool.query(
@@ -21,7 +35,7 @@ async function main() {
              active = true
        RETURNING id, slug, price_cents`,
     );
-    console.log("Stripe test item ready:", result.rows[0]);
+    console.log("Local Stripe test item ready:", result.rows[0]);
   } finally {
     await pool.end();
   }
