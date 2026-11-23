@@ -251,3 +251,10 @@ test("businessSeoRecordFromRow normalises numeric columns from pg", () => {
   assert.equal(businessSeoRecordFromRow({ ...row, rating: "4.8", reviews_count: 12 }).rating, 4.8);
   assert.equal(businessSeoRecordFromRow({ ...row, rating: null, reviews_count: null }).rating, 0);
 });
+
+test("fills the empty root with the escaped business name and details", () => {
+  const rootShell = '<html><head><title>Default</title></head><body><div id="root"></div></body></html>';
+  const html = injectBusinessRouteSeoMeta(rootShell, { ...publicBusiness, name: "A <b>&</b> Co" });
+  assert.ok(html.includes('<div id="root"><main><h1>A &lt;b&gt;&amp;&lt;/b&gt; Co</h1>'));
+  assert.ok(!html.includes('<div id="root"></div>'));
+});

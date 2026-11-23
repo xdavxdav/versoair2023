@@ -96,3 +96,12 @@ test("normalizes trailing slashes", () => {
 test("leaves unknown routes unchanged", () => {
   assert.equal(injectRouteSeoMeta(html, "/not-a-listed-route"), html);
 });
+
+test("fills the empty root with crawlable plain-HTML content", () => {
+  const shell = '<html><head><title>Default</title></head><body><div id="root"></div></body></html>';
+  const home = injectRouteSeoMeta(shell, "/");
+  assert.ok(home.includes('<div id="root"><main><h1>VersoAir</h1>'));
+  assert.ok(home.includes("Verso Air Inc. is an Ontario corporation"));
+  assert.ok(home.includes('href="https://www.versoair.com/businesses-directory"'));
+  assert.ok(injectRouteSeoMeta(shell, "/about").includes("<h1>About Verso Air</h1>"));
+});

@@ -145,6 +145,33 @@ function normalizePath(requestPath: string): string {
   return trimmed === "" ? "/" : trimmed;
 }
 
+const FALLBACK_NAV: ReadonlyArray<[string, string]> = [
+  ["/", "Home"],
+  ["/businesses-directory", "Business directory"],
+  ["/about", "About"],
+  ["/contact", "Contact"],
+  ["/news", "News"],
+  ["/marketing/journal", "Journal"],
+];
+
+const HOMEPAGE_EXTRA =
+  "<p>Verso Air Inc. is an Ontario corporation based in Toronto. Businesses can be listed in a verified directory, and the platform also hosts creative projects and an arcade. Listings and metrics are published only once they are verified.</p>";
+
+// Plain-HTML body for crawlers that do not run JavaScript; createRoot replaces it on mount.
+export function buildRouteFallbackHtml(routePath: string, meta: RouteMeta): string {
+  const nav = FALLBACK_NAV.map(
+    ([href, label]) => `<a href="${SITE_ORIGIN}${href}">${label}</a>`,
+  ).join(" | ");
+  return [
+    `<main>`,
+    `<h1>${escapeHtml(meta.title.split(" | ")[0])}</h1>`,
+    `<p>${escapeHtml(meta.description)}</p>`,
+    routePath === "/" ? HOMEPAGE_EXTRA : "",
+    `<nav>${nav}</nav>`,
+    `</main>`,
+  ].join("");
+}
+
 export function injectRouteSeoMeta(html: string, requestPath: string): string {
   const routePath = normalizePath(requestPath);
   const meta = ROUTE_SEO_META[routePath];
@@ -171,7 +198,9 @@ export function injectRouteSeoMeta(html: string, requestPath: string): string {
     ...(routePath === "/" ? [googleSiteVerificationTag(), bingSiteVerificationTag(), homepageJsonLdScript()] : []),
   ].join("\n    ");
 
+  const fallback = buildRouteFallbackHtml(routePath, meta);
   return html
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
-    .replace("</head>", `    ${tags}\n  </head>`);
+    .replace("</head>", `    ${tags}\n  </head>`)
+    .replace('<div id="root"></div>', () => `<div id="root">${fallback}</div>`);
 }

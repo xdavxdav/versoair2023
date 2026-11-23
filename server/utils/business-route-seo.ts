@@ -131,6 +131,23 @@ function withHead(html: string, title: string, tags: string[]): string {
     .replace("</head>", () => `    ${tags.join("\n    ")}\n  </head>`);
 }
 
+function businessFallbackHtml(business: BusinessSeoRecord): string {
+  const details = [
+    business.location && `Location: ${business.location}`,
+    business.address && `Address: ${business.address}`,
+    business.phone && `Phone: ${business.phone}`,
+    business.email && `Email: ${business.email}`,
+  ].filter(Boolean) as string[];
+  return [
+    `<main>`,
+    `<h1>${escapeHtml(business.name)}</h1>`,
+    `<p>${escapeHtml(business.description?.trim() || DEFAULT_DESCRIPTION)}</p>`,
+    details.length ? `<ul>${details.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul>` : "",
+    `<nav><a href="${getSiteOrigin()}/businesses-directory">Business directory</a></nav>`,
+    `</main>`,
+  ].join("");
+}
+
 export function injectBusinessRouteSeoMeta(html: string, business: BusinessSeoRecord): string {
   const origin = getSiteOrigin();
   const canonical = `${origin}/business/${business.id}`;
@@ -139,6 +156,7 @@ export function injectBusinessRouteSeoMeta(html: string, business: BusinessSeoRe
   const description = descriptionFor(business);
   const jsonLd = localBusinessJsonLd(business, canonical);
 
+  const fallback = businessFallbackHtml(business);
   return withHead(html, title, [
     `<meta name="description" content="${escapeHtml(description)}" data-rh="true">`,
     `<link rel="canonical" href="${escapeHtml(canonical)}" data-rh="true">`,
@@ -153,7 +171,7 @@ export function injectBusinessRouteSeoMeta(html: string, business: BusinessSeoRe
     `<meta name="twitter:description" content="${escapeHtml(description)}" data-rh="true">`,
     `<meta name="twitter:image" content="${escapeHtml(image)}" data-rh="true">`,
     `<script type="application/ld+json" data-rh="true">${jsonForScript(jsonLd)}</script>`,
-  ]);
+  ]).replace('<div id="root"></div>', () => `<div id="root">${fallback}</div>`);
 }
 
 export function injectBusinessNotFoundSeoMeta(html: string): string {
