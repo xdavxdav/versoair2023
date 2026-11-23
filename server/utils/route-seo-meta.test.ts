@@ -70,6 +70,15 @@ test("injects complete canonical metadata for every supported route", () => {
   }
 });
 
+test("only the homepage carries the Google Search Console verification tag", () => {
+  const home = injectRouteSeoMeta(html, "/");
+  const tag =
+    '<meta name="google-site-verification" content="TMuw3uv9xRLhhm5pjMzM197ZWA5csbpxRzf2YGV9_S4">';
+  assert.ok(home.includes(tag), "homepage has the verification meta tag");
+  assert.ok(!home.includes(`${tag.slice(0, -1)} data-rh`), "no data-rh so it is not stripped");
+  assert.ok(!injectRouteSeoMeta(html, "/about").includes("google-site-verification"));
+});
+
 test("normalizes trailing slashes", () => {
   const result = injectRouteSeoMeta(html, "/commerce/");
 

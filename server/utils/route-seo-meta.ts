@@ -102,6 +102,15 @@ export const ROUTE_SEO_META: Readonly<Record<string, RouteMeta>> = {
   },
 };
 
+// Google Search Console ownership verification. No data-rh so react-helmet-async
+// leaves it in place after the client mounts; it must stay in the served HTML.
+const GOOGLE_SITE_VERIFICATION =
+  "TMuw3uv9xRLhhm5pjMzM197ZWA5csbpxRzf2YGV9_S4";
+
+function googleSiteVerificationTag(): string {
+  return `<meta name="google-site-verification" content="${GOOGLE_SITE_VERIFICATION}">`;
+}
+
 // No data-rh on this script: react-helmet-async removes every data-rh tag once the
 // client mounts, and the homepage <SeoHead> carries no JSON-LD to put back.
 function homepageJsonLdScript(): string {
@@ -153,7 +162,7 @@ export function injectRouteSeoMeta(html: string, requestPath: string): string {
     `<meta name="twitter:title" content="${title}" data-rh="true">`,
     `<meta name="twitter:description" content="${description}" data-rh="true">`,
     `<meta name="twitter:image" content="${image}" data-rh="true">`,
-    ...(routePath === "/" ? [homepageJsonLdScript()] : []),
+    ...(routePath === "/" ? [googleSiteVerificationTag(), homepageJsonLdScript()] : []),
   ].join("\n    ");
 
   return html
