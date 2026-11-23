@@ -111,6 +111,12 @@ function googleSiteVerificationTag(): string {
   return `<meta name="google-site-verification" content="${GOOGLE_SITE_VERIFICATION}">`;
 }
 
+const BING_SITE_VERIFICATION = "B85CFE0E65EB4B070737B0332D0FEABD";
+
+function bingSiteVerificationTag(): string {
+  return `<meta name="msvalidate.01" content="${BING_SITE_VERIFICATION}">`;
+}
+
 // No data-rh on this script: react-helmet-async removes every data-rh tag once the
 // client mounts, and the homepage <SeoHead> carries no JSON-LD to put back.
 function homepageJsonLdScript(): string {
@@ -162,7 +168,7 @@ export function injectRouteSeoMeta(html: string, requestPath: string): string {
     `<meta name="twitter:title" content="${title}" data-rh="true">`,
     `<meta name="twitter:description" content="${description}" data-rh="true">`,
     `<meta name="twitter:image" content="${image}" data-rh="true">`,
-    ...(routePath === "/" ? [googleSiteVerificationTag(), homepageJsonLdScript()] : []),
+    ...(routePath === "/" ? [googleSiteVerificationTag(), bingSiteVerificationTag(), homepageJsonLdScript()] : []),
   ].join("\n    ");
 
   return html

@@ -79,6 +79,13 @@ test("only the homepage carries the Google Search Console verification tag", () 
   assert.ok(!injectRouteSeoMeta(html, "/about").includes("google-site-verification"));
 });
 
+test("only the homepage carries the Bing Webmaster Tools verification tag", () => {
+  const home = injectRouteSeoMeta(html, "/");
+  const tag = '<meta name="msvalidate.01" content="B85CFE0E65EB4B070737B0332D0FEABD">';
+  assert.ok(home.includes(tag), "homepage has the Bing verification meta tag");
+  assert.ok(!injectRouteSeoMeta(html, "/about").includes("msvalidate.01"));
+});
+
 test("normalizes trailing slashes", () => {
   const result = injectRouteSeoMeta(html, "/commerce/");
 
