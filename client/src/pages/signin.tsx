@@ -293,6 +293,7 @@ export default function SignIn() {
   const [accountType, setAccountType] = useState<"general" | "business_owner">(
     "general",
   );
+  const [accountCategory, setAccountCategory] = useState("general");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [mfaCode, setMfaCode] = useState(["", "", "", "", "", ""]);
@@ -1960,18 +1961,27 @@ export default function SignIn() {
                     Account type
                   </label>
                   <select
-                    value={accountType}
-                    onChange={(e) =>
+                    value={accountCategory}
+                    onChange={(e) => {
+                      setAccountCategory(e.target.value);
                       setAccountType(
                         e.target.value === "business_owner"
                           ? "business_owner"
                           : "general",
-                      )
-                    }
+                      );
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bf831c] focus:border-transparent"
                   >
                     <option value="general">Personal (General)</option>
                     <option value="business_owner">Business Owner</option>
+                    <option value="geoadmin">GeoAdmin Subscriber</option>
+                    <option value="musical">Musical (Artist / Label)</option>
+                    <option value="streamer">Streamer / Listener</option>
+                    <option value="careers">Careers / Job Seeker</option>
+                    <option value="independent">Independent (Particulier)</option>
+                    <option value="contractor">Contractor / Freelancer</option>
+                    <option value="artisan">Artisan / Craft Professional</option>
+                    <option value="community">Community Member</option>
                   </select>
                   {accountType === "business_owner" && (
                     <p className="mt-2 text-xs text-gray-600">
