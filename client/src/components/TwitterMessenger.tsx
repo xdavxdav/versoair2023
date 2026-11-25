@@ -56,6 +56,7 @@ import {
   mergeThreadReload,
   nextSendAttempt,
   postInboxMessage,
+  requestSupportReply,
   removePendingMessage,
   restoreDraft,
   sameId,
@@ -248,7 +249,7 @@ interface Conversation {
   participantId: string;
   participantName: string;
   participantAvatar?: string;
-  type: "direct" | "group";
+  type: string;
   portal?: PortalKey;
   lastMessage: string;
   lastMessageAt: string;
@@ -307,6 +308,7 @@ export function TwitterMessenger({
   const [search, setSearch] = useState("");
   const [msgText, setMsgText] = useState("");
   const [sending, setSending] = useState(false);
+  const [aiReplying, setAiReplying] = useState(false);
   const [portalFilter, setPortalFilter] = useState<"all" | PortalKey>("all");
 
   // New conversation modal state
@@ -604,6 +606,30 @@ export function TwitterMessenger({
     }
   }, [messages]);
 
+  /* ── VersoAI reply for the support thread ── */
+  const askVersoAI = useCallback(async (conversationId: IdLike, text: string) => {
+    setAiReplying(true);
+    const reply = await requestSupportReply(
+      authenticatedFetch,
+      conversationId,
+      text,
+    );
+    setAiReplying(false);
+    if (reply.ok) {
+      if (sameId(selectedConvRef.current?.id, conversationId)) {
+        setThreadReloadKey((key) => key + 1);
+      } else {
+        void refreshConversations();
+      }
+    } else if (reply.kind !== "aborted") {
+      toast({
+        title: "VersoAI did not reply",
+        description: reply.message,
+        variant: "destructive",
+      });
+    }
+  }, [refreshConversations]);
+
   /* ── Send ── */
   const sendMessage = useCallback(async () => {
     const draft = msgText;
@@ -658,6 +684,9 @@ export function TwitterMessenger({
           createdAt: result.data.createdAt || new Date().toISOString(),
         }),
       );
+      if (conversation.type === "support") {
+        void askVersoAI(conversation.id, text);
+      }
       return;
     }
 
@@ -675,7 +704,7 @@ export function TwitterMessenger({
         variant: "destructive",
       });
     }
-  }, [msgText, selectedConv, user]);
+  }, [msgText, selectedConv, user, askVersoAI]);
 
   /* ── Filtered ── */
   const filtered = useMemo(() => {
@@ -1112,6 +1141,11 @@ export function TwitterMessenger({
                   </React.Fragment>
                 );
               })}
+              {aiReplying && selectedConv.type === "support" && (
+                <p className="mt-3 ml-1 text-[12px] text-white/40" role="status">
+                  VersoAI is typing…
+                </p>
+              )}
               </div>
               {showScrollBottom && (
                 <button

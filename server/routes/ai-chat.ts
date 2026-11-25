@@ -403,6 +403,33 @@ router.get("/support/stream", async (req: Request, res: Response) => {
     res.end();
   };
 
+  // Saved before "done" is sent, so the client's reload right after it already
+  // finds the reply (cache and FAQ answers used to be streamed but never stored).
+  const saveReply = async (content: string) => {
+    if (!convId) return;
+    const reply = {
+      conversationId: convId,
+      senderId: "support",
+      senderName: "VersoAI Support",
+      content,
+      isAi: true,
+    };
+    try {
+      await db.insert(schema.inboxMessages).values({ ...reply, isRead: false });
+      await db
+        .update(schema.inboxConversations)
+        .set({
+          lastMessage: content.substring(0, 120),
+          lastMessageAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.inboxConversations.id, convId));
+    } catch {
+      // DB down → queue for later
+      await enqueueInboxMessage(user.userId, reply).catch(() => {});
+    }
+  };
+
   // ── Tier detection ───────────────────────────────────────────────────────────
   const tier: string =
     user.role === "superuser"
@@ -423,6 +450,7 @@ router.get("/support/stream", async (req: Request, res: Response) => {
       sendToken(word + " ");
       await new Promise((r) => setTimeout(r, 8));
     }
+    await saveReply(cached);
     sendDone("cache");
     return;
   }
@@ -552,30 +580,7 @@ router.get("/support/stream", async (req: Request, res: Response) => {
     if (fullReply.length > 10) {
       await cacheAIReply(cacheKey, fullReply, 3600);
 
-      // Persist AI reply to conversation history (fire-and-forget)
-      if (convId) {
-        db.insert(schema.inboxMessages)
-          .values({
-            conversationId: convId,
-            senderId: "support",
-            senderName: "VersoAI Support",
-            content: fullReply,
-            isAi: true,
-            isRead: false,
-          })
-          .catch(() => {
-            // DB down → queue for later
-            enqueueInboxMessage(user.userId, {
-              conversationId: convId,
-              senderId: "support",
-              senderName: "VersoAI Support",
-              content: fullReply,
-              isAi: true,
-            }).catch(() => {
-              /* silent */
-            });
-          });
-      }
+      await saveReply(fullReply);
     }
 
     sendDone("ollama");
@@ -640,28 +645,7 @@ router.get("/support/stream", async (req: Request, res: Response) => {
 
       if (fullReply.length > 10) {
         await cacheAIReply(cacheKey, fullReply, 3600);
-        if (convId) {
-          db.insert(schema.inboxMessages)
-            .values({
-              conversationId: convId,
-              senderId: "support",
-              senderName: "VersoAI Support",
-              content: fullReply,
-              isAi: true,
-              isRead: false,
-            })
-            .catch(() => {
-              enqueueInboxMessage(user.userId, {
-                conversationId: convId,
-                senderId: "support",
-                senderName: "VersoAI Support",
-                content: fullReply,
-                isAi: true,
-              }).catch(() => {
-                /* silent */
-              });
-            });
-        }
+        await saveReply(fullReply);
       }
 
       sendDone("groq");
@@ -679,6 +663,7 @@ router.get("/support/stream", async (req: Request, res: Response) => {
       sendToken(word + " ");
       await new Promise((r) => setTimeout(r, 30));
     }
+    await saveReply(faqAnswer);
     sendDone("faq");
     return;
   }

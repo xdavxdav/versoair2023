@@ -19,6 +19,7 @@ import {
   postInboxMessage,
   publishInboxMessage,
   removePendingMessage,
+  requestSupportReply,
   restoreDraft,
   settleSendAttempt,
   sortConversationsNewestFirst,
@@ -787,4 +788,50 @@ test("the sign-in link never redirects off site", () => {
   for (const bad of ["https://evil.example", "//evil.example", "/\\evil.example", "javascript:alert(1)", ""]) {
     assert.equal(buildSignInHref(bad), fallback, bad);
   }
+});
+
+const stream = (status: number, text: string) =>
+  new Response(text, { status, headers: { "Content-Type": "text/event-stream" } });
+
+test("a finished support stream means the reply is stored and ready to load", async () => {
+  let url = "";
+  const result = await requestSupportReply(
+    async (u) => {
+      url = u;
+      return stream(200, 'data: {"token":"Hi "}\n\nevent: done\ndata: {"provider":"groq"}\n\n');
+    },
+    12,
+    "are you alive?",
+  );
+  assert.deepEqual(result, { ok: true, data: { provider: "groq" } });
+  assert.equal(url, "/api/ai/support/stream?message=are+you+alive%3F&convId=12");
+});
+
+test("a support stream that never finishes or only falls back is a failure", async () => {
+  for (const text of [
+    'data: {"token":"Hi "}\n\n',
+    'event: error\ndata: {"error":"x"}\n\n',
+    'event: done\ndata: {"provider":"fallback"}\n\n',
+  ]) {
+    const result = await requestSupportReply(async () => stream(200, text), 1, "hi");
+    assert.equal(result.ok, false);
+    assert.match((result as InboxFailure).message, /message is saved/);
+  }
+});
+
+test("support reply failures are told apart by status", async () => {
+  const kind = async (response: Response) =>
+    (await requestSupportReply(async () => response, 1, "hi") as InboxFailure).kind;
+  assert.equal(await kind(json(401, { error: "no" })), "unauthorized");
+  assert.equal(await kind(json(429, { error: "Too many AI requests." })), "rate_limited");
+  assert.equal(await kind(json(503, {})), "server");
+  assert.equal(await kind(stream(404, "")), "client");
+  const offline = await requestSupportReply(
+    async () => {
+      throw new TypeError("offline");
+    },
+    1,
+    "hi",
+  );
+  assert.equal((offline as InboxFailure).kind, "network");
 });
