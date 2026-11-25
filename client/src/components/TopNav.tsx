@@ -12,7 +12,7 @@ import MarketLabel from "@/components/MarketLabel";
 export const PORTALS: Record<PortalId, { label: string; path: string }> = {
   general: { label: "Dashboard", path: "/dashboard" },
   streamer: { label: "Streamer", path: "/streamer-portal" },
-  artist: { label: "Artist", path: "/artist-portal/welcome" },
+  artist: { label: "Artist", path: "/artist-portal" },
   artisan: { label: "Artisan", path: "/artisans-portal" },
   "geo-admin": { label: "Geo Admin", path: "/geo-admin" },
   community: { label: "Community", path: "/blog" },
@@ -65,7 +65,7 @@ function Menu({
 
 export default function TopNav() {
   const { user, logout } = useAuthContext();
-  const { accessiblePortals } = usePortalAccess();
+  const { isAuthenticated } = usePortalAccess();
   const [location, navigate] = useLocation();
   const [open, setOpen] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -102,9 +102,7 @@ export default function TopNav() {
           open={open === "portals"}
           onToggle={() => toggle("portals")}
         >
-          {PORTAL_ORDER.filter(
-            (id) => accessiblePortals.includes(id) && PORTALS[id],
-          )
+          {PORTAL_ORDER.filter((id) => isAuthenticated && PORTALS[id])
             .map((id) => (
               <Link key={id} href={PORTALS[id].path} className={item}>
                 {PORTALS[id].label}

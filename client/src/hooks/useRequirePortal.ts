@@ -7,8 +7,8 @@
  *   if (!allowed) return null; // redirect already fired
  *
  * The hook waits for auth + capabilities to resolve before deciding.
- * If the user isn't authenticated at all, it redirects to /apply.
- * If authenticated but lacking the specific portal, it redirects to `redirectTo`.
+ * Any signed-in user is allowed through; server APIs still enforce their own permissions.
+ * Signed-out users are redirected to /artist-portal/welcome.
  */
 
 import { useEffect, useRef } from "react";
@@ -40,7 +40,7 @@ export function useRequirePortal(
   const [, navigate] = useLocation();
   const hasRedirected = useRef(false);
 
-  const allowed = access[portalId];
+  const allowed = isAuthenticated || access[portalId];
 
   useEffect(() => {
     // Don't act while still loading

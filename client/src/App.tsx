@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
+import { PORTAL_ORDER } from "@/lib/portal-access";
 import { PORTALS } from "@/components/TopNav";
 import ThemeToggle from "@/components/ThemeToggle";
 import { CountryProvider } from "@/contexts/CountryContext";
@@ -130,10 +131,10 @@ const ArtistBioPage = lazy(() => import("@/pages/artist-bio"));
 // so React keeps the same component identity across re-renders.
 const ArtistPortalWelcomePage = (props: any) => {
   const { user } = useAuthContext();
-  const { canAccessArtist, accessiblePortals, isLoading } = usePortalAccess();
-  // Signed in without artist access: no login form, just the portals they can open
+  const { canAccessArtist, isLoading } = usePortalAccess();
+  // Signed in without artist access: no login form, just every portal to open
   if (user && !isLoading && !canAccessArtist) {
-    const links = accessiblePortals.filter((id) => PORTALS[id]);
+    const links = PORTAL_ORDER.filter((id) => PORTALS[id]);
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4 pt-16 text-slate-900 dark:text-white">
         <div className="w-full max-w-md rounded-2xl border border-violet-200 bg-white p-6 text-center shadow-md dark:border-white/10 dark:bg-white/5 dark:shadow-none">
