@@ -244,6 +244,80 @@ export function postInboxMessage<M>(
   );
 }
 
+/**
+ * Asks VersoAI to answer a message already stored in a support thread. The
+ * server saves the reply before it ends the stream, so success means the
+ * reply is ready to be loaded with the thread.
+ */
+export async function requestSupportReply(
+  fetcher: InboxFetcher,
+  conversationId: IdLike,
+  message: string,
+  signal?: AbortSignal,
+): Promise<InboxResult<{ provider: string }>> {
+  const params = new URLSearchParams({
+    message,
+    convId: String(conversationId),
+  });
+  const unavailable =
+    "VersoAI could not reply right now. Your message is saved; try again in a few minutes.";
+
+  let response: Response;
+  try {
+    response = await fetcher(`/api/ai/support/stream?${params}`, { signal });
+  } catch (error) {
+    if (isAbort(error, signal)) return fail("aborted", 0, "", false);
+    return fail(
+      "network",
+      0,
+      "VersoAI could not be reached. Check your connection and try again.",
+      true,
+    );
+  }
+
+  if (!response.ok) {
+    const detail = serverMessage(await readJson(response));
+    if (response.status === 401) {
+      return fail("unauthorized", 401, SIGN_IN_AGAIN, false);
+    }
+    if (response.status === 429) {
+      return fail(
+        "rate_limited",
+        429,
+        detail ?? "You're doing that too fast. Please wait a moment.",
+        true,
+      );
+    }
+    return fail(
+      response.status >= 500 ? "server" : "client",
+      response.status,
+      response.status >= 500 ? unavailable : (detail ?? unavailable),
+      response.status >= 500,
+    );
+  }
+
+  let stream: string;
+  try {
+    stream = await response.text();
+  } catch (error) {
+    if (isAbort(error, signal)) return fail("aborted", 0, "", false);
+    return fail("network", 0, unavailable, true);
+  }
+
+  const done = /event: done\ndata: (\{.*\})/.exec(stream);
+  let provider = "";
+  try {
+    provider = done ? String(JSON.parse(done[1]).provider ?? "") : "";
+  } catch {
+    /* handled below */
+  }
+  // "fallback" is the canned "AI backend unavailable" text, which is not stored.
+  if (!done || provider === "fallback") {
+    return fail("server", 503, unavailable, true);
+  }
+  return { ok: true, data: { provider } };
+}
+
 /* ----------------------- send attempts and their keys ---------------------- */
 
 /**

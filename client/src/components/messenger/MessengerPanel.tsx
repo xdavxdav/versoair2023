@@ -51,6 +51,7 @@ import {
   mergeThreadReload,
   nextSendAttempt,
   postInboxMessage,
+  requestSupportReply,
   publishInboxMessage,
   removePendingMessage,
   restoreDraft,
@@ -170,6 +171,7 @@ export default function MessengerPanel({
   const [activeFilter, setActiveFilter] = useState("all");
   const [followingUserIds, setFollowingUserIds] = useState<number[]>([]);
   const [otherTyping, setOtherTyping] = useState(false);
+  const [aiReplying, setAiReplying] = useState(false);
   const [otherOnline, setOtherOnline] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<string | null>(
@@ -557,6 +559,29 @@ export default function MessengerPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
+  const askVersoAI = async (conversationId: IdLike, text: string) => {
+    setAiReplying(true);
+    const reply = await requestSupportReply(
+      authenticatedFetch,
+      conversationId,
+      text,
+    );
+    setAiReplying(false);
+    if (reply.ok) {
+      if (sameId(activeConvoRef.current?.id, conversationId)) {
+        setThreadReloadKey((key) => key + 1);
+      } else {
+        void refreshConversations();
+      }
+    } else if (reply.kind !== "aborted") {
+      toast({
+        title: "VersoAI did not reply",
+        description: reply.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const sendMessage = async () => {
     const draftText = draft;
     const content = draftText.trim();
@@ -614,6 +639,9 @@ export default function MessengerPanel({
           createdAt: result.data.createdAt || new Date().toISOString(),
         }),
       );
+      if (conversation.type === "support" && content) {
+        void askVersoAI(conversation.id, content);
+      }
       return;
     }
 
@@ -1367,7 +1395,7 @@ export default function MessengerPanel({
                       </motion.div>
                     );
                   })}
-                  {otherTyping && (
+                  {(otherTyping || (aiReplying && activeConvo?.type === "support")) && (
                     <div className="flex justify-start mt-3">
                       <div className="bg-[#180d34]/95 border border-purple-500/25 rounded-2xl rounded-bl-sm px-3.5 py-2.5 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-300 motion-safe:animate-bounce [animation-delay:-0.3s]" />
