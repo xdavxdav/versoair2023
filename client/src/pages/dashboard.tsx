@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import GeoAdminSubscriberView from "@/components/GeoAdminSubscriberView";
 import {
   getDashboardAccountLabel,
@@ -1509,7 +1509,8 @@ const ACCOUNT_THEMES: Record<
 export default function UserDashboard() {
   const queryClient = useQueryClient();
   const { user: authUser, logout, restoreAuth } = useAuthContext();
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
+  const search = useSearch();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
   const [selectedBusinessIdx, setSelectedBusinessIdx] = useState(0);
@@ -1771,7 +1772,7 @@ export default function UserDashboard() {
     });
 
   // Navigation context
-  const routeParams = new URLSearchParams(location.split("?")[1] || "");
+  const routeParams = new URLSearchParams(search);
   const fromParam = routeParams.get("from");
   const cameFromGeoAdmin =
     fromParam === "geoadmin" || fromParam === "geo-admin";
