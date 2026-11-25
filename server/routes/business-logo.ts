@@ -144,7 +144,7 @@ router.post(
 
       // Verify the user owns the business
       const ownerCheck = await pool.query(
-        `SELECT b.id, b.tier, b.name, u.subscription_tier
+        `SELECT b.id, b.tier, b.name, b.is_verified, u.subscription_tier
          FROM businesses b
          LEFT JOIN users u ON u.id = $2
          WHERE b.id = $1
@@ -165,6 +165,15 @@ router.post(
       }
 
       const business = ownerCheck.rows[0];
+      if (!business.is_verified) {
+        return res.status(403).json({
+          success: false,
+          code: "BUSINESS_VERIFICATION_REQUIRED",
+          message:
+            "Only verified businesses can upload a logo. Complete business verification first.",
+        });
+      }
+
       const userTier = (business.subscription_tier || "free").toLowerCase();
       const bizTier = (business.tier || "free").toLowerCase();
 

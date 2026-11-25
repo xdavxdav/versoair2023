@@ -45,6 +45,7 @@ interface Scenario {
   /** Who owns the business. */
   ownerId?: number;
   coOwnerId?: number;
+  isVerified?: boolean;
   userTier?: string;
   bizTier?: string;
   /** The row behind GET /file/:id; undefined: no such business. */
@@ -60,13 +61,14 @@ function scriptedDb(scenario: Scenario = {}) {
         (id) => id != null && String(params[1]) === String(id),
       );
 
-    if (sql.startsWith("SELECT b.id, b.tier, b.name, u.subscription_tier")) {
+    if (sql.startsWith("SELECT b.id, b.tier, b.name, b.is_verified, u.subscription_tier")) {
       return {
         rows: ownsIt()
           ? [
               {
                 id: BUSINESS,
                 name: "Chez Ada",
+                is_verified: scenario.isVerified ?? true,
                 tier: scenario.bizTier ?? "free",
                 subscription_tier: scenario.userTier ?? "free",
               },
@@ -226,6 +228,16 @@ test("an accepted co-owner can upload a logo", async () => {
     assert.equal(res.status, 200);
   });
   assert.equal(writes(db).length, 1);
+});
+
+test("an unverified business cannot upload a logo", async () => {
+  const db = scriptedDb({ isVerified: false, bizTier: "verified" });
+  await serve(async (origin) => {
+    const res = await postForm(origin, UPLOAD, logoForm(png), signIn(owner));
+    assert.equal(res.status, 403);
+    assert.equal(res.body.code, "BUSINESS_VERIFICATION_REQUIRED");
+  });
+  assert.deepEqual(writes(db), []);
 });
 
 test("when subscriptions are on sale a free-tier owner is asked to upgrade", async () => {

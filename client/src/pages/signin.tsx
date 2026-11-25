@@ -2679,7 +2679,7 @@ export default function SignIn() {
                         type="checkbox"
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
-                        className="rounded border-gray-300 text-[#bf831c] focus:ring-[#bf831c]"
+                        className="rounded border-gray-300 text-[#bf831c] accent-[#bf831c] focus:ring-[#bf831c]"
                       />
                       <span className="ml-2 text-sm text-gray-600">
                         Remember me

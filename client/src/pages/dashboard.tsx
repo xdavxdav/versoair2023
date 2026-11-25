@@ -26,7 +26,9 @@ import {
   ShoppingCart,
   BarChart3,
   MapPin,
+  Check,
   CheckCircle,
+  Loader2,
   ArrowRight,
   ArrowLeft,
   LogOut,
@@ -1527,25 +1529,34 @@ export default function UserDashboard() {
 
   // Avatar Management — backed by real PostgreSQL storage (/api/profile/avatar)
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const [customAvatarUrl, setCustomAvatarUrl] = useState<string>(
     () => authUser?.avatarUrl || authUser?.avatar || "",
   );
 
   useEffect(() => {
     const serverAvatar = authUser?.avatarUrl || authUser?.avatar || "";
-    if (serverAvatar) {
-      setCustomAvatarUrl(serverAvatar);
-    }
+    setCustomAvatarUrl(serverAvatar);
   }, [authUser?.avatarUrl, authUser?.avatar]);
 
+  const showShortToast = (opts: Parameters<typeof toast>[0]) => {
+    const { dismiss } = toast({ ...opts, duration: 2500 });
+    window.setTimeout(() => dismiss(), 2500);
+  };
+
   const handleSelectAvatar = async (url: string) => {
+    if (avatarBusy) return;
+    setAvatarBusy(true);
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Could not load selected avatar.");
       const blob = await response.blob();
-      const file = new File([blob], "avatar.png", {
-        type: blob.type && blob.type.startsWith("image/") ? blob.type : "image/png",
-      });
+      const mime =
+        blob.type &&
+        ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(blob.type)
+          ? blob.type
+          : "image/png";
+      const file = new File([blob], "avatar.png", { type: mime });
       const form = new FormData();
       form.append("avatar", file);
       const uploadRes = await authenticatedFetch("/api/profile/avatar", {
@@ -1560,18 +1571,20 @@ export default function UserDashboard() {
       setCustomAvatarUrl(uploadJson.avatarUrl);
       invalidateAuthSessionCache();
       await restoreAuth();
-      toast({
+      showShortToast({
         title: "Photo de profil mise à jour",
         description: "Votre avatar a été enregistré sur votre compte.",
       });
       setShowAvatarModal(false);
     } catch (err) {
-      toast({
+      showShortToast({
         title: "Échec de la mise à jour",
         description:
           err instanceof Error ? err.message : "Impossible d'enregistrer cet avatar.",
         variant: "destructive",
       });
+    } finally {
+      setAvatarBusy(false);
     }
   };
 
@@ -1580,7 +1593,8 @@ export default function UserDashboard() {
   ) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (!file || avatarBusy) return;
+    setAvatarBusy(true);
     try {
       const form = new FormData();
       form.append("avatar", file);
@@ -1596,18 +1610,51 @@ export default function UserDashboard() {
       setCustomAvatarUrl(json.avatarUrl);
       invalidateAuthSessionCache();
       await restoreAuth();
-      toast({
+      showShortToast({
         title: "Nouvelle photo enregistrée",
         description: "Votre photo de profil est synchronisée sur tous vos appareils.",
       });
       setShowAvatarModal(false);
     } catch (err) {
-      toast({
+      showShortToast({
         title: "Échec de l'envoi",
         description:
           err instanceof Error ? err.message : "Impossible d'enregistrer cette image.",
         variant: "destructive",
       });
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!customAvatarUrl || avatarBusy) return;
+    setAvatarBusy(true);
+    try {
+      const res = await authenticatedFetch("/api/profile/avatar", {
+        method: "DELETE",
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || "Could not remove avatar.");
+      }
+      localStorage.removeItem("user_custom_avatar");
+      setCustomAvatarUrl("");
+      invalidateAuthSessionCache();
+      await restoreAuth();
+      showShortToast({
+        title: "Photo supprimée",
+        description: "Votre photo de profil a été retirée.",
+      });
+    } catch (err) {
+      showShortToast({
+        title: "Échec de la suppression",
+        description:
+          err instanceof Error ? err.message : "Impossible de retirer la photo.",
+        variant: "destructive",
+      });
+    } finally {
+      setAvatarBusy(false);
     }
   };
 
@@ -1626,14 +1673,27 @@ export default function UserDashboard() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } else if (src && src.startsWith("http")) {
-      fetch(src)
-        .then((r) => r.blob())
+    } else if (src && (src.startsWith("http") || src.startsWith("/"))) {
+      fetch(src, { credentials: "include" })
+        .then((r) => {
+          if (!r.ok) throw new Error("download failed");
+          return r.blob();
+        })
         .then((blob) => {
+          const ext =
+            blob.type === "image/jpeg"
+              ? "jpg"
+              : blob.type === "image/webp"
+                ? "webp"
+                : blob.type === "image/gif"
+                  ? "gif"
+                  : blob.type === "image/svg+xml"
+                    ? "svg"
+                    : "png";
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `${userName}-avatar.svg`;
+          a.download = `${userName}-avatar.${ext}`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -1974,11 +2034,25 @@ export default function UserDashboard() {
         body: formData,
       });
       const data = await res.json();
-      if (data.success)
+      if (data.success) {
         queryClient.invalidateQueries({ queryKey: ["my-businesses"] });
-      else alert(data.message || "Logo upload failed");
+        showShortToast({
+          title: "Business logo updated",
+          description: "Your verified business logo is now saved.",
+        });
+      } else {
+        showShortToast({
+          title: "Logo upload blocked",
+          description: data.message || "Logo upload failed.",
+          variant: "destructive",
+        });
+      }
     } catch {
-      alert("Logo upload failed. Please try again.");
+      showShortToast({
+        title: "Logo upload failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLogoUploading(false);
       if (logoInputRef.current) logoInputRef.current.value = "";
@@ -1999,11 +2073,22 @@ export default function UserDashboard() {
         },
       );
       const data = await res.json();
-      if (data.success)
+      if (data.success) {
         queryClient.invalidateQueries({ queryKey: ["my-businesses"] });
-      else alert(data.message || "Failed to remove logo.");
+        showShortToast({ title: "Business logo removed" });
+      } else {
+        showShortToast({
+          title: "Failed to remove logo",
+          description: data.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch {
-      alert("Failed to remove logo.");
+      showShortToast({
+        title: "Failed to remove logo",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -2528,7 +2613,7 @@ export default function UserDashboard() {
               {isLoggedIn && accountOptions.length > 1 && (
                 <select
                   aria-label="Select account dashboard"
-                  className="max-w-36 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 sm:max-w-48"
+                  className="max-w-36 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 sm:max-w-48"
                   value={selectedAccount}
                   onChange={(event) => {
                     const nextAccount = accountOptions.find(
@@ -3026,13 +3111,38 @@ export default function UserDashboard() {
                     )}
                     <button
                       type="button"
-                      onClick={() => logoInputRef.current?.click()}
+                      onClick={() => {
+                        if (business.verification_status !== "verified") {
+                          showShortToast({
+                            title: "Verification required",
+                            description:
+                              "Only verified businesses can upload a logo. Complete business verification first.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        logoInputRef.current?.click();
+                      }}
                       disabled={logoUploading}
-                      aria-label={business.logo_url ? "Change logo" : "Add logo"}
-                      title={business.logo_url ? "Change logo" : "Add logo"}
+                      aria-label={
+                        business.verification_status !== "verified"
+                          ? "Business verification required to upload a logo"
+                          : business.logo_url
+                            ? "Change logo"
+                            : "Add logo"
+                      }
+                      title={
+                        business.verification_status !== "verified"
+                          ? "Only verified businesses can upload a logo"
+                          : business.logo_url
+                            ? "Change logo"
+                            : "Add logo"
+                      }
                       className="absolute inset-0 rounded-xl bg-slate-900/60 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                     >
-                      {logoUploading ? (
+                      {business.verification_status !== "verified" ? (
+                        <Lock className="h-4 w-4 text-amber-300" />
+                      ) : logoUploading ? (
                         <Upload className="h-4 w-4 text-white animate-pulse" />
                       ) : (
                         <Camera className="h-4 w-4 text-white" />
@@ -3041,9 +3151,15 @@ export default function UserDashboard() {
                     {/* Always visible, so touch screens (no hover) can find the control. */}
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow ring-2 ring-white"
+                      className={`pointer-events-none absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-white shadow ring-2 ring-white ${
+                        business.verification_status === "verified"
+                          ? "bg-blue-600"
+                          : "bg-amber-600"
+                      }`}
                     >
-                      {logoUploading ? (
+                      {business.verification_status !== "verified" ? (
+                        <Lock className="h-2.5 w-2.5" />
+                      ) : logoUploading ? (
                         <Upload className="h-3 w-3 animate-pulse" />
                       ) : (
                         <Camera className="h-3 w-3" />
@@ -3078,11 +3194,11 @@ export default function UserDashboard() {
                       </button>
                     )}
                     {business.verification_status === "verified" ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30">
                         <ShieldCheck className="h-3 w-3" /> Verified
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
                         Pending
                       </span>
                     )}
@@ -4825,65 +4941,121 @@ export default function UserDashboard() {
 
       {/* AVATAR SELECTION & UPLOAD MODAL */}
       <Dialog open={showAvatarModal} onOpenChange={setShowAvatarModal}>
-        <DialogContent className="max-w-md bg-[#0f172a] text-white border-slate-800 rounded-3xl p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-400" />
-              Photo de profil & Avatars
-            </DialogTitle>
-            <DialogDescription className="text-slate-400 text-xs">
-              Choisissez un avatar existant ou importez votre propre image
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5 my-2">
-            {/* Custom upload option */}
-            <div className="p-4 rounded-2xl border border-dashed border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors text-center">
-              <label className="cursor-pointer flex flex-col items-center justify-center gap-2">
-                <Upload className="h-6 w-6 text-blue-400" />
-                <span className="text-xs font-semibold text-blue-200">
-                  Importer une photo depuis l'appareil
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  PNG, JPG, WebP jusqu'à 5 Mo
-                </span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={handleUploadAvatarFile}
-                  className="hidden"
-                />
-              </label>
+        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white text-slate-900 shadow-2xl dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+          {/* Header with live avatar preview */}
+          <div className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-br from-amber-50 via-white to-indigo-50/70 px-6 pt-6 pb-5 dark:border-slate-800/90 dark:from-slate-900 dark:via-slate-950 dark:to-indigo-950/50">
+            <div className="flex items-center gap-4 pr-8">
+              <div className="relative h-16 w-16 shrink-0 rounded-2xl p-[2px] bg-gradient-to-br from-amber-500 via-rose-500 to-indigo-600 shadow-md">
+                <div className="h-full w-full overflow-hidden rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center">
+                  {customAvatarUrl ? (
+                    <img
+                      src={customAvatarUrl}
+                      alt={userSession?.user?.displayName || "Profile avatar"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl font-bold text-indigo-700 dark:text-indigo-300">
+                      {(
+                        userSession?.user?.displayName ||
+                        userSession?.user?.name ||
+                        "V"
+                      )
+                        .charAt(0)
+                        .toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                {avatarBusy && (
+                  <div className="absolute inset-0 rounded-2xl bg-slate-950/60 flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+              <DialogHeader className="text-left space-y-1">
+                <DialogTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  Photo de profil &amp; Avatars
+                </DialogTitle>
+                <DialogDescription className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  Avatar personnel uniquement — les logos d'entreprise exigent une vérification.
+                </DialogDescription>
+              </DialogHeader>
             </div>
+          </div>
+
+          <div className="px-6 py-5 space-y-5">
+            {/* Custom upload dropzone */}
+            <label
+              className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-5 text-center transition-all ${
+                avatarBusy
+                  ? "pointer-events-none opacity-60 border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50"
+                  : "cursor-pointer border-indigo-300/80 bg-indigo-50/40 hover:border-indigo-500 hover:bg-indigo-50/80 dark:border-indigo-500/35 dark:bg-indigo-500/10 dark:hover:border-indigo-400/60 dark:hover:bg-indigo-500/15"
+              }`}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-200/80 transition-transform group-hover:scale-105 dark:bg-slate-900 dark:text-indigo-300 dark:ring-indigo-500/30">
+                {avatarBusy ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Upload className="h-5 w-5" />
+                )}
+              </div>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {avatarBusy
+                  ? "Enregistrement en cours..."
+                  : "Importer une photo depuis l'appareil"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900/80 dark:text-slate-400 dark:ring-slate-700">
+                JPEG · PNG · WebP · GIF · max 5 Mo
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleUploadAvatarFile}
+                disabled={avatarBusy}
+                className="hidden"
+              />
+            </label>
 
             {/* Presets Gallery */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-                Avatars disponibles
-              </p>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  Avatars disponibles
+                </p>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {PRESET_AVATARS.length} styles
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-2.5">
                 {PRESET_AVATARS.map((preset) => {
                   const isSelected = customAvatarUrl === preset.url;
                   return (
                     <button
                       key={preset.id}
+                      type="button"
+                      disabled={avatarBusy}
                       onClick={() => handleSelectAvatar(preset.url)}
-                      className={`group relative flex flex-col items-center p-2 rounded-2xl border transition-all ${
+                      className={`group relative flex flex-col items-center rounded-2xl border p-2.5 transition-all disabled:opacity-50 ${
                         isSelected
-                          ? "border-blue-400 bg-blue-500/20 ring-2 ring-blue-400"
-                          : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-800"
+                          ? "border-indigo-500 bg-indigo-50/90 ring-2 ring-indigo-500/30 dark:border-indigo-400 dark:bg-indigo-500/20 dark:ring-indigo-400/30"
+                          : "border-slate-200 bg-slate-50/70 hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-slate-700 dark:hover:bg-slate-800/90"
                       }`}
                     >
-                      <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-800 flex items-center justify-center mb-1">
+                      {isSelected && (
+                        <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-white shadow">
+                          <Check className="h-2.5 w-2.5" />
+                        </span>
+                      )}
+                      <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center mb-1.5 ring-1 ring-black/5 dark:ring-white/10">
                         <img
                           src={preset.url}
                           alt={preset.name}
-                          className="h-full w-full object-cover group-hover:scale-110 transition-transform"
+                          className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-200"
                         />
                       </div>
                       <span
                         translate="no"
-                        className="notranslate text-[10px] text-slate-300 font-medium truncate w-full text-center"
+                        className="notranslate text-[11px] text-slate-700 dark:text-slate-200 font-medium truncate w-full text-center"
                       >
                         {preset.name}
                       </span>
@@ -4893,22 +5065,41 @@ export default function UserDashboard() {
               </div>
             </div>
 
-            {/* Download current avatar */}
-            <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
+            {/* Footer actions */}
+            <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={avatarBusy}
+                  onClick={downloadProfilePicture}
+                  className="bg-white border-slate-300 text-slate-800 hover:bg-slate-100 hover:text-slate-950 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white text-xs gap-1.5 rounded-xl"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Télécharger l'avatar actuel
+                </Button>
+                {customAvatarUrl && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={avatarBusy}
+                    onClick={handleRemoveAvatar}
+                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-rose-950/50 text-xs gap-1 rounded-xl"
+                    aria-label="Supprimer la photo"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Retirer
+                  </Button>
+                )}
+              </div>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadProfilePicture}
-                className="bg-slate-800/80 border-slate-700 text-slate-100 hover:bg-slate-700 hover:text-white text-xs gap-1.5 rounded-xl"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Télécharger l'avatar actuel
-              </Button>
-              <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowAvatarModal(false)}
-                className="text-slate-300 hover:text-white hover:bg-slate-800 text-xs rounded-xl"
+                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-xs rounded-xl"
               >
                 Fermer
               </Button>
