@@ -108,42 +108,42 @@ const PRESET_AVATARS = [
   {
     id: "eagle",
     name: "Verso Eagle",
-    url: "https://api.dicebear.com/9.x/bottts/svg?seed=VersoEagle&backgroundColor=b6e3f4,c0aede,d1d4f9",
+    url: "https://api.dicebear.com/9.x/bottts/png?size=256&seed=VersoEagle&backgroundColor=b6e3f4,c0aede,d1d4f9",
   },
   {
     id: "gold",
     name: "Gold Monarch",
-    url: "https://api.dicebear.com/9.x/initials/svg?seed=VA&backgroundColor=f59e0b&textColor=ffffff",
+    url: "https://api.dicebear.com/9.x/initials/png?size=256&seed=VA&backgroundColor=f59e0b&textColor=ffffff",
   },
   {
     id: "cyber",
     name: "Cyber Beat",
-    url: "https://api.dicebear.com/9.x/bottts/svg?seed=CyberBeat&backgroundColor=8b5cf6,ec4899",
+    url: "https://api.dicebear.com/9.x/bottts/png?size=256&seed=CyberBeat&backgroundColor=8b5cf6,ec4899",
   },
   {
     id: "artisan",
     name: "Emerald Craft",
-    url: "https://api.dicebear.com/9.x/identicon/svg?seed=Artisan&backgroundColor=10b981",
+    url: "https://api.dicebear.com/9.x/identicon/png?size=256&seed=Artisan&backgroundColor=10b981",
   },
   {
     id: "sunset",
     name: "Sunset Flame",
-    url: "https://api.dicebear.com/9.x/thumbs/svg?seed=Sunset&backgroundColor=f97316,ea580c",
+    url: "https://api.dicebear.com/9.x/thumbs/png?size=256&seed=Sunset&backgroundColor=f97316,ea580c",
   },
   {
     id: "velvet",
     name: "Velvet Star",
-    url: "https://api.dicebear.com/9.x/shapes/svg?seed=VelvetStar&backgroundColor=a855f7,6366f1",
+    url: "https://api.dicebear.com/9.x/shapes/png?size=256&seed=VelvetStar&backgroundColor=a855f7,6366f1",
   },
   {
     id: "neo",
     name: "Neo Producer",
-    url: "https://api.dicebear.com/9.x/personas/svg?seed=NeoProducer&backgroundColor=3b82f6",
+    url: "https://api.dicebear.com/9.x/personas/png?size=256&seed=NeoProducer&backgroundColor=3b82f6",
   },
   {
     id: "cosmic",
     name: "Cosmic Audio",
-    url: "https://api.dicebear.com/9.x/rings/svg?seed=CosmicAudio&backgroundColor=1e1b4b",
+    url: "https://api.dicebear.com/9.x/rings/png?size=256&seed=CosmicAudio&backgroundColor=1e1b4b",
   },
 ];
 
@@ -4849,7 +4849,7 @@ export default function UserDashboard() {
                 </span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={handleUploadAvatarFile}
                   className="hidden"
                 />
@@ -4881,7 +4881,10 @@ export default function UserDashboard() {
                           className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                         />
                       </div>
-                      <span className="text-[10px] text-slate-300 font-medium truncate w-full text-center">
+                      <span
+                        translate="no"
+                        className="notranslate text-[10px] text-slate-300 font-medium truncate w-full text-center"
+                      >
                         {preset.name}
                       </span>
                     </button>
@@ -4896,7 +4899,7 @@ export default function UserDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={downloadProfilePicture}
-                className="border-slate-700 text-slate-300 hover:bg-slate-800 text-xs gap-1.5 rounded-xl"
+                className="bg-slate-800/80 border-slate-700 text-slate-100 hover:bg-slate-700 hover:text-white text-xs gap-1.5 rounded-xl"
               >
                 <Download className="h-3.5 w-3.5" />
                 Télécharger l'avatar actuel
@@ -4905,7 +4908,7 @@ export default function UserDashboard() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowAvatarModal(false)}
-                className="text-slate-400 hover:text-white text-xs rounded-xl"
+                className="text-slate-300 hover:text-white hover:bg-slate-800 text-xs rounded-xl"
               >
                 Fermer
               </Button>
