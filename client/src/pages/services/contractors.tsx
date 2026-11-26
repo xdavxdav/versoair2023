@@ -1346,15 +1346,15 @@ export default function Contractors() {
             {/* ── CONTRACT LIST ── */}
             <div className="lg:w-3/4">
               {/* sector quick-pick */}
-              <div className="mb-5 flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-500">
+              <div className="mb-5 flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="shrink-0 text-sm font-medium text-gray-500">
                   Sector:
                 </span>
                 <Popover open={sectorOpen} onOpenChange={setSectorOpen}>
                   <PopoverTrigger asChild>
                     <button
                       className={
-                        "inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium min-w-[230px] justify-between transition-all " +
+                        "inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium max-w-full sm:min-w-[230px] justify-between transition-all " +
                         (selSector !== "all"
                           ? "bg-gradient-to-r " +
                             getSectorDef(selSector).gradient +
@@ -1428,7 +1428,7 @@ export default function Contractors() {
                 onValueChange={setActiveTab}
                 className="mb-8"
               >
-                <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4 sm:mb-6 bg-gray-100/80 p-1 sm:p-1.5 rounded-xl">
+                <TabsList className="grid h-auto grid-cols-2 sm:grid-cols-4 mb-4 sm:mb-6 bg-gray-100/80 p-1 sm:p-1.5 rounded-xl">
                   {[
                     {
                       v: "all",
@@ -1479,8 +1479,9 @@ export default function Contractors() {
                         Available Contracts
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Showing {filtered.length} opportunities matching your
-                        criteria
+                        Showing {filtered.length}{" "}
+                        {filtered.length === 1 ? "opportunity" : "opportunities"}{" "}
+                        matching your criteria
                       </p>
                     </div>
                     <Select defaultValue="newest">
@@ -1727,7 +1728,7 @@ export default function Contractors() {
 
                               <Separator className="my-5" />
 
-                              <div className="flex items-center justify-between">
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="text-sm text-gray-500">
                                   <span className="flex items-center gap-2">
                                     <Eye className="h-4 w-4" />{" "}
@@ -1740,7 +1741,7 @@ export default function Contractors() {
                                     </span>
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                   <Button
                                     variant="outline"
                                     size="sm"

@@ -699,7 +699,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
                 key={item.key}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-medium transition-colors ${
+                className={`relative flex flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] tracking-tight min-[400px]:text-[11px] font-medium transition-colors ${
                   isActive
                     ? "text-amber-800 dark:text-amber-300 font-semibold"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -716,7 +716,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
                     </span>
                   ) : null}
                 </span>
-                <span className="truncate max-w-full px-0.5">{item.shortLabel}</span>
+                <span className="max-w-full whitespace-nowrap">{item.shortLabel}</span>
                 {isActive && (
                   <span className="absolute bottom-1 h-1 w-6 rounded-full bg-amber-600 dark:bg-amber-400" />
                 )}
