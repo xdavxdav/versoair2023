@@ -554,6 +554,7 @@ function Router() {
       <Route path="/artist-directory">{() => <Redirect to="/artistes" />}</Route>
       <Route path="/account">{() => <Redirect to="/profile" />}</Route>
       <Route path="/jobs">{() => <Redirect to="/services/careers" />}</Route>
+      <Route path="/directory">{() => <Redirect to="/businesses-directory" />}</Route>
       <Route path="/artisan">{() => <Redirect to="/artisans" />}</Route>
       <Route path="/billing">{() => <Redirect to="/account/billing" />}</Route>
       <Route path="/music/social">{() => <Redirect to="/blog" />}</Route>
