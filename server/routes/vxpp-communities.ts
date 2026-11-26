@@ -163,11 +163,12 @@ export function createVxppCommunitiesRouter(deps: VxppCommunitiesDeps = {}) {
   }
 
   // ── GET /api/vxpp-communities — list communities + grouped member & post counts ─
-  router.get("/", async (req: Request, res: Response) => {
+  router.get("/", optAuth(), async (req: Request, res: Response) => {
     try {
       await ensureSchema();
+      const actor = getActor(req);
       const limit = Math.min(Math.max(Number(req.query.limit) || 60, 1), 100);
-      const [listRes, memberRows, postRows] = await Promise.all([
+      const [listRes, memberRows, postRows, mineRows] = await Promise.all([
         queryPool.query(
           `SELECT id, name, slug, tagline, description, category, emoji, created_by, created_at AS created_date
            FROM vxpp_communities
@@ -185,11 +186,18 @@ export function createVxppCommunitiesRouter(deps: VxppCommunitiesDeps = {}) {
            FROM vxpp_community_posts
            GROUP BY community_id`,
         ),
+        actor
+          ? queryPool.query(
+              `SELECT community_id FROM vxpp_community_members WHERE user_id = $1`,
+              [actor.userId],
+            )
+          : Promise.resolve({ rows: [] as Array<{ community_id: number }> }),
       ]);
 
       return res.json({
         success: true,
         items: listRes.rows,
+        myCommunityIds: mineRows.rows.map((r: any) => Number(r.community_id)),
         memberCounts: toCountRecord(memberRows.rows),
         postCounts: toCountRecord(postRows.rows),
       });
@@ -520,6 +528,7 @@ export function createVxppCommunitiesRouter(deps: VxppCommunitiesDeps = {}) {
       ]);
       return res.status(201).json({
         success: true,
+        joined: true,
         membership: memberRes.rows[0] || null,
         memberCount: Number(countRes.rows[0]?.count) || 0,
       });
@@ -551,6 +560,7 @@ export function createVxppCommunitiesRouter(deps: VxppCommunitiesDeps = {}) {
       );
       return res.json({
         success: true,
+        joined: false,
         membership: null,
         memberCount: Number(countRes.rows[0]?.count) || 0,
       });

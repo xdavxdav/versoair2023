@@ -67,6 +67,13 @@ function createTestServer() {
         if (idx >= 0) communities.splice(idx, 1);
         return { rows: [], rowCount: 1 };
       }
+      if (q.startsWith("SELECT community_id FROM vxpp_community_members WHERE user_id = $1")) {
+        return {
+          rows: members
+            .filter((m) => m.user_id === Number(params[0]))
+            .map((m) => ({ community_id: m.community_id })),
+        };
+      }
       if (q.startsWith("SELECT community_id, COUNT(*)::int AS count FROM vxpp_community_members")) {
         const map = new Map<number, number>();
         for (const m of members) map.set(m.community_id, (map.get(m.community_id) || 0) + 1);
@@ -294,13 +301,22 @@ test("vxpp communities end-to-end: public read, anonymous write rejection, dupli
       headers: { "x-test-user": "20" },
     });
     assert.equal(join1.status, 201);
-    assert.equal((await join1.json()).memberCount, 1);
+    const join1Json = await join1.json();
+    assert.equal(join1Json.memberCount, 1);
+    assert.equal(join1Json.joined, true);
 
     const join2 = await fetch(`${srv.origin}/api/vxpp-communities/${created.id}/membership`, {
       method: "POST",
       headers: { "x-test-user": "20" },
     });
-    assert.equal((await join2.json()).memberCount, 1);
+    const join2Json = await join2.json();
+    assert.equal(join2Json.memberCount, 1);
+    assert.equal(join2Json.joined, true);
+
+    // List reports the signed-in user's memberships; anonymous gets none
+    const mineRes = await fetch(`${srv.origin}/api/vxpp-communities`, { headers: { "x-test-user": "20" } });
+    assert.deepEqual((await mineRes.json()).myCommunityIds, [created.id]);
+    assert.deepEqual(listJson.myCommunityIds, []);
 
     // Empty post rejected
     const emptyPost = await fetch(`${srv.origin}/api/vxpp-communities/${created.id}/posts`, {
@@ -361,7 +377,9 @@ test("vxpp communities end-to-end: public read, anonymous write rejection, dupli
       method: "DELETE",
       headers: { "x-test-user": "20" },
     });
-    assert.equal((await leaveRes.json()).memberCount, 0);
+    const leaveJson = await leaveRes.json();
+    assert.equal(leaveJson.memberCount, 0);
+    assert.equal(leaveJson.joined, false);
 
     // Unknown slug -> 404
     const missingRes = await fetch(`${srv.origin}/api/vxpp-communities/does-not-exist`);

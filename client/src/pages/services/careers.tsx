@@ -1569,14 +1569,14 @@ export default function Careers() {
 
               {/* Sector Quick Filter — Searchable Dropdown */}
               <div className="mb-5">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-500">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <span className="shrink-0 text-sm font-medium text-gray-500">
                     Sector:
                   </span>
                   <Popover open={sectorOpen} onOpenChange={setSectorOpen}>
                     <PopoverTrigger asChild>
                       <button
-                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all duration-200 min-w-[230px] justify-between ${
+                        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all duration-200 max-w-full sm:min-w-[230px] justify-between ${
                           selectedSector !== "all"
                             ? `bg-gradient-to-r ${getSectorDef(selectedSector).gradient} text-white border-transparent shadow-md`
                             : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 shadow-sm"
@@ -1641,7 +1641,7 @@ export default function Careers() {
                 onValueChange={setActiveTab}
                 className="mb-8"
               >
-                <TabsList className="grid grid-cols-3 sm:grid-cols-5 mb-4 sm:mb-6 bg-gray-100/80 p-1 sm:p-1.5 rounded-xl">
+                <TabsList className="grid h-auto grid-cols-3 sm:grid-cols-5 mb-4 sm:mb-6 bg-gray-100/80 p-1 sm:p-1.5 rounded-xl">
                   {[
                     {
                       value: "all",
@@ -1698,7 +1698,8 @@ export default function Careers() {
                         Available Opportunities
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Showing {filteredJobs.length} matching positions
+                        Showing {filteredJobs.length} matching{" "}
+                        {filteredJobs.length === 1 ? "position" : "positions"}
                       </p>
                     </div>
                     <Select defaultValue="newest">
@@ -1936,7 +1937,7 @@ export default function Careers() {
 
                             <Separator className="my-5" />
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                               <div className="text-sm text-gray-500">
                                 <span className="flex items-center gap-2">
                                   <Eye className="h-4 w-4" />
@@ -1951,7 +1952,7 @@ export default function Careers() {
                                 </span>
                               </div>
 
-                              <div className="flex items-center gap-3">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                 <Button
                                   variant="outline"
                                   size="sm"
