@@ -4,6 +4,7 @@ import type { PoolClient } from "pg";
 import { pool } from "../db";
 import { requireAuth, isOwner } from "../middleware/auth";
 import { buildSlaReport } from "../services/ticket-report";
+import { notifyRequester, replyNotice, shouldNotifyRequester, statusNotice } from "../services/ticket-notify";
 import {
   approvalError, approvalSchema, slaPauseMs,
   assignTicketSchema, canReadTicket, canWorkTicket, commentSchema, createTicketSchema,
@@ -132,7 +133,8 @@ async function update(client: PoolClient, id: number, actor: TicketActor, input:
 router.get("/", route(async (req, res) => {
   const filter = scope(actorFor(req));
   const { rows } = await pool.query<SupportTicket>(
-    `SELECT * FROM tickets WHERE ${filter.sql} ORDER BY updated_at DESC, id DESC`, filter.values,
+    `SELECT tickets.*, (SELECT username FROM users WHERE id = tickets.assignee_id) AS assignee_name
+     FROM tickets WHERE ${filter.sql} ORDER BY updated_at DESC, id DESC`, filter.values,
   );
   res.json(rows.map((ticket) => publicTicket(ticket, actorFor(req))));
 }));
@@ -141,8 +143,8 @@ function publicTicket(ticket: SupportTicket, actor: TicketActor) {
   if (isTicketStaff(actor)) return ticket;
   const {
     pending_reason: _pending, abandonment_proposed_at: _abandonment,
-    problem_id: _problem, time_spent_minutes: _time, ...publicFields
-  } = ticket;
+    problem_id: _problem, time_spent_minutes: _time, assignee_name: _assignee, ...publicFields
+  } = ticket as SupportTicket & { assignee_name?: unknown };
   return publicFields;
 }
 // Logged effort is internal bookkeeping; requesters never see it.
@@ -323,7 +325,17 @@ router.get("/:id", route(async (req, res) => {
 router.put("/:id", route(async (req, res) => {
   const actor = actorFor(req);
   const input = parse(updateTicketSchema, req.body);
-  const ticket = await transaction((client) => update(client, parse(idSchema, req.params.id), actor, input));
+  const id = parse(idSchema, req.params.id);
+  let previousStatus: string | undefined;
+  const ticket = await transaction(async (client) => {
+    previousStatus = (await readTicket(client, id, actor, true)).status;
+    return update(client, id, actor, input);
+  });
+  if (previousStatus && shouldNotifyRequester({ actorId: actor.id, reporterId: ticket.reporter_id })) {
+    await notifyRequester(pool, ticket.reporter_id, statusNotice(ticket, {
+      from: previousStatus, to: ticket.status, pendingReason: ticket.pending_reason,
+    }));
+  }
   res.json(publicTicket(ticket, actor));
 }));
 router.delete("/:id", route(async () => {
@@ -503,9 +515,12 @@ router.post("/:id/comments", route(async (req, res) => {
       await event(client, id, actor, "customer-replied", {});
     }
     await event(client, id, actor, "comment-added", { commentId: rows[0].id }, input.internal);
-    return rows[0];
+    return { comment: rows[0], ticket };
   });
-  res.status(201).json(publicComment(result, actor));
+  if (shouldNotifyRequester({ actorId: actor.id, reporterId: result.ticket.reporter_id, internal: input.internal })) {
+    await notifyRequester(pool, result.ticket.reporter_id, replyNotice(result.ticket));
+  }
+  res.status(201).json(publicComment(result.comment, actor));
 }));
 router.get("/:id/events", route(async (req, res) => {
   const actor = actorFor(req);
