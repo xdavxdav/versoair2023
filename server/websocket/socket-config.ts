@@ -8,9 +8,18 @@ import { notificationEmitter } from "../services/notification-service";
 import { sendPushToUser } from "../services/push-service";
 import { participantIsUser } from "../utils/inbox-participants";
 import { markUserSeen } from "../services/user-presence";
+import {
+  CallRegistry,
+  RING_TIMEOUT_MS,
+  cleanSignal,
+} from "../services/call-signaling";
+import { callsEnabled } from "../services/turn-credentials";
 
 let io: SocketIOServer | null = null;
 const userConnections = new Map<number, string[]>(); // userId -> [socketIds]
+const calls = new CallRegistry();
+
+const toUser = (userId: number) => io?.to(`user_${userId}`);
 
 /**
  * Mirrors the HTTP CORS allowlist in server/index.ts so socket origins can't
@@ -216,6 +225,121 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     // Presence is served by GET /api/inbox/conversations/:id/presence, which
     // only answers for people the caller already has a conversation with.
 
+    // ── 1:1 voice/video calls. The server only relays signalling between the two
+    // people on a call; media goes peer to peer (or through TURN).
+    const me = (): number | null =>
+      socket.data.userId == null ? null : Number(socket.data.userId);
+
+    socket.on(
+      "call:invite",
+      async (data: { conversationId?: number; video?: boolean }) => {
+        const callerId = me();
+        const conversationId = Number(data?.conversationId);
+        if (callerId === null || !Number.isSafeInteger(conversationId)) return;
+        if (!callsEnabled()) {
+          socket.emit("call:unavailable", { reason: "disabled" });
+          return;
+        }
+        try {
+          const [conversation] = await db
+            .select({
+              participantId: schema.inboxConversations.participantId,
+              type: schema.inboxConversations.type,
+            })
+            .from(schema.inboxConversations)
+            .where(
+              and(
+                eq(schema.inboxConversations.id, conversationId),
+                eq(schema.inboxConversations.userId, callerId),
+              ),
+            )
+            .limit(1);
+          const calleeId = Number(conversation?.participantId);
+          if (
+            !conversation ||
+            conversation.type === "support" ||
+            !participantIsUser(conversation.type) ||
+            !Number.isSafeInteger(calleeId) ||
+            calleeId <= 0
+          ) {
+            socket.emit("call:unavailable", { reason: "not_allowed" });
+            return;
+          }
+          if (!isUserConnected(calleeId)) {
+            socket.emit("call:unavailable", { reason: "offline" });
+            return;
+          }
+          const invite = calls.invite(
+            callerId,
+            calleeId,
+            conversationId,
+            data?.video === true,
+          );
+          if (!invite.ok) {
+            socket.emit("call:unavailable", { reason: invite.reason });
+            return;
+          }
+          const { call } = invite;
+          const [caller] = await db
+            .select({
+              username: schema.users.username,
+              displayName: schema.users.displayName,
+            })
+            .from(schema.users)
+            .where(eq(schema.users.id, callerId))
+            .limit(1);
+          socket.emit("call:ringing", { callId: call.id, conversationId });
+          toUser(calleeId)?.emit("call:incoming", {
+            callId: call.id,
+            fromUserId: callerId,
+            fromName: caller?.displayName || caller?.username || "Someone",
+            video: call.video,
+          });
+          setTimeout(() => {
+            const missed = calls.expire(call.id);
+            if (!missed) return;
+            toUser(missed.callerId)?.emit("call:ended", {
+              callId: missed.id,
+              reason: "no_answer",
+            });
+            toUser(missed.calleeId)?.emit("call:ended", {
+              callId: missed.id,
+              reason: "missed",
+            });
+          }, RING_TIMEOUT_MS).unref();
+        } catch (err) {
+          console.error("[SOCKET] Call invite failed", {
+            errorType: err instanceof Error ? err.name : "unknown",
+          });
+          socket.emit("call:unavailable", { reason: "error" });
+        }
+      },
+    );
+
+    socket.on("call:accept", (data: { callId?: string }) => {
+      const userId = me();
+      const call = userId === null ? null : calls.accept(data?.callId, userId);
+      if (call) toUser(call.callerId)?.emit("call:accepted", { callId: call.id });
+    });
+
+    // Decline, hang up and cancel are the same thing to the server.
+    socket.on("call:end", (data: { callId?: string }) => {
+      const userId = me();
+      const call = userId === null ? null : calls.end(data?.callId, userId);
+      if (!call) return;
+      const peer = call.callerId === userId ? call.calleeId : call.callerId;
+      toUser(peer)?.emit("call:ended", { callId: call.id, reason: "ended" });
+    });
+
+    socket.on("call:signal", (data: { callId?: string }) => {
+      const userId = me();
+      if (userId === null) return;
+      const peer = calls.peerOf(data?.callId, userId);
+      const payload = cleanSignal(data);
+      if (peer === null || !payload) return;
+      toUser(peer)?.emit("call:signal", { callId: data.callId, ...payload });
+    });
+
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
 
@@ -228,6 +352,17 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
           userConnections.delete(userId);
         } else {
           userConnections.set(userId, filtered);
+        }
+        if (userId === socket.data.userId && filtered.length === 0) {
+          const dropped = calls.dropUser(userId);
+          if (dropped) {
+            const peer =
+              dropped.callerId === userId ? dropped.calleeId : dropped.callerId;
+            toUser(peer)?.emit("call:ended", {
+              callId: dropped.id,
+              reason: "disconnected",
+            });
+          }
         }
       }
     });

@@ -41,6 +41,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { useInboxSocket } from "@/hooks/use-inbox-socket";
 import { authenticatedFetch } from "@/lib/auth";
+import { useCalls } from "@/contexts/CallContext";
 import { useConversationPresence } from "@/hooks/use-conversation-presence";
 import InboxNotice from "@/components/messenger/InboxNotice";
 import {
@@ -536,6 +537,13 @@ export function TwitterMessenger({
     !!selectedConv && selectedConv.type !== "support" && selectedConv.type !== "business_network",
   );
   const presenceText = presenceLabel(presence);
+  const calls = useCalls();
+  const canCall =
+    calls.enabled &&
+    !calls.busy &&
+    !!selectedConv &&
+    selectedConv.type !== "support" &&
+    selectedConv.type !== "business_network";
 
   useEffect(() => {
     if (!selectedId) {
@@ -1032,14 +1040,22 @@ export function TwitterMessenger({
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  className="rounded-full p-2.5 text-white/30 transition-colors hover:bg-white/5 hover:text-white"
-                  title="Voice call"
+                  type="button"
+                  disabled={!canCall}
+                  onClick={() => selectedConv && calls.startCall(selectedConv, false)}
+                  aria-label="Voice call"
+                  className="rounded-full p-2.5 text-white/70 transition-colors hover:bg-white/5 hover:text-white disabled:text-white/25 disabled:hover:bg-transparent"
+                  title={canCall ? "Voice call" : "Calls are not available for this conversation"}
                 >
                   <Phone className="h-4 w-4" />
                 </button>
                 <button
-                  className="rounded-full p-2.5 text-white/30 transition-colors hover:bg-white/5 hover:text-white"
-                  title="Video call"
+                  type="button"
+                  disabled={!canCall}
+                  onClick={() => selectedConv && calls.startCall(selectedConv, true)}
+                  aria-label="Video call"
+                  className="rounded-full p-2.5 text-white/70 transition-colors hover:bg-white/5 hover:text-white disabled:text-white/25 disabled:hover:bg-transparent"
+                  title={canCall ? "Video call" : "Calls are not available for this conversation"}
                 >
                   <Video className="h-4 w-4" />
                 </button>

@@ -133,3 +133,19 @@ export function emitInboxTyping(
 ) {
   getSocket().emit("inbox_typing", { toUserId, conversationId, isTyping });
 }
+
+/** Keeps the shared socket open for as long as the caller needs it (calls). */
+export function retainSocket(): Socket {
+  const socket = getSocket();
+  refCount++;
+  return socket;
+}
+
+export function releaseSocket() {
+  refCount--;
+  if (refCount <= 0) {
+    sharedSocket?.disconnect();
+    sharedSocket = null;
+    refCount = 0;
+  }
+}
