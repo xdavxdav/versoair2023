@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
+import { CallProvider } from "@/contexts/CallContext";
 import { usePortalAccess } from "@/hooks/usePortalAccess";
 import { PORTAL_ORDER } from "@/lib/portal-access";
 import { PORTALS } from "@/components/TopNav";
@@ -1660,7 +1661,9 @@ function App() {
                   <LoadingProvider>
                     <AudioProvider>
                       <NavigationProgress />
-                      <AppContent />
+                      <CallProvider>
+                        <AppContent />
+                      </CallProvider>
                       {/* Global "Now Playing" bar — renders itself only when a
                           track is loaded. artist-portal.tsx depends on this. */}
                       <AudioPlayer />

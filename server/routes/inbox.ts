@@ -25,6 +25,7 @@ import {
 } from "@shared/social-schema";
 import { isUserConnected } from "../websocket/socket-config";
 import { lastSeenOf } from "../services/user-presence";
+import { getCallConfig } from "../services/turn-credentials";
 import { drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 import {
@@ -369,6 +370,13 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
 
 // ─── GET /api/inbox/conversations/:id/messages ───────────────────────────────
 // Paginated message history. Marks all unread as read on fetch.
+// Whether calls are on, and the ICE servers (with short-lived TURN credentials)
+// the browser needs to connect one.
+router.get("/calls/config", async (_req: Request, res: Response) => {
+  res.set("Cache-Control", "no-store");
+  return res.json({ success: true, data: await getCallConfig() });
+});
+
 // Whether the other person in one of the caller's own threads is connected now,
 // and when they last were. Support and business threads have no person to show.
 router.get(
