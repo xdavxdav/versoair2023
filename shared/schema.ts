@@ -3951,6 +3951,15 @@ export const insertInventoryProductSchema =
   createInsertSchema(inventoryProducts);
 export type InventoryProduct = typeof inventoryProducts.$inferSelect;
 
+// ─── Inbox: presence (when each user was last connected) ────────────────────
+
+export const userPresence = pgTable("user_presence", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  lastSeen: timestamp("last_seen").notNull().defaultNow(),
+});
+
 // ─── Inbox: Conversations ────────────────────────────────────────────────────
 
 export const inboxConversations = pgTable(

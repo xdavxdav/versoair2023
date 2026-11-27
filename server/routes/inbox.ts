@@ -23,6 +23,8 @@ import {
   socialUsers,
   socialFollowers,
 } from "@shared/social-schema";
+import { isUserConnected } from "../websocket/socket-config";
+import { lastSeenOf } from "../services/user-presence";
 import { drainInboxQueue } from "../services/redis-client";
 import { marketplaceMessageLimiter } from "../middleware/rate-limiter";
 import {
@@ -367,6 +369,56 @@ router.get("/suggested-contacts", async (req: Request, res: Response) => {
 
 // ─── GET /api/inbox/conversations/:id/messages ───────────────────────────────
 // Paginated message history. Marks all unread as read on fetch.
+// Whether the other person in one of the caller's own threads is connected now,
+// and when they last were. Support and business threads have no person to show.
+router.get(
+  "/conversations/:id/presence",
+  async (req: Request, res: Response) => {
+    const convId = Number(req.params.id);
+    if (!Number.isSafeInteger(convId) || convId <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid conversation id" });
+    }
+    try {
+      const [conv] = await db
+        .select()
+        .from(schema.inboxConversations)
+        .where(
+          and(
+            eq(schema.inboxConversations.id, convId),
+            eq(schema.inboxConversations.userId, Number(req.user!.userId)),
+          ),
+        )
+        .limit(1);
+      const other = conv ? Number(conv.participantId) : NaN;
+      if (
+        !conv ||
+        conv.type === "support" ||
+        !participantIsUser(conv.type) ||
+        !Number.isSafeInteger(other) ||
+        other <= 0
+      ) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Conversation not found" });
+      }
+      const online = isUserConnected(other);
+      const lastSeen = online ? null : await lastSeenOf(other);
+      res.set("Cache-Control", "no-store");
+      return res.json({
+        success: true,
+        data: { online, lastSeen: lastSeen ? lastSeen.toISOString() : null },
+      });
+    } catch (error) {
+      console.error("[Inbox] Presence error:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Presence unavailable" });
+    }
+  },
+);
+
 router.get(
   "/conversations/:id/messages",
   async (req: Request, res: Response) => {

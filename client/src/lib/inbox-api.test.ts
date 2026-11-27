@@ -18,6 +18,7 @@ import {
   nextSendAttempt,
   postInboxMessage,
   publishInboxMessage,
+  presenceLabel,
   removePendingMessage,
   requestSupportReply,
   restoreDraft,
@@ -834,4 +835,16 @@ test("support reply failures are told apart by status", async () => {
     "hi",
   );
   assert.equal((offline as InboxFailure).kind, "network");
+});
+
+test("presence reads as online, last seen today, yesterday, or a date", () => {
+  const now = new Date(2026, 10, 27, 15, 0);
+  const at = (d: Date) => ({ online: false, lastSeen: d.toISOString() });
+  assert.equal(presenceLabel(null, now), null);
+  assert.equal(presenceLabel({ online: true, lastSeen: null }, now), "online");
+  assert.equal(presenceLabel({ online: false, lastSeen: null }, now), null);
+  assert.match(presenceLabel(at(new Date(2026, 10, 27, 9, 5)), now)!, /^last seen today at /);
+  assert.match(presenceLabel(at(new Date(2026, 10, 26, 22, 0)), now)!, /^last seen yesterday at /);
+  assert.match(presenceLabel(at(new Date(2026, 10, 1, 10, 0)), now)!, /^last seen Nov 1$/);
+  assert.equal(presenceLabel({ online: false, lastSeen: "nope" }, now), null);
 });
