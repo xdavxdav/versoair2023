@@ -780,6 +780,13 @@ const TABLE_STATEMENTS: TableDef[] = [
       ON business_claims (user_id, created_at)`,
   },
   {
+    table: "user_presence",
+    sql: `CREATE TABLE IF NOT EXISTS user_presence (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      last_seen TIMESTAMP NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
     table: "inbox_conversations",
     sql: `CREATE TABLE IF NOT EXISTS inbox_conversations (
       id SERIAL PRIMARY KEY,

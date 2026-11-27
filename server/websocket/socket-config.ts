@@ -7,6 +7,7 @@ import * as schema from "@shared/schema";
 import { notificationEmitter } from "../services/notification-service";
 import { sendPushToUser } from "../services/push-service";
 import { participantIsUser } from "../utils/inbox-participants";
+import { markUserSeen } from "../services/user-presence";
 
 let io: SocketIOServer | null = null;
 const userConnections = new Map<number, string[]>(); // userId -> [socketIds]
@@ -106,6 +107,7 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
       const connections = userConnections.get(userId) || [];
       connections.push(socket.id);
       userConnections.set(userId, connections);
+      void markUserSeen(userId);
 
       console.log(
         `[SOCKET] User ${userId} joined room ${roomName} (socket ${socket.id})`,
@@ -211,17 +213,13 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
       },
     );
 
-    // Presence check — respond with whether the requested user has an active socket
-    socket.on("presence_check", (data: { userId: number }) => {
-      if (!data?.userId) return;
-      socket.emit("presence_status", {
-        userId: data.userId,
-        online: isUserConnected(data.userId),
-      });
-    });
+    // Presence is served by GET /api/inbox/conversations/:id/presence, which
+    // only answers for people the caller already has a conversation with.
 
     socket.on("disconnect", () => {
       console.log(`[SOCKET] User disconnected: ${socket.id}`);
+
+      if (socket.data.userId != null) void markUserSeen(socket.data.userId);
 
       // Clean up user connections map
       for (const [userId, socketIds] of userConnections.entries()) {

@@ -43,7 +43,8 @@ type InboxOperation =
   | "contacts"
   | "start"
   | "upload"
-  | "publish";
+  | "publish"
+  | "presence";
 
 const FAILED: Record<InboxOperation, string> = {
   conversations: "Your conversations could not be loaded.",
@@ -53,6 +54,7 @@ const FAILED: Record<InboxOperation, string> = {
   start: "The conversation could not be started.",
   upload: "The image could not be uploaded.",
   publish: "The message could not be published.",
+  presence: "Presence could not be loaded.",
 };
 
 const SIGN_IN_AGAIN = "Your session has ended. Sign in again to continue.";
@@ -192,6 +194,55 @@ export function fetchInboxConversations<C>(
         ? (body.conversations as C[])
         : undefined,
   );
+}
+
+export interface InboxPresence {
+  online: boolean;
+  lastSeen: string | null;
+}
+
+export function fetchInboxPresence(
+  fetcher: InboxFetcher,
+  conversationId: IdLike,
+  signal?: AbortSignal,
+) {
+  return requestInbox<InboxPresence>(
+    fetcher,
+    "presence",
+    `${conversationUrl(conversationId)}/presence`,
+    { signal },
+    (body) => {
+      const data = body.data;
+      if (!isRecord(data) || typeof data.online !== "boolean") return undefined;
+      return {
+        online: data.online,
+        lastSeen: typeof data.lastSeen === "string" ? data.lastSeen : null,
+      };
+    },
+  );
+}
+
+const sameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+/** "online", "last seen today at 3:05 PM", "last seen yesterday at …", or a date. */
+export function presenceLabel(
+  presence: InboxPresence | null,
+  now: Date = new Date(),
+): string | null {
+  if (!presence) return null;
+  if (presence.online) return "online";
+  if (!presence.lastSeen) return null;
+  const seen = new Date(presence.lastSeen);
+  if (Number.isNaN(seen.getTime())) return null;
+  const time = seen.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (sameDay(seen, now)) return `last seen today at ${time}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(seen, yesterday)) return `last seen yesterday at ${time}`;
+  return `last seen ${seen.toLocaleDateString([], { month: "short", day: "numeric" })}`;
 }
 
 export interface InboxThread<M, C> {

@@ -41,6 +41,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { useInboxSocket } from "@/hooks/use-inbox-socket";
 import { authenticatedFetch } from "@/lib/auth";
+import { useConversationPresence } from "@/hooks/use-conversation-presence";
 import InboxNotice from "@/components/messenger/InboxNotice";
 import {
   appendMessageOnce,
@@ -51,6 +52,7 @@ import {
   fetchInboxContacts,
   fetchInboxConversations,
   fetchInboxThread,
+  presenceLabel,
   keepConversationMessages,
   markInboxConversationRead,
   mergeThreadReload,
@@ -528,6 +530,12 @@ export function TwitterMessenger({
 
   /* ── Load messages ── */
   const selectedId = selectedConv ? String(selectedConv.id) : null;
+  const presence = useConversationPresence(
+    authenticatedFetch,
+    selectedId,
+    !!selectedConv && selectedConv.type !== "support" && selectedConv.type !== "business_network",
+  );
+  const presenceText = presenceLabel(presence);
 
   useEffect(() => {
     if (!selectedId) {
@@ -1009,6 +1017,18 @@ export function TwitterMessenger({
                   {theme?.icon && <theme.icon className="h-3 w-3" />}
                   {theme?.label || "Direct message"}
                 </p>
+                {presenceText && (
+                  <p
+                    role="status"
+                    className={`flex items-center gap-1.5 text-[11px] ${presence?.online ? "font-semibold text-emerald-400" : "text-white/50"}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-2 w-2 rounded-full ${presence?.online ? "bg-emerald-400" : "bg-slate-500"}`}
+                    />
+                    {presenceText}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <button

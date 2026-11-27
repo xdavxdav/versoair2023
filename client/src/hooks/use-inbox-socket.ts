@@ -133,19 +133,3 @@ export function emitInboxTyping(
 ) {
   getSocket().emit("inbox_typing", { toUserId, conversationId, isTyping });
 }
-
-/** One-shot presence check — resolves via the "presence_status" callback. */
-export function checkPresence(
-  userId: number,
-  onStatus: (online: boolean) => void,
-) {
-  const socket = getSocket();
-  const handler = (data: { userId: number; online: boolean }) => {
-    if (data.userId === userId) {
-      onStatus(data.online);
-      socket.off("presence_status", handler);
-    }
-  };
-  socket.on("presence_status", handler);
-  socket.emit("presence_check", { userId });
-}

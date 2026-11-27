@@ -26,6 +26,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { authenticatedFetch } from "@/lib/auth";
+import { useConversationPresence } from "@/hooks/use-conversation-presence";
 import { isRouteReachable } from "@/lib/beta-route-access";
 import { useAuthContext } from "@/contexts/AuthContext";
 import FollowButton from "@/components/FollowButton";
@@ -34,7 +35,6 @@ import {
   useInboxSocket,
   useInboxTyping,
   emitInboxTyping,
-  checkPresence,
 } from "@/hooks/use-inbox-socket";
 import {
   appendMessageOnce,
@@ -44,6 +44,7 @@ import {
   fetchInboxContacts,
   fetchInboxConversations,
   fetchInboxThread,
+  presenceLabel,
   isTypingFromParticipant,
   keepConversationMessages,
   localFailure,
@@ -172,7 +173,6 @@ export default function MessengerPanel({
   const [followingUserIds, setFollowingUserIds] = useState<number[]>([]);
   const [otherTyping, setOtherTyping] = useState(false);
   const [aiReplying, setAiReplying] = useState(false);
-  const [otherOnline, setOtherOnline] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<string | null>(
     null,
@@ -480,16 +480,14 @@ export default function MessengerPanel({
   );
   useInboxTyping(open && activeConvo ? handleTyping : undefined);
 
-  // Check the other participant's online status whenever a thread is opened
-  useEffect(() => {
-    if (!activeConvo) {
-      setOtherOnline(false);
-      return;
-    }
-    checkPresence(Number(activeConvo.participantId), setOtherOnline);
-  }, [activeConvo]);
-
   const activeId = activeConvo ? String(activeConvo.id) : null;
+  const presence = useConversationPresence(
+    authenticatedFetch,
+    activeId,
+    !!activeConvo && activeConvo.type !== "support" && activeConvo.type !== "business_network",
+  );
+  const otherOnline = presence?.online ?? false;
+  const presenceText = presenceLabel(presence);
 
   // Typing state and composer errors belong to one conversation, not the next.
   useEffect(() => {
@@ -850,7 +848,7 @@ export default function MessengerPanel({
                     activeConvo.participantName?.[0]?.toUpperCase()
                   )}
                   {otherOnline && (
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-amber-400 border border-[#0f0f17]" />
+                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border border-[#0f0f17]" />
                   )}
                 </button>
               )}
@@ -868,7 +866,7 @@ export default function MessengerPanel({
                       ? "typing…"
                       : otherOnline
                         ? "online"
-                        : TYPE_LABELS[activeConvo.type] || activeConvo.type}
+                        : presenceText || TYPE_LABELS[activeConvo.type] || activeConvo.type}
                   </span>
                 )}
               </h2>
@@ -927,7 +925,7 @@ export default function MessengerPanel({
                             }`}
                           />
                         </span>
-                        {otherOnline ? "Online now" : "Offline"}
+                        {otherOnline ? "Online now" : presenceText || "Offline"}
                       </p>
                     </div>
                   </div>
