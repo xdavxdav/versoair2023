@@ -1,0 +1,11 @@
+{
+  "agent": "copilot",
+  "taskId": "msgr-layout",
+  "files": [
+    "client/src/App.tsx",
+    "client/src/components/TwitterMessenger.tsx",
+    "client/src/components/messenger/MessengerPanel.tsx",
+    "client/src/components/vxpp/VxppShell.tsx"
+  ],
+  "claimedAt": "2026-11-27T17:33:32.129Z"
+}

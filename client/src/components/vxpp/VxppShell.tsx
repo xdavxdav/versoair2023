@@ -308,7 +308,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
   return (
     <div
       data-testid="vxpp-shell"
-      className={`min-h-screen w-full bg-[#f6f3ee] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row ${
+      className={`${fullBleed ? "min-h-0" : "min-h-screen"} w-full bg-[#f6f3ee] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row ${
         fullBleed ? "h-[100dvh] overflow-hidden" : ""
       }`}
     >
@@ -678,7 +678,7 @@ export default function VxppShell({ children, fullBleed = false }: VxppShellProp
       {/* ── Main Content Area ── */}
       <div
         className={`flex-1 min-w-0 min-h-0 flex flex-col ${
-          fullBleed ? "h-[calc(100dvh-3.5rem-4rem)] lg:h-[100dvh] overflow-hidden" : "pb-20 lg:pb-6"
+          fullBleed ? "h-[calc(100dvh-3.5rem-4rem-env(safe-area-inset-bottom))] lg:h-[100dvh] overflow-hidden" : "pb-20 lg:pb-6"
         }`}
       >
         {children}

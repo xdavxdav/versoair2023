@@ -1527,11 +1527,11 @@ function AppContent() {
       {/* Main Router */}
       <main
         translate={isTranslationSensitivePage ? "no" : undefined}
-        className={`flex-1 min-h-screen transition-opacity duration-300 ${
+        className={`flex-1 ${isMessagesPage ? "h-[100dvh] min-h-0 overflow-hidden" : "min-h-screen"} transition-opacity duration-300 ${
           isLoading && !isFadingOut
             ? "opacity-0 pointer-events-none"
             : "opacity-100"
-        } ${pageEnter ? "page-enter" : ""} ${isMessagesPage ? "h-screen min-h-0 overflow-hidden" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""} ${isTranslationSensitivePage ? "notranslate" : ""}`}
+        } ${pageEnter ? "page-enter" : ""} ${showContentNav ? "pb-[80px]" : ""} ${!isMusicPage && currentTrack ? "pb-[68px]" : ""} ${isTranslationSensitivePage ? "notranslate" : ""}`}
         style={{ overflowX: isMessagesPage ? "hidden" : "clip" }}
       >
         <ErrorBoundary>
