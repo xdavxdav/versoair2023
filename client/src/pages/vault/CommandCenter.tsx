@@ -196,6 +196,11 @@ export default function CommandCenter() {
                     emoji="✅"
                   />
                   <RouteLink
+                    path="/admin/business-verification"
+                    label="Business Verification Queue"
+                    emoji="🏢"
+                  />
+                  <RouteLink
                     path="/admin/tickets"
                     label="Ticket Management"
                     emoji="🎫"
@@ -598,6 +603,11 @@ export default function CommandCenter() {
                     path="/admin/verification"
                     label="Verification Admin"
                     emoji="✔️"
+                  />
+                  <RouteLink
+                    path="/admin/business-verification"
+                    label="Business Verification Queue"
+                    emoji="🏢"
                   />
                   <RouteLink
                     path="/admin/tickets"

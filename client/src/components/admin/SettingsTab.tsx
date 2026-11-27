@@ -140,6 +140,12 @@ export default function SettingsTab({ dbConnected }: SettingsTabProps) {
             Verification
           </Link>
           <Link
+            href="/admin/business-verification"
+            className="text-sm px-3 py-2 rounded-lg border border-slate-700 text-slate-200 hover:bg-slate-800"
+          >
+            Business Verification Queue
+          </Link>
+          <Link
             href="/admin/tickets"
             className="text-sm px-3 py-2 rounded-lg border border-slate-700 text-slate-200 hover:bg-slate-800"
           >
